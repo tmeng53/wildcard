@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "DesignSystem",
     defaultLocalization: "zh-Hans",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS("26.0"), .macOS(.v14)],
     products: [
         .library(name: "DesignSystem", targets: ["DesignSystem"]),
         .library(name: "DesignSystemUI", targets: ["DesignSystemUI"]),

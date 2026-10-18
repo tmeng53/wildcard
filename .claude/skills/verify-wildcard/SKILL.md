@@ -52,7 +52,7 @@ mkdir -p /tmp/verify-wildcard/$(git rev-parse --short HEAD)
 
 All must pass before you drive anything:
 
-- The `ios` job ran on exactly the head commit you pinned and concluded `success`; its log ends with `ios-test: ok`.
+- The `ios` job ran on exactly the head commit you pinned and concluded `success`; its log has the line `ios-test: ok` (printed before the screenshot previews).
 - The screenshots artifact has one PNG per screenshot the UI tests name (`XCTAttachment` names in `ios/WildcardUITests/`), each named after it, e.g. `01-style-guide-zh-top.png`.
 
 If the job failed or the artifact is missing, stop: the verdict is FAIL, reason "the app didn't build or launch", with the failing step's log saved to `/tmp/verify-wildcard/<short sha>/`. A failed run also uploads `ios-xcresult-<full head SHA>`.

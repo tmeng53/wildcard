@@ -1,5 +1,6 @@
 # Runs scripts/verify.sh for ready PRs and pushes to main (AGENTS.md, CI).
-# GitHub-hosted runners are free while the repo is public. Never use a self-hosted
+# GitHub-hosted runners are free while the repo is public. macos-26 ships Xcode 26, which the
+# App Store requires since 2026-04-28 and Liquid Glass needs. Never use a self-hosted
 # runner here: on a public repo a fork's PR could run code on that machine.
 # macOS runners have no Docker, so the PR that adds supabase/migrations adds a Linux job for it.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
@@ -22,7 +23,7 @@ concurrency:
 jobs:
   verify:
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -37,7 +38,7 @@ jobs:
   # so reviewers and verifiers see every visible change without a Mac.
   ios:
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -54,7 +55,7 @@ jobs:
           # Named after the commit the PR is at, not the merge commit GitHub tests.
           name: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}
           path: build/ios/screenshots
-          if-no-files-found: warn
+          if-no-files-found: error
       - name: Upload test results on failure
         if: failure()
         uses: actions/upload-artifact@v4

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the iOS app, runs its UI tests on a simulator and exports the screenshots they keep.
-# macOS with Xcode 16 or newer only. CI's `ios` job runs it and uploads build/ios/screenshots.
-# Usage: scripts/ios-test.sh            (SIMULATOR="iPhone 16 Pro" to pick another device)
+# macOS with Xcode 26 or newer only. CI's `ios` job runs it and uploads build/ios/screenshots.
+# Usage: scripts/ios-test.sh            (SIMULATOR="iPhone 17 Pro" to pick another device)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -10,7 +10,7 @@ rm -rf "$out"
 mkdir -p "$out/screenshots"
 
 # The named simulator if this Xcode has it, else the first available iPhone.
-want="${SIMULATOR:-iPhone 16}"
+want="${SIMULATOR:-iPhone 17}"
 devices="$(xcrun simctl list devices available)"
 if grep -q "    $want (" <<<"$devices"; then
   sim="$want"
@@ -52,18 +52,25 @@ for test in json.loads((raw / "manifest.json").read_text()):
 PY
 fi
 
+shots=$(find "$out/screenshots" -name '*.png' | wc -l | tr -d ' ')
+echo "ios-test: $shots screenshots"
+if [ "$status" -eq 0 ] && [ "$shots" -eq 0 ]; then
+  echo "the UI tests passed but no screenshots were exported" >&2
+  status=1
+fi
+[ "$status" -eq 0 ] && echo "ios-test: ok"
+
 # Small JPEG previews in the log, for agents whose network can't download artifacts:
 # decode the lines between the markers with `base64 -d`.
 if [ "${PRINT_PREVIEWS:-}" = "1" ]; then
   for png in "$out"/screenshots/*.png; do
     [ -e "$png" ] || continue
     jpg="$out/preview.jpg"
-    sips -Z 900 -s format jpeg -s formatOptions 60 "$png" --out "$jpg" >/dev/null
+    sips -Z 700 -s format jpeg -s formatOptions 50 "$png" --out "$jpg" >/dev/null
     echo "----- preview begin: $(basename "$png" .png).jpg -----"
     base64 -b 76 -i "$jpg"
     echo "----- preview end -----"
   done
 fi
 
-[ "$status" -eq 0 ] && echo "ios-test: ok"
 exit "$status"
