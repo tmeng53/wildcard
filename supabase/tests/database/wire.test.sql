@@ -1,7 +1,7 @@
 -- Saving and reading check-ins as the app's wire JSON (ios/Packages/Contracts,
 -- version 1), with the squads each one goes to. Also the 3-squad limit.
 begin;
-select plan(13);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -20,7 +20,7 @@ $$;
 
 -- Ann's check-in as the app encodes it, with fields swapped in per case.
 create function pg_temp.wire(changes jsonb default '{}') returns jsonb language sql as $$
-  select '{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"a0000000-0000-0000-0000-000000000001","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.000Z","kind":"ateClean","meal":{"quality":"cheat","slot":"dinner"},"squads":["5a000000-0000-0000-0000-000000000001","5b000000-0000-0000-0000-000000000002"]}'::jsonb || changes;
+  select '{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"a0000000-0000-0000-0000-000000000001","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.000Z","kind":"cheatMeal","meal":{"caption":"火锅，不后悔","slot":"dinner"},"audience":["5b000000-0000-0000-0000-000000000002","5a000000-0000-0000-0000-000000000001"]}'::jsonb || changes;
 $$;
 
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
@@ -33,21 +33,29 @@ select throws_ok(
   '42501', null, 'a member can''t save a check-in as someone else'
 );
 select throws_ok(
-  $$select public.create_check_in(pg_temp.wire('{"squads":[]}'))$$,
+  $$select public.create_check_in(pg_temp.wire('{"audience":[]}'))$$,
   '22023', null, 'a check-in goes to at least one squad'
 );
 select throws_ok(
-  $$select public.create_check_in(pg_temp.wire('{"squads":["5a000000-0000-0000-0000-000000000001","5a000000-0000-0000-0000-000000000002","5a000000-0000-0000-0000-000000000003","5a000000-0000-0000-0000-000000000004"]}'))$$,
+  $$select public.create_check_in(pg_temp.wire('{"audience":["5a000000-0000-0000-0000-000000000001","5a000000-0000-0000-0000-000000000002","5a000000-0000-0000-0000-000000000003","5a000000-0000-0000-0000-000000000004"]}'))$$,
   '22023', null, 'a check-in goes to at most 3 squads'
 );
 select throws_ok(
-  $$select public.create_check_in(pg_temp.wire('{"squads":["5c000000-0000-0000-0000-000000000003"]}'))$$,
+  $$select public.create_check_in(pg_temp.wire('{"audience":["5a000000-0000-0000-0000-000000000001","5a000000-0000-0000-0000-000000000001"]}'))$$,
+  '22023', null, 'a check-in''s audience lists each squad once'
+);
+select throws_ok(
+  $$select public.create_check_in(pg_temp.wire('{"training":{"sport":"run","minutes":30}}'))$$,
+  '22023', null, 'a payload that doesn''t match the kind is rejected'
+);
+select throws_ok(
+  $$select public.create_check_in(pg_temp.wire('{"audience":["5c000000-0000-0000-0000-000000000003"]}'))$$,
   '42501', null, 'a check-in can''t go to a squad its member isn''t in'
 );
 select is_empty('select 1 from public.check_ins', 'a refused check-in leaves nothing behind');
 select lives_ok(
   $$select public.create_check_in(pg_temp.wire())$$,
-  'a member saves a 放纵餐忏悔 to two squads'
+  'a member saves a 放纵餐忏悔 to two squads, in the order they picked'
 );
 select is(
   (select check_in from public.check_ins_wire),
@@ -57,7 +65,7 @@ select is(
 
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
 select is(
-  (select check_in -> 'squads' from public.check_ins_wire),
+  (select check_in -> 'audience' from public.check_ins_wire),
   '["5a000000-0000-0000-0000-000000000001"]'::jsonb,
   'a squad-mate sees only their own squad among where it went'
 );

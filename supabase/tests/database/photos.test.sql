@@ -44,8 +44,8 @@ select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 insert into public.check_ins (id, day, kind, payload, version) values
   ('11111111-1111-1111-1111-111111111111', current_date, 'trained',
    '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1);
-insert into public.check_in_squads (check_in_id, squad_id) values
-  ('11111111-1111-1111-1111-111111111111', '5a000000-0000-0000-0000-000000000001');
+insert into public.check_in_squads (check_in_id, squad_id, position) values
+  ('11111111-1111-1111-1111-111111111111', '5a000000-0000-0000-0000-000000000001', 1);
 
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
 select results_eq(

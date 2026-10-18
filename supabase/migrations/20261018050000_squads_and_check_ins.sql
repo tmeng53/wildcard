@@ -113,12 +113,27 @@ using (member_id = (select auth.uid()));
 
 -- Check-ins --------------------------------------------------------------------
 
-create type public.check_in_kind as enum ('trained', 'ateClean', 'disclaimer');
+-- 练了, 健康餐, 放纵餐忏悔, 今日免责声明.
+create type public.check_in_kind as enum ('trained', 'healthyMeal', 'cheatMeal', 'disclaimer');
+
+-- A 免责声明 or a caption: trimmed, one line, 1 to 40 characters as people see them.
+-- Postgres counts code points, not what people see, so it holds a looser cap that a
+-- line of 40 emoji can't trip; the app holds the exact limit.
+create function private.is_short_line(value jsonb)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select jsonb_typeof(value) = 'string'
+    and char_length(value #>> '{}') between 1 and 160
+    and value #>> '{}' = btrim(value #>> '{}', E' \t\n\r')
+    and strpos(value #>> '{}', E'\n') = 0
+    and strpos(value #>> '{}', E'\r') = 0;
+$$;
 
 -- The kind-specific object from the wire JSON (`training`, `meal` or `disclaimer`),
--- checked against the same rules as the Swift contract. The app enforces the exact
--- 40-character 免责声明 limit in characters people see; Postgres counts code points,
--- so it holds a looser cap that an emoji sequence can't trip.
+-- checked against the same rules as the Swift contract.
 create function private.check_in_payload_is_valid(
   kind public.check_in_kind, payload jsonb, member uuid
 )
@@ -128,11 +143,11 @@ immutable
 set search_path = ''
 as $$
   select jsonb_typeof(payload) = 'object'
-    and case kind
-      when 'trained' then
+    and case
+      when kind = 'trained' then
         payload ?& array['sport', 'minutes']
         and (select count(*) from jsonb_object_keys(payload) k
-             where k not in ('sport', 'minutes', 'photo')) = 0
+             where k not in ('sport', 'minutes', 'photo', 'caption')) = 0
         and payload ->> 'sport' in (
           'run', 'strength', 'yoga', 'pilates', 'swim', 'cycle',
           'ball', 'climb', 'hike', 'dance', 'other'
@@ -140,20 +155,17 @@ as $$
         and jsonb_typeof(payload -> 'minutes') = 'number'
         and (payload ->> 'minutes') ~ '^[0-9]+$'
         and (payload ->> 'minutes')::int between 1 and 600
-      -- 健康餐 or 放纵餐忏悔, by quality.
-      when 'ateClean' then
-        payload ?& array['slot', 'quality']
+      when kind in ('healthyMeal', 'cheatMeal') then
+        payload ? 'slot'
         and (select count(*) from jsonb_object_keys(payload) k
-             where k not in ('slot', 'quality', 'photo')) = 0
+             where k not in ('slot', 'photo', 'caption')) = 0
         and payload ->> 'slot' in ('breakfast', 'lunch', 'dinner', 'snack')
-        and payload ->> 'quality' in ('healthy', 'cheat')
-      when 'disclaimer' then
+      when kind = 'disclaimer' then
         payload ? 'text'
         and (select count(*) from jsonb_object_keys(payload) k where k <> 'text') = 0
-        and jsonb_typeof(payload -> 'text') = 'string'
-        and char_length(btrim(payload ->> 'text')) between 1 and 160
-        and payload ->> 'text' = btrim(payload ->> 'text')
+        and private.is_short_line(payload -> 'text')
     end
+    and (not payload ? 'caption' or private.is_short_line(payload -> 'caption'))
     -- A photo is {"path": "<member id>/..."}: members only point at their own uploads.
     and (
       not payload ? 'photo'
@@ -189,11 +201,14 @@ create table public.check_ins (
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
 
--- The squads a check-in was sent to: one, some or all of the member's (at most 3).
+-- A check-in's audience: the squads it was sent to (one, some or all of the
+-- member's, at most 3), in the order the member picked them.
 create table public.check_in_squads (
   check_in_id uuid not null references public.check_ins (id) on delete cascade,
   squad_id uuid not null references public.squads (id) on delete cascade,
-  primary key (check_in_id, squad_id)
+  position smallint not null check (position between 1 and 3),
+  primary key (check_in_id, squad_id),
+  unique (check_in_id, position)
 );
 
 create index check_in_squads_squad_id_idx on public.check_in_squads (squad_id);
@@ -299,8 +314,8 @@ with check (
 revoke all on public.squads, public.squad_members, public.check_ins, public.check_in_squads from anon;
 revoke update on public.check_ins, public.check_in_squads from authenticated;
 
--- The app saves a check-in as its wire JSON (ios/Packages/Contracts), with the
--- squads it goes to, in one transaction. Runs as the caller, so every policy above
+-- The app saves a check-in as its wire JSON (ios/Packages/Contracts), with its
+-- audience, in one transaction. Runs as the caller, so every policy above
 -- applies.
 create function public.create_check_in(check_in jsonb)
 returns void
@@ -310,7 +325,7 @@ set search_path = ''
 as $$
 declare
   payload_key text;
-  squad_count int;
+  audience_size int;
 begin
   if (check_in ->> 'version') is distinct from '1' then
     raise exception 'unsupported check-in version: %', check_in ->> 'version'
@@ -321,18 +336,27 @@ begin
   end if;
   payload_key := case check_in ->> 'kind'
     when 'trained' then 'training'
-    when 'ateClean' then 'meal'
+    when 'healthyMeal' then 'meal'
+    when 'cheatMeal' then 'meal'
     when 'disclaimer' then 'disclaimer'
   end;
   if payload_key is null then
     raise exception 'unknown check-in kind: %', check_in ->> 'kind' using errcode = '22023';
   end if;
-  if jsonb_typeof(check_in -> 'squads') is distinct from 'array' then
-    raise exception 'a check-in needs the squads it goes to' using errcode = '22023';
+  if (select count(*) from jsonb_object_keys(check_in) k
+      where k not in ('version', 'id', 'member', 'day', 'createdAt', 'audience', 'kind', payload_key)) > 0
+  then
+    raise exception 'check-in keys don''t match its kind' using errcode = '22023';
   end if;
-  squad_count := jsonb_array_length(check_in -> 'squads');
-  if squad_count not between 1 and 3 then
-    raise exception 'a check-in goes to 1 to 3 squads, not %', squad_count using errcode = '22023';
+  if jsonb_typeof(check_in -> 'audience') is distinct from 'array' then
+    raise exception 'a check-in needs its audience' using errcode = '22023';
+  end if;
+  audience_size := jsonb_array_length(check_in -> 'audience');
+  if audience_size not between 1 and 3 then
+    raise exception 'a check-in goes to 1 to 3 squads, not %', audience_size using errcode = '22023';
+  end if;
+  if (select count(distinct value) from jsonb_array_elements_text(check_in -> 'audience')) <> audience_size then
+    raise exception 'a check-in''s audience lists each squad once' using errcode = '22023';
   end if;
 
   insert into public.check_ins (id, member_id, day, created_at, kind, payload, version)
@@ -345,16 +369,16 @@ begin
     check_in -> payload_key,
     1
   );
-  insert into public.check_in_squads (check_in_id, squad_id)
-  select (check_in ->> 'id')::uuid, squad::uuid
-  from jsonb_array_elements_text(check_in -> 'squads') squad;
+  insert into public.check_in_squads (check_in_id, squad_id, position)
+  select (check_in ->> 'id')::uuid, squad::uuid, position
+  from jsonb_array_elements_text(check_in -> 'audience') with ordinality as a (squad, position);
 end;
 $$;
 
 revoke execute on function public.create_check_in(jsonb) from public, anon;
 grant execute on function public.create_check_in(jsonb) to authenticated;
 
--- Check-ins the caller can see, in the same wire JSON the app sends. `squads` lists
+-- Check-ins the caller can see, in the same wire JSON the app sends. `audience` lists
 -- only the caller's own squads among those it went to (all of them, for the author).
 create view public.check_ins_wire
 with (security_invoker = true)
@@ -370,10 +394,10 @@ select
     'day', c.day,
     'createdAt', to_char(c.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'kind', c.kind,
-    case c.kind when 'trained' then 'training' when 'ateClean' then 'meal' else 'disclaimer' end,
+    case c.kind when 'trained' then 'training' when 'disclaimer' then 'disclaimer' else 'meal' end,
     c.payload,
-    'squads', coalesce(
-      (select jsonb_agg(t.squad_id order by t.squad_id)
+    'audience', coalesce(
+      (select jsonb_agg(t.squad_id order by t.position)
        from public.check_in_squads t where t.check_in_id = c.id),
       '[]'::jsonb
     )

@@ -1,7 +1,7 @@
 -- Check-ins: members write only their own rows, and the payload follows the
 -- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
-select plan(28);
+select plan(29);
 
 -- Four people: Ann and Bo share a squad, Cy is in a different squad, Di is in none.
 insert into auth.users (id, email) values
@@ -46,7 +46,7 @@ select lives_ok(
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
 select lives_ok(
   $$insert into public.check_ins (id, day, kind, payload, version) values
-    ('22222222-2222-2222-2222-222222222222', current_date, 'ateClean', '{"slot":"lunch","quality":"healthy"}', 1)$$,
+    ('22222222-2222-2222-2222-222222222222', current_date, 'healthyMeal', '{"slot":"lunch"}', 1)$$,
   'a member logs 吃得干净'
 );
 select pg_temp.sign_in('c0000000-0000-0000-0000-000000000003');
@@ -58,8 +58,8 @@ select lives_ok(
 
 -- Bo sends his to the squad he shares with Ann.
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
-insert into public.check_in_squads (check_in_id, squad_id) values
-  ('22222222-2222-2222-2222-222222222222', '5a000000-0000-0000-0000-000000000001');
+insert into public.check_in_squads (check_in_id, squad_id, position) values
+  ('22222222-2222-2222-2222-222222222222', '5a000000-0000-0000-0000-000000000001', 1);
 
 -- Who sees what.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
@@ -85,14 +85,14 @@ select pg_temp.sign_out();
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select throws_ok(
   $$insert into public.check_ins (id, member_id, day, kind, payload, version) values
-    (gen_random_uuid(), 'b0000000-0000-0000-0000-000000000002', current_date, 'ateClean', '{"slot":"dinner","quality":"cheat"}', 1)$$,
+    (gen_random_uuid(), 'b0000000-0000-0000-0000-000000000002', current_date, 'healthyMeal', '{"slot":"dinner"}', 1)$$,
   '42501', null, 'a member can''t check in for a squad-mate'
 );
 delete from public.check_ins where id = '22222222-2222-2222-2222-222222222222';
 select pg_temp.sign_out();
 select is(
   (select payload from public.check_ins where id = '22222222-2222-2222-2222-222222222222'),
-  '{"slot":"lunch","quality":"healthy"}'::jsonb,
+  '{"slot":"lunch"}'::jsonb,
   'a squad-mate''s check-in can''t be deleted by someone else'
 );
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
@@ -126,11 +126,12 @@ select pg_temp.rejects('trained', '{"sport":"run","minutes":0}', '练了 needs a
 select pg_temp.rejects('trained', '{"sport":"run","minutes":601}', '练了 is at most 600 minutes');
 select pg_temp.rejects('trained', '{"sport":"run","minutes":30.5}', 'minutes are whole numbers');
 select pg_temp.rejects('trained', '{"sport":"sumo","minutes":30}', 'the sport is one the contract names');
-select pg_temp.rejects('trained', '{"slot":"lunch","quality":"healthy"}', 'the payload matches its kind');
-select pg_temp.rejects('ateClean', '{"slot":"brunch","quality":"healthy"}', 'the meal is one of the four slots');
-select pg_temp.rejects('ateClean', '{"slot":"lunch"}', 'a meal says whether it was 健康餐 or 放纵餐');
-select pg_temp.rejects('ateClean', '{"slot":"lunch","quality":"okay"}', 'a meal is healthy or cheat');
-select pg_temp.rejects('ateClean', '{"slot":"lunch","quality":"healthy","calories":500}', 'no calories or other unknown fields');
+select pg_temp.rejects('trained', '{"slot":"lunch"}', 'the payload matches its kind');
+select pg_temp.rejects('healthyMeal', '{"slot":"brunch"}', 'the meal is one of the four slots');
+select pg_temp.rejects('cheatMeal', '{"caption":"火锅"}', 'a meal names its slot');
+select pg_temp.rejects('cheatMeal', '{"slot":"dinner","caption":"火锅\n不后悔"}', 'a caption is one line');
+select pg_temp.rejects('trained', '{"sport":"run","minutes":30,"caption":""}', 'a caption isn''t empty');
+select pg_temp.rejects('healthyMeal', '{"slot":"lunch","calories":500}', 'no calories or other unknown fields');
 select pg_temp.rejects('disclaimer', '{"text":"   "}', 'an empty 免责声明 is rejected');
 select pg_temp.rejects('disclaimer', '{"text":" 腿酸 "}', 'the 免责声明 arrives trimmed, as the contract sends it');
 select pg_temp.rejects(
@@ -139,12 +140,12 @@ select pg_temp.rejects(
 );
 select throws_ok(
   $$insert into public.check_ins (id, day, kind, payload, version) values
-    (gen_random_uuid(), current_date, 'ateClean', '{"slot":"lunch","quality":"healthy"}', 2)$$,
+    (gen_random_uuid(), current_date, 'healthyMeal', '{"slot":"lunch"}', 2)$$,
   '23514', null, 'only wire version 1 is stored'
 );
 select throws_ok(
   $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
-    (gen_random_uuid(), '2025-10-15', '2025-10-18T00:00:00Z', 'ateClean', '{"slot":"lunch","quality":"healthy"}', 1)$$,
+    (gen_random_uuid(), '2025-10-15', '2025-10-18T00:00:00Z', 'healthyMeal', '{"slot":"lunch"}', 1)$$,
   '23514', null, 'the local day is within a day of when it was made'
 );
 select lives_ok(

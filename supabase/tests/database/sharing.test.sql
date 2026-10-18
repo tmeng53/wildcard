@@ -29,18 +29,18 @@ $$;
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 insert into public.check_ins (id, day, kind, payload, version) values
   ('11111111-1111-1111-1111-111111111111', current_date, 'trained', '{"sport":"run","minutes":30}', 1),
-  ('22222222-2222-2222-2222-222222222222', current_date, 'ateClean', '{"slot":"lunch","quality":"healthy"}', 1),
+  ('22222222-2222-2222-2222-222222222222', current_date, 'healthyMeal', '{"slot":"lunch"}', 1),
   ('33333333-3333-3333-3333-333333333333', current_date, 'disclaimer', '{"text":"腿还在酸"}', 1);
 select lives_ok(
-  $$insert into public.check_in_squads (check_in_id, squad_id) values
-    ('11111111-1111-1111-1111-111111111111', '5a000000-0000-0000-0000-000000000001'),
-    ('22222222-2222-2222-2222-222222222222', '5a000000-0000-0000-0000-000000000001'),
-    ('22222222-2222-2222-2222-222222222222', '5b000000-0000-0000-0000-000000000002')$$,
+  $$insert into public.check_in_squads (check_in_id, squad_id, position) values
+    ('11111111-1111-1111-1111-111111111111', '5a000000-0000-0000-0000-000000000001', 1),
+    ('22222222-2222-2222-2222-222222222222', '5a000000-0000-0000-0000-000000000001', 1),
+    ('22222222-2222-2222-2222-222222222222', '5b000000-0000-0000-0000-000000000002', 2)$$,
   'a member sends a check-in to one squad, or to each of their squads'
 );
 select throws_ok(
-  $$insert into public.check_in_squads (check_in_id, squad_id) values
-    ('33333333-3333-3333-3333-333333333333', '5c000000-0000-0000-0000-000000000003')$$,
+  $$insert into public.check_in_squads (check_in_id, squad_id, position) values
+    ('33333333-3333-3333-3333-333333333333', '5c000000-0000-0000-0000-000000000003', 1)$$,
   '42501', null, 'a member can''t send to a squad they aren''t in'
 );
 select results_eq(
@@ -57,8 +57,8 @@ select results_eq(
   'a squad-mate sees what was sent to their squad, not the unsent one'
 );
 select throws_ok(
-  $$insert into public.check_in_squads (check_in_id, squad_id) values
-    ('33333333-3333-3333-3333-333333333333', '5a000000-0000-0000-0000-000000000001')$$,
+  $$insert into public.check_in_squads (check_in_id, squad_id, position) values
+    ('33333333-3333-3333-3333-333333333333', '5a000000-0000-0000-0000-000000000001', 1)$$,
   '42501', null, 'a squad-mate can''t send someone else''s check-in'
 );
 delete from public.check_in_squads where check_in_id = '11111111-1111-1111-1111-111111111111';
