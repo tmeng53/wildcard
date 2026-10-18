@@ -1,0 +1,55 @@
+-- Only our API reaches the data: the app's tokens (anon, authenticated) can't read or
+-- write any table or reach the photo files, even through Supabase's own REST API.
+begin;
+select plan(9);
+
+insert into auth.users (id, email) values ('a0000000-0000-0000-0000-000000000001', 'ann@example.com');
+insert into storage.objects (bucket_id, name, owner_id) values
+  ('check-in-photos', 'a0000000-0000-0000-0000-000000000001/run.jpg', 'a0000000-0000-0000-0000-000000000001');
+
+-- Every table the migrations create, so a new one without the lock fails here.
+select is(
+  (select array_agg(tablename::text order by tablename) from pg_tables where schemaname = 'public'),
+  array['check_in_photos', 'check_in_squads', 'check_ins', 'profiles', 'squad_members', 'squads'],
+  'these are all the tables'
+);
+select is(
+  (select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity),
+  0, 'row-level security is on for every table, so a stray grant still shows nothing'
+);
+select is(
+  (select count(*)::int from pg_policies where schemaname = 'public'),
+  0, 'no table has a policy that would let the app''s tokens in'
+);
+select is(
+  (select count(*)::int from information_schema.role_table_grants
+   where table_schema = 'public' and grantee in ('anon', 'authenticated')),
+  0, 'the app''s tokens have no privileges on any table or view'
+);
+select is(
+  (select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+     and (has_function_privilege('anon', p.oid, 'execute') or has_function_privilege('authenticated', p.oid, 'execute'))),
+  0, 'the app''s tokens can''t call any function'
+);
+select is_empty(
+  $$select 1 from storage.buckets where id = 'check-in-photos' and public$$,
+  'the photos bucket is private'
+);
+
+select set_config('role', 'authenticated', true),
+       set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+select throws_ok(
+  'select * from public.check_ins', '42501', null, 'a signed-in token can''t read check-ins'
+);
+select throws_ok(
+  $$insert into public.squads (name, created_by) values ('早八跑团', 'a0000000-0000-0000-0000-000000000001')$$,
+  '42501', null, 'a signed-in token can''t create a squad'
+);
+select is_empty(
+  $$select 1 from storage.objects where bucket_id = 'check-in-photos'$$,
+  'a signed-in token can''t see photo files, even its own; the API signs URLs'
+);
+
+select * from finish();
+rollback;
