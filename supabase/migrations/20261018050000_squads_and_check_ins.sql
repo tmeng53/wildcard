@@ -25,6 +25,26 @@ create table public.squad_members (
 
 create index squad_members_member_id_idx on public.squad_members (member_id);
 
+-- A member is in at most 3 squads. The lock keeps two joins at once from both passing.
+create function private.limit_squads_per_member()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform pg_advisory_xact_lock(hashtext('squad_members'), hashtext(new.member_id::text));
+  if (select count(*) from public.squad_members where member_id = new.member_id) >= 3 then
+    raise exception 'a member can be in at most 3 squads' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger squad_members_limit
+before insert on public.squad_members
+for each row execute function private.limit_squads_per_member();
+
 -- Security definer so policies on squad_members can ask about squad_members
 -- without recursing into their own policy.
 create function private.is_squad_member(squad uuid)
@@ -120,11 +140,13 @@ as $$
         and jsonb_typeof(payload -> 'minutes') = 'number'
         and (payload ->> 'minutes') ~ '^[0-9]+$'
         and (payload ->> 'minutes')::int between 1 and 600
+      -- 健康餐 or 放纵餐忏悔, by quality.
       when 'ateClean' then
-        payload ? 'slot'
+        payload ?& array['slot', 'quality']
         and (select count(*) from jsonb_object_keys(payload) k
-             where k not in ('slot', 'photo')) = 0
+             where k not in ('slot', 'quality', 'photo')) = 0
         and payload ->> 'slot' in ('breakfast', 'lunch', 'dinner', 'snack')
+        and payload ->> 'quality' in ('healthy', 'cheat')
       when 'disclaimer' then
         payload ? 'text'
         and (select count(*) from jsonb_object_keys(payload) k where k <> 'text') = 0
@@ -167,7 +189,7 @@ create table public.check_ins (
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
 
--- The squads a check-in was sent to. The app sends to one squad or to all of them.
+-- The squads a check-in was sent to: one, some or all of the member's (at most 3).
 create table public.check_in_squads (
   check_in_id uuid not null references public.check_ins (id) on delete cascade,
   squad_id uuid not null references public.squads (id) on delete cascade,
@@ -251,14 +273,15 @@ create policy "Members check in as themselves"
 on public.check_ins for insert to authenticated
 with check (member_id = (select auth.uid()));
 
-create policy "Members edit their own check-ins"
-on public.check_ins for update to authenticated
-using (member_id = (select auth.uid()))
-with check (member_id = (select auth.uid()));
-
-create policy "Members delete their own check-ins"
+-- Check-ins can't be edited, only deleted on the day they count for. The app holds
+-- the exact local day (with its 3am grace); the database allows until that day,
+-- plus grace, has ended in the last time zone (UTC-12): 15:00 UTC the next day.
+create policy "Members delete their own check-ins on the same day"
 on public.check_ins for delete to authenticated
-using (member_id = (select auth.uid()));
+using (
+  member_id = (select auth.uid())
+  and now() < ((day + 1)::timestamp at time zone 'UTC') + interval '15 hours'
+);
 
 -- The author sees everywhere a check-in went; others see only their own squads.
 create policy "Members see what was sent to their squads"
@@ -272,12 +295,93 @@ with check (
   and (select private.is_squad_member(squad_id))
 );
 
-create policy "Members take their own check-ins back from a squad"
-on public.check_in_squads for delete to authenticated
-using ((select private.owns_check_in(check_in_id)));
-
 -- The anonymous role gets nothing here; signed-in users get only what the policies allow.
 revoke all on public.squads, public.squad_members, public.check_ins, public.check_in_squads from anon;
+revoke update on public.check_ins, public.check_in_squads from authenticated;
+
+-- The app saves a check-in as its wire JSON (ios/Packages/Contracts), with the
+-- squads it goes to, in one transaction. Runs as the caller, so every policy above
+-- applies.
+create function public.create_check_in(check_in jsonb)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  payload_key text;
+  squad_count int;
+begin
+  if (check_in ->> 'version') is distinct from '1' then
+    raise exception 'unsupported check-in version: %', check_in ->> 'version'
+      using errcode = '22023';
+  end if;
+  if (check_in ->> 'member')::uuid is distinct from auth.uid() then
+    raise exception 'a check-in''s member must be the caller' using errcode = '42501';
+  end if;
+  payload_key := case check_in ->> 'kind'
+    when 'trained' then 'training'
+    when 'ateClean' then 'meal'
+    when 'disclaimer' then 'disclaimer'
+  end;
+  if payload_key is null then
+    raise exception 'unknown check-in kind: %', check_in ->> 'kind' using errcode = '22023';
+  end if;
+  if jsonb_typeof(check_in -> 'squads') is distinct from 'array' then
+    raise exception 'a check-in needs the squads it goes to' using errcode = '22023';
+  end if;
+  squad_count := jsonb_array_length(check_in -> 'squads');
+  if squad_count not between 1 and 3 then
+    raise exception 'a check-in goes to 1 to 3 squads, not %', squad_count using errcode = '22023';
+  end if;
+
+  insert into public.check_ins (id, member_id, day, created_at, kind, payload, version)
+  values (
+    (check_in ->> 'id')::uuid,
+    (check_in ->> 'member')::uuid,
+    (check_in ->> 'day')::date,
+    (check_in ->> 'createdAt')::timestamptz,
+    (check_in ->> 'kind')::public.check_in_kind,
+    check_in -> payload_key,
+    1
+  );
+  insert into public.check_in_squads (check_in_id, squad_id)
+  select (check_in ->> 'id')::uuid, squad::uuid
+  from jsonb_array_elements_text(check_in -> 'squads') squad;
+end;
+$$;
+
+revoke execute on function public.create_check_in(jsonb) from public, anon;
+grant execute on function public.create_check_in(jsonb) to authenticated;
+
+-- Check-ins the caller can see, in the same wire JSON the app sends. `squads` lists
+-- only the caller's own squads among those it went to (all of them, for the author).
+create view public.check_ins_wire
+with (security_invoker = true)
+as
+select
+  c.member_id,
+  c.day,
+  c.created_at,
+  jsonb_build_object(
+    'version', c.version,
+    'id', c.id,
+    'member', c.member_id,
+    'day', c.day,
+    'createdAt', to_char(c.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+    'kind', c.kind,
+    case c.kind when 'trained' then 'training' when 'ateClean' then 'meal' else 'disclaimer' end,
+    c.payload,
+    'squads', coalesce(
+      (select jsonb_agg(t.squad_id order by t.squad_id)
+       from public.check_in_squads t where t.check_in_id = c.id),
+      '[]'::jsonb
+    )
+  ) as check_in
+from public.check_ins c;
+
+revoke all on public.check_ins_wire from anon;
+grant select on public.check_ins_wire to authenticated;
 
 -- Check-in photos --------------------------------------------------------------
 

@@ -29,7 +29,7 @@ $$;
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 insert into public.check_ins (id, day, kind, payload, version) values
   ('11111111-1111-1111-1111-111111111111', current_date, 'trained', '{"sport":"run","minutes":30}', 1),
-  ('22222222-2222-2222-2222-222222222222', current_date, 'ateClean', '{"slot":"lunch"}', 1),
+  ('22222222-2222-2222-2222-222222222222', current_date, 'ateClean', '{"slot":"lunch","quality":"healthy"}', 1),
   ('33333333-3333-3333-3333-333333333333', current_date, 'disclaimer', '{"text":"腿还在酸"}', 1);
 select lives_ok(
   $$insert into public.check_in_squads (check_in_id, squad_id) values
@@ -81,14 +81,14 @@ select is(
   1, 'a squad-mate can''t take someone else''s check-in out of a squad'
 );
 
--- Ann takes her 练了 back from 早八跑团.
+-- Where a check-in went can't be changed afterwards, even by its author.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 delete from public.check_in_squads where check_in_id = '11111111-1111-1111-1111-111111111111';
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
 select results_eq(
-  'select id::text from public.check_ins',
-  array['22222222-2222-2222-2222-222222222222'],
-  'a check-in the author takes back disappears for the squad'
+  'select id::text from public.check_ins order by id',
+  array['11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222'],
+  'an author can''t take a check-in back from a squad'
 );
 
 -- Bo leaves 早八跑团, and Ann's check-ins leave his view.
