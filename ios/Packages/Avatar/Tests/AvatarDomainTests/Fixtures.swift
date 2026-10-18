@@ -6,7 +6,7 @@ import Foundation
 struct Files: ArtSource {
     var files: [String: String]
 
-    func svg(at path: String) -> String? {
+    func text(at path: String) -> String? {
         files[path]
     }
 }

@@ -1,0 +1,39 @@
+import AvatarDomain
+import DesignSystem
+
+extension PlaceholderCharacter {
+    /// The preset colors a look can give a slot while it wears `variant`, for the character
+    /// editor's swatches: skin or fur for `body`, then `hair`, `top` and `bottom`. Empty for
+    /// slots that keep their art's colors (hats, props) and for a variant without
+    /// `tones.json`. Every color comes from the design system's palette: its scene and
+    /// meaning colors for clothes, its character tones for skin, fur and hair.
+    public static func swatches(for slot: Slot, wearing variant: String) -> [RGBAColor] {
+        guard BundledArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
+        return switch (slot.description, variant) {
+        case ("body", "peach"), ("body", "tan"): skin
+        case ("body", "cat"): catFur
+        case ("body", "bear"): bearFur
+        case ("hair", _): hair
+        case ("top", _): tops
+        case ("bottom", _): bottoms
+        default: []
+        }
+    }
+
+    static let skin = colors(Palette.skinTones)
+    static let catFur = colors(Palette.catFur)
+    static let bearFur = colors(Palette.bearFur)
+    static let hair = colors(Palette.hairColors)
+    static let tops = colors([
+        Palette.cobalt, Palette.mint, Palette.trackSignature, Palette.lavender, Palette.honey,
+        Palette.poolSignature, Palette.climbingSignature, Palette.graphite,
+    ])
+    static let bottoms = colors([
+        Palette.graphite, Palette.inkSecondary, Palette.cobalt, Palette.mint, Palette.tennisSignature,
+        Palette.climbingSignature, Palette.trackSignature, Palette.lavender,
+    ])
+
+    private static func colors(_ palette: [SRGBColor]) -> [RGBAColor] {
+        palette.map { RGBAColor(red: $0.red, green: $0.green, blue: $0.blue) }
+    }
+}

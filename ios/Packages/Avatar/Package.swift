@@ -3,7 +3,8 @@ import PackageDescription
 
 // The character: layered SVG parts on a rig, moved by keyframe clips. `AvatarDomain` is
 // pure Swift (parsing, sampling, posing), so it builds and tests on Linux. `AvatarArt`
-// bundles the placeholder character's files. `AvatarUI` draws and plays a character.
+// bundles the placeholder character's files and its preset colors, taken from the design
+// system's palette. `AvatarUI` draws and plays a character.
 let package = Package(
     name: "Avatar",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -12,9 +13,13 @@ let package = Package(
         .library(name: "AvatarArt", targets: ["AvatarArt"]),
         .library(name: "AvatarUI", targets: ["AvatarUI"]),
     ],
+    dependencies: [.package(path: "../DesignSystem")],
     targets: [
         .target(name: "AvatarDomain"),
-        .target(name: "AvatarArt", dependencies: ["AvatarDomain"], resources: [.copy("Placeholder")]),
+        .target(
+            name: "AvatarArt",
+            dependencies: ["AvatarDomain", .product(name: "DesignSystem", package: "DesignSystem")],
+            resources: [.copy("Placeholder")]),
         .target(name: "AvatarUI", dependencies: ["AvatarDomain", "AvatarArt"]),
         .testTarget(name: "AvatarDomainTests", dependencies: ["AvatarDomain"]),
         .testTarget(name: "AvatarArtTests", dependencies: ["AvatarArt", "AvatarDomain"]),

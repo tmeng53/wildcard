@@ -69,6 +69,22 @@ struct NeutralTests {
     }
 }
 
+struct CharacterToneTests {
+    /// The avatar's skin, fur and hair swatches, as Tracy approved them (2026-10-18).
+    @Test func tonesMatchTheApprovedSpec() {
+        #expect(
+            Palette.skinTones.map(\.hex) == [
+                "#F9DCC4", "#F5CDAE", "#E8B48F", "#D9A27A", "#B97F57", "#8D5A3B", "#5E3B27",
+            ])
+        #expect(Palette.catFur.map(\.hex) == ["#F2A65A", "#F6E6CC", "#A3A7B0", "#4A4650", "#FBFAF6", "#C9874F"])
+        #expect(Palette.bearFur.map(\.hex) == ["#B98563", "#7E5236", "#D9B07E", "#F2EFE8", "#3F393B", "#A8927E"])
+        #expect(
+            Palette.hairColors.map(\.hex) == [
+                "#2A2333", "#4A2F25", "#6B4330", "#B07B4A", "#E2BF74", "#A2452F", "#C4C2CA",
+            ])
+    }
+}
+
 struct SceneThemeTests {
     @Test func poolColors() {
         let pool = SceneTheme.pool.colors
