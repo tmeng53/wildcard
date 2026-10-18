@@ -15,7 +15,7 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 ## Commands
 
 - All checks that run without a Mac (the cloud stop hook runs this): `scripts/verify.sh`. It runs `swift test` for every package in `ios/Packages/`, and the web and backend checks once `web/` and `supabase/` exist.
-- iOS build, UI tests and screenshots (macOS only): `scripts/ios-test.sh`, added with the Xcode project; CI runs it.
+- iOS build, UI tests and screenshots (macOS only): `scripts/ios-test.sh`, added with the Xcode project, together with a CI job that runs it and uploads the screenshots as workflow artifacts.
 - Lint: SwiftLint and swift-format, configured with the first Swift package.
 
 Add each command here in the PR that makes it real.

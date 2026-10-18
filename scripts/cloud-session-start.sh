@@ -2,7 +2,7 @@
 # SessionStart hook (.claude/settings.json): gives a Claude cloud session the services
 # scripts/verify.sh needs, so checks run before a push. Does nothing outside the cloud.
 # Cloud sessions are Linux: they run the Swift package tests, the web page and Supabase,
-# never the iOS simulator (that runs in CI, on a GitHub-hosted Mac).
+# never the iOS simulator (that runs in CI's macOS job, added with the Xcode project).
 # Each step reports its own failure and the rest still run, so the session always learns
 # which checks will be inconclusive.
 set -uo pipefail
