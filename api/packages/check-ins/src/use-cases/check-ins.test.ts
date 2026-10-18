@@ -46,7 +46,7 @@ function draft(body: { readonly audience: readonly string[] } & Record<string, u
     version: 1,
     day: '2026-10-18',
     createdAt: '2026-10-18T19:30:00.000Z',
-    ...('kind' in body ? {} : { kind: 'trained', training: { sport: 'run', minutes: 30 } }),
+    ...('kind' in body ? {} : { kind: 'trained', training: { sport: 'run' } }),
     ...body,
   });
 }
@@ -70,7 +70,7 @@ describe('saving a check-in', () => {
     const saved = await checkIns.save({ id, member, draft: draft({ audience: [b, a] }) });
     expect(saved.created).toBe(true);
     expect(await savedRows(id)).toStrictEqual([
-      { kind: 'trained', payload: { version: 1, sport: 'run', minutes: 30 }, squads: [b, a] },
+      { kind: 'trained', payload: { version: 1, sport: 'run' }, squads: [b, a] },
     ]);
   });
 
@@ -105,7 +105,7 @@ describe('saving a check-in', () => {
       checkIns.save({
         id,
         member,
-        draft: draft({ audience: [squad], training: { sport: 'run', minutes: 31 } }),
+        draft: draft({ audience: [squad], training: { sport: 'swim' } }),
       }),
     ).rejects.toMatchObject({ reason: 'CHECK_IN_ID_CONFLICT' });
     await expect(
@@ -164,7 +164,7 @@ describe('saving a check-in', () => {
       overlapping().save({
         id,
         member,
-        draft: draft({ audience: [squad], training: { sport: 'swim', minutes: 30 } }),
+        draft: draft({ audience: [squad], training: { sport: 'yoga' } }),
       }),
     ).rejects.toMatchObject({ reason: 'CHECK_IN_ID_CONFLICT' });
   });

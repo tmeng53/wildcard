@@ -40,9 +40,9 @@ describe('Caption', () => {
     }
   });
 
-  it('takes 40 characters as people count them, not 41', () => {
-    expect(Caption.parse('👍🏽'.repeat(40))).toBe('👍🏽'.repeat(40));
-    expect(Caption.safeParse('腿'.repeat(41)).success).toBe(false);
+  it('takes 60 characters as people count them, not 61', () => {
+    expect(Caption.parse('👍🏽'.repeat(60))).toBe('👍🏽'.repeat(60));
+    expect(Caption.safeParse('腿'.repeat(61)).success).toBe(false);
   });
 
   it('refuses each line break inside, but keeps inner spaces', () => {
@@ -65,6 +65,7 @@ describe('DisclaimerText', () => {
   });
 
   it('refuses more than 40 characters and blank text', () => {
+    expect(DisclaimerText.parse('累'.repeat(40))).toBe('累'.repeat(40));
     expect(DisclaimerText.safeParse('累'.repeat(41)).success).toBe(false);
     expect(DisclaimerText.safeParse('\n \n').success).toBe(false);
   });

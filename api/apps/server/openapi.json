@@ -220,20 +220,14 @@
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
                   },
-                  "minutes": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 600
-                  },
                   "caption": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them, on one line."
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
                   }
                 },
                 "required": [
-                  "sport",
-                  "minutes"
+                  "sport"
                 ],
                 "additionalProperties": false
               }
@@ -296,24 +290,12 @@
               "meal": {
                 "type": "object",
                 "properties": {
-                  "slot": {
-                    "type": "string",
-                    "enum": [
-                      "breakfast",
-                      "lunch",
-                      "dinner",
-                      "snack"
-                    ]
-                  },
                   "caption": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them, on one line."
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
                   }
                 },
-                "required": [
-                  "slot"
-                ],
                 "additionalProperties": false
               }
             },
@@ -375,24 +357,12 @@
               "meal": {
                 "type": "object",
                 "properties": {
-                  "slot": {
-                    "type": "string",
-                    "enum": [
-                      "breakfast",
-                      "lunch",
-                      "dinner",
-                      "snack"
-                    ]
-                  },
                   "caption": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them, on one line."
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
                   }
                 },
-                "required": [
-                  "slot"
-                ],
                 "additionalProperties": false
               }
             },
@@ -580,20 +550,14 @@
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
                   },
-                  "minutes": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 600
-                  },
                   "caption": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them, on one line."
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
                   }
                 },
                 "required": [
-                  "sport",
-                  "minutes"
+                  "sport"
                 ],
                 "additionalProperties": false
               }
@@ -643,24 +607,12 @@
               "meal": {
                 "type": "object",
                 "properties": {
-                  "slot": {
-                    "type": "string",
-                    "enum": [
-                      "breakfast",
-                      "lunch",
-                      "dinner",
-                      "snack"
-                    ]
-                  },
                   "caption": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them, on one line."
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
                   }
                 },
-                "required": [
-                  "slot"
-                ],
                 "additionalProperties": false
               }
             },
@@ -709,24 +661,12 @@
               "meal": {
                 "type": "object",
                 "properties": {
-                  "slot": {
-                    "type": "string",
-                    "enum": [
-                      "breakfast",
-                      "lunch",
-                      "dinner",
-                      "snack"
-                    ]
-                  },
                   "caption": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them, on one line."
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
                   }
                 },
-                "required": [
-                  "slot"
-                ],
                 "additionalProperties": false
               }
             },

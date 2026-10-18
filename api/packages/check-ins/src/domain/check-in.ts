@@ -36,12 +36,9 @@ export const Audience = z
     message: 'Must not list a squad twice',
   });
 
-const MealSlot = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
-
 const trainingFields = {
   sport: SportKey,
   customSport: CustomSportName.optional(),
-  minutes: z.int().min(1).max(600),
   caption: Caption.optional(),
 };
 
@@ -62,14 +59,14 @@ function customSportMatches(
   }
 }
 
-const mealFields = { slot: MealSlot, caption: Caption.optional() };
+const mealFields = { caption: Caption.optional() };
 const disclaimerFields = { text: DisclaimerText };
 
-/** 练了: what was trained and for how long, with an optional line. */
+/** 练了: what was trained, with an optional line. */
 export const Training = z.strictObject(trainingFields).superRefine(customSportMatches);
 export type Training = z.infer<typeof Training>;
 
-/** A 健康餐 or 坦白放纵餐: which meal, with an optional line. No calories, ever, in v1. */
+/** A 健康餐 or 坦白放纵餐, with an optional line. No meal type and no calories in v1. */
 export const Meal = z.strictObject(mealFields);
 export type Meal = z.infer<typeof Meal>;
 

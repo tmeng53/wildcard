@@ -71,9 +71,9 @@ function typedText({ max, oneLine }: { readonly max: number; readonly oneLine: b
     });
 }
 
-/** The optional line under a 练了 or a meal: trimmed, 1 to 40 characters, one line. */
-export const Caption = typedText({ max: 40, oneLine: true }).meta({
-  description: 'Trimmed, then 1 to 40 characters as people see them, on one line.',
+/** The optional line under a 练了 or a meal: trimmed, 1 to 60 characters, one line. */
+export const Caption = typedText({ max: 60, oneLine: true }).meta({
+  description: 'Trimmed, then 1 to 60 characters as people see them, on one line.',
 });
 
 /** A 今日免责声明: trimmed, 1 to 40 characters, and it may span lines. */

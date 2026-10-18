@@ -80,7 +80,7 @@ describe('PUT /check-ins/{id}', () => {
       createdAt,
       audience: [squad],
       kind: 'trained',
-      training: { sport: 'custom', customSport: ' 飞盘 ', minutes: 45, caption: '累但爽' },
+      training: { sport: 'custom', customSport: ' 飞盘 ', caption: '累但爽' },
     };
     const expected = {
       version: 1,
@@ -90,7 +90,7 @@ describe('PUT /check-ins/{id}', () => {
       createdAt,
       audience: [squad],
       kind: 'trained',
-      training: { sport: 'custom', customSport: '飞盘', minutes: 45, caption: '累但爽' },
+      training: { sport: 'custom', customSport: '飞盘', caption: '累但爽' },
     };
     expect(
       await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body }),
@@ -197,7 +197,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       createdAt,
       audience: [friendsOther, squad],
       kind: 'healthyMeal',
-      meal: { slot: 'dinner' },
+      meal: { caption: '番茄炒蛋' },
     };
     expect(
       (await call({ method: 'PUT', path: `/check-ins/${id}`, token: friend.token, body })).status,
@@ -209,7 +209,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       day,
       createdAt,
       kind: 'healthyMeal',
-      meal: { slot: 'dinner' },
+      meal: { caption: '番茄炒蛋' },
     };
     const range = `from=${day}&to=${day}`;
 
