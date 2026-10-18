@@ -12,7 +12,8 @@ grant usage on schema private to authenticated;
 create table public.squads (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(btrim(name)) between 1 and 40),
-  created_by uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  -- Null once the creator deletes their account: the squad belongs to its members.
+  created_by uuid default auth.uid() references auth.users (id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -98,10 +99,6 @@ create policy "The creator renames the squad"
 on public.squads for update to authenticated
 using (created_by = (select auth.uid()))
 with check (created_by = (select auth.uid()));
-
-create policy "The creator deletes the squad"
-on public.squads for delete to authenticated
-using (created_by = (select auth.uid()));
 
 create policy "Members see who is in their squads"
 on public.squad_members for select to authenticated
@@ -273,13 +270,36 @@ for each row execute function private.stamp_check_in();
 -- member's, at most 3), in the order the member picked them.
 create table public.check_in_squads (
   check_in_id uuid not null references public.check_ins (id) on delete cascade,
-  squad_id uuid not null references public.squads (id) on delete cascade,
+  -- A squad a check-in went to can't be deleted: the check-in would lose its audience.
+  squad_id uuid not null references public.squads (id) on delete restrict,
   position smallint not null check (position between 1 and 3),
   primary key (check_in_id, squad_id),
   unique (check_in_id, position)
 );
 
 create index check_in_squads_squad_id_idx on public.check_in_squads (squad_id);
+
+-- Every check-in goes to at least one squad. Checked at commit, so the check-in
+-- and its audience can be saved one after the other in the same transaction.
+create function private.require_audience()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if exists (select 1 from public.check_ins where id = new.id)
+     and not exists (select 1 from public.check_in_squads where check_in_id = new.id) then
+    raise exception 'a check-in goes to at least one squad' using errcode = '23514';
+  end if;
+  return null;
+end;
+$$;
+
+create constraint trigger check_ins_have_audience
+after insert on public.check_ins
+deferrable initially deferred
+for each row execute function private.require_audience();
 
 -- The caller made the check-in, or is in a squad it was sent to while its author
 -- still is too (leaving a squad takes your check-ins out of it).
@@ -380,6 +400,8 @@ on public.check_ins for delete to authenticated
 using (
   member_id = (select auth.uid())
   and now() < ((day + 1)::timestamp at time zone 'UTC') + interval '15 hours'
+  -- With the 3am grace no local day lasts longer than 24 hours from its check-in.
+  and now() < created_at + interval '24 hours'
 );
 
 -- The author sees everywhere a check-in went; others see only their own squads.
@@ -399,6 +421,8 @@ with check (
 -- The anonymous role gets nothing here; signed-in users get only what the policies allow.
 revoke all on public.squads, public.squad_members, public.check_ins, public.check_in_squads from anon;
 revoke update on public.check_ins, public.check_in_squads from authenticated;
+-- Squads aren't deleted in v1; members leave them.
+revoke delete on public.squads from authenticated;
 
 -- The app saves a check-in as its wire JSON (ios/Packages/Contracts), with its
 -- audience, in one transaction. Runs as the caller, so every policy above

@@ -1,7 +1,7 @@
 -- Check-ins: members write only their own rows, and the payload follows the
 -- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
-select plan(34);
+select plan(35);
 
 -- Four people: Ann and Bo share a squad, Cy is in a different squad, Di is in none.
 insert into auth.users (id, email) values
@@ -129,6 +129,20 @@ select is_empty(
   $$select 1 from public.check_ins where id = '44444444-4444-4444-4444-444444444444'$$,
   'a member deletes their own check-in on the same day'
 );
+-- A check-in counted for today but made 25 hours ago: its day may not be over in UTC-12,
+-- but no local day lasts that long.
+select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
+insert into public.check_ins (id, day, created_at, kind, payload, version) values
+  ('66666666-6666-6666-6666-666666666666',
+   ((now() - interval '25 hours') at time zone 'UTC')::date + 1, now() - interval '25 hours',
+   'healthyMeal', '{"slot":"breakfast"}', 1);
+delete from public.check_ins where id = '66666666-6666-6666-6666-666666666666';
+select pg_temp.sign_out();
+select isnt_empty(
+  $$select 1 from public.check_ins where id = '66666666-6666-6666-6666-666666666666'$$,
+  'a check-in can''t be deleted more than 24 hours after it was made'
+);
+
 
 -- The payload follows the contract.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');

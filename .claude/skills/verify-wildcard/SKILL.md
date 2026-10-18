@@ -49,7 +49,7 @@ In a cloud session the session-start hook starts Docker and local Supabase and p
 ```sh
 docker info >/dev/null 2>&1 || (nohup dockerd >/tmp/dockerd.log 2>&1 &)   # Docker isn't running by default in cloud sessions
 npx --yes supabase@2.121.0 stop
-npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta
+npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime   # the same services CI starts
 ```
 
 ## 3. Health check
@@ -92,7 +92,7 @@ Then try at least one thing the author may not have: the change's edge case, a w
 
 ## 6. Clean up
 
-Stop only what you started: servers and watchers; the stack (`<stop command>`, which keeps data volumes) and a Docker daemon, if you started them; and the worktree (`git worktree remove /tmp/verify-wildcard/tree-<short sha>`). A stack you found running stays running; never wipe a stack or database you didn't create. The evidence folder stays.
+Stop only what you started: servers and watchers; the stack (`npx --yes supabase@2.121.0 stop`, which keeps data volumes) and a Docker daemon, if you started them; and the worktree (`git worktree remove /tmp/verify-wildcard/tree-<short sha>`). A stack you found running stays running; never wipe a stack or database you didn't create. The evidence folder stays.
 
 ## 7. The verdict
 
