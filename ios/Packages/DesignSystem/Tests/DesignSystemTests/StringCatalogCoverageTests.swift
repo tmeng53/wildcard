@@ -25,12 +25,14 @@ struct StringCatalogCoverageTests {
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
-    /// SwiftLint's olympic_terms rule can't read the catalog, so this covers its copy.
-    @Test func catalogNeverSaysOlympic() throws {
+    /// SwiftLint's banned-terms rule can't read the catalog, so this covers its copy.
+    @Test func catalogAvoidsBannedTerms() throws {
         let catalogURL = Self.sources.appendingPathComponent("Resources/Localizable.xcstrings")
         let text = try String(contentsOf: catalogURL, encoding: .utf8).lowercased()
-        #expect(!text.contains("奥运"))
-        #expect(!text.contains("olympic"))
+        // Escaped, so the lint rule does not flag the test itself.
+        for term in ["\u{5965}\u{8FD0}", "\u{6F}lympic"] {
+            #expect(!text.contains(term), "the String Catalog uses a banned term")
+        }
     }
 
     /// Every key in `Text("…", bundle: .module)` across the style guide's sources.
