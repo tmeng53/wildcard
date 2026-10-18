@@ -40,11 +40,12 @@ done
 cat "$out/previews/timings.txt"
 
 # Previews in the log, for agents whose network can't download artifacts: decode the lines
-# between the markers with `base64 -d`.
+# between the markers with `base64 -d`. Long lines keep all five files inside the last 5,000
+# log lines, which is as far back as a log tail reaches.
 if [ "${PRINT_PREVIEWS:-}" = "1" ]; then
   for file in "$out"/previews/*.png "$out"/previews/*.gif; do
     echo "----- preview begin: $(basename "$file") -----"
-    base64 -b 76 -i "$file"
+    base64 -b 4000 -i "$file"
     echo "----- preview end -----"
   done
 fi
