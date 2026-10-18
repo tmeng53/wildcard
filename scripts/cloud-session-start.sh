@@ -18,6 +18,13 @@ else
   missing+=("Swift (allow swift.org in the cloud environment)")
 fi
 
+# The pinned SwiftLint, the same one CI lints with.
+if scripts/install-swiftlint.sh >/tmp/swiftlint-install.log 2>&1; then
+  ready+=("SwiftLint")
+else
+  missing+=("SwiftLint (see /tmp/swiftlint-install.log)")
+fi
+
 if [ -d supabase ]; then
   # Docker is installed in the cloud image but not running.
   if ! docker info >/dev/null 2>&1; then

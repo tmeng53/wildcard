@@ -1,12 +1,12 @@
+import Contracts
 import Foundation
 import Testing
-import Contracts
 
 private let checkInID = CheckInID(UUID(uuidString: "11111111-1111-1111-1111-111111111111")!)
 private let memberID = MemberID(UUID(uuidString: "22222222-2222-2222-2222-222222222222")!)
 private let squadA = SquadID(UUID(uuidString: "33333333-3333-3333-3333-333333333333")!)
 private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444444")!)
-private let createdAt = Timestamp(millisecondsSince1970: 1_760_745_600_123) // 2025-10-18T00:00:00.123Z
+private let createdAt = Timestamp(millisecondsSince1970: 1_760_745_600_123)  // 2025-10-18T00:00:00.123Z
 
 private func encode(_ checkIn: CheckIn) throws -> String {
     String(decoding: try WireJSON.encoder().encode(checkIn), as: UTF8.self)
@@ -20,10 +20,15 @@ private func decode(_ json: String) throws -> CheckIn {
     let checkIn = CheckIn(
         id: checkInID, member: memberID, day: try LocalDay("2025-10-17"), createdAt: createdAt,
         audience: try Audience([squadA, squadB]),
-        entry: .trained(try Training(sport: .run, minutes: 45, photo: try PhotoRef(path: "m/abc.jpg"),
-                                     caption: try Caption("  雨中五公里 ")))
+        entry: .trained(
+            try Training(
+                sport: .run, minutes: 45, photo: try PhotoRef(path: "m/abc.jpg"),
+                caption: try Caption("  雨中五公里 ")))
     )
-    #expect(try encode(checkIn) == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","id":"11111111-1111-1111-1111-111111111111","kind":"trained","member":"22222222-2222-2222-2222-222222222222","training":{"caption":"雨中五公里","minutes":45,"photo":{"path":"m\/abc.jpg"},"sport":"run"},"version":1}"#)
+    #expect(
+        try encode(checkIn)
+            == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","id":"11111111-1111-1111-1111-111111111111","kind":"trained","member":"22222222-2222-2222-2222-222222222222","training":{"caption":"雨中五公里","minutes":45,"photo":{"path":"m\/abc.jpg"},"sport":"run"},"version":1}"#
+    )
 }
 
 @Test func eachKindRoundTrips() throws {
@@ -34,24 +39,28 @@ private func decode(_ json: String) throws -> CheckIn {
         .disclaimer(try Disclaimer("下雨了，跑道在哭")),
     ]
     for entry in entries {
-        let checkIn = CheckIn(id: checkInID, member: memberID, day: try LocalDay("2025-10-17"),
-                              createdAt: createdAt, audience: try Audience([squadA]), entry: entry)
+        let checkIn = CheckIn(
+            id: checkInID, member: memberID, day: try LocalDay("2025-10-17"),
+            createdAt: createdAt, audience: try Audience([squadA]), entry: entry)
         #expect(try decode(try encode(checkIn)) == checkIn)
     }
 }
 
 @Test func disclaimerDecodesFromWire() throws {
-    let json = #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"disclaimer","disclaimer":{"text":"  腿还在酸  "}}"#
+    let json =
+        #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"disclaimer","disclaimer":{"text":"  腿还在酸  "}}"#
     #expect(try decode(json).entry == .disclaimer(try Disclaimer("腿还在酸")))
 }
 
 @Test func unknownVersionIsRejected() {
-    let json = #"{"version":2,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"healthyMeal","meal":{"slot":"dinner"}}"#
+    let json =
+        #"{"version":2,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"healthyMeal","meal":{"slot":"dinner"}}"#
     #expect(throws: ContractsError.unsupportedVersion(2)) { try decode(json) }
 }
 
 @Test func outOfRangeMinutesAreRejectedOnDecode() {
-    let json = #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"trained","training":{"sport":"run","minutes":0}}"#
+    let json =
+        #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"trained","training":{"sport":"run","minutes":0}}"#
     #expect(throws: ContractsError.minutesOutOfRange(0)) { try decode(json) }
 }
 
@@ -67,17 +76,20 @@ private func decode(_ json: String) throws -> CheckIn {
 
 @Test func idsEncodeLowercase() throws {
     let upper = CheckInID(UUID(uuidString: "ABCDEF01-ABCD-ABCD-ABCD-ABCDEF012345")!)
-    #expect(String(decoding: try WireJSON.encoder().encode([upper]), as: UTF8.self)
-        == #"["abcdef01-abcd-abcd-abcd-abcdef012345"]"#)
+    #expect(
+        String(decoding: try WireJSON.encoder().encode([upper]), as: UTF8.self)
+            == #"["abcdef01-abcd-abcd-abcd-abcdef012345"]"#)
 }
 
 @Test func payloadThatDoesNotMatchKindIsRejected() {
-    let json = #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"healthyMeal","meal":{"slot":"dinner"},"training":{"sport":"run","minutes":30}}"#
+    let json =
+        #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"healthyMeal","meal":{"slot":"dinner"},"training":{"sport":"run","minutes":30}}"#
     #expect(throws: ContractsError.payloadMismatch("healthyMeal")) { try decode(json) }
 }
 
 @Test func cheatMealDecodesFromWire() throws {
-    let json = #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"cheatMeal","meal":{"slot":"dinner","caption":"火锅，不后悔"}}"#
+    let json =
+        #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"cheatMeal","meal":{"slot":"dinner","caption":"火锅，不后悔"}}"#
     #expect(try decode(json).entry == .cheatMeal(Meal(slot: .dinner, caption: try Caption("火锅，不后悔"))))
 }
 
@@ -91,7 +103,8 @@ private func decode(_ json: String) throws -> CheckIn {
 }
 
 @Test func checkInWithNoAudienceIsRejectedOnDecode() {
-    let json = #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":[],"kind":"healthyMeal","meal":{"slot":"lunch"}}"#
+    let json =
+        #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":[],"kind":"healthyMeal","meal":{"slot":"lunch"}}"#
     #expect(throws: ContractsError.audienceSize(0)) { try decode(json) }
 }
 

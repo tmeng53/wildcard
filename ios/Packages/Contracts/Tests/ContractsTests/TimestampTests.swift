@@ -1,6 +1,6 @@
+import Contracts
 import Foundation
 import Testing
-import Contracts
 
 @Test func readsWhatSupabaseReturns() throws {
     #expect(try Timestamp("2025-10-18T00:00:00.123456+00:00").millisecondsSince1970 == 1_760_745_600_123)

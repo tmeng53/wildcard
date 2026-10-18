@@ -106,7 +106,9 @@ public struct WeekSummary: Hashable, Sendable {
 
     init(week: Week, plan: WeeklyPlan?, log: CheckInLog) {
         let days = week.days.enumerated().map { index, day in
-            Day(day: day, plan: plan?.days[index], training: log.training(on: day), hadHealthyMeal: log.hadHealthyMeal(on: day))
+            Day(
+                day: day, plan: plan?.days[index], training: log.training(on: day),
+                hadHealthyMeal: log.hadHealthyMeal(on: day))
         }
         self.week = week
         self.days = days

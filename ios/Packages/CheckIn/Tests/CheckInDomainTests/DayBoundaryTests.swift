@@ -1,7 +1,7 @@
+import CheckInDomain
+import Contracts
 import Foundation
 import Testing
-import Contracts
-import CheckInDomain
 
 private let toronto = TimeZone(identifier: "America/Toronto")!
 private let vancouver = TimeZone(identifier: "America/Vancouver")!
@@ -10,9 +10,9 @@ private func at(_ text: String) -> Timestamp { try! Timestamp(text) }
 
 @Test func dayChangesAtThreeInTheMorningNotMidnight() throws {
     // 2026-10-18 is EDT (UTC-4) in Toronto.
-    #expect(try DayBoundary.day(at: at("2026-10-19T03:59:00Z"), in: toronto) == day("2026-10-18")) // 23:59
-    #expect(try DayBoundary.day(at: at("2026-10-19T06:59:59Z"), in: toronto) == day("2026-10-18")) // 02:59:59
-    #expect(try DayBoundary.day(at: at("2026-10-19T07:00:00Z"), in: toronto) == day("2026-10-19")) // 03:00
+    #expect(try DayBoundary.day(at: at("2026-10-19T03:59:00Z"), in: toronto) == day("2026-10-18"))  // 23:59
+    #expect(try DayBoundary.day(at: at("2026-10-19T06:59:59Z"), in: toronto) == day("2026-10-18"))  // 02:59:59
+    #expect(try DayBoundary.day(at: at("2026-10-19T07:00:00Z"), in: toronto) == day("2026-10-19"))  // 03:00
 }
 
 @Test func theSameMomentIsADifferentDayInAnotherZone() throws {
