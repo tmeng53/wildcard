@@ -18,6 +18,47 @@ public struct TodayView: View {
 
     public var body: some View {
         let theme = model.board?.scene ?? .track
+        // The 免责声明 card and the compose page make room for the keyboard. The scene sits in
+        // the background, so it neither sizes this stack nor moves with the keyboard: as a layer
+        // of it, the scene, taller than what the keyboard leaves, would push the card and the
+        // page up under the status bar.
+        ZStack {
+            if model.step == .disclaimer {
+                VStack {
+                    DisclaimerCard(model: model)
+                        .padding(.horizontal, Space.gutter)
+                        .padding(.top, Space.xs)
+                    Spacer()
+                }
+                .transition(
+                    reduceMotion ? .opacity : .scale(scale: 0.7, anchor: .bottom).combined(with: .opacity))
+            }
+
+            if case .composing(let meaning) = model.step {
+                ComposeView(model: model, meaning: meaning)
+                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
+                    .zIndex(1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            scene.ignoresSafeArea(.keyboard)
+        }
+        .environment(\.sceneTheme, theme)
+        .animation(.wildcard(Motion.smooth, reduceMotion: reduceMotion), value: model.step)
+        .animation(.wildcard(Motion.bouncy, reduceMotion: reduceMotion), value: model.board)
+        .animation(.wildcard(Motion.panel, reduceMotion: reduceMotion), value: model.payoff)
+        .sheet(isPresented: isPickingPhotos) {
+            PhotoStep(model: model)
+                .environment(\.sceneTheme, theme)
+        }
+        // The one strong haptic of the payoff.
+        .sensoryFeedback(.impact(weight: .heavy), trigger: model.posts)
+        .task { await model.load() }
+    }
+
+    /// The floor, the week's card, the character and the 打卡 burst.
+    private var scene: some View {
         ZStack {
             SceneFloor(isBlurred: model.isSceneDimmed)
                 .ignoresSafeArea()
@@ -40,10 +81,6 @@ public struct TodayView: View {
                 Color.clear.frame(height: Sizing.checkInHeight)
                     .padding(.bottom, Space.l)
             }
-            // The scene keeps its layout under the keyboard; only the card and the compose page
-            // make room for it. Otherwise the scene, taller than what the keyboard leaves, pushes
-            // them up under the status bar.
-            .ignoresSafeArea(.keyboard)
 
             if model.isBurstOpen {
                 // A tap anywhere outside the capsules closes the burst.
@@ -66,38 +103,9 @@ public struct TodayView: View {
                     }
                     .padding(.bottom, Space.l)
                 }
-                .ignoresSafeArea(.keyboard)
                 .transition(.opacity)
             }
-
-            if model.step == .disclaimer {
-                VStack {
-                    DisclaimerCard(model: model)
-                        .padding(.horizontal, Space.gutter)
-                        .padding(.top, Space.xs)
-                    Spacer()
-                }
-                .transition(
-                    reduceMotion ? .opacity : .scale(scale: 0.7, anchor: .bottom).combined(with: .opacity))
-            }
-
-            if case .composing(let meaning) = model.step {
-                ComposeView(model: model, meaning: meaning)
-                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
-                    .zIndex(1)
-            }
         }
-        .environment(\.sceneTheme, theme)
-        .animation(.wildcard(Motion.smooth, reduceMotion: reduceMotion), value: model.step)
-        .animation(.wildcard(Motion.bouncy, reduceMotion: reduceMotion), value: model.board)
-        .animation(.wildcard(Motion.panel, reduceMotion: reduceMotion), value: model.payoff)
-        .sheet(isPresented: isPickingPhotos) {
-            PhotoStep(model: model)
-                .environment(\.sceneTheme, theme)
-        }
-        // The one strong haptic of the payoff.
-        .sensoryFeedback(.impact(weight: .heavy), trigger: model.posts)
-        .task { await model.load() }
     }
 
     private var isPickingPhotos: Binding<Bool> {
