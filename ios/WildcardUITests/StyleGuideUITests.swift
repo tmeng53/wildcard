@@ -17,17 +17,18 @@ final class StyleGuideUITests: XCTestCase {
         ]
         for (scene, shot) in scenes {
             app.buttons[scene].firstMatch.tap()
-            XCTAssertTrue(banner(in: app).label.contains(scene), "the banner didn't switch to \(scene)")
+            waitForLabel(of: banner(in: app), "label CONTAINS %@", scene, "the banner didn't switch to \(scene)")
             // Let the color change settle before the shot.
             Thread.sleep(forTimeInterval: 0.6)
             keepScreenshot(named: shot)
         }
 
         app.buttons["游泳池"].firstMatch.tap()
+        waitForLabel(of: banner(in: app), "label CONTAINS %@", "游泳池", "the banner didn't switch back to 游泳池")
         let checkIn = app.buttons["styleguide.checkin"]
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
-        XCTAssertEqual(checkIn.label, "收起")
+        waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
         let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "免责")]
         for (meaning, label) in capsules {
             let capsule = app.buttons["styleguide.capsule.\(meaning)"]
@@ -38,7 +39,7 @@ final class StyleGuideUITests: XCTestCase {
         keepScreenshot(named: "06-pool-capsules-open")
 
         app.buttons["styleguide.capsule.fresh"].tap()
-        XCTAssertEqual(checkIn.label, "打卡")
+        waitForLabel(of: checkIn, "label == %@", "打卡", "the capsules didn't close")
 
         app.swipeUp()
         keepScreenshot(named: "07-colors")
@@ -48,10 +49,34 @@ final class StyleGuideUITests: XCTestCase {
         let play = app.buttons["styleguide.motion.play"]
         scrollUntilHittable(play, in: app)
         play.tap()
-        XCTAssertEqual(play.label, "回到起点")
+        waitForLabel(of: play, "label == %@", "回到起点", "the motion demo didn't start")
         // Let the springs settle before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "09-motion-finish")
+
+    }
+
+    /// The sport picker demo starts with 跑步 picked, so 完成 counts 1; picking 快走 makes it 2.
+    func testSportPickerDemo() {
+        let app = launch(language: "zh-Hans")
+        _ = banner(in: app)
+        let done = app.buttons["styleguide.picker.done"]
+        scrollUntilHittable(done, in: app)
+        app.swipeUp()
+        XCTAssertTrue(app.buttons["styleguide.picker.pill.run"].isSelected, "跑步 isn't picked to start")
+        let walk = app.buttons["styleguide.picker.tile.walk"]
+        XCTAssertTrue(walk.waitForExistence(timeout: 2), "no 快走 tile")
+        XCTAssertFalse(walk.isSelected)
+        XCTAssertTrue(app.buttons["styleguide.picker.category.runWalk"].isSelected)
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "11-picker")
+
+        walk.tap()
+        waitForLabel(of: done, "label CONTAINS %@", "2", "picking 快走 didn't bump 完成 to 2")
+        XCTAssertTrue(walk.isSelected, "the 快走 tile isn't marked selected")
+        // Let the check badge spring in before the shot.
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "12-picker-selected")
     }
 
     func testStyleGuideInEnglish() {
@@ -77,8 +102,20 @@ final class StyleGuideUITests: XCTestCase {
         return banner
     }
 
+    /// Taps update the UI on the next frames, so a check right after `tap()` can run before
+    /// the label changes on a slow simulator. Wait for it instead, as strictly as the check was:
+    /// `label == %@` for an exact label, `label CONTAINS %@` for the banner's combined label.
+    private func waitForLabel(
+        of element: XCUIElement, _ format: String, _ text: String, _ message: String,
+        timeout: TimeInterval = 5
+    ) {
+        let changed = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: format, text), object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [changed], timeout: timeout), .completed, message)
+    }
+
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<6 where !element.isHittable {
+        for _ in 0..<12 where !element.isHittable {
             app.swipeUp()
         }
         XCTAssertTrue(element.isHittable, "\(element) never scrolled into view")

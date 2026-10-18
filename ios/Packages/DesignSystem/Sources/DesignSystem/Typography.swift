@@ -66,6 +66,14 @@ public enum TypeRamp {
     public static let body = TypeStyle(face: .text(.regular), size: 16, anchor: .body)
     /// Draft cards, capsule labels and chips.
     public static let callout = TypeStyle(face: .text(.medium), size: 15, anchor: .callout)
+    /// The selected item of a category bar: `callout`, one weight heavier.
+    public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
+    /// Labels on choice tiles.
+    public static let tileLabel = TypeStyle(face: .text(.medium), size: 14, anchor: .subheadline)
+    /// Text typed into a search field.
+    public static let field = TypeStyle(face: .text(.medium), size: 17, anchor: .body)
+    /// Small section labels over a group (最近使用, 全部运动), in secondary ink.
+    public static let sectionLabel = TypeStyle(face: .text(.semibold), size: 13, tracking: 0.26, anchor: .footnote)
     /// Tabs, name tags and reaction buttons.
     public static let caption = TypeStyle(face: .text(.medium), size: 13, anchor: .caption)
     /// Capsule badges such as 第 42 周 and 我 · 本周.
@@ -89,7 +97,8 @@ public enum TypeRamp {
 
     public static let all: [(name: String, style: TypeStyle)] = [
         ("hero", hero), ("title", title), ("headline", headline), ("action", action), ("body", body),
-        ("callout", callout), ("caption", caption), ("footnote", footnote), ("scoreHero", scoreHero),
+        ("callout", callout), ("calloutEmphasis", calloutEmphasis), ("tileLabel", tileLabel), ("field", field),
+        ("sectionLabel", sectionLabel), ("caption", caption), ("footnote", footnote), ("scoreHero", scoreHero),
         ("scoreLarge", scoreLarge), ("scoreLargeDenominator", scoreLargeDenominator),
         ("scoreMedium", scoreMedium), ("scoreSmall", scoreSmall),
         ("scoreSmallDenominator", scoreSmallDenominator), ("scoreLabel", scoreLabel),

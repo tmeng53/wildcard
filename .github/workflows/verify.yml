@@ -81,3 +81,26 @@ jobs:
         with:
           name: ios-xcresult-${{ github.event.pull_request.head.sha || github.sha }}
           path: build/ios/Wildcard.xcresult
+
+  # Renders the character's clips on an iOS simulator through the player's own view and
+  # uploads them, so reviewers see motion changes without a Mac.
+  avatar-preview:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: scripts/avatar-preview.sh
+        env:
+          PRINT_PREVIEWS: "1"
+      - name: Upload previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Named after the commit the PR is at, not the merge commit GitHub tests.
+          name: avatar-previews-${{ github.event.pull_request.head.sha || github.sha }}
+          path: build/avatar/previews
+          if-no-files-found: error
