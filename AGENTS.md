@@ -26,7 +26,7 @@ Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud mach
 
 ## CI
 
-The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` on `macos-15` for ready (not draft) PRs and pushes to `main`, and cancels a run that a newer push replaces; "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
+The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` on `macos-15` for ready (not draft) PRs and pushes to `main`, and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
 
 ## Skills
 
@@ -86,7 +86,7 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 - Write it with the `raise-pr` skill. The **Verification** section lists each command you ran and what it printed, or "inconclusive" and why. Anything users see carries screenshots or a recording.
 - **Get a code review once the PR is ready, and again only when a new head needs one.** If Codex is installed on the repo, post one `@codex review` comment once the head is green; otherwise, or when Codex can't review, a fresh Claude agent that did not write the PR reviews that head under the Code Review Rules below. How, in `raise-pr`.
 - **Review feedback is a symptom, not a to-do list.** Every finding (a person's, a bot's, a verifier's note) is a claim to check before acting; answer each on the PR, fixed (with the commit) or not and why. Read the whole review first and group findings by cause. When a PR gets findings a second time, post one short root-cause note before pushing a fix, then rework it into the simplest design. When in doubt, ask a human.
-- **Who merges:** the owner thread merges PRs that change nothing users can see; Tracy OKs anything users see or feel; a human merges changes to agent rules, checks and hooks, CI, dependencies, the contract or migrations. The exact rule is in `raise-pr` (Merging).
+- **Who merges:** the owner thread merges most PRs itself once they're green, verified and reviewed. Tracy merges a key technical decision or a major UI change she didn't ask for. The exact rule is in `raise-pr` (Merging).
 - Only change what the PR is about. Never force-push `main`; never edit or delete other people's comments.
 - **If agents can't agree** after one round of replies, post a **Decision needed:** where the discussion is (`wildcard-docs`) and stop work on that point until a human answers.
 - **Ground decisions in evidence:** link one to three credible sources (Apple, Supabase, standards, well-known engineering blogs), or say there are none.

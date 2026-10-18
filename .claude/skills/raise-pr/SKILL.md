@@ -130,17 +130,21 @@ When a review bot or a person comments, read every finding first, then check eac
 
 ## Merging
 
-Decide mechanically from the diff; when unsure, a human merges.
+Tracy's rule (2026-10-18): the owner thread merges most PRs itself; only a key technical decision or a major UI change she didn't ask for waits for her. When unsure which it is, ask her.
 
-**The owner thread merges its own PR** when it changes nothing a user can see or feel, and all of these hold on its current head commit:
+**The owner thread merges its own PR** when all of these hold on its current head commit:
 
 1. Every check is green: the `verify` workflow passed on the head commit.
 2. The latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff, and each of its notes has an answer on the PR (see Independent verification).
 3. The code review is clean on the head commit (Codex's, or the fallback's; see After opening), and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
+5. It isn't one of the PRs below that wait for Tracy.
 
-**Tracy merges** (or tells the owner thread to) any PR that changes what users see or feel: screens, layout, copy, motion, haptics, images or assets. By path, that is any change under `ios/` outside a `Domain` target or a test, any `*.xcassets`, `*.xcstrings` or `*.strings`, anything under `web/` outside a test, and any copy a push notification or email sends. The owner thread posts the screenshots or recording in the thread and asks for her OK; nothing merges on silence.
+**Tracy merges** (or tells the owner thread to) a PR that does something she didn't ask for in her own words (link her message from the PR when she did) and is either:
 
-**A human also merges** any PR that touches agent rules (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`), the checks and hooks (`scripts/`), CI or repo settings (`.github/`), dependencies (any `Package.swift`, `Package.resolved`, `package.json` or lockfile), the shared contract (`ios/Packages/Contracts`, labelled `contract`), database migrations, or carries the `needs-human` label. Those are the rules and checks themselves, new dependencies, or data that's hard to undo. Check the diff's file list against this list; it decides, not judgment.
+- **A key technical decision:** a new dependency or service (any `Package.swift`, `Package.resolved`, `package.json` or lockfile change that adds one), a change to the shared contract (`ios/Packages/Contracts`, the database schema or a migration, labelled `contract`), auth, privacy, payments or anything storing user data, anything hard to reverse, or a change to the rules and checks agents are held to (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`, `scripts/`, `.github/`) that loosens them. The PR's Decisions and trade-offs section says why it's one.
+- **A major UI change:** a new screen or flow, or a change to navigation, layout, visual style, motion or the tone of user-facing copy beyond what her request named. Small UI fixes (spacing, a typo, a bug that breaks a screen she approved) aren't major.
 
-Branch protection on `main` is to require the `verify` check and block force-pushes once this workflow is on `main` (issue #2); until then GitHub enforces none of this. Even then it can't require Tracy's approval, because agents open PRs under her account and GitHub doesn't let an author approve their own PR, so the rest holds because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening moves the PR into a human-merged category, stop and ask.
+Anything labelled `needs-human` also waits for her. For every PR users can see, major or not, the owner thread posts the screenshots or recording in the thread when it merges or asks.
+
+Branch protection on `main` is to require the `verify` check and block force-pushes once this workflow is on `main` (issue #2); until then GitHub enforces none of this. Even then it can't require Tracy's approval, because agents open PRs under her account and GitHub doesn't let an author approve their own PR, so the rest holds because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening makes the PR one that waits for Tracy, stop and ask.

@@ -1,4 +1,4 @@
-# Agent rules, CI and the shared contract need Tracy's review.
+# Tracy owns agent rules, CI and the shared contract; raise-pr (Merging) says which PRs wait for her.
 /AGENTS.md @tmeng53
 /CLAUDE.md @tmeng53
 /.claude/ @tmeng53
