@@ -1,7 +1,7 @@
 -- Check-in photos: members upload only into their own folder, and a photo is seen
 -- only by its owner and by members of the squads its check-in was sent to.
 begin;
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -96,6 +96,15 @@ select throws_ok(
      '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1)$$,
   '23514', null, 'two check-ins can''t share one photo'
 );
+select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
+select throws_like(
+  $$insert into public.check_ins (id, day, kind, payload, version) values
+    (gen_random_uuid(), current_date, 'trained',
+     '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1)$$,
+  '%check_ins_payload_matches_kind%',
+  'pointing at someone else''s photo fails the payload check, without saying whether it exists'
+);
+select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 
 -- Deleting the check-in (on its day) frees the photo.
 delete from public.check_ins where id = '11111111-1111-1111-1111-111111111111';

@@ -115,8 +115,9 @@ create type public.check_in_kind as enum ('trained', 'healthyMeal', 'cheatMeal',
 
 -- A 免责声明 or a caption: trimmed, 1 to 40 characters as people see them; a caption
 -- is also one line (the contract lets a 免责声明 span lines). Postgres counts code
--- points, not what people see (a family emoji is 1 character but 7 code points), so
--- it holds a loose cap of 400; the app holds the exact limit.
+-- points, not what people see (a family emoji with skin tones is 1 character but 11
+-- code points), so it holds a loose cap of 1000 (25 per character); the app holds
+-- the exact limit.
 -- The spaces and line breaks the contract trims (Swift's `.whitespacesAndNewlines`)
 -- and the line breaks a caption can't hold (`Character.isNewline`), listed from Swift
 -- by checking every Unicode scalar. U+200B counts as a space in Foundation on Linux
@@ -146,7 +147,7 @@ immutable
 set search_path = ''
 as $$
   select jsonb_typeof(value) = 'string'
-    and char_length(value #>> '{}') <= 400
+    and char_length(value #>> '{}') <= 1000
     and value #>> '{}' = btrim(value #>> '{}', private.contract_spaces())
     and char_length(btrim(value #>> '{}', private.contract_spaces() || E'\u200B')) >= 1
     and (not one_line or translate(value #>> '{}', private.contract_line_breaks(), '') = value #>> '{}');
@@ -273,7 +274,9 @@ begin
     raise exception 'a check-in''s createdAt must be within the last 48 hours, not in the future'
       using errcode = '23514';
   end if;
-  if new.payload ? 'photo' then
+  -- Only the member's own folder: any other path fails the payload check without
+  -- saying whether that photo exists.
+  if starts_with(new.payload -> 'photo' ->> 'path', new.member_id::text || '/') then
     if not private.photo_is_uploaded(new.payload -> 'photo' ->> 'path') then
       raise exception 'upload a check-in''s photo before saving it' using errcode = '23514';
     end if;

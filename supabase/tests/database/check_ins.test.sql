@@ -1,7 +1,7 @@
 -- Check-ins: members write only their own rows, and the payload follows the
 -- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
-select plan(40);
+select plan(42);
 
 -- Four people: Ann and Bo share a squad, Cy is in a different squad, Di is in none.
 insert into auth.users (id, email) values
@@ -223,6 +223,17 @@ select lives_ok(
   $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
     (gen_random_uuid(), (now() at time zone 'UTC')::date + 1, now(), 'disclaimer', '{"text":"👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦"}', 1)$$,
   'a 免责声明 of 40 family emoji (40 characters in the app, 280 code points) fits, and Kiribati''s tomorrow is allowed'
+);
+-- A family with skin tones is 1 character in the app but 11 code points.
+select ok(
+  private.is_short_text(to_jsonb(repeat(
+    chr(128104) || chr(127995) || chr(8205) || chr(128105) || chr(127995) || chr(8205)
+      || chr(128103) || chr(127995) || chr(8205) || chr(128102) || chr(127995), 40)), true),
+  'a caption of 40 families with skin tones (440 code points) fits'
+);
+select ok(
+  not private.is_short_text(to_jsonb(repeat('累', 1001)), false),
+  'text over the loose cap of 1000 code points is refused'
 );
 
 select * from finish();
