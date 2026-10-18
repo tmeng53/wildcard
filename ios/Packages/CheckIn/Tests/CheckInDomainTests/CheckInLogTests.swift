@@ -162,7 +162,8 @@ private func plan(startingOn start: String, _ days: [PlanDay], for member: Membe
     let weekPlan = plan(
         startingOn: "2026-10-19",
         [
-            .train(.run), .train(.strength), .rest, .train(nil), .train(.yoga), .train(.swim), .rest,
+            .train(.sport(.run)), .train(.sport(.strength)), .rest, .train(nil), .train(.sport(.yoga)),
+            .train(.sport(.swim)), .rest,
         ])
     let log = CheckInLog(
         member: tracy,
@@ -189,7 +190,7 @@ private func plan(startingOn start: String, _ days: [PlanDay], for member: Membe
 }
 
 @Test func trainingMoreThanPlannedIsCounted() throws {
-    let restWeek = plan(startingOn: "2026-10-19", [.train(.run), .rest, .rest, .rest, .rest, .rest, .rest])
+    let restWeek = plan(startingOn: "2026-10-19", [.train(.sport(.run)), .rest, .rest, .rest, .rest, .rest, .rest])
     let log = CheckInLog(
         member: tracy, checkIns: [checkIn("trained", on: "2026-10-19"), checkIn("trained", on: "2026-10-20")])
     let summary = try log.summary(for: restWeek)

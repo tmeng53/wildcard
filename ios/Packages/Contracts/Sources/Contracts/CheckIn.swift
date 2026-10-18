@@ -1,8 +1,8 @@
 import Foundation
 
-/// One check-in: 练了, 健康餐, 放纵餐忏悔 or 今日免责声明. This is the shape the app
+/// One check-in: 练了, 健康餐, 坦白放纵餐 or 今日免责声明. This is the shape the app
 /// stores and the backend receives; the rules (how many a day, which conflict,
-/// streaks, deleting) live in the `CheckIn` package, not here.
+/// weekly counts, deleting) live in the `CheckIn` package, not here.
 public struct CheckIn: Hashable, Sendable, Codable {
     /// The only wire `version` this build writes and reads.
     public static let currentVersion = 1
@@ -31,9 +31,9 @@ public struct CheckIn: Hashable, Sendable, Codable {
     public enum Entry: Hashable, Sendable {
         /// 练了
         case trained(Training)
-        /// 健康餐: counts toward the eating streak.
+        /// 健康餐: counts toward the week's healthy meals.
         case healthyMeal(Meal)
-        /// 放纵餐忏悔: shown as a confession, never counts toward a streak.
+        /// 坦白放纵餐: shown as a confession, never counts toward anything.
         case cheatMeal(Meal)
         /// 今日免责声明: a rest day with the member's excuse.
         case disclaimer(Disclaimer)
@@ -101,42 +101,51 @@ public struct CheckIn: Hashable, Sendable, Codable {
     }
 }
 
-/// A sport a member trains. New sports are a contract change.
-public enum Sport: String, CaseIterable, Hashable, Sendable, Codable {
-    case run, strength, yoga, pilates, swim, cycle, ball, climb, hike, dance, other
-}
-
-/// 练了: what was trained and for how long, with an optional photo and line.
+/// 练了: what was trained and for how long, with optional photos and a line.
 public struct Training: Hashable, Sendable, Codable {
     public static let minutesRange = 1...600
 
-    public let sport: Sport
+    public let activity: Activity
     public let minutes: Int
-    public let photo: PhotoRef?
+    public let photos: Photos?
     public let caption: Caption?
 
-    public init(sport: Sport, minutes: Int, photo: PhotoRef? = nil, caption: Caption? = nil) throws(ContractsError) {
+    public init(
+        activity: Activity, minutes: Int, photos: Photos? = nil, caption: Caption? = nil
+    ) throws(ContractsError) {
         guard Self.minutesRange.contains(minutes) else { throw .minutesOutOfRange(minutes) }
-        self.sport = sport
+        self.activity = activity
         self.minutes = minutes
-        self.photo = photo
+        self.photos = photos
         self.caption = caption
     }
 
-    private enum CodingKeys: String, CodingKey { case sport, minutes, photo, caption }
+    private enum CodingKeys: String, CodingKey { case sport, customSport, minutes, photos, caption }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        guard let activity = try container.decodeActivityIfPresent(sport: .sport, custom: .customSport) else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.sport, .init(codingPath: container.codingPath, debugDescription: "练了 needs a sport"))
+        }
         try self.init(
-            sport: try container.decode(Sport.self, forKey: .sport),
+            activity: activity,
             minutes: try container.decode(Int.self, forKey: .minutes),
-            photo: try container.decodeIfPresent(PhotoRef.self, forKey: .photo),
+            photos: try container.decodeIfPresent(Photos.self, forKey: .photos),
             caption: try container.decodeIfPresent(Caption.self, forKey: .caption)
         )
     }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeActivity(activity, sport: .sport, custom: .customSport)
+        try container.encode(minutes, forKey: .minutes)
+        try container.encodeIfPresent(photos, forKey: .photos)
+        try container.encodeIfPresent(caption, forKey: .caption)
+    }
 }
 
-/// A 健康餐 or 放纵餐: which meal, with an optional photo and line. No calories or
+/// A 健康餐 or 坦白放纵餐: which meal, with optional photos and a line. No calories or
 /// macros, ever, in v1.
 public struct Meal: Hashable, Sendable, Codable {
     public enum Slot: String, CaseIterable, Hashable, Sendable, Codable {
@@ -144,12 +153,12 @@ public struct Meal: Hashable, Sendable, Codable {
     }
 
     public let slot: Slot
-    public let photo: PhotoRef?
+    public let photos: Photos?
     public let caption: Caption?
 
-    public init(slot: Slot, photo: PhotoRef? = nil, caption: Caption? = nil) {
+    public init(slot: Slot, photos: Photos? = nil, caption: Caption? = nil) {
         self.slot = slot
-        self.photo = photo
+        self.photos = photos
         self.caption = caption
     }
 }
@@ -219,6 +228,42 @@ public struct Audience: Hashable, Sendable, Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(squads)
+    }
+}
+
+/// A check-in's photos: one to `maxCount`, no repeats, in the order the member set.
+/// The first is the cover, the one the feed and 战报 show. On the wire, an array.
+public struct Photos: Hashable, Sendable, Codable {
+    public static let maxCount = 3
+
+    public let all: [PhotoRef]
+
+    public var cover: PhotoRef { all[0] }
+
+    public init(_ photos: [PhotoRef]) throws(ContractsError) {
+        guard (1...Self.maxCount).contains(photos.count) else { throw .photoCount(photos.count) }
+        guard Set(photos).count == photos.count else { throw .repeatedPhoto }
+        all = photos
+    }
+
+    /// For a reordering of photos already checked, which keeps count and distinctness.
+    private init(reordering photos: [PhotoRef]) { all = photos }
+
+    /// The same photos with `photo` moved to the front as the cover; nil if it isn't one of them.
+    public func withCover(_ photo: PhotoRef) -> Photos? {
+        guard let index = all.firstIndex(of: photo) else { return nil }
+        var reordered = all
+        reordered.insert(reordered.remove(at: index), at: 0)
+        return Photos(reordering: reordered)
+    }
+
+    public init(from decoder: Decoder) throws {
+        try self.init(try decoder.singleValueContainer().decode([PhotoRef].self))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(all)
     }
 }
 
