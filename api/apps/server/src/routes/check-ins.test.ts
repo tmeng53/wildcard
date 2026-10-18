@@ -7,42 +7,30 @@ import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
-import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
-
-// Local Supabase, as `supabase status -o env` prints it (scripts/verify.sh passes it in).
-const config = readConfig(process.env);
-const publishableKey = z.string().min(1).parse(process.env.SUPABASE_PUBLISHABLE_KEY);
+import { config, signUp } from '../test-kit/local-supabase.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  photos: createSupabasePhotoStorage({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
   log: createLog(() => undefined),
 });
 
-const SignUp = z.object({ access_token: z.string(), user: z.object({ id: z.uuid() }) });
-
-/** Signs a new member up through local Supabase Auth: their id and real access token. */
-async function signUp() {
-  const response = await fetch(`${config.supabaseUrl}/auth/v1/signup`, {
-    method: 'POST',
-    headers: { apikey: publishableKey, 'content-type': 'application/json' },
-    body: JSON.stringify({ email: `${randomUUID()}@example.com`, password: randomUUID() }),
-  });
-  const body = SignUp.parse(await response.json());
-  return { token: body.access_token, id: body.user.id };
-}
-
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */
-async function squadOf(...members: readonly { readonly id: string }[]) {
+async function squadOf(...members: readonly { readonly userId: string }[]) {
   const id = randomUUID();
   await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
   for (const member of members) {
-    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member.id})`.execute(
+    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member.userId})`.execute(
       db,
     );
   }
@@ -97,7 +85,7 @@ describe('PUT /check-ins/{id}', () => {
     const expected = {
       version: 1,
       id,
-      member: me.id,
+      member: me.userId,
       day,
       createdAt,
       audience: [squad],
@@ -217,7 +205,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
     const saved = {
       version: 1,
       id,
-      member: friend.id,
+      member: friend.userId,
       day,
       createdAt,
       kind: 'healthyMeal',

@@ -187,12 +187,8 @@ private final class SVGReader: NSObject, XMLParserDelegate {
     /// `none`, `#rgb` or `#rrggbb`.
     private func color(_ text: String) throws(SVGProblem) -> RGBAColor? {
         if text == "none" { return nil }
-        var hex = Substring(text)
-        guard hex.first == "#" else { throw .invalidColor(text) }
-        hex = hex.dropFirst()
-        if hex.count == 3 { hex = Substring(hex.flatMap { [$0, $0] }) }
-        guard hex.count == 6, let value = UInt32(hex, radix: 16) else { throw .invalidColor(text) }
-        return RGBAColor(red: UInt8(value >> 16 & 0xFF), green: UInt8(value >> 8 & 0xFF), blue: UInt8(value & 0xFF))
+        guard let color = RGBAColor(hex: text) else { throw .invalidColor(text) }
+        return color
     }
 
     /// Four cubic quarter arcs, the usual Bézier circle.

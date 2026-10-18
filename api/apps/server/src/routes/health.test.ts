@@ -8,7 +8,8 @@ import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 
 const config = readConfig(process.env);
-const notCalled = () => Promise.reject(new Error('no route here verifies tokens'));
+const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
+const photos = { createUploadUrl: notCalled, exists: notCalled, createViewUrl: notCalled };
 const checkInsOn = (db: Database) =>
   createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() });
 
@@ -18,6 +19,7 @@ async function getHealth(db: Database) {
     db,
     verifyToken: notCalled,
     checkIns: checkInsOn(db),
+    photos,
     log: createLog((line) => lines.push(line)),
   });
   try {
@@ -81,6 +83,7 @@ describe('an unknown route', () => {
       db,
       verifyToken: notCalled,
       checkIns: checkInsOn(db),
+      photos,
       log: createLog(() => undefined),
     });
     const response = await app.request('/nope', { method: 'POST' });

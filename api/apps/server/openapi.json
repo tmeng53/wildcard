@@ -820,6 +820,33 @@
           "checkIns"
         ],
         "additionalProperties": false
+      },
+      "PhotoUpload": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "The photo’s name, `<member id>/<photo id>`. A check-in lists it in `photos` once the upload is done.",
+            "example": "3f0c8a52-6f39-4c39-9a51-0c7c3c4a4f1e/9b2e1d4c-7a8f-4e2b-8c1d-2f3a4b5c6d7e"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Upload the photo here with `PUT`, the file as the body and its `Content-Type` (JPEG, HEIC, PNG or WebP, at most 10 MiB). It works for 2 hours and only once."
+          }
+        },
+        "required": [
+          "version",
+          "path",
+          "uploadUrl"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {}
@@ -1157,6 +1184,49 @@
           },
           "503": {
             "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/photo-uploads": {
+      "post": {
+        "operationId": "createPhotoUpload",
+        "summary": "A signed URL to upload one check-in photo to",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ready to upload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {

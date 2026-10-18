@@ -5,16 +5,18 @@ import { z } from 'zod';
 
 import { RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
-import type { Database, VerifyToken } from './ports.js';
+import type { Database, PhotoStorage, VerifyToken } from './ports.js';
 import { problemResponse } from './problem.js';
 import { checkIns } from './routes/check-ins.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
+import { photoUploads } from './routes/photo-uploads.js';
 
 export interface AppDependencies {
   readonly db: Database;
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
+  readonly photos: PhotoStorage;
   readonly log: Log;
 }
 
@@ -36,6 +38,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', health(deps));
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
+  app.route('/', photoUploads(deps));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((error, c) => {

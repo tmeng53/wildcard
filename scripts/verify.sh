@@ -61,8 +61,9 @@ if want api && [ -f api/package.json ]; then
   pnpm --dir api lint
   pnpm --dir api typecheck
   pnpm --dir api boundaries
-  # The tests query local Supabase's database and sign members up through its Auth, so they
-  # need `supabase start`. A subshell keeps the status variables out of the rest of this script.
+  # The tests query local Supabase's database, sign members up through its Auth and upload to
+  # its Storage, so they need `supabase start`. A subshell keeps the status variables out of the
+  # rest of this script.
   (
     status="$(supabase status -o env 2>/dev/null)" || {
       echo "api: local Supabase isn't running (supabase start)" >&2
@@ -72,6 +73,7 @@ if want api && [ -f api/package.json ]; then
     # The Kysely table types must match the migrations: `pnpm --dir api db-types` rewrites them.
     DATABASE_URL="$DB_URL" pnpm --dir api db-types --verify
     DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
+      SUPABASE_SECRET_KEY="$SECRET_KEY" \
       pnpm --dir api test
   )
   ran=1

@@ -71,4 +71,43 @@ public enum Palette {
     public static let lavender = SRGBColor(red: 0x90, green: 0x62, blue: 0xDE)
     public static let lavenderWash = SRGBColor(red: 0xF3, green: 0xEE, blue: 0xFC)
     public static let lavenderText = SRGBColor(red: 0x5B, green: 0x3A, blue: 0xA6)
+    // MARK: Character tones: the avatar's skin, fur and hair swatches. Never UI color.
+    /// Skin, light to deep.
+    public static let skinTones = [
+        SRGBColor(red: 0xF9, green: 0xDC, blue: 0xC4),
+        SRGBColor(red: 0xF5, green: 0xCD, blue: 0xAE),
+        SRGBColor(red: 0xE8, green: 0xB4, blue: 0x8F),
+        SRGBColor(red: 0xD9, green: 0xA2, blue: 0x7A),
+        SRGBColor(red: 0xB9, green: 0x7F, blue: 0x57),
+        SRGBColor(red: 0x8D, green: 0x5A, blue: 0x3B),
+        SRGBColor(red: 0x5E, green: 0x3B, blue: 0x27),
+    ]
+    /// Cat fur: orange tabby, cream, gray, black, white, brown tabby.
+    public static let catFur = [
+        SRGBColor(red: 0xF2, green: 0xA6, blue: 0x5A),
+        SRGBColor(red: 0xF6, green: 0xE6, blue: 0xCC),
+        SRGBColor(red: 0xA3, green: 0xA7, blue: 0xB0),
+        SRGBColor(red: 0x4A, green: 0x46, blue: 0x50),
+        SRGBColor(red: 0xFB, green: 0xFA, blue: 0xF6),
+        SRGBColor(red: 0xC9, green: 0x87, blue: 0x4F),
+    ]
+    /// Bear fur: brown, dark brown, honey, polar white, black, grizzly.
+    public static let bearFur = [
+        SRGBColor(red: 0xB9, green: 0x85, blue: 0x63),
+        SRGBColor(red: 0x7E, green: 0x52, blue: 0x36),
+        SRGBColor(red: 0xD9, green: 0xB0, blue: 0x7E),
+        SRGBColor(red: 0xF2, green: 0xEF, blue: 0xE8),
+        SRGBColor(red: 0x3F, green: 0x39, blue: 0x3B),
+        SRGBColor(red: 0xA8, green: 0x92, blue: 0x7E),
+    ]
+    /// Hair: black, dark brown, brown, light brown, blonde, auburn, silver.
+    public static let hairColors = [
+        SRGBColor(red: 0x2A, green: 0x23, blue: 0x33),
+        SRGBColor(red: 0x4A, green: 0x2F, blue: 0x25),
+        SRGBColor(red: 0x6B, green: 0x43, blue: 0x30),
+        SRGBColor(red: 0xB0, green: 0x7B, blue: 0x4A),
+        SRGBColor(red: 0xE2, green: 0xBF, blue: 0x74),
+        SRGBColor(red: 0xA2, green: 0x45, blue: 0x2F),
+        SRGBColor(red: 0xC4, green: 0xC2, blue: 0xCA),
+    ]
 }

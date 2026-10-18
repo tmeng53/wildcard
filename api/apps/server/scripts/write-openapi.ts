@@ -14,9 +14,11 @@ const unused = (): never => {
 };
 // Never connected: the pool opens a connection only for a query.
 const db = createDatabase('postgres://localhost/unused');
+const photos = { createUploadUrl: unused, exists: unused, createViewUrl: unused };
 const app = createApp({
   db,
   verifyToken: unused,
+  photos,
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: unused }),
   log: createLog(unused),
 });

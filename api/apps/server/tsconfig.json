@@ -5,6 +5,6 @@
     "outDir": "dist"
   },
   "include": ["src", "scripts"],
-  "exclude": ["src/**/*.test.ts"],
+  "exclude": ["src/**/*.test.ts", "src/test-kit"],
   "references": [{ "path": "../../packages/errors" }, { "path": "../../packages/check-ins" }]
 }

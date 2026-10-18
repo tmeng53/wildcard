@@ -9,8 +9,8 @@ import Testing
 import UniformTypeIdentifiers
 
 /// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
-/// strip of each persona's cheer, the five cheering together as the player shows it, and
-/// each persona's idle loop, frame by frame as animated GIFs.
+/// strip of each persona's cheer, the five cheering together as the player shows it, each
+/// persona's idle loop, frame by frame as animated GIFs, and a sheet of the color swatches.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -76,7 +76,29 @@ struct CharacterPreviewTests {
                 to: folder.appendingPathComponent("04-idle-\(persona.rawValue).gif"))
         }
 
+        try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
+
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
+    }
+
+    /// The editor's swatches: a row per slot, a look in every color the slot offers.
+    private func writeSwatches(to url: URL) throws {
+        let rows: [(Outfit, Slot)] = [
+            (PlaceholderCharacter.lifter, "body"), (PlaceholderCharacter.lifter, "hair"),
+            (PlaceholderCharacter.lifter, "top"), (PlaceholderCharacter.lifter, "bottom"),
+            (PlaceholderCharacter.cat, "body"), (PlaceholderCharacter.bear, "body"),
+        ]
+        let sheet = try rows.map { outfit, slot in
+            let variant = try #require(outfit.variants[slot])
+            return try sideBySide(
+                PlaceholderCharacter.swatches(for: slot, wearing: variant).map { swatch in
+                    var colored = outfit
+                    colored.colors[slot] = swatch
+                    let look = try Frame(outfit: colored)
+                    return try look.render(image: look.figure.restPose, scale: 1, background: Self.mist)
+                })
+        }
+        try writePNG(stacked(sheet), to: url)
     }
 
     private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
@@ -109,6 +131,9 @@ struct CharacterPreviewTests {
             CGContext(
                 data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        // Shorter rows leave a gap at the right: paint it the page's neutral, not transparent.
+        context.setFillColor(CGColor(srgbRed: 0xF3 / 255, green: 0xF5 / 255, blue: 0xF8 / 255, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         // Core Graphics counts rows from the bottom, so the first image goes on top.
         var top = height
         for image in images {
@@ -168,7 +193,8 @@ struct CharacterPreviewTests {
             budget per frame: 16.7 ms at 60 Hz, 8.3 ms at 120 Hz
             """
         print(report)
-        try report.write(to: url, atomically: true, encoding: .utf8)
+        // End with a newline, so `cat` in the preview log doesn't run into the next line.
+        try (report + "\n").write(to: url, atomically: true, encoding: .utf8)
     }
 }
 #endif
