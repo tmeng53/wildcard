@@ -4,7 +4,7 @@ import Contracts
 
 private let checkInID = CheckInID(UUID(uuidString: "11111111-1111-1111-1111-111111111111")!)
 private let memberID = MemberID(UUID(uuidString: "22222222-2222-2222-2222-222222222222")!)
-private let createdAt = Date(timeIntervalSince1970: 1_760_745_600) // 2025-10-18T00:00:00Z
+private let createdAt = Timestamp(millisecondsSince1970: 1_760_745_600_123) // 2025-10-18T00:00:00.123Z
 
 private func encode(_ checkIn: CheckIn) throws -> String {
     String(decoding: try WireJSON.encoder().encode(checkIn), as: UTF8.self)
@@ -19,7 +19,7 @@ private func decode(_ json: String) throws -> CheckIn {
         id: checkInID, member: memberID, day: try LocalDay("2025-10-17"), createdAt: createdAt,
         entry: .trained(try Training(sport: .run, minutes: 45, photo: try PhotoRef(path: "m/abc.jpg")))
     )
-    #expect(try encode(checkIn) == #"{"createdAt":"2025-10-18T00:00:00Z","day":"2025-10-17","id":"11111111-1111-1111-1111-111111111111","kind":"trained","member":"22222222-2222-2222-2222-222222222222","training":{"minutes":45,"photo":{"path":"m\/abc.jpg"},"sport":"run"},"version":1}"#)
+    #expect(try encode(checkIn) == #"{"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","id":"11111111-1111-1111-1111-111111111111","kind":"trained","member":"22222222-2222-2222-2222-222222222222","training":{"minutes":45,"photo":{"path":"m\/abc.jpg"},"sport":"run"},"version":1}"#)
 }
 
 @Test func eachKindRoundTrips() throws {
@@ -58,4 +58,15 @@ private func decode(_ json: String) throws -> CheckIn {
 
 @Test func emptyPhotoPathIsRejected() {
     #expect(throws: ContractsError.emptyPhotoPath) { try PhotoRef(path: "") }
+}
+
+@Test func idsEncodeLowercase() throws {
+    let upper = CheckInID(UUID(uuidString: "ABCDEF01-ABCD-ABCD-ABCD-ABCDEF012345")!)
+    #expect(String(decoding: try WireJSON.encoder().encode([upper]), as: UTF8.self)
+        == #"["abcdef01-abcd-abcd-abcd-abcdef012345"]"#)
+}
+
+@Test func payloadThatDoesNotMatchKindIsRejected() {
+    let json = #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","kind":"ateClean","meal":{"slot":"dinner"},"training":{"sport":"run","minutes":30}}"#
+    #expect(throws: ContractsError.payloadMismatch("ateClean")) { try decode(json) }
 }

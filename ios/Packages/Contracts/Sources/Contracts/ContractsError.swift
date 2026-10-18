@@ -10,4 +10,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case disclaimerLength(Int)
     /// A photo path that is empty.
     case emptyPhotoPath
+    /// A timestamp that isn't ISO 8601.
+    case invalidTimestamp(String)
+    /// A check-in whose payload keys don't match its `kind`.
+    case payloadMismatch(String)
 }

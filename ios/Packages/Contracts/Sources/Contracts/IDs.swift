@@ -1,7 +1,7 @@
 import Foundation
 
 /// A typed UUID, so a member id can't be passed where a check-in id is expected.
-/// Encodes as a bare UUID string.
+/// Encodes as a bare lowercase UUID string, the form Postgres returns.
 public struct ID<Tag>: Hashable, Sendable, Codable, CustomStringConvertible {
     public let uuid: UUID
 
@@ -13,7 +13,7 @@ public struct ID<Tag>: Hashable, Sendable, Codable, CustomStringConvertible {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(uuid)
+        try container.encode(description)
     }
 
     public var description: String { uuid.uuidString.lowercased() }

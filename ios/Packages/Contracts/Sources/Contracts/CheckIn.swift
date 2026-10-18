@@ -12,10 +12,10 @@ public struct CheckIn: Hashable, Sendable, Codable {
     /// The member's local day the check-in counts for.
     public let day: LocalDay
     /// When it was made, for ordering on the track. Not used to pick the day.
-    public let createdAt: Date
+    public let createdAt: Timestamp
     public let entry: Entry
 
-    public init(id: CheckInID, member: MemberID, day: LocalDay, createdAt: Date, entry: Entry) {
+    public init(id: CheckInID, member: MemberID, day: LocalDay, createdAt: Timestamp, entry: Entry) {
         self.id = id
         self.member = member
         self.day = day
@@ -38,6 +38,14 @@ public struct CheckIn: Hashable, Sendable, Codable {
 
     private enum Kind: String, Codable {
         case trained, ateClean, disclaimer
+
+        var payloadKey: CodingKeys {
+            switch self {
+            case .trained: .training
+            case .ateClean: .meal
+            case .disclaimer: .disclaimer
+            }
+        }
     }
 
     public init(from decoder: Decoder) throws {
@@ -47,8 +55,11 @@ public struct CheckIn: Hashable, Sendable, Codable {
         id = try container.decode(CheckInID.self, forKey: .id)
         member = try container.decode(MemberID.self, forKey: .member)
         day = try container.decode(LocalDay.self, forKey: .day)
-        createdAt = try container.decode(Date.self, forKey: .createdAt)
-        entry = switch try container.decode(Kind.self, forKey: .kind) {
+        createdAt = try container.decode(Timestamp.self, forKey: .createdAt)
+        let kind = try container.decode(Kind.self, forKey: .kind)
+        let payloads: [CodingKeys] = [.training, .meal, .disclaimer].filter(container.contains)
+        guard payloads == [kind.payloadKey] else { throw ContractsError.payloadMismatch(kind.rawValue) }
+        entry = switch kind {
         case .trained: .trained(try container.decode(Training.self, forKey: .training))
         case .ateClean: .ateClean(try container.decode(Meal.self, forKey: .meal))
         case .disclaimer: .disclaimer(try container.decode(Disclaimer.self, forKey: .disclaimer))

@@ -1,18 +1,15 @@
 import Foundation
 
 /// The one JSON setup for contract types, so the app and the backend agree on
-/// dates (ISO 8601 in UTC, whole seconds) and key order.
+/// key order. Contract types carry `Timestamp`, never `Date`, so no date strategy.
 public enum WireJSON {
     public static func encoder() -> JSONEncoder {
         let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.sortedKeys]
         return encoder
     }
 
     public static func decoder() -> JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
+        JSONDecoder()
     }
 }
