@@ -1,8 +1,8 @@
 /// Why a character's files were rejected. Each case names the file or part to fix.
 public enum AvatarError: Error, Equatable, Sendable {
-    /// Rig or clip JSON carries a `version` this build doesn't read.
+    /// Rig, clip or tones JSON carries a `version` this build doesn't read.
     case unsupportedVersion(Int)
-    /// Rig or clip JSON that doesn't match the format; the text says where.
+    /// Rig, clip or tones JSON that doesn't match the format; the text says where.
     case malformedJSON(String)
     /// Two parts in a rig share an id.
     case duplicatePart(PartID)
@@ -16,6 +16,12 @@ public enum AvatarError: Error, Equatable, Sendable {
     case missingArt(String)
     /// An outfit picks a variant that has no art for any part.
     case unknownVariant(slot: Slot, variant: String)
+    /// An outfit colors a slot it doesn't wear.
+    case colorForBareSlot(Slot)
+    /// An outfit colors a slot whose variant has no `tones.json`.
+    case notRecolorable(slot: Slot, variant: String)
+    /// A variant's `tones.json` lists a color its art never paints.
+    case unusedTone(slot: Slot, variant: String, color: RGBAColor)
     /// An art file uses SVG this player doesn't draw.
     case invalidSVG(art: String, problem: SVGProblem)
     /// An art file drawn on a different canvas than the rig's.

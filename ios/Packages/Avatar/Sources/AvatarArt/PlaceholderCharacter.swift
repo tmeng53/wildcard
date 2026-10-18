@@ -49,7 +49,7 @@ public enum PlaceholderCharacter {
 
 /// Reads art files from the placeholder's folder in this package's bundle.
 struct BundledArt: ArtSource {
-    func svg(at path: String) -> String? {
+    func text(at path: String) -> String? {
         try? String(
             contentsOf: PlaceholderCharacter.folder.appendingPathComponent("art").appendingPathComponent(path),
             encoding: .utf8)

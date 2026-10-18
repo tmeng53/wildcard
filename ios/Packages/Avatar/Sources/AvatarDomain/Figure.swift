@@ -1,17 +1,24 @@
-/// Where the art files live, as `base/<art>.svg` or `<slot>/<variant>/<art>.svg`. An adapter
-/// reads them from the app bundle; tests pass strings.
+import Foundation
+
+/// Where the art files live, as `base/<art>.svg` or `<slot>/<variant>/<art>.svg`, with a
+/// variant's `tones.json` beside its art. An adapter reads them from the app bundle; tests
+/// pass strings.
 public protocol ArtSource {
-    /// The file's SVG text, or nil when there is no such file.
-    func svg(at path: String) -> String?
+    /// The file's text, or nil when there is no such file.
+    func text(at path: String) -> String?
 }
 
-/// Which variant each slot wears, such as `top: tee` and `prop: dumbbell`. A slot left
-/// out wears nothing.
+/// Which variant each slot wears, such as `top: tee` and `prop: dumbbell`, and the color
+/// a slot is recolored to, if any. A slot left out wears nothing; a slot with no color
+/// keeps its art's own.
 public struct Outfit: Hashable, Sendable {
     public var variants: [Slot: String]
+    /// The new main color per slot. The variant's `tones.json` says which of its art's
+    /// colors follow it.
+    public var colors: [Slot: RGBAColor]
 
-    public init(_ variants: [Slot: String]) {
-        self.variants = variants
+    public init(_ variants: [Slot: String], colors: [Slot: RGBAColor] = [:]) {
+        (self.variants, self.colors) = (variants, colors)
     }
 }
 
@@ -39,7 +46,11 @@ public struct Figure: Hashable, Sendable {
         let parents = try Self.parents(rig.parts)
         evaluationOrder = try Self.order(rig.parts.map(\.id), parents)
 
+        let recolors = try Self.recolors(outfit, source)
+
         var used: Set<Slot> = []
+        /// Each recolored slot's art colors before recoloring, to check its tones against.
+        var painted: [Slot: [RGBAColor]] = [:]
         var built: [Part] = []
         for part in rig.parts {
             var artworks: [Artwork] = []
@@ -49,12 +60,17 @@ public struct Figure: Hashable, Sendable {
                     guard let variant = outfit.variants[slot] else { continue }
                     path = "\(slot)/\(variant)/\(layer.art).svg"
                     // A variant may leave a part bare, like a tank top with no sleeves.
-                    guard let svg = source.svg(at: path) else { continue }
-                    artworks.append(try Self.artwork(svg, path, rig))
+                    guard let svg = source.text(at: path) else { continue }
+                    var artwork = try Self.artwork(svg, path, rig)
+                    if let recolor = recolors[slot] {
+                        painted[slot, default: []] += artwork.colors
+                        artwork = recolor.applied(to: artwork)
+                    }
+                    artworks.append(artwork)
                     used.insert(slot)
                 } else {
                     path = "base/\(layer.art).svg"
-                    guard let svg = source.svg(at: path) else { throw .missingArt(path) }
+                    guard let svg = source.text(at: path) else { throw .missingArt(path) }
                     artworks.append(try Self.artwork(svg, path, rig))
                 }
             }
@@ -63,7 +79,34 @@ public struct Figure: Hashable, Sendable {
         if let (slot, variant) = outfit.variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
         }
+        try Self.checkTones(recolors, against: painted, outfit)
         (width, height, parts, self.parents) = (rig.width, rig.height, built, parents)
+    }
+
+    /// Each colored slot's tones, read from its variant's `tones.json`.
+    private static func recolors(_ outfit: Outfit, _ source: some ArtSource) throws(AvatarError) -> [Slot: Recolor] {
+        var recolors: [Slot: Recolor] = [:]
+        for (slot, color) in outfit.colors.sorted(by: { $0.key.description < $1.key.description }) {
+            guard let variant = outfit.variants[slot] else { throw .colorForBareSlot(slot) }
+            guard let text = source.text(at: "\(slot)/\(variant)/tones.json") else {
+                throw .notRecolorable(slot: slot, variant: variant)
+            }
+            recolors[slot] = Recolor(tones: try Tones.decode(Data(text.utf8)), color: color)
+        }
+        return recolors
+    }
+
+    /// A tone the art never paints is a typo in `tones.json`, which would leave that color
+    /// unchanged on the phone.
+    private static func checkTones(
+        _ recolors: [Slot: Recolor], against painted: [Slot: [RGBAColor]], _ outfit: Outfit
+    ) throws(AvatarError) {
+        for (slot, recolor) in recolors {
+            let colors = painted[slot, default: []]
+            if let unused = recolor.tones.all.first(where: { tone in !colors.contains { $0.sameRGB(as: tone) } }) {
+                throw .unusedTone(slot: slot, variant: outfit.variants[slot] ?? "", color: unused)
+            }
+        }
     }
 
     /// Each part's parent as an index into the parts.
