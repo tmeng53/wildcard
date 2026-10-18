@@ -3,7 +3,7 @@ name: verify-wildcard
 description: How an agent that did not write a change proves Wildcard works end to end (the iOS app through the simulator screenshots and UI-test results CI's macOS job uploads, local Supabase in Docker), checks the evidence (simulator screenshots, database rows) and gives a PASS, PASS+NOTES or FAIL verdict tied to the exact commit and diff. Use when asked to verify a PR, branch or commit, or to give a verdict on another agent's change.
 ---
 
-<!-- From engineering-skills/verify-product. Sections 2, 3 and 5 are filled in by the PR that adds the Xcode project and the first Supabase migration; until then a verifier drives each change from its PR's own docs and tests. -->
+<!-- From engineering-skills/verify-product. Sections 2, 3 and 5 cover local Supabase (filled in with the first migration); the iOS parts are filled in by the PR that adds the Xcode project. -->
 
 # Verify Wildcard
 
@@ -44,12 +44,12 @@ mkdir -p /tmp/verify-wildcard/$(git rev-parse --short HEAD)
 
 ## 2. Launch the stack
 
-<In a cloud session, what the session-start hook already did and the line it prints.> If the stack is already running, reuse it and note in the verdict that you didn't start it. Otherwise:
+In a cloud session the session-start hook starts Docker and local Supabase and prints `Ready: … Docker local Supabase.` A running stack serves whichever checkout started it, so from your worktree restart it to serve the code under test, and note that in the verdict:
 
 ```sh
-<install command>
-<env file setup>
-<start command, e.g. docker compose up -d --wait --wait-timeout 120>
+docker info >/dev/null 2>&1 || (nohup dockerd >/tmp/dockerd.log 2>&1 &)   # Docker isn't running by default in cloud sessions
+npx --yes supabase@2.121.0 stop
+npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime   # the same services CI starts
 ```
 
 ## 3. Health check
@@ -57,11 +57,11 @@ mkdir -p /tmp/verify-wildcard/$(git rev-parse --short HEAD)
 All must pass before you drive anything (the expected values come from a real run):
 
 ```sh
-<command>    # <what healthy prints>
-<command>    # <what healthy prints>
+npx --yes supabase@2.121.0 status -o json   # prints API_URL http://127.0.0.1:54321 and an ANON_KEY
+scripts/verify.sh supabase                  # resets the database from supabase/migrations; ends "Result: PASS" and "verify: ok"
 ```
 
-If a service won't start, stop: the verdict is FAIL, reason "stack did not start", with `<logs command>` saved to `/tmp/verify-wildcard/<short sha>/`.
+If a service won't start, stop: the verdict is FAIL, reason "stack did not start", with `docker ps -a` and `docker logs supabase_db_wildcard` saved to `/tmp/verify-wildcard/<short sha>/`.
 
 ## 4. Drive the journeys
 
@@ -84,16 +84,15 @@ Every journey ends with evidence you read yourself. Keep only the kinds a journe
 
 | Evidence | How to check it |
 | --- | --- |
-| **<External system state>** | <query against the system itself>; <each field and its value, e.g. `status` is `<X>`, result `<success code>`, amount exactly `<n>`> |
-| **<Signatures>** | <verify with the public key; changing one byte must make it fail> |
-| **<Database rows>** | <psql command>; the rows exist, and nothing immutable was edited or deleted |
+| **Database rows** | `docker exec supabase_db_wildcard psql -U postgres -c "select id, member_id, day, kind, payload from public.check_ins"` (and `check_in_squads`, `storage.objects`); the rows exist, and nothing immutable was edited or deleted |
+| **What each member gets back** | Sign up real users (`/auth/v1/signup` with the anon key), act as each through `/rest/v1` and `/storage/v1`: squad-mates, someone in another squad, and a signed-out caller each get only what the rules allow |
 | **What a user or agent sees** | <no internal error messages or internals in public-facing copy> |
 
 Then try at least one thing the author may not have: the change's edge case, a wrong input, or a repeat of the same call. wildcard must refuse what it says it refuses.
 
 ## 6. Clean up
 
-Stop only what you started: servers and watchers; the stack (`<stop command>`, which keeps data volumes) and a Docker daemon, if you started them; and the worktree (`git worktree remove /tmp/verify-wildcard/tree-<short sha>`). A stack you found running stays running; never wipe a stack or database you didn't create. The evidence folder stays.
+Stop only what you started: servers and watchers; the stack (`npx --yes supabase@2.121.0 stop`, which keeps data volumes) and a Docker daemon, if you started them; and the worktree (`git worktree remove /tmp/verify-wildcard/tree-<short sha>`). A stack you found running stays running; never wipe a stack or database you didn't create. The evidence folder stays.
 
 ## 7. The verdict
 

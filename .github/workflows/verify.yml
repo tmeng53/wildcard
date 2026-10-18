@@ -1,7 +1,7 @@
 # Runs scripts/verify.sh for ready PRs and pushes to main (AGENTS.md, CI).
 # GitHub-hosted runners are free while the repo is public. Never use a self-hosted
 # runner here: on a public repo a fork's PR could run code on that machine.
-# macOS runners have no Docker, so the PR that adds supabase/migrations adds a Linux job for it.
+# macOS runners have no Docker, so the database checks run in a Linux job.
 name: verify
 
 on:
@@ -28,4 +28,16 @@ jobs:
         with:
           persist-credentials: false
       - run: swift --version
-      - run: scripts/verify.sh
+      - run: scripts/verify.sh swift web
+
+  supabase:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      # Only the services the database tests use.
+      - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
+      - run: scripts/verify.sh supabase
