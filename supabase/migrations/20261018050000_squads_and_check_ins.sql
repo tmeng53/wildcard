@@ -117,8 +117,8 @@ using (member_id = (select auth.uid()));
 create type public.check_in_kind as enum ('trained', 'healthyMeal', 'cheatMeal', 'disclaimer');
 
 -- A 免责声明 or a caption: trimmed, one line, 1 to 40 characters as people see them.
--- Postgres counts code points, not what people see, so it holds a looser cap that a
--- line of 40 emoji can't trip; the app holds the exact limit.
+-- Postgres counts code points, not what people see (a family emoji is 1 character but
+-- 7 code points), so it holds a loose cap of 400; the app holds the exact limit.
 create function private.is_short_line(value jsonb)
 returns boolean
 language sql
@@ -126,7 +126,7 @@ immutable
 set search_path = ''
 as $$
   select jsonb_typeof(value) = 'string'
-    and char_length(value #>> '{}') between 1 and 160
+    and char_length(value #>> '{}') between 1 and 400
     and value #>> '{}' = btrim(value #>> '{}', E' \t\n\r')
     and strpos(value #>> '{}', E'\n') = 0
     and strpos(value #>> '{}', E'\r') = 0;
