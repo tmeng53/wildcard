@@ -1,7 +1,11 @@
 /// Why a contract value was rejected. Each case is something the caller can act on.
 public enum ContractsError: Error, Equatable, Sendable {
-    /// Stored or wire JSON carries a `version` this build doesn't read.
+    /// Stored or wire JSON carries a `version` older than this build reads.
     case unsupportedVersion(Int)
+    /// Stored or wire JSON from a newer app: a `version` above this build's.
+    case newerVersion(Int)
+    /// A check-in `kind` this build doesn't know, from a newer app.
+    case unknownKind(String)
     /// A day string that isn't a real `YYYY-MM-DD` date.
     case invalidDay(String)
     /// Training minutes outside `Training.minutesRange`.
@@ -26,8 +30,10 @@ public enum ContractsError: Error, Equatable, Sendable {
     case repeatedPhoto
     /// A 其他 sport name that is empty or longer than `CustomSport.maxLength` characters.
     case customSportLength(Int)
-    /// A 其他 sport name with a line break.
+    /// A 其他 sport name with a line break, tab or other control character.
     case multilineCustomSport
+    /// An empty `sport` key.
+    case unknownSport(String)
     /// A `customSport` name next to a listed sport, or with no sport at all.
     case strayCustomSport
     /// A timestamp that isn't ISO 8601.

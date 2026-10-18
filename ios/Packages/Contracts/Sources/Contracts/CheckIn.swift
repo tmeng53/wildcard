@@ -62,13 +62,15 @@ public struct CheckIn: Hashable, Sendable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let version = try container.decode(Int.self, forKey: .version)
+        guard version <= Self.currentVersion else { throw ContractsError.newerVersion(version) }
         guard version == Self.currentVersion else { throw ContractsError.unsupportedVersion(version) }
         id = try container.decode(CheckInID.self, forKey: .id)
         member = try container.decode(MemberID.self, forKey: .member)
         day = try container.decode(LocalDay.self, forKey: .day)
         createdAt = try container.decode(Timestamp.self, forKey: .createdAt)
         audience = try container.decode(Audience.self, forKey: .audience)
-        let kind = try container.decode(Kind.self, forKey: .kind)
+        let rawKind = try container.decode(String.self, forKey: .kind)
+        guard let kind = Kind(rawValue: rawKind) else { throw ContractsError.unknownKind(rawKind) }
         let payloads: [CodingKeys] = [.training, .meal, .disclaimer].filter(container.contains)
         guard payloads == [kind.payloadKey] else { throw ContractsError.payloadMismatch(kind.rawValue) }
         entry = switch kind {

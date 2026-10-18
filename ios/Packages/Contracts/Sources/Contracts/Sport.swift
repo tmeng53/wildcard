@@ -64,7 +64,8 @@ public struct CustomSport: Hashable, Sendable {
 
     public init(_ name: String) throws(ContractsError) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.contains(where: \.isNewline) else { throw .multilineCustomSport }
+        guard !trimmed.unicodeScalars.contains(where: { $0.properties.generalCategory == .control || $0.properties.isWhitespace && $0 != " " && $0 != "\u{3000}" })
+        else { throw .multilineCustomSport }
         guard (1...Self.maxLength).contains(trimmed.count) else { throw .customSportLength(trimmed.count) }
         self.name = trimmed
     }
@@ -76,10 +77,18 @@ public enum Activity: Hashable, Sendable {
     case sport(Sport)
     case custom(CustomSport)
     /// A sport a newer app added that this build doesn't know. Read so the check-in
-    /// still shows (as 其他) instead of breaking the feed; never picked by this build.
-    case unrecognized(String)
+    /// still shows (as 其他) instead of breaking the feed. Only the decoder makes one,
+    /// so this build can't write a sport value no reader accepts.
+    case unrecognized(UnrecognizedSport)
 
     static let customRawValue = "custom"
+}
+
+/// A sport key from a newer app: never a listed sport, never `custom`, never empty.
+public struct UnrecognizedSport: Hashable, Sendable {
+    public let rawValue: String
+
+    fileprivate init(rawValue: String) { self.rawValue = rawValue }
 }
 
 extension KeyedDecodingContainer {
@@ -93,7 +102,9 @@ extension KeyedDecodingContainer {
             return .custom(try CustomSport(try decode(String.self, forKey: customKey)))
         }
         guard !contains(customKey) else { throw ContractsError.strayCustomSport }
-        return Sport(rawValue: raw).map(Activity.sport) ?? .unrecognized(raw)
+        if let sport = Sport(rawValue: raw) { return .sport(sport) }
+        guard !raw.isEmpty else { throw ContractsError.unknownSport(raw) }
+        return .unrecognized(UnrecognizedSport(rawValue: raw))
     }
 }
 
@@ -101,7 +112,7 @@ extension KeyedEncodingContainer {
     mutating func encodeActivity(_ activity: Activity?, sport sportKey: Key, custom customKey: Key) throws {
         switch activity {
         case .sport(let sport): try encode(sport.rawValue, forKey: sportKey)
-        case .unrecognized(let raw): try encode(raw, forKey: sportKey)
+        case .unrecognized(let unrecognized): try encode(unrecognized.rawValue, forKey: sportKey)
         case .custom(let custom):
             try encode(Activity.customRawValue, forKey: sportKey)
             try encode(custom.name, forKey: customKey)

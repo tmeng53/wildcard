@@ -29,7 +29,7 @@ private let memberID = MemberID(UUID(uuidString: "22222222-2222-2222-2222-222222
 
 @Test func unknownPlanVersionIsRejected() {
     let json = #"{"version":2,"member":"22222222-2222-2222-2222-222222222222","weekStart":"2025-10-20","days":[]}"#
-    #expect(throws: ContractsError.unsupportedVersion(2)) {
+    #expect(throws: ContractsError.newerVersion(2)) {
         try WireJSON.decoder().decode(WeeklyPlan.self, from: Data(json.utf8))
     }
 }
