@@ -43,7 +43,7 @@ select is_empty(
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 insert into public.check_ins (id, day, kind, payload, version) values
   ('11111111-1111-1111-1111-111111111111', current_date, 'trained',
-   '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1);
+   '{"sport":"run","minutes":30,"photos":[{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}]}', 1);
 insert into public.check_in_squads (check_in_id, squad_id, position) values
   ('11111111-1111-1111-1111-111111111111', '5a000000-0000-0000-0000-000000000001', 1);
 
@@ -87,20 +87,20 @@ select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select throws_ok(
   $$insert into public.check_ins (id, day, kind, payload, version) values
     (gen_random_uuid(), current_date, 'trained',
-     '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/later.jpg"}}', 1)$$,
+     '{"sport":"run","minutes":30,"photos":[{"path":"a0000000-0000-0000-0000-000000000001/later.jpg"}]}', 1)$$,
   '23514', null, 'a check-in can''t point at a photo that isn''t uploaded yet'
 );
 select throws_ok(
   $$insert into public.check_ins (id, day, kind, payload, version) values
     (gen_random_uuid(), current_date, 'trained',
-     '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1)$$,
-  '23514', null, 'two check-ins can''t share one photo'
+     '{"sport":"run","minutes":30,"photos":[{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}]}', 1)$$,
+  '23505', 'another check-in already uses this photo', 'two check-ins can''t share one photo'
 );
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
 select throws_like(
   $$insert into public.check_ins (id, day, kind, payload, version) values
     (gen_random_uuid(), current_date, 'trained',
-     '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1)$$,
+     '{"sport":"run","minutes":30,"photos":[{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}]}', 1)$$,
   '%check_ins_payload_matches_kind%',
   'pointing at someone else''s photo fails the payload check, without saying whether it exists'
 );

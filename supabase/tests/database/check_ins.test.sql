@@ -45,7 +45,7 @@ select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select lives_ok(
   $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
     ('11111111-1111-1111-1111-111111111111', (now() at time zone 'UTC')::date, now(), 'trained',
-     '{"minutes":45,"photo":{"path":"a0000000-0000-0000-0000-000000000001/abc.jpg"},"sport":"run"}', 1)$$,
+     '{"minutes":45,"photos":[{"path":"a0000000-0000-0000-0000-000000000001/abc.jpg"}],"sport":"run"}', 1)$$,
   'a member logs 练了 with a photo in their own folder'
 );
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
@@ -186,7 +186,7 @@ select lives_ok(
 );
 select pg_temp.rejects('disclaimer', '{"text":" 腿酸 "}', 'the 免责声明 arrives trimmed, as the contract sends it');
 select pg_temp.rejects(
-  'trained', '{"sport":"run","minutes":30,"photo":{"path":"b0000000-0000-0000-0000-000000000002/x.jpg"}}',
+  'trained', '{"sport":"run","minutes":30,"photos":[{"path":"b0000000-0000-0000-0000-000000000002/x.jpg"}]}',
   'a photo must be in the member''s own folder'
 );
 select throws_ok(
