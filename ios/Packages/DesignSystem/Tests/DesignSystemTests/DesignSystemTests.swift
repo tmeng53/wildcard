@@ -4,12 +4,12 @@ import Testing
 
 struct RGBColorTests {
     @Test func hexIsUppercaseWithLeadingZeros() {
-        #expect(RGBColor(red: 0x0E, green: 0x1B, blue: 0x3D).hex == "#0E1B3D")
-        #expect(RGBColor(red: 0, green: 0, blue: 0).hex == "#000000")
+        #expect(SRGBColor(red: 0x0E, green: 0x1B, blue: 0x3D).hex == "#0E1B3D")
+        #expect(SRGBColor(red: 0, green: 0, blue: 0).hex == "#000000")
     }
 
     @Test func contrastRatioMatchesWCAGEndpoints() {
-        let black = RGBColor(red: 0, green: 0, blue: 0)
+        let black = SRGBColor(red: 0, green: 0, blue: 0)
         #expect(black.contrastRatio(with: Palette.white) == 21)
         #expect(Palette.white.contrastRatio(with: Palette.white) == 1)
     }

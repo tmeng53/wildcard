@@ -1,7 +1,8 @@
 import Foundation
 
 /// An opaque sRGB color, one byte per channel, so every token is an exact, reviewable value.
-public struct RGBColor: Sendable, Hashable {
+/// Named apart from QuickDraw's `RGBColor`, which macOS imports with SwiftUI.
+public struct SRGBColor: Sendable, Hashable {
     public let red: UInt8
     public let green: UInt8
     public let blue: UInt8
@@ -27,7 +28,7 @@ public struct RGBColor: Sendable, Hashable {
     }
 
     /// WCAG 2.x contrast ratio against another color, from 1 to 21.
-    public func contrastRatio(with other: RGBColor) -> Double {
+    public func contrastRatio(with other: SRGBColor) -> Double {
         let lighter = max(relativeLuminance, other.relativeLuminance)
         let darker = min(relativeLuminance, other.relativeLuminance)
         return (lighter + 0.05) / (darker + 0.05)

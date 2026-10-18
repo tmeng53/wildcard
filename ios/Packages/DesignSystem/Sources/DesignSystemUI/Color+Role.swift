@@ -3,7 +3,7 @@ import DesignSystem
 import SwiftUI
 
 extension Color {
-    public init(_ rgb: RGBColor) {
+    public init(_ rgb: SRGBColor) {
         self.init(
             .sRGB,
             red: Double(rgb.red) / 255,

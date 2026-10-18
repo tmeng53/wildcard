@@ -5,7 +5,7 @@ import SwiftUI
 extension Animation {
     /// The animation for a motion token. With Reduce Motion on, it becomes a short ease-out
     /// with no overshoot.
-    public static func wildcard(_ spring: Spring, reduceMotion: Bool = false) -> Animation {
+    public static func wildcard(_ spring: MotionSpring, reduceMotion: Bool = false) -> Animation {
         if reduceMotion {
             return .easeOut(duration: Motion.reducedDuration)
         }

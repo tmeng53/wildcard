@@ -202,7 +202,7 @@ private struct MotionSection: View {
 
     private struct Runner {
         let name: String
-        let spring: Spring
+        let spring: MotionSpring
         let color: ColorRole
     }
 
@@ -216,7 +216,8 @@ private struct MotionSection: View {
         VStack(alignment: .leading, spacing: Space.m) {
             SectionTitle(number: 3, title: Text("动效", bundle: .module))
             VStack(spacing: 0) {
-                ForEach(Array(runners.enumerated()), id: \.offset) { index, runner in
+                ForEach(runners.indices, id: \.self) { index in
+                    let runner = runners[index]
                     Lane(number: index + 1, name: runner.name, color: runner.color, atFinish: atFinish)
                         .animation(
                             .wildcard(runner.spring, reduceMotion: reduceMotion)

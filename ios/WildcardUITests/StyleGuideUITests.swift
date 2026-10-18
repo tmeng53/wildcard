@@ -4,10 +4,6 @@ import XCTest
 /// (scripts/ios-test.sh).
 @MainActor
 final class StyleGuideUITests: XCTestCase {
-    override func setUp() {
-        continueAfterFailure = false
-    }
-
     func testStyleGuideInChinese() {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(header(in: app).label.contains("小队本周打卡"))
@@ -35,6 +31,7 @@ final class StyleGuideUITests: XCTestCase {
     }
 
     private func launch(language: String) -> XCUIApplication {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", language]
         app.launch()
