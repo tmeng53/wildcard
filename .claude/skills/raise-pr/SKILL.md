@@ -135,4 +135,4 @@ Decide mechanically from the diff; when unsure, a human merges.
 
 **A human also merges** any PR that touches agent rules (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`), the checks and hooks (`scripts/`), CI or repo settings (`.github/`), dependencies (any `Package.swift`, `Package.resolved`, `package.json` or lockfile), the shared contract (`ios/Packages/Contracts`, labelled `contract`), database migrations, or carries the `needs-human` label. Those are the rules and checks themselves, new dependencies, or data that's hard to undo. Check the diff's file list against this list; it decides, not judgment.
 
-Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening moves the PR into a human-merged category, stop and ask.
+GitHub doesn't enforce any of this (a private repo on GitHub Free has no branch protection), so the rule holds only because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening moves the PR into a human-merged category, stop and ask.

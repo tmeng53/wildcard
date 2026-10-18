@@ -26,7 +26,7 @@ Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud mach
 
 ## CI
 
-**No GitHub-hosted runners**: they cost money this project doesn't spend. Linux checks run in the agent's own session before every push. iOS build, UI tests and screenshots run on the self-hosted runner labelled `macos-self-hosted` (Tracy's Mac), so a PR touching `ios/` waits until that Mac is awake. Every workflow uses `runs-on: [self-hosted, macos-self-hosted]`, runs only on ready (not draft) PRs and on pushes to `main`, and cancels the run a newer push replaces.
+**No GitHub-hosted runners**: they cost money this project doesn't spend. Linux checks run in the agent's own session before every push. iOS build, UI tests and screenshots run on the self-hosted runner labelled `macos-self-hosted` (Tracy's Mac), so a PR touching `ios/` waits until that Mac is awake. Every workflow uses `runs-on: [self-hosted, macos-self-hosted]`, runs only on ready (not draft) PRs and on pushes to `main`, and cancels the run a newer push replaces. Until a workflow exists, "green" means `scripts/verify.sh` passes on the pushed head; there is nothing else to wait for.
 
 ## Skills
 

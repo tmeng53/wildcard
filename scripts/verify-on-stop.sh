@@ -22,9 +22,17 @@ print("" if v is None else str(v).lower() if isinstance(v, bool) else v)' "$inpu
 [ "$(field stop_hook_active)" = "true" ] && exit 0
 
 # The input's cwd follows the session into a worktree; CLAUDE_PROJECT_DIR doesn't.
+# Use cwd only when it's a checkout of this repo (same git common dir); a session can
+# also sit in another repo or outside any repo, and then the project dir is checked.
+project="${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}"
+common() { (cd "$1" 2>/dev/null && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P); }
+target="$project"
 dir="$(field cwd)"
-cd "${dir:-${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}}" || exit 0
-cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0   # cwd may be a subdirectory
+if [ -n "$dir" ] && [ -n "$(common "$dir")" ] && [ "$(common "$dir")" = "$(common "$project")" ]; then
+  target="$dir"
+fi
+top="$(cd "$target" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null)"
+[ -n "$top" ] && cd "$top" || exit 0   # cwd may be a subdirectory
 
 # Explicit refspec: some clones have none configured, which would leave origin/main missing.
 git rev-parse --verify --quiet origin/main >/dev/null ||

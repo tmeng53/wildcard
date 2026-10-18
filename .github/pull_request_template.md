@@ -1,7 +1,7 @@
 <!--
 Title: Short imperative summary
 Rules: .claude/skills/raise-pr/SKILL.md. Never list files or features; the diff shows them.
-Delete a section only when it truly has nothing to say. Never delete the top line or Verification.
+Delete a section only when it truly has nothing to say. Never delete the top line, Verification, Screenshots (for anything users see) or Verifier verdict.
 -->
 
 Replace this line with one sharp sentence: what this PR makes possible or changes, and why it matters.
