@@ -17,7 +17,7 @@ final class StyleGuideUITests: XCTestCase {
         ]
         for (scene, shot) in scenes {
             app.buttons[scene].firstMatch.tap()
-            waitForLabel(of: banner(in: app), containing: scene, "the banner didn't switch to \(scene)")
+            waitForLabel(of: banner(in: app), "label CONTAINS %@", scene, "the banner didn't switch to \(scene)")
             // Let the color change settle before the shot.
             Thread.sleep(forTimeInterval: 0.6)
             keepScreenshot(named: shot)
@@ -27,7 +27,7 @@ final class StyleGuideUITests: XCTestCase {
         let checkIn = app.buttons["styleguide.checkin"]
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
-        waitForLabel(of: checkIn, containing: "收起", "the check-in button didn't turn into 收起")
+        waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
         let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "免责")]
         for (meaning, label) in capsules {
             let capsule = app.buttons["styleguide.capsule.\(meaning)"]
@@ -38,7 +38,7 @@ final class StyleGuideUITests: XCTestCase {
         keepScreenshot(named: "06-pool-capsules-open")
 
         app.buttons["styleguide.capsule.fresh"].tap()
-        waitForLabel(of: checkIn, containing: "打卡", "the capsules didn't close")
+        waitForLabel(of: checkIn, "label == %@", "打卡", "the capsules didn't close")
 
         app.swipeUp()
         keepScreenshot(named: "07-colors")
@@ -48,7 +48,7 @@ final class StyleGuideUITests: XCTestCase {
         let play = app.buttons["styleguide.motion.play"]
         scrollUntilHittable(play, in: app)
         play.tap()
-        waitForLabel(of: play, containing: "回到起点", "the motion demo didn't start")
+        waitForLabel(of: play, "label == %@", "回到起点", "the motion demo didn't start")
         // Let the springs settle before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "09-motion-finish")
@@ -78,12 +78,14 @@ final class StyleGuideUITests: XCTestCase {
     }
 
     /// Taps update the UI on the next frames, so a check right after `tap()` can run before
-    /// the label changes on a slow simulator. Wait for it instead.
+    /// the label changes on a slow simulator. Wait for it instead, as strictly as the check was:
+    /// `label == %@` for an exact label, `label CONTAINS %@` for the banner's combined label.
     private func waitForLabel(
-        of element: XCUIElement, containing text: String, _ message: String, timeout: TimeInterval = 5
+        of element: XCUIElement, _ format: String, _ text: String, _ message: String,
+        timeout: TimeInterval = 5
     ) {
         let changed = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "label CONTAINS %@", text), object: element)
+            predicate: NSPredicate(format: format, text), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [changed], timeout: timeout), .completed, message)
     }
 
