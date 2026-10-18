@@ -1,7 +1,7 @@
 -- Only our API reaches the data: the app's tokens (anon, authenticated) can't read or
 -- write any table or reach the photo files, even through Supabase's own REST API.
 begin;
-select plan(11);
+select plan(14);
 
 insert into auth.users (id, email) values ('a0000000-0000-0000-0000-000000000001', 'ann@example.com');
 insert into storage.objects (bucket_id, name, owner_id) values
@@ -32,6 +32,12 @@ select is(
      and (has_function_privilege('anon', p.oid, 'execute') or has_function_privilege('authenticated', p.oid, 'execute'))),
   0, 'the app''s tokens can''t call any function'
 );
+select ok(
+  not has_schema_privilege('anon', 'public', 'usage') and not has_schema_privilege('authenticated', 'public', 'usage'),
+  'the app''s tokens can''t use the public schema at all'
+);
+select ok(has_schema_privilege('service_role', 'public', 'usage'), 'the API''s server role can');
+
 -- What a later migration adds is locked too.
 create table public.later_table (id int);
 create function public.later_function() returns int language sql as 'select 1';
@@ -51,6 +57,17 @@ select is_empty(
   $$select 1 from storage.buckets where id = 'check-in-photos' and public$$,
   'the photos bucket is private'
 );
+
+-- An extension Supabase installs into public grants the app's roles access to its
+-- functions; the schema lock still keeps them out.
+create extension pg_trgm schema public;
+select set_config('role', 'anon', true);
+select throws_ok(
+  'select public.show_limit()', '42501', null,
+  'an extension installed into public later still can''t be reached by the app''s tokens'
+);
+select set_config('role', 'postgres', true);
+drop extension pg_trgm;
 
 select set_config('role', 'authenticated', true),
        set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);

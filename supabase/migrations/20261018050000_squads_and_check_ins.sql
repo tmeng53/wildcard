@@ -124,9 +124,13 @@ values (
 -- Access -------------------------------------------------------------------------
 
 -- Supabase serves the public schema to the app's tokens (the anon and authenticated
--- roles). Those roles get nothing here, and row-level security with no policies is a
--- second lock if a grant ever slips in. The API connects as a server role, which
--- bypasses both.
+-- roles), and Postgres lets every role use it. They lose the schema itself: without
+-- usage on it, nothing inside it can be reached, whoever creates it later (a
+-- migration, or Supabase installing an extension) and whatever it grants. The API
+-- connects as a server role, which keeps it. Underneath, as backstops: no grants on what is here now or what later migrations
+-- add, and row-level security with no policies on every table.
+revoke usage on schema public from public, anon, authenticated;
+
 alter table public.squads enable row level security;
 alter table public.squad_members enable row level security;
 alter table public.profiles enable row level security;
@@ -136,9 +140,8 @@ alter table public.check_in_photos enable row level security;
 
 revoke all on all tables in schema public from anon, authenticated;
 revoke all on all functions in schema public from public, anon, authenticated;
--- The same for whatever later migrations create. Postgres lets everyone call a new
--- function unless that is revoked globally: a per-schema rule can't take it away.
 alter default privileges in schema public revoke all on tables from anon, authenticated;
 alter default privileges in schema public revoke all on sequences from anon, authenticated;
 alter default privileges in schema public revoke all on functions from anon, authenticated;
+-- Postgres lets everyone call a new function unless that is revoked globally.
 alter default privileges for role postgres revoke execute on functions from public;

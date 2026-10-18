@@ -1,5 +1,5 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
--- Runs as the server role, as the API does.
+-- Runs as postgres; the API's server role writes the same way.
 begin;
 select plan(19);
 
