@@ -153,8 +153,73 @@ as $$
     and (not one_line or translate(value #>> '{}', private.contract_line_breaks(), '') = value #>> '{}');
 $$;
 
+-- The 52 listed sports (`Sport` in ios/Packages/Contracts). A new sport is a contract
+-- change and a new migration here; a newer app's unknown sport is refused on save.
+create function private.is_sport(sport text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select sport in (
+    'run', 'walk', 'hike', 'trailRun',
+    'strength', 'crossfit', 'hyrox', 'kettlebell',
+    'spin', 'elliptical', 'rowing', 'hiit', 'jumpRope', 'aerobics',
+    'yoga', 'matPilates', 'reformerPilates', 'barre', 'stretching',
+    'swim', 'surf', 'paddleboard', 'kayak',
+    'tennis', 'badminton', 'pickleball', 'tableTennis', 'squash',
+    'basketball', 'soccer', 'volleyball', 'golf', 'baseballSoftball', 'ultimate',
+    'roadCycling', 'mountainBiking',
+    'climb', 'ski', 'snowboard', 'skate',
+    'boxing', 'kickboxing', 'jiuJitsu', 'martialArts',
+    'dance',
+    'dogWalk', 'walkCommute', 'bikeCommute', 'deepClean', 'moving', 'strollerWalk', 'gardening'
+  );
+$$;
+
+-- What was trained (`Activity`): `"sport": "<listed sport>"`, or `"sport": "custom"` with
+-- a `customSport` name of 1 to 20 characters on one line. The app holds the exact 20;
+-- the database caps it loosely at 500 code points, as it does other text.
+create function private.is_activity(payload jsonb)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select coalesce(case
+    when payload ->> 'sport' = 'custom' then
+      private.is_short_text(payload -> 'customSport', one_line => true)
+      and char_length(payload ->> 'customSport') <= 500
+    else
+      private.is_sport(payload ->> 'sport') and not payload ? 'customSport'
+  end, false);
+$$;
+
+-- `photos` (`Photos`): 1 to 3 distinct {"path": "<member id>/..."}, the first being the
+-- cover. Members only point at their own uploads.
+create function private.photos_are_valid(photos jsonb, member uuid)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select jsonb_typeof(photos) = 'array'
+    and jsonb_array_length(photos) between 1 and 3
+    and not exists (
+      select 1 from jsonb_array_elements(photos) p
+      where jsonb_typeof(p) <> 'object'
+         or (select count(*) from jsonb_object_keys(p) k where k <> 'path') > 0
+         or jsonb_typeof(p -> 'path') is distinct from 'string'
+         or not starts_with(p ->> 'path', member::text || '/')
+         or char_length(p ->> 'path') <= char_length(member::text || '/')
+    )
+    and (select count(distinct p ->> 'path') from jsonb_array_elements(photos) p)
+        = jsonb_array_length(photos);
+$$;
+
 -- The kind-specific object from the wire JSON (`training`, `meal` or `disclaimer`),
--- checked against the same rules as the Swift contract.
+-- checked against the same rules as the Swift contract. A rule that can't be decided
+-- (a missing or JSON null field) counts as broken: a check constraint lets a null through.
 create function private.check_in_payload_is_valid(
   kind public.check_in_kind, payload jsonb, member uuid
 )
@@ -163,23 +228,20 @@ language sql
 immutable
 set search_path = ''
 as $$
-  select jsonb_typeof(payload) = 'object'
+  select coalesce(jsonb_typeof(payload) = 'object'
     and case
       when kind = 'trained' then
         payload ?& array['sport', 'minutes']
         and (select count(*) from jsonb_object_keys(payload) k
-             where k not in ('sport', 'minutes', 'photo', 'caption')) = 0
-        and payload ->> 'sport' in (
-          'run', 'strength', 'yoga', 'pilates', 'swim', 'cycle',
-          'ball', 'climb', 'hike', 'dance', 'other'
-        )
+             where k not in ('sport', 'customSport', 'minutes', 'photos', 'caption')) = 0
+        and private.is_activity(payload)
         and jsonb_typeof(payload -> 'minutes') = 'number'
         and (payload ->> 'minutes') ~ '^[0-9]+$'
         and (payload ->> 'minutes')::int between 1 and 600
       when kind in ('healthyMeal', 'cheatMeal') then
         payload ? 'slot'
         and (select count(*) from jsonb_object_keys(payload) k
-             where k not in ('slot', 'photo', 'caption')) = 0
+             where k not in ('slot', 'photos', 'caption')) = 0
         and payload ->> 'slot' in ('breakfast', 'lunch', 'dinner', 'snack')
       when kind = 'disclaimer' then
         payload ? 'text'
@@ -187,17 +249,7 @@ as $$
         and private.is_short_text(payload -> 'text', one_line => false)
     end
     and (not payload ? 'caption' or private.is_short_text(payload -> 'caption', one_line => true))
-    -- A photo is {"path": "<member id>/..."}: members only point at their own uploads.
-    and (
-      not payload ? 'photo'
-      or (
-        jsonb_typeof(payload -> 'photo') = 'object'
-        and (select count(*) from jsonb_object_keys(payload -> 'photo') k where k <> 'path') = 0
-        and jsonb_typeof(payload -> 'photo' -> 'path') = 'string'
-        and starts_with(payload -> 'photo' ->> 'path', member::text || '/')
-        and char_length(payload -> 'photo' ->> 'path') > char_length(member::text || '/')
-      )
-    );
+    and (not payload ? 'photos' or private.photos_are_valid(payload -> 'photos', member)), false);
 $$;
 
 create table public.check_ins (
@@ -225,7 +277,17 @@ create table public.check_ins (
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
 
--- Whether a photo path is uploaded, and whether a check-in already points at it.
+-- Every photo path a saved check-in points at, one row each. The primary key is what
+-- makes a photo belong to one check-in: two check-ins (even saved at the same moment)
+-- can't both claim it. Bookkeeping only, so it lives in the unexposed schema.
+create table private.check_in_photos (
+  path text primary key,
+  check_in_id uuid not null references public.check_ins (id) on delete cascade,
+  position smallint not null check (position between 1 and 3),
+  unique (check_in_id, position)
+);
+
+-- Whether a photo path is uploaded, and whether a saved check-in points at it.
 -- Security definer so these see every object and check-in, not just the caller's.
 create function private.photo_is_uploaded(path text)
 returns boolean
@@ -246,7 +308,7 @@ stable
 security definer
 set search_path = ''
 as $$
-  select exists (select 1 from public.check_ins where payload -> 'photo' ->> 'path' = path);
+  select exists (select 1 from private.check_in_photos p where p.path = photo_is_in_use.path);
 $$;
 
 revoke execute on function private.photo_is_uploaded(text) from public;
@@ -255,7 +317,7 @@ grant execute on function private.photo_is_uploaded(text) to authenticated;
 grant execute on function private.photo_is_in_use(text) to authenticated;
 
 -- Everything a check-in refers to is fixed when it is saved: its times (below), its
--- audience (only in the saving transaction) and its photo (already uploaded, used by
+-- audience (only in the saving transaction) and its photos (already uploaded, used by
 -- no other check-in, and locked in storage while the check-in exists).
 --
 -- The app picks `created_at` and `day`, so the server bounds them by its own clock:
@@ -275,14 +337,16 @@ begin
       using errcode = '23514';
   end if;
   -- Only the member's own folder: any other path fails the payload check without
-  -- saying whether that photo exists.
-  if starts_with(new.payload -> 'photo' ->> 'path', new.member_id::text || '/') then
-    if not private.photo_is_uploaded(new.payload -> 'photo' ->> 'path') then
-      raise exception 'upload a check-in''s photo before saving it' using errcode = '23514';
-    end if;
-    if private.photo_is_in_use(new.payload -> 'photo' ->> 'path') then
-      raise exception 'another check-in already uses this photo' using errcode = '23514';
-    end if;
+  -- saying whether that photo exists. Whether a photo is taken is left to
+  -- check_in_photos' primary key, which also holds when two saves race.
+  if exists (
+    select 1 from jsonb_array_elements(
+      case when jsonb_typeof(new.payload -> 'photos') = 'array' then new.payload -> 'photos' else '[]' end
+    ) p
+    where starts_with(p ->> 'path', new.member_id::text || '/')
+      and not private.photo_is_uploaded(p ->> 'path')
+  ) then
+    raise exception 'upload a check-in''s photos before saving it' using errcode = '23514';
   end if;
   return new;
 end;
@@ -291,6 +355,28 @@ $$;
 create trigger check_ins_stamp
 before insert on public.check_ins
 for each row execute function private.stamp_check_in();
+
+-- After the payload check passes, claim the check-in's photos.
+create function private.claim_check_in_photos()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into private.check_in_photos (path, check_in_id, position)
+  select p.value ->> 'path', new.id, p.ordinality
+  from jsonb_array_elements(coalesce(new.payload -> 'photos', '[]')) with ordinality p;
+  return null;
+exception
+  when unique_violation then
+    raise exception 'another check-in already uses this photo' using errcode = '23505';
+end;
+$$;
+
+create trigger check_ins_claim_photos
+after insert on public.check_ins
+for each row execute function private.claim_check_in_photos();
 
 -- A check-in's audience: the squads it was sent to (one, some or all of the
 -- member's, at most 3), in the order the member picked them.
@@ -376,9 +462,9 @@ security definer
 set search_path = ''
 as $$
   select exists (
-    select 1 from public.check_ins c
-    where c.payload -> 'photo' ->> 'path' = path
-      and private.can_see_check_in(c.id)
+    select 1 from private.check_in_photos p
+    where p.path = can_see_photo.path
+      and private.can_see_check_in(p.check_in_id)
   );
 $$;
 
@@ -475,6 +561,7 @@ as $$
 declare
   payload_key text;
   audience_size int;
+  saved public.check_ins;
 begin
   if (check_in ->> 'version') is distinct from '1' then
     raise exception 'unsupported check-in version: %', check_in ->> 'version'
@@ -504,23 +591,55 @@ begin
   if audience_size not between 1 and 3 then
     raise exception 'a check-in goes to 1 to 3 squads, not %', audience_size using errcode = '22023';
   end if;
-  if (select count(distinct value) from jsonb_array_elements_text(check_in -> 'audience')) <> audience_size then
+  if (select count(distinct value::uuid) from jsonb_array_elements_text(check_in -> 'audience')) <> audience_size then
     raise exception 'a check-in''s audience lists each squad once' using errcode = '22023';
   end if;
 
-  insert into public.check_ins (id, member_id, day, created_at, kind, payload, version)
-  values (
-    (check_in ->> 'id')::uuid,
-    (check_in ->> 'member')::uuid,
-    (check_in ->> 'day')::date,
-    (check_in ->> 'createdAt')::timestamptz,
-    (check_in ->> 'kind')::public.check_in_kind,
-    check_in -> payload_key,
-    1
-  );
-  insert into public.check_in_squads (check_in_id, squad_id, position)
-  select (check_in ->> 'id')::uuid, squad::uuid, position
-  from jsonb_array_elements_text(check_in -> 'audience') with ordinality as a (squad, position);
+  -- Already saved? A retry is the same check-in sent again, so it succeeds without a
+  -- second row; the same id with other contents is a bug in the app and is refused.
+  -- Looking first means a retry also succeeds after the insert's own checks would
+  -- refuse it (the 48-hour window, the photos now being in use).
+  select * into saved from public.check_ins where id = (check_in ->> 'id')::uuid;
+  if not found then
+    begin
+      insert into public.check_ins (id, member_id, day, created_at, kind, payload, version)
+      values (
+        (check_in ->> 'id')::uuid,
+        (check_in ->> 'member')::uuid,
+        (check_in ->> 'day')::date,
+        (check_in ->> 'createdAt')::timestamptz,
+        (check_in ->> 'kind')::public.check_in_kind,
+        check_in -> payload_key,
+        1
+      );
+      insert into public.check_in_squads (check_in_id, squad_id, position)
+      select (check_in ->> 'id')::uuid, squad::uuid, position
+      from jsonb_array_elements_text(check_in -> 'audience') with ordinality as a (squad, position);
+      return;
+    exception when unique_violation then
+      -- A retry that arrived while the first try was still running waits for it here
+      -- and then collides with it, on the id or on any other unique rule. If the
+      -- first try is what it collided with, that is the saved row; else the error stands.
+      select * into saved from public.check_ins where id = (check_in ->> 'id')::uuid;
+      if not found then
+        raise;
+      end if;
+    end;
+  end if;
+
+  -- The caller also sees squad-mates' check-ins, so the member is compared too.
+  if saved.member_id = (check_in ->> 'member')::uuid
+     and saved.kind = (check_in ->> 'kind')::public.check_in_kind
+     and saved.day = (check_in ->> 'day')::date
+     and saved.created_at = (check_in ->> 'createdAt')::timestamptz
+     and saved.payload = check_in -> payload_key
+     and array(select squad_id from public.check_in_squads where check_in_id = saved.id order by position)
+         = array(select value::uuid from jsonb_array_elements_text(check_in -> 'audience') with ordinality
+                 order by ordinality)
+  then
+    return;
+  end if;
+  raise exception 'a different check-in is already saved with this id' using errcode = '23505';
 end;
 $$;
 
@@ -558,7 +677,7 @@ grant select on public.check_ins_wire to authenticated;
 
 -- Check-in photos --------------------------------------------------------------
 
--- Private bucket. Objects live at "<member id>/<file>", the path a check-in's photo
+-- Private bucket. Objects live at "<member id>/<file>", the path each of a check-in's photos
 -- points at. A photo on a saved check-in can't be deleted or replaced until the
 -- check-in is deleted. There is no update policy, so nothing is overwritten in place.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
