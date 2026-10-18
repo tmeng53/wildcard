@@ -76,4 +76,15 @@ if [ "${PRINT_PREVIEWS:-}" = "1" ]; then
   done
 fi
 
+# The failing tests and their messages, last, so they stay in a log's tail after the previews.
+if [ "$status" -ne 0 ] && [ -d "$out/Wildcard.xcresult" ]; then
+  echo "==> failing tests"
+  xcrun xcresulttool get test-results summary --path "$out/Wildcard.xcresult" --compact |
+    python3 -c 'import json, sys
+for failure in json.load(sys.stdin).get("testFailures", []):
+    name = failure.get("testIdentifierString") or failure.get("testName")
+    print("FAILED", name, "--", failure.get("failureText"))' ||
+    echo "couldn't read the test results"
+fi
+
 exit "$status"
