@@ -231,6 +231,16 @@
         }
       }
     },
+    "已选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Picked"
+          }
+        }
+      }
+    },
     "开跑": {
       "localizations": {
         "en": {

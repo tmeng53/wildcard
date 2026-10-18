@@ -24,6 +24,7 @@ final class StyleGuideUITests: XCTestCase {
         }
 
         app.buttons["游泳池"].firstMatch.tap()
+        waitForLabel(of: banner(in: app), "label CONTAINS %@", "游泳池", "the banner didn't switch back to 游泳池")
         let checkIn = app.buttons["styleguide.checkin"]
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()

@@ -35,6 +35,24 @@ struct ChoiceSection: View {
                     .scrollIndicators(.hidden)
                     .horizontalScrollFade()
                 }
+                // Sign-up's picked row: removable pills, so the variant shows up in review.
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    SectionLabel(Text("已选", bundle: .module))
+                        .padding(.horizontal, Space.m)
+                    ScrollView(.horizontal) {
+                        HStack(spacing: Sizing.pillGap) {
+                            ForEach(SampleSport.allCases.filter(picked.contains), id: \.self) { sport in
+                                ChoicePill(sport.name, systemImage: sport.symbol, isSelected: true, isRemovable: true) {
+                                    toggle(sport)
+                                }
+                                .accessibilityIdentifier("styleguide.picker.picked.\(sport.rawValue)")
+                            }
+                        }
+                        .padding(.horizontal, Space.m)
+                    }
+                    .scrollIndicators(.hidden)
+                    .horizontalScrollFade()
+                }
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     SectionLabel(Text("全部运动", bundle: .module))
                         .padding(.horizontal, Space.m)
