@@ -97,7 +97,8 @@ select throws_ok(
 );
 delete from public.check_ins where id = '11111111-1111-1111-1111-111111111111';
 select is(
-  (select count(*)::int from public.check_in_photos), 0, 'deleting a check-in frees its photos'
+  (select count(*)::int from public.check_in_photos where check_in_id = '11111111-1111-1111-1111-111111111111'), 0,
+  'deleting a check-in frees its photos'
 );
 
 -- Time zones and accounts.
@@ -107,16 +108,16 @@ select throws_ok(
 );
 select lives_ok(
   $$insert into public.profiles (member_id, time_zone) values ('a0000000-0000-0000-0000-000000000001', 'America/Los_Angeles');
-    update public.profiles set time_zone = 'America/Toronto'$$,
+    update public.profiles set time_zone = 'America/Toronto' where member_id = 'a0000000-0000-0000-0000-000000000001'$$,
   'a member''s time zone is saved and changed'
 );
 select is(
-  (select time_zone from public.profiles), 'America/Toronto', 'the change is kept'
+  (select time_zone from public.profiles where member_id = 'a0000000-0000-0000-0000-000000000001'), 'America/Toronto', 'the change is kept'
 );
 delete from auth.users where id = 'a0000000-0000-0000-0000-000000000001';
 select is(
   (select count(*)::int from public.check_ins where member_id = 'a0000000-0000-0000-0000-000000000001')
-  + (select count(*)::int from public.profiles)
+  + (select count(*)::int from public.profiles where member_id = 'a0000000-0000-0000-0000-000000000001')
   + (select count(*)::int from public.squad_members where member_id = 'a0000000-0000-0000-0000-000000000001'),
   0, 'deleting an account takes its check-ins, profile and memberships with it'
 );

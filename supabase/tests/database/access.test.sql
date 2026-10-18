@@ -1,7 +1,7 @@
 -- Only our API reaches the data: the app's tokens (anon, authenticated) can't read or
 -- write any table or reach the photo files, even through Supabase's own REST API.
 begin;
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, email) values ('a0000000-0000-0000-0000-000000000001', 'ann@example.com');
 insert into storage.objects (bucket_id, name, owner_id) values
@@ -32,6 +32,21 @@ select is(
      and (has_function_privilege('anon', p.oid, 'execute') or has_function_privilege('authenticated', p.oid, 'execute'))),
   0, 'the app''s tokens can''t call any function'
 );
+-- What a later migration adds is locked too.
+create table public.later_table (id int);
+create function public.later_function() returns int language sql as 'select 1';
+select ok(
+  not has_table_privilege('authenticated', 'public.later_table', 'select'),
+  'a table a later migration adds gets no grants for the app''s tokens'
+);
+select ok(
+  not has_function_privilege('anon', 'public.later_function()', 'execute')
+  and not has_function_privilege('authenticated', 'public.later_function()', 'execute'),
+  'a function a later migration adds can''t be called by the app''s tokens'
+);
+drop function public.later_function();
+drop table public.later_table;
+
 select is_empty(
   $$select 1 from storage.buckets where id = 'check-in-photos' and public$$,
   'the photos bucket is private'
