@@ -15,17 +15,23 @@ extension Animation {
 
 /// Shrinks a control while it is held (`snappy`) and springs it back with `panel`.
 public struct PressableButtonStyle: ButtonStyle {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     public init() {}
 
     public func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? Motion.pressedScale : 1)
+        configuration.label.modifier(PressFeedback(isPressed: configuration.isPressed))
+    }
+}
+
+/// The press every Wildcard button shares. With Reduce Motion on, the control doesn't shrink.
+struct PressFeedback: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let isPressed: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isPressed && !reduceMotion ? Motion.pressedScale : 1)
             .animation(
-                .wildcard(configuration.isPressed ? Motion.snappy : Motion.panel, reduceMotion: reduceMotion),
-                value: configuration.isPressed
-            )
+                .wildcard(isPressed ? Motion.snappy : Motion.panel, reduceMotion: reduceMotion), value: isPressed)
     }
 }
 #endif

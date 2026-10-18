@@ -232,12 +232,9 @@ struct MotionSection: View {
             } label: {
                 (atFinish ? Text("回到起点", bundle: .module) : Text("开跑", bundle: .module))
                     .typeStyle(TypeRamp.action)
-                    .foregroundStyle(Color(role: .onSignature, in: theme))
                     .padding(.horizontal, Space.xl)
-                    .frame(height: Sizing.checkInHeight)
-                    .background(Color(role: .signature, in: theme), in: Capsule())
             }
-            .buttonStyle(PressableButtonStyle())
+            .buttonStyle(PrimaryButtonStyle())
             .accessibilityIdentifier("styleguide.motion.play")
         }
     }

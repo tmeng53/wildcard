@@ -311,6 +311,16 @@
         }
       }
     },
+    "清除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
     "游泳池": {
       "localizations": {
         "en": {
@@ -327,6 +337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canvas"
+          }
+        }
+      }
+    },
+    "移除这一项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removes this choice"
           }
         }
       }

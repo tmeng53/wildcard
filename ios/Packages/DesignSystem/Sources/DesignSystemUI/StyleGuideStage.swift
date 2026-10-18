@@ -233,7 +233,6 @@ private struct CheckInControl: View {
 /// The primary action: a solid signature capsule. Its plus turns into a cross and it keeps a
 /// word (收起) when open, so it is never an icon alone.
 private struct CheckInButton: View {
-    @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var isOpen: Bool
 
@@ -249,12 +248,9 @@ private struct CheckInButton: View {
                 (isOpen ? Text("收起", bundle: .module) : Text("打卡", bundle: .module))
                     .typeStyle(TypeRamp.action)
             }
-            .foregroundStyle(Color(role: .onSignature, in: theme))
             .padding(.horizontal, Space.l)
-            .frame(height: Sizing.checkInHeight)
-            .background(Color(role: .signature, in: theme), in: Capsule())
         }
-        .buttonStyle(PressableButtonStyle())
+        .buttonStyle(PrimaryButtonStyle())
         .accessibilityIdentifier("styleguide.checkin")
     }
 }
