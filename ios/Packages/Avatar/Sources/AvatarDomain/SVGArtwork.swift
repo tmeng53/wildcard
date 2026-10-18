@@ -8,7 +8,8 @@ extension Artwork {
     /// Reads one flat SVG art file: `path`, `circle`, `ellipse` and `rect` elements, grouped
     /// with `g` if you like, colored with hex fills and strokes. Anything else is an error,
     /// so art never looks different on the phone from how it looked in the design tool.
-    public init(svg: String) throws(SVGProblem) {
+    /// Internal: callers load art through `Figure`, which reports `AvatarError.invalidSVG`.
+    init(svg: String) throws(SVGProblem) {
         let reader = SVGReader()
         let parser = XMLParser(data: Data(svg.utf8))
         parser.delegate = reader
@@ -20,7 +21,8 @@ extension Artwork {
     }
 }
 
-/// Paint attributes a `g` passes down to its children.
+/// Paint attributes a `g` passes down to its children. Opacity isn't one: a group fades
+/// as one piece in SVG, which per-shape opacity can't show, so `opacity` is only read on shapes.
 private struct Style {
     var fill: RGBAColor? = RGBAColor(red: 0, green: 0, blue: 0)  // SVG's default fill is black
     var fillOpacity = 1.0
@@ -36,7 +38,6 @@ private final class SVGReader: NSObject, XMLParserDelegate {
     var viewBox: (width: Double, height: Double)?
     var problem: SVGProblem?
     private var styles = [Style()]
-    private var opacities = [1.0]
     /// Inside `title`, `desc` or `metadata`, whose content isn't drawn.
     private var ignoredDepth = 0
 
@@ -70,10 +71,7 @@ private final class SVGReader: NSObject, XMLParserDelegate {
             ignoredDepth -= 1
             return
         }
-        if name == "svg" || name == "g" {
-            styles.removeLast()
-            opacities.removeLast()
-        }
+        if name == "svg" || name == "g" { styles.removeLast() }
     }
 
     private func start(_ name: String, _ given: [String: String]) throws(SVGProblem) {
@@ -82,6 +80,7 @@ private final class SVGReader: NSObject, XMLParserDelegate {
         var geometry: [String: String] = [:]
         for (key, value) in Self.expandingStyle(given) {
             if key == "opacity" {
+                guard name != "svg", name != "g" else { throw .unsupportedAttribute("opacity on \(name)") }
                 opacity = try number(value)
             } else if Self.geometry.contains(key) {
                 geometry[key] = value
@@ -89,17 +88,14 @@ private final class SVGReader: NSObject, XMLParserDelegate {
                 try paint(key, value, into: &style)
             }
         }
-        let combined = opacities[opacities.count - 1] * opacity
         switch name {
         case "svg":
             viewBox = try viewBox(geometry)
             styles.append(style)
-            opacities.append(combined)
         case "g":
             styles.append(style)
-            opacities.append(combined)
         default:
-            add(try shape(name, geometry), style, combined)
+            add(try shape(name, geometry), style, opacity)
         }
     }
 

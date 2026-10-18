@@ -71,9 +71,18 @@ public struct CharacterCanvas: View {
         for shape in shapes {
             var each = context
             each.opacity *= shape.opacity
-            if let fill = shape.fill { each.fill(shape.path, with: .color(fill)) }
-            if let stroke = shape.stroke { each.stroke(shape.path, with: .color(stroke.color), style: stroke.style) }
+            guard shape.opacity < 1, shape.fill != nil, shape.stroke != nil else {
+                paint(shape, in: &each)
+                continue
+            }
+            // As in SVG, fill and stroke fade together, so the stroke doesn't darken the fill under it.
+            each.drawLayer { layer in paint(shape, in: &layer) }
         }
+    }
+
+    private func paint(_ shape: FigureDrawing.DrawableShape, in context: inout GraphicsContext) {
+        if let fill = shape.fill { context.fill(shape.path, with: .color(fill)) }
+        if let stroke = shape.stroke { context.stroke(shape.path, with: .color(stroke.color), style: stroke.style) }
     }
 }
 

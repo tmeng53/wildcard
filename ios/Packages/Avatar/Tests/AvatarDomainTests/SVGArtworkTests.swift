@@ -1,13 +1,14 @@
-import AvatarDomain
 import Testing
+
+@testable import AvatarDomain
 
 @Test func readsShapesWithTheirPaint() throws {
     let art = try Artwork(
         svg: """
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
               <title>arm</title>
-              <g opacity="0.5" fill="#2D5BA0">
-                <rect x="10" y="20" width="30" height="40"/>
+              <g fill="#2D5BA0">
+                <rect x="10" y="20" width="30" height="40" opacity="0.5"/>
                 <path d="M0 0 L10 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
               </g>
               <circle cx="5" cy="6" r="2" style="fill: #22252E; fill-opacity: 0.25"/>
@@ -46,6 +47,10 @@ import Testing
     }
     #expect(throws: SVGProblem.unsupportedElement("linearGradient")) {
         try Artwork(svg: #"<svg viewBox="0 0 10 10"><linearGradient/></svg>"#)
+    }
+    // A group fades as one piece in SVG, which per-shape opacity can't draw.
+    #expect(throws: SVGProblem.unsupportedAttribute("opacity on g")) {
+        try Artwork(svg: #"<svg viewBox="0 0 10 10"><g opacity="0.5"><circle r="1"/></g></svg>"#)
     }
     #expect(throws: SVGProblem.invalidColor("red")) {
         try Artwork(svg: #"<svg viewBox="0 0 10 10"><circle r="1" fill="red"/></svg>"#)
