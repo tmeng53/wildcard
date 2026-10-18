@@ -177,6 +177,25 @@ struct LayoutTests {
         #expect(Sizing.capsuleGlyph < Sizing.capsuleIcon)
     }
 
+    @Test func pickerControlsMatchTheSpec() {
+        #expect(Radius.tile == 13)
+        #expect([Sizing.searchFieldHeight, Sizing.pillHeight, Sizing.tileHeight] == [44, 36, 86])
+        #expect([Sizing.pillGlyph, Sizing.tileGlyph, Sizing.checkBadge] == [15, 28, 18])
+        #expect([Sizing.categoryPillHeight, Sizing.categoryItemInset] == [34, 14])
+        #expect(Sizing.selectionStroke == 1.75)
+        #expect([Lift.opacity, Lift.radius, Lift.y] == [0.12, 1, 1])
+    }
+
+    /// Pills and category pills draw smaller than a finger, so they pad out to the tap target;
+    /// the search field and tiles are already big enough.
+    @Test func pickerControlsReachTheTapTarget() {
+        #expect(Sizing.pillHeight < Sizing.minimumTapTarget)
+        #expect(Sizing.categoryPillHeight < Sizing.minimumTapTarget)
+        #expect(Sizing.searchFieldHeight >= Sizing.minimumTapTarget)
+        #expect(Sizing.tileHeight >= Sizing.minimumTapTarget)
+        #expect(Sizing.checkBadge < Sizing.tileGlyph)
+    }
+
     @Test func frostGetsWhiterFromNavigationToCards() {
         #expect([Frost.capsuleFill, Frost.bannerFill, Frost.cardFill] == [0.5, 0.62, 0.76])
         #expect(Tint.selected == 0.14)
@@ -204,6 +223,14 @@ struct TypographyTests {
         ].map(\.size)
         #expect(sizes == [30, 24, 17, 16, 15, 13, 12])
         #expect(TypeRamp.action.size == 19)
+    }
+
+    @Test func pickerRungsMatchTheSpec() {
+        let rungs = [TypeRamp.calloutEmphasis, TypeRamp.tileLabel, TypeRamp.field, TypeRamp.sectionLabel]
+        #expect(rungs.map(\.size) == [15, 14, 17, 13])
+        #expect(rungs.map(\.face) == [.text(.semibold), .text(.medium), .text(.medium), .text(.semibold)])
+        #expect(TypeRamp.sectionLabel.tracking == 0.26)
+        #expect(TypeRamp.calloutEmphasis.anchor == TypeRamp.callout.anchor)
     }
 
     @Test func scoreboardRampMatchesTheSpec() {
