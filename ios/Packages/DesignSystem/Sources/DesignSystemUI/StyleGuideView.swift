@@ -21,14 +21,9 @@ public struct StyleGuideView: View {
                 .padding(.bottom, Space.xxl)
             }
         }
-        .background {
-            // Sky behind the status bar and the top overscroll, canvas below.
-            VStack(spacing: 0) {
-                Color(role: .skyWash).frame(height: 400)
-                Color(role: .canvas)
-            }
-            .ignoresSafeArea()
-        }
+        // Unclipped, so the header's sky reaches behind the status bar and into the top overscroll.
+        .scrollClipDisabled()
+        .background(Color(role: .canvas).ignoresSafeArea())
     }
 }
 
@@ -56,11 +51,14 @@ private struct ScoreHeader: View {
             .padding(.horizontal, Space.gutter)
             .padding(.top, Space.l)
             .padding(.bottom, Space.l)
-            TrackStrip(lanes: 4)
-                .frame(height: 64)
+            TrackStrip(lanes: 3)
+                .frame(height: 72)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(role: .skyWash))
+        .background(alignment: .bottom) {
+            // Taller than the header, so pulling the page down shows more sky, not a gap.
+            Color(role: .skyWash).frame(height: 2000)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("styleguide.header")
     }
