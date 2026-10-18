@@ -1,0 +1,28 @@
+#if canImport(SwiftUI)
+import DesignSystem
+import SwiftUI
+
+extension Animation {
+    /// The animation for a motion token. With Reduce Motion on, it becomes a short ease-out
+    /// with no overshoot.
+    public static func wildcard(_ spring: Spring, reduceMotion: Bool = false) -> Animation {
+        if reduceMotion {
+            return .easeOut(duration: Motion.reducedDuration)
+        }
+        return .spring(response: spring.response, dampingFraction: spring.dampingFraction)
+    }
+}
+
+/// Shrinks a control while it is held, with the `snappy` spring.
+public struct PressableButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? Motion.pressedScale : 1)
+            .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: configuration.isPressed)
+    }
+}
+#endif

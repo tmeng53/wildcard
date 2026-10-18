@@ -3,7 +3,7 @@ name: verify-wildcard
 description: How an agent that did not write a change proves Wildcard works end to end (the iOS app through the simulator screenshots and UI-test results CI's macOS job uploads, local Supabase in Docker), checks the evidence (simulator screenshots, database rows) and gives a PASS, PASS+NOTES or FAIL verdict tied to the exact commit and diff. Use when asked to verify a PR, branch or commit, or to give a verdict on another agent's change.
 ---
 
-<!-- From engineering-skills/verify-product. Sections 2, 3 and 5 are filled in by the PR that adds the Xcode project and the first Supabase migration; until then a verifier drives each change from its PR's own docs and tests. -->
+<!-- From engineering-skills/verify-product. The iOS parts of sections 2, 3 and 5 are filled in; the Supabase parts are filled in by the PR that adds the first migration. -->
 
 # Verify Wildcard
 
@@ -44,24 +44,18 @@ mkdir -p /tmp/verify-wildcard/$(git rev-parse --short HEAD)
 
 ## 2. Launch the stack
 
-<In a cloud session, what the session-start hook already did and the line it prints.> If the stack is already running, reuse it and note in the verdict that you didn't start it. Otherwise:
+**The iOS app.** A Linux cloud session can't run the simulator, so the app runs in CI: the `ios` job of the `verify` workflow builds the head commit, runs the UI tests on an iPhone simulator (`scripts/ios-test.sh`) and uploads the screenshots the tests keep as the artifact `ios-screenshots-<full head SHA>`. Find the workflow run for the head commit and download that artifact into `/tmp/verify-wildcard/<short sha>/screenshots/`. On a Mac, run `scripts/ios-test.sh` in the worktree instead; it writes the same files to `build/ios/screenshots/`.
 
-```sh
-<install command>
-<env file setup>
-<start command, e.g. docker compose up -d --wait --wait-timeout 120>
-```
+**Local Supabase:** filled in by the PR that adds the first migration.
 
 ## 3. Health check
 
-All must pass before you drive anything (the expected values come from a real run):
+All must pass before you drive anything:
 
-```sh
-<command>    # <what healthy prints>
-<command>    # <what healthy prints>
-```
+- The `ios` job ran on exactly the head commit you pinned and concluded `success`; its log ends with `ios-test: ok`.
+- The screenshots artifact has one PNG per screenshot the UI tests name (`XCTAttachment` names in `ios/WildcardUITests/`), each named after it, e.g. `01-style-guide-zh-top.png`.
 
-If a service won't start, stop: the verdict is FAIL, reason "stack did not start", with `<logs command>` saved to `/tmp/verify-wildcard/<short sha>/`.
+If the job failed or the artifact is missing, stop: the verdict is FAIL, reason "the app didn't build or launch", with the failing step's log saved to `/tmp/verify-wildcard/<short sha>/`. A failed run also uploads `ios-xcresult-<full head SHA>`.
 
 ## 4. Drive the journeys
 
@@ -84,10 +78,9 @@ Every journey ends with evidence you read yourself. Keep only the kinds a journe
 
 | Evidence | How to check it |
 | --- | --- |
-| **<External system state>** | <query against the system itself>; <each field and its value, e.g. `status` is `<X>`, result `<success code>`, amount exactly `<n>`> |
-| **<Signatures>** | <verify with the public key; changing one byte must make it fail> |
-| **<Database rows>** | <psql command>; the rows exist, and nothing immutable was edited or deleted |
-| **What a user or agent sees** | <no internal error messages or internals in public-facing copy> |
+| **Simulator screenshots** | Open every one yourself. The screen shows what the journey says, in Chinese first (and English where a test launches in `en`), with no clipped or overlapping text, no placeholder or missing glyphs, and the look in `/mnt/project-files/ui-critique/critique.md`. |
+| **Database rows** | Filled in by the PR that adds the first migration. |
+| **What a user or agent sees** | No internal error messages, ids or internals in public-facing copy. |
 
 Then try at least one thing the author may not have: the change's edge case, a wrong input, or a repeat of the same call. wildcard must refuse what it says it refuses.
 

@@ -2,6 +2,7 @@
 # GitHub-hosted runners are free while the repo is public. Never use a self-hosted
 # runner here: on a public repo a fork's PR could run code on that machine.
 # macOS runners have no Docker, so the PR that adds supabase/migrations adds a Linux job for it.
+# The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 name: verify
 
 on:
@@ -28,4 +29,32 @@ jobs:
         with:
           persist-credentials: false
       - run: swift --version
+      - name: Install SwiftLint if the image lacks it
+        run: command -v swiftlint || brew install swiftlint
       - run: scripts/verify.sh
+
+  # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
+  # so reviewers and verifiers see every visible change without a Mac.
+  ios:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: scripts/ios-test.sh
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots-${{ github.sha }}
+          path: build/ios/screenshots
+          if-no-files-found: warn
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcresult-${{ github.sha }}
+          path: build/ios/Wildcard.xcresult

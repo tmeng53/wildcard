@@ -1,0 +1,18 @@
+# Style is swift-format's job (.swift-format); SwiftLint adds the rules it doesn't cover.
+included:
+  - ios
+excluded:
+  - ios/**/.build
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - fatal_error_message
+  - unowned_variable_capture
+disabled_rules:
+  - trailing_comma       # swift-format owns commas
+  - opening_brace        # swift-format owns braces
+  - line_length          # swift-format owns line length
+identifier_name:
+  excluded: [id, s, m, l, xs, xl, xxs, xxl]
+force_try: error
+force_unwrapping: error

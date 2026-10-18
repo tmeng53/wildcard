@@ -4,6 +4,22 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ran=0
+if compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
+  echo "==> swift format lint"
+  swift format lint --strict --recursive ios
+  # SwiftLint isn't part of the Swift toolchain. CI must have it; elsewhere a missing
+  # binary makes this one check inconclusive, and says so.
+  if type -P swiftlint >/dev/null; then
+    echo "==> swiftlint"
+    swiftlint lint --strict --quiet
+  elif [ "${CI:-}" = "true" ]; then
+    echo "swiftlint is not installed on this CI runner" >&2
+    exit 1
+  else
+    echo "==> swiftlint: not installed, so this check is inconclusive"
+  fi
+fi
+
 for pkg in ios/Packages/*/; do
   [ -f "$pkg/Package.swift" ] || continue
   echo "==> swift test $pkg"

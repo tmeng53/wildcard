@@ -1,0 +1,196 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "三个队友都练了，就差你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three teammates trained. Just you left."
+          }
+        }
+      }
+    },
+    "今天你练了吗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained today?"
+          }
+        }
+      }
+    },
+    "今日免责声明：下雨了，跑步机也湿了。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's disclaimer: it rained, and the treadmill got wet too."
+          }
+        }
+      }
+    },
+    "动效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motion"
+          }
+        }
+      }
+    },
+    "周日战报": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunday recap"
+          }
+        }
+      }
+    },
+    "回到起点": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to start"
+          }
+        }
+      }
+    },
+    "墨蓝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ink"
+          }
+        }
+      }
+    },
+    "奖牌金": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medal gold"
+          }
+        }
+      }
+    },
+    "字体": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        }
+      }
+    },
+    "小队本周打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad check-ins this week"
+          }
+        }
+      }
+    },
+    "开跑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go"
+          }
+        }
+      }
+    },
+    "晴空": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear sky"
+          }
+        }
+      }
+    },
+    "次要文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondary text"
+          }
+        }
+      }
+    },
+    "粉笔白": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chalk"
+          }
+        }
+      }
+    },
+    "练了 · 吃得干净 · Coco": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained · Ate clean · Coco"
+          }
+        }
+      }
+    },
+    "草地绿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Field green"
+          }
+        }
+      }
+    },
+    "跑道红": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track red"
+          }
+        }
+      }
+    },
+    "转播蓝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadcast blue"
+          }
+        }
+      }
+    },
+    "配色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
