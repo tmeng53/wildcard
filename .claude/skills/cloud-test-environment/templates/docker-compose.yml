@@ -1,0 +1,22 @@
+# Every service the tests need, the same file on a laptop, in a cloud agent session and in CI.
+# Template from sponge-ai-lab/engineering-skills (cloud-test-environment skill).
+# Pin every image to a full version (a digest when you need byte-identical images), publish ports on 127.0.0.1 only, and give each service a healthcheck
+# so `docker compose up --wait` returns only when they are ready.
+services:
+  postgres:
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-app}']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  # Add a local stand-in for each external system the tests talk to: a standalone
+  # blockchain node, a storage emulator, a mail catcher. Same shape: pinned image,
+  # 127.0.0.1 ports, a healthcheck.

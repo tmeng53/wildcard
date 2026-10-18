@@ -1,0 +1,33 @@
+---
+name: verification
+description: How to prove a change works and how to write tests that can fail. Use before calling any task done, when writing or reviewing tests, and when filling a PR's Verification section.
+---
+
+# Verification
+
+Every claim that something works comes with evidence from the real thing, not a proxy. Adapted from [pstack](https://github.com/cursor/plugins/tree/main/pstack) (MIT).
+
+## Prove it works
+
+- Before you call a task done, run it: call the feature the way its callers do and read the real output. "It compiles" and "tests pass" are not proof of a feature.
+- Every PR's **Verification** section lists each command you ran and the key line it printed. If a check couldn't run, write "inconclusive" and why.
+- Each commit and PR ends in a state you can check, ordered so the sequence proves itself (for example a failing test, then the fix).
+
+## Tests that can fail
+
+- **Test behavior, not implementation.** Call the code the way its users do and assert a literal expected value or observable effect.
+- Before keeping a test, ask: would it still pass if every function it imports returned `undefined`? If yes, rewrite or delete it.
+- Don't use matchers that pass for almost anything (`toBeDefined`, `toBeTruthy`, `toBeInstanceOf`, `not.toThrow`, bare `toHaveBeenCalled`).
+- **Don't mock what you can run.** Storage tests use the real database in a throwaway container, never an in-memory stand-in. Mock only systems you can't run locally, and say why on that line.
+- No focused or skipped tests in a commit.
+
+## Types that make bugs unrepresentable
+
+- No `as` casts: parse with a schema, narrow, or use `satisfies`. `as const` is fine.
+- A `switch` over a union has no `default` that would hide a new member.
+- More than two parameters become one object.
+- Shipped code logs through a structured logger, never the console.
+
+## Enforced
+
+`templates/eslint.config.js` turns every rule above that a linter can check into an error: the banned matchers, no mocks, no focused or skipped tests, no casts, exhaustive switches, max two parameters, no console. It also carries the `errors` skill's rule. Copy it to the repo root.
