@@ -91,12 +91,42 @@
         }
       }
     },
+    "全部运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All sports"
+          }
+        }
+      }
+    },
     "出赛表": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Schedule"
+          }
+        }
+      }
+    },
+    "力量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength"
+          }
+        }
+      }
+    },
+    "力量训练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength training"
           }
         }
       }
@@ -191,12 +221,42 @@
         }
       }
     },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
     "开跑": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Go"
+          }
+        }
+      }
+    },
+    "徒步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiking"
+          }
+        }
+      }
+    },
+    "快走": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walking"
           }
         }
       }
@@ -231,6 +291,16 @@
         }
       }
     },
+    "搜索运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search sports"
+          }
+        }
+      }
+    },
     "攀岩馆": {
       "localizations": {
         "en": {
@@ -257,6 +327,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cheat meal"
+          }
+        }
+      }
+    },
+    "最近使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent"
+          }
+        }
+      }
+    },
+    "有氧": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cardio"
           }
         }
       }
@@ -291,6 +381,16 @@
         }
       }
     },
+    "水上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Water"
+          }
+        }
+      }
+    },
     "浅底": {
       "localizations": {
         "en": {
@@ -321,12 +421,52 @@
         }
       }
     },
+    "游泳": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swimming"
+          }
+        }
+      }
+    },
     "游泳池": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Pool"
+          }
+        }
+      }
+    },
+    "球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Racket"
+          }
+        }
+      }
+    },
+    "球类": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ball games"
+          }
+        }
+      }
+    },
+    "瑜伽": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yoga"
           }
         }
       }
@@ -401,6 +541,16 @@
         }
       }
     },
+    "篮球": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basketball"
+          }
+        }
+      }
+    },
     "线": {
       "localizations": {
         "en": {
@@ -431,6 +581,16 @@
         }
       }
     },
+    "网球": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tennis"
+          }
+        }
+      }
+    },
     "网球场": {
       "localizations": {
         "en": {
@@ -451,6 +611,36 @@
         }
       }
     },
+    "越野跑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail running"
+          }
+        }
+      }
+    },
+    "跑步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running"
+          }
+        }
+      }
+    },
+    "跑走": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run & walk"
+          }
+        }
+      }
+    },
     "跑道": {
       "localizations": {
         "en": {
@@ -461,12 +651,42 @@
         }
       }
     },
+    "跳绳": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jump rope"
+          }
+        }
+      }
+    },
+    "身心": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mind & body"
+          }
+        }
+      }
+    },
     "进度": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Progress"
+          }
+        }
+      }
+    },
+    "选择": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choices"
           }
         }
       }

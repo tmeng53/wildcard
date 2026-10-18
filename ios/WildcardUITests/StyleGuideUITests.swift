@@ -52,6 +52,30 @@ final class StyleGuideUITests: XCTestCase {
         // Let the springs settle before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "09-motion-finish")
+
+    }
+
+    /// The sport picker demo starts with 跑步 picked, so 完成 counts 1; picking 快走 makes it 2.
+    func testSportPickerDemo() {
+        let app = launch(language: "zh-Hans")
+        _ = banner(in: app)
+        let done = app.buttons["styleguide.picker.done"]
+        scrollUntilHittable(done, in: app)
+        app.swipeUp()
+        XCTAssertTrue(app.buttons["styleguide.picker.pill.run"].isSelected, "跑步 isn't picked to start")
+        let walk = app.buttons["styleguide.picker.tile.walk"]
+        XCTAssertTrue(walk.waitForExistence(timeout: 2), "no 快走 tile")
+        XCTAssertFalse(walk.isSelected)
+        XCTAssertTrue(app.buttons["styleguide.picker.category.runWalk"].isSelected)
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "11-picker")
+
+        walk.tap()
+        waitForLabel(of: done, "label CONTAINS %@", "2", "picking 快走 didn't bump 完成 to 2")
+        XCTAssertTrue(walk.isSelected, "the 快走 tile isn't marked selected")
+        // Let the check badge spring in before the shot.
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "12-picker-selected")
     }
 
     func testStyleGuideInEnglish() {
@@ -90,7 +114,7 @@ final class StyleGuideUITests: XCTestCase {
     }
 
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<6 where !element.isHittable {
+        for _ in 0..<12 where !element.isHittable {
             app.swipeUp()
         }
         XCTAssertTrue(element.isHittable, "\(element) never scrolled into view")
