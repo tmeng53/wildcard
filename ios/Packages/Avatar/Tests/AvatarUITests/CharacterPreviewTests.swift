@@ -9,8 +9,8 @@ import Testing
 import UniformTypeIdentifiers
 
 /// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
-/// strip of each persona's cheer, and the player's output frame by frame as animated GIFs of
-/// the five personas.
+/// strip of each persona's cheer, the five cheering together as the player shows it, and
+/// each persona's idle loop, frame by frame as animated GIFs.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -32,11 +32,11 @@ struct CharacterPreviewTests {
             to: folder.appendingPathComponent("01-outfits.png"))
 
         // One character per persona, the looks taking turns.
-        let cast = Persona.all.indices.map { squad[$0 % squad.count] }
-        let idles = try zip(Persona.all, cast).map { persona, look in
+        let cast = Persona.allCases.indices.map { squad[$0 % squad.count] }
+        let idles = try zip(Persona.allCases, cast).map { persona, look in
             try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
         }
-        let cheers = try zip(Persona.all, cast).map { persona, look in
+        let cheers = try zip(Persona.allCases, cast).map { persona, look in
             try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
         }
 
@@ -67,21 +67,20 @@ struct CharacterPreviewTests {
             },
             to: folder.appendingPathComponent("03-check-in-cheer.gif"))
 
-        let idling = zip(cast, idles).map { look, idle in Performance(figure: look.figure, idle: idle) }
-        try writeGIF(
-            frames(seconds: 4) { time in
-                try sideBySide(
-                    zip(cast, idling).map { look, performance in
-                        try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
-                    })
-            },
-            to: folder.appendingPathComponent("04-idle-squad.gif"))
+        // Each persona's idle on its own, exactly one loop long, so the GIF repeats seamlessly.
+        for (persona, (look, idle)) in zip(Persona.allCases, zip(cast, idles)) {
+            try writeGIF(
+                frames(seconds: idle.clip.duration) { time in
+                    try look.render(image: look.figure.pose(idle, at: time), scale: 1, background: Self.mist)
+                },
+                to: folder.appendingPathComponent("04-idle-\(persona.rawValue).gif"))
+        }
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
 
     private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
-        try (0..<Int(seconds * Self.fps)).map { index in try render(Double(index) / Self.fps) }
+        try (0..<Int((seconds * Self.fps).rounded())).map { index in try render(Double(index) / Self.fps) }
     }
 
     /// Images side by side, as one image.

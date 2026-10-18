@@ -18,7 +18,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(figure.layout(figure.restPose)[9].opacity == 0)
 }
 
-@Test(arguments: Persona.all)
+@Test(arguments: Persona.allCases)
 func everyPersonaHasAnIdleAndACheer(persona: Persona) throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
@@ -48,7 +48,7 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
         return (0...Int(cheer.clip.duration * 100)).map { value(figure.pose(cheer, at: Double($0) / 100).parts[1]) }
     }
     // Root y is up-negative, so the highest jump has the smallest minimum.
-    let peaks = try Persona.all.map { try rootValues($0, \.y).min() ?? 0 }
+    let peaks = try Persona.allCases.map { try rootValues($0, \.y).min() ?? 0 }
     #expect(abs(peaks[0] - -10) < 0.5)  // deadpan
     #expect(abs(peaks[1] - -36) < 0.5)  // energetic
     #expect(peaks.min() == peaks[1])
@@ -61,7 +61,7 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
 
 /// Every look stays inside the canvas through every frame of every persona's clips, so a view sized to
 /// the art never cuts off an ear or a racket. The bottom edge is left out: the shadow sits on it.
-@Test(arguments: Persona.all, PlaceholderCharacter.squad)
+@Test(arguments: Persona.allCases, PlaceholderCharacter.squad)
 func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for name in ["idle", "cheer"] {
@@ -75,7 +75,7 @@ func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
                     for point in outline(shape.path).map(placement.transform.apply(to:)) {
                         #expect(
                             point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0,
-                            "\(persona.id) \(name) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
+                            "\(persona.rawValue) \(name) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
                     }
                 }
             }

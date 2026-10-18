@@ -29,7 +29,7 @@ public enum PlaceholderCharacter {
 
     /// A persona's `idle` (loops) or `cheer` (plays once, for a check-in).
     public static func clip(_ name: String, persona: Persona) throws(AvatarError) -> Clip {
-        try Clip.decode(file("clips/\(persona.id)/\(name).json"))
+        try Clip.decode(file("clips/\(persona.rawValue)/\(name).json"))
     }
 
     public static func figure(wearing outfit: Outfit) throws(AvatarError) -> Figure {
