@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server';
 
 import { createDatabase } from './adapters/postgres.js';
 import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
+import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
@@ -13,6 +14,10 @@ const db = createDatabase(config.databaseUrl);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  photos: createSupabasePhotoStorage({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
   log,
 });
 
