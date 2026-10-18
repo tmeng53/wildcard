@@ -3,8 +3,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# With no arguments it runs every check. CI's jobs name the parts their runner can run:
+# swift and web on macOS, supabase on Linux (macOS runners have no Docker).
+parts="${*:-swift web supabase}"
+want() { [[ " $parts " == *" $1 "* ]]; }
+
 ran=0
-if compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
+if want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
   echo "==> swift format lint"
   swift format lint --strict --recursive ios
   # SwiftLint isn't part of the Swift toolchain. CI must have it; elsewhere a missing
@@ -18,16 +23,16 @@ if compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
   else
     echo "==> swiftlint: not installed, so this check is inconclusive"
   fi
+
+  for pkg in ios/Packages/*/; do
+    [ -f "$pkg/Package.swift" ] || continue
+    echo "==> swift test $pkg"
+    swift test --package-path "$pkg"
+    ran=1
+  done
 fi
 
-for pkg in ios/Packages/*/; do
-  [ -f "$pkg/Package.swift" ] || continue
-  echo "==> swift test $pkg"
-  swift test --package-path "$pkg"
-  ran=1
-done
-
-if [ -f web/package.json ]; then
+if want web && [ -f web/package.json ]; then
   echo "==> web"
   pnpm --dir web install --frozen-lockfile
   pnpm --dir web lint
@@ -35,10 +40,10 @@ if [ -f web/package.json ]; then
   ran=1
 fi
 
-# The Supabase CLI runs through npx unless it's installed.
-supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else npx --yes supabase "$@"; fi; }
+# The Supabase CLI runs through npx, pinned, unless it's installed.
+supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else npx --yes supabase@2.121.0 "$@"; fi; }
 
-if [ -d supabase/migrations ]; then
+if want supabase && [ -d supabase/migrations ]; then
   echo "==> supabase"
   supabase db reset
   supabase test db

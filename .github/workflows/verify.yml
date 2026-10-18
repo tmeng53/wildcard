@@ -2,7 +2,7 @@
 # GitHub-hosted runners are free while the repo is public. macos-26 ships Xcode 26, which the
 # App Store requires since 2026-04-28 and Liquid Glass needs. Never use a self-hosted
 # runner here: on a public repo a fork's PR could run code on that machine.
-# macOS runners have no Docker, so the PR that adds supabase/migrations adds a Linux job for it.
+# macOS runners have no Docker, so the database checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 name: verify
 
@@ -32,7 +32,19 @@ jobs:
       - run: swift --version
       - name: Install SwiftLint if the image lacks it
         run: command -v swiftlint || brew install swiftlint
-      - run: scripts/verify.sh
+      - run: scripts/verify.sh swift web
+
+  supabase:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      # Only the services the database tests use.
+      - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
+      - run: scripts/verify.sh supabase
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.

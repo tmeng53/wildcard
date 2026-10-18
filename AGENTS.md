@@ -15,6 +15,7 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 ## Commands
 
 - All checks that run without a Mac (the cloud stop hook runs this): `scripts/verify.sh`. It runs `swift test` for every package in `ios/Packages/`, and the web and backend checks once `web/` and `supabase/` exist.
+- Database: `scripts/verify.sh supabase` resets local Supabase from `supabase/migrations` and runs the pgTAP tests in `supabase/tests/database` (needs Docker and `supabase start`). CI runs it in a Linux job, since macOS runners have no Docker.
 - iOS build, UI tests and screenshots (macOS with Xcode 26 or newer): `scripts/ios-test.sh`. It writes the screenshots the UI tests keep to `build/ios/screenshots/`; CI's `ios` job runs it and uploads them as the `ios-screenshots-<sha>` artifact.
 - Lint (part of `scripts/verify.sh`): `swift format lint --strict --recursive ios` (`.swift-format`) and `swiftlint lint --strict` (`.swiftlint.yml`). `swift format -i -r ios` fixes formatting.
 
