@@ -1,0 +1,31 @@
+# Runs scripts/verify.sh for ready PRs and pushes to main (AGENTS.md, CI).
+# GitHub-hosted runners are free while the repo is public. Never use a self-hosted
+# runner here: on a public repo a fork's PR could run code on that machine.
+# macOS runners have no Docker, so the PR that adds supabase/migrations adds a Linux job for it.
+name: verify
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # A PR's newer push cancels its older run; each commit on main gets its own run.
+  group: verify-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: swift --version
+      - run: scripts/verify.sh
