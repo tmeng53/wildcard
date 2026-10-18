@@ -37,7 +37,9 @@ public struct ChoiceTile: View {
                     .accessibilityHidden(true)
                 title
                     .typeStyle(TypeRamp.tileLabel)
-                    .lineLimit(1)
+                    // A second line at large text sizes rather than cutting the name off.
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
             }
             .foregroundStyle(Color(role: isSelected ? .signatureText : .textPrimary, in: theme))
             .padding(.horizontal, Space.xs)

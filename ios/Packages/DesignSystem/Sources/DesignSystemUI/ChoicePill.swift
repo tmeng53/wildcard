@@ -4,7 +4,7 @@ import SwiftUI
 
 /// A compact choice: a small icon and a label in a capsule, for a row of recent or picked
 /// choices. Plain it is a quiet white capsule; selected it takes the scene's wash with a
-/// signature border. Removable pills end in a cross and remove themselves when tapped.
+/// signature border. Removable pills end in a cross; the caller removes the pill in `action`.
 public struct ChoicePill: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -34,7 +34,7 @@ public struct ChoicePill: View {
             taps += 1
             action()
         } label: {
-            HStack(spacing: Space.xxs + Space.xxs / 2) {
+            HStack(spacing: Sizing.pillGap) {
                 Image(systemName: systemImage)
                     .font(.system(size: Sizing.pillGlyph, weight: .medium))
                     .accessibilityHidden(true)
@@ -49,9 +49,10 @@ public struct ChoicePill: View {
                 }
             }
             .foregroundStyle(Color(role: isSelected ? .signatureText : .textPrimary, in: theme))
-            .padding(.leading, Space.xs + Space.xxs / 2)
-            .padding(.trailing, isRemovable ? Space.xs + Space.xxs / 2 : Space.s)
-            .frame(height: Sizing.pillHeight)
+            .padding(.leading, Sizing.pillInset)
+            .padding(.trailing, isRemovable ? Sizing.pillInset : Space.s)
+            // Grows with Dynamic Type instead of clipping the label.
+            .frame(minHeight: Sizing.pillHeight)
             .background(Color(role: isSelected ? .signatureWash : .canvas, in: theme), in: Capsule())
             .overlay {
                 if isSelected {

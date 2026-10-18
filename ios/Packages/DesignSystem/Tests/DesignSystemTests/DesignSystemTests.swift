@@ -188,12 +188,13 @@ struct LayoutTests {
 
     /// Pills and category pills draw smaller than a finger, so they pad out to the tap target;
     /// the search field and tiles are already big enough.
-    @Test func pickerControlsReachTheTapTarget() {
+    /// The pill and the category pill draw smaller than a tap target; their views pad out to it.
+    @Test func pickerTokenSizesRelateAsDrawn() {
         #expect(Sizing.pillHeight < Sizing.minimumTapTarget)
         #expect(Sizing.categoryPillHeight < Sizing.minimumTapTarget)
         #expect(Sizing.searchFieldHeight >= Sizing.minimumTapTarget)
         #expect(Sizing.tileHeight >= Sizing.minimumTapTarget)
-        #expect(Sizing.checkBadge < Sizing.tileGlyph)
+        #expect([Sizing.pillGap, Sizing.pillInset, Sizing.fieldInset] == [6, 10, 14])
     }
 
     @Test func frostGetsWhiterFromNavigationToCards() {

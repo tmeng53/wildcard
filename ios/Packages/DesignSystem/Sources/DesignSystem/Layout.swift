@@ -53,6 +53,12 @@ public enum Sizing {
     public static let pillHeight: Double = 36
     /// The SF Symbol point size inside a choice pill.
     public static let pillGlyph: Double = 15
+    /// The gap between a pill's icon, label and cross.
+    public static let pillGap: Double = 6
+    /// A pill's padding at its leading edge, and at its trailing edge when it ends in a cross.
+    public static let pillInset: Double = 10
+    /// The search field's padding before its magnifier.
+    public static let fieldInset: Double = 14
     /// Height of a choice tile in a picker grid.
     public static let tileHeight: Double = 86
     /// The SF Symbol point size on a choice tile.

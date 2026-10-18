@@ -71,12 +71,12 @@ public struct CategoryBar<ID: Hashable>: View {
                 .lineLimit(1)
                 .fixedSize()
                 .padding(.horizontal, Sizing.categoryItemInset)
-                .frame(minHeight: Sizing.minimumTapTarget)
+                // The pill hugs this box, so it grows with Dynamic Type instead of clipping.
+                .frame(minHeight: Sizing.categoryPillHeight)
                 .background {
                     if isSelected {
                         Capsule()
                             .fill(Color(role: .textPrimary, in: theme))
-                            .frame(height: Sizing.categoryPillHeight)
                             .shadow(
                                 color: Color(role: .textPrimary, in: theme).opacity(Lift.opacity), radius: Lift.radius,
                                 y: Lift.y
@@ -84,6 +84,7 @@ public struct CategoryBar<ID: Hashable>: View {
                             .matchedGeometryEffect(id: "selection", in: indicator)
                     }
                 }
+                .frame(minHeight: Sizing.minimumTapTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

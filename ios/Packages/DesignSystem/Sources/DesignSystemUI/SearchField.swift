@@ -37,17 +37,21 @@ public struct SearchField: View {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: Sizing.pillGlyph))
                         .foregroundStyle(Color(role: .textTertiary, in: theme))
-                        .frame(width: Space.xl, height: Sizing.searchFieldHeight)
+                        .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("清除", bundle: .module))
             }
         }
-        .padding(.leading, Space.s + Space.xxs / 2)
+        .padding(.leading, Sizing.fieldInset)
         .padding(.trailing, Space.xxs)
-        .frame(height: Sizing.searchFieldHeight)
+        // Grows with Dynamic Type instead of clipping the text.
+        .frame(minHeight: Sizing.searchFieldHeight)
         .glassEffect(.regular, in: Capsule())
+        // A tap anywhere on the capsule, not only on the text, starts typing.
+        .contentShape(Capsule())
+        .onTapGesture { isFocused = true }
         .overlay {
             if isFocused {
                 Capsule().strokeBorder(Color(role: .signature, in: theme), lineWidth: Sizing.selectionStroke)

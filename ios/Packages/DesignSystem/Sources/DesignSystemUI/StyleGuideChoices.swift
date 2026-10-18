@@ -22,7 +22,7 @@ struct ChoiceSection: View {
                     SectionLabel(Text("最近使用", bundle: .module))
                         .padding(.horizontal, Space.m)
                     ScrollView(.horizontal) {
-                        HStack(spacing: Space.xxs + Space.xxs / 2) {
+                        HStack(spacing: Sizing.pillGap) {
                             ForEach(SampleSport.recent, id: \.self) { sport in
                                 ChoicePill(sport.name, systemImage: sport.symbol, isSelected: picked.contains(sport)) {
                                     toggle(sport)
