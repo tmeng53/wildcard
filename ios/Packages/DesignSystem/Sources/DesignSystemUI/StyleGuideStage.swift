@@ -45,7 +45,8 @@ struct SceneStage: View {
     }
 }
 
-/// The scene's floor: signature color with lane lines, blurred lightly while a check-in is open.
+/// The scene's floor: a quiet wash with faint signature lane lines, so the solid 打卡 button is
+/// the only strong color. Blurred lightly while a check-in is open.
 private struct SceneBand: View {
     @Environment(\.sceneTheme) private var theme
     let isOpen: Bool
@@ -53,13 +54,13 @@ private struct SceneBand: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topLeading) {
-                Color(role: .signature, in: theme)
+                Color(role: .signatureWash, in: theme)
                 Rectangle()
-                    .fill(Color(role: .signatureShade, in: theme))
+                    .fill(Color(role: .signature, in: theme).opacity(0.35))
                     .frame(height: Space.xxs)
                 ForEach(1..<4, id: \.self) { lane in
                     Rectangle()
-                        .fill(Color(role: .onSignature, in: theme).opacity(0.5))
+                        .fill(Color(role: .signature, in: theme).opacity(0.22))
                         .frame(width: 2)
                         .offset(x: proxy.size.width * Double(lane) / 4 - 1)
                 }
