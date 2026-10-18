@@ -76,19 +76,8 @@ public struct CustomSport: Hashable, Sendable {
 public enum Activity: Hashable, Sendable {
     case sport(Sport)
     case custom(CustomSport)
-    /// A sport a newer app added that this build doesn't know. Read so the check-in
-    /// still shows (as 其他) instead of breaking the feed. Only the decoder makes one,
-    /// so this build can't write a sport value no reader accepts.
-    case unrecognized(UnrecognizedSport)
 
     static let customRawValue = "custom"
-}
-
-/// A sport key from a newer app: never a listed sport, never `custom`, never empty.
-public struct UnrecognizedSport: Hashable, Sendable {
-    public let rawValue: String
-
-    fileprivate init(rawValue: String) { self.rawValue = rawValue }
 }
 
 extension KeyedDecodingContainer {
@@ -102,9 +91,8 @@ extension KeyedDecodingContainer {
             return .custom(try CustomSport(try decode(String.self, forKey: customKey)))
         }
         guard !contains(customKey) else { throw ContractsError.strayCustomSport }
-        if let sport = Sport(rawValue: raw) { return .sport(sport) }
-        guard !raw.isEmpty else { throw ContractsError.unknownSport(raw) }
-        return .unrecognized(UnrecognizedSport(rawValue: raw))
+        guard let sport = Sport(rawValue: raw) else { throw ContractsError.unknownSport(raw) }
+        return .sport(sport)
     }
 }
 
@@ -112,7 +100,6 @@ extension KeyedEncodingContainer {
     mutating func encodeActivity(_ activity: Activity?, sport sportKey: Key, custom customKey: Key) throws {
         switch activity {
         case .sport(let sport): try encode(sport.rawValue, forKey: sportKey)
-        case .unrecognized(let unrecognized): try encode(unrecognized.rawValue, forKey: sportKey)
         case .custom(let custom):
             try encode(Activity.customRawValue, forKey: sportKey)
             try encode(custom.name, forKey: customKey)

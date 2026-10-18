@@ -51,7 +51,7 @@ private func decode(_ json: String) throws -> CheckIn {
 
 @Test func unknownVersionIsRejected() {
     let json = #"{"version":2,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"healthyMeal","meal":{"slot":"dinner"}}"#
-    #expect(throws: ContractsError.newerVersion(2)) { try decode(json) }
+    #expect(throws: ContractsError.unsupportedVersion(2)) { try decode(json) }
 }
 
 @Test func outOfRangeMinutesAreRejectedOnDecode() {
@@ -129,14 +129,8 @@ private func trainingJSON(_ training: String) -> String {
     #expect(throws: DecodingError.self) { try decode(trainingJSON(#"{"sport":"custom","minutes":40}"#)) }
 }
 
-@Test func unknownSportFromANewerAppStillReads() throws {
-    let checkIn = try decode(trainingJSON(#"{"sport":"padel","minutes":60,"intensity":"hard"}"#))
-    guard case .trained(let training) = checkIn.entry, case .unrecognized(let sport) = training.activity else {
-        Issue.record("expected an unrecognized sport, got \(checkIn.entry)")
-        return
-    }
-    #expect(sport.rawValue == "padel")
-    #expect(try encode(checkIn).contains(#""sport":"padel""#))
+@Test func unknownSportIsRejected() {
+    #expect(throws: ContractsError.unknownSport("padel")) { try decode(trainingJSON(#"{"sport":"padel","minutes":60}"#)) }
     #expect(throws: ContractsError.unknownSport("")) { try decode(trainingJSON(#"{"sport":"","minutes":60}"#)) }
 }
 
@@ -154,30 +148,8 @@ private func trainingJSON(_ training: String) -> String {
     #expect(throws: ContractsError.photoCount(0)) { try decode(trainingJSON(#"{"sport":"run","minutes":30,"photos":[]}"#)) }
 }
 
-@Test func aFeedSkipsOnlyTheCheckInsThisBuildCantRead() throws {
-    let readable = trainingJSON(#"{"sport":"run","minutes":30}"#)
-    let newKind = #"{"version":1,"id":"11111111-1111-1111-1111-111111111112","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"sleep","sleep":{"hours":8}}"#
-    let newVersion = readable.replacingOccurrences(of: #""version":1"#, with: #""version":2"#)
-    let broken = trainingJSON(#"{"sport":"run","minutes":0}"#)
-    let feed = try WireJSON.decoder().decode(
-        [Tolerant<CheckIn>].self, from: Data("[\(readable),\(newKind),\(newVersion),\(broken)]".utf8))
-    #expect(feed.map { $0.value?.id } == [checkInID, nil, nil, nil])
-    #expect(feed.map(\.isFromNewerApp) == [false, true, true, false])
-    guard case .unreadable(let reason) = feed[3] else {
-        Issue.record("a version 1 check-in with 0 minutes should be unreadable, got \(feed[3])")
-        return
-    }
-    #expect(reason == "minutesOutOfRange(0)")
-}
-
 @Test func everySportHasOneCategoryAndEveryCategoryHasSports() {
     #expect(Sport.allCases.count == 52)
     #expect(SportCategory.allCases.allSatisfy { !$0.sports.isEmpty })
     #expect(SportCategory.everyday.sports == [.dogWalk, .walkCommute, .bikeCommute, .deepClean, .moving, .strollerWalk, .gardening])
-}
-
-extension Tolerant {
-    fileprivate var isFromNewerApp: Bool {
-        if case .fromNewerApp = self { true } else { false }
-    }
 }

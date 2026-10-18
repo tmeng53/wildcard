@@ -26,7 +26,6 @@ public struct WeeklyPlan: Hashable, Sendable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let version = try container.decode(Int.self, forKey: .version)
-        guard version <= Self.currentVersion else { throw ContractsError.newerVersion(version) }
         guard version == Self.currentVersion else { throw ContractsError.unsupportedVersion(version) }
         try self.init(
             member: try container.decode(MemberID.self, forKey: .member),
