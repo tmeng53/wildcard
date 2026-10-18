@@ -44,7 +44,7 @@ mkdir -p /tmp/verify-wildcard/$(git rev-parse --short HEAD)
 
 ## 2. Launch the stack
 
-**The iOS app.** A Linux cloud session can't run the simulator, so the app runs in CI: the `ios` job of the `verify` workflow builds the head commit, runs the UI tests on an iPhone simulator (`scripts/ios-test.sh`) and uploads the screenshots the tests keep as the artifact `ios-screenshots-<full head SHA>`. Find the workflow run for the head commit and download that artifact into `/tmp/verify-wildcard/<short sha>/screenshots/`. On a Mac, run `scripts/ios-test.sh` in the worktree instead; it writes the same files to `build/ios/screenshots/`.
+**The iOS app.** A Linux cloud session can't run the simulator, so the app runs in CI: the `ios` job of the `verify` workflow builds the head commit, runs the UI tests on an iPhone simulator (`scripts/ios-test.sh`) and uploads the screenshots the tests keep as the artifact `ios-screenshots-<full head SHA>`. Find the workflow run for the head commit and download that artifact into `/tmp/verify-wildcard/<short sha>/screenshots/`. If your network can't download artifacts (cloud sessions often can't reach GitHub's artifact storage), the job's `scripts/ios-test.sh` step log also carries a small JPEG preview of each screenshot as base64 between `----- preview begin: <name>.jpg -----` and `----- preview end -----`; decode it with `base64 -d`. On a Mac, run `scripts/ios-test.sh` in the worktree instead; it writes the same files to `build/ios/screenshots/`.
 
 **Local Supabase:** filled in by the PR that adds the first migration.
 

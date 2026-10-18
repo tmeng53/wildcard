@@ -43,9 +43,26 @@ for test in json.loads((raw / "manifest.json").read_text()):
     for item in test.get("attachments", []):
         name = item.get("suggestedHumanReadableName") or item["exportedFileName"]
         name = re.sub(r"_\d+_[0-9A-Fa-f-]{36}(\.\w+)$", r"\1", name)
+        # Only the screenshots the tests name ("01-..."); skip XCTest's automatic
+        # UI snapshots, synthesized events and failure recordings.
+        if not re.match(r"^\d\d-.+\.png$", name):
+            continue
         shutil.copy(raw / item["exportedFileName"], dest / name)
         print(f"screenshot: {dest / name}")
 PY
+fi
+
+# Small JPEG previews in the log, for agents whose network can't download artifacts:
+# decode the lines between the markers with `base64 -d`.
+if [ "${PRINT_PREVIEWS:-}" = "1" ]; then
+  for png in "$out"/screenshots/*.png; do
+    [ -e "$png" ] || continue
+    jpg="$out/preview.jpg"
+    sips -Z 900 -s format jpeg -s formatOptions 60 "$png" --out "$jpg" >/dev/null
+    echo "----- preview begin: $(basename "$png" .png).jpg -----"
+    base64 -b 76 -i "$jpg"
+    echo "----- preview end -----"
+  done
 fi
 
 [ "$status" -eq 0 ] && echo "ios-test: ok"

@@ -45,6 +45,8 @@ jobs:
           persist-credentials: false
       - run: xcodebuild -version
       - run: scripts/ios-test.sh
+        env:
+          PRINT_PREVIEWS: "1"
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

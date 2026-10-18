@@ -122,7 +122,6 @@ private struct PaletteSection: View {
                 }
             }
         }
-        .accessibilityIdentifier("styleguide.palette")
     }
 }
 
@@ -173,7 +172,6 @@ private struct TypeSection: View {
                 }
             }
         }
-        .accessibilityIdentifier("styleguide.type")
     }
 }
 
@@ -240,7 +238,6 @@ private struct MotionSection: View {
             .buttonStyle(PressableButtonStyle())
             .accessibilityIdentifier("styleguide.motion.play")
         }
-        .accessibilityIdentifier("styleguide.motion")
     }
 }
 
