@@ -90,7 +90,7 @@ final class StyleGuideUITests: XCTestCase {
     private func launch(language: String) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", language]
+        app.launchArguments += ["-styleguide", "-AppleLanguages", "(\(language))", "-AppleLocale", language]
         app.launch()
         return app
     }

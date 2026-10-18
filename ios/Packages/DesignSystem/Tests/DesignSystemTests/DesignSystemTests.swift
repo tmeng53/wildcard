@@ -214,7 +214,7 @@ struct LayoutTests {
     }
 
     @Test func frostGetsWhiterFromNavigationToCards() {
-        #expect([Frost.capsuleFill, Frost.bannerFill, Frost.cardFill] == [0.5, 0.62, 0.76])
+        #expect([Frost.bannerFill, Frost.cardFill] == [0.62, 0.76])
         #expect(Tint.selected == 0.14)
     }
 

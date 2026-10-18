@@ -1,14 +1,12 @@
-/// Frosted material for what floats over the scene: the squad banner and the check-in
-/// capsules, never content. Plain frost: no rim highlight, no glow, no specular streak.
-/// The tab bar is Liquid Glass (`glassEffect`), not frost. Primary actions are solid signature
-/// fills, not glass.
+/// Frosted material for what floats over the scene: the squad banner, never content. Plain
+/// frost: no rim highlight, no glow, no specular streak. The tab bar, the 打卡 button and its
+/// capsules are Liquid Glass (`glassEffect`; spec rev 186), not frost. Other primary actions
+/// are solid signature fills.
 public enum Frost {
     /// White over the frost for the squad banner.
     public static let bannerFill: Double = 0.62
     /// White over the frost for the disclaimer draft card.
     public static let cardFill: Double = 0.76
-    /// White over the frost for an open check-in capsule.
-    public static let capsuleFill: Double = 0.50
 }
 
 /// What sits between the scene and an open check-in: a light blur, not a grey dim, so the

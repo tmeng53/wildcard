@@ -17,4 +17,8 @@ public enum CheckInError: Error, Equatable, Sendable {
     case notFound(CheckInID)
     /// Date arithmetic left the years `LocalDay` supports.
     case dayOutOfRange
+    /// The check-in didn't reach the server, so nothing was saved; trying again is safe.
+    case notSent
+    /// A picked photo couldn't be read as an image.
+    case unreadablePhoto
 }
