@@ -26,6 +26,10 @@ public struct StyleGuideView: View {
         }
         // Unclipped, so the scene's wash reaches behind the status bar and into the top overscroll.
         .scrollClipDisabled()
+        // A frosted band under the status bar, so scrolled text never runs into the clock.
+        .overlay(alignment: .top) {
+            Rectangle().fill(.ultraThinMaterial).frame(height: 0).ignoresSafeArea(edges: .top)
+        }
         .background(Color(role: .canvas, in: theme).ignoresSafeArea())
         .environment(\.sceneTheme, theme)
         .animation(.wildcard(Motion.smooth, reduceMotion: reduceMotion), value: theme)

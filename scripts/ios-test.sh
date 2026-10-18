@@ -9,13 +9,16 @@ out=build/ios
 rm -rf "$out"
 mkdir -p "$out/screenshots"
 
-# The named simulator if this Xcode has it, else the first available iPhone.
+# The named simulator if this Xcode has it, else an iPhone on the newest iOS runtime (simctl
+# lists runtimes oldest first, and the app needs iOS 26).
 want="${SIMULATOR:-iPhone 17}"
 devices="$(xcrun simctl list devices available)"
 if grep -q "    $want (" <<<"$devices"; then
   sim="$want"
 else
-  sim="$(grep -Eo '    iPhone [^(]+' <<<"$devices" | head -n 1 | sed -E 's/^ +//; s/ +$//')"
+  sim="$(awk '/^-- iOS/ { first = ""; ios = 1; next } /^-- / { ios = 0 }
+    ios && first == "" && /^    iPhone / { first = $0; newest = $0 } END { print newest }' <<<"$devices" |
+    sed -E 's/ \(.*$//; s/^ +//')"
   [ -n "$sim" ] || { echo "no iPhone simulator available" >&2; exit 1; }
   echo "$want isn't available; using $sim"
 fi
@@ -25,7 +28,7 @@ status=0
 xcodebuild test \
   -project ios/Wildcard.xcodeproj \
   -scheme Wildcard \
-  -destination "platform=iOS Simulator,name=$sim" \
+  -destination "platform=iOS Simulator,OS=latest,name=$sim" \
   -derivedDataPath "$out/DerivedData" \
   -resultBundlePath "$out/Wildcard.xcresult" \
   CODE_SIGNING_ALLOWED=NO \

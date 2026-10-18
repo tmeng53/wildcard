@@ -174,10 +174,12 @@ struct LayoutTests {
     @Test func tapTargetsAreAtLeast44Points() {
         #expect(Sizing.capsuleHeight >= Sizing.minimumTapTarget)
         #expect(Sizing.checkInHeight >= Sizing.minimumTapTarget)
+        #expect(Sizing.capsuleGlyph < Sizing.capsuleIcon)
     }
 
     @Test func frostGetsWhiterFromNavigationToCards() {
-        #expect([Frost.navigationFill, Frost.capsuleFill, Frost.bannerFill, Frost.cardFill] == [0.5, 0.5, 0.62, 0.76])
+        #expect([Frost.capsuleFill, Frost.bannerFill, Frost.cardFill] == [0.5, 0.62, 0.76])
+        #expect(Tint.selected == 0.14)
     }
 
     @Test func scrimIsALightBlurNotADim() {

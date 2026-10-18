@@ -9,19 +9,24 @@ parts="${*:-swift web supabase}"
 want() { [[ " $parts " == *" $1 "* ]]; }
 
 ran=0
+inconclusive=()
 if want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
   echo "==> swift format lint"
   swift format lint --strict --recursive ios
-  # SwiftLint isn't part of the Swift toolchain. CI must have it; elsewhere a missing
-  # binary makes this one check inconclusive, and says so.
-  if type -P swiftlint >/dev/null; then
+  # SwiftLint isn't part of the Swift toolchain; scripts/install-swiftlint.sh installs the
+  # pinned version. CI must have it. Elsewhere a missing or different SwiftLint makes this one
+  # check inconclusive, and the run ends saying so instead of "ok".
+  pinned="$(cat scripts/swiftlint-version)"
+  installed="$(swiftlint version 2>/dev/null || true)"
+  if [ "$installed" = "$pinned" ]; then
     echo "==> swiftlint"
     swiftlint lint --strict --quiet
   elif [ "${CI:-}" = "true" ]; then
-    echo "swiftlint is not installed on this CI runner" >&2
+    echo "swiftlint $pinned is not installed on this CI runner (found '${installed:-none}')" >&2
     exit 1
   else
-    echo "==> swiftlint: not installed, so this check is inconclusive"
+    echo "==> swiftlint: need $pinned, found '${installed:-none}' (run scripts/install-swiftlint.sh)"
+    inconclusive+=("swiftlint")
   fi
 
   for pkg in ios/Packages/*/; do
@@ -51,4 +56,8 @@ if want supabase && [ -d supabase/migrations ]; then
 fi
 
 [ "$ran" = 1 ] || echo "nothing to check yet"
+if [ "${#inconclusive[@]}" -gt 0 ]; then
+  echo "verify: inconclusive (${inconclusive[*]} did not run)" >&2
+  exit 2
+fi
 echo "verify: ok"

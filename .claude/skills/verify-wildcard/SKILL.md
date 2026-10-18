@@ -95,7 +95,7 @@ Every journey ends with evidence you read yourself. Keep only the kinds a journe
 
 | Evidence | How to check it |
 | --- | --- |
-| **Simulator screenshots** | Open every one yourself. The screen shows what the journey says, in Chinese first (and English where a test launches in `en`), with no clipped or overlapping text, no placeholder or missing glyphs, and the look in `/mnt/project-files/ui-critique/critique.md`. |
+| **Simulator screenshots** | Open every one yourself. The screen shows what the journey says, in Chinese first (and English where a test launches in `en`), with no clipped or overlapping text, no placeholder or missing glyphs, no text running under the status bar, and colors and type that match the style guide's tokens (`ios/Packages/DesignSystem`). |
 | **Database rows** | `docker exec supabase_db_wildcard psql -U postgres -c "select id, member_id, day, kind, payload from public.check_ins"` (and `check_in_squads`, `storage.objects`); the rows exist, and nothing immutable was edited or deleted |
 | **What each member gets back** | Sign up real users (`/auth/v1/signup` with the anon key), act as each through `/rest/v1` and `/storage/v1`: squad-mates, someone in another squad, and a signed-out caller each get only what the rules allow |
 | **What a user or agent sees** | No internal error messages, ids or internals in public-facing copy. |

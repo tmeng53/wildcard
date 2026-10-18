@@ -36,8 +36,10 @@ public enum Sizing {
     public static let checkInHeight: Double = 50
     /// Height of a check-in capsule.
     public static let capsuleHeight: Double = 44
-    /// Icon size inside a check-in capsule.
+    /// The frame of the icon inside a check-in capsule.
     public static let capsuleIcon: Double = 22
+    /// The SF Symbol point size drawn inside `capsuleIcon`.
+    public static let capsuleGlyph: Double = 17.6
     /// The smallest tap target, even when a control draws smaller.
     public static let minimumTapTarget: Double = 44
 }

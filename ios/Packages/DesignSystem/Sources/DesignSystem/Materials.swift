@@ -1,9 +1,8 @@
-/// Frosted material for what floats over the scene: navigation, the squad banner and the
-/// check-in capsules, never content. Plain frost: no rim highlight, no glow, no specular streak.
-/// Primary actions are solid signature fills, not glass.
+/// Frosted material for what floats over the scene: the squad banner and the check-in
+/// capsules, never content. Plain frost: no rim highlight, no glow, no specular streak.
+/// The tab bar is Liquid Glass (`glassEffect`), not frost. Primary actions are solid signature
+/// fills, not glass.
 public enum Frost {
-    /// White over the frost for the tab bar.
-    public static let navigationFill: Double = 0.50
     /// White over the frost for the squad banner.
     public static let bannerFill: Double = 0.62
     /// White over the frost for the disclaimer draft card.
@@ -23,4 +22,10 @@ public enum Scrim {
     /// Seconds to fade in and out.
     public static let fadeIn: Double = 0.20
     public static let fadeOut: Double = 0.18
+}
+
+/// How strongly the signature tints something that isn't a solid fill.
+public enum Tint {
+    /// The pill behind a selected tab or segment.
+    public static let selected: Double = 0.14
 }

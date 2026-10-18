@@ -123,6 +123,7 @@ private struct SquadBanner: View {
                     Text("我 · 本周", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .textSecondary, in: theme))
+                        .fixedSize()
                     Score(
                         count: 3, goal: 5, countStyle: TypeRamp.scoreSmall, goalStyle: TypeRamp.scoreSmallDenominator)
                 }
@@ -267,7 +268,7 @@ private struct CheckInCapsule: View {
         Button(action: action) {
             HStack(spacing: Space.xs) {
                 Image(systemName: meaning.symbol)
-                    .font(.system(size: Sizing.capsuleIcon * 0.8, weight: .semibold))
+                    .font(.system(size: Sizing.capsuleGlyph, weight: .semibold))
                     .frame(width: Sizing.capsuleIcon, height: Sizing.capsuleIcon)
                     .foregroundStyle(Color(role: meaning.ink, in: theme))
                     .accessibilityHidden(true)
@@ -333,7 +334,7 @@ private struct TabBarSample: View {
                     .frame(maxWidth: .infinity, minHeight: Sizing.minimumTapTarget)
                     .background {
                         if isSelected {
-                            Capsule().fill(Color(role: .signature, in: theme).opacity(0.14))
+                            Capsule().fill(Color(role: .signature, in: theme).opacity(Tint.selected))
                         }
                     }
                     .contentShape(Capsule())

@@ -30,8 +30,11 @@ jobs:
         with:
           persist-credentials: false
       - run: swift --version
-      - name: Install SwiftLint if the image lacks it
-        run: command -v swiftlint || brew install swiftlint
+      # Ahead of the image's own SwiftLint on PATH, which may be a different version.
+      - name: Install the pinned SwiftLint
+        run: |
+          scripts/install-swiftlint.sh "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: scripts/verify.sh swift web
 
   supabase:
