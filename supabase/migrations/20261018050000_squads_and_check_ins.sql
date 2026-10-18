@@ -116,10 +116,11 @@ using (member_id = (select auth.uid()));
 -- 练了, 健康餐, 放纵餐忏悔, 今日免责声明.
 create type public.check_in_kind as enum ('trained', 'healthyMeal', 'cheatMeal', 'disclaimer');
 
--- A 免责声明 or a caption: trimmed, one line, 1 to 40 characters as people see them.
--- Postgres counts code points, not what people see (a family emoji is 1 character but
--- 7 code points), so it holds a loose cap of 400; the app holds the exact limit.
-create function private.is_short_line(value jsonb)
+-- A 免责声明 or a caption: trimmed, 1 to 40 characters as people see them; a caption
+-- is also one line (the contract lets a 免责声明 span lines). Postgres counts code
+-- points, not what people see (a family emoji is 1 character but 7 code points), so
+-- it holds a loose cap of 400; the app holds the exact limit.
+create function private.is_short_text(value jsonb, one_line boolean)
 returns boolean
 language sql
 immutable
@@ -128,8 +129,7 @@ as $$
   select jsonb_typeof(value) = 'string'
     and char_length(value #>> '{}') between 1 and 400
     and value #>> '{}' = btrim(value #>> '{}', E' \t\n\r')
-    and strpos(value #>> '{}', E'\n') = 0
-    and strpos(value #>> '{}', E'\r') = 0;
+    and (not one_line or (strpos(value #>> '{}', E'\n') = 0 and strpos(value #>> '{}', E'\r') = 0));
 $$;
 
 -- The kind-specific object from the wire JSON (`training`, `meal` or `disclaimer`),
@@ -163,9 +163,9 @@ as $$
       when kind = 'disclaimer' then
         payload ? 'text'
         and (select count(*) from jsonb_object_keys(payload) k where k <> 'text') = 0
-        and private.is_short_line(payload -> 'text')
+        and private.is_short_text(payload -> 'text', one_line => false)
     end
-    and (not payload ? 'caption' or private.is_short_line(payload -> 'caption'))
+    and (not payload ? 'caption' or private.is_short_text(payload -> 'caption', one_line => true))
     -- A photo is {"path": "<member id>/..."}: members only point at their own uploads.
     and (
       not payload ? 'photo'

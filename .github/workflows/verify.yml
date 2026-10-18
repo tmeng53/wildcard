@@ -39,5 +39,5 @@ jobs:
         with:
           persist-credentials: false
       # Only the services the database tests use.
-      - run: npx --yes supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
+      - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
       - run: scripts/verify.sh supabase

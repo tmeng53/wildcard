@@ -26,8 +26,8 @@ if want web && [ -f web/package.json ]; then
   ran=1
 fi
 
-# The Supabase CLI runs through npx unless it's installed.
-supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else npx --yes supabase "$@"; fi; }
+# The Supabase CLI runs through npx, pinned, unless it's installed.
+supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else npx --yes supabase@2.121.0 "$@"; fi; }
 
 if want supabase && [ -d supabase/migrations ]; then
   echo "==> supabase"

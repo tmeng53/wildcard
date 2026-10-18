@@ -1,7 +1,7 @@
 -- Check-ins: members write only their own rows, and the payload follows the
 -- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
-select plan(33);
+select plan(34);
 
 -- Four people: Ann and Bo share a squad, Cy is in a different squad, Di is in none.
 insert into auth.users (id, email) values
@@ -143,6 +143,11 @@ select pg_temp.rejects('cheatMeal', '{"slot":"dinner","caption":"火锅\n不后�
 select pg_temp.rejects('trained', '{"sport":"run","minutes":30,"caption":""}', 'a caption isn''t empty');
 select pg_temp.rejects('healthyMeal', '{"slot":"lunch","calories":500}', 'no calories or other unknown fields');
 select pg_temp.rejects('disclaimer', '{"text":"   "}', 'an empty 免责声明 is rejected');
+select lives_ok(
+  $$insert into public.check_ins (id, day, kind, payload, version) values
+    (gen_random_uuid(), current_date, 'disclaimer', '{"text":"腿酸\n明天再练"}', 1)$$,
+  'a 免责声明 may span two lines, as the contract allows'
+);
 select pg_temp.rejects('disclaimer', '{"text":" 腿酸 "}', 'the 免责声明 arrives trimmed, as the contract sends it');
 select pg_temp.rejects(
   'trained', '{"sport":"run","minutes":30,"photo":{"path":"b0000000-0000-0000-0000-000000000002/x.jpg"}}',
