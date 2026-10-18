@@ -19,6 +19,7 @@ public struct StyleGuideView: View {
                         ColorSection()
                         TypeSection()
                         MotionSection()
+                        ChoiceSection()
                     }
                     .padding(.horizontal, Space.gutter)
                     .padding(.top, Space.xl)

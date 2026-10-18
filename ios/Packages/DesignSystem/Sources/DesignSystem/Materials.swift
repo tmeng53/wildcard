@@ -29,3 +29,12 @@ public enum Tint {
     /// The pill behind a selected tab or segment.
     public static let selected: Double = 0.14
 }
+
+/// The one shadow in the system: barely there, under a solid pill that sits on a light surface
+/// (the selected category). Cards and tiles have none.
+public enum Lift {
+    /// Opacity of the primary text color as the shadow color.
+    public static let opacity: Double = 0.12
+    public static let radius: Double = 1
+    public static let y: Double = 1
+}
