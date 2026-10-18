@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "name": "idle",
+  "duration": 2.4,
+  "loops": true,
+  "tracks": [
+    { "part": "torso", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 1.2, "v": 1.025, "ease": "easeInOut" }, { "t": 2.4, "v": 1, "ease": "easeInOut" } ] },
+    { "part": "head", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.6, "v": 2, "ease": "easeOut" }, { "t": 1.8, "v": -2, "ease": "easeInOut" },
+      { "t": 2.4, "v": 0, "ease": "easeIn" } ] },
+    { "part": "armL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.2, "v": 3, "ease": "easeInOut" }, { "t": 2.4, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "armR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.2, "v": -3, "ease": "easeInOut" }, { "t": 2.4, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "eyes", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 1.7, "v": 1 }, { "t": 1.78, "v": 0.1, "ease": "easeIn" },
+      { "t": 1.88, "v": 1, "ease": "easeOut" } ] }
+  ]
+}

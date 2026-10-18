@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "canvas": { "width": 240, "height": 320 },
+  "parts": [
+    { "id": "root", "pivot": [120, 302] },
+    { "id": "legL", "parent": "root", "pivot": [108, 240],
+      "layers": [{ "art": "legL" }, { "slot": "bottom", "art": "legL" }] },
+    { "id": "legR", "parent": "root", "pivot": [132, 240],
+      "layers": [{ "art": "legR" }, { "slot": "bottom", "art": "legR" }] },
+    { "id": "torso", "parent": "root", "pivot": [120, 240],
+      "layers": [{ "art": "neck" }, { "slot": "bottom", "art": "torso" }, { "slot": "top", "art": "torso" }] },
+    { "id": "head", "parent": "torso", "pivot": [120, 170],
+      "layers": [{ "art": "head" }, { "slot": "hair", "art": "head" }] },
+    { "id": "eyes", "parent": "head", "pivot": [120, 120], "layers": [{ "art": "eyes" }] },
+    { "id": "mouthSmile", "parent": "head", "pivot": [120, 142], "layers": [{ "art": "mouthSmile" }] },
+    { "id": "mouthOpen", "parent": "head", "pivot": [120, 142], "opacity": 0, "layers": [{ "art": "mouthOpen" }] },
+    { "id": "propR", "parent": "armR", "pivot": [156, 229],
+      "layers": [{ "slot": "prop", "art": "propR" }] },
+    { "id": "armL", "parent": "torso", "pivot": [97, 182],
+      "layers": [{ "art": "armL" }, { "slot": "top", "art": "armL" }] },
+    { "id": "armR", "parent": "torso", "pivot": [143, 182],
+      "layers": [{ "art": "armR" }, { "slot": "top", "art": "armR" }] }
+  ]
+}

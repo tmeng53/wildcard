@@ -41,3 +41,26 @@ jobs:
       # Only the services the database tests use.
       - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
       - run: scripts/verify.sh supabase
+
+  # Renders the character's clips on an iOS simulator through the player's own view and
+  # uploads them, so reviewers see motion changes without a Mac.
+  avatar-preview:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: scripts/avatar-preview.sh
+        env:
+          PRINT_PREVIEWS: "1"
+      - name: Upload previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Named after the commit the PR is at, not the merge commit GitHub tests.
+          name: avatar-previews-${{ github.event.pull_request.head.sha || github.sha }}
+          path: build/avatar/previews
+          if-no-files-found: error

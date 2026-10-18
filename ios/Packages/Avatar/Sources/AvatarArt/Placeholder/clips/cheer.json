@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "name": "cheer",
+  "duration": 1.3,
+  "loops": false,
+  "tracks": [
+    { "part": "root", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.18, "v": 0 }, { "t": 0.44, "v": -46, "ease": "easeOut" },
+      { "t": 0.68, "v": 0, "ease": "easeIn" } ] },
+    { "part": "root", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 0.18, "v": 0.9, "ease": "easeOut" }, { "t": 0.3, "v": 1.06, "ease": "easeOut" },
+      { "t": 0.6, "v": 1, "ease": "easeInOut" }, { "t": 0.72, "v": 0.9, "ease": "easeOut" },
+      { "t": 1.0, "v": 1, "ease": "backOut" } ] },
+    { "part": "root", "channel": "scaleX", "keys": [
+      { "t": 0, "v": 1 }, { "t": 0.18, "v": 1.06, "ease": "easeOut" }, { "t": 0.3, "v": 0.97, "ease": "easeOut" },
+      { "t": 0.6, "v": 1, "ease": "easeInOut" }, { "t": 0.72, "v": 1.06, "ease": "easeOut" },
+      { "t": 1.0, "v": 1, "ease": "backOut" } ] },
+    { "part": "armL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.18, "v": -12, "ease": "easeOut" }, { "t": 0.42, "v": 100, "ease": "backOut" },
+      { "t": 0.95, "v": 100 }, { "t": 1.3, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "armR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.18, "v": 12, "ease": "easeOut" }, { "t": 0.42, "v": -100, "ease": "backOut" },
+      { "t": 0.95, "v": -100 }, { "t": 1.3, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "legL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.2, "v": 0 }, { "t": 0.44, "v": 10, "ease": "easeOut" }, { "t": 0.68, "v": 0, "ease": "easeIn" } ] },
+    { "part": "legR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.2, "v": 0 }, { "t": 0.44, "v": -10, "ease": "easeOut" }, { "t": 0.68, "v": 0, "ease": "easeIn" } ] },
+    { "part": "head", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.44, "v": -6, "ease": "easeOut" }, { "t": 0.8, "v": 4, "ease": "easeInOut" },
+      { "t": 1.3, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "eyes", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 0.2, "v": 0.45, "ease": "easeOut" }, { "t": 1.0, "v": 0.45 }, { "t": 1.15, "v": 1, "ease": "easeOut" } ] },
+    { "part": "mouthSmile", "channel": "opacity", "keys": [
+      { "t": 0, "v": 1 }, { "t": 0.16, "v": 1 }, { "t": 0.2, "v": 0 }, { "t": 1.05, "v": 0 }, { "t": 1.1, "v": 1 } ] },
+    { "part": "mouthOpen", "channel": "opacity", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.16, "v": 0 }, { "t": 0.2, "v": 1 }, { "t": 1.05, "v": 1 }, { "t": 1.1, "v": 0 } ] },
+    { "part": "mouthOpen", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 0.6 }, { "t": 0.2, "v": 0.6 }, { "t": 0.44, "v": 1.1, "ease": "backOut" }, { "t": 1.05, "v": 0.8 }, { "t": 1.1, "v": 1, "ease": "hold" } ] }
+  ]
+}
