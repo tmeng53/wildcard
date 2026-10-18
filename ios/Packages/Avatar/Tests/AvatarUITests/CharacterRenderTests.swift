@@ -29,8 +29,9 @@ struct CharacterRenderTests {
 
     @Test func theCheerCarriesTheDumbbellUpWithTheArm() throws {
         let lifter = try Frame(outfit: PlaceholderCharacter.lifter)
-        let cheer = try lifter.figure.bind(PlaceholderCharacter.clip("cheer"))
-        let peak = lifter.figure.pose(cheer, at: 0.44)
+        let cheer = try lifter.figure.bind(PlaceholderCharacter.clip("cheer", persona: .energetic))
+        // The top of the energetic cheer's second jump, arms overhead.
+        let peak = lifter.figure.pose(cheer, at: 0.84)
         let image = try lifter.render(peak)
         // The plate's rest spot is empty, and the plate is where the arm and prop transforms take it.
         #expect(matches(image.color(atColumn: 193, row: 255), Self.white))

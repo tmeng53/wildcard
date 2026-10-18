@@ -19,16 +19,17 @@ public enum PlaceholderCharacter {
     public static let baller = Outfit([
         "body": "tan", "hair": "buzz", "hat": "headband", "top": "jersey", "bottom": "shorts", "prop": "basketball",
     ])
-    /// Four looks from the same rig and clips: different species, hair, hats, clothes and props.
+    /// Four looks from the same rig: different species, hair, hats, clothes and props. Any look
+    /// can play any persona's clips.
     public static let squad = [lifter, cat, bear, baller]
 
     public static func rig() throws(AvatarError) -> Rig {
         try Rig.decode(file("rig.json"))
     }
 
-    /// `idle` (loops) or `cheer` (plays once, for a check-in).
-    public static func clip(_ name: String) throws(AvatarError) -> Clip {
-        try Clip.decode(file("clips/\(name).json"))
+    /// A persona's `idle` (loops) or `cheer` (plays once, for a check-in).
+    public static func clip(_ name: String, persona: Persona) throws(AvatarError) -> Clip {
+        try Clip.decode(file("clips/\(persona.rawValue)/\(name).json"))
     }
 
     public static func figure(wearing outfit: Outfit) throws(AvatarError) -> Figure {

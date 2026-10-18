@@ -9,7 +9,8 @@ import Testing
 import UniformTypeIdentifiers
 
 /// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
-/// strip of cheer frames, and the player's output frame by frame as animated GIFs.
+/// strip of each persona's cheer, the five cheering together as the player shows it, and
+/// each persona's idle loop, frame by frame as animated GIFs.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -25,53 +26,61 @@ struct CharacterPreviewTests {
         let folder = try #require(Self.folder)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let squad = try PlaceholderCharacter.squad.map { outfit in try Frame(outfit: outfit) }
-        let idle = try PlaceholderCharacter.clip("idle")
-        let cheer = try PlaceholderCharacter.clip("cheer")
-
         try writePNG(
             sideBySide(
                 squad.map { look in try look.render(image: look.figure.restPose, scale: 2, background: Self.mist) }),
             to: folder.appendingPathComponent("01-outfits.png"))
 
-        let lifter = squad[0]
-        let bound = try lifter.figure.bind(cheer)
-        let strip = try [0, 0.18, 0.3, 0.44, 0.6, 0.72, 0.95, 1.3].map { time in
-            try lifter.render(image: lifter.figure.pose(bound, at: time), scale: 1, background: Self.mist)
+        // One character per persona, the looks taking turns.
+        let cast = Persona.allCases.indices.map { squad[$0 % squad.count] }
+        let idles = try zip(Persona.allCases, cast).map { persona, look in
+            try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
         }
-        try writePNG(sideBySide(strip), to: folder.appendingPathComponent("02-cheer-frames.png"))
+        let cheers = try zip(Persona.allCases, cast).map { persona, look in
+            try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
+        }
 
-        // What the player shows when the squad checks in one after another: idle, the cheer
-        // on top, back to idle.
+        // Each persona's cheer as a row of frames, one row per persona.
+        let rows = try zip(cast, cheers).map { look, cheer in
+            try sideBySide(
+                (0..<6).map { step in
+                    let time = cheer.clip.duration * Double(step) / 5
+                    return try look.render(image: look.figure.pose(cheer, at: time), scale: 1, background: Self.mist)
+                })
+        }
+        try writePNG(stacked(rows), to: folder.appendingPathComponent("02-cheer-frames.png"))
+
+        // What the player shows when the five check in together: idle, the cheer on top,
+        // back to idle.
         var performances: [Performance] = []
-        for (index, look) in squad.enumerated() {
-            var performance = Performance(figure: look.figure, idle: try look.figure.bind(idle))
-            performance.play(try look.figure.bind(cheer), at: 0.6 + 0.3 * Double(index))
+        for (index, look) in cast.enumerated() {
+            var performance = Performance(figure: look.figure, idle: idles[index])
+            performance.play(cheers[index], at: 0.6)
             performances.append(performance)
         }
         try writeGIF(
-            frames(seconds: 3.6) { time in
+            frames(seconds: 4) { time in
                 try sideBySide(
-                    zip(squad, performances).map { look, performance in
+                    zip(cast, performances).map { look, performance in
                         try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
                     })
             },
             to: folder.appendingPathComponent("03-check-in-cheer.gif"))
 
-        let idling = try squad.map { look in Performance(figure: look.figure, idle: try look.figure.bind(idle)) }
-        try writeGIF(
-            frames(seconds: idle.duration) { time in
-                try sideBySide(
-                    zip(squad, idling).map { look, performance in
-                        try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
-                    })
-            },
-            to: folder.appendingPathComponent("04-idle-squad.gif"))
+        // Each persona's idle on its own, exactly one loop long, so the GIF repeats seamlessly.
+        for (persona, (look, idle)) in zip(Persona.allCases, zip(cast, idles)) {
+            try writeGIF(
+                frames(seconds: idle.clip.duration) { time in
+                    try look.render(image: look.figure.pose(idle, at: time), scale: 1, background: Self.mist)
+                },
+                to: folder.appendingPathComponent("04-idle-\(persona.rawValue).gif"))
+        }
 
-        try writeTimings(lifter, performances[0], to: folder.appendingPathComponent("timings.txt"))
+        try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
 
     private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
-        try (0..<Int(seconds * Self.fps)).map { index in try render(Double(index) / Self.fps) }
+        try (0..<Int((seconds * Self.fps).rounded())).map { index in try render(Double(index) / Self.fps) }
     }
 
     /// Images side by side, as one image.
@@ -87,6 +96,24 @@ struct CharacterPreviewTests {
         for image in images {
             context.draw(image, in: CGRect(x: left, y: height - image.height, width: image.width, height: image.height))
             left += image.width
+        }
+        return try #require(context.makeImage())
+    }
+
+    /// Images one above the other, as one image.
+    private func stacked(_ images: [CGImage]) throws -> CGImage {
+        let width = images.map(\.width).max() ?? 0
+        let height = images.reduce(0) { $0 + $1.height }
+        let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+        let context = try #require(
+            CGContext(
+                data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        // Core Graphics counts rows from the bottom, so the first image goes on top.
+        var top = height
+        for image in images {
+            top -= image.height
+            context.draw(image, in: CGRect(x: 0, y: top, width: image.width, height: image.height))
         }
         return try #require(context.makeImage())
     }

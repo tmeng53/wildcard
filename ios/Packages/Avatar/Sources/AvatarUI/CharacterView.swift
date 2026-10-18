@@ -68,14 +68,14 @@ private struct PlaceholderPreview: View {
         if let player {
             CharacterView(player: player)
                 .frame(height: 320)
-                .onTapGesture { try? player.play(PlaceholderCharacter.clip("cheer")) }
+                .onTapGesture { try? player.play(PlaceholderCharacter.clip("cheer", persona: .energetic)) }
         }
     }
 
     private static func makePlayer() -> CharacterPlayer? {
         try? CharacterPlayer(
             figure: PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter),
-            idle: PlaceholderCharacter.clip("idle"))
+            idle: PlaceholderCharacter.clip("idle", persona: .energetic))
     }
 }
 #endif

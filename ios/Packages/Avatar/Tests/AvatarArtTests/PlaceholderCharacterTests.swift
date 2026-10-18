@@ -18,38 +18,54 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(figure.layout(figure.restPose)[9].opacity == 0)
 }
 
-@Test(arguments: ["idle", "cheer"])
-func everyClipBindsToTheRig(name: String) throws {
+@Test(arguments: Persona.allCases)
+func everyPersonaHasAnIdleAndACheer(persona: Persona) throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
-    let clip = try PlaceholderCharacter.clip(name)
-    #expect(clip.name == name)
-    _ = try figure.bind(clip)
-}
-
-@Test func idleLoopsSeamlesslyAndCheerEndsAtRest() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
-    let idle = try figure.bind(PlaceholderCharacter.clip("idle"))
-    let cheer = try figure.bind(PlaceholderCharacter.clip("cheer"))
-    #expect(idle.clip.loops)
-    #expect(!cheer.clip.loops)
+    let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
+    let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
+    #expect(idle.clip.name == "idle" && idle.clip.loops)
+    #expect(cheer.clip.name == "cheer" && !cheer.clip.loops)
     // The idle loop's last frame is its first, so the loop has no visible jump.
-    #expect(figure.pose(idle, at: idle.clip.duration - 1e-9) == figure.pose(idle, at: 0))
-    // The cheer lands back in the rest pose, so handing back to idle doesn't jump either.
-    #expect(figure.pose(cheer, at: cheer.clip.duration) == figure.restPose)
-    // Mid-cheer the figure is in the air with its arms out.
-    let peak = figure.pose(cheer, at: 0.44)
-    #expect(peak.parts[1].y == -36)
-    #expect(peak.parts[11].rotation == 100)
-    #expect(peak.parts[12].rotation == -100)
+    #expect(nearlyEqual(figure.pose(idle, at: idle.clip.duration - 1e-9), figure.pose(idle, at: 0)))
+    // The cheer lands where the idle starts (half-closed eyes included, for deadpan), so
+    // handing back to idle doesn't jump either.
+    #expect(nearlyEqual(figure.pose(cheer, at: cheer.clip.duration), figure.pose(idle, at: 0)))
 }
 
-/// Every look stays inside the canvas through every frame of every clip, so a view sized to
+/// The same pose, give or take floating-point rounding.
+private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
+    zip(first.parts, second.parts).allSatisfy { one, other in
+        Channel.allCases.allSatisfy { abs(one[$0] - other[$0]) < 1e-6 }
+    }
+}
+
+/// Personas read differently at a glance: how high each one jumps, and the moves that
+/// define them.
+@Test func personasMoveTheirOwnWay() throws {
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
+    func rootValues(_ persona: Persona, _ value: (PartPose) -> Double) throws -> [Double] {
+        let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
+        return (0...Int(cheer.clip.duration * 100)).map { value(figure.pose(cheer, at: Double($0) / 100).parts[1]) }
+    }
+    // Root y is up-negative, so the highest jump has the smallest minimum.
+    let peaks = try Persona.allCases.map { try rootValues($0, \.y).min() ?? 0 }
+    #expect(abs(peaks[0] - -10) < 0.5)  // deadpan
+    #expect(abs(peaks[1] - -36) < 0.5)  // energetic
+    #expect(peaks.min() == peaks[1])
+    #expect(peaks.max() == peaks[0])
+    // The show-off spins: the figure flips through its own width.
+    #expect(try rootValues(.showoff, \.scaleX).min() ?? 1 < 0)
+    // The shy one edges sideways before it hops.
+    #expect(abs((try rootValues(.shy, \.x).min() ?? 0) - -10) < 0.5)
+}
+
+/// Every look stays inside the canvas through every frame of every persona's clips, so a view sized to
 /// the art never cuts off an ear or a racket. The bottom edge is left out: the shadow sits on it.
-@Test(arguments: PlaceholderCharacter.squad)
-func everyFrameStaysOnTheCanvas(outfit: Outfit) throws {
+@Test(arguments: Persona.allCases, PlaceholderCharacter.squad)
+func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for name in ["idle", "cheer"] {
-        let bound = try figure.bind(PlaceholderCharacter.clip(name))
+        let bound = try figure.bind(PlaceholderCharacter.clip(name, persona: persona))
         for frame in 0...Int(bound.clip.duration * 50) {
             let time = Double(frame) / 50
             for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
@@ -59,7 +75,7 @@ func everyFrameStaysOnTheCanvas(outfit: Outfit) throws {
                     for point in outline(shape.path).map(placement.transform.apply(to:)) {
                         #expect(
                             point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0,
-                            "\(name) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
+                            "\(persona.rawValue) \(name) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
                     }
                 }
             }
