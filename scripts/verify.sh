@@ -69,6 +69,8 @@ if want api && [ -f api/package.json ]; then
       exit 1
     }
     eval "$status"
+    # The Kysely table types must match the migrations: `pnpm --dir api db-types` rewrites them.
+    DATABASE_URL="$DB_URL" pnpm --dir api db-types --verify
     DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
       pnpm --dir api test
   )

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 import { sign } from 'hono/jwt';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -32,6 +33,7 @@ async function getMe(headers: Record<string, string>, supabaseUrl = config.supab
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
+    checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
     log: createLog(() => undefined),
   });
   try {

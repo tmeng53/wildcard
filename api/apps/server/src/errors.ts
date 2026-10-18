@@ -47,6 +47,13 @@ export class DatabaseUnavailableError extends AppError {
   }
 }
 
+/** Thrown when a request's path, query or body isn't what the route takes. Fix the request. */
+export class RequestInvalidError extends AppError {
+  override readonly name = 'RequestInvalidError';
+  readonly reason = 'REQUEST_INVALID';
+  readonly status = 'INVALID_ARGUMENT';
+}
+
 /** Thrown for a method and path the API doesn't have. */
 export class RouteNotFoundError extends AppError {
   override readonly name = 'RouteNotFoundError';

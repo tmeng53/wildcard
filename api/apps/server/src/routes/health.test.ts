@@ -1,3 +1,4 @@
+import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 import { describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -8,10 +9,17 @@ import type { Database } from '../ports.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens'));
+const checkInsOn = (db: Database) =>
+  createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() });
 
 async function getHealth(db: Database) {
   const lines: string[] = [];
-  const app = createApp({ db, verifyToken: notCalled, log: createLog((line) => lines.push(line)) });
+  const app = createApp({
+    db,
+    verifyToken: notCalled,
+    checkIns: checkInsOn(db),
+    log: createLog((line) => lines.push(line)),
+  });
   try {
     const response = await app.request('/health');
     return {
@@ -68,9 +76,11 @@ describe('GET /health', () => {
 
 describe('an unknown route', () => {
   it('answers 404 as a problem', async () => {
+    const db = createDatabase(config.databaseUrl);
     const app = createApp({
-      db: createDatabase(config.databaseUrl),
+      db,
       verifyToken: notCalled,
+      checkIns: checkInsOn(db),
       log: createLog(() => undefined),
     });
     const response = await app.request('/nope', { method: 'POST' });

@@ -8,12 +8,13 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json",
+    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json && tsc --noEmit -p packages/check-ins/tsconfig.test.json",
     "lint": "tsc --build && eslint . && prettier --check .",
     "format": "prettier --write .",
     "boundaries": "depcruise apps packages",
     "test": "vitest run",
-    "openapi": "pnpm build && node apps/server/dist/scripts/write-openapi.js"
+    "openapi": "pnpm build && node apps/server/dist/scripts/write-openapi.js",
+    "db-types": "kysely-codegen --dialect postgres --date-parser string --include-pattern 'public.(check_ins|check_in_squads|check_in_photos|squad_members)' --out-file packages/check-ins/src/adapters/tables.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -23,6 +24,7 @@
     "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.13.0",
+    "kysely-codegen": "0.20.0",
     "prettier": "3.9.10",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
