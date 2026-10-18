@@ -114,7 +114,7 @@ The author can't pass its own work. Every PR needs a verdict from an agent that 
 
 ## After opening
 
-If other work in progress is affected, link the PR from its issue. **When Codex is installed on the repo** (it isn't yet): Codex doesn't review on its own, so once the head commit is CI green, post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
+If other work in progress is affected, link the PR from its issue. **When Codex is installed on the repo** (it isn't yet): Codex doesn't review on its own, so once the head commit is green (`scripts/verify.sh` passes, and the Mac's run when the PR touches `ios/`), post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
 
 **When Codex isn't installed, or can't review that head** (it replies that it is out of usage, or no review has landed two hours after the ask), start, right away in the first case, a fresh Claude agent that did not write the PR as the fallback reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One fallback review per head, like Codex; once Codex can review again, the next head goes back to Codex. The fallback is a review, not a verdict: the verifier still runs.
 
@@ -133,6 +133,6 @@ Decide mechanically from the diff; when unsure, a human merges.
 
 **Tracy merges** (or tells the owner thread to) any PR that changes what users see or feel: screens, layout, copy, motion, haptics, images or assets. The owner thread posts the screenshots or recording in the thread and asks for her OK; nothing merges on silence.
 
-**A human also merges** any PR that touches agent rules (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`), CI or repo settings (`.github/`), the shared contract (`ios/Packages/Contracts`, labelled `contract`), database migrations, or carries the `needs-human` label. Those are the rules themselves, or data that's hard to undo.
+**A human also merges** any PR that touches agent rules (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`), the checks and hooks (`scripts/`), CI or repo settings (`.github/`), dependencies (any `Package.swift`, `Package.resolved`, `package.json` or lockfile), the shared contract (`ios/Packages/Contracts`, labelled `contract`), database migrations, or carries the `needs-human` label. Those are the rules and checks themselves, new dependencies, or data that's hard to undo. Check the diff's file list against this list; it decides, not judgment.
 
 Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening moves the PR into a human-merged category, stop and ask.

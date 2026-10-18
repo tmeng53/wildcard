@@ -2,6 +2,8 @@
 /AGENTS.md @tmeng53
 /CLAUDE.md @tmeng53
 /.claude/ @tmeng53
+/.agents/ @tmeng53
+/scripts/ @tmeng53
 /.github/ @tmeng53
 /ios/Packages/Contracts/ @tmeng53
 /supabase/migrations/ @tmeng53

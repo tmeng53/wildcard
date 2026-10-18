@@ -28,7 +28,8 @@ if base="$(git merge-base HEAD origin/main 2>/dev/null)"; then
   fi
 fi
 
-log="/tmp/verify-on-stop-$(field session_id | tr -cd 'a-zA-Z0-9_-').log"
+sid="$(field session_id | tr -cd 'a-zA-Z0-9_-')"
+log="/tmp/verify-on-stop-${sid:-$$}.log"
 if scripts/verify.sh >"$log" 2>&1; then
   exit 0
 fi
