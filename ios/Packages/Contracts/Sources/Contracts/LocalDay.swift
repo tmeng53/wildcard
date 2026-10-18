@@ -8,7 +8,7 @@ public struct LocalDay: Hashable, Comparable, Sendable, Codable, CustomStringCon
 
     public init(year: Int, month: Int, day: Int) throws(ContractsError) {
         guard (1...12).contains(month), (1...Self.daysIn(month: month, year: year)).contains(day),
-              (1970...9999).contains(year)
+            (1970...9999).contains(year)
         else { throw .invalidDay(Self.format(year, month, day)) }
         self.year = year
         self.month = month
@@ -18,7 +18,7 @@ public struct LocalDay: Hashable, Comparable, Sendable, Codable, CustomStringCon
     public init(_ text: String) throws(ContractsError) {
         let parts = text.split(separator: "-", omittingEmptySubsequences: false)
         guard parts.count == 3, parts[0].count == 4, parts[1].count == 2, parts[2].count == 2,
-              let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2])
+            let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2])
         else { throw .invalidDay(text) }
         try self.init(year: year, month: month, day: day)
     }

@@ -3,7 +3,7 @@
 # stills of the placeholder character and its clips as GIFs, frame by frame through the
 # player's own view. macOS with Xcode only. CI's `avatar-preview` job runs it and uploads
 # build/avatar.
-# Usage: scripts/avatar-preview.sh            (SIMULATOR="iPhone 16 Pro" to pick another device)
+# Usage: scripts/avatar-preview.sh            (SIMULATOR="iPhone 17 Pro" to pick another device)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -12,7 +12,7 @@ rm -rf "$out"
 mkdir -p "$out/previews"
 
 # The named simulator if this Xcode has it, else the first iPhone on the newest iOS runtime.
-want="${SIMULATOR:-iPhone 16}"
+want="${SIMULATOR:-iPhone 17}"
 devices="$(xcrun simctl list devices available)"
 if grep -q "    $want (" <<<"$devices"; then
   sim="$want"

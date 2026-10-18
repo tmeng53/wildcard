@@ -1,5 +1,5 @@
-import Foundation
 import Contracts
+import Foundation
 
 let tracy = MemberID(UUID(uuidString: "11111111-1111-1111-1111-111111111111")!)
 let coco = MemberID(UUID(uuidString: "22222222-2222-2222-2222-222222222222")!)
@@ -14,12 +14,13 @@ func checkIn(
     _ kind: String, on dayText: String, by member: MemberID = tracy, to squads: [SquadID] = [runners]
 ) -> CheckIn {
     let id = CheckInID(UUID())
-    let entry: CheckIn.Entry = switch kind {
-    case "trained": .trained(try! Training(sport: .run, minutes: 30))
-    case "healthy": .healthyMeal(Meal(slot: .lunch))
-    case "cheat": .cheatMeal(Meal(slot: .dinner))
-    default: .disclaimer(try! Disclaimer("加班到十点"))
-    }
+    let entry: CheckIn.Entry =
+        switch kind {
+        case "trained": .trained(try! Training(activity: .sport(.run), minutes: 30))
+        case "healthy": .healthyMeal(Meal(slot: .lunch))
+        case "cheat": .cheatMeal(Meal(slot: .dinner))
+        default: .disclaimer(try! Disclaimer("加班到十点"))
+        }
     return CheckIn(
         id: id, member: member, day: day(dayText), createdAt: Timestamp(millisecondsSince1970: 0),
         audience: try! Audience(squads), entry: entry
