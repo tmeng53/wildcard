@@ -9,54 +9,176 @@ struct SRGBColorTests {
     }
 
     @Test func contrastRatioMatchesWCAGEndpoints() {
-        let black = SRGBColor(red: 0, green: 0, blue: 0)
-        #expect(black.contrastRatio(with: Palette.white) == 21)
+        #expect(Palette.black.contrastRatio(with: Palette.white) == 21)
         #expect(Palette.white.contrastRatio(with: Palette.white) == 1)
     }
 
     @Test func contrastRatioIsSymmetric() {
-        #expect(Palette.ink.contrastRatio(with: Palette.medal) == Palette.medal.contrastRatio(with: Palette.ink))
+        #expect(Palette.ink.contrastRatio(with: Palette.amber) == Palette.amber.contrastRatio(with: Palette.ink))
     }
 }
 
-struct PaletteTests {
-    @Test func tokensKeepTheTrackMeetPalette() {
-        #expect(Palette.ink.hex == "#0E1B3D")
-        #expect(Palette.track.hex == "#EE5A36")
-        #expect(Palette.medal.hex == "#F6B92B")
-        #expect(Palette.sky.hex == "#1F6BFF")
+struct NeutralTests {
+    @Test func neutralsMatchTheApprovedSpec() {
+        let neutrals: [ColorRole] = [.canvas, .surface, .divider, .textPrimary, .textSecondary, .textTertiary]
+        #expect(
+            neutrals.map { $0.color(in: .pool).hex } == [
+                "#FFFFFF", "#F3F5F8", "#E8EBF0", "#22252E", "#6B7080", "#AEB2BC",
+            ])
+    }
+
+    /// A theme swaps only the signature group; neutrals and the fixed meaning accents never change.
+    @Test func onlyTheSignatureGroupAndTrainedFollowTheScene() {
+        let themed = ColorRole.allCases.filter { role in
+            Set(SceneTheme.allCases.map { role.color(in: $0) }).count > 1
+        }
+        #expect(
+            themed.map(\.rawValue) == [
+                "signature", "signatureShade", "signatureWash", "onSignature", "signatureText", "progressFill",
+                "meaningTrained", "meaningTrainedInk", "meaningTrainedWash", "meaningTrainedText",
+            ])
+    }
+
+    @Test func noNeutralIsAWarmOffWhite() {
+        // Cream backgrounds are off-brand, so every neutral background leans cool (blue >= red)
+        // in every scene. Two warm washes are deliberate and pinned here: the track scene's own
+        // wash (a scene color, never a neutral) and the 坦白放纵餐 tag's amber wash.
+        func isWarm(_ color: SRGBColor) -> Bool { color.blue < color.red }
+        for theme in SceneTheme.allCases {
+            for role in [ColorRole.canvas, .surface, .divider] {
+                #expect(!isWarm(role.color(in: theme)), "\(role) leans warm in \(theme)")
+            }
+        }
+        #expect(SceneTheme.allCases.filter { isWarm($0.colors.wash) } == [.track])
+        #expect(Meaning.allCases.filter { isWarm($0.accent(in: .pool).wash) } == [.indulgence])
     }
 
     /// Body-size text needs 4.5:1 (WCAG 2.2, 1.4.3).
     @Test(arguments: [
         (ColorRole.textPrimary, ColorRole.canvas),
         (.textPrimary, .surface),
-        (.textPrimary, .skyWash),
         (.textSecondary, .canvas),
         (.textSecondary, .surface),
-        (.textOnFill, .sky),
-        (.textOnFill, .textPrimary),
-        (.textPrimary, .achievement),
-        (.textPrimary, .fresh),
-        (.textPrimary, .brand),
     ])
-    func smallTextIsReadable(text: ColorRole, background: ColorRole) {
-        #expect(text.color.contrastRatio(with: background.color) >= 4.5)
+    func neutralTextIsReadable(text: ColorRole, background: ColorRole) {
+        #expect(text.color(in: .pool).contrastRatio(with: background.color(in: .pool)) >= 4.5)
     }
 
-    /// White on track red is 3.4:1, enough only for large or bold text (WCAG 3:1), so the
-    /// main action's label is 17 pt semibold or bigger.
-    @Test func whiteOnBrandIsLargeTextOnly() {
-        let ratio = ColorRole.textOnFill.color.contrastRatio(with: ColorRole.brand.color)
+    /// Tertiary ink is for denominators and decoration only; this pins that it is too faint for text.
+    @Test func tertiaryIsDecorationOnly() {
+        #expect(ColorRole.textTertiary.color(in: .pool).contrastRatio(with: Palette.white) < 3)
+    }
+}
+
+struct SceneThemeTests {
+    @Test func poolColors() {
+        let pool = SceneTheme.pool.colors
+        #expect(
+            [pool.signature, pool.shade, pool.wash, pool.onSignature, pool.signatureText, pool.progressFill].map(\.hex)
+                == ["#079BB8", "#067C93", "#E2F5F9", "#FFFFFF", "#06778D", "#079BB8"])
+    }
+
+    @Test func trackColors() {
+        let track = SceneTheme.track.colors
+        #expect(
+            [track.signature, track.shade, track.wash, track.onSignature, track.signatureText, track.progressFill]
+                .map(\.hex) == ["#F0402F", "#C72E20", "#FDEDEA", "#FFFFFF", "#C72E20", "#F0402F"])
+    }
+
+    @Test func gymIsGraphiteWithVoltOnIt() {
+        let gym = SceneTheme.gym.colors
+        #expect(
+            [gym.signature, gym.shade, gym.wash, gym.onSignature, gym.signatureText, gym.progressFill].map(\.hex)
+                == ["#1F2128", "#000000", "#EEF0F2", "#C6F432", "#1F2128", "#C6F432"])
+    }
+
+    /// Small signature-colored text (第 42 周, selected tabs, the score) sits on white or the wash.
+    @Test(arguments: SceneTheme.allCases)
+    func signatureTextIsReadable(theme: SceneTheme) {
+        let text = ColorRole.signatureText.color(in: theme)
+        #expect(text.contrastRatio(with: ColorRole.canvas.color(in: theme)) >= 4.5)
+        #expect(text.contrastRatio(with: ColorRole.signatureWash.color(in: theme)) >= 4.5)
+        #expect(
+            ColorRole.textPrimary.color(in: theme).contrastRatio(with: ColorRole.signatureWash.color(in: theme)) >= 4.5)
+    }
+
+    /// The 打卡 label is 17 pt Semibold with a 22 pt icon. Apple's HIG asks 3:1 for bold text and
+    /// for icons; white on the pool signature is 3.3:1 and on the track signature 3.8:1.
+    @Test(arguments: SceneTheme.allCases)
+    func labelsOnTheSignatureMeetBoldTextContrast(theme: SceneTheme) {
+        let ratio = ColorRole.onSignature.color(in: theme).contrastRatio(with: ColorRole.signature.color(in: theme))
         #expect(ratio >= 3)
-        #expect(ratio < 4.5)
     }
 
-    @Test func noRoleUsesAWarmOffWhite() {
-        // Cream backgrounds are off-brand: every light surface leans cool (blue >= red).
-        for role in [ColorRole.canvas, .surface, .skyWash, .divider] {
-            #expect(role.color.blue >= role.color.red, "\(role) leans warm")
+    /// Tennis and climbing are placeholders until their colors are chosen; this pins them so a
+    /// change is deliberate.
+    @Test func placeholderScenes() {
+        #expect(
+            [SceneTheme.tennis, .climbing].map { [$0.colors.signature.hex, $0.colors.shade.hex, $0.colors.wash.hex] }
+                == [
+                    ["#2E8B57", "#226B43", "#E5F3EB"], ["#C2622D", "#9A4A1F", "#F1F2F5"],
+                ])
+    }
+
+    @Test func dimSignaturesAreBoldOnly() {
+        // Pins the limit above: these pairs must never carry regular-weight small text.
+        let pool = SceneTheme.pool.colors
+        let track = SceneTheme.track.colors
+        #expect(pool.onSignature.contrastRatio(with: pool.signature) < 4.5)
+        #expect(track.onSignature.contrastRatio(with: track.signature) < 4.5)
+    }
+}
+
+struct MeaningTests {
+    @Test func fixedAccentsKeepTheCurrentMeaningColors() {
+        let accents = [Meaning.fresh, .indulgence, .disclaimer].map { $0.accent(in: .pool).tint.hex }
+        #expect(accents == ["#2BD47D", "#FFB020", "#A98BFF"])
+    }
+
+    @Test(arguments: SceneTheme.allCases)
+    func trainedFollowsTheSceneSignature(theme: SceneTheme) {
+        #expect(Meaning.trained.accent(in: theme) == theme.colors.trainedAccent)
+        #expect(ColorRole.meaningTrained.color(in: theme) == ColorRole.progressFill.color(in: theme))
+    }
+
+    /// A tag is dark text on the accent's wash: 4.5:1.
+    @Test(arguments: Meaning.allCases, SceneTheme.allCases)
+    func tagTextIsReadable(meaning: Meaning, theme: SceneTheme) {
+        let accent = meaning.accent(in: theme)
+        #expect(accent.text.contrastRatio(with: accent.wash) >= 4.5)
+    }
+
+    /// Icons need 3:1 (WCAG 2.2, 1.4.11) on every light surface they sit on, glass included.
+    @Test(arguments: Meaning.allCases, SceneTheme.allCases)
+    func iconInkIsVisible(meaning: Meaning, theme: SceneTheme) {
+        let ink = meaning.accent(in: theme).ink
+        for background in [ColorRole.canvas, .surface, .signatureWash] {
+            #expect(ink.contrastRatio(with: background.color(in: theme)) >= 3, "\(meaning) on \(background)")
         }
+    }
+}
+
+struct LayoutTests {
+    @Test func spacingAndRadiiMatchTheSpec() {
+        #expect([Space.xxs, Space.xs, Space.s, Space.m, Space.l, Space.xl, Space.xxl] == [4, 8, 12, 16, 24, 32, 48])
+        #expect(Space.gutter == 16)
+        #expect([Radius.s, Radius.m, Radius.button, Radius.l, Radius.xl] == [14, 16, 18, 24, 26])
+        #expect(Radius.capsule(height: Sizing.capsuleHeight) == 22)
+    }
+
+    @Test func tapTargetsAreAtLeast44Points() {
+        #expect(Sizing.capsuleHeight >= Sizing.minimumTapTarget)
+        #expect(Sizing.checkInHeight >= Sizing.minimumTapTarget)
+    }
+
+    @Test func frostGetsWhiterFromNavigationToCards() {
+        #expect([Frost.navigationFill, Frost.capsuleFill, Frost.bannerFill, Frost.cardFill] == [0.5, 0.5, 0.62, 0.76])
+    }
+
+    @Test func scrimIsALightBlurNotADim() {
+        #expect(Scrim.blurRadius == 3)
+        #expect(Scrim.tint.hex == "#E8F6FA")
+        #expect(Scrim.tintOpacity == 0.1)
     }
 }
 
@@ -68,31 +190,60 @@ struct TypographyTests {
         #expect(Face.scoreboard(.semibold).postScriptName == "BarlowCondensed-SemiBold")
     }
 
-    @Test func rampGetsSmallerFromHeroToCaption() {
+    @Test func textRampGetsSmallerFromHeroToFootnote() {
         let sizes = [
             TypeRamp.hero, TypeRamp.title, TypeRamp.headline, TypeRamp.body, TypeRamp.callout, TypeRamp.caption,
+            TypeRamp.footnote,
         ].map(\.size)
-        #expect(sizes == [34, 24, 17, 16, 15, 13])
+        #expect(sizes == [30, 24, 17, 16, 15, 13, 12])
     }
 
-    @Test func scoreboardStylesUseTheScoreboardFace() {
-        for style in [TypeRamp.scoreHero, TypeRamp.scoreLarge, TypeRamp.scoreMedium, TypeRamp.scoreLabel] {
-            guard case .scoreboard = style.face else {
-                Issue.record("\(style) is not a scoreboard face")
-                continue
-            }
+    @Test func scoreboardRampMatchesTheSpec() {
+        let sizes = [
+            TypeRamp.scoreHero, TypeRamp.scoreLarge, TypeRamp.scoreLargeDenominator, TypeRamp.scoreMedium,
+            TypeRamp.scoreSmall, TypeRamp.scoreSmallDenominator, TypeRamp.scoreLabel,
+        ].map(\.size)
+        #expect(sizes == [92, 52, 28, 30, 20, 14, 14])
+        #expect(TypeRamp.scoreHero.tracking == -1.84)
+        #expect(TypeRamp.scoreMedium.face == .scoreboard(.extraBold))
+    }
+
+    @Test func everyRungUsesTheRightFamily() {
+        let scoreboard = TypeRamp.all.filter {
+            if case .scoreboard = $0.style.face { return true }
+            return false
         }
+        #expect(
+            scoreboard.map(\.name) == [
+                "scoreHero", "scoreLarge", "scoreLargeDenominator", "scoreMedium", "scoreSmall",
+                "scoreSmallDenominator", "scoreLabel",
+            ])
     }
 }
 
 struct MotionTests {
-    @Test func springsSettleQuicklyEnoughForTaps() {
-        #expect(Motion.snappy.response == 0.3)
-        #expect(Motion.snappy.dampingFraction == 0.86)
+    @Test func springsMatchTheSpec() {
+        #expect(Motion.all.map(\.name) == ["snappy", "burst", "panel", "bouncy", "smooth"])
+        #expect(Motion.all.map(\.spring.response) == [0.3, 0.24, 0.37, 0.5, 0.45])
+        #expect(Motion.all.map(\.spring.dampingFraction) == [0.86, 0.6, 0.52, 0.6, 1])
+        #expect(Motion.burstStagger == 0.028)
+        #expect([Motion.collapseDuration, Motion.collapseStagger] == [0.19, 0.016])
     }
 
-    @Test func onlyCelebrationsBounce() {
+    /// Bounce is reserved for the expressive moments (the check-in burst, glass panels springing
+    /// in, celebrations). Taps and ordinary transitions never overshoot visibly.
+    @Test func onlyExpressiveSpringsBounce() {
         let bouncing = Motion.all.filter { $0.spring.dampingFraction < 0.8 }.map(\.name)
-        #expect(bouncing == ["bouncy"])
+        #expect(bouncing == ["burst", "panel", "bouncy"])
+        #expect(Motion.snappy.dampingFraction >= 0.8)
+        #expect(Motion.smooth.dampingFraction == 1)
+    }
+
+    @Test func capsulesLandOnTheArcAboveTheButton() {
+        let rounded = Meaning.allCases.map { meaning in
+            let offset = BurstLayout.offset(for: meaning)
+            return [(offset.x * 10).rounded() / 10, (offset.y * 10).rounded() / 10]
+        }
+        #expect(rounded == [[-121.7, -39.6], [-60.1, -113.0], [60.1, -113.0], [121.7, -39.6]])
     }
 }

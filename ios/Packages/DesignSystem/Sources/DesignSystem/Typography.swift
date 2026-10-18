@@ -53,25 +53,42 @@ public struct TypeStyle: Sendable, Hashable {
     }
 }
 
-/// The type ramp. One `hero` per screen; scoreboard styles carry the numbers that matter most.
+/// The type ramp. Chinese tops out at Semibold, so levels come from size, not weight.
+/// One `hero` per screen; scoreboard styles carry the numbers that matter most.
 public enum TypeRamp {
-    public static let hero = TypeStyle(face: .text(.semibold), size: 34, anchor: .largeTitle)
+    public static let hero = TypeStyle(face: .text(.semibold), size: 30, anchor: .largeTitle)
     public static let title = TypeStyle(face: .text(.semibold), size: 24, anchor: .title)
+    /// Squad names, card titles and the main button.
     public static let headline = TypeStyle(face: .text(.semibold), size: 17, anchor: .headline)
     public static let body = TypeStyle(face: .text(.regular), size: 16, anchor: .body)
+    /// Draft cards, capsule labels and chips.
     public static let callout = TypeStyle(face: .text(.medium), size: 15, anchor: .callout)
+    /// Tabs, name tags and reaction buttons.
     public static let caption = TypeStyle(face: .text(.medium), size: 13, anchor: .caption)
+    /// Capsule badges such as 第 42 周 and 我 · 本周.
+    public static let footnote = TypeStyle(face: .text(.semibold), size: 12, anchor: .footnote)
 
-    /// The one number a screen is about, like a broadcast score bug.
-    public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 96, tracking: -1, anchor: .largeTitle)
-    public static let scoreLarge = TypeStyle(face: .scoreboard(.extraBold), size: 56, anchor: .largeTitle)
-    public static let scoreMedium = TypeStyle(face: .scoreboard(.bold), size: 32, anchor: .title)
+    /// The big number on a highlight card.
+    public static let scoreHero = TypeStyle(
+        face: .scoreboard(.extraBold), size: 92, tracking: -1.84, anchor: .largeTitle)
+    /// The squad's week score, like a broadcast score bug.
+    public static let scoreLarge = TypeStyle(face: .scoreboard(.extraBold), size: 52, anchor: .largeTitle)
+    /// The `/25` after `scoreLarge`, in tertiary ink.
+    public static let scoreLargeDenominator = TypeStyle(face: .scoreboard(.extraBold), size: 28, anchor: .title)
+    /// Podium counts in the Sunday recap.
+    public static let scoreMedium = TypeStyle(face: .scoreboard(.extraBold), size: 30, anchor: .title)
+    /// 我 · 本周 `3/5`.
+    public static let scoreSmall = TypeStyle(face: .scoreboard(.extraBold), size: 20, anchor: .title3)
+    /// The `/5` after `scoreSmall`, in tertiary ink.
+    public static let scoreSmallDenominator = TypeStyle(face: .scoreboard(.extraBold), size: 14, anchor: .footnote)
     /// Short uppercase Latin labels: `WK42`, `LANE 3`.
     public static let scoreLabel = TypeStyle(face: .scoreboard(.semibold), size: 14, tracking: 1.5, anchor: .caption)
 
     public static let all: [(name: String, style: TypeStyle)] = [
         ("hero", hero), ("title", title), ("headline", headline), ("body", body),
-        ("callout", callout), ("caption", caption), ("scoreHero", scoreHero),
-        ("scoreLarge", scoreLarge), ("scoreMedium", scoreMedium), ("scoreLabel", scoreLabel),
+        ("callout", callout), ("caption", caption), ("footnote", footnote), ("scoreHero", scoreHero),
+        ("scoreLarge", scoreLarge), ("scoreLargeDenominator", scoreLargeDenominator),
+        ("scoreMedium", scoreMedium), ("scoreSmall", scoreSmall),
+        ("scoreSmallDenominator", scoreSmallDenominator), ("scoreLabel", scoreLabel),
     ]
 }
