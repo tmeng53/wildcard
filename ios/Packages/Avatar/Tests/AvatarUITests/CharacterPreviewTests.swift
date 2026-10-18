@@ -131,6 +131,9 @@ struct CharacterPreviewTests {
             CGContext(
                 data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        // Shorter rows leave a gap at the right: paint it the page's neutral, not transparent.
+        context.setFillColor(CGColor(srgbRed: 0xF3 / 255, green: 0xF5 / 255, blue: 0xF8 / 255, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         // Core Graphics counts rows from the bottom, so the first image goes on top.
         var top = height
         for image in images {
