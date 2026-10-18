@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart hook (.claude/settings.json): gives a Claude cloud session the services
 # scripts/verify.sh needs, so checks run before a push. Does nothing outside the cloud.
-# Cloud sessions are Linux: they run the Swift package tests, the web page and Supabase,
+# Cloud sessions are Linux: they run the Swift package tests, the web page, Supabase and the API,
 # never the iOS simulator (that runs in CI's macOS job, added with the Xcode project).
 # Each step reports its own failure and the rest still run, so the session always learns
 # which checks will be inconclusive.
@@ -49,6 +49,14 @@ if [ -f web/package.json ]; then
     ready+=("web dependencies")
   else
     missing+=("web dependencies (see /tmp/pnpm-install.log)")
+  fi
+fi
+
+if [ -f api/package.json ]; then
+  if pnpm --dir api install --frozen-lockfile --prefer-offline >/tmp/pnpm-api-install.log 2>&1; then
+    ready+=("API dependencies")
+  else
+    missing+=("API dependencies (see /tmp/pnpm-api-install.log)")
   fi
 fi
 

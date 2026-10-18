@@ -1,0 +1,18 @@
+{
+  "name": "@wildcard/errors",
+  "private": true,
+  "type": "module",
+  "wildcard": {
+    "kind": "supporting"
+  },
+  "exports": {
+    ".": {
+      "@wildcard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  }
+}

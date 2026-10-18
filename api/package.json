@@ -1,0 +1,31 @@
+{
+  "name": "@wildcard/api-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "boundaries": "depcruise apps packages",
+    "test": "vitest run",
+    "openapi": "pnpm build && node apps/server/dist/scripts/write-openapi.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@vitest/eslint-plugin": "1.6.27",
+    "dependency-cruiser": "18.6.0",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.5"
+  }
+}
