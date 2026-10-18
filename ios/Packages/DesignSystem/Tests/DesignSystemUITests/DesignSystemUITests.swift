@@ -25,11 +25,32 @@ struct ScoreboardFontTests {
 }
 
 struct StringCatalogTests {
-    @Test func styleGuideHasEnglish() throws {
-        let path = try #require(Bundle.module.path(forResource: "en", ofType: "lproj"))
-        let english = try #require(Bundle(path: path))
-        #expect(english.localizedString(forKey: "开跑", value: nil, table: nil) == "Go")
-        #expect(english.localizedString(forKey: "配色", value: nil, table: nil) == "Color")
+    /// Command-line SwiftPM copies the catalog as is; Xcode compiles it into `.lproj` tables.
+    /// The UI test launching the app in English checks the compiled form.
+    @Test func everyStyleGuideStringHasEnglish() throws {
+        let url = try #require(Bundle.module.url(forResource: "Localizable", withExtension: "xcstrings"))
+        let catalog = try JSONDecoder().decode(Catalog.self, from: Data(contentsOf: url))
+        #expect(catalog.sourceLanguage == "zh-Hans")
+        #expect(catalog.strings["开跑"]?.localizations["en"]?.stringUnit.value == "Go")
+        let missing = catalog.strings.filter { $0.value.localizations["en"]?.stringUnit.value.isEmpty ?? true }
+        #expect(missing.isEmpty, "no English for \(missing.keys.sorted())")
     }
+}
+
+private struct Catalog: Decodable {
+    let sourceLanguage: String
+    let strings: [String: CatalogEntry]
+}
+
+private struct CatalogEntry: Decodable {
+    let localizations: [String: CatalogLocalization]
+}
+
+private struct CatalogLocalization: Decodable {
+    let stringUnit: CatalogStringUnit
+}
+
+private struct CatalogStringUnit: Decodable {
+    let value: String
 }
 #endif

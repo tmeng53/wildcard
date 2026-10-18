@@ -49,12 +49,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-screenshots-${{ github.sha }}
+          # Named after the commit the PR is at, not the merge commit GitHub tests.
+          name: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}
           path: build/ios/screenshots
           if-no-files-found: warn
       - name: Upload test results on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-xcresult-${{ github.sha }}
+          name: ios-xcresult-${{ github.event.pull_request.head.sha || github.sha }}
           path: build/ios/Wildcard.xcresult

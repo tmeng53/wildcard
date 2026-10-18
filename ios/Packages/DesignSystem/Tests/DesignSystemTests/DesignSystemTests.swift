@@ -2,7 +2,7 @@ import Testing
 
 @testable import DesignSystem
 
-struct RGBColorTests {
+struct SRGBColorTests {
     @Test func hexIsUppercaseWithLeadingZeros() {
         #expect(SRGBColor(red: 0x0E, green: 0x1B, blue: 0x3D).hex == "#0E1B3D")
         #expect(SRGBColor(red: 0, green: 0, blue: 0).hex == "#000000")
