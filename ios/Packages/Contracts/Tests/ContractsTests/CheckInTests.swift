@@ -20,17 +20,21 @@ private func decode(_ json: String) throws -> CheckIn {
     let checkIn = CheckIn(
         id: checkInID, member: memberID, day: try LocalDay("2025-10-17"), createdAt: createdAt,
         audience: try Audience([squadA, squadB]),
-        entry: .trained(try Training(sport: .run, minutes: 45, photo: try PhotoRef(path: "m/abc.jpg"),
-                                     caption: try Caption("  雨中五公里 ")))
+        entry: .trained(
+            try Training(
+                activity: .sport(.run), minutes: 45,
+                photos: try Photos([try PhotoRef(path: "m/b.jpg"), try PhotoRef(path: "m/a.jpg")]),
+                caption: try Caption("  雨中五公里 ")))
     )
-    #expect(try encode(checkIn) == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","id":"11111111-1111-1111-1111-111111111111","kind":"trained","member":"22222222-2222-2222-2222-222222222222","training":{"caption":"雨中五公里","minutes":45,"photo":{"path":"m\/abc.jpg"},"sport":"run"},"version":1}"#)
+    #expect(try encode(checkIn) == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","id":"11111111-1111-1111-1111-111111111111","kind":"trained","member":"22222222-2222-2222-2222-222222222222","training":{"caption":"雨中五公里","minutes":45,"photos":[{"path":"m\/b.jpg"},{"path":"m\/a.jpg"}],"sport":"run"},"version":1}"#)
 }
 
 @Test func eachKindRoundTrips() throws {
     let entries: [CheckIn.Entry] = [
-        .trained(try Training(sport: .yoga, minutes: 30)),
+        .trained(try Training(activity: .sport(.yoga), minutes: 30)),
+        .trained(try Training(activity: .custom(try CustomSport("飞盘高尔夫")), minutes: 50)),
         .healthyMeal(Meal(slot: .lunch, caption: try Caption("沙拉碗"))),
-        .cheatMeal(Meal(slot: .snack, photo: try PhotoRef(path: "m/boba.jpg"))),
+        .cheatMeal(Meal(slot: .snack, photos: try Photos([try PhotoRef(path: "m/boba.jpg")]))),
         .disclaimer(try Disclaimer("下雨了，跑道在哭")),
     ]
     for entry in entries {
@@ -100,4 +104,59 @@ private func decode(_ json: String) throws -> CheckIn {
     #expect(throws: ContractsError.captionLength(41)) { try Caption(String(repeating: "爽", count: 41)) }
     #expect(throws: ContractsError.captionLength(0)) { try Caption(" ") }
     #expect(throws: ContractsError.multilineCaption) { try Caption("第一行\n第二行") }
+}
+
+private func trainingJSON(_ training: String) -> String {
+    #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"trained","training":"#
+        + training + "}"
+}
+
+@Test func customSportIsReadAndWrittenWithItsName() throws {
+    let checkIn = try decode(trainingJSON(#"{"sport":"custom","customSport":" 飞盘高尔夫 ","minutes":40}"#))
+    #expect(try checkIn.entry == .trained(Training(activity: .custom(try CustomSport("飞盘高尔夫")), minutes: 40)))
+    #expect(try encode(checkIn).contains(#""training":{"customSport":"飞盘高尔夫","minutes":40,"sport":"custom"}"#))
+}
+
+@Test func customSportNameMustFitAndGoWithCustom() {
+    #expect(throws: ContractsError.customSportLength(21)) { try CustomSport(String(repeating: "练", count: 21)) }
+    #expect(throws: ContractsError.multilineCustomSport) { try CustomSport("飞盘\n高尔夫") }
+    #expect(throws: ContractsError.strayCustomSport) {
+        try decode(trainingJSON(#"{"sport":"run","customSport":"飞盘","minutes":40}"#))
+    }
+    #expect(throws: DecodingError.self) { try decode(trainingJSON(#"{"sport":"custom","minutes":40}"#)) }
+}
+
+@Test func unknownSportFromANewerAppStillReads() throws {
+    let checkIn = try decode(trainingJSON(#"{"sport":"padel","minutes":60,"intensity":"hard"}"#))
+    #expect(try checkIn.entry == .trained(Training(activity: .unrecognized("padel"), minutes: 60)))
+    #expect(try encode(checkIn).contains(#""sport":"padel""#))
+}
+
+@Test func photosAreOneToThreeDistinctWithTheFirstAsCover() throws {
+    let a = try PhotoRef(path: "m/a.jpg")
+    let b = try PhotoRef(path: "m/b.jpg")
+    let c = try PhotoRef(path: "m/c.jpg")
+    let photos = try Photos([a, b, c])
+    #expect(photos.cover == a)
+    #expect(photos.withCover(c)?.all == [c, a, b])
+    #expect(try photos.withCover(PhotoRef(path: "m/z.jpg")) == nil)
+    #expect(throws: ContractsError.photoCount(0)) { try Photos([]) }
+    #expect(throws: ContractsError.photoCount(4)) { try Photos([a, b, c, try PhotoRef(path: "m/d.jpg")]) }
+    #expect(throws: ContractsError.repeatedPhoto) { try Photos([a, a]) }
+    #expect(throws: ContractsError.photoCount(0)) { try decode(trainingJSON(#"{"sport":"run","minutes":30,"photos":[]}"#)) }
+}
+
+@Test func aFeedSkipsOnlyTheCheckInsThisBuildCantRead() throws {
+    let readable = trainingJSON(#"{"sport":"run","minutes":30}"#)
+    let newKind = #"{"version":1,"id":"11111111-1111-1111-1111-111111111112","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00Z","audience":["33333333-3333-3333-3333-333333333333"],"kind":"sleep","sleep":{"hours":8}}"#
+    let newVersion = readable.replacingOccurrences(of: #""version":1"#, with: #""version":2"#)
+    let feed = try WireJSON.decoder().decode(
+        [Tolerant<CheckIn>].self, from: Data("[\(readable),\(newKind),\(newVersion)]".utf8))
+    #expect(feed.map { $0.value?.id } == [checkInID, nil, nil])
+}
+
+@Test func everySportHasOneCategoryAndEveryCategoryHasSports() {
+    #expect(Sport.allCases.count == 52)
+    #expect(SportCategory.allCases.allSatisfy { !$0.sports.isEmpty })
+    #expect(SportCategory.everyday.sports == [.dogWalk, .walkCommute, .bikeCommute, .deepClean, .moving, .strollerWalk, .gardening])
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A member's plan for one week: which days they train and which are rest days.
-/// Planned rest days keep the training streak without a check-in. The rules
+/// Planned training days are what 本周 counts against. The rules
 /// (locking days once they start, carrying last week's plan over) live in the
 /// `CheckIn` package, not here.
 public struct WeeklyPlan: Hashable, Sendable, Codable {
@@ -45,18 +45,18 @@ public struct WeeklyPlan: Hashable, Sendable, Codable {
 
 /// One planned day: train (optionally naming the sport) or 休息.
 public enum PlanDay: Hashable, Sendable, Codable {
-    case train(Sport?)
+    case train(Activity?)
     case rest
 
-    private enum CodingKeys: String, CodingKey { case kind, sport }
+    private enum CodingKeys: String, CodingKey { case kind, sport, customSport }
     private enum Kind: String, Codable { case train, rest }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(Kind.self, forKey: .kind) {
-        case .train: self = .train(try container.decodeIfPresent(Sport.self, forKey: .sport))
+        case .train: self = .train(try container.decodeActivityIfPresent(sport: .sport, custom: .customSport))
         case .rest:
-            guard !container.contains(.sport) else { throw ContractsError.payloadMismatch(Kind.rest.rawValue) }
+            guard !container.contains(.sport), !container.contains(.customSport) else { throw ContractsError.payloadMismatch(Kind.rest.rawValue) }
             self = .rest
         }
     }
@@ -64,9 +64,9 @@ public enum PlanDay: Hashable, Sendable, Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-        case .train(let sport):
+        case .train(let activity):
             try container.encode(Kind.train, forKey: .kind)
-            try container.encodeIfPresent(sport, forKey: .sport)
+            try container.encodeActivity(activity, sport: .sport, custom: .customSport)
         case .rest:
             try container.encode(Kind.rest, forKey: .kind)
         }

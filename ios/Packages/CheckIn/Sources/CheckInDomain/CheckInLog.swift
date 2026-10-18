@@ -37,7 +37,7 @@ public struct CheckInLog: Hashable, Sendable {
         return .notCheckedIn
     }
 
-    /// At least one 健康餐 that day. 放纵餐忏悔 never counts.
+    /// At least one 健康餐 that day. 坦白放纵餐 never counts.
     public func hadHealthyMeal(on day: LocalDay) -> Bool {
         checkIns.contains { $0.day == day && $0.entry.isHealthyMeal }
     }
