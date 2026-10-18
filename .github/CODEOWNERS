@@ -7,3 +7,9 @@
 /.github/ @tmeng53
 /ios/Packages/Contracts/ @tmeng53
 /supabase/migrations/ @tmeng53
+
+# New dependencies.
+Package.swift @tmeng53
+Package.resolved @tmeng53
+package.json @tmeng53
+pnpm-lock.yaml @tmeng53

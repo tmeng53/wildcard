@@ -131,7 +131,7 @@ Decide mechanically from the diff; when unsure, a human merges.
 3. The code review is clean on the head commit (Codex's, or the fallback's; see After opening), and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
 
-**Tracy merges** (or tells the owner thread to) any PR that changes what users see or feel: screens, layout, copy, motion, haptics, images or assets. The owner thread posts the screenshots or recording in the thread and asks for her OK; nothing merges on silence.
+**Tracy merges** (or tells the owner thread to) any PR that changes what users see or feel: screens, layout, copy, motion, haptics, images or assets. By path, that is any change under `ios/` outside a `Domain` target or a test, any `*.xcassets`, `*.xcstrings` or `*.strings`, anything under `web/` outside a test, and any copy a push notification or email sends. The owner thread posts the screenshots or recording in the thread and asks for her OK; nothing merges on silence.
 
 **A human also merges** any PR that touches agent rules (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`), the checks and hooks (`scripts/`), CI or repo settings (`.github/`), dependencies (any `Package.swift`, `Package.resolved`, `package.json` or lockfile), the shared contract (`ios/Packages/Contracts`, labelled `contract`), database migrations, or carries the `needs-human` label. Those are the rules and checks themselves, new dependencies, or data that's hard to undo. Check the diff's file list against this list; it decides, not judgment.
 

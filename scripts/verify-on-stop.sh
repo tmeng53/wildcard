@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
 # Stop hook (.claude/settings.json): a Claude cloud session can't end its turn while
-# scripts/verify.sh is red on a branch with changes of its own. On failure it exits 2,
-# which blocks the stop and hands the error to Claude so it keeps working.
-# It blocks once per turn: when Claude stops again after a block (`stop_hook_active`),
-# it lets the stop through, so a check Claude can't fix (no toolchain, main already red)
-# ends in a report to the user instead of an endless loop.
-# Does nothing outside the cloud, and nothing when the branch has no changes of its own.
+# scripts/verify.sh is red on a branch with changes of its own.
+# From sponge-ai-lab/engineering-skills (cloud-test-environment skill's template).
+# On failure it exits 2, which blocks the stop and hands the error to Claude.
+# It blocks once per turn: on the next stop (`stop_hook_active`) it lets it through,
+# so a check Claude can't fix (no toolchain, main already red) ends in a report to the
+# user, not a loop. Does nothing outside the cloud, or when the branch has no changes.
 set -uo pipefail
-[ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
-cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}"
+VERIFY=(scripts/verify.sh)
+LIMIT=840   # seconds; with the 20 s kill grace, stays under the hook's 900 s timeout
 
+[ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
+
+# Read a field of the hook's JSON input (booleans print as true/false).
 input="$(cat)"
-field() { python3 -c 'import json,sys
-try:
-    v = json.loads(sys.argv[1]).get(sys.argv[2])
-    if v is not None: print(str(v).lower() if isinstance(v, bool) else v)
-except Exception: pass' "$input" "$1"; }
+field() {
+  python3 -c 'import json, sys
+v = json.loads(sys.argv[1]).get(sys.argv[2])
+print("" if v is None else str(v).lower() if isinstance(v, bool) else v)' "$input" "$1" 2>/dev/null
+}
 [ "$(field stop_hook_active)" = "true" ] && exit 0
+
+# The input's cwd follows the session into a worktree; CLAUDE_PROJECT_DIR doesn't.
+dir="$(field cwd)"
+cd "${dir:-${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}}" || exit 0
+cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0   # cwd may be a subdirectory
 
 # Explicit refspec: some clones have none configured, which would leave origin/main missing.
 git rev-parse --verify --quiet origin/main >/dev/null ||
@@ -28,16 +36,25 @@ if base="$(git merge-base HEAD origin/main 2>/dev/null)"; then
   fi
 fi
 
-sid="$(field session_id | tr -cd 'a-zA-Z0-9_-')"
-log="/tmp/verify-on-stop-${sid:-$$}.log"
-if scripts/verify.sh >"$log" 2>&1; then
+log="$(mktemp -t verify-on-stop.XXXXXX.log)"
+# timeout runs the check in its own process group (pgid = its pid). After a
+# timeout, kill whatever is left of that group: --kill-after only covers the
+# command itself, not children that outlive it.
+NO_COLOR=1 timeout --kill-after=20 "$LIMIT" "${VERIFY[@]}" >"$log" 2>&1 &
+pid=$!
+wait "$pid"
+status=$?
+{ [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; } && kill -KILL -- "-$pid" 2>/dev/null
+if [ "$status" -eq 0 ]; then
+  rm -f "$log"   # keep only failed logs
   exit 0
 fi
 
 {
-  echo "scripts/verify.sh failed, so this turn can't end yet. Last lines (full log: $log):"
+  { [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; } && echo "${VERIFY[*]} timed out after ${LIMIT}s."
+  echo "${VERIFY[*]} failed, so this turn can't end yet. Last lines (full log: $log):"
   tail -n 40 "$log"
   echo
-  echo "Fix the failure and run it again. If you can't fix it, tell the user exactly which check is red and why; your next stop will be allowed."
+  echo "Fix it and run it again. If you can't, tell the user exactly which check is red and why; your next stop will be allowed."
 } >&2
 exit 2

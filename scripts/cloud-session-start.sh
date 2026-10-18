@@ -29,7 +29,8 @@ if [ -d supabase ]; then
   fi
   if ! docker info >/dev/null 2>&1; then
     missing+=("Docker (see /tmp/dockerd.log)")
-  elif npx --yes supabase start >/tmp/supabase-start.log 2>&1; then
+  # Same CLI choice as scripts/verify.sh: a real binary if installed, else npx.
+  elif { if type -P supabase >/dev/null; then supabase start; else npx --yes supabase start; fi; } >/tmp/supabase-start.log 2>&1; then
     ready+=("Docker" "local Supabase")
   else
     missing+=("local Supabase (see /tmp/supabase-start.log)")
