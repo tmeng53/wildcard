@@ -6,32 +6,17 @@ import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
-import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
-
-// Local Supabase, as `supabase status -o env` prints it (scripts/verify.sh passes it in).
-const config = readConfig(process.env);
-const publishableKey = z.string().min(1).parse(process.env.SUPABASE_PUBLISHABLE_KEY);
-
-const SignUp = z.object({ access_token: z.string(), user: z.object({ id: z.uuid() }) });
-
-/** Signs a new member up through local Supabase Auth and returns their real access token. */
-async function signUp() {
-  const response = await fetch(`${config.supabaseUrl}/auth/v1/signup`, {
-    method: 'POST',
-    headers: { apikey: publishableKey, 'content-type': 'application/json' },
-    body: JSON.stringify({ email: `${randomUUID()}@example.com`, password: randomUUID() }),
-  });
-  const body = SignUp.parse(await response.json());
-  return { token: body.access_token, userId: body.user.id };
-}
+import { config, signUp } from '../test-kit/local-supabase.js';
 
 async function getMe(headers: Record<string, string>, supabaseUrl = config.supabaseUrl) {
   const db = createDatabase(config.databaseUrl);
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
+    photos: createSupabasePhotoStorage({ supabaseUrl, secretKey: config.supabaseSecretKey }),
     log: createLog(() => undefined),
   });
   try {

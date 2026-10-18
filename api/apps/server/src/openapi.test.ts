@@ -13,6 +13,11 @@ describe('openapi.json', () => {
     const app = createApp({
       db,
       verifyToken: () => Promise.reject(new Error('unused')),
+      photos: {
+        createUploadUrl: () => Promise.reject(new Error('unused')),
+        exists: () => Promise.reject(new Error('unused')),
+        createViewUrl: () => Promise.reject(new Error('unused')),
+      },
       log: createLog(() => undefined),
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');

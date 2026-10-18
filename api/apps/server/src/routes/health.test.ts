@@ -7,11 +7,17 @@ import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 
 const config = readConfig(process.env);
-const notCalled = () => Promise.reject(new Error('no route here verifies tokens'));
+const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
+const photos = { createUploadUrl: notCalled, exists: notCalled, createViewUrl: notCalled };
 
 async function getHealth(db: Database) {
   const lines: string[] = [];
-  const app = createApp({ db, verifyToken: notCalled, log: createLog((line) => lines.push(line)) });
+  const app = createApp({
+    db,
+    verifyToken: notCalled,
+    photos,
+    log: createLog((line) => lines.push(line)),
+  });
   try {
     const response = await app.request('/health');
     return {
@@ -71,6 +77,7 @@ describe('an unknown route', () => {
     const app = createApp({
       db: createDatabase(config.databaseUrl),
       verifyToken: notCalled,
+      photos,
       log: createLog(() => undefined),
     });
     const response = await app.request('/nope', { method: 'POST' });
