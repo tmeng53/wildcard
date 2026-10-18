@@ -181,10 +181,10 @@ func decodeJSON<T: Decodable>(_ data: Data, version expected: Int, shape: JSONSh
         return try JSONDecoder().decode(T.self, from: data)
     } catch let error as AvatarError {
         throw error
-    } catch let DecodingError.keyNotFound(key, context) {
+    } catch DecodingError.keyNotFound(let key, let context) {
         throw .malformedJSON("missing \(path(context.codingPath + [key]))")
-    } catch let DecodingError.typeMismatch(_, context), let DecodingError.valueNotFound(_, context),
-        let DecodingError.dataCorrupted(context)
+    } catch DecodingError.typeMismatch(_, let context), DecodingError.valueNotFound(_, let context),
+        DecodingError.dataCorrupted(let context)
     {
         throw .malformedJSON("\(path(context.codingPath)): \(context.debugDescription)")
     } catch {
