@@ -28,7 +28,7 @@ public struct StyleGuideView: View {
         .scrollClipDisabled()
         // A frosted band under the status bar, so scrolled text never runs into the clock.
         .overlay(alignment: .top) {
-            Rectangle().fill(.ultraThinMaterial).frame(height: 0).ignoresSafeArea(edges: .top)
+            Rectangle().fill(.thickMaterial).frame(height: 0).ignoresSafeArea(edges: .top)
         }
         .background(Color(role: .canvas, in: theme).ignoresSafeArea())
         .environment(\.sceneTheme, theme)
