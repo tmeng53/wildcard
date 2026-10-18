@@ -150,6 +150,15 @@ export default {
       to: { path: '^apps/[^/]+/src/adapters/' },
     },
     {
+      name: 'provider-sdks-only-in-adapters',
+      severity: 'error',
+      comment:
+        "Only src/adapters/ may import a provider's library (pg, @supabase/*). Routes reach " +
+        'providers through the ports in src/ports.ts, so swapping a provider touches one adapter.',
+      from: { path: '^apps/[^/]+/src/', pathNot: ['^apps/[^/]+/src/adapters/', '\\.test\\.ts$'] },
+      to: { path: '(^|/)node_modules/(pg|@supabase/[^/]+)/' },
+    },
+    {
       name: 'no-dev-dependencies-in-src',
       severity: 'error',
       comment:
