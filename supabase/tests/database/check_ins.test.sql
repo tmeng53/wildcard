@@ -1,7 +1,7 @@
 -- Check-ins: members write only their own rows, and the payload follows the
 -- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
-select plan(29);
+select plan(33);
 
 -- Four people: Ann and Bo share a squad, Cy is in a different squad, Di is in none.
 insert into auth.users (id, email) values
@@ -39,7 +39,7 @@ insert into public.squads (id, name, created_by) values
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select lives_ok(
   $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
-    ('11111111-1111-1111-1111-111111111111', '2025-10-17', '2025-10-18T00:00:00Z', 'trained',
+    ('11111111-1111-1111-1111-111111111111', (now() at time zone 'UTC')::date, now(), 'trained',
      '{"minutes":45,"photo":{"path":"a0000000-0000-0000-0000-000000000001/abc.jpg"},"sport":"run"}', 1)$$,
   'a member logs 练了 with a photo in their own folder'
 );
@@ -106,6 +106,11 @@ select throws_ok(
     where id = '11111111-1111-1111-1111-111111111111'$$,
   '42501', null, 'check-ins can''t be edited, even by their member'
 );
+-- Ann's 练了 moves three days into the past, as if its day had ended.
+select pg_temp.sign_out();
+update public.check_ins set day = day - 3, created_at = created_at - interval '3 days'
+where id = '11111111-1111-1111-1111-111111111111';
+select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 delete from public.check_ins where id = '11111111-1111-1111-1111-111111111111';
 insert into public.check_ins (id, day, kind, payload, version) values
   ('44444444-4444-4444-4444-444444444444', (now() at time zone 'UTC')::date, 'trained', '{"sport":"yoga","minutes":20}', 1);
@@ -145,12 +150,32 @@ select throws_ok(
 );
 select throws_ok(
   $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
-    (gen_random_uuid(), '2025-10-15', '2025-10-18T00:00:00Z', 'healthyMeal', '{"slot":"lunch"}', 1)$$,
+    (gen_random_uuid(), (now() at time zone 'UTC')::date - 2, now(), 'healthyMeal', '{"slot":"lunch"}', 1)$$,
   '23514', null, 'the local day is within a day of when it was made'
+);
+select throws_ok(
+  $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
+    (gen_random_uuid(), '2099-01-01', '2099-01-01T00:00:00Z', 'healthyMeal', '{"slot":"lunch"}', 1)$$,
+  '23514', null, 'a check-in can''t be dated in the future'
+);
+select throws_ok(
+  $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
+    (gen_random_uuid(), (now() at time zone 'UTC')::date - 3, now() - interval '3 days', 'healthyMeal', '{"slot":"lunch"}', 1)$$,
+  '23514', null, 'a check-in can''t be back-dated beyond the 48-hour offline window'
+);
+select lives_ok(
+  $$insert into public.check_ins (id, day, created_at, received_at, kind, payload, version) values
+    ('55555555-5555-5555-5555-555555555555', (now() at time zone 'UTC' - interval '20 hours')::date, now() - interval '20 hours',
+     '2000-01-01T00:00:00Z', 'healthyMeal', '{"slot":"lunch"}', 1)$$,
+  'a check-in saved offline syncs within 48 hours'
+);
+select is(
+  (select received_at from public.check_ins where id = '55555555-5555-5555-5555-555555555555'),
+  now(), 'the server, not the app, sets when it received a check-in'
 );
 select lives_ok(
   $$insert into public.check_ins (id, day, created_at, kind, payload, version) values
-    (gen_random_uuid(), '2025-10-18', '2025-10-17T10:30:00Z', 'disclaimer', '{"text":"👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦"}', 1)$$,
+    (gen_random_uuid(), (now() at time zone 'UTC')::date + 1, now(), 'disclaimer', '{"text":"👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦"}', 1)$$,
   'a 免责声明 of 40 family emoji (40 characters in the app, 280 code points) fits, and Kiribati''s tomorrow is allowed'
 );
 

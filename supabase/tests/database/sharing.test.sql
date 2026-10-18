@@ -1,7 +1,7 @@
 -- Sending a check-in to squads: only members of the squads it was sent to see it,
 -- and only its author decides where it goes.
 begin;
-select plan(11);
+select plan(12);
 
 -- Ann is in two squads: 早八跑团 with Bo, and 周末队 with Cy.
 insert into auth.users (id, email) values
@@ -82,7 +82,15 @@ select is(
 );
 
 -- Where a check-in went can't be changed afterwards, even by its author.
+select pg_temp.sign_out();
+update public.check_ins set received_at = now() - interval '1 minute'
+where id = '33333333-3333-3333-3333-333333333333';
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
+select throws_ok(
+  $$insert into public.check_in_squads (check_in_id, squad_id, position) values
+    ('33333333-3333-3333-3333-333333333333', '5a000000-0000-0000-0000-000000000001', 1)$$,
+  '42501', null, 'an author can''t add a squad to a check-in after saving it'
+);
 delete from public.check_in_squads where check_in_id = '11111111-1111-1111-1111-111111111111';
 select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
 select results_eq(

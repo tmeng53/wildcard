@@ -20,7 +20,10 @@ $$;
 
 -- Ann's check-in as the app encodes it, with fields swapped in per case.
 create function pg_temp.wire(changes jsonb default '{}') returns jsonb language sql as $$
-  select '{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"a0000000-0000-0000-0000-000000000001","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.000Z","kind":"cheatMeal","meal":{"caption":"火锅，不后悔","slot":"dinner"},"audience":["5b000000-0000-0000-0000-000000000002","5a000000-0000-0000-0000-000000000001"]}'::jsonb || changes;
+  select jsonb_build_object(
+    'day', (now() at time zone 'UTC')::date,
+    'createdAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+  ) || '{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"a0000000-0000-0000-0000-000000000001","kind":"cheatMeal","meal":{"caption":"火锅，不后悔","slot":"dinner"},"audience":["5b000000-0000-0000-0000-000000000002","5a000000-0000-0000-0000-000000000001"]}'::jsonb || changes;
 $$;
 
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
@@ -73,12 +76,13 @@ select is(
 -- Postgres's own microsecond timestamps read back in the app's millisecond form.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select public.create_check_in(pg_temp.wire(
-  '{"id":"22222222-2222-2222-2222-222222222222","createdAt":"2025-10-17T23:59:59.123456+00:00","kind":"disclaimer","disclaimer":{"text":"腿还在酸"}}'
+  jsonb_build_object('createdAt', to_char(now() at time zone 'UTC' - interval '1 hour', 'YYYY-MM-DD"T"HH24:MI:SS.US') || '+00:00')
+  || '{"id":"22222222-2222-2222-2222-222222222222","kind":"disclaimer","disclaimer":{"text":"腿还在酸"}}'
 ) - 'meal');
 select is(
   (select check_in ->> 'createdAt' from public.check_ins_wire
    where check_in ->> 'id' = '22222222-2222-2222-2222-222222222222'),
-  '2025-10-17T23:59:59.123Z',
+  to_char(now() at time zone 'UTC' - interval '1 hour', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
   'createdAt reads back in UTC with milliseconds'
 );
 

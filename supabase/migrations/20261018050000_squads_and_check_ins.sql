@@ -185,7 +185,10 @@ create table public.check_ins (
   member_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   -- The member's local calendar day the check-in counts for.
   day date not null,
+  -- When the member made it, from their phone (it may sync later from offline).
   created_at timestamptz not null default now(),
+  -- When the server took it. Set by a trigger; the app can't choose it.
+  received_at timestamptz not null default now(),
   kind public.check_in_kind not null,
   payload jsonb not null,
   version smallint not null check (version = 1),
@@ -200,6 +203,30 @@ create table public.check_ins (
 );
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
+
+-- The app picks `created_at` and `day`, so the server bounds them by its own clock:
+-- nothing from the future (5 minutes of clock skew allowed) and nothing older than
+-- 48 hours, long enough for a check-in saved offline to sync. Without this a member
+-- could back-date check-ins or set a far-future day to keep one deletable forever.
+create function private.stamp_check_in()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.received_at := now();
+  if new.created_at > now() + interval '5 minutes'
+     or new.created_at < now() - interval '48 hours' then
+    raise exception 'a check-in''s createdAt must be within the last 48 hours, not in the future'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger check_ins_stamp
+before insert on public.check_ins
+for each row execute function private.stamp_check_in();
 
 -- A check-in's audience: the squads it was sent to (one, some or all of the
 -- member's, at most 3), in the order the member picked them.
@@ -269,6 +296,22 @@ as $$
   );
 $$;
 
+-- Whether the caller made this check-in in the current transaction.
+create function private.is_new_own_check_in(check_in uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.check_ins
+    where id = check_in and member_id = (select auth.uid()) and received_at = now()
+  );
+$$;
+
+revoke execute on function private.is_new_own_check_in(uuid) from public;
+grant execute on function private.is_new_own_check_in(uuid) to authenticated;
 revoke execute on function private.can_see_check_in(uuid) from public;
 revoke execute on function private.can_see_photo(text) from public;
 revoke execute on function private.owns_check_in(uuid) from public;
@@ -303,11 +346,13 @@ create policy "Members see what was sent to their squads"
 on public.check_in_squads for select to authenticated
 using (private.owns_check_in(check_in_id) or private.is_squad_member(squad_id));
 
-create policy "Members send their own check-ins to squads they are in"
+-- Only while saving the check-in: its audience is fixed once it's made. `now()` is
+-- the transaction's start, so this matches only a check-in saved in this transaction.
+create policy "Members send their own check-ins to squads they are in, when saving them"
 on public.check_in_squads for insert to authenticated
 with check (
-  (select private.owns_check_in(check_in_id))
-  and (select private.is_squad_member(squad_id))
+  private.is_new_own_check_in(check_in_id)
+  and private.is_squad_member(squad_id)
 );
 
 -- The anonymous role gets nothing here; signed-in users get only what the policies allow.
