@@ -279,17 +279,25 @@ create table public.check_in_squads (
 
 create index check_in_squads_squad_id_idx on public.check_in_squads (squad_id);
 
--- Every check-in goes to at least one squad. Checked at commit, so the check-in
--- and its audience can be saved one after the other in the same transaction.
+-- Every check-in goes to at least one squad, from saving it until it is deleted.
+-- Checked at commit, so the check-in and its audience can be saved one after the
+-- other in the same transaction, and deleting a check-in takes its audience with it.
 create function private.require_audience()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  check_in uuid;
 begin
-  if exists (select 1 from public.check_ins where id = new.id)
-     and not exists (select 1 from public.check_in_squads where check_in_id = new.id) then
+  if tg_table_name = 'check_ins' then
+    check_in := new.id;
+  else
+    check_in := old.check_in_id;
+  end if;
+  if exists (select 1 from public.check_ins where id = check_in)
+     and not exists (select 1 from public.check_in_squads where check_in_id = check_in) then
     raise exception 'a check-in goes to at least one squad' using errcode = '23514';
   end if;
   return null;
@@ -298,6 +306,11 @@ $$;
 
 create constraint trigger check_ins_have_audience
 after insert on public.check_ins
+deferrable initially deferred
+for each row execute function private.require_audience();
+
+create constraint trigger check_in_squads_keep_audience
+after delete or update on public.check_in_squads
 deferrable initially deferred
 for each row execute function private.require_audience();
 
@@ -400,8 +413,8 @@ on public.check_ins for delete to authenticated
 using (
   member_id = (select auth.uid())
   and now() < ((day + 1)::timestamp at time zone 'UTC') + interval '15 hours'
-  -- With the 3am grace no local day lasts longer than 24 hours from its check-in.
-  and now() < created_at + interval '24 hours'
+  -- A local day (3am to 3am) lasts at most 25 hours, on the day clocks go back.
+  and now() < created_at + interval '25 hours'
 );
 
 -- The author sees everywhere a check-in went; others see only their own squads.

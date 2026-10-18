@@ -129,18 +129,18 @@ select is_empty(
   $$select 1 from public.check_ins where id = '44444444-4444-4444-4444-444444444444'$$,
   'a member deletes their own check-in on the same day'
 );
--- A check-in counted for today but made 25 hours ago: its day may not be over in UTC-12,
+-- A check-in counted for today but made 26 hours ago: its day may not be over in UTC-12,
 -- but no local day lasts that long.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 insert into public.check_ins (id, day, created_at, kind, payload, version) values
   ('66666666-6666-6666-6666-666666666666',
-   ((now() - interval '25 hours') at time zone 'UTC')::date + 1, now() - interval '25 hours',
+   ((now() - interval '26 hours') at time zone 'UTC')::date + 1, now() - interval '26 hours',
    'healthyMeal', '{"slot":"breakfast"}', 1);
 delete from public.check_ins where id = '66666666-6666-6666-6666-666666666666';
 select pg_temp.sign_out();
 select isnt_empty(
   $$select 1 from public.check_ins where id = '66666666-6666-6666-6666-666666666666'$$,
-  'a check-in can''t be deleted more than 24 hours after it was made'
+  'a check-in can''t be deleted more than 25 hours after it was made'
 );
 
 
