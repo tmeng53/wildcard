@@ -14,7 +14,7 @@ struct SRGBColorTests {
     }
 
     @Test func contrastRatioIsSymmetric() {
-        #expect(Palette.ink.contrastRatio(with: Palette.amber) == Palette.amber.contrastRatio(with: Palette.ink))
+        #expect(Palette.ink.contrastRatio(with: Palette.honey) == Palette.honey.contrastRatio(with: Palette.ink))
     }
 }
 
@@ -27,29 +27,28 @@ struct NeutralTests {
             ])
     }
 
-    /// A theme swaps only the signature group; neutrals and the fixed meaning accents never change.
-    @Test func onlyTheSignatureGroupAndTrainedFollowTheScene() {
+    /// A theme swaps only the signature group; neutrals and the meaning accents never change.
+    @Test func onlyTheSignatureGroupFollowsTheScene() {
         let themed = ColorRole.allCases.filter { role in
             Set(SceneTheme.allCases.map { role.color(in: $0) }).count > 1
         }
         #expect(
             themed.map(\.rawValue) == [
                 "signature", "signatureShade", "signatureWash", "onSignature", "signatureText", "progressFill",
-                "meaningTrained", "meaningTrainedInk", "meaningTrainedWash", "meaningTrainedText",
             ])
     }
 
     @Test func noNeutralIsAWarmOffWhite() {
         // Cream backgrounds are off-brand, so every neutral background leans cool (blue >= red)
-        // in every scene. Two warm washes are deliberate and pinned here: the track scene's own
-        // wash (a scene color, never a neutral) and the 坦白放纵餐 tag's amber wash.
+        // in every scene. The warm washes are deliberate and pinned here: the track, tennis and climbing
+        // scenes' own washes (scene colors, never neutrals) and the 坦白放纵餐 tag's honey wash.
         func isWarm(_ color: SRGBColor) -> Bool { color.blue < color.red }
         for theme in SceneTheme.allCases {
             for role in [ColorRole.canvas, .surface, .divider] {
                 #expect(!isWarm(role.color(in: theme)), "\(role) leans warm in \(theme)")
             }
         }
-        #expect(SceneTheme.allCases.filter { isWarm($0.colors.wash) } == [.track])
+        #expect(SceneTheme.allCases.filter { isWarm($0.colors.wash) } == [.track, .tennis, .climbing])
         #expect(Meaning.allCases.filter { isWarm($0.accent(in: .pool).wash) } == [.indulgence])
     }
 
@@ -75,14 +74,14 @@ struct SceneThemeTests {
         let pool = SceneTheme.pool.colors
         #expect(
             [pool.signature, pool.shade, pool.wash, pool.onSignature, pool.signatureText, pool.progressFill].map(\.hex)
-                == ["#079BB8", "#067C93", "#E2F5F9", "#FFFFFF", "#06778D", "#079BB8"])
+                == ["#079BB8", "#067C93", "#E2F5F9", "#FFFFFF", "#066E83", "#079BB8"])
     }
 
     @Test func trackColors() {
         let track = SceneTheme.track.colors
         #expect(
             [track.signature, track.shade, track.wash, track.onSignature, track.signatureText, track.progressFill]
-                .map(\.hex) == ["#F0402F", "#C72E20", "#FDEDEA", "#FFFFFF", "#C72E20", "#F0402F"])
+                .map(\.hex) == ["#E65345", "#C23B2E", "#FCEDEB", "#FFFFFF", "#B83325", "#E65345"])
     }
 
     @Test func gymIsGraphiteWithVoltOnIt() {
@@ -102,22 +101,24 @@ struct SceneThemeTests {
             ColorRole.textPrimary.color(in: theme).contrastRatio(with: ColorRole.signatureWash.color(in: theme)) >= 4.5)
     }
 
-    /// The 打卡 label is 17 pt Semibold with a 22 pt icon. Apple's HIG asks 3:1 for bold text and
-    /// for icons; white on the pool signature is 3.3:1 and on the track signature 3.8:1.
+    /// The 打卡 label is `TypeRamp.action` (19 pt Semibold, large text under WCAG 1.4.3). Large text
+    /// and icons need 3:1; white on the pool signature is 3.3:1 and on the track signature 3.7:1.
     @Test(arguments: SceneTheme.allCases)
     func labelsOnTheSignatureMeetBoldTextContrast(theme: SceneTheme) {
         let ratio = ColorRole.onSignature.color(in: theme).contrastRatio(with: ColorRole.signature.color(in: theme))
         #expect(ratio >= 3)
     }
 
-    /// Tennis and climbing are placeholders until their colors are chosen; this pins them so a
-    /// change is deliberate.
-    @Test func placeholderScenes() {
+    @Test func tennisAndClimbingColors() {
         #expect(
-            [SceneTheme.tennis, .climbing].map { [$0.colors.signature.hex, $0.colors.shade.hex, $0.colors.wash.hex] }
-                == [
-                    ["#2E8B57", "#226B43", "#E5F3EB"], ["#C2622D", "#9A4A1F", "#F1F2F5"],
-                ])
+            [SceneTheme.tennis, .climbing].map { theme in
+                let colors = theme.colors
+                return [colors.signature, colors.shade, colors.wash, colors.onSignature, colors.signatureText]
+                    .map(\.hex)
+            } == [
+                ["#4F6B22", "#3B5119", "#EEF2E4", "#FFFFFF", "#41591B"],
+                ["#8E4A2C", "#6F3820", "#F6EDE8", "#FFFFFF", "#7A3E24"],
+            ])
     }
 
     @Test func dimSignaturesAreBoldOnly() {
@@ -130,15 +131,19 @@ struct SceneThemeTests {
 }
 
 struct MeaningTests {
-    @Test func fixedAccentsKeepTheCurrentMeaningColors() {
-        let accents = [Meaning.fresh, .indulgence, .disclaimer].map { $0.accent(in: .pool).tint.hex }
-        #expect(accents == ["#2BD47D", "#FFB020", "#A98BFF"])
+    @Test func accentsMatchTheApprovedSpec() {
+        #expect(
+            Meaning.allCases.map { [$0.accent.ink.hex, $0.accent.wash.hex, $0.accent.text.hex] } == [
+                ["#2D5BA0", "#EAF0F8", "#224780"],
+                ["#278C5E", "#E5F3EB", "#1B6545"],
+                ["#A0760E", "#FBF1DC", "#6E4F07"],
+                ["#9062DE", "#F3EEFC", "#5B3AA6"],
+            ])
     }
 
     @Test(arguments: SceneTheme.allCases)
-    func trainedFollowsTheSceneSignature(theme: SceneTheme) {
-        #expect(Meaning.trained.accent(in: theme) == theme.colors.trainedAccent)
-        #expect(ColorRole.meaningTrained.color(in: theme) == ColorRole.progressFill.color(in: theme))
+    func accentsAreTheSameInEveryScene(theme: SceneTheme) {
+        #expect(Meaning.allCases.map { $0.accent(in: theme) } == Meaning.allCases.map(\.accent))
     }
 
     /// A tag is dark text on the accent's wash: 4.5:1.
@@ -196,6 +201,7 @@ struct TypographyTests {
             TypeRamp.footnote,
         ].map(\.size)
         #expect(sizes == [30, 24, 17, 16, 15, 13, 12])
+        #expect(TypeRamp.action.size == 19)
     }
 
     @Test func scoreboardRampMatchesTheSpec() {

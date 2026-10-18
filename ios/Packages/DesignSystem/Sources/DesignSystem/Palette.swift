@@ -20,14 +20,15 @@ public enum Palette {
     public static let poolShade = SRGBColor(red: 0x06, green: 0x7C, blue: 0x93)
     public static let poolWash = SRGBColor(red: 0xE2, green: 0xF5, blue: 0xF9)
     /// Pool-colored text. The signature itself is 2.9:1 on the pool wash, too faint for small text.
-    public static let poolText = SRGBColor(red: 0x06, green: 0x77, blue: 0x8D)
+    public static let poolText = SRGBColor(red: 0x06, green: 0x6E, blue: 0x83)
 
     // MARK: Track scene
 
-    public static let trackSignature = SRGBColor(red: 0xF0, green: 0x40, blue: 0x2F)
-    public static let trackShade = SRGBColor(red: 0xC7, green: 0x2E, blue: 0x20)
-    /// The one warm light color: the track scene's own wash, never a neutral.
-    public static let trackWash = SRGBColor(red: 0xFD, green: 0xED, blue: 0xEA)
+    public static let trackSignature = SRGBColor(red: 0xE6, green: 0x53, blue: 0x45)
+    public static let trackShade = SRGBColor(red: 0xC2, green: 0x3B, blue: 0x2E)
+    /// A warm light color: the track scene's own wash, never a neutral.
+    public static let trackWash = SRGBColor(red: 0xFC, green: 0xED, blue: 0xEB)
+    public static let trackText = SRGBColor(red: 0xB8, green: 0x33, blue: 0x25)
 
     // MARK: Gym scene
 
@@ -37,30 +38,37 @@ public enum Palette {
     /// Text, icons and progress on graphite. Never a large background.
     public static let volt = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
 
-    // MARK: Tennis and climbing scenes (placeholders until their colors are chosen)
+    // MARK: Tennis scene (grass, not blue hard court, which would sit next to 练了 cobalt)
 
-    public static let tennisSignature = SRGBColor(red: 0x2E, green: 0x8B, blue: 0x57)
-    public static let tennisShade = SRGBColor(red: 0x22, green: 0x6B, blue: 0x43)
-    public static let tennisWash = SRGBColor(red: 0xE5, green: 0xF3, blue: 0xEB)
-    public static let climbingSignature = SRGBColor(red: 0xC2, green: 0x62, blue: 0x2D)
-    public static let climbingShade = SRGBColor(red: 0x9A, green: 0x4A, blue: 0x1F)
-    public static let climbingWash = SRGBColor(red: 0xF1, green: 0xF2, blue: 0xF5)
+    public static let tennisSignature = SRGBColor(red: 0x4F, green: 0x6B, blue: 0x22)
+    public static let tennisShade = SRGBColor(red: 0x3B, green: 0x51, blue: 0x19)
+    public static let tennisWash = SRGBColor(red: 0xEE, green: 0xF2, blue: 0xE4)
+    public static let tennisText = SRGBColor(red: 0x41, green: 0x59, blue: 0x1B)
 
-    // MARK: Meaning accents (placeholders until the retuned values land)
+    // MARK: Climbing scene (warm rock brick, kept apart from the honey 坦白放纵餐)
 
+    public static let climbingSignature = SRGBColor(red: 0x8E, green: 0x4A, blue: 0x2C)
+    public static let climbingShade = SRGBColor(red: 0x6F, green: 0x38, blue: 0x20)
+    /// A warm light color: the climbing scene's own wash, never a neutral.
+    public static let climbingWash = SRGBColor(red: 0xF6, green: 0xED, blue: 0xE8)
+    public static let climbingText = SRGBColor(red: 0x7A, green: 0x3E, blue: 0x24)
+
+    // MARK: Meaning accents, fixed in every scene. Icons and dots use the same color.
+
+    /// 练了.
+    public static let cobalt = SRGBColor(red: 0x2D, green: 0x5B, blue: 0xA0)
+    public static let cobaltWash = SRGBColor(red: 0xEA, green: 0xF0, blue: 0xF8)
+    public static let cobaltText = SRGBColor(red: 0x22, green: 0x47, blue: 0x80)
     /// 健康餐.
-    public static let mint = SRGBColor(red: 0x2B, green: 0xD4, blue: 0x7D)
-    public static let mintInk = SRGBColor(red: 0x14, green: 0x9E, blue: 0x58)
-    public static let mintWash = SRGBColor(red: 0xE4, green: 0xF9, blue: 0xEE)
-    public static let mintText = SRGBColor(red: 0x0B, green: 0x5E, blue: 0x36)
+    public static let mint = SRGBColor(red: 0x27, green: 0x8C, blue: 0x5E)
+    public static let mintWash = SRGBColor(red: 0xE5, green: 0xF3, blue: 0xEB)
+    public static let mintText = SRGBColor(red: 0x1B, green: 0x65, blue: 0x45)
     /// 坦白放纵餐.
-    public static let amber = SRGBColor(red: 0xFF, green: 0xB0, blue: 0x20)
-    public static let amberInk = SRGBColor(red: 0xB5, green: 0x7A, blue: 0x00)
-    public static let amberWash = SRGBColor(red: 0xFF, green: 0xF4, blue: 0xDD)
-    public static let amberText = SRGBColor(red: 0x7A, green: 0x4A, blue: 0x00)
+    public static let honey = SRGBColor(red: 0xA0, green: 0x76, blue: 0x0E)
+    public static let honeyWash = SRGBColor(red: 0xFB, green: 0xF1, blue: 0xDC)
+    public static let honeyText = SRGBColor(red: 0x6E, green: 0x4F, blue: 0x07)
     /// 今日免责声明.
-    public static let lavender = SRGBColor(red: 0xA9, green: 0x8B, blue: 0xFF)
-    public static let lavenderInk = SRGBColor(red: 0x74, green: 0x57, blue: 0xE8)
-    public static let lavenderWash = SRGBColor(red: 0xF2, green: 0xED, blue: 0xFF)
-    public static let lavenderText = SRGBColor(red: 0x4B, green: 0x2F, blue: 0xA6)
+    public static let lavender = SRGBColor(red: 0x90, green: 0x62, blue: 0xDE)
+    public static let lavenderWash = SRGBColor(red: 0xF3, green: 0xEE, blue: 0xFC)
+    public static let lavenderText = SRGBColor(red: 0x5B, green: 0x3A, blue: 0xA6)
 }

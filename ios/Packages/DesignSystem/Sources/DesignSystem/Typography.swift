@@ -58,7 +58,10 @@ public struct TypeStyle: Sendable, Hashable {
 public enum TypeRamp {
     public static let hero = TypeStyle(face: .text(.semibold), size: 30, anchor: .largeTitle)
     public static let title = TypeStyle(face: .text(.semibold), size: 24, anchor: .title)
-    /// Squad names, card titles and the main button.
+    /// The solid signature buttons (打卡, 开跑). Large enough to count as large text, so white on
+    /// the brighter signatures only needs 3:1.
+    public static let action = TypeStyle(face: .text(.semibold), size: 19, anchor: .headline)
+    /// Squad names and card titles.
     public static let headline = TypeStyle(face: .text(.semibold), size: 17, anchor: .headline)
     public static let body = TypeStyle(face: .text(.regular), size: 16, anchor: .body)
     /// Draft cards, capsule labels and chips.
@@ -85,7 +88,7 @@ public enum TypeRamp {
     public static let scoreLabel = TypeStyle(face: .scoreboard(.semibold), size: 14, tracking: 1.5, anchor: .caption)
 
     public static let all: [(name: String, style: TypeStyle)] = [
-        ("hero", hero), ("title", title), ("headline", headline), ("body", body),
+        ("hero", hero), ("title", title), ("headline", headline), ("action", action), ("body", body),
         ("callout", callout), ("caption", caption), ("footnote", footnote), ("scoreHero", scoreHero),
         ("scoreLarge", scoreLarge), ("scoreLargeDenominator", scoreLargeDenominator),
         ("scoreMedium", scoreMedium), ("scoreSmall", scoreSmall),

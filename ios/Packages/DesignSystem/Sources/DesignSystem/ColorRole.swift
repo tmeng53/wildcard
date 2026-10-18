@@ -16,7 +16,7 @@ public enum SceneTheme: String, CaseIterable, Sendable {
         case .track:
             SceneColors(
                 signature: Palette.trackSignature, shade: Palette.trackShade, wash: Palette.trackWash,
-                onSignature: Palette.white, signatureText: Palette.trackShade, progressFill: Palette.trackSignature)
+                onSignature: Palette.white, signatureText: Palette.trackText, progressFill: Palette.trackSignature)
         case .gym:
             // Graphite is dark, so text, icons and progress on it are volt.
             SceneColors(
@@ -25,11 +25,11 @@ public enum SceneTheme: String, CaseIterable, Sendable {
         case .tennis:
             SceneColors(
                 signature: Palette.tennisSignature, shade: Palette.tennisShade, wash: Palette.tennisWash,
-                onSignature: Palette.white, signatureText: Palette.tennisShade, progressFill: Palette.tennisSignature)
+                onSignature: Palette.white, signatureText: Palette.tennisText, progressFill: Palette.tennisSignature)
         case .climbing:
             SceneColors(
                 signature: Palette.climbingSignature, shade: Palette.climbingShade, wash: Palette.climbingWash,
-                onSignature: Palette.white, signatureText: Palette.climbingShade,
+                onSignature: Palette.white, signatureText: Palette.climbingText,
                 progressFill: Palette.climbingSignature)
         }
     }
@@ -83,25 +83,21 @@ public enum Meaning: String, CaseIterable, Sendable {
     case disclaimer
 
     public func accent(in theme: SceneTheme) -> AccentFamily {
+        accent
+    }
+
+    /// The accent, the same in every scene.
+    public var accent: AccentFamily {
         switch self {
-        // Follows the scene for now; a fixed color would be a one-line change here.
-        case .trained: theme.colors.trainedAccent
-        case .fresh:
-            AccentFamily(tint: Palette.mint, ink: Palette.mintInk, wash: Palette.mintWash, text: Palette.mintText)
-        case .indulgence:
-            AccentFamily(tint: Palette.amber, ink: Palette.amberInk, wash: Palette.amberWash, text: Palette.amberText)
-        case .disclaimer:
-            AccentFamily(
-                tint: Palette.lavender, ink: Palette.lavenderInk, wash: Palette.lavenderWash, text: Palette.lavenderText
-            )
+        case .trained: Self.family(Palette.cobalt, Palette.cobaltWash, Palette.cobaltText)
+        case .fresh: Self.family(Palette.mint, Palette.mintWash, Palette.mintText)
+        case .indulgence: Self.family(Palette.honey, Palette.honeyWash, Palette.honeyText)
+        case .disclaimer: Self.family(Palette.lavender, Palette.lavenderWash, Palette.lavenderText)
         }
     }
-}
 
-extension SceneColors {
-    /// The scene's signature group used as an accent.
-    public var trainedAccent: AccentFamily {
-        AccentFamily(tint: progressFill, ink: signatureText, wash: wash, text: signatureText)
+    private static func family(_ color: SRGBColor, _ wash: SRGBColor, _ text: SRGBColor) -> AccentFamily {
+        AccentFamily(tint: color, ink: color, wash: wash, text: text)
     }
 }
 

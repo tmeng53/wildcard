@@ -231,7 +231,7 @@ struct MotionSection: View {
                 atFinish.toggle()
             } label: {
                 (atFinish ? Text("回到起点", bundle: .module) : Text("开跑", bundle: .module))
-                    .typeStyle(TypeRamp.headline)
+                    .typeStyle(TypeRamp.action)
                     .foregroundStyle(Color(role: .onSignature, in: theme))
                     .padding(.horizontal, Space.xl)
                     .frame(height: Sizing.checkInHeight)

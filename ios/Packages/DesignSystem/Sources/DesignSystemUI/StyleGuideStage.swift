@@ -246,7 +246,7 @@ private struct CheckInButton: View {
                     .rotationEffect(.degrees(isOpen ? 135 : 0))
                     .accessibilityHidden(true)
                 (isOpen ? Text("收起", bundle: .module) : Text("打卡", bundle: .module))
-                    .typeStyle(TypeRamp.headline)
+                    .typeStyle(TypeRamp.action)
             }
             .foregroundStyle(Color(role: .onSignature, in: theme))
             .padding(.horizontal, Space.l)
