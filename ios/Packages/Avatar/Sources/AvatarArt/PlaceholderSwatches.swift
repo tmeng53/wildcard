@@ -8,7 +8,8 @@ extension PlaceholderCharacter {
     /// `tones.json`. Clothes take the design system's palette; skin, fur and hair take
     /// natural tones, which the palette doesn't have.
     public static func swatches(for slot: Slot, wearing variant: String) -> [RGBAColor] {
-        switch (slot.description, variant) {
+        guard BundledArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
+        return switch (slot.description, variant) {
         case ("body", "peach"), ("body", "tan"): skin
         case ("body", "cat"): catFur
         case ("body", "bear"): bearFur

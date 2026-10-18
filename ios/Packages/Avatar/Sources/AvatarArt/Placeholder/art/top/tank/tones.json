@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "base": "#22B169",
-  "shades": []
+  "base": "#F4F6FA",
+  "shades": ["#AFAEB9"]
 }

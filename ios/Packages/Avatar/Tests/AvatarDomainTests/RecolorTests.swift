@@ -41,8 +41,11 @@ private func recolorable(tones text: String? = tones) -> Files {
     #expect(faint.recolored(from: blue, to: red) == RGBAColor(red: 0xE6, green: 0x53, blue: 0x45, opacity: 0.5))
     // A lighter muzzle on brown fur goes to white when the fur turns polar white.
     #expect(try hex("#D4B39E").recolored(from: hex("#B98563"), to: hex("#F2EFE8")) == hex("#FFFFFF"))
-    // A gray base has no saturation to scale: shades take the target's.
+    // A nearly gray base: its shade's saturation scales in proportion.
     #expect(try hex("#3C3E4F").recolored(from: hex("#4A4F5C"), to: hex("#278C5E")) == hex("#168062"))
+    // A truly gray base has no hue or saturation to move from: a cool outline takes the
+    // target's hue and saturation instead of keeping its own blue.
+    #expect(try hex("#606880").recolored(from: hex("#808080"), to: hex("#E65345")) == hex("#E23524"))
 }
 
 @Test func aColorRecolorsOnlyTheSlotsTones() throws {
@@ -66,6 +69,11 @@ private func recolorable(tones text: String? = tones) -> Files {
     }
     #expect(throws: AvatarError.notRecolorable(slot: "top", variant: "tee")) {
         try Figure(rig: rig, outfit: Outfit(["top": "tee"], colors: ["top": red]), art: recolorable(tones: nil))
+    }
+    #expect(throws: AvatarError.malformedJSON("top/tee/tones.json.shades[0]: not a #rrggbb color")) {
+        try Figure(
+            rig: rig, outfit: Outfit(["top": "tee"], colors: ["top": red]),
+            art: recolorable(tones: ##"{"version": 1, "base": "#2D5BA0", "shades": ["blue"]}"##))
     }
     let typo = ##"{"version": 1, "base": "#2D5BA0", "shades": ["#28467F"]}"##
     #expect(throws: AvatarError.unusedTone(slot: "top", variant: "tee", color: try hex("#28467F"))) {

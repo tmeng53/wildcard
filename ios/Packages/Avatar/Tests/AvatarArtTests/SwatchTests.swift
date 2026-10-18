@@ -38,6 +38,17 @@ func everySwatchApplies(outfit: Outfit) throws {
     #expect(legs.contains { $0.stroke?.color == RGBAColor(hex: "#5E3B27") })
 }
 
+/// Each list keeps every color it names, so a mistyped hex can't drop a swatch unnoticed,
+/// and a variant without `tones.json` offers none.
+@Test func swatchCounts() {
+    let counts = [
+        ("body", "peach"), ("body", "tan"), ("body", "cat"), ("body", "bear"), ("hair", "bob"), ("top", "tee"),
+        ("bottom", "shorts"),
+    ].map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
+    #expect(counts == [7, 7, 6, 6, 7, 8, 8])
+    #expect(PlaceholderCharacter.swatches(for: "top", wearing: "cape").isEmpty)
+}
+
 /// Clothes come from the design system's palette, in the order the editor shows them.
 @Test func clothesUseThePalette() {
     #expect(

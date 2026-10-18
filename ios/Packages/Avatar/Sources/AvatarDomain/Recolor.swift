@@ -100,7 +100,8 @@ extension RGBAColor {
             reference == 0 ? goal : min(max(goal * value / reference, 0), 1)
         }
         let moved = HSL(
-            hue: goal.hue + own.hue - from.hue,
+            // A gray base has no hue to turn from, so shades take the target's.
+            hue: from.saturation == 0 ? goal.hue : goal.hue + own.hue - from.hue,
             saturation: scaled(own.saturation, from.saturation, goal.saturation),
             lightness: scaled(own.lightness, from.lightness, goal.lightness))
         return moved.color(opacity: opacity)

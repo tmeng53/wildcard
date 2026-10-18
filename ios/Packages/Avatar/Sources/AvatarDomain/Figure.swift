@@ -91,7 +91,13 @@ public struct Figure: Hashable, Sendable {
             guard let text = source.text(at: "\(slot)/\(variant)/tones.json") else {
                 throw .notRecolorable(slot: slot, variant: variant)
             }
-            recolors[slot] = Recolor(tones: try Tones.decode(Data(text.utf8)), color: color)
+            let tones: Tones
+            do {
+                tones = try Tones.decode(Data(text.utf8))
+            } catch .malformedJSON(let problem) {
+                throw .malformedJSON("\(slot)/\(variant)/tones.json\(problem)")
+            }
+            recolors[slot] = Recolor(tones: tones, color: color)
         }
         return recolors
     }
