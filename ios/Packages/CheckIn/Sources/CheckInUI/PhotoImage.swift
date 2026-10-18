@@ -4,28 +4,29 @@ import DesignSystemUI
 import ImageIO
 import SwiftUI
 
-/// A prepared photo, filling its frame. Decoded once per view; prepared photos are small.
+/// A prepared photo, filling its frame. Decoded once per view, off the main actor, so a
+/// transition carrying photos doesn't drop frames.
 struct PhotoImage: View {
     @Environment(\.sceneTheme) private var theme
     let photo: PreparedPhoto
-    @State private var image: Image?
+    @State private var image: CGImage?
 
     var body: some View {
         Color(role: .divider, in: theme)
             .overlay {
                 if let image {
-                    image.resizable().scaledToFill()
+                    Image(decorative: image, scale: 1).resizable().scaledToFill()
                 }
             }
             .clipped()
-            .task(id: photo.id) { image = Self.decode(photo) }
+            .task(id: photo.id) { image = await Self.decode(photo) }
     }
 
-    private static func decode(_ photo: PreparedPhoto) -> Image? {
-        guard let source = CGImageSourceCreateWithData(photo.jpeg as CFData, nil),
-            let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil)
-        else { return nil }
-        return Image(decorative: cgImage, scale: 1)
+    /// Decodes now rather than on first draw, which would land on the main actor.
+    private nonisolated static func decode(_ photo: PreparedPhoto) async -> CGImage? {
+        guard let source = CGImageSourceCreateWithData(photo.jpeg as CFData, nil) else { return nil }
+        let options = [kCGImageSourceShouldCacheImmediately: true] as CFDictionary
+        return CGImageSourceCreateImageAtIndex(source, 0, options)
     }
 }
 #endif

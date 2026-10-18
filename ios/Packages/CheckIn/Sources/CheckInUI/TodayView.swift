@@ -40,6 +40,10 @@ public struct TodayView: View {
                 Color.clear.frame(height: Sizing.checkInHeight)
                     .padding(.bottom, Space.l)
             }
+            // The scene keeps its layout under the keyboard; only the card and the compose page
+            // make room for it. Otherwise the scene, taller than what the keyboard leaves, pushes
+            // them up under the status bar.
+            .ignoresSafeArea(.keyboard)
 
             if model.isBurstOpen {
                 // A tap anywhere outside the capsules closes the burst.
@@ -62,6 +66,7 @@ public struct TodayView: View {
                     }
                     .padding(.bottom, Space.l)
                 }
+                .ignoresSafeArea(.keyboard)
                 .transition(.opacity)
             }
 

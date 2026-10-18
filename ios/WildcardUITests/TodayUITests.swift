@@ -35,6 +35,10 @@ final class TodayUITests: XCTestCase {
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         caption.tap()
         caption.typeText("晨跑 5 公里，腿还在")
+        // With the keyboard up, the line stays in view and the bar stays clear of the status bar.
+        XCTAssertTrue(caption.isHittable, "the caption is hidden under the keyboard")
+        // Every Face ID iPhone's status bar is at least 44 points tall.
+        XCTAssertGreaterThanOrEqual(post.frame.minY, 44, "发布 slid under the status bar")
         settle()
         keepScreenshot(named: "15-compose-trained")
 
@@ -71,6 +75,8 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
         field.tap()
         field.typeText("加班")
+        XCTAssertGreaterThanOrEqual(
+            app.buttons["disclaimer.close"].frame.minY, 44, "the card slid under the status bar")
         app.buttons["disclaimer.write"].tap()
         let first = app.buttons["disclaimer.draft.1"]
         XCTAssertTrue(first.waitForExistence(timeout: 3), "帮我写 gave no drafts")

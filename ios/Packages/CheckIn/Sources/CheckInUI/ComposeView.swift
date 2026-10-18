@@ -9,33 +9,44 @@ import SwiftUI
 /// no meal type.
 struct ComposeView: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: TodayModel
     let meaning: Meaning
     @State private var caption = ""
+    @FocusState private var isWriting: Bool
     @State private var activity: Activity?
     @State private var isPickingSport = false
 
     var body: some View {
         VStack(spacing: 0) {
             bar
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.l) {
-                    MediaBlock(model: model)
-                    if meaning == .trained {
-                        SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.l) {
+                        MediaBlock(model: model)
+                        if meaning == .trained {
+                            SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
+                        }
+                        captionField.id(Self.captionID)
+                        if model.sendFailed {
+                            Text("没发出去，再点一次发布", bundle: .module)
+                                .typeStyle(TypeRamp.caption)
+                                .foregroundStyle(Color(role: .textSecondary, in: theme))
+                                .accessibilityIdentifier("compose.failed")
+                        }
                     }
-                    captionField
-                    if model.sendFailed {
-                        Text("没发出去，再点一次发布", bundle: .module)
-                            .typeStyle(TypeRamp.caption)
-                            .foregroundStyle(Color(role: .textSecondary, in: theme))
-                            .accessibilityIdentifier("compose.failed")
+                    .padding(.horizontal, Space.gutter)
+                    .padding(.vertical, Space.m)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                // Keep the line being written above the keyboard.
+                .onChange(of: isWriting) { _, writing in
+                    guard writing else { return }
+                    withAnimation(.wildcard(Motion.smooth, reduceMotion: reduceMotion)) {
+                        proxy.scrollTo(Self.captionID, anchor: .bottom)
                     }
                 }
-                .padding(.horizontal, Space.gutter)
-                .padding(.vertical, Space.m)
             }
-            .scrollDismissesKeyboard(.interactively)
         }
         .background(Color(role: .canvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
@@ -46,6 +57,8 @@ struct ComposeView: View {
             .environment(\.sceneTheme, theme)
         }
     }
+
+    private static let captionID = "caption"
 
     /// The board's last sport until the member picks one; detection from the cover comes later.
     private var currentActivity: Activity {
@@ -96,6 +109,7 @@ struct ComposeView: View {
             }
             .typeStyle(TypeRamp.field)
             .lineLimit(1...4)
+            .focused($isWriting)
             .onChange(of: caption) { _, typed in
                 let fitted = PostBody.fitCaption(typed)
                 if fitted != typed { caption = fitted }
@@ -139,7 +153,8 @@ private struct MediaBlock: View {
         VStack(alignment: .leading, spacing: Space.s) {
             if let cover = model.photos.first {
                 PhotoImage(photo: cover)
-                    .aspectRatio(1, contentMode: .fit)
+                    // Wider than tall, so the sport row and the caption fit below it on one screen.
+                    .aspectRatio(4 / 3, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
                     .accessibilityElement()
                     .accessibilityLabel(Text("封面", bundle: .module))
