@@ -204,6 +204,39 @@ create table public.check_ins (
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
 
+-- Whether a photo path is uploaded, and whether a check-in already points at it.
+-- Security definer so these see every object and check-in, not just the caller's.
+create function private.photo_is_uploaded(path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from storage.objects where bucket_id = 'check-in-photos' and name = path
+  );
+$$;
+
+create function private.photo_is_in_use(path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.check_ins where payload -> 'photo' ->> 'path' = path);
+$$;
+
+revoke execute on function private.photo_is_uploaded(text) from public;
+revoke execute on function private.photo_is_in_use(text) from public;
+grant execute on function private.photo_is_uploaded(text) to authenticated;
+grant execute on function private.photo_is_in_use(text) to authenticated;
+
+-- Everything a check-in refers to is fixed when it is saved: its times (below), its
+-- audience (only in the saving transaction) and its photo (already uploaded, used by
+-- no other check-in, and locked in storage while the check-in exists).
+--
 -- The app picks `created_at` and `day`, so the server bounds them by its own clock:
 -- nothing from the future (5 minutes of clock skew allowed) and nothing older than
 -- 48 hours, long enough for a check-in saved offline to sync. Without this a member
@@ -219,6 +252,14 @@ begin
      or new.created_at < now() - interval '48 hours' then
     raise exception 'a check-in''s createdAt must be within the last 48 hours, not in the future'
       using errcode = '23514';
+  end if;
+  if new.payload ? 'photo' then
+    if not private.photo_is_uploaded(new.payload -> 'photo' ->> 'path') then
+      raise exception 'upload a check-in''s photo before saving it' using errcode = '23514';
+    end if;
+    if private.photo_is_in_use(new.payload -> 'photo' ->> 'path') then
+      raise exception 'another check-in already uses this photo' using errcode = '23514';
+    end if;
   end if;
   return new;
 end;
@@ -454,7 +495,9 @@ grant select on public.check_ins_wire to authenticated;
 
 -- Check-in photos --------------------------------------------------------------
 
--- Private bucket. Objects live at "<member id>/<file>", the path a check-in's photo points at.
+-- Private bucket. Objects live at "<member id>/<file>", the path a check-in's photo
+-- points at. A photo on a saved check-in can't be deleted or replaced until the
+-- check-in is deleted. There is no update policy, so nothing is overwritten in place.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'check-in-photos', 'check-in-photos', false, 10485760,
@@ -466,6 +509,7 @@ on storage.objects for insert to authenticated
 with check (
   bucket_id = 'check-in-photos'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and not private.photo_is_in_use(name)
 );
 
 create policy "Members see their own photos and those on check-ins they can see"
@@ -478,9 +522,10 @@ using (
   )
 );
 
-create policy "Members delete their own photos"
+create policy "Members delete their own photos that no check-in uses"
 on storage.objects for delete to authenticated
 using (
   bucket_id = 'check-in-photos'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and not private.photo_is_in_use(name)
 );

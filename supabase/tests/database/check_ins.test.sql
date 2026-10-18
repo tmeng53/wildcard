@@ -26,6 +26,11 @@ create function pg_temp.rejects(kind text, payload text, description text) retur
   );
 $$;
 
+-- Photos the check-ins below point at, already uploaded.
+insert into storage.objects (bucket_id, name, owner_id) values
+  ('check-in-photos', 'a0000000-0000-0000-0000-000000000001/abc.jpg', 'a0000000-0000-0000-0000-000000000001'),
+  ('check-in-photos', 'b0000000-0000-0000-0000-000000000002/x.jpg', 'b0000000-0000-0000-0000-000000000002');
+
 -- Ann creates the squad and is its first member through the trigger.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 insert into public.squads (id, name) values ('5a000000-0000-0000-0000-000000000001', '早八跑团');

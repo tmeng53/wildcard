@@ -1,7 +1,7 @@
 -- Check-in photos: members upload only into their own folder, and a photo is seen
 -- only by its owner and by members of the squads its check-in was sent to.
 begin;
-select plan(8);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -69,12 +69,41 @@ select isnt_empty(
   'a squad-mate can''t delete the photo'
 );
 
+-- While the check-in exists its photo is locked: no delete, no upload over it.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
+delete from storage.objects where name = 'a0000000-0000-0000-0000-000000000001/run.jpg';
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name, owner_id)
+    values ('check-in-photos', 'a0000000-0000-0000-0000-000000000001/run.jpg', 'a0000000-0000-0000-0000-000000000001')$$,
+  '42501', null, 'a member can''t upload over the photo on a saved check-in'
+);
+select set_config('role', 'postgres', true);
+select isnt_empty(
+  $$select 1 from storage.objects where name = 'a0000000-0000-0000-0000-000000000001/run.jpg'$$,
+  'a member can''t delete the photo on a saved check-in'
+);
+
+select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
+select throws_ok(
+  $$insert into public.check_ins (id, day, kind, payload, version) values
+    (gen_random_uuid(), current_date, 'trained',
+     '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/later.jpg"}}', 1)$$,
+  '23514', null, 'a check-in can''t point at a photo that isn''t uploaded yet'
+);
+select throws_ok(
+  $$insert into public.check_ins (id, day, kind, payload, version) values
+    (gen_random_uuid(), current_date, 'trained',
+     '{"sport":"run","minutes":30,"photo":{"path":"a0000000-0000-0000-0000-000000000001/run.jpg"}}', 1)$$,
+  '23514', null, 'two check-ins can''t share one photo'
+);
+
+-- Deleting the check-in (on its day) frees the photo.
+delete from public.check_ins where id = '11111111-1111-1111-1111-111111111111';
 delete from storage.objects where name = 'a0000000-0000-0000-0000-000000000001/run.jpg';
 select set_config('role', 'postgres', true);
 select is_empty(
   $$select 1 from storage.objects where name = 'a0000000-0000-0000-0000-000000000001/run.jpg'$$,
-  'the member deletes their own photo'
+  'once its check-in is deleted, the member deletes the photo'
 );
 
 select * from finish();
