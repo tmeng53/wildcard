@@ -13,6 +13,10 @@ disabled_rules:
   - opening_brace        # swift-format owns braces
   - line_length          # swift-format owns line length
 identifier_name:
-  excluded: [id, s, m, l, xs, xl, xxs, xxl]
+  excluded: [id, s, m, l, xs, xl, xxs, xxl, y, z]  # y, z: Hinnant's date algorithms
+type_name:
+  excluded: [ID]
+large_tuple:
+  warning: 3  # (year, month, day)
 force_try: error
 force_unwrapping: error

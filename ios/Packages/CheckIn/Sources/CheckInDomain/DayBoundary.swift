@@ -1,5 +1,5 @@
-import Foundation
 import Contracts
+import Foundation
 
 /// Which day a moment belongs to. A day ends at midnight in the member's own time
 /// zone, but anything before 3am still counts for the day before, so a late workout
@@ -15,7 +15,7 @@ public enum DayBoundary {
         calendar.timeZone = timeZone
         let parts = calendar.dateComponents([.year, .month, .day, .hour], from: moment.date)
         guard let year = parts.year, let month = parts.month, let day = parts.day, let hour = parts.hour,
-              let calendarDay = try? LocalDay(year: year, month: month, day: day)
+            let calendarDay = try? LocalDay(year: year, month: month, day: day)
         else { throw .dayOutOfRange }
         return hour < graceHours ? try calendarDay.adding(days: -1) : calendarDay
     }
@@ -36,7 +36,7 @@ extension LocalDay {
 
     public var weekday: Weekday {
         // 1970-01-01 was a Thursday.
-        let index = ((dayNumber % 7) + 7 + 3) % 7 // 0 = Monday
+        let index = ((dayNumber % 7) + 7 + 3) % 7  // 0 = Monday
         return Weekday(rawValue: index + 1) ?? .monday
     }
 

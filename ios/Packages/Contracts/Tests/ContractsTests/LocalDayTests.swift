@@ -1,5 +1,5 @@
-import Testing
 import Contracts
+import Testing
 
 @Test func parsesAndPrintsTheSameDay() throws {
     #expect(try LocalDay("2024-02-29").description == "2024-02-29")

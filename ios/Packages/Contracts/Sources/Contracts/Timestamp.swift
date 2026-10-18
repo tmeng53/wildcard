@@ -38,7 +38,7 @@ public struct Timestamp: Hashable, Comparable, Sendable, Codable, CustomStringCo
     public var description: String {
         let (seconds, millis) = millisecondsSince1970.quotientAndRemainder(dividingBy: 1000)
         let (wholeSeconds, fraction) = millis < 0 ? (seconds - 1, millis + 1000) : (seconds, millis)
-        let base = Date(timeIntervalSince1970: Double(wholeSeconds)).formatted(.iso8601) // ends in "Z"
+        let base = Date(timeIntervalSince1970: Double(wholeSeconds)).formatted(.iso8601)  // ends in "Z"
         let fractionText = String(fraction + 1000).dropFirst()
         return "\(base.dropLast()).\(fractionText)Z"
     }
