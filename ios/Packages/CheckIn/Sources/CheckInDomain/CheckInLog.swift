@@ -37,7 +37,7 @@ public struct CheckInLog: Hashable, Sendable {
         return .notCheckedIn
     }
 
-    /// At least one 健康餐 that day. 放纵餐忏悔 never counts.
+    /// At least one 健康餐 that day. 坦白放纵餐 never counts.
     public func hadHealthyMeal(on day: LocalDay) -> Bool {
         checkIns.contains { $0.day == day && $0.entry.isHealthyMeal }
     }
@@ -106,7 +106,9 @@ public struct WeekSummary: Hashable, Sendable {
 
     init(week: Week, plan: WeeklyPlan?, log: CheckInLog) {
         let days = week.days.enumerated().map { index, day in
-            Day(day: day, plan: plan?.days[index], training: log.training(on: day), hadHealthyMeal: log.hadHealthyMeal(on: day))
+            Day(
+                day: day, plan: plan?.days[index], training: log.training(on: day),
+                hadHealthyMeal: log.hadHealthyMeal(on: day))
         }
         self.week = week
         self.days = days

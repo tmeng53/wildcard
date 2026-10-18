@@ -1,0 +1,46 @@
+# Style is swift-format's job (.swift-format); SwiftLint adds the rules it doesn't cover.
+included:
+  - ios
+excluded:
+  - ios/**/.build
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - fatal_error_message
+  - unowned_variable_capture
+disabled_rules:
+  - trailing_comma       # swift-format owns commas
+  - opening_brace        # swift-format owns braces
+  - line_length          # swift-format owns line length
+identifier_name:
+  excluded: [id, s, m, l, xs, xl, xxs, xxl, y, z]  # y, z: Hinnant's date algorithms
+type_name:
+  excluded: [ID]
+large_tuple:
+  warning: 3  # (year, month, day)
+force_try: error
+force_unwrapping: error
+
+# AGENTS.md rules a regex can catch (first drafted for issue #6).
+custom_rules:
+  unchecked_sendable_without_reason:
+    name: "@unchecked Sendable needs a reason"
+    message: "AGENTS.md: say why it is safe in a comment on the same line."
+    regex: '@unchecked\s+Sendable(?![^\n]*//)'
+    severity: error
+  domain_imports_ui_or_backend:
+    name: "Domain imports UI or Backend"
+    message: "AGENTS.md: Domain targets never import SwiftUI, UIKit or Backend."
+    included: '.*/Sources/[^/]*Domain/.*\.swift'
+    regex: '^\s*(@testable\s+)?import\s+(SwiftUI|UIKit|Backend)\b'
+    severity: error
+  olympic_terms:
+    name: "Olympic terms"
+    message: "AGENTS.md: never use 奥运, the rings or \"Olympic\" in code-visible copy or names."
+    regex: '(奥运|[Oo]lympic)'
+    severity: error
+  shared_package_names:
+    name: "Topic-less module name"
+    message: "AGENTS.md: name shared code after its topic, never Utils, Shared, Common or Helpers."
+    regex: '^\s*import\s+(Utils|Shared|Common|Helpers)\b'
+    severity: error

@@ -20,6 +20,18 @@ public enum ContractsError: Error, Equatable, Sendable {
     case planLength(Int)
     /// A photo path that is empty.
     case emptyPhotoPath
+    /// A check-in with no photos listed, or more than `Photos.maxCount`.
+    case photoCount(Int)
+    /// A check-in that lists the same photo twice.
+    case repeatedPhoto
+    /// A 其他 sport name that is empty or longer than `CustomSport.maxLength` characters.
+    case customSportLength(Int)
+    /// A 其他 sport name with a line break, tab or other control character.
+    case multilineCustomSport
+    /// A `sport` key that isn't a listed sport or `custom`.
+    case unknownSport(String)
+    /// A `customSport` name next to a listed sport, or with no sport at all.
+    case strayCustomSport
     /// A timestamp that isn't ISO 8601.
     case invalidTimestamp(String)
     /// A check-in whose payload keys don't match its `kind`.

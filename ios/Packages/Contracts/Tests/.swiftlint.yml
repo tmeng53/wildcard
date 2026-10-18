@@ -1,0 +1,5 @@
+# Tests may force unwrap and force try fixtures (AGENTS.md: "outside tests").
+disabled_rules:
+  - force_unwrapping
+  - force_try
+  - optional_data_string_conversion
