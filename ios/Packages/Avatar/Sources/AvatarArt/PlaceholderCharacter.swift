@@ -5,10 +5,22 @@ import Foundation
 /// art, bundled with this package. Art and motion are placeholders; the file formats and
 /// the player are what's real.
 public enum PlaceholderCharacter {
-    /// Short-sleeved tee, shorts and a small dumbbell in the right hand.
-    public static let tee = Outfit(["hair": "short", "top": "tee", "bottom": "shorts", "prop": "dumbbell"])
-    /// Hoodie and shorts, hands free.
-    public static let hoodie = Outfit(["hair": "short", "top": "hoodie", "bottom": "shorts"])
+    /// A bob, a tee, shorts and a small dumbbell.
+    public static let lifter = Outfit([
+        "body": "peach", "hair": "bob", "top": "tee", "bottom": "shorts", "prop": "dumbbell",
+    ])
+    /// A cat in a cap and tank top, with a tennis racket.
+    public static let cat = Outfit([
+        "body": "cat", "hat": "cap", "top": "tank", "bottom": "greenshorts", "prop": "racket",
+    ])
+    /// A bear in a hoodie and leggings, hands free.
+    public static let bear = Outfit(["body": "bear", "top": "hoodie", "bottom": "leggings"])
+    /// A headband, a jersey and a basketball.
+    public static let baller = Outfit([
+        "body": "tan", "hair": "buzz", "hat": "headband", "top": "jersey", "bottom": "shorts", "prop": "basketball",
+    ])
+    /// Four looks from the same rig and clips: different species, hair, hats, clothes and props.
+    public static let squad = [lifter, cat, bear, baller]
 
     public static func rig() throws(AvatarError) -> Rig {
         try Rig.decode(file("rig.json"))

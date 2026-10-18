@@ -3,29 +3,31 @@ import AvatarDomain
 import Testing
 
 /// The bundled files load and fit together, so a broken edit to them fails here, not on a phone.
-@Test(arguments: [PlaceholderCharacter.tee, PlaceholderCharacter.hoodie])
+@Test(arguments: PlaceholderCharacter.squad)
 func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "root", "legL", "legR", "torso", "head", "eyes", "mouthSmile", "mouthOpen", "propR", "armL", "armR",
+            "shadow", "root", "tail", "legL", "legR", "torso", "head", "eyes", "mouthSmile", "mouthOpen", "propR",
+            "armL", "armR",
         ])
-    // The prop slot is filled only in the tee outfit.
-    #expect(figure.parts[8].art.count == (outfit == PlaceholderCharacter.tee ? 1 : 0))
+    // Only the bear's hands are free, and only the cat has a tail.
+    #expect(figure.parts[10].art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
+    #expect(figure.parts[2].art.count == (outfit == PlaceholderCharacter.cat ? 1 : 0))
     // The open mouth waits hidden until the cheer swaps it in.
-    #expect(figure.layout(figure.restPose)[7].opacity == 0)
+    #expect(figure.layout(figure.restPose)[9].opacity == 0)
 }
 
 @Test(arguments: ["idle", "cheer"])
 func everyClipBindsToTheRig(name: String) throws {
-    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.tee)
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let clip = try PlaceholderCharacter.clip(name)
     #expect(clip.name == name)
     _ = try figure.bind(clip)
 }
 
 @Test func idleLoopsSeamlesslyAndCheerEndsAtRest() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.tee)
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let idle = try figure.bind(PlaceholderCharacter.clip("idle"))
     let cheer = try figure.bind(PlaceholderCharacter.clip("cheer"))
     #expect(idle.clip.loops)
@@ -36,7 +38,7 @@ func everyClipBindsToTheRig(name: String) throws {
     #expect(figure.pose(cheer, at: cheer.clip.duration) == figure.restPose)
     // Mid-cheer the figure is in the air with its arms out.
     let peak = figure.pose(cheer, at: 0.44)
-    #expect(peak.parts[0].y == -46)
-    #expect(peak.parts[9].rotation == 100)
-    #expect(peak.parts[10].rotation == -100)
+    #expect(peak.parts[1].y == -46)
+    #expect(peak.parts[11].rotation == 100)
+    #expect(peak.parts[12].rotation == -100)
 }

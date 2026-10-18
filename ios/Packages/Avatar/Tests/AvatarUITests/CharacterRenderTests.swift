@@ -15,26 +15,26 @@ struct CharacterRenderTests {
     static let white = (0xFF, 0xFF, 0xFF)
 
     @Test func drawsTheRestPoseWhereTheArtSays() throws {
-        let tee = try Frame(outfit: PlaceholderCharacter.tee)
-        let image = try tee.render(tee.figure.restPose)
+        let lifter = try Frame(outfit: PlaceholderCharacter.lifter)
+        let image = try lifter.render(lifter.figure.restPose)
         // The middle of the face, the outer dumbbell plate in the right hand, and empty canvas.
-        #expect(matches(image.color(atColumn: 120, row: 112), Self.skin))
-        #expect(matches(image.color(atColumn: 173, row: 229), Self.plate))
+        #expect(matches(image.color(atColumn: 120, row: 150), Self.skin))
+        #expect(matches(image.color(atColumn: 193, row: 255), Self.plate))
         #expect(matches(image.color(atColumn: 10, row: 10), Self.white))
 
-        // The hoodie outfit has no prop: the same spot, just past the hand, is empty.
-        let hoodie = try Frame(outfit: PlaceholderCharacter.hoodie)
-        #expect(matches(try hoodie.render(hoodie.figure.restPose).color(atColumn: 173, row: 229), Self.white))
+        // The bear has no prop: the same spot, past the hand, is empty.
+        let bear = try Frame(outfit: PlaceholderCharacter.bear)
+        #expect(matches(try bear.render(bear.figure.restPose).color(atColumn: 193, row: 255), Self.white))
     }
 
     @Test func theCheerCarriesTheDumbbellUpWithTheArm() throws {
-        let tee = try Frame(outfit: PlaceholderCharacter.tee)
-        let cheer = try tee.figure.bind(PlaceholderCharacter.clip("cheer"))
-        let peak = tee.figure.pose(cheer, at: 0.44)
-        let image = try tee.render(peak)
-        // The plate's rest spot is empty, and the plate is where the arm's transform takes it.
-        #expect(matches(image.color(atColumn: 173, row: 229), Self.white))
-        let moved = tee.figure.layout(peak)[8].transform.apply(to: Point(x: 173, y: 229))
+        let lifter = try Frame(outfit: PlaceholderCharacter.lifter)
+        let cheer = try lifter.figure.bind(PlaceholderCharacter.clip("cheer"))
+        let peak = lifter.figure.pose(cheer, at: 0.44)
+        let image = try lifter.render(peak)
+        // The plate's rest spot is empty, and the plate is where the arm and prop transforms take it.
+        #expect(matches(image.color(atColumn: 193, row: 255), Self.white))
+        let moved = lifter.figure.layout(peak)[10].transform.apply(to: Point(x: 193, y: 255))
         #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
     }
 }

@@ -8,7 +8,7 @@ import SwiftUI
 import Testing
 import UniformTypeIdentifiers
 
-/// Writes the placeholder character's previews for reviewers: stills of both outfits, a
+/// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
 /// strip of cheer frames, and the player's output frame by frame as animated GIFs.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
@@ -24,47 +24,58 @@ struct CharacterPreviewTests {
     @Test(.enabled(if: CharacterPreviewTests.folder != nil)) func writePreviews() throws {
         let folder = try #require(Self.folder)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let tee = try Frame(outfit: PlaceholderCharacter.tee)
-        let hoodie = try Frame(outfit: PlaceholderCharacter.hoodie)
+        let squad = try PlaceholderCharacter.squad.map { outfit in try Frame(outfit: outfit) }
         let idle = try PlaceholderCharacter.clip("idle")
         let cheer = try PlaceholderCharacter.clip("cheer")
 
         try writePNG(
-            [
-                tee.render(image: tee.figure.restPose, scale: 2, background: Self.mist),
-                hoodie.render(image: hoodie.figure.restPose, scale: 2, background: Self.mist),
-            ],
+            sideBySide(
+                squad.map { look in try look.render(image: look.figure.restPose, scale: 2, background: Self.mist) }),
             to: folder.appendingPathComponent("01-outfits.png"))
 
-        let bound = try tee.figure.bind(cheer)
+        let lifter = squad[0]
+        let bound = try lifter.figure.bind(cheer)
         let strip = try [0, 0.18, 0.3, 0.44, 0.6, 0.72, 0.95, 1.3].map { time in
-            try tee.render(image: tee.figure.pose(bound, at: time), scale: 1, background: Self.mist)
+            try lifter.render(image: lifter.figure.pose(bound, at: time), scale: 1, background: Self.mist)
         }
-        try writePNG(strip, to: folder.appendingPathComponent("02-cheer-frames.png"))
+        try writePNG(sideBySide(strip), to: folder.appendingPathComponent("02-cheer-frames.png"))
 
-        // What the player shows when someone checks in: idle, the cheer on top, back to idle.
-        var performance = Performance(figure: tee.figure, idle: try tee.figure.bind(idle))
-        performance.play(bound, at: 0.6)
-        let cheerFrames = try frames(seconds: 3.2) { time in
-            try tee.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
+        // What the player shows when the squad checks in one after another: idle, the cheer
+        // on top, back to idle.
+        var performances: [Performance] = []
+        for (index, look) in squad.enumerated() {
+            var performance = Performance(figure: look.figure, idle: try look.figure.bind(idle))
+            performance.play(try look.figure.bind(cheer), at: 0.6 + 0.3 * Double(index))
+            performances.append(performance)
         }
-        try writeGIF(cheerFrames, to: folder.appendingPathComponent("03-check-in-cheer.gif"))
+        try writeGIF(
+            frames(seconds: 3.6) { time in
+                try sideBySide(
+                    zip(squad, performances).map { look, performance in
+                        try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
+                    })
+            },
+            to: folder.appendingPathComponent("03-check-in-cheer.gif"))
 
-        let idleHoodie = Performance(figure: hoodie.figure, idle: try hoodie.figure.bind(idle))
-        let idleFrames = try frames(seconds: idle.duration) { time in
-            try hoodie.render(image: idleHoodie.pose(at: time), scale: 1, background: Self.mist)
-        }
-        try writeGIF(idleFrames, to: folder.appendingPathComponent("04-idle-hoodie.gif"))
+        let idling = try squad.map { look in Performance(figure: look.figure, idle: try look.figure.bind(idle)) }
+        try writeGIF(
+            frames(seconds: idle.duration) { time in
+                try sideBySide(
+                    zip(squad, idling).map { look, performance in
+                        try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
+                    })
+            },
+            to: folder.appendingPathComponent("04-idle-squad.gif"))
 
-        try writeTimings(tee, performance, to: folder.appendingPathComponent("timings.txt"))
+        try writeTimings(lifter, performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
 
     private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
         try (0..<Int(seconds * Self.fps)).map { index in try render(Double(index) / Self.fps) }
     }
 
-    /// Images side by side.
-    private func writePNG(_ images: [CGImage], to url: URL) throws {
+    /// Images side by side, as one image.
+    private func sideBySide(_ images: [CGImage]) throws -> CGImage {
         let width = images.reduce(0) { $0 + $1.width }
         let height = images.map(\.height).max() ?? 0
         let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
@@ -77,7 +88,10 @@ struct CharacterPreviewTests {
             context.draw(image, in: CGRect(x: left, y: height - image.height, width: image.width, height: image.height))
             left += image.width
         }
-        let sheet = try #require(context.makeImage())
+        return try #require(context.makeImage())
+    }
+
+    private func writePNG(_ sheet: CGImage, to url: URL) throws {
         let destination = try #require(
             CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil))
         CGImageDestinationAddImage(destination, sheet, nil)

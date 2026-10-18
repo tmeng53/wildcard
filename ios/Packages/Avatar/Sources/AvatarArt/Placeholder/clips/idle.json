@@ -4,6 +4,9 @@
   "duration": 2.4,
   "loops": true,
   "tracks": [
+    { "part": "tail", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.6, "v": -8, "ease": "easeInOut" }, { "t": 1.8, "v": 8, "ease": "easeInOut" },
+      { "t": 2.4, "v": 0, "ease": "easeInOut" } ] },
     { "part": "torso", "channel": "scaleY", "keys": [
       { "t": 0, "v": 1 }, { "t": 1.2, "v": 1.025, "ease": "easeInOut" }, { "t": 2.4, "v": 1, "ease": "easeInOut" } ] },
     { "part": "head", "channel": "rotation", "keys": [

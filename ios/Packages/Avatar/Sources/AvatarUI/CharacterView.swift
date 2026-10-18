@@ -74,7 +74,7 @@ private struct PlaceholderPreview: View {
 
     private static func makePlayer() -> CharacterPlayer? {
         try? CharacterPlayer(
-            figure: PlaceholderCharacter.figure(wearing: PlaceholderCharacter.tee),
+            figure: PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter),
             idle: PlaceholderCharacter.clip("idle"))
     }
 }
