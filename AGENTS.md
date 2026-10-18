@@ -74,7 +74,7 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 
 ## Pull requests
 
-1. **Merge only by the project's merge rule.** Agents open PRs ready for review, written with the `raise-pr` skill; nothing merges without green checks, a clean review and an independent verifier's pass. <The merge rule: which PRs agents merge themselves.>
+1. **Merge only by the project's merge rule.** Agents open PRs ready for review, written with the `raise-pr` skill; nothing merges without green checks, a clean review and an independent verifier's pass. **Merge rule:** the owner thread merges a PR itself only when it changes nothing a user can see (logic, backend, tooling, tests). Any PR that changes what users see or feel (screens, copy, motion, assets) waits for Tracy's OK on its screenshots, and a human merges changes to `AGENTS.md` and `.claude/skills/`.
 2. **Never rewrite history others may rely on:** no force-pushes to `main`, no editing or deleting other people's comments.
 3. **If agents can't agree** after one round of replies, post a reply starting with **Decision needed:** and stop work on that point until a human answers.
 4. **Ground decisions in evidence:** link official docs (Apple, Supabase) or respected writing, or say there are none.
