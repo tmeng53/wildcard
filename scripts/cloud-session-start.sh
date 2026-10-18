@@ -3,16 +3,19 @@
 # scripts/verify.sh needs, so checks run before a push. Does nothing outside the cloud.
 # Cloud sessions are Linux: they run the Swift package tests, the web page and Supabase,
 # never the iOS simulator (that runs on the self-hosted Mac).
-set -euo pipefail
+# Each step reports its own failure and the rest still run, so the session always learns
+# which checks will be inconclusive.
+set -uo pipefail
 [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}"
 
 ready=()
+missing=()
 
 if command -v swift >/dev/null 2>&1; then
-  ready+=("Swift $(swift --version 2>/dev/null | head -1 | sed -E 's/.*version ([0-9.]+).*/\1/')")
+  ready+=("Swift")
 else
-  echo "No Swift toolchain: swift test is inconclusive until swift.org is allowed in the cloud environment." >&2
+  missing+=("Swift (allow swift.org in the cloud environment)")
 fi
 
 if [ -d supabase ]; then
@@ -24,17 +27,26 @@ if [ -d supabase ]; then
       sleep 0.5
     done
   fi
-  npx --yes supabase start >/tmp/supabase-start.log 2>&1
-  ready+=("Docker" "local Supabase")
+  if ! docker info >/dev/null 2>&1; then
+    missing+=("Docker (see /tmp/dockerd.log)")
+  elif npx --yes supabase start >/tmp/supabase-start.log 2>&1; then
+    ready+=("Docker" "local Supabase")
+  else
+    missing+=("local Supabase (see /tmp/supabase-start.log)")
+  fi
 fi
 
 if [ -f web/package.json ]; then
-  pnpm --dir web install --frozen-lockfile --prefer-offline >/tmp/pnpm-install.log 2>&1
-  ready+=("web dependencies")
+  if pnpm --dir web install --frozen-lockfile --prefer-offline >/tmp/pnpm-install.log 2>&1; then
+    ready+=("web dependencies")
+  else
+    missing+=("web dependencies (see /tmp/pnpm-install.log)")
+  fi
 fi
 
-if [ "${#ready[@]}" -gt 0 ]; then
-  echo "Ready: ${ready[*]}. Logs in /tmp/*.log."
-else
-  echo "Ready: nothing to start yet."
+[ "${#ready[@]}" -gt 0 ] && echo "Ready: ${ready[*]}."
+[ "${#ready[@]}" -eq 0 ] && [ "${#missing[@]}" -eq 0 ] && echo "Ready: nothing to start yet."
+if [ "${#missing[@]}" -gt 0 ]; then
+  printf 'Not available, so their checks are inconclusive: %s\n' "${missing[*]}"
 fi
+exit 0

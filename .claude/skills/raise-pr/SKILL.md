@@ -29,7 +29,7 @@ The first line of the body, before any heading: one sentence saying what this PR
 | ❌ Don't | ✅ Do |
 | --- | --- |
 | Adds `CheckInSheet.swift`, `CheckInStore.swift`, updates `HomeView.swift` and tests. | You can now check in from the home screen, and your squad sees it on the track right away. |
-| This PR implements several features for the verifier including min rows, date range and refactoring. | The verifier now catches stale data, so the 2019-dataset demo gets refunded instead of paid. |
+| This PR implements several features for the recap including podium, excuses and refactoring. | The Sunday recap now names the week's best excuse, so squads have a reason to open it. |
 
 ### 2. Why
 
@@ -114,9 +114,9 @@ The author can't pass its own work. Every PR needs a verdict from an agent that 
 
 ## After opening
 
-If other work in progress is affected, link the PR from its issue. Codex doesn't review on its own: once the head commit is CI green, post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
+If other work in progress is affected, link the PR from its issue. **When Codex is installed on the repo** (it isn't yet): Codex doesn't review on its own, so once the head commit is CI green, post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
 
-If Codex can't review that head (it replies that it is out of usage, or no review has landed two hours after the ask), start a fresh Claude agent that did not write the PR as the fallback reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One fallback review per head, like Codex; once Codex can review again, the next head goes back to Codex. The fallback is a review, not a verdict: the verifier still runs.
+**When Codex isn't installed, or can't review that head** (it replies that it is out of usage, or no review has landed two hours after the ask), start, right away in the first case, a fresh Claude agent that did not write the PR as the fallback reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One fallback review per head, like Codex; once Codex can review again, the next head goes back to Codex. The fallback is a review, not a verdict: the verifier still runs.
 
 When a review bot or a person comments, read every finding first, then check each is real before acting (AGENTS.md, "Review feedback is a symptom"): fix real ones and reply on the thread with the commit and proof; dismiss the rest with a concrete reason. Re-run the checks, and update Verification if the evidence changed.
 

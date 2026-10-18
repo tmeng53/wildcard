@@ -19,6 +19,9 @@ if [ -f web/package.json ]; then
   ran=1
 fi
 
+# The Supabase CLI runs through npx unless it's installed.
+supabase() { if command -v supabase >/dev/null 2>&1; then command supabase "$@"; else npx --yes supabase "$@"; fi; }
+
 if [ -d supabase/migrations ]; then
   echo "==> supabase"
   supabase db reset

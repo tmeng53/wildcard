@@ -75,7 +75,7 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 
 - **Prove it works.** Run the feature the way users do before calling it done. UI changes attach simulator screenshots or a recording to the PR.
 - Domain tests use Swift Testing (`@Test`, `#expect`) with literal expected values. Backend tests run against local Supabase in Docker, never a mocked database.
-- **Someone else passes it.** Every PR needs a verdict from a fresh agent that did not write it. It gets only the task and the diff, runs the change from a clean checkout of the pushed commit, and returns PASS, PASS+NOTES or FAIL with evidence, naming the head commit and the diff hash from `scripts/verify-diff-hash.sh`. One run per PR, once it's ready. CI, a code review and the author's own review are not a verdict. How, in `raise-pr` (Independent verification).
+- **Someone else passes it.** Every PR needs a verdict from a fresh agent that did not write it. It gets only the task and the diff, runs the change from a clean checkout of the pushed commit, and returns PASS, PASS+NOTES or FAIL with evidence, naming the head commit and the diff hash from `scripts/verify-diff-hash.sh`. One run per diff, once the PR is ready; a change to the diff needs a new verdict. CI, a code review and the author's own review are not a verdict. How, in `raise-pr` (Independent verification).
 - Run `scripts/verify.sh` before every push.
 
 ## Pull requests

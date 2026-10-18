@@ -18,9 +18,14 @@ try:
 except Exception: pass' "$input" "$1"; }
 [ "$(field stop_hook_active)" = "true" ] && exit 0
 
-base="$(git merge-base HEAD origin/main 2>/dev/null)" || exit 0
-if git diff --quiet "$base" && [ -z "$(git ls-files --others --exclude-standard)" ]; then
-  exit 0
+# Explicit refspec: some clones have none configured, which would leave origin/main missing.
+git rev-parse --verify --quiet origin/main >/dev/null ||
+  git fetch --quiet origin '+refs/heads/main:refs/remotes/origin/main' 2>/dev/null
+# With no merge base (main unknown, or a shallow clone) every change counts as the branch's own.
+if base="$(git merge-base HEAD origin/main 2>/dev/null)"; then
+  if git diff --quiet "$base" && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+    exit 0
+  fi
 fi
 
 log="/tmp/verify-on-stop-$(field session_id | tr -cd 'a-zA-Z0-9_-').log"

@@ -7,6 +7,8 @@ description: How an agent that did not write a change proves Wildcard works end 
 
 # Verify Wildcard
 
+This skill says how to run Wildcard and check its evidence. The verification process itself (who starts the verifier, the clean checkout, one verdict comment per PR, re-runs) is in `raise-pr` (Independent verification); where they differ, `raise-pr` wins.
+
 You are the verifier. You did not write the change, and your verdict is the only thing that says it works: green CI and a review bot are not verdicts. Run wildcard the way its users do, read the real output, and check the evidence yourself instead of trusting what the author or a script says.
 
 ## Rules
@@ -20,13 +22,13 @@ You are the verifier. You did not write the change, and your verdict is the only
 ## 1. Pin what you are verifying
 
 ```sh
-git fetch origin +refs/heads/main:refs/remotes/origin/main +refs/heads/<branch>:refs/remotes/origin/<branch>   # explicit refspecs, so origin/* is never stale
-git worktree add --detach /tmp/verify-wildcard/tree-<short sha> origin/<branch>   # the PR's head, leaving your checkout alone
+git fetch origin '+refs/heads/*:refs/remotes/origin/*'   # explicit refspec, so origin/* is never stale
+GIT_NO_REPLACE_OBJECTS=1 GIT_GRAFT_FILE=/nonexistent git worktree add --detach /tmp/verify-wildcard/tree-<short sha> <full head SHA you were asked to verify>   # that exact commit, never the branch tip; replace refs and grafts can't swap it
 cd /tmp/verify-wildcard/tree-<short sha>
 git status --porcelain                      # must print nothing: verify committed code only
 swift package resolve --package-path ios/Packages/<Package>   # and pnpm --dir web install --frozen-lockfile once web/ exists
 git rev-parse HEAD                          # the commit the verdict names
-f=$(mktemp) && git show origin/main:scripts/verify-diff-hash.sh > "$f" && bash "$f" "$(git rev-parse HEAD)"; rm -f "$f"   # the diff the verdict covers, hashed by main's copy of the script
+f=$(mktemp) && git show origin/main:scripts/verify-diff-hash.sh > "$f" && bash "$f" "$(git rev-parse HEAD)"; rm -f "$f"   # the diff the verdict covers, hashed by main's copy of the script; main itself gives e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 (empty)
 git merge-base --is-ancestor origin/main HEAD || echo "behind main"
 ```
 
@@ -95,24 +97,20 @@ Stop only what you started: servers and watchers; the stack (`<stop command>`, w
 
 ## 7. The verdict
 
-Post it where the change is discussed: as a PR comment when there is a PR, else where the verdict was asked for. Save a copy as `/tmp/verify-wildcard/<short sha>/verdict.md`. Never edit it after posting. Exactly one of:
+Return the report to the owner thread that asked for it, which posts it unedited in the PR's one verdict comment (`raise-pr`, Independent verification, step 5); without a PR, post it where the verdict was asked for. Save a copy as `/tmp/verify-wildcard/<short sha>/verdict.md`. Exactly one of:
 
 - **PASS**: every journey you ran did what it should, and the evidence matches.
 - **PASS+NOTES**: it works, with issues that don't block (each one named).
 - **FAIL**: something didn't work, or couldn't be checked. Name the first failing step and its output.
 
-```md
-**Verdict: PASS** (verify-wildcard)
+```markdown
+## Verifier verdict: PASS | PASS+NOTES | FAIL
 
-- Commit: `<full sha>`
-- Diff: `<sha256 of the diff>`
-- Journeys: <journey> (Ready); <which journeys this change touches>
-- Not run: <journey>, because <reason>; or none
-- Evidence:
-  - `<command>`: `<quoted output line>`
-  - <evidence kind>: <what you read at the source>
-  - extra check: `<what you tried>` → `<what happened>`
-- Notes: none
+Commit: <full head SHA>
+Diff: <output of scripts/verify-diff-hash.sh, main's copy>
+
+What I ran: each journey and command, and the key line it printed or what I saw (screenshots attached for anything users see). Journeys not run, and why.
+Notes or failures: what's wrong or worth knowing, with the evidence, including the extra check you tried.
 ```
 
 Quote real output lines, never paraphrase them. A verdict without a commit, a diff hash or evidence doesn't count.
