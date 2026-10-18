@@ -308,8 +308,9 @@ private enum TabSample: String, CaseIterable {
     }
 }
 
-/// A frosted tab bar: icon and word on every item; the selected one in signature text on a
-/// light signature pill, the rest in primary text.
+/// A Liquid Glass tab bar (navigation is Liquid Glass, Tracy 2026-10-18): icon and word on
+/// every item; the selected one in signature text on a light signature pill, the rest in
+/// primary text.
 private struct TabBarSample: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -342,7 +343,7 @@ private struct TabBarSample: View {
             }
         }
         .padding(Space.xxs)
-        .frosted(white: Frost.navigationFill, in: Capsule())
+        .glassEffect(.regular, in: Capsule())
     }
 }
 #endif
