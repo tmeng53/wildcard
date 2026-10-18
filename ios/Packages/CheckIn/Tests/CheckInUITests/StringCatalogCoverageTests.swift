@@ -36,6 +36,17 @@ struct StringCatalogCoverageTests {
         #expect(try Self.english(for: "周三不练腿俱乐部") != nil)
     }
 
+    /// The care line's copy is the approved wording, and points at 988 and 911.
+    @Test func careLineHasItsApprovedCopy() throws {
+        #expect(try Self.english(for: "打给 988") == "Call 988")
+        #expect(try Self.english(for: "发短信给 988") == "Text 988")
+        #expect(try Self.english(for: "有紧急危险请直接打 911。") == "If you're in immediate danger, call 911.")
+        let source = try String(
+            contentsOf: Self.sources.appendingPathComponent("DisclaimerCard.swift"), encoding: .utf8)
+        #expect(source.contains("\"tel:988\""))
+        #expect(source.contains("\"sms:988\""))
+    }
+
     /// SwiftLint's banned-terms rule can't read the catalog, so this covers its copy.
     @Test func catalogAvoidsBannedTerms() throws {
         let text = try String(contentsOf: Self.catalogURL, encoding: .utf8).lowercased()

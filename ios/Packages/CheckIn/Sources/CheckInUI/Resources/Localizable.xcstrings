@@ -1,16 +1,6 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "988 心理援助热线": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "988 Suicide & Crisis Lifeline"
-          }
-        }
-      }
-    },
     "deadline 当前，先活下来": {
       "localizations": {
         "en": {
@@ -1145,6 +1135,16 @@
         }
       }
     },
+    "发短信给 988": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text 988"
+          }
+        }
+      }
+    },
     "取消": {
       "localizations": {
         "en": {
@@ -1215,6 +1215,16 @@
         }
       }
     },
+    "打给 988": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Call 988"
+          }
+        }
+      }
+    },
     "换一个": {
       "localizations": {
         "en": {
@@ -1261,6 +1271,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recents"
+          }
+        }
+      }
+    },
+    "有紧急危险请直接打 911。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you're in immediate danger, call 911."
           }
         }
       }
@@ -1345,6 +1365,16 @@
         }
       }
     },
+    "美国和加拿大都能拨 988，24 小时，免费。美国的线路可以要中文翻译。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "988 works in the US and Canada, 24 hours a day, for free. The US line can bring in a Chinese interpreter."
+          }
+        }
+      }
+    },
     "设为封面": {
       "localizations": {
         "en": {
@@ -1375,12 +1405,12 @@
         }
       }
     },
-    "这句我们不帮你编了。最近要是很难受，找人聊聊会好一点。": {
+    "这条先不写段子了。最近要是真的很难，找个人聊聊吧。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "We'll sit this one out. If things feel heavy lately, talking to someone can help."
+            "value": "No joke for this one. If things are really hard lately, talk to someone."
           }
         }
       }

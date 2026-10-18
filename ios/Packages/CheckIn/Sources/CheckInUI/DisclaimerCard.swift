@@ -171,25 +171,41 @@ private struct DraftChoice: View {
     }
 }
 
-/// What the author alone sees when the reason touches self-harm: no joke, a gentle line and a
-/// help line (spec section 3). Copy pending from the spec thread.
+/// What the author alone sees when the reason reads as self-harm (spec section 3): no joke, a
+/// gentle line, and the 988 line to call or text. Teammates see nothing.
 private struct CareLine: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
-            Text("这句我们不帮你编了。最近要是很难受，找人聊聊会好一点。", bundle: .module)
+        VStack(alignment: .leading, spacing: Space.s) {
+            Text("这条先不写段子了。最近要是真的很难，找个人聊聊吧。", bundle: .module)
                 .typeStyle(TypeRamp.callout)
                 .foregroundStyle(Color(role: .textPrimary, in: theme))
-            if let url = URL(string: "https://988lifeline.org") {
-                Link(destination: url) {
-                    Text("988 心理援助热线", bundle: .module)
-                        .typeStyle(TypeRamp.calloutEmphasis)
-                        .foregroundStyle(Color(role: .signatureText, in: theme))
+            HStack(spacing: Sizing.pillGap) {
+                ChoicePill(Text("打给 988", bundle: .module), systemImage: "phone", isSelected: false) {
+                    open("tel:988")
                 }
+                .accessibilityIdentifier("disclaimer.care.call")
+                ChoicePill(Text("发短信给 988", bundle: .module), systemImage: "message", isSelected: false) {
+                    open("sms:988")
+                }
+                .accessibilityIdentifier("disclaimer.care.text")
             }
+            Text("美国和加拿大都能拨 988，24 小时，免费。美国的线路可以要中文翻译。", bundle: .module)
+                .typeStyle(TypeRamp.caption)
+                .foregroundStyle(Color(role: .textSecondary, in: theme))
+            Text("有紧急危险请直接打 911。", bundle: .module)
+                .typeStyle(TypeRamp.caption)
+                .foregroundStyle(Color(role: .textSecondary, in: theme))
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("disclaimer.care")
+    }
+
+    private func open(_ address: String) {
+        guard let url = URL(string: address) else { return }
+        openURL(url)
     }
 }
 #endif
