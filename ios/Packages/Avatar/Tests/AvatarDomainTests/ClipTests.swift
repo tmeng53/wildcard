@@ -59,6 +59,13 @@ import Testing
         try clip("wave", duration: 1, loops: true, [track("arm", .x, [(0, 0), (1.5, 1)])])
     }
     #expect(throws: AvatarError.invalidDuration(clip: "wave")) { try clip("wave", duration: 0, loops: true, []) }
+    #expect(throws: AvatarError.invalidEasing(clip: "wave", part: "arm", channel: .x)) {
+        try Clip(
+            name: "wave", duration: 1, loops: true,
+            tracks: [
+                .init(part: "arm", channel: .x, keys: [.init(time: 0, value: 0, easing: .cubicBezier(0, 0, -0.5, 1))])
+            ])
+    }
     #expect(throws: AvatarError.duplicateTrack(clip: "wave", part: "arm", channel: .x)) {
         try clip("wave", duration: 1, loops: true, [track("arm", .x, [(0, 0)]), track("arm", .x, [(0, 1)])])
     }
@@ -70,7 +77,7 @@ import Testing
                   { "part": "arm", "channel": "x", "keys": [{ "t": 0, "v": 0, "easing": "backOut" }] } ] }
                 """#.utf8))
     }
-    #expect(throws: AvatarError.malformedJSON("wave: cubic Bézier x values must be within 0...1")) {
+    #expect(throws: AvatarError.invalidEasing(clip: "wave", part: "arm", channel: .x)) {
         try Clip.decode(
             Data(
                 #"""

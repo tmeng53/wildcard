@@ -26,6 +26,8 @@ public enum AvatarError: Error, Equatable, Sendable {
     case invalidDuration(clip: String)
     /// A track with no keys, keys out of time order, or keys outside the clip.
     case invalidKeyframes(clip: String, part: PartID, channel: Channel)
+    /// A key eased by a cubic Bézier whose x values fall outside 0...1.
+    case invalidEasing(clip: String, part: PartID, channel: Channel)
     /// Two tracks in one clip move the same channel of the same part.
     case duplicateTrack(clip: String, part: PartID, channel: Channel)
 }

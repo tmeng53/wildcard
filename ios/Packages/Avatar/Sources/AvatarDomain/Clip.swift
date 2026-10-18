@@ -26,6 +26,13 @@ public enum Easing: Hashable, Sendable {
         "backOut": .backOut,
     ]
 
+    /// As in CSS: with either control point's x outside 0...1 the curve turns back in
+    /// time and has no single value at some moments.
+    var isPlayable: Bool {
+        guard case .cubicBezier(let firstX, let firstY, let secondX, let secondY) = self else { return true }
+        return (0...1).contains(firstX) && (0...1).contains(secondX) && firstY.isFinite && secondY.isFinite
+    }
+
     /// Progress (0...1, or past it for overshoot) at a fraction of the way through time.
     public func progress(_ fraction: Double) -> Double {
         switch self {
@@ -137,6 +144,9 @@ public struct Clip: Hashable, Sendable {
             guard let first = times.first, let last = times.last, ordered, first >= 0, last <= duration else {
                 throw .invalidKeyframes(clip: name, part: track.part, channel: track.channel)
             }
+            guard track.keys.allSatisfy({ $0.easing.isPlayable }) else {
+                throw .invalidEasing(clip: name, part: track.part, channel: track.channel)
+            }
         }
         (self.name, self.duration, self.loops, self.tracks) = (name, duration, loops, tracks)
     }
@@ -160,13 +170,7 @@ public struct Clip: Hashable, Sendable {
         case .name(let name)?:
             guard let easing = Easing.named[name] else { throw .malformedJSON("\(clip): unknown ease \"\(name)\"") }
             return easing
-        case .bezier(let numbers)?:
-            // As in CSS: with either x outside 0...1 the curve turns back in time and
-            // has no single value at some moments.
-            guard (0...1).contains(numbers[0]), (0...1).contains(numbers[2]), numbers.allSatisfy(\.isFinite) else {
-                throw .malformedJSON("\(clip): cubic Bézier x values must be within 0...1")
-            }
-            return .cubicBezier(numbers[0], numbers[1], numbers[2], numbers[3])
+        case .bezier(let numbers)?: return .cubicBezier(numbers[0], numbers[1], numbers[2], numbers[3])
         }
     }
 }
