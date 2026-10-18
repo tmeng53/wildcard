@@ -38,7 +38,7 @@ func everyClipBindsToTheRig(name: String) throws {
     #expect(figure.pose(cheer, at: cheer.clip.duration) == figure.restPose)
     // Mid-cheer the figure is in the air with its arms out.
     let peak = figure.pose(cheer, at: 0.44)
-    #expect(peak.parts[1].y == -46)
+    #expect(peak.parts[1].y == -36)
     #expect(peak.parts[11].rotation == 100)
     #expect(peak.parts[12].rotation == -100)
 }
