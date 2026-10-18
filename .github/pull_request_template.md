@@ -52,3 +52,7 @@ Otherwise delete this section.
 ## Screenshots
 
 <!-- Required for any change users can see: simulator screenshots or a recording, before and after. Delete only if nothing visible changed. -->
+
+## Verifier verdict
+
+<!-- Link to the latest verdict comment; it must cover the current diff (raise-pr skill, Independent verification). "Pending" until it's posted. -->

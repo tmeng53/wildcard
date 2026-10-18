@@ -20,9 +20,13 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 
 Add each command here in the PR that makes it real.
 
+In Claude cloud sessions a SessionStart hook (`scripts/cloud-session-start.sh`) starts what the checks need, and a Stop hook (`scripts/verify-on-stop.sh`) runs `scripts/verify.sh` whenever the branch has changes of its own and blocks the first stop while it's red: fix it, or tell the user exactly what is red. If a toolchain or service isn't available, say that check is inconclusive; never skip or fake it.
+
+Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud machines are yours and thrown away after the session. If every session should have it, add it to `scripts/cloud-session-start.sh` in a PR.
+
 ## CI
 
-**No GitHub-hosted runners**: they cost money this project doesn't spend. Linux checks run in the agent's own session before every push. iOS build, UI tests and screenshots run on the self-hosted runner labelled `macos-self-hosted` (Tracy's Mac), so a PR touching `ios/` waits until that Mac is awake. Every workflow uses `runs-on: [self-hosted, macos-self-hosted]`.
+**No GitHub-hosted runners**: they cost money this project doesn't spend. Linux checks run in the agent's own session before every push. iOS build, UI tests and screenshots run on the self-hosted runner labelled `macos-self-hosted` (Tracy's Mac), so a PR touching `ios/` waits until that Mac is awake. Every workflow uses `runs-on: [self-hosted, macos-self-hosted]`, runs only on ready (not draft) PRs and on pushes to `main`, and cancels the run a newer push replaces.
 
 ## Skills
 
@@ -36,8 +40,9 @@ Read the matching skill before the work it covers.
 | `errors` | Before adding error handling in `web/` or `supabase/`. |
 | `zod` | Before adding a schema or parsing untrusted input in TypeScript. |
 | `address-review` | When a PR you own gets review comments. |
-| `raise-pr` | Whenever you open or edit a pull request. |
-| `verify-product` | When verifying another agent's change. The project's `verify-wildcard` skill is what a verifier follows. |
+| `raise-pr` | Whenever you open, edit or merge a pull request. Covers the verifier's verdict and who merges. |
+| `wildcard-docs` | At the start of every session, and when you open an issue, need something from another developer, or need a human decision. |
+| `verify-wildcard` | When you verify a change you didn't write, or prove a user journey works end to end. |
 | `project-setup` | When PRs, decisions or friction keep stalling. |
 | `cloud-test-environment` | When adding a service the tests need. |
 
@@ -55,7 +60,7 @@ Planned (update as packages land): packages by capability, each `Domain` (pure S
 
 SwiftLint and swift-format enforce style; they are not repeated here.
 
-- Swift 6 language mode with strict concurrency. No `@unchecked Sendable` without a comment saying why it is safe.
+- Swift 6 language mode with strict concurrency (needs Xcode 16 or newer). No `@unchecked Sendable` without a comment saying why it is safe.
 - **Module boundaries are packages.** A package imports another only through its public API; `Domain` targets never import SwiftUI, UIKit or `Backend`. Cross-capability types live in a small `Contracts` package.
 - **Reuse before you add.** Search first. Shared code goes in a package named after its topic, never `Utils`, `Shared`, `Common` or `Helpers`.
 - Parse at boundaries with `Codable` into strict types; stored and wire JSON carries a top-level `version`.
@@ -70,16 +75,27 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 
 - **Prove it works.** Run the feature the way users do before calling it done. UI changes attach simulator screenshots or a recording to the PR.
 - Domain tests use Swift Testing (`@Test`, `#expect`) with literal expected values. Backend tests run against local Supabase in Docker, never a mocked database.
+- **Someone else passes it.** Every PR needs a verdict from a fresh agent that did not write it. It gets only the task and the diff, runs the change from a clean checkout of the pushed commit, and returns PASS, PASS+NOTES or FAIL with evidence, naming the head commit and the diff hash from `scripts/verify-diff-hash.sh`. One run per PR, once it's ready. CI, a code review and the author's own review are not a verdict. How, in `raise-pr` (Independent verification).
 - Run `scripts/verify.sh` before every push.
 
 ## Pull requests
 
-1. **Merge only by the project's merge rule.** Agents open PRs ready for review, written with the `raise-pr` skill; nothing merges without green checks, a clean review and an independent verifier's pass. **Merge rule:** the owner thread merges a PR itself only when it changes nothing a user can see (logic, backend, tooling, tests). Any PR that changes what users see or feel (screens, copy, motion, assets) waits for Tracy's OK on its screenshots, and a human merges changes to `AGENTS.md` and `.claude/skills/`.
-2. **Never rewrite history others may rely on:** no force-pushes to `main`, no editing or deleting other people's comments.
-3. **If agents can't agree** after one round of replies, post a reply starting with **Decision needed:** and stop work on that point until a human answers.
-4. **Ground decisions in evidence:** link official docs (Apple, Supabase) or respected writing, or say there are none.
-5. **When a decision or review comment would hold in any project,** open a PR adding it to `sponge-ai-lab/engineering-skills`.
-6. **Surface design friction; don't absorb it.** Record it as a `friction` issue, work around it minimally, and tell the friction owner.
+- Branch from `main`. One small change per PR. **Never stack** a PR on another open PR.
+- Run `scripts/verify.sh` first. Open the PR as a draft and mark it ready once it passes: CI runs only on ready PRs.
+- **No PR merges without a verifier's PASS or PASS+NOTES for its current diff.** A FAIL goes back to the author, or to a human if the author disputes it; a change to the diff after the verdict needs a new verdict from a new verifier.
+- Write it with the `raise-pr` skill. The **Verification** section lists each command you ran and what it printed, or "inconclusive" and why. Anything users see carries screenshots or a recording.
+- **Get a code review on every ready head.** If Codex is installed on the repo, post one `@codex review` comment once the head is green; otherwise, or when Codex can't review, a fresh Claude agent that did not write the PR reviews that head under the Code Review Rules below. How, in `raise-pr`.
+- **Review feedback is a symptom, not a to-do list.** Every finding (a person's, a bot's, a verifier's note) is a claim to check before acting; answer each on the PR, fixed (with the commit) or not and why. Read the whole review first and group findings by cause. When a PR gets findings a second time, post one short root-cause note before pushing a fix, then rework it into the simplest design. When in doubt, ask a human.
+- **Who merges:** the owner thread merges PRs that change nothing users can see; Tracy OKs anything users see or feel; a human merges changes to agent rules, CI, the contract or migrations. The exact rule is in `raise-pr` (Merging).
+- Only change what the PR is about. Never force-push `main`; never edit or delete other people's comments.
+- **If agents can't agree** after one round of replies, post a **Decision needed:** where the discussion is (`wildcard-docs`) and stop work on that point until a human answers.
+- **Ground decisions in evidence:** link one to three credible sources (Apple, Supabase, standards, well-known engineering blogs), or say there are none.
+- **When a decision or review comment would hold in any project,** also open a PR adding it to `sponge-ai-lab/engineering-skills`.
+
+## Friction
+
+- **Report friction the moment you hit it.** When the architecture, a boundary or an abstraction makes the work harder (a workaround, a rule written twice, a port that can't say what you need, a change that ripples through many packages), open a GitHub issue labelled `friction`: what you were doing, what got in the way, the workaround, and the fix you'd suggest. Keep going with the smallest clean workaround; don't start the refactor yourself. Then tell the friction owner the project instructions name.
+- **The friction owner reviews each report against the whole list.** On a recurring theme or a severe report with a clear fix, it acts at once; otherwise it asks a human to decide.
 
 ## Code Review Rules
 
@@ -92,7 +108,7 @@ Flag only real problems: bugs, broken rules, missing evidence. Formatting and an
 - A force unwrap or `try!` in shipped code, or `@unchecked Sendable` without a reason.
 - A hard-coded user-facing string outside the String Catalog.
 - A UI change without screenshots, a test that can't fail, or a mocked database.
-- A PR that mixes unrelated changes.
+- A PR based on another open PR, or one that mixes unrelated changes.
 
 ## Keeping this file current
 

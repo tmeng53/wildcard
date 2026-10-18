@@ -26,7 +26,7 @@ cd /tmp/verify-wildcard/tree-<short sha>
 git status --porcelain                      # must print nothing: verify committed code only
 swift package resolve --package-path ios/Packages/<Package>   # and pnpm --dir web install --frozen-lockfile once web/ exists
 git rev-parse HEAD                          # the commit the verdict names
-git diff --full-index --binary origin/main...HEAD | sha256sum | cut -d' ' -f1   # the diff the verdict covers; main itself gives e3b0c442…7852b855 (empty)
+f=$(mktemp) && git show origin/main:scripts/verify-diff-hash.sh > "$f" && bash "$f" "$(git rev-parse HEAD)"; rm -f "$f"   # the diff the verdict covers, hashed by main's copy of the script
 git merge-base --is-ancestor origin/main HEAD || echo "behind main"
 ```
 
