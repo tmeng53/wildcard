@@ -1,7 +1,7 @@
 -- Check-ins: members write only their own rows, and the payload follows the
 -- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
-select plan(35);
+select plan(40);
 
 -- Four people: Ann and Bo share a squad, Cy is in a different squad, Di is in none.
 insert into auth.users (id, email) values
@@ -145,8 +145,30 @@ select isnt_empty(
 
 
 -- The payload follows the contract.
+-- Every space and line break Swift's contract knows, as Swift lists them
+-- (`CharacterSet.whitespacesAndNewlines`, `Character.isNewline`, swift:6.0 on Linux).
+select is(
+  (select count(*)::int from regexp_split_to_table(E'\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u200B\u2028\u2029\u202F\u205F\u3000', '') c
+   where private.is_short_text(to_jsonb(c), false)),
+  0, 'a 免责声明 made only of spaces the contract trims is refused'
+);
+select is(
+  (select count(*)::int from regexp_split_to_table(E'\u000A\u000B\u000C\u000D\u0085\u2028\u2029', '') c
+   where private.is_short_text(to_jsonb('腿' || c || '酸'), true)),
+  0, 'a caption holding any line break the contract knows is refused'
+);
+select is(
+  (select count(*)::int from regexp_split_to_table(E'\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u200B\u2028\u2029\u202F\u205F\u3000', '') c
+   where private.is_short_text(to_jsonb('腿' || c || '酸'), false)),
+  26, 'a 免责声明 may hold any of those spaces and line breaks inside'
+);
+select ok(
+  private.is_short_text(to_jsonb(E'\u200B腿酸'::text), true),
+  'text may start with a zero-width space, which the app may not trim'
+);
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select pg_temp.rejects('trained', '{"sport":"run","minutes":0}', '练了 needs at least 1 minute');
+select pg_temp.rejects('disclaimer', '{"text":"\u3000"}', 'a 免责声明 of only an ideographic space is refused');
 select pg_temp.rejects('trained', '{"sport":"run","minutes":601}', '练了 is at most 600 minutes');
 select pg_temp.rejects('trained', '{"sport":"run","minutes":30.5}', 'minutes are whole numbers');
 select pg_temp.rejects('trained', '{"sport":"sumo","minutes":30}', 'the sport is one the contract names');

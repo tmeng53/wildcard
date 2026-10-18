@@ -95,9 +95,9 @@ create policy "Signed-in users create squads they own"
 on public.squads for insert to authenticated
 with check (created_by = (select auth.uid()));
 
-create policy "The creator renames the squad"
+create policy "The creator renames the squad while still in it"
 on public.squads for update to authenticated
-using (created_by = (select auth.uid()))
+using (created_by = (select auth.uid()) and (select private.is_squad_member(id)))
 with check (created_by = (select auth.uid()));
 
 create policy "Members see who is in their squads"
@@ -117,6 +117,28 @@ create type public.check_in_kind as enum ('trained', 'healthyMeal', 'cheatMeal',
 -- is also one line (the contract lets a 免责声明 span lines). Postgres counts code
 -- points, not what people see (a family emoji is 1 character but 7 code points), so
 -- it holds a loose cap of 400; the app holds the exact limit.
+-- The spaces and line breaks the contract trims (Swift's `.whitespacesAndNewlines`)
+-- and the line breaks a caption can't hold (`Character.isNewline`), listed from Swift
+-- by checking every Unicode scalar. U+200B counts as a space in Foundation on Linux
+-- but maybe not on Apple, so text needn't be trimmed of it but can't be only that.
+create function private.contract_spaces()
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select E'\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000';
+$$;
+
+create function private.contract_line_breaks()
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select E'\u000A\u000B\u000C\u000D\u0085\u2028\u2029';
+$$;
+
 create function private.is_short_text(value jsonb, one_line boolean)
 returns boolean
 language sql
@@ -124,9 +146,10 @@ immutable
 set search_path = ''
 as $$
   select jsonb_typeof(value) = 'string'
-    and char_length(value #>> '{}') between 1 and 400
-    and value #>> '{}' = btrim(value #>> '{}', E' \t\n\r')
-    and (not one_line or (strpos(value #>> '{}', E'\n') = 0 and strpos(value #>> '{}', E'\r') = 0));
+    and char_length(value #>> '{}') <= 400
+    and value #>> '{}' = btrim(value #>> '{}', private.contract_spaces())
+    and char_length(btrim(value #>> '{}', private.contract_spaces() || E'\u200B')) >= 1
+    and (not one_line or translate(value #>> '{}', private.contract_line_breaks(), '') = value #>> '{}');
 $$;
 
 -- The kind-specific object from the wire JSON (`training`, `meal` or `disclaimer`),

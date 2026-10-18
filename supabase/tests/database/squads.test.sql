@@ -1,7 +1,7 @@
 -- Squads and membership: only members see a squad and its roster, and nobody adds
 -- members directly (that comes with the invite flow).
 begin;
-select plan(13);
+select plan(14);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -91,6 +91,15 @@ delete from auth.users where id = 'b0000000-0000-0000-0000-000000000002';
 select is(
   (select count(*)::int from public.squads where id = '5c000000-0000-0000-0000-000000000003' and created_by is null), 1,
   'a squad stays when its creator deletes their account'
+);
+
+select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
+delete from public.squad_members where member_id = 'a0000000-0000-0000-0000-000000000001';
+update public.squads set name = '改名了' where id = '5a000000-0000-0000-0000-000000000001';
+select pg_temp.sign_out();
+select is(
+  (select name from public.squads where id = '5a000000-0000-0000-0000-000000000001'),
+  '早八跑团', 'a creator who has left the squad can''t rename it'
 );
 
 select * from finish();
