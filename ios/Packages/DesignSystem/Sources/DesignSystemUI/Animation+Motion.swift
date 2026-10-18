@@ -13,7 +13,7 @@ extension Animation {
     }
 }
 
-/// Shrinks a control while it is held, with the `snappy` spring.
+/// Shrinks a control while it is held (`snappy`) and springs it back with `panel`.
 public struct PressableButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -22,7 +22,10 @@ public struct PressableButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed && !reduceMotion ? Motion.pressedScale : 1)
-            .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: configuration.isPressed)
+            .animation(
+                .wildcard(configuration.isPressed ? Motion.snappy : Motion.panel, reduceMotion: reduceMotion),
+                value: configuration.isPressed
+            )
     }
 }
 #endif

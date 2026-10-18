@@ -13,8 +13,14 @@ extension Color {
         )
     }
 
-    public init(role: ColorRole) {
-        self.init(role.color)
+    /// A role's color in a scene. Neutral and fixed meaning roles ignore the scene.
+    public init(role: ColorRole, in theme: SceneTheme) {
+        self.init(role.color(in: theme))
     }
+}
+
+extension EnvironmentValues {
+    /// The scene the squad picked. Views read it to color their signature roles.
+    @Entry public var sceneTheme: SceneTheme = .pool
 }
 #endif

@@ -1,32 +1,102 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "三个队友都练了，就差你": {
+    "1 人免责声明": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Three teammates trained. Just you left."
+            "value": "1 disclaimer"
           }
         }
       }
     },
-    "今天你练了吗": {
+    "中性色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trained today?"
+            "value": "Neutrals"
           }
         }
       }
     },
-    "今日免责声明：下雨了，跑步机也湿了。": {
+    "今天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today's disclaimer: it rained, and the treadmill got wet too."
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "今天 3 人练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 trained today"
+          }
+        }
+      }
+    },
+    "今日免责声明": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's disclaimer"
+          }
+        }
+      }
+    },
+    "会开到第五个，我已经分不清自己是人还是待办": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By the fifth meeting I couldn't tell if I was a person or a to-do"
+          }
+        }
+      }
+    },
+    "健康餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean meal"
+          }
+        }
+      }
+    },
+    "健身房": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gym"
+          }
+        }
+      }
+    },
+    "免责": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disclaimer"
+          }
+        }
+      }
+    },
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schedule"
           }
         }
       }
@@ -41,12 +111,32 @@
         }
       }
     },
-    "周日战报": {
+    "名场面": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sunday recap"
+            "value": "Highlights"
+          }
+        }
+      }
+    },
+    "含义色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meanings"
+          }
+        }
+      }
+    },
+    "周三不练腿俱乐部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip Leg Day Club"
           }
         }
       }
@@ -61,22 +151,32 @@
         }
       }
     },
-    "墨蓝": {
+    "场景": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ink"
+            "value": "Scene"
           }
         }
       }
     },
-    "奖牌金": {
+    "场景签名色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Medal gold"
+            "value": "Scene signature"
+          }
+        }
+      }
+    },
+    "坦白放纵餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheat meal confession"
           }
         }
       }
@@ -91,16 +191,6 @@
         }
       }
     },
-    "小队本周打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad check-ins this week"
-          }
-        }
-      }
-    },
     "开跑": {
       "localizations": {
         "en": {
@@ -111,72 +201,252 @@
         }
       }
     },
-    "晴空": {
+    "我": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear sky"
+            "value": "Me"
           }
         }
       }
     },
-    "次要文字": {
+    "我 · 本周": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Secondary text"
+            "value": "Me · this week"
           }
         }
       }
     },
-    "粉笔白": {
+    "打卡": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chalk"
+            "value": "Check in"
           }
         }
       }
     },
-    "练了 · 吃得干净 · Coco": {
+    "攀岩馆": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trained · Ate clean · Coco"
+            "value": "Climbing"
           }
         }
       }
     },
-    "草地绿": {
+    "收起": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Field green"
+            "value": "Close"
           }
         }
       }
     },
-    "跑道红": {
+    "放纵餐": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Track red"
+            "value": "Cheat meal"
           }
         }
       }
     },
-    "转播蓝": {
+    "本周全队还差 7 次达标": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Broadcast blue"
+            "value": "7 more to hit the squad goal"
+          }
+        }
+      }
+    },
+    "次要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondary"
+          }
+        }
+      }
+    },
+    "正文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
+          }
+        }
+      }
+    },
+    "浅底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wash"
+          }
+        }
+      }
+    },
+    "深一档": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shade"
+          }
+        }
+      }
+    },
+    "游泳池": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pool"
+          }
+        }
+      }
+    },
+    "画布": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas"
+          }
+        }
+      }
+    },
+    "第 42 周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week 42"
+          }
+        }
+      }
+    },
+    "第三级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tertiary"
+          }
+        }
+      }
+    },
+    "签名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signature"
+          }
+        }
+      }
+    },
+    "签名上的字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On signature"
+          }
+        }
+      }
+    },
+    "签名色文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signature text"
+          }
+        }
+      }
+    },
+    "线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line"
+          }
+        }
+      }
+    },
+    "练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained"
+          }
+        }
+      }
+    },
+    "练腿日，腿还在": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leg day. Legs still here."
+          }
+        }
+      }
+    },
+    "网球场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tennis"
+          }
+        }
+      }
+    },
+    "表面": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surface"
+          }
+        }
+      }
+    },
+    "跑道": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track"
+          }
+        }
+      }
+    },
+    "进度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress"
           }
         }
       }
