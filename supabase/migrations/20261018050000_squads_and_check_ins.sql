@@ -1,7 +1,7 @@
 -- Squads, their members, and daily check-ins (练了 / 吃得干净 / 今日免责声明).
 -- Mirrors the check-in contract in ios/Packages/Contracts (wire version 1).
--- A member is a signed-in user (auth.users.id). A check-in belongs to its member,
--- not to a squad: everyone who shares a squad with that member sees it.
+-- A member is a signed-in user (auth.users.id). A check-in belongs to its member, who
+-- sends it to one or more of their squads; members of those squads see it.
 
 -- Helpers that row-level policies call live outside the API's exposed schemas.
 create schema private;
@@ -40,25 +40,8 @@ as $$
   );
 $$;
 
-create function private.shares_squad_with(member uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.squad_members mine
-    join public.squad_members theirs on theirs.squad_id = mine.squad_id
-    where mine.member_id = (select auth.uid()) and theirs.member_id = member
-  );
-$$;
-
 revoke execute on function private.is_squad_member(uuid) from public;
-revoke execute on function private.shares_squad_with(uuid) from public;
 grant execute on function private.is_squad_member(uuid) to authenticated;
-grant execute on function private.shares_squad_with(uuid) to authenticated;
 
 -- Whoever creates a squad is its first member. Joining by invite comes with the
 -- invite flow; until then members are added only through this trigger.
@@ -184,14 +167,85 @@ create table public.check_ins (
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
 
-alter table public.check_ins enable row level security;
-
-create policy "Members and their squad-mates see check-ins"
-on public.check_ins for select to authenticated
-using (
-  member_id = (select auth.uid())
-  or (select private.shares_squad_with(member_id))
+-- The squads a check-in was sent to. The app sends to one squad or to all of them.
+create table public.check_in_squads (
+  check_in_id uuid not null references public.check_ins (id) on delete cascade,
+  squad_id uuid not null references public.squads (id) on delete cascade,
+  primary key (check_in_id, squad_id)
 );
+
+create index check_in_squads_squad_id_idx on public.check_in_squads (squad_id);
+
+-- The caller made the check-in, or is in a squad it was sent to while its author
+-- still is too (leaving a squad takes your check-ins out of it).
+create function private.can_see_check_in(check_in uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.check_ins c
+    where c.id = check_in
+      and (
+        c.member_id = (select auth.uid())
+        or exists (
+          select 1
+          from public.check_in_squads t
+          join public.squad_members viewer
+            on viewer.squad_id = t.squad_id and viewer.member_id = (select auth.uid())
+          join public.squad_members author
+            on author.squad_id = t.squad_id and author.member_id = c.member_id
+          where t.check_in_id = c.id
+        )
+      )
+  );
+$$;
+
+-- A photo is visible to whoever can see a check-in that points at it.
+create function private.can_see_photo(path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.check_ins c
+    where c.payload -> 'photo' ->> 'path' = path
+      and private.can_see_check_in(c.id)
+  );
+$$;
+
+-- Whether the caller made this check-in, for the policy on check_in_squads.
+create function private.owns_check_in(check_in uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.check_ins
+    where id = check_in and member_id = (select auth.uid())
+  );
+$$;
+
+revoke execute on function private.can_see_check_in(uuid) from public;
+revoke execute on function private.can_see_photo(text) from public;
+revoke execute on function private.owns_check_in(uuid) from public;
+grant execute on function private.can_see_check_in(uuid) to authenticated;
+grant execute on function private.can_see_photo(text) to authenticated;
+grant execute on function private.owns_check_in(uuid) to authenticated;
+
+alter table public.check_ins enable row level security;
+alter table public.check_in_squads enable row level security;
+
+create policy "Members see their own check-ins and those sent to their squads"
+on public.check_ins for select to authenticated
+using (private.can_see_check_in(id));
+
 
 create policy "Members check in as themselves"
 on public.check_ins for insert to authenticated
@@ -206,8 +260,24 @@ create policy "Members delete their own check-ins"
 on public.check_ins for delete to authenticated
 using (member_id = (select auth.uid()));
 
+-- The author sees everywhere a check-in went; others see only their own squads.
+create policy "Members see what was sent to their squads"
+on public.check_in_squads for select to authenticated
+using (private.owns_check_in(check_in_id) or private.is_squad_member(squad_id));
+
+create policy "Members send their own check-ins to squads they are in"
+on public.check_in_squads for insert to authenticated
+with check (
+  (select private.owns_check_in(check_in_id))
+  and (select private.is_squad_member(squad_id))
+);
+
+create policy "Members take their own check-ins back from a squad"
+on public.check_in_squads for delete to authenticated
+using ((select private.owns_check_in(check_in_id)));
+
 -- The anonymous role gets nothing here; signed-in users get only what the policies allow.
-revoke all on public.squads, public.squad_members, public.check_ins from anon;
+revoke all on public.squads, public.squad_members, public.check_ins, public.check_in_squads from anon;
 
 -- Check-in photos --------------------------------------------------------------
 
@@ -225,13 +295,13 @@ with check (
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
-create policy "Members and their squad-mates see photos"
+create policy "Members see their own photos and those on check-ins they can see"
 on storage.objects for select to authenticated
 using (
   bucket_id = 'check-in-photos'
   and (
     (storage.foldername(name))[1] = (select auth.uid())::text
-    or (select private.shares_squad_with(((storage.foldername(name))[1])::uuid))
+    or private.can_see_photo(name)
   )
 );
 

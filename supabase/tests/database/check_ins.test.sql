@@ -1,5 +1,5 @@
--- Check-ins: only squad-mates see each other, members write only their own rows,
--- and the payload follows the check-in contract (wire version 1).
+-- Check-ins: members write only their own rows, and the payload follows the
+-- check-in contract (wire version 1). Which squads see a check-in is in sharing.test.sql.
 begin;
 select plan(25);
 
@@ -56,12 +56,17 @@ select lives_ok(
   'a member logs 今日免责声明'
 );
 
+-- Bo sends his to the squad he shares with Ann.
+select pg_temp.sign_in('b0000000-0000-0000-0000-000000000002');
+insert into public.check_in_squads (check_in_id, squad_id) values
+  ('22222222-2222-2222-2222-222222222222', '5a000000-0000-0000-0000-000000000001');
+
 -- Who sees what.
 select pg_temp.sign_in('a0000000-0000-0000-0000-000000000001');
 select results_eq(
   'select id::text from public.check_ins order by id',
   array['11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222'],
-  'a member sees their own and their squad-mate''s check-ins, not another squad''s'
+  'a member sees their own check-ins and those sent to their squad, not another squad''s'
 );
 select pg_temp.sign_in('c0000000-0000-0000-0000-000000000003');
 select results_eq(
