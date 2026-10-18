@@ -25,6 +25,14 @@ struct StringCatalogCoverageTests {
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
+    /// SwiftLint's olympic_terms rule can't read the catalog, so this covers its copy.
+    @Test func catalogNeverSaysOlympic() throws {
+        let catalogURL = Self.sources.appendingPathComponent("Resources/Localizable.xcstrings")
+        let text = try String(contentsOf: catalogURL, encoding: .utf8).lowercased()
+        #expect(!text.contains("奥运"))
+        #expect(!text.contains("olympic"))
+    }
+
     /// Every key in `Text("…", bundle: .module)` across the style guide's sources.
     private static func localizedKeys() throws -> Set<String> {
         let pattern = try NSRegularExpression(pattern: #"Text\("((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
