@@ -135,6 +135,21 @@ export default {
       to: { path: kindPath('app'), pathNot: '^$1/$2/' },
     },
     {
+      // Wildcard's own rule (Tracy, 2026-10-18): Auth, Storage and Postgres stay swappable, so
+      // only the composition root (main.ts) picks a provider's adapter; everything else uses the
+      // interfaces in src/ports.ts.
+      name: 'adapters-only-in-the-composition-root',
+      severity: 'error',
+      comment:
+        'Only main.ts (and tests) may import from src/adapters/. Depend on the port in ' +
+        'src/ports.ts instead, so a provider can be swapped by writing a new adapter.',
+      from: {
+        path: '^apps/[^/]+/src/',
+        pathNot: ['^apps/[^/]+/src/(main\\.ts$|adapters/)', '\\.test\\.ts$'],
+      },
+      to: { path: '^apps/[^/]+/src/adapters/' },
+    },
+    {
       name: 'no-dev-dependencies-in-src',
       severity: 'error',
       comment:

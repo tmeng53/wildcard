@@ -1,10 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 
-import type { VerifyToken } from './auth/verify-supabase-token.js';
-import type { Database } from './database.js';
 import { RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
+import type { Database, VerifyToken } from './ports.js';
 import { problemResponse } from './problem.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';

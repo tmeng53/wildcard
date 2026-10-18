@@ -2,8 +2,8 @@
 // the committed file and the routes disagree.
 import { writeFileSync } from 'node:fs';
 
+import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
-import { createDatabase } from '../src/database.js';
 import { createLog } from '../src/log.js';
 import { openApiJson } from '../src/openapi.js';
 

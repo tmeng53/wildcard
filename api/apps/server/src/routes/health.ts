@@ -2,8 +2,8 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { sql } from 'kysely';
 
 import { bodyVersion } from '../body-version.js';
-import type { Database } from '../database.js';
 import { DatabaseUnavailableError } from '../errors.js';
+import type { Database } from '../ports.js';
 import { problem } from '../problem.js';
 
 export const Health = z

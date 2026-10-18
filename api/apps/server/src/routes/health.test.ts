@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { createDatabase } from '../adapters/postgres.js';
 import { createApp } from '../app.js';
 import { readConfig } from '../config.js';
-import { createDatabase, type Database } from '../database.js';
 import { createLog } from '../log.js';
+import type { Database } from '../ports.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens'));

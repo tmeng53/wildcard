@@ -4,7 +4,7 @@ import { randomUUID, webcrypto, type JsonWebKey } from 'node:crypto';
 import { sign } from 'hono/jwt';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createSupabaseTokenVerifier } from './verify-supabase-token.js';
+import { createSupabaseTokenVerifier } from './supabase-auth.js';
 
 // A stand-in issuer serving a JWKS whose private keys the test holds, so it can sign tokens
 // local Supabase never would (expired, wrong audience) and rotate keys. GET /me's tests cover

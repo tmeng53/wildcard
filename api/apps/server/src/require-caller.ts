@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 
-import { AuthTokenInvalidError, AuthTokenMissingError } from '../errors.js';
-import type { Caller, VerifyToken } from './verify-supabase-token.js';
+import { AuthTokenInvalidError, AuthTokenMissingError } from './errors.js';
+import type { Caller, VerifyToken } from './ports.js';
 
 export interface SignedIn {
   Variables: { caller: Caller };

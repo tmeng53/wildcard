@@ -1,9 +1,9 @@
 import { serve } from '@hono/node-server';
 
+import { createDatabase } from './adapters/postgres.js';
+import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
 import { createApp } from './app.js';
-import { createSupabaseTokenVerifier } from './auth/verify-supabase-token.js';
 import { readConfig } from './config.js';
-import { createDatabase } from './database.js';
 import { createLog } from './log.js';
 
 // The composition root: picks the real adapters and serves the API.

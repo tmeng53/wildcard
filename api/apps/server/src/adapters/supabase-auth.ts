@@ -2,17 +2,7 @@ import { decode, verifyWithJwks } from 'hono/jwt';
 import { z } from 'zod';
 
 import { AuthKeysUnavailableError, AuthTokenInvalidError } from '../errors.js';
-
-export const UserId = z.uuid().brand<'UserId'>();
-export type UserId = z.infer<typeof UserId>;
-
-/** Who is calling: the Supabase Auth user the access token was issued to. */
-export interface Caller {
-  readonly userId: UserId;
-}
-
-/** Checks a bearer token and says who it belongs to, or throws `AuthTokenInvalidError`. */
-export type VerifyToken = (token: string) => Promise<Caller>;
+import { UserId, type VerifyToken } from '../ports.js';
 
 // Supabase signs access tokens with the project's asymmetric signing key (ES256 by default,
 // RS256 if the project chose RSA) and publishes the public keys as a JWKS. Symmetric HS256
@@ -52,7 +42,7 @@ const KEYS_MAX_AGE_MS = 10 * 60 * 1000;
 const REFETCH_COOLDOWN_MS = 30 * 1000;
 
 /**
- * Verifies Supabase Auth access tokens against the project's published signing keys: the
+ * The sign-in port on Supabase Auth: verifies its access tokens against the project's published signing keys: the
  * signature, the issuer, the `authenticated` audience and role, and the expiry.
  */
 export function createSupabaseTokenVerifier(options: {

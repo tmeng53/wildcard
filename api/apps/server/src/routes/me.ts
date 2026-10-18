@@ -1,9 +1,9 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { requireCaller, type SignedIn } from '../auth/require-caller.js';
-import type { VerifyToken } from '../auth/verify-supabase-token.js';
 import { bodyVersion } from '../body-version.js';
+import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
+import { requireCaller, type SignedIn } from '../require-caller.js';
 
 export const Me = z
   .strictObject({

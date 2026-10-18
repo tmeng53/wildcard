@@ -4,10 +4,10 @@ import { sign } from 'hono/jwt';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { createDatabase } from '../adapters/postgres.js';
+import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
-import { createSupabaseTokenVerifier } from '../auth/verify-supabase-token.js';
 import { readConfig } from '../config.js';
-import { createDatabase } from '../database.js';
 import { createLog } from '../log.js';
 
 // Local Supabase, as `supabase status -o env` prints it (scripts/verify.sh passes it in).
