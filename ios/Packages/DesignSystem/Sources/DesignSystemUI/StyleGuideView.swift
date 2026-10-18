@@ -11,24 +11,31 @@ public struct StyleGuideView: View {
     public init() {}
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                SceneStage(theme: $theme)
-                VStack(alignment: .leading, spacing: Space.xxl) {
-                    ColorSection()
-                    TypeSection()
-                    MotionSection()
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    SceneStage(theme: $theme)
+                    VStack(alignment: .leading, spacing: Space.xxl) {
+                        ColorSection()
+                        TypeSection()
+                        MotionSection()
+                    }
+                    .padding(.horizontal, Space.gutter)
+                    .padding(.top, Space.xl)
+                    .padding(.bottom, Space.xxl)
                 }
-                .padding(.horizontal, Space.gutter)
-                .padding(.top, Space.xl)
-                .padding(.bottom, Space.xxl)
             }
-        }
-        // Unclipped, so the scene's wash reaches behind the status bar and into the top overscroll.
-        .scrollClipDisabled()
-        // A frosted band under the status bar, so scrolled text never runs into the clock.
-        .overlay(alignment: .top) {
-            Rectangle().fill(.thickMaterial).frame(height: 0).ignoresSafeArea(edges: .top)
+            // Unclipped, so the scene's wash reaches behind the status bar and into the top overscroll.
+            .scrollClipDisabled()
+            // A frosted band behind the status bar, so scrolled text never runs into the clock.
+            // The root reader knows the status bar's height; an overlay alone gets no safe area.
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(.thickMaterial)
+                    .frame(height: proxy.safeAreaInsets.top)
+                    .offset(y: -proxy.safeAreaInsets.top)
+                    .allowsHitTesting(false)
+            }
         }
         .background(Color(role: .canvas, in: theme).ignoresSafeArea())
         .environment(\.sceneTheme, theme)
