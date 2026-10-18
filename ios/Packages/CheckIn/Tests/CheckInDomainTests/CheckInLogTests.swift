@@ -67,13 +67,21 @@ import CheckInDomain
     }
 }
 
-@Test func disclaimersHaveNoLimit() throws {
+@Test func disclaimersHaveNoWeeklyLimit() throws {
     let log = CheckInLog(member: tracy, checkIns: [
         checkIn("disclaimer", on: "2026-10-19"), checkIn("disclaimer", on: "2026-10-20"),
         checkIn("disclaimer", on: "2026-10-21"), checkIn("disclaimer", on: "2026-10-22"),
     ])
-    try log.checkPost(checkIn("disclaimer", on: "2026-10-22"), today: day("2026-10-22"), memberSquads: [runners])
+    try log.checkPost(checkIn("disclaimer", on: "2026-10-23"), today: day("2026-10-23"), memberSquads: [runners])
+    // Training after a 免责声明 is always welcome.
     try log.checkPost(checkIn("trained", on: "2026-10-22"), today: day("2026-10-22"), memberSquads: [runners])
+}
+
+@Test func oneDisclaimerADay() {
+    let log = CheckInLog(member: tracy, checkIns: [checkIn("disclaimer", on: "2026-10-22"), checkIn("healthy", on: "2026-10-22")])
+    #expect(throws: CheckInError.disclaimerAlreadyPosted) {
+        try log.checkPost(checkIn("disclaimer", on: "2026-10-22"), today: day("2026-10-22"), memberSquads: [runners])
+    }
 }
 
 @Test func onlyTodayCanBePosted() {

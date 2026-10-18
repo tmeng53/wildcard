@@ -58,15 +58,21 @@ public struct CheckInLog: Hashable, Sendable {
         return WeekSummary(week: try Week(startingOn: plan.weekStart), plan: plan, log: self)
     }
 
-    /// Checks that `checkIn` may be posted now. Any number of check-ins a day is fine;
-    /// only a 免责声明 after a 练了 the same day conflicts.
+    /// Checks that `checkIn` may be posted now. Any number of 练了 and meals a day is
+    /// fine; a 免责声明 is at most one a day, and never after a 练了 the same day.
     public func checkPost(_ checkIn: CheckIn, today: LocalDay, memberSquads: Set<SquadID>) throws(CheckInError) {
         guard checkIn.member == member else { throw .otherMember(checkIn.member) }
         guard checkIn.day == today else { throw .notToday(checkIn.day) }
         if let squad = checkIn.audience.squads.first(where: { !memberSquads.contains($0) }) {
             throw .notInSquad(squad)
         }
-        if checkIn.entry.isDisclaimer, training(on: today) == .trained { throw .alreadyTrained }
+        if checkIn.entry.isDisclaimer {
+            switch training(on: today) {
+            case .trained: throw .alreadyTrained
+            case .disclaimer: throw .disclaimerAlreadyPosted
+            case .notCheckedIn: break
+            }
+        }
     }
 
     /// Checks that `requester` may delete the check-in: their own, and only on the day
