@@ -15,7 +15,7 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 ## Commands
 
 - All checks that run without a Mac (the cloud stop hook runs this): `scripts/verify.sh`. It runs `swift test` for every package in `ios/Packages/`, and the web and backend checks once `web/` and `supabase/` exist.
-- iOS build, UI tests and screenshots (Mac only): `scripts/ios-test.sh`, added with the Xcode project.
+- iOS build, UI tests and screenshots (macOS only): `scripts/ios-test.sh`, added with the Xcode project; CI runs it.
 - Lint: SwiftLint and swift-format, configured with the first Swift package.
 
 Add each command here in the PR that makes it real.
@@ -26,7 +26,7 @@ Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud mach
 
 ## CI
 
-**No GitHub-hosted runners**: they cost money this project doesn't spend. Linux checks run in the agent's own session before every push. iOS build, UI tests and screenshots run on the self-hosted runner labelled `macos-self-hosted` (Tracy's Mac), so a PR touching `ios/` waits until that Mac is awake. Every workflow uses `runs-on: [self-hosted, macos-self-hosted]`, runs only on ready (not draft) PRs and on pushes to `main`, and cancels the run a newer push replaces. Until a workflow exists, "green" means `scripts/verify.sh` passes on the pushed head; there is nothing else to wait for.
+The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` on `macos-15` for ready (not draft) PRs and pushes to `main`, and cancels a run that a newer push replaces; "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
 
 ## Skills
 

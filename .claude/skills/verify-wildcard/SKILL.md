@@ -1,6 +1,6 @@
 ---
 name: verify-wildcard
-description: How an agent that did not write a change proves Wildcard works end to end (the iOS app in the simulator on the self-hosted Mac, local Supabase in Docker), checks the evidence (simulator screenshots, database rows) and gives a PASS, PASS+NOTES or FAIL verdict tied to the exact commit and diff. Use when asked to verify a PR, branch or commit, or to give a verdict on another agent's change.
+description: How an agent that did not write a change proves Wildcard works end to end (the iOS app in the simulator on CI's GitHub-hosted Mac, local Supabase in Docker), checks the evidence (simulator screenshots, database rows) and gives a PASS, PASS+NOTES or FAIL verdict tied to the exact commit and diff. Use when asked to verify a PR, branch or commit, or to give a verdict on another agent's change.
 ---
 
 <!-- From engineering-skills/verify-product. Sections 2, 3 and 5 are filled in by the PR that adds the Xcode project and the first Supabase migration; until then a verifier drives each change from its PR's own docs and tests. -->

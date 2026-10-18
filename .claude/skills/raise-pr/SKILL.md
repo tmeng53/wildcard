@@ -13,7 +13,7 @@ A reviewer should understand what a PR does and why from its first line, see how
 - CI checks pass locally, and you have evidence the change works.
 - Review placement against `AGENTS.md` (Language practices) for Swift and the `module-structure` skill for TypeScript: pure domain rules, I/O in adapters. Explain any deviation in the PR.
 - Title: an imperative summary, prefixed with the work item when there is one, e.g. `Show squad check-ins on the track`. Label `contract` if it touches `ios/Packages/Contracts`, the database schema or the API.
-- Open it as a draft, and mark it ready for review once `scripts/verify.sh` passes locally on the head you pushed. CI runs only on ready PRs (and on every push to them after that), on the self-hosted Mac, so a draft has no CI result. Who merges is in Merging.
+- Open it as a draft, and mark it ready for review once `scripts/verify.sh` passes locally on the head you pushed. CI (`.github/workflows/verify.yml`, on a GitHub-hosted Mac) runs only on ready PRs and on every push to them after that, so a draft has no CI result. Who merges is in Merging.
 
 ## The description
 
@@ -95,7 +95,7 @@ The author can't pass its own work. Every PR needs a verdict from an agent that 
 
 1. **Verify once, when the PR is ready.** A verifier run is expensive, so there is one per PR: after CI is green and review findings are fixed, not after every push. Batch fixes before asking again. The owner thread starts a new agent (a subagent with no history of the work) and gives it only the task and the diff: the issue or the human's ask in their words, the PR's branch and head commit. Not the author's reasoning, plan or description of what it tested; the verifier forms its own view of what "works" means from the task.
 2. **The verifier works in its own clean checkout of that commit**, never the author's working tree, where unpushed edits would be tested but are not in the PR: `git fetch origin '+refs/heads/*:refs/remotes/origin/*' && GIT_NO_REPLACE_OBJECTS=1 GIT_GRAFT_FILE=/nonexistent git worktree add --detach <dir> <full head SHA>` (so local replace refs or grafts can't swap the code checked out), and `git status --porcelain` there prints nothing. It runs the change only in that checkout, with no build caches shared with the author (a fresh `.build/` and DerivedData path), so nothing is replayed from the author's run, and removes it at the end.
-3. **The verifier runs the change the way its callers do.** It follows the `verify-wildcard` skill (`.claude/skills/verify-wildcard/`): launch, check health, drive the affected journey as a squad member would (in the simulator on the self-hosted Mac for anything users see), keep the evidence and screenshots, clean up. It reads the real output; tests passing is not proof. A change with nothing to run (docs only) is checked by comparing every claim in it with the code.
+3. **The verifier runs the change the way its callers do.** It follows the `verify-wildcard` skill (`.claude/skills/verify-wildcard/`): launch, check health, drive the affected journey as a squad member would (in the simulator, on CI's Mac, for anything users see), keep the evidence and screenshots, clean up. It reads the real output; tests passing is not proof. A change with nothing to run (docs only) is checked by comparing every claim in it with the code.
 4. **The verifier reports one verdict:** `PASS`, `PASS+NOTES` (works; the notes are worth the author's attention but don't block) or `FAIL` (doesn't do what the task asks, breaks something else, or couldn't be shown to work). When in doubt it's `FAIL`. The report never contains the Codex mention (see After opening), since it is posted as is.
 5. **The owner thread keeps one verdict comment per PR.** It posts the report unedited in this shape, and when a later verdict comes it edits that comment to put the new report on top and the earlier ones below, unchanged:
 
@@ -122,7 +122,7 @@ The author can't pass its own work. Every PR needs a verdict from an agent that 
 
 ## After opening
 
-If other work in progress is affected, link the PR from its issue. **When Codex is installed on the repo** (it isn't yet): Codex doesn't review on its own, so once the head commit is green (`scripts/verify.sh` passes, and the Mac's run when the PR touches `ios/`), post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
+If other work in progress is affected, link the PR from its issue. **When Codex is installed on the repo** (it isn't yet): Codex doesn't review on its own, so once the head commit is green (the `verify` check passed on it), post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
 
 **When Codex isn't installed, or can't review that head** (it replies that it is out of usage, or no review has landed two hours after the ask), start, right away in the first case, a fresh Claude agent that did not write the PR as the fallback reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One fallback review per head, like Codex; once Codex can review again, the next head goes back to Codex. The fallback is a review, not a verdict: the verifier still runs.
 
@@ -134,7 +134,7 @@ Decide mechanically from the diff; when unsure, a human merges.
 
 **The owner thread merges its own PR** when it changes nothing a user can see or feel, and all of these hold on its current head commit:
 
-1. Every check is green: `scripts/verify.sh` in the author's session, and the self-hosted Mac's run when the PR touches `ios/`.
+1. Every check is green: the `verify` workflow passed on the head commit.
 2. The latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff, and each of its notes has an answer on the PR (see Independent verification).
 3. The code review is clean on the head commit (Codex's, or the fallback's; see After opening), and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
@@ -143,4 +143,4 @@ Decide mechanically from the diff; when unsure, a human merges.
 
 **A human also merges** any PR that touches agent rules (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.agents/`), the checks and hooks (`scripts/`), CI or repo settings (`.github/`), dependencies (any `Package.swift`, `Package.resolved`, `package.json` or lockfile), the shared contract (`ios/Packages/Contracts`, labelled `contract`), database migrations, or carries the `needs-human` label. Those are the rules and checks themselves, new dependencies, or data that's hard to undo. Check the diff's file list against this list; it decides, not judgment.
 
-GitHub doesn't enforce any of this (a private repo on GitHub Free has no branch protection), so the rule holds only because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening moves the PR into a human-merged category, stop and ask.
+GitHub enforces only part of this: branch protection on `main` (turned on once the `verify` workflow is on `main`) requires the `verify` check and blocks force-pushes. It can't require Tracy's approval, because agents open PRs under her account and GitHub doesn't let an author approve their own PR, so the rest holds because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening moves the PR into a human-merged category, stop and ask.
