@@ -1,5 +1,5 @@
--- Squads, their members, members' settings, and daily check-ins (练了 / 健康餐 /
--- 坦白放纵餐 / 今日免责声明), with their photos.
+-- Squads, their members, members' settings, and daily check-ins (trained, healthy
+-- meal, cheat meal, daily disclaimer), with their photos.
 --
 -- Only our own API reads and writes these tables. The app never talks to the database:
 -- it calls the API, which checks every product rule (who may see what, text limits,
@@ -32,7 +32,7 @@ create index squad_members_member_id_idx on public.squad_members (member_id);
 create table public.profiles (
   member_id uuid primary key references auth.users (id) on delete cascade,
   -- An IANA name such as "America/Los_Angeles" (iOS: TimeZone.current.identifier), for
-  -- the member's weekly reset and their squad's 今日赛况 time. A name, not an offset:
+  -- the member's weekly reset and their squad's daily recap time. A name, not an offset:
   -- offsets change with daylight saving, names don't.
   time_zone text not null,
   updated_at timestamptz not null default now()
@@ -74,7 +74,7 @@ create table public.check_ins (
   -- When the server took it.
   received_at timestamptz not null default now(),
   kind public.check_in_kind not null,
-  -- The kind's own fields (sport and minutes, meal slot, 免责声明 text, caption), as
+  -- The kind's own fields (sport and minutes, meal slot, disclaimer text, caption), as
   -- stored JSON with its shape's version at the top: {"version": 1, ...}. The API owns
   -- the shape and parses it on every read.
   payload jsonb not null check (coalesce(jsonb_typeof(payload -> 'version') = 'number', false))
@@ -82,7 +82,7 @@ create table public.check_ins (
 
 create index check_ins_member_id_day_idx on public.check_ins (member_id, day desc);
 
--- At most one 今日免责声明 per member per day (Tracy, 2026-10-18). An index, not an API
+-- At most one daily disclaimer per member per day (Tracy, 2026-10-18). An index, not an API
 -- check, so two saves at once can't both pass.
 create unique index check_ins_one_disclaimer_a_day
 on public.check_ins (member_id, day)
