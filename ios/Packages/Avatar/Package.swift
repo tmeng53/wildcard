@@ -6,7 +6,7 @@ import PackageDescription
 // bundles the placeholder character's files. `AvatarUI` draws and plays a character.
 let package = Package(
     name: "Avatar",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS("26.0"), .macOS("26.0")],
     products: [
         .library(name: "AvatarDomain", targets: ["AvatarDomain"]),
         .library(name: "AvatarArt", targets: ["AvatarArt"]),

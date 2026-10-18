@@ -89,4 +89,10 @@ import Testing
                 #"{ "version": 1, "canvas": { "width": 1, "height": 1 }, "parts": [{ "id": "a", "pivot": [1, 2, 3] }] }"#
                     .utf8))
     }
+    #expect(throws: AvatarError.malformedJSON(".parts[0]: unknown key \"parnet\"")) {
+        try Rig.decode(
+            Data(
+                #"{ "version": 1, "canvas": { "width": 1, "height": 1 }, "parts": [{ "id": "a", "parnet": "b", "pivot": [1, 2] }] }"#
+                    .utf8))
+    }
 }

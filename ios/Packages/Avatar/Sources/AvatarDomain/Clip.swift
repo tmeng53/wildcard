@@ -127,7 +127,11 @@ public struct Clip: Hashable, Sendable {
 
     public init(name: String, duration: Double, loops: Bool, tracks: [Track]) throws(AvatarError) {
         guard duration > 0, duration.isFinite else { throw .invalidDuration(clip: name) }
+        var moved: Set<String> = []
         for track in tracks {
+            guard moved.insert("\(track.part).\(track.channel)").inserted else {
+                throw .duplicateTrack(clip: name, part: track.part, channel: track.channel)
+            }
             let times = track.keys.map(\.time)
             let ordered = zip(times, times.dropFirst()).allSatisfy { $0 < $1 }
             guard let first = times.first, let last = times.last, ordered, first >= 0, last <= duration else {
@@ -138,7 +142,7 @@ public struct Clip: Hashable, Sendable {
     }
 
     public static func decode(_ data: Data) throws(AvatarError) -> Clip {
-        let file: ClipFile = try decodeJSON(data, version: currentVersion)
+        let file: ClipFile = try decodeJSON(data, version: currentVersion, shape: ClipFile.shape)
         var tracks: [Track] = []
         for track in file.tracks {
             var keys: [Keyframe] = []
@@ -156,7 +160,13 @@ public struct Clip: Hashable, Sendable {
         case .name(let name)?:
             guard let easing = Easing.named[name] else { throw .malformedJSON("\(clip): unknown ease \"\(name)\"") }
             return easing
-        case .bezier(let numbers)?: return .cubicBezier(numbers[0], numbers[1], numbers[2], numbers[3])
+        case .bezier(let numbers)?:
+            // As in CSS: with either x outside 0...1 the curve turns back in time and
+            // has no single value at some moments.
+            guard (0...1).contains(numbers[0]), (0...1).contains(numbers[2]), numbers.allSatisfy(\.isFinite) else {
+                throw .malformedJSON("\(clip): cubic Bézier x values must be within 0...1")
+            }
+            return .cubicBezier(numbers[0], numbers[1], numbers[2], numbers[3])
         }
     }
 }
@@ -166,6 +176,15 @@ private struct ClipFile: Decodable {
     let duration: Double
     let loops: Bool
     let tracks: [TrackFile]
+
+    static let shape = JSONShape.object([
+        "version": .value, "name": .value, "duration": .value, "loops": .value,
+        "tracks": .array(
+            .object([
+                "part": .value, "channel": .value,
+                "keys": .array(.object(["t": .value, "v": .value, "ease": .value])),
+            ])),
+    ])
 
     struct TrackFile: Decodable {
         let part: PartID

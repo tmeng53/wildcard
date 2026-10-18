@@ -15,10 +15,11 @@ import Testing
     #expect(Easing.hold.progress(1) == 1)
     // CSS ease-in-out is symmetric: halfway in time is halfway in value.
     #expect(abs(Easing.easeInOut.progress(0.5) - 0.5) < 1e-6)
-    #expect(Easing.easeIn.progress(0.25) < 0.25)
-    #expect(Easing.easeOut.progress(0.25) > 0.25)
+    // Values from the same curves solved by bisection, as browsers draw them.
+    #expect(abs(Easing.easeIn.progress(0.25) - 0.093465) < 1e-6)
+    #expect(abs(Easing.easeOut.progress(0.25) - 0.378138) < 1e-6)
     // backOut overshoots before it settles.
-    #expect(Easing.backOut.progress(0.7) > 1)
+    #expect(abs(Easing.backOut.progress(0.7) - 1.075776) < 1e-6)
     #expect(Easing.backOut.progress(1) == 1)
 }
 
@@ -58,4 +59,23 @@ import Testing
         try clip("wave", duration: 1, loops: true, [track("arm", .x, [(0, 0), (1.5, 1)])])
     }
     #expect(throws: AvatarError.invalidDuration(clip: "wave")) { try clip("wave", duration: 0, loops: true, []) }
+    #expect(throws: AvatarError.duplicateTrack(clip: "wave", part: "arm", channel: .x)) {
+        try clip("wave", duration: 1, loops: true, [track("arm", .x, [(0, 0)]), track("arm", .x, [(0, 1)])])
+    }
+    #expect(throws: AvatarError.malformedJSON(".tracks[0].keys[0]: unknown key \"easing\"")) {
+        try Clip.decode(
+            Data(
+                #"""
+                { "version": 1, "name": "wave", "duration": 1, "loops": true, "tracks": [
+                  { "part": "arm", "channel": "x", "keys": [{ "t": 0, "v": 0, "easing": "backOut" }] } ] }
+                """#.utf8))
+    }
+    #expect(throws: AvatarError.malformedJSON("wave: cubic Bézier x values must be within 0...1")) {
+        try Clip.decode(
+            Data(
+                #"""
+                { "version": 1, "name": "wave", "duration": 1, "loops": true, "tracks": [
+                  { "part": "arm", "channel": "x", "keys": [{ "t": 0, "v": 0, "ease": [1.2, 0, 0.5, 1] }] } ] }
+                """#.utf8))
+    }
 }

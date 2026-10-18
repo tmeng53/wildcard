@@ -91,7 +91,7 @@ public struct Rig: Hashable, Sendable {
     }
 
     public static func decode(_ data: Data) throws(AvatarError) -> Rig {
-        let file: RigFile = try decodeJSON(data, version: currentVersion)
+        let file: RigFile = try decodeJSON(data, version: currentVersion, shape: RigFile.shape)
         return Rig(
             width: file.canvas.width, height: file.canvas.height,
             parts: file.parts.map { part in
@@ -105,6 +105,16 @@ public struct Rig: Hashable, Sendable {
 private struct RigFile: Decodable {
     let canvas: Canvas
     let parts: [PartFile]
+
+    static let shape = JSONShape.object([
+        "version": .value,
+        "canvas": .object(["width": .value, "height": .value]),
+        "parts": .array(
+            .object([
+                "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
+                "layers": .array(.object(["slot": .value, "art": .value])),
+            ])),
+    ])
 
     struct Canvas: Decodable {
         let width: Double
@@ -137,11 +147,37 @@ private struct Versioned: Decodable {
     let version: Int
 }
 
+/// The keys a JSON file may use. `Decodable` skips keys it doesn't know, so a misspelt
+/// optional key such as `"parnet"` would load as if it were absent; checking the keys
+/// first turns that into an error that names it.
+indirect enum JSONShape: Sendable {
+    case object([String: JSONShape])
+    case array(JSONShape)
+    /// A number, string or anything else `Decodable` checks on its own.
+    case value
+
+    func check(_ json: Any, at path: String = "") throws(AvatarError) {
+        switch self {
+        case .value: return
+        case .array(let element):
+            guard let items = json as? [Any] else { return }
+            for (index, item) in items.enumerated() { try element.check(item, at: "\(path)[\(index)]") }
+        case .object(let keys):
+            guard let object = json as? [String: Any] else { return }
+            for key in object.keys.sorted() {
+                guard let shape = keys[key] else { throw .malformedJSON("\(path): unknown key \"\(key)\"") }
+                if let value = object[key] { try shape.check(value, at: "\(path).\(key)") }
+            }
+        }
+    }
+}
+
 /// Reads the version first, so a newer file says so instead of failing on a field it added.
-func decodeJSON<T: Decodable>(_ data: Data, version expected: Int) throws(AvatarError) -> T {
+func decodeJSON<T: Decodable>(_ data: Data, version expected: Int, shape: JSONShape) throws(AvatarError) -> T {
     do {
         let version = try JSONDecoder().decode(Versioned.self, from: data).version
         guard version == expected else { throw AvatarError.unsupportedVersion(version) }
+        try shape.check(try JSONSerialization.jsonObject(with: data))
         return try JSONDecoder().decode(T.self, from: data)
     } catch let error as AvatarError {
         throw error
