@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # With no arguments it runs every check. CI's jobs name the parts their runner can run:
-# swift and web on macOS, supabase on Linux (macOS runners have no Docker).
-parts="${*:-swift web supabase}"
+# swift and web on macOS, supabase and api on Linux (macOS runners have no Docker).
+parts="${*:-swift web supabase api}"
 want() { [[ " $parts " == *" $1 "* ]]; }
 
 ran=0
@@ -52,6 +52,26 @@ if want supabase && [ -d supabase/migrations ]; then
   echo "==> supabase"
   supabase db reset
   supabase test db
+  ran=1
+fi
+
+if want api && [ -f api/package.json ]; then
+  echo "==> api"
+  pnpm --dir api install --frozen-lockfile
+  pnpm --dir api lint
+  pnpm --dir api typecheck
+  pnpm --dir api boundaries
+  # The tests query local Supabase's database and sign members up through its Auth, so they
+  # need `supabase start`. A subshell keeps the status variables out of the rest of this script.
+  (
+    status="$(supabase status -o env 2>/dev/null)" || {
+      echo "api: local Supabase isn't running (supabase start)" >&2
+      exit 1
+    }
+    eval "$status"
+    DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
+      pnpm --dir api test
+  )
   ran=1
 fi
 

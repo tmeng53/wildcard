@@ -1,0 +1,189 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Wildcard API",
+    "version": "1",
+    "description": "The only way into Wildcard’s data. Every JSON body carries a top-level `version`; every failure is an RFC 9457 problem with a stable `reason`."
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "A Supabase Auth access token."
+      }
+    },
+    "schemas": {
+      "Health": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "about:blank"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "The HTTP reason phrase.",
+            "example": "Unauthorized"
+          },
+          "status": {
+            "type": "integer",
+            "description": "The HTTP status code.",
+            "example": 401
+          },
+          "detail": {
+            "type": "string",
+            "description": "One sentence for people. Never shown as is in the app."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The exact failure. Never reworded once released; clients match on it.",
+            "example": "AUTH_TOKEN_INVALID"
+          },
+          "errorStatus": {
+            "type": "string",
+            "description": "The general kind of failure, from a fixed list.",
+            "example": "UNAUTHENTICATED"
+          }
+        },
+        "required": [
+          "version",
+          "type",
+          "title",
+          "status",
+          "detail",
+          "reason",
+          "errorStatus"
+        ],
+        "additionalProperties": false
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The signed-in member’s Supabase Auth user id."
+          }
+        },
+        "required": [
+          "version",
+          "userId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Whether the API can reach its database",
+        "responses": {
+          "200": {
+            "description": "Ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The database is unreachable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "The signed-in member",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

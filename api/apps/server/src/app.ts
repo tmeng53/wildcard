@@ -1,0 +1,40 @@
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { HTTP_STATUS, isAppError } from '@wildcard/errors';
+
+import { RouteNotFoundError } from './errors.js';
+import type { Log } from './log.js';
+import type { Database, VerifyToken } from './ports.js';
+import { problemResponse } from './problem.js';
+import { health } from './routes/health.js';
+import { me } from './routes/me.js';
+
+export interface AppDependencies {
+  readonly db: Database;
+  readonly verifyToken: VerifyToken;
+  readonly log: Log;
+}
+
+/** The HTTP API. The only way into the data; `main.ts` serves it, tests call it directly. */
+export function createApp(deps: AppDependencies) {
+  const app = new OpenAPIHono();
+  app.openAPIRegistry.registerComponent('securitySchemes', 'bearer', {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+    description: 'A Supabase Auth access token.',
+  });
+
+  app.route('/', health(deps));
+  app.route('/', me(deps));
+
+  app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
+  app.onError((error, c) => {
+    if (!isAppError(error) || HTTP_STATUS[error.status] >= 500) {
+      deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
+    }
+    return problemResponse(error);
+  });
+  return app;
+}
+
+export type App = ReturnType<typeof createApp>;

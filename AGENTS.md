@@ -4,18 +4,20 @@
 
 Wildcard is an iOS app where friend squads check in every day (练了 / 吃得干净 / 今日免责声明), see each other on a shared track, get a Sunday 战报 recap and share a weekly 3:4 schedule poster. Chinese-first UI. The MVP plan lives in the project's docs; this file holds how the code is built.
 
-The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. Change them there first, then copy the change in. The TypeScript skills (`verification`'s ESLint config, `module-structure`, `errors`, `zod`) apply to `web/` and `supabase/` as written; the Swift equivalents are in **Language practices** below.
+The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. Change them there first, then copy the change in. The TypeScript skills (`verification`'s ESLint config, `module-structure`, `errors`, `zod`) apply to `web/`, `api/` and `supabase/` as written; the Swift equivalents are in **Language practices** below.
 
 ## Layout
 
 - `ios/` — the app. `Wildcard.xcodeproj` is a thin app target; all logic lives in local Swift packages under `ios/Packages/`.
+- `api/` — the HTTP API (TypeScript: Node, Hono, Zod, Kysely), the only way into the data. Supabase is its Postgres, Auth and Storage.
 - `web/` — the invite landing page (Next.js) that opens the App Clip or App Store.
 - `supabase/` — migrations, row-level security policies, edge functions (TypeScript).
 
 ## Commands
 
-- All checks that run without a Mac (the cloud stop hook runs this): `scripts/verify.sh`. It runs `swift test` for every package in `ios/Packages/`, and the web and backend checks once `web/` and `supabase/` exist.
+- All checks that run without a Mac (the cloud stop hook runs this): `scripts/verify.sh`. It runs `swift test` for every package in `ios/Packages/`, and the web, database and API checks once `web/`, `supabase/` and `api/` exist.
 - Database: `scripts/verify.sh supabase` resets local Supabase from `supabase/migrations` and runs the pgTAP tests in `supabase/tests/database` (needs Docker and `supabase start`). CI runs it in a Linux job, since macOS runners have no Docker.
+- API: `scripts/verify.sh api` installs `api/` with pnpm and runs ESLint, Prettier, `tsc`, dependency-cruiser (`pnpm --dir api boundaries`) and the Vitest tests, which use local Supabase's database and Auth (needs `supabase start`). After changing a route, `pnpm --dir api openapi` rewrites `api/apps/server/openapi.json`; a test fails while it is stale.
 - iOS build, UI tests and screenshots (macOS with Xcode 26 or newer): `scripts/ios-test.sh`. It writes the screenshots the UI tests keep to `build/ios/screenshots/`; CI's `ios` job runs it and uploads them as the `ios-screenshots-<sha>` artifact.
 - Avatar previews (macOS with Xcode 26 or newer): `scripts/avatar-preview.sh` renders the character through `AvatarUI` on an iOS simulator into `build/avatar/previews/` (outfit stills, cheer frames, GIFs, frame timings); CI's `avatar-preview` job uploads them as `avatar-previews-<sha>`, and with `PRINT_PREVIEWS=1` prints them base64 in the log for agents that can't download artifacts.
 - Lint (part of `scripts/verify.sh`): `swift format lint --strict --recursive ios` (`.swift-format`) and `swiftlint lint --strict` (`.swiftlint.yml`). `swift format -i -r ios` fixes formatting. `scripts/install-swiftlint.sh` installs the pinned SwiftLint (`scripts/swiftlint-version`); with another version `scripts/verify.sh` ends inconclusive.
@@ -28,7 +30,7 @@ Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud mach
 
 ## CI
 
-The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` (job `verify`), `scripts/ios-test.sh` (job `ios`) and `scripts/avatar-preview.sh` (job `avatar-preview`) on `macos-26` for ready (not draft) PRs and pushes to `main`, and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
+The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` (job `verify`), `scripts/ios-test.sh` (job `ios`) and `scripts/avatar-preview.sh` (job `avatar-preview`) on `macos-26`, and the database and API checks (job `supabase`) on Linux, for ready (not draft) PRs and pushes to `main`, and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
 
 ## Skills
 
@@ -39,7 +41,7 @@ Read the matching skill before the work it covers.
 | `verification` | Before calling anything done, and when writing tests or a PR's evidence. |
 | `agent-instructions` | Before editing this file, `CLAUDE.md` or project instructions. |
 | `module-structure` | Before adding a package or module (TypeScript as written; Swift per below). |
-| `errors` | Before adding error handling in `web/` or `supabase/`. |
+| `errors` | Before adding error handling in `web/`, `api/` or `supabase/`. |
 | `zod` | Before adding a schema or parsing untrusted input in TypeScript. |
 | `address-review` | When a PR you own gets review comments. |
 | `raise-pr` | Whenever you open, edit or merge a pull request. Covers the verifier's verdict and who merges. |
@@ -51,6 +53,8 @@ Read the matching skill before the work it covers.
 ## Architecture
 
 Landed: `DesignSystem`, with a `DesignSystem` target (palette and color roles, type ramp, spacing, motion springs; pure Swift) and `DesignSystemUI` (SwiftUI bridges, the bundled Barlow Condensed font, the style guide the app opens on until the first feature screen). Screens take colors, type, spacing, radii, control sizes and motion from `ColorRole`, `TypeRamp`, `Space`, `Radius`, `Sizing`, `Tint` and `Motion`, never raw values; a size that belongs to one view only (a frame, a stroke) can stay in that view.
+
+API (`api/`, a pnpm workspace): `apps/server` is the only app (routes, sign-in, wiring in `main.ts`) and `packages/errors` holds `AppError` and RFC 9457 problem bodies. Routes are declared with `@hono/zod-openapi`, so `openapi.json` comes from the code. Every JSON body carries a top-level `version`, every failure is `application/problem+json` with a stable `reason`, and signed-in routes check the Supabase access token against the project's published signing keys. Auth, Storage and Postgres are interfaces first, so a provider can be swapped: the server depends on the ports in `apps/server/src/ports.ts`, each provider is an adapter in `src/adapters/`, only adapters import a provider's library, and only `main.ts` picks one (dependency-cruiser enforces both). Auth and Postgres have ports today; Storage gets its port with photo uploads.
 
 Landed: `Avatar`, the character player: `AvatarDomain` (SVG-subset art, rig, keyframe clips, `Performance` blending idle and one-shot clips; pure Swift, the caller passes the time), `AvatarArt` (the placeholder character's SVG parts and clip JSON) and `AvatarUI` (`CharacterView`, drawn with `Canvas` in a `TimelineView`). A look picks an SVG variant per slot (`body` for the species or skin tone, then hair, hat, top, bottom, prop) and may recolor body, hair, top and bottom from preset swatches (a variant's `tones.json` says which of its colors follow); a `Persona` picks the idle and cheer clips, and any look plays any persona.
 

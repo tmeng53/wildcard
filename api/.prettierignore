@@ -1,0 +1,5 @@
+dist/
+coverage/
+pnpm-lock.yaml
+# Written by `pnpm openapi`; the test in apps/server checks it matches the routes.
+openapi.json
