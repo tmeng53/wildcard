@@ -4,30 +4,62 @@ import XCTest
 /// (scripts/ios-test.sh).
 @MainActor
 final class StyleGuideUITests: XCTestCase {
+    /// Every scene recolors the style guide; the check-in opens into its four capsules.
     func testStyleGuideInChinese() {
         let app = launch(language: "zh-Hans")
-        XCTAssertTrue(header(in: app).label.contains("小队本周打卡"))
-        XCTAssertTrue(app.staticTexts["跑道红"].exists)
-        keepScreenshot(named: "01-style-guide-zh-top")
+        XCTAssertTrue(banner(in: app).label.contains("周三不练腿俱乐部"))
+        XCTAssertTrue(banner(in: app).label.contains("游泳池"))
+        keepScreenshot(named: "01-scene-pool")
+
+        let scenes = [
+            ("跑道", "02-scene-track"), ("健身房", "03-scene-gym"), ("网球场", "04-scene-tennis"),
+            ("攀岩馆", "05-scene-climbing"),
+        ]
+        for (scene, shot) in scenes {
+            app.buttons[scene].firstMatch.tap()
+            XCTAssertTrue(banner(in: app).label.contains(scene), "the banner didn't switch to \(scene)")
+            // Let the color change settle before the shot.
+            Thread.sleep(forTimeInterval: 0.6)
+            keepScreenshot(named: shot)
+        }
+
+        app.buttons["游泳池"].firstMatch.tap()
+        let checkIn = app.buttons["styleguide.checkin"]
+        XCTAssertEqual(checkIn.label, "打卡")
+        checkIn.tap()
+        XCTAssertEqual(checkIn.label, "收起")
+        let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "免责")]
+        for (meaning, label) in capsules {
+            let capsule = app.buttons["styleguide.capsule.\(meaning)"]
+            XCTAssertTrue(capsule.waitForExistence(timeout: 2), "no \(label) capsule")
+            XCTAssertEqual(capsule.label, label)
+        }
+        Thread.sleep(forTimeInterval: 0.8)
+        keepScreenshot(named: "06-pool-capsules-open")
+
+        app.buttons["styleguide.capsule.fresh"].tap()
+        XCTAssertEqual(checkIn.label, "打卡")
 
         app.swipeUp()
-        keepScreenshot(named: "02-style-guide-zh-type")
+        keepScreenshot(named: "07-colors")
+        app.swipeUp()
+        keepScreenshot(named: "08-type")
 
         let play = app.buttons["styleguide.motion.play"]
         scrollUntilHittable(play, in: app)
-        keepScreenshot(named: "03-style-guide-zh-motion-start")
         play.tap()
         XCTAssertEqual(play.label, "回到起点")
         // Let the springs settle before the shot.
         Thread.sleep(forTimeInterval: 1.2)
-        keepScreenshot(named: "04-style-guide-zh-motion-finish")
+        keepScreenshot(named: "09-motion-finish")
     }
 
     func testStyleGuideInEnglish() {
         let app = launch(language: "en")
-        XCTAssertTrue(header(in: app).label.contains("Squad check-ins this week"))
-        XCTAssertTrue(app.staticTexts["Track red"].exists)
-        keepScreenshot(named: "05-style-guide-en-top")
+        XCTAssertTrue(banner(in: app).label.contains("Skip Leg Day Club"))
+        XCTAssertEqual(app.buttons["styleguide.checkin"].label, "Check in")
+        XCTAssertEqual(app.buttons["styleguide.tab.highlights"].label, "Highlights")
+        keepScreenshot(named: "10-en-top")
     }
 
     private func launch(language: String) -> XCUIApplication {
@@ -38,11 +70,11 @@ final class StyleGuideUITests: XCTestCase {
         return app
     }
 
-    /// The score header, which VoiceOver reads as one element.
-    private func header(in app: XCUIApplication) -> XCUIElement {
-        let header = app.descendants(matching: .any).matching(identifier: "styleguide.header").firstMatch
-        XCTAssertTrue(header.waitForExistence(timeout: 10), "the style guide never appeared")
-        return header
+    /// The squad banner, which VoiceOver reads as one element.
+    private func banner(in app: XCUIApplication) -> XCUIElement {
+        let banner = app.descendants(matching: .any).matching(identifier: "styleguide.banner").firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 10), "the style guide never appeared")
+        return banner
     }
 
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
