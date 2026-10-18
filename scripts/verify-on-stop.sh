@@ -44,7 +44,8 @@ if base="$(git merge-base HEAD origin/main 2>/dev/null)"; then
   fi
 fi
 
-log="$(mktemp -t verify-on-stop.XXXXXX.log)"
+# One log per checkout, inside .git so it's never committed; each run overwrites it.
+log="$(git rev-parse --absolute-git-dir)/verify-on-stop.log"
 # timeout runs the check in its own process group (pgid = its pid). After a
 # timeout, kill whatever is left of that group: --kill-after only covers the
 # command itself, not children that outlive it.
@@ -54,7 +55,7 @@ wait "$pid"
 status=$?
 { [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; } && kill -KILL -- "-$pid" 2>/dev/null
 if [ "$status" -eq 0 ]; then
-  rm -f "$log"   # keep only failed logs
+  rm -f "$log"   # a log left behind is the last failure
   exit 0
 fi
 

@@ -77,7 +77,15 @@ One or two sentences: who or what this touches, and why that's safe or risky.
 
 Evidence, not "it compiles": each command you ran and the key line it printed. For behavior a caller sees, run it end to end and say what you observed. If a check couldn't run, write "inconclusive" and why.
 
-### 8. Verifier verdict
+### 8. Contract
+
+Tick one box. If the PR changes `ios/Packages/Contracts`, the database schema or the API, label it `contract` and request review from the other owners.
+
+### 9. Screenshots
+
+For anything users can see: simulator screenshots or a recording, before and after. Delete the section only when nothing visible changed.
+
+### 10. Verifier verdict
 
 A link to the latest verdict comment, which must cover the current diff (see Independent verification). Until it's posted, say it's pending.
 
