@@ -1,7 +1,9 @@
 # Runs scripts/verify.sh for ready PRs and pushes to main (AGENTS.md, CI).
-# GitHub-hosted runners are free while the repo is public. Never use a self-hosted
+# GitHub-hosted runners are free while the repo is public. macos-26 ships Xcode 26, which the
+# App Store requires since 2026-04-28 and Liquid Glass needs. Never use a self-hosted
 # runner here: on a public repo a fork's PR could run code on that machine.
 # macOS runners have no Docker, so the database checks run in a Linux job.
+# The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 name: verify
 
 on:
@@ -21,13 +23,18 @@ concurrency:
 jobs:
   verify:
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - run: swift --version
+      # Ahead of the image's own SwiftLint on PATH, which may be a different version.
+      - name: Install the pinned SwiftLint
+        run: |
+          scripts/install-swiftlint.sh "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: scripts/verify.sh swift web
 
   supabase:
@@ -41,3 +48,32 @@ jobs:
       # Only the services the database tests use.
       - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
       - run: scripts/verify.sh supabase
+
+  # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
+  # so reviewers and verifiers see every visible change without a Mac.
+  ios:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: scripts/ios-test.sh
+        env:
+          PRINT_PREVIEWS: "1"
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Named after the commit the PR is at, not the merge commit GitHub tests.
+          name: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}
+          path: build/ios/screenshots
+          if-no-files-found: error
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcresult-${{ github.event.pull_request.head.sha || github.sha }}
+          path: build/ios/Wildcard.xcresult

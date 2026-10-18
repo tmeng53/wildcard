@@ -16,8 +16,8 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 
 - All checks that run without a Mac (the cloud stop hook runs this): `scripts/verify.sh`. It runs `swift test` for every package in `ios/Packages/`, and the web and backend checks once `web/` and `supabase/` exist.
 - Database: `scripts/verify.sh supabase` resets local Supabase from `supabase/migrations` and runs the pgTAP tests in `supabase/tests/database` (needs Docker and `supabase start`). CI runs it in a Linux job, since macOS runners have no Docker.
-- iOS build, UI tests and screenshots (macOS only): `scripts/ios-test.sh`, added with the Xcode project, together with a CI job that runs it and uploads the screenshots as workflow artifacts.
-- Lint: SwiftLint and swift-format, configured with the first Swift package.
+- iOS build, UI tests and screenshots (macOS with Xcode 26 or newer): `scripts/ios-test.sh`. It writes the screenshots the UI tests keep to `build/ios/screenshots/`; CI's `ios` job runs it and uploads them as the `ios-screenshots-<sha>` artifact.
+- Lint (part of `scripts/verify.sh`): `swift format lint --strict --recursive ios` (`.swift-format`) and `swiftlint lint --strict` (`.swiftlint.yml`). `swift format -i -r ios` fixes formatting. `scripts/install-swiftlint.sh` installs the pinned SwiftLint (`scripts/swiftlint-version`); with another version `scripts/verify.sh` ends inconclusive.
 
 Add each command here in the PR that makes it real.
 
@@ -27,7 +27,7 @@ Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud mach
 
 ## CI
 
-The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` on `macos-15` for ready (not draft) PRs and pushes to `main`, and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
+The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` (job `verify`) and `scripts/ios-test.sh` (job `ios`) on `macos-26` for ready (not draft) PRs and pushes to `main`, and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
 
 ## Skills
 
@@ -49,6 +49,8 @@ Read the matching skill before the work it covers.
 
 ## Architecture
 
+Landed: `DesignSystem`, with a `DesignSystem` target (palette and color roles, type ramp, spacing, motion springs; pure Swift) and `DesignSystemUI` (SwiftUI bridges, the bundled Barlow Condensed font, the style guide the app opens on until the first feature screen). Screens take colors, type, spacing, radii, control sizes and motion from `ColorRole`, `TypeRamp`, `Space`, `Radius`, `Sizing`, `Tint` and `Motion`, never raw values; a size that belongs to one view only (a frame, a stroke) can stay in that view.
+
 Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `CheckIn`, `Squad`, `Recap`, `Poster`, `Avatar`, `Onboarding`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (Supabase client adapter). The app target only wires packages together.
 
 ## Domain rules
@@ -61,7 +63,7 @@ Planned (update as packages land): packages by capability, each `Domain` (pure S
 
 SwiftLint and swift-format enforce style; they are not repeated here.
 
-- Swift 6 language mode with strict concurrency (needs Xcode 16 or newer). No `@unchecked Sendable` without a comment saying why it is safe.
+- Swift 6 language mode with strict concurrency (needs Xcode 26 or newer; the app targets iOS 26). No `@unchecked Sendable` without a comment saying why it is safe.
 - **Module boundaries are packages.** A package imports another only through its public API; `Domain` targets never import SwiftUI, UIKit or `Backend`. Cross-capability types live in a small `Contracts` package.
 - **Reuse before you add.** Search first. Shared code goes in a package named after its topic, never `Utils`, `Shared`, `Common` or `Helpers`.
 - Parse at boundaries with `Codable` into strict types; stored and wire JSON carries a top-level `version`.

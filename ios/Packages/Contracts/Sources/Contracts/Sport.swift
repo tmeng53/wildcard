@@ -64,7 +64,10 @@ public struct CustomSport: Hashable, Sendable {
 
     public init(_ name: String) throws(ContractsError) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.unicodeScalars.contains(where: { $0.properties.generalCategory == .control || $0.properties.isWhitespace && $0 != " " && $0 != "\u{3000}" })
+        guard
+            !trimmed.unicodeScalars.contains(where: {
+                $0.properties.generalCategory == .control || $0.properties.isWhitespace && $0 != " " && $0 != "\u{3000}"
+            })
         else { throw .multilineCustomSport }
         guard (1...Self.maxLength).contains(trimmed.count) else { throw .customSportLength(trimmed.count) }
         self.name = trimmed

@@ -56,7 +56,9 @@ public enum PlanDay: Hashable, Sendable, Codable {
         switch try container.decode(Kind.self, forKey: .kind) {
         case .train: self = .train(try container.decodeActivityIfPresent(sport: .sport, custom: .customSport))
         case .rest:
-            guard !container.contains(.sport), !container.contains(.customSport) else { throw ContractsError.payloadMismatch(Kind.rest.rawValue) }
+            guard !container.contains(.sport), !container.contains(.customSport) else {
+                throw ContractsError.payloadMismatch(Kind.rest.rawValue)
+            }
             self = .rest
         }
     }

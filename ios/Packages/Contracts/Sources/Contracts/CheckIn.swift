@@ -67,12 +67,13 @@ public struct CheckIn: Hashable, Sendable, Codable {
         let kind = try container.decode(Kind.self, forKey: .kind)
         let payloads: [CodingKeys] = [.training, .meal, .disclaimer].filter(container.contains)
         guard payloads == [kind.payloadKey] else { throw ContractsError.payloadMismatch(kind.rawValue) }
-        entry = switch kind {
-        case .trained: .trained(try container.decode(Training.self, forKey: .training))
-        case .healthyMeal: .healthyMeal(try container.decode(Meal.self, forKey: .meal))
-        case .cheatMeal: .cheatMeal(try container.decode(Meal.self, forKey: .meal))
-        case .disclaimer: .disclaimer(try container.decode(Disclaimer.self, forKey: .disclaimer))
-        }
+        entry =
+            switch kind {
+            case .trained: .trained(try container.decode(Training.self, forKey: .training))
+            case .healthyMeal: .healthyMeal(try container.decode(Meal.self, forKey: .meal))
+            case .cheatMeal: .cheatMeal(try container.decode(Meal.self, forKey: .meal))
+            case .disclaimer: .disclaimer(try container.decode(Disclaimer.self, forKey: .disclaimer))
+            }
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -245,12 +246,15 @@ public struct Photos: Hashable, Sendable, Codable {
         all = photos
     }
 
+    /// For a reordering of photos already checked, which keeps count and distinctness.
+    private init(reordering photos: [PhotoRef]) { all = photos }
+
     /// The same photos with `photo` moved to the front as the cover; nil if it isn't one of them.
     public func withCover(_ photo: PhotoRef) -> Photos? {
         guard let index = all.firstIndex(of: photo) else { return nil }
         var reordered = all
         reordered.insert(reordered.remove(at: index), at: 0)
-        return try? Photos(reordered)
+        return Photos(reordering: reordered)
     }
 
     public init(from decoder: Decoder) throws {
