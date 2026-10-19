@@ -2595,7 +2595,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/resting`.
                 public var resting: Swift.Int
-                /// At least one member trained today and every other member is resting (全员上场).
+                /// At least one member trained today and every other member is on a planned rest day, whatever they checked in (全员上场).
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/everyoneTrained`.
                 public var everyoneTrained: Swift.Bool
@@ -2605,7 +2605,7 @@ extension Components {
                 ///   - trained: Members whose today is trained.
                 ///   - disclaimer: Members whose today is a 免责声明 with no 练了.
                 ///   - resting: Members on a planned rest day with no 练了 or 免责声明 today.
-                ///   - everyoneTrained: At least one member trained today and every other member is resting (全员上场).
+                ///   - everyoneTrained: At least one member trained today and every other member is on a planned rest day, whatever they checked in (全员上场).
                 public init(
                     trained: Swift.Int,
                     disclaimer: Swift.Int,

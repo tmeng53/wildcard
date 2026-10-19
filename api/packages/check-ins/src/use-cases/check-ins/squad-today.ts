@@ -39,7 +39,7 @@ export interface SquadToday {
   readonly disclaimerToday: number;
   /** Members on a planned rest day with no 练了 or 免责声明. */
   readonly restingToday: number;
-  /** At least one member trained today and everyone else is resting (全员上场). */
+  /** At least one member trained today and everyone else is on a planned rest day (全员上场). */
   readonly everyoneTrained: boolean;
   /** The viewer's own week, from all their check-ins wherever they went, against their plan. */
   readonly myWeek: Week & { readonly trainedDays: number; readonly plannedDays: number };
@@ -142,7 +142,8 @@ export async function squadToday(
     disclaimerToday: todays.filter(({ training }) => training === 'disclaimer').length,
     restingToday: todays.filter(resting).length,
     everyoneTrained:
-      trainedToday > 0 && todays.every((row) => row.training === 'trained' || resting(row)),
+      trainedToday > 0 &&
+      todays.every(({ training, plannedRest }) => training === 'trained' || plannedRest),
     myWeek: {
       ...me.week,
       trainedDays: trainedDays(mine, me.week.days),

@@ -178,7 +178,8 @@ describe('a squad’s today', () => {
       disclaimerToday: 1,
       // noZone: a rest day with only meals.
       restingToday: 1,
-      everyoneTrained: false,
+      // Me trained; noZone and Tokyo are on planned rest days, Tokyo with a 请假条.
+      everyoneTrained: true,
       myWeek: {
         from: '2026-10-19',
         to: '2026-10-25',
@@ -219,6 +220,26 @@ describe('a squad’s today', () => {
     expect([today.everyoneTrained, today.trainedToday, today.myLifetimeTrainedDays]).toStrictEqual([
       true,
       2,
+      1,
+    ]);
+  });
+
+  it('needs someone to train for 全员上场, not only rest', async () => {
+    // Both keep the default plan, so today, Wednesday, is a rest day for both.
+    const me = await newMember('America/Los_Angeles');
+    const friend = await newMember('America/Los_Angeles');
+    const squad = await newSquad(me, friend);
+    const resting = await checkIns.squadToday({ viewer: me, squad });
+    expect([resting.everyoneTrained, resting.restingToday, resting.trainedToday]).toStrictEqual([
+      false,
+      2,
+      0,
+    ]);
+    await checkedIn(friend, { kind: 'trained', day: '2026-10-21', audience: [squad] });
+    const trained = await checkIns.squadToday({ viewer: me, squad });
+    expect([trained.everyoneTrained, trained.restingToday, trained.trainedToday]).toStrictEqual([
+      true,
+      1,
       1,
     ]);
   });

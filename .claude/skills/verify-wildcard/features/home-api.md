@@ -41,6 +41,6 @@ Check at the source, with the ids from the log:
 
 - Members in time zones far apart (Pacific/Kiritimati and Pacific/Pago_Pago are 25 hours apart): each member's `day` is their own today, before 3am counting for the day before.
 - A member on Sunday night while a teammate is already on Monday: each one's week, x and y are their own (`squadWeek` adds them up).
-- A member who posts a 请假条 on a planned rest day: `disclaimer`, not `resting`.
+- A member who posts a 请假条 on a planned rest day: `disclaimer`, not `resting`, and it doesn't keep `everyoneTrained` false.
 - Everyone resting but nobody trained: `everyoneTrained` is false.
 - A member who left the squad: not listed, not counted.

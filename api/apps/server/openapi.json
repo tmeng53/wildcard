@@ -1326,7 +1326,7 @@
               },
               "everyoneTrained": {
                 "type": "boolean",
-                "description": "At least one member trained today and every other member is resting (全员上场)."
+                "description": "At least one member trained today and every other member is on a planned rest day, whatever they checked in (全员上场)."
               }
             },
             "required": [
