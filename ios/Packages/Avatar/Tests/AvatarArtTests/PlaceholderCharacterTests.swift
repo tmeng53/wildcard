@@ -8,14 +8,18 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "root", "tail", "legL", "legR", "torso", "head", "eyes", "mouthSmile", "mouthOpen", "propR",
-            "armL", "armR",
+            "shadow", "root", "tail", "legL", "legR", "torso", "head", "eyes", "brows", "glasses", "mouthSmile",
+            "mouthOpen", "propR", "armL", "armR",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
-    #expect(figure.parts[10].art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
+    #expect(figure.parts[12].art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
     #expect(figure.parts[2].art.count == (outfit == PlaceholderCharacter.cat ? 1 : 0))
+    // Everyone has eyes and both mouths; only people pick brows.
+    #expect([7, 10, 11].allSatisfy { figure.parts[$0].art.count == 1 })
+    let isPerson = PlaceholderCharacter.people.contains(outfit.variants["body"] ?? "")
+    #expect(figure.parts[8].art.count == (isPerson ? 1 : 0))
     // The open mouth waits hidden until the cheer swaps it in.
-    #expect(figure.layout(figure.restPose)[9].opacity == 0)
+    #expect(figure.layout(figure.restPose)[11].opacity == 0)
 }
 
 /// Every body and hair the editor can offer, by folder name.
@@ -29,13 +33,54 @@ func everyOutfitBuilds(outfit: Outfit) throws {
         PlaceholderCharacter.variants(for: "hair") == [
             "bob", "bun", "buzz", "curls", "curtain", "long", "pigtails", "ponytail", "spacebuns", "wolf",
         ])
+    #expect(PlaceholderCharacter.variants(for: "eyes") == ["dot", "happy", "round", "sharp", "sleepy", "sparkle"])
+    #expect(PlaceholderCharacter.variants(for: "brows") == ["arched", "bold", "soft", "worried"])
+    #expect(PlaceholderCharacter.variants(for: "mouth") == ["cat", "grin", "oh", "smile", "smirk"])
+    #expect(PlaceholderCharacter.variants(for: "cheeks") == ["flushed", "freckles", "rosy"])
+    #expect(PlaceholderCharacter.variants(for: "glasses") == ["round", "square"])
     #expect(PlaceholderCharacter.variants(for: "cape").isEmpty)
+}
+
+/// People pick hair and a face; animals keep the default face their coat goes with.
+@Test func theEditorOffersAFaceToPeopleOnly() {
+    #expect(
+        PlaceholderCharacter.slots(for: "tan") == [
+            "body", "hair", "eyes", "brows", "mouth", "cheeks", "glasses", "hat", "top", "bottom", "prop",
+        ])
+    #expect(PlaceholderCharacter.slots(for: "cat") == ["body", "hat", "top", "bottom", "prop"])
+    #expect(PlaceholderCharacter.people.allSatisfy(PlaceholderCharacter.variants(for: "body").contains))
+}
+
+/// A cat leaves its face out and still gets round eyes and a smile; a person can pick others.
+@Test func looksWithoutAFaceWearTheDefaultOne() throws {
+    let cat = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.cat)
+    let plain = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "eyes": "round", "mouth": "smile"]))
+    let bare = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
+    #expect(cat.parts[7].art == plain.parts[7].art)
+    #expect(bare.parts[7].art == plain.parts[7].art && bare.parts[10].art == plain.parts[10].art)
+    let baller = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.baller)
+    #expect(baller.parts[7].art != plain.parts[7].art && baller.parts[10].art != plain.parts[10].art)
+}
+
+/// Brows take the hair's color until they're given their own.
+@Test func browsFollowTheHairUntilPickedSeparately() throws {
+    let (auburn, blonde, black) = try (
+        #require(RGBAColor(hex: "#A2452F")), #require(RGBAColor(hex: "#E2BF74")), #require(RGBAColor(hex: "#2A2333"))
+    )
+    var look = PlaceholderCharacter.lifter
+    look.dyeHair(auburn)
+    #expect(look.colors["hair"] == auburn && look.colors["brows"] == auburn)
+    look.colors["brows"] = black
+    look.dyeHair(blonde)
+    #expect(look.colors["hair"] == blonde && look.colors["brows"] == black)
+    let figure = try PlaceholderCharacter.figure(wearing: look)
+    #expect(figure.parts[8].art[0].shapes.allSatisfy { $0.stroke?.color == black })
 }
 
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 13)
+    #expect(figure.parts.count == 15)
 }
 
 @Test(arguments: Persona.allCases)
