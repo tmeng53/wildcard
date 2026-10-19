@@ -496,7 +496,7 @@
                   "text": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them; may span lines."
+                    "description": "Trimmed, then 1 to 80 characters as people see them; may span lines."
                   },
                   "photos": {
                     "type": "array",
@@ -867,7 +867,7 @@
                   "text": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 40 characters as people see them; may span lines."
+                    "description": "Trimmed, then 1 to 80 characters as people see them; may span lines."
                   },
                   "photos": {
                     "type": "array",
