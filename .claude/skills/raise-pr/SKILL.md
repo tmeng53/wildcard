@@ -122,9 +122,11 @@ The author can't pass its own work. Every PR needs a verdict from an agent that 
 
 ## After opening
 
-If other work in progress is affected, link the PR from its issue. **When Codex is installed on the repo** (it isn't yet): Codex doesn't review on its own, so once the head commit is green (the `verify` check passed on it), post one `@codex review` comment. Ask again only when a new head needs a fresh review (for example before a low-risk merge); never repeat it for the same commit. Write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears.
+If other work in progress is affected, link the PR from its issue.
 
-**When Codex isn't installed, or can't review that head** (it replies that it is out of usage, or no review has landed two hours after the ask), start, right away in the first case, a fresh Claude agent that did not write the PR as the fallback reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One fallback review per head, like Codex; once Codex can review again, the next head goes back to Codex. The fallback is a review, not a verdict: the verifier still runs.
+**Every PR gets a Claude code review first.** Once the head is green (every CI job passed on it), start a fresh Claude agent that did not write the PR as the reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One Claude review per head. It is a review, not a verdict: the verifier still runs.
+
+**Bigger PRs also get a Codex review.** Codex is installed on the repo, but Tracy's Codex usage is limited, so ask it only for a feature, an API, contract or schema change, an architecture change, a new dependency or a large refactor; small fixes, docs and test-only changes skip it. Codex doesn't review on its own: post one `@codex review` comment once CI is green on the head and the verifier has passed it (`PASS` or `PASS+NOTES`). **At most two `@codex review` comments per PR, ever:** normally one; a second only when a later head changes the code substantially. Never repeat it for the same commit, and write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears. If Codex can't review (it replies that it is out of usage, or no review has landed two hours after the ask), the Claude review stands and the PR doesn't wait for Codex.
 
 When a review bot or a person comments, read every finding first, then check each is real before acting (AGENTS.md, "Review feedback is a symptom"): fix real ones and reply on the thread with the commit and proof; dismiss the rest with a concrete reason. Re-run the checks, and update Verification if the evidence changed.
 
@@ -136,7 +138,7 @@ Tracy's rule (2026-10-18): the owner thread merges most PRs itself; only a key t
 
 1. Every check is green: the `verify` workflow passed on the head commit.
 2. The latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff, and each of its notes has an answer on the PR (see Independent verification).
-3. The code review is clean on the head commit (Codex's, or the fallback's; see After opening), and no review thread is unresolved.
+3. The code review is clean on the head commit (the Claude review, and Codex's for a bigger PR; see After opening), and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
 5. It isn't one of the PRs below that wait for Tracy.
 
