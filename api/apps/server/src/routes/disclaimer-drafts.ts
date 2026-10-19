@@ -9,7 +9,7 @@ import {
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 export const DisclaimerDraftRequest = z
@@ -98,6 +98,7 @@ export function disclaimerDrafts(deps: {
       },
       400: problem('Not a valid request'),
       401: problem('No bearer token, or not a valid one'),
+      ...jsonBodyFailures,
       429: problem('The member has used today’s batches'),
       503: problem('Sign-in can’t be checked, or no drafts could be written, right now'),
     },

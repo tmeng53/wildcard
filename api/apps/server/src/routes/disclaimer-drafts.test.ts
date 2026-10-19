@@ -1,4 +1,9 @@
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -44,6 +49,11 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: () => Promise.resolve(undefined),
+      clock: () => new Date(),
+    }),
     log: createLog(() => undefined),
   });
   return { app, requests: recorded.requests };
