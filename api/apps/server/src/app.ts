@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
-import type { Database, PhotoStorage, VerifyToken } from './ports.js';
+import type { Accounts, Database, PhotoStorage, RevokeAppleSignIn, VerifyToken } from './ports.js';
 import { problemResponse } from './problem.js';
 import { checkIns } from './routes/check-ins.js';
 import { health } from './routes/health.js';
@@ -21,6 +21,9 @@ import { weeklyPlans } from './routes/weekly-plans.js';
 export interface AppDependencies {
   readonly db: Database;
   readonly verifyToken: VerifyToken;
+  readonly accounts: Accounts;
+  /** Undefined until the Sign in with Apple key is configured. */
+  readonly revokeAppleSignIn: RevokeAppleSignIn | undefined;
   readonly checkIns: CheckIns;
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
