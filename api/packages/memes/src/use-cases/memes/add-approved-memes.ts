@@ -20,5 +20,6 @@ export async function addApprovedMemes(
 ): Promise<AddedMemes> {
   const added = await deps.store.add(memes, approvedAt);
   const fresh = new Set(added);
-  return { added, alreadyThere: memes.map(({ phrase }) => phrase).filter((p) => !fresh.has(p)) };
+  const phrases = new Set(memes.map(({ phrase }) => phrase));
+  return { added, alreadyThere: [...phrases].filter((phrase) => !fresh.has(phrase)) };
 }

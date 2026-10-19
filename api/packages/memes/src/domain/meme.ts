@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 // A meme in the library: a phrase trending among Chinese speakers (or in North American
 // Chinese work life), with enough background that the AI writing a 今日免责声明 knows what it
-// means and how people use it.
+// means and how people use it. The example lines Tracy reads when she approves a meme stay out
+// of the library on purpose (Tracy, 2026-10-19): the AI would copy them.
 
 export const MemeId = z.uuid().brand<'MemeId'>();
 export type MemeId = z.infer<typeof MemeId>;
@@ -32,8 +33,6 @@ const memeFields = {
     }),
   /** Where it trends, e.g. 小红书. */
   source: Text(60),
-  /** Example 免责声明 lines that use it. */
-  examples: z.array(Text(80)).min(1).max(5),
 };
 
 /** A meme Tracy approved, as it is handed to the library. */
@@ -54,8 +53,8 @@ export interface MemeRecord extends MemeDraft {
 
 /** The stored JSON for a draft. */
 export function storedPayload(meme: MemeDraft): StoredMeme {
-  const { background, meaning, styles, source, examples } = meme;
-  return { version: 1, background, meaning, styles, source, examples };
+  const { background, meaning, styles, source } = meme;
+  return { version: 1, background, meaning, styles, source };
 }
 
 /** A meme is used for 4 weeks after it is approved (Tracy, 2026-10-19), then left out. */

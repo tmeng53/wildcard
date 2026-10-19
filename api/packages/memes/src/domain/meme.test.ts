@@ -8,7 +8,6 @@ const city = {
   meaning: '问某事洋不洋气。',
   styles: ['funny'],
   source: '抖音',
-  examples: ['今天这雨下得挺 city 的，我选择在家感受。'],
 };
 
 describe('a meme draft', () => {
@@ -21,10 +20,12 @@ describe('a meme draft', () => {
     ['no styles', { ...city, styles: [] }],
     ['a style twice', { ...city, styles: ['funny', 'funny'] }],
     ['a style the app lacks', { ...city, styles: ['wholesome'] }],
-    ['no examples', { ...city, examples: [] }],
-    ['six examples', { ...city, examples: ['一', '二', '三', '四', '五', '六'] }],
+    [
+      'example lines, which stay out of the library',
+      { ...city, examples: ['今天这雨下得挺 city 的。'] },
+    ],
     ['a phrase over 30 characters', { ...city, phrase: '梗'.repeat(31) }],
-    ['an unknown field', { ...city, calories: 300 }],
+    ['an unknown field', { ...city, mood: 'chill' }],
   ])('is refused with %s', (_case, input) => {
     expect(MemeDraft.safeParse(input).success).toBe(false);
   });

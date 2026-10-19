@@ -37,7 +37,7 @@ export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
         .orderBy('phrase')
         .execute();
       return rows.map((row): MemeRecord => {
-        const { background, meaning, styles, source, examples } = StoredMeme.parse(row.payload);
+        const { background, meaning, styles, source } = StoredMeme.parse(row.payload);
         return {
           id: MemeId.parse(row.id),
           phrase: row.phrase,
@@ -45,7 +45,6 @@ export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
           meaning,
           styles,
           source,
-          examples,
           approvedAt: row.approved_at,
         };
       });

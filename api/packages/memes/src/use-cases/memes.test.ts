@@ -30,7 +30,6 @@ function draft(name: string) {
     meaning: '问某事洋不洋气、时髦不时髦。',
     styles: ['funny', 'stubborn'],
     source: '抖音',
-    examples: ['今天这雨下得挺 city 的，我选择在家感受。'],
   });
 }
 
@@ -41,7 +40,7 @@ async function inUse(...made: readonly MemeDraft[]) {
 }
 
 describe('the meme library', () => {
-  it('keeps an approved meme with its background, meaning, styles, source and examples', async () => {
+  it('keeps an approved meme with its background, meaning, styles and source', async () => {
     const city = draft('city不city');
     now = new Date('2026-10-19T16:00:00.000Z');
     await expect(memes.addApproved({ memes: [city], approvedAt: now })).resolves.toStrictEqual({
@@ -70,6 +69,14 @@ describe('the meme library', () => {
     expect(kept.map(({ meaning, approvedAt: at }) => [meaning, at])).toStrictEqual([
       [first.meaning, approvedAt],
     ]);
+  });
+
+  it('adds a phrase listed twice in one batch once', async () => {
+    const meme = draft('重复');
+    await expect(
+      memes.addApproved({ memes: [meme, meme], approvedAt: new Date('2026-10-19T16:00:00.000Z') }),
+    ).resolves.toStrictEqual({ added: [meme.phrase], alreadyThere: [] });
+    expect(await inUse(meme)).toHaveLength(1);
   });
 
   it('uses a meme for 4 weeks after its approval, newest first', async () => {
