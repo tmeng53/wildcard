@@ -29,6 +29,7 @@ describe('openapi.json', () => {
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
         photos,
+        calendarOf: () => Promise.resolve(undefined),
         clock: () => {
           throw new Error('unused');
         },

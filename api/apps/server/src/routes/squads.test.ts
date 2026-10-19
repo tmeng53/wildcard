@@ -33,6 +33,7 @@ const app = createApp({
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({

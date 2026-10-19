@@ -1055,6 +1055,149 @@
         ],
         "additionalProperties": false
       },
+      "SquadToday": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "squad": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "day": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before."
+                },
+                "training": {
+                  "type": "string",
+                  "enum": [
+                    "trained",
+                    "disclaimer",
+                    "notCheckedIn"
+                  ],
+                  "description": "Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day."
+                },
+                "latestMeal": {
+                  "type": "string",
+                  "enum": [
+                    "healthyMeal",
+                    "cheatMeal"
+                  ],
+                  "description": "Their latest meal today sent to this squad. Missing when none."
+                }
+              },
+              "required": [
+                "member",
+                "day",
+                "training"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Everyone in the squad now, the signed-in member included, in join order."
+          },
+          "today": {
+            "type": "object",
+            "properties": {
+              "trained": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Members whose today is trained."
+              },
+              "disclaimer": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Members whose today is a 免责声明 with no 练了."
+              },
+              "everyoneTrained": {
+                "type": "boolean",
+                "description": "Every member’s today is trained."
+              }
+            },
+            "required": [
+              "trained",
+              "disclaimer",
+              "everyoneTrained"
+            ],
+            "additionalProperties": false
+          },
+          "me": {
+            "type": "object",
+            "properties": {
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "trainedDays": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Days this week with a 练了, wherever it was sent. Several on one day count once."
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "trainedDays"
+                ],
+                "additionalProperties": false
+              },
+              "lifetimeTrainedDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days ever with a 练了."
+              }
+            },
+            "required": [
+              "week",
+              "lifetimeTrainedDays"
+            ],
+            "additionalProperties": false
+          },
+          "squadWeek": {
+            "type": "object",
+            "properties": {
+              "trainedDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad."
+              }
+            },
+            "required": [
+              "trainedDays"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "version",
+          "squad",
+          "members",
+          "today",
+          "me",
+          "squadWeek"
+        ],
+        "additionalProperties": false
+      },
       "WeeklyPlan": {
         "type": "object",
         "properties": {
@@ -2087,6 +2230,71 @@
           },
           "404": {
             "description": "No squad has this code (`INVITE_CODE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/today": {
+      "get": {
+        "operationId": "getSquadToday",
+        "summary": "Where a squad’s day and week stand",
+        "description": "Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squad’s day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadToday"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
             "content": {
               "application/problem+json": {
                 "schema": {

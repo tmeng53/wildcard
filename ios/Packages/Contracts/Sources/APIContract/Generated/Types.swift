@@ -91,6 +91,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
     func joinSquad(_ input: Operations.JoinSquad.Input) async throws -> Operations.JoinSquad.Output
+    /// Where a squad’s day and week stand
+    ///
+    /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/today`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
+    func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
     /// The signed-in member’s plan for a week
     ///
     /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
@@ -276,6 +283,21 @@ extension APIProtocol {
         headers: Operations.JoinSquad.Input.Headers = .init()
     ) async throws -> Operations.JoinSquad.Output {
         try await joinSquad(Operations.JoinSquad.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Where a squad’s day and week stand
+    ///
+    /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/today`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
+    public func getSquadToday(
+        path: Operations.GetSquadToday.Input.Path,
+        headers: Operations.GetSquadToday.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadToday.Output {
+        try await getSquadToday(Operations.GetSquadToday.Input(
             path: path,
             headers: headers
         ))

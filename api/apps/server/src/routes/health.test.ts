@@ -18,7 +18,12 @@ const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
 const photos = { createUploadUrl: notCalled, exists: notCalled, createViewUrls: notCalled };
 const checkInsOn = (db: Database) =>
-  createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: () => new Date() });
+  createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: () => Promise.resolve(undefined),
+    clock: () => new Date(),
+  });
 
 async function getHealth(db: Database) {
   const lines: string[] = [];

@@ -15,6 +15,7 @@ import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { squads } from './routes/squads.js';
+import { squadToday } from './routes/squad-today.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
 export interface AppDependencies {
@@ -48,6 +49,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
   app.route('/', squads(deps));
+  app.route('/', squadToday(deps));
   app.route('/', weeklyPlans(deps));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
