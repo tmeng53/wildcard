@@ -10,7 +10,9 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
+import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { MemberId, SquadId, type CheckInRecord } from '../domain/check-in.js';
+import { WeekStart, type PlanDay } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -25,16 +27,28 @@ afterAll(() => db.destroy());
 const now = new Date('2026-10-21T20:00:00.000Z');
 // Members' time zones, as the members module would give them.
 const zones = new Map<MemberId, string>();
-const checkIns = createCheckIns({
-  store: createPostgresCheckInStore(db),
-  reactions: createPostgresReactionStore(db),
-  photos: { exists: () => Promise.reject(new Error('unused')) },
-  calendarOf: (member) => {
-    const timeZone = zones.get(member);
-    return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: now });
-  },
-  clock: () => now,
-});
+const plans = createPostgresWeeklyPlanStore(db);
+/** The check-ins module with its clock at `moment`. */
+const checkInsAt = (moment: Date) =>
+  createCheckIns({
+    store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
+    plans,
+    photos: { exists: () => Promise.reject(new Error('unused')) },
+    calendarOf: (member) => {
+      const timeZone = zones.get(member);
+      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: moment });
+    },
+    clock: () => moment,
+  });
+const checkIns = checkInsAt(now);
+
+const train: PlanDay = { kind: 'train' };
+const rest: PlanDay = { kind: 'rest' };
+/** Saves the member's plan for the week from `monday`, days Monday first. */
+async function planned(member: MemberId, { monday, days }: { monday: string; days: PlanDay[] }) {
+  await plans.save({ member, weekStart: WeekStart.parse(monday), days });
+}
 
 async function newMember(timeZone?: string) {
   const id = MemberId.parse(randomUUID());
@@ -125,15 +139,47 @@ describe('a squad’s today', () => {
       db,
     );
 
+    // Tokyo rests on Thursdays and weekends: 4 training days. The others have the default plan
+    // (rest on Wednesday and Sunday, 5 training days), so today is a rest day for me and noZone.
+    await planned(tokyo, {
+      monday: '2026-10-19',
+      days: [train, train, train, rest, train, rest, rest],
+    });
+
     expect(await checkIns.squadToday({ viewer: me, squad })).toStrictEqual({
+      // Checked in today, by first check-in: me and noZone both at 17:00 (join order), then Tokyo.
       members: [
-        { member: me, day: '2026-10-21', training: 'trained', latestMeal: undefined },
-        { member: tokyo, day: '2026-10-22', training: 'disclaimer', latestMeal: undefined },
-        { member: noZone, day: '2026-10-21', training: 'notCheckedIn', latestMeal: 'cheatMeal' },
+        {
+          member: me,
+          day: '2026-10-21',
+          training: 'trained',
+          latestMeal: undefined,
+          plannedRest: true,
+          firstCheckInAt: new Date('2026-10-21T17:00:00.000Z'),
+        },
+        {
+          member: noZone,
+          day: '2026-10-21',
+          training: 'notCheckedIn',
+          latestMeal: 'cheatMeal',
+          plannedRest: true,
+          firstCheckInAt: new Date('2026-10-21T17:00:00.000Z'),
+        },
+        {
+          member: tokyo,
+          day: '2026-10-22',
+          training: 'disclaimer',
+          latestMeal: undefined,
+          plannedRest: true,
+          firstCheckInAt: new Date('2026-10-22T18:00:00.000Z'),
+        },
       ],
       trainedToday: 1,
       disclaimerToday: 1,
-      everyoneTrained: false,
+      // noZone: a rest day with only meals.
+      restingToday: 1,
+      // Me trained; noZone and Tokyo are on planned rest days, Tokyo with a 请假条.
+      everyoneTrained: true,
       myWeek: {
         from: '2026-10-19',
         to: '2026-10-25',
@@ -147,10 +193,12 @@ describe('a squad’s today', () => {
           '2026-10-25',
         ],
         trainedDays: 3,
+        plannedDays: 5,
       },
       myLifetimeTrainedDays: 4,
-      // Me: Monday and today (Tuesday went elsewhere). Tokyo: Tuesday.
-      squadTrainedDays: 3,
+      // Trained: me on Monday and today (Tuesday went elsewhere), Tokyo on Tuesday.
+      // Planned: 5 + 4 + 5.
+      squadWeek: { trainedDays: 3, plannedDays: 14 },
     });
   });
 
@@ -158,6 +206,13 @@ describe('a squad’s today', () => {
     const me = await newMember('America/Los_Angeles');
     const friend = await newMember('America/New_York');
     const squad = await newSquad(me, friend);
+    // Today, Wednesday, is a training day for both.
+    for (const member of [me, friend]) {
+      await planned(member, {
+        monday: '2026-10-19',
+        days: [train, train, train, train, train, rest, rest],
+      });
+    }
     await checkedIn(me, { kind: 'trained', day: '2026-10-21', audience: [squad] });
     expect((await checkIns.squadToday({ viewer: friend, squad })).everyoneTrained).toBe(false);
     await checkedIn(friend, { kind: 'trained', day: '2026-10-21', audience: [squad] });
@@ -167,6 +222,60 @@ describe('a squad’s today', () => {
       2,
       1,
     ]);
+  });
+
+  it('needs someone to train for 全员上场, not only rest', async () => {
+    // Both keep the default plan, so today, Wednesday, is a rest day for both.
+    const me = await newMember('America/Los_Angeles');
+    const friend = await newMember('America/Los_Angeles');
+    const squad = await newSquad(me, friend);
+    const resting = await checkIns.squadToday({ viewer: me, squad });
+    expect([resting.everyoneTrained, resting.restingToday, resting.trainedToday]).toStrictEqual([
+      false,
+      2,
+      0,
+    ]);
+    await checkedIn(friend, { kind: 'trained', day: '2026-10-21', audience: [squad] });
+    const trained = await checkIns.squadToday({ viewer: me, squad });
+    expect([trained.everyoneTrained, trained.restingToday, trained.trainedToday]).toStrictEqual([
+      true,
+      1,
+      1,
+    ]);
+  });
+
+  it('reads each member in their own week, and counts a planned rest as on the field', async () => {
+    // Sunday 9pm in Los Angeles, already Monday 1pm of the next week in Tokyo.
+    const sundayNight = checkInsAt(new Date('2026-10-26T04:00:00.000Z'));
+    const la = await newMember('America/Los_Angeles');
+    const tokyo = await newMember('Asia/Tokyo');
+    const squad = await newSquad(la, tokyo);
+    await checkedIn(la, { kind: 'trained', day: '2026-10-24', audience: [squad] });
+    // Saturday is Tokyo's last week; Monday is this week.
+    await checkedIn(tokyo, { kind: 'trained', day: '2026-10-24', audience: [squad] });
+    await checkedIn(tokyo, { kind: 'trained', day: '2026-10-26', audience: [squad], hour: 2 });
+    // Tokyo's plan for last week carries over: 4 training days, Monday a training day.
+    await planned(tokyo, {
+      monday: '2026-10-19',
+      days: [train, train, train, rest, train, rest, rest],
+    });
+
+    const today = await sundayNight.squadToday({ viewer: la, squad });
+    expect(today.members.map(({ member, day, plannedRest }) => [member, day, plannedRest])).toEqual(
+      [
+        [tokyo, '2026-10-26', false],
+        // Sunday is a rest day in the default plan.
+        [la, '2026-10-25', true],
+      ],
+    );
+    expect(today).toMatchObject({
+      trainedToday: 1,
+      restingToday: 1,
+      everyoneTrained: true,
+      myWeek: { from: '2026-10-19', to: '2026-10-25', trainedDays: 1, plannedDays: 5 },
+      // LA: Saturday. Tokyo: Monday only, since Saturday was in Tokyo's last week. Planned: 5 + 4.
+      squadWeek: { trainedDays: 2, plannedDays: 9 },
+    });
   });
 
   it('shows a squad only to its members', async () => {

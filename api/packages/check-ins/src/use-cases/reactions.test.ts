@@ -10,6 +10,7 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
+import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
 import { CheckInNotFoundError, OwnCheckInReactionError } from '../errors.js';
 import { createCheckIns } from './check-ins.js';
@@ -26,6 +27,7 @@ let now = new Date('2026-10-18T20:00:00.000Z');
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   reactions: createPostgresReactionStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
   photos: { exists: () => Promise.resolve(true) },
   calendarOf: () => Promise.resolve(undefined),
   clock: () => now,

@@ -1,7 +1,14 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
 import type { Reaction } from '../domain/reaction.js';
-import type { CheckInStore, Clock, MemberCalendar, PhotoFiles, ReactionStore } from '../ports.js';
+import type {
+  CheckInStore,
+  Clock,
+  MemberCalendar,
+  PhotoFiles,
+  ReactionStore,
+  WeeklyPlanStore,
+} from '../ports.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
 import { listReactions } from './check-ins/list-reactions.js';
 import {
@@ -40,6 +47,7 @@ export function createCheckIns(deps: {
   readonly store: CheckInStore;
   readonly reactions: ReactionStore;
   readonly photos: PhotoFiles;
+  readonly plans: WeeklyPlanStore;
   readonly calendarOf: MemberCalendar;
   readonly clock: Clock;
 }): CheckIns {

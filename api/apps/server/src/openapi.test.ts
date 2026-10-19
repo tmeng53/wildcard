@@ -38,6 +38,7 @@ describe('openapi.json', () => {
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
         reactions: createPostgresReactionStore(db),
+        plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf: () => Promise.resolve(undefined),
         clock: () => {

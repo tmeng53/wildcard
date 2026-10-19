@@ -40,6 +40,7 @@ const app = createApp({
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
+    plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -91,6 +92,8 @@ async function call(
 }
 
 const HOUR = 3_600_000;
+/** Any ISO 8601 time, as the API writes them. */
+const isoTime: unknown = expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
 /** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
 const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
 
@@ -103,6 +106,23 @@ async function member(timeZone = 'UTC') {
   });
   expect(saved.status).toBe(200);
   return signedUp;
+}
+
+/** The Monday of the week `day` is in. */
+function mondayOf(day: string) {
+  const date = new Date(`${day}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  return date.toISOString().slice(0, 10);
+}
+
+/** Saves the member's plan for their week from `day`: every day `kind`. */
+async function planAll(token: string, { day, kind }: { day: string; kind: 'train' | 'rest' }) {
+  const saved = await call('PUT', {
+    path: `/me/weekly-plans/${mondayOf(day)}`,
+    token,
+    body: { version: 1, days: Array.from({ length: 7 }, () => ({ kind })) },
+  });
+  expect(saved.status).toBe(200);
 }
 
 async function checkIn(
@@ -121,6 +141,9 @@ describe('GET /squads/{squadId}/today', () => {
     // 25 hours apart, so their todays are never the same date: each must be read in their own zone.
     const [east, west] = [await member('Pacific/Kiritimati'), await member('Pacific/Pago_Pago')];
     const squad = await squadOf(me, friend, east, west);
+    // East trains every day this week and West rests every day; me and friend keep the default.
+    await planAll(east.token, { day: today(14), kind: 'train' });
+    await planAll(west.token, { day: today(-11), kind: 'rest' });
     await checkIn(me.token, { squad, kind: 'disclaimer', disclaimer: { text: '加班' } });
     await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
     await checkIn(friend.token, { squad, kind: 'healthyMeal', meal: {} });
@@ -133,22 +156,31 @@ describe('GET /squads/{squadId}/today', () => {
     expect(body).toMatchObject({
       version: 1,
       squad,
+      // Checked in today by first check-in, then the planned rest, then the rest.
       members: [
-        { member: me.userId, day: today(), training: 'trained' },
+        {
+          member: me.userId,
+          day: today(),
+          training: 'trained',
+          firstCheckInAt: isoTime,
+        },
         {
           member: friend.userId,
           day: today(),
           training: 'notCheckedIn',
           latestMeal: 'healthyMeal',
+          firstCheckInAt: isoTime,
         },
-        { member: east.userId, day: today(14), training: 'notCheckedIn' },
-        { member: west.userId, day: today(-11), training: 'notCheckedIn' },
+        { member: west.userId, day: today(-11), training: 'notCheckedIn', plannedRest: true },
+        { member: east.userId, day: today(14), training: 'notCheckedIn', plannedRest: false },
       ],
       today: { trained: 1, disclaimer: 0, everyoneTrained: false },
-      me: { week: { trainedDays: 0 }, lifetimeTrainedDays: 0 },
-      squadWeek: { trainedDays: 1 },
+      me: { week: { trainedDays: 0, plannedDays: 5 }, lifetimeTrainedDays: 0 },
+      // Planned: 5 + 5 + 7 + 0.
+      squadWeek: { trainedDays: 1, plannedDays: 17 },
     });
     expect(body).not.toHaveProperty('members.0.latestMeal');
+    expect(body).not.toHaveProperty('members.2.firstCheckInAt');
   });
 
   it('answers only the squad’s members', async () => {

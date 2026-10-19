@@ -59,6 +59,7 @@ function appWith(model: LanguageModel) {
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       reactions: createPostgresReactionStore(db),
+      plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
