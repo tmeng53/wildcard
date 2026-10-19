@@ -1,9 +1,15 @@
 import { sql, type Kysely } from 'kysely';
 
 import { MemberId } from '../domain/check-in.js';
-import { ReactionKind } from '../domain/reaction.js';
+import { ReactionKind, type Reaction } from '../domain/reaction.js';
 import type { ReactionStore } from '../ports.js';
 import type { DB } from './tables.js';
+
+const fromRow = (row: { member_id: string; kind: string; reacted_at: Date }): Reaction => ({
+  member: MemberId.parse(row.member_id),
+  kind: ReactionKind.parse(row.kind),
+  reactedAt: row.reacted_at,
+});
 
 /** The reaction store on Postgres (`supabase/migrations`). */
 export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
@@ -42,11 +48,28 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
         .orderBy('reacted_at')
         .orderBy('member_id')
         .execute();
-      return rows.map((row) => ({
-        member: MemberId.parse(row.member_id),
-        kind: ReactionKind.parse(row.kind),
-        reactedAt: row.reacted_at,
-      }));
+      return rows.map(fromRow);
+    },
+
+    async receivedBy({ member, since, until }) {
+      const rows = await db
+        .selectFrom('check_in_reactions')
+        .innerJoin('check_ins', 'check_ins.id', 'check_in_reactions.check_in_id')
+        .select([
+          'check_in_reactions.member_id',
+          'check_in_reactions.kind',
+          'check_in_reactions.reacted_at',
+        ])
+        .where('check_ins.member_id', '=', member)
+        .where('check_in_reactions.reacted_at', '>=', since)
+        .where('check_in_reactions.reacted_at', '<', until)
+        .orderBy('check_in_reactions.reacted_at')
+        .orderBy('check_in_reactions.member_id')
+        .execute();
+      // A kind this release no longer has is left out, not an error.
+      return rows.flatMap((row) =>
+        ReactionKind.safeParse(row.kind).success ? [fromRow(row)] : [],
+      );
     },
   };
 }

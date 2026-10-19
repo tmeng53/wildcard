@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
+import {
+  createOffSender,
+  createPostgresDailyPushStore,
+  createPostgresDeviceStore,
+  createPostgresSettingsStore,
+  createPush,
+  type PushSender,
+} from '@wildcard/push';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
@@ -44,3 +52,16 @@ export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []
     authorizationServer: new URL(`${config.supabaseUrl}/auth/v1`),
   };
 }
+
+/** Push on local Supabase's database, sending nothing (no APNs key in tests). */
+export function pushOn(db: Database, sender: PushSender = createOffSender()) {
+  return createPush({
+    store: createPostgresDeviceStore(db),
+    settings: createPostgresSettingsStore(db),
+    daily: createPostgresDailyPushStore(db),
+    sender,
+  });
+}
+
+/** Jobs as a server without a scheduler has them: no token, so none runs. */
+export const noJobs = { token: undefined, interactions: [], clock: () => new Date() };

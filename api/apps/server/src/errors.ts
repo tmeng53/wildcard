@@ -184,3 +184,25 @@ export class AdminSignInRequiredError extends AppError {
     super('Sign in from your MCP client to use the admin tools.');
   }
 }
+
+/** Thrown when a job is started without the jobs token (`JOBS_TOKEN`) or with another one. */
+export class JobTokenInvalidError extends AppError {
+  override readonly name = 'JobTokenInvalidError';
+  readonly reason = 'JOB_TOKEN_INVALID';
+  readonly status = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Only the scheduler can start this job.');
+  }
+}
+
+/** Thrown when a job is started on a server with no jobs token set, so none can run. */
+export class JobsOffError extends AppError {
+  override readonly name = 'JobsOffError';
+  readonly reason = 'JOBS_OFF';
+  readonly status = 'UNAVAILABLE';
+
+  constructor() {
+    super('Jobs aren’t set up on this server.');
+  }
+}

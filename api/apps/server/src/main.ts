@@ -18,7 +18,9 @@ import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import {
   createApnsSender,
   createOffSender,
+  createPostgresDailyPushStore,
   createPostgresDeviceStore,
+  createPostgresSettingsStore,
   createPush,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -32,6 +34,7 @@ import {
   supabaseAuthIssuer,
 } from './adapters/supabase-auth.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -61,12 +64,23 @@ if (config.appleSignInKey === undefined) {
 const members = createMembers({ store: createPostgresProfileStore(db) });
 const push = createPush({
   store: createPostgresDeviceStore(db),
+  settings: createPostgresSettingsStore(db),
+  daily: createPostgresDailyPushStore(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
+if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
+const checkIns = createCheckIns({
+  store: createPostgresCheckInStore(db),
+  reactions: createPostgresReactionStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
+  photos,
+  calendarOf: memberCalendar(members),
+  clock: () => new Date(),
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -78,14 +92,7 @@ const app = createApp({
     config.appleSignInKey === undefined
       ? undefined
       : createAppleSignInRevoker(config.appleSignInKey),
-  checkIns: createCheckIns({
-    store: createPostgresCheckInStore(db),
-    reactions: createPostgresReactionStore(db),
-    plans: createPostgresWeeklyPlanStore(db),
-    photos,
-    calendarOf: memberCalendar(members),
-    clock: () => new Date(),
-  }),
+  checkIns,
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
@@ -109,6 +116,12 @@ const app = createApp({
   }),
   push,
   log,
+  jobs: {
+    token: config.jobsToken,
+    // Each kind of interaction the daily push counts comes from one of these.
+    interactions: [reactionInteractions(checkIns)],
+    clock: () => new Date(),
+  },
   admin: {
     admins: adminsOn,
     tools: (scope) => [

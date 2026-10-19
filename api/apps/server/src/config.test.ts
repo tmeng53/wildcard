@@ -35,6 +35,7 @@ describe('readConfig', () => {
       publicUrl: new URL('http://localhost:8080'),
       anthropicApiKey: undefined,
       appleSignInKey: undefined,
+      jobsToken: undefined,
       apns: undefined,
     });
   });

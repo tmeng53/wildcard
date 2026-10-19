@@ -9,6 +9,14 @@ export interface Members {
   saveProfile(input: SaveProfileInput): Promise<Profile>;
   /** When the member joined (first saved their profile), or `undefined` before that. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
+  /**
+   * Everyone whose own clock at `now` reads `hour` o'clock or later, before midnight, with their
+   * local day (`YYYY-MM-DD`). Members who haven't saved a time zone aren't on it.
+   */
+  pastLocalHour(input: {
+    readonly hour: number;
+    readonly now: Date;
+  }): Promise<{ readonly member: MemberId; readonly day: string }[]>;
 }
 
 export function createMembers(deps: { readonly store: ProfileStore }): Members {
@@ -16,5 +24,6 @@ export function createMembers(deps: { readonly store: ProfileStore }): Members {
     findProfile: (member) => findProfile(deps, member),
     saveProfile: (input) => saveProfile(deps, input),
     joinedAt: (member) => deps.store.joinedAt(member),
+    pastLocalHour: (input) => deps.store.pastLocalHour(input),
   };
 }

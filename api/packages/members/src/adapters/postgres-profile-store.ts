@@ -1,7 +1,7 @@
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 
-import { Profile, type MemberId } from '../domain/profile.js';
+import { MemberId, Profile } from '../domain/profile.js';
 import type { ProfileStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -27,6 +27,19 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
         .where('member_id', '=', member)
         .executeTakeFirst();
       return row === undefined ? undefined : new Date(row.created_at);
+    },
+
+    async pastLocalHour({ hour, now }) {
+      // Postgres turns the moment into each member's wall-clock time with its own zone data,
+      // the same data that checked the zone when it was saved.
+      const local = sql`(${now}::timestamptz at time zone profiles.time_zone)`;
+      const rows = await db
+        .selectFrom('profiles')
+        .select(['member_id', sql<string>`${local}::date::text`.as('day')])
+        .where(sql<boolean>`extract(hour from ${local}) >= ${hour}`)
+        .orderBy('member_id')
+        .execute();
+      return rows.map(({ member_id, day }) => ({ member: MemberId.parse(member_id), day }));
     },
 
     async save(member: MemberId, profile) {

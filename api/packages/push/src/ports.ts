@@ -1,5 +1,7 @@
+import type { DailyCandidate, LocalDay } from './domain/daily.js';
 import type { Device, DeviceToken, MemberId } from './domain/device.js';
 import type { PushNotification } from './domain/notification.js';
+import type { PushSettings, PushTopic } from './domain/topic.js';
 
 /** Where members' push devices are kept. */
 export interface DeviceStore {
@@ -22,4 +24,30 @@ export type SendOutcome = 'sent' | 'gone' | 'off';
 /** Sends push notifications. Throws when the push service refuses or can't be reached. */
 export interface PushSender {
   send(device: Device, notification: PushNotification): Promise<SendOutcome>;
+}
+
+/** Where members' push switches are kept: only the ones they changed, so the rest stay on. */
+export interface SettingsStore {
+  /** The switches the member changed. */
+  changedBy(member: MemberId): Promise<ReadonlyMap<PushTopic, boolean>>;
+  /** Saves every switch. */
+  save(member: MemberId, settings: PushSettings): Promise<void>;
+}
+
+/** Which members' daily push has been handled, day by day. */
+export interface DailyPushStore {
+  /**
+   * Of these candidates, those with a phone, the daily push switched on and their day not handled
+   * yet.
+   */
+  due(candidates: readonly DailyCandidate[]): Promise<DailyCandidate[]>;
+  /**
+   * Marks the member's day handled, `sent` or not. False when it already was, so a day is only
+   * ever handled once, however many runs reach it at once.
+   */
+  claim(handled: {
+    readonly member: MemberId;
+    readonly day: LocalDay;
+    readonly sent: boolean;
+  }): Promise<boolean>;
 }

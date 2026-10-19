@@ -43,6 +43,12 @@ export interface ReactionStore {
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
   /** A check-in's reactions, oldest first. */
   list(checkIn: CheckInId): Promise<Reaction[]>;
+  /** Reactions left in `[since, until)` on any of the member's check-ins, oldest first. */
+  receivedBy(query: {
+    readonly member: MemberId;
+    readonly since: Date;
+    readonly until: Date;
+  }): Promise<Reaction[]>;
 }
 
 /** Where uploaded photo files are kept. */

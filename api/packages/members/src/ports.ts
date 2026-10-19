@@ -11,4 +11,12 @@ export interface ProfileStore {
   save(member: MemberId, profile: Profile): Promise<boolean>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
+  /**
+   * Members whose local time at `now` is `hour` o'clock or later on the same calendar day, each
+   * with that day (`YYYY-MM-DD`).
+   */
+  pastLocalHour(input: {
+    readonly hour: number;
+    readonly now: Date;
+  }): Promise<{ readonly member: MemberId; readonly day: string }[]>;
 }
