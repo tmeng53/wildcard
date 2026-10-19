@@ -352,6 +352,31 @@ describe('saving a check-in', () => {
       reason: 'CHECK_IN_DAY_MISMATCH',
     });
   });
+
+  it('refuses a day the member had not reached in their own time zone', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const inPagoPago = createCheckIns({
+      store: createPostgresCheckInStore(db),
+      reactions: createPostgresReactionStore(db),
+      plans: createPostgresWeeklyPlanStore(db),
+      photos,
+      calendarOf: (who) =>
+        Promise.resolve(
+          who === member ? { timeZone: 'Pacific/Pago_Pago', joinedAt: new Date(0) } : undefined,
+        ),
+      clock: () => now,
+    });
+    // 13:31 UTC on the 18th is 02:31 on the 18th in Pago Pago (UTC-11): still the 17th there.
+    const save = (day: string) =>
+      inPagoPago.save({
+        id: CheckInId.parse(randomUUID()),
+        member,
+        draft: draft({ audience: [squad], createdAt: '2026-10-18T13:31:00.000Z', day }),
+      });
+    await expect(save('2026-10-18')).rejects.toMatchObject({ reason: 'CHECK_IN_DAY_MISMATCH' });
+    expect((await save('2026-10-17')).created).toBe(true);
+  });
 });
 
 describe('listing check-ins', () => {

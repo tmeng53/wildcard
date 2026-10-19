@@ -429,7 +429,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/day`.
             public var day: Swift.String
@@ -455,7 +455,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -715,7 +715,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/day`.
             public var day: Swift.String
@@ -741,7 +741,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -877,7 +877,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/day`.
             public var day: Swift.String
@@ -903,7 +903,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -997,7 +997,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/day`.
             public var day: Swift.String
@@ -1023,7 +1023,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
