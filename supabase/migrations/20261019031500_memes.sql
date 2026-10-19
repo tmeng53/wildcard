@@ -8,7 +8,7 @@ create table public.memes (
   id uuid primary key default gen_random_uuid(),
   -- The meme itself, e.g. 「city不city」. Saved once: approving it again changes nothing.
   phrase text not null unique,
-  -- Its background, meaning, the styles it suits, where it trends and example lines, as
+  -- Its background, meaning, the styles it suits and where it trends, as
   -- stored JSON with its shape's version at the top: {"version": 1, ...}. The API owns the
   -- shape and parses it on every read.
   payload jsonb not null check (coalesce(jsonb_typeof(payload -> 'version') = 'number', false)),
