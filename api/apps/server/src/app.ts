@@ -24,6 +24,7 @@ import { photoUploads } from './routes/photo-uploads.js';
 import { reactions } from './routes/reactions.js';
 import { squads } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
+import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
 export interface AppDependencies {
@@ -76,6 +77,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', devices(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
+  app.route('/', weekSummary(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
