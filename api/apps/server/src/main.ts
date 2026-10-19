@@ -45,7 +45,11 @@ import type { Database } from './ports.js';
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
 const log = createLog((line) => process.stdout.write(line));
-const db = createDatabase(config.databaseUrl);
+const db = createDatabase(config.databaseUrl, {
+  onIdleError: (error) => {
+    log.warn('the database dropped an idle connection', { error });
+  },
+});
 const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
