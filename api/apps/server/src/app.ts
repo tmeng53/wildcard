@@ -2,6 +2,8 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { CheckIns } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
+import type { Members } from '@wildcard/members';
+import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
 import { adminMcp } from './admin-mcp/admin-mcp.js';
@@ -19,6 +21,7 @@ export interface AppDependencies {
   readonly db: Database;
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
+  readonly members: Members;
   readonly photos: PhotoStorage;
   readonly log: Log;
   /** The admin MCP server at `/mcp`. */
@@ -56,7 +59,12 @@ export function createApp(deps: AppDependencies) {
   app.route('/', adminMcp({ ...deps.admin, verifyToken: deps.verifyToken, log: deps.log }));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
-  app.onError((error, c) => {
+  app.onError((thrown, c) => {
+    // Hono's own validator throws a 400 for a body that isn't JSON: answer it like any bad body.
+    const error =
+      thrown instanceof HTTPException && thrown.status === 400
+        ? new RequestInvalidError(thrown.message, { cause: thrown })
+        : thrown;
     if (!isAppError(error) || HTTP_STATUS[error.status] >= 500) {
       deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
     }

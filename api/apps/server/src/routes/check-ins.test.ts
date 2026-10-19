@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -27,6 +28,7 @@ const app = createApp({
     photos,
     clock: () => new Date(),
   }),
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   log: createLog(() => undefined),
   admin: adminOn(db),
 });
@@ -188,6 +190,16 @@ describe('PUT /check-ins/{id}', () => {
       'application/problem+json',
       'REQUEST_INVALID',
     ]);
+    const malformed = await app.request(`/check-ins/${randomUUID()}`, {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${me.token}`, 'content-type': 'application/json' },
+      body: 'nope',
+    });
+    expect([
+      malformed.status,
+      malformed.headers.get('content-type'),
+      z.object({ reason: z.string() }).parse(await malformed.json()).reason,
+    ]).toStrictEqual([400, 'application/problem+json', 'REQUEST_INVALID']);
   });
 
   it('asks a caller with no token to sign in', async () => {
@@ -347,6 +359,51 @@ describe('photos on check-ins', () => {
       [cover, 'cover'],
       [second, 'two'],
     ]);
+  });
+
+  it('saves a disclaimer with a photo, viewed like any other', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const cover = await uploadPhoto(me.token, 'rain');
+    const { day, createdAt } = todayAndNow();
+    const saved = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: me.token,
+      body: {
+        version: 1,
+        day,
+        createdAt,
+        audience: [squad],
+        kind: 'disclaimer',
+        disclaimer: { text: '下雨了', photos: [{ path: cover }] },
+      },
+    });
+    expect(saved.status).toBe(201);
+    const listed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    const { checkIns } = z
+      .object({
+        checkIns: z.tuple([
+          z.object({
+            disclaimer: z.object({
+              text: z.string(),
+              photos: z.array(z.object({ path: z.string(), url: z.url() })),
+            }),
+          }),
+        ]),
+      })
+      .parse(listed.body);
+    const [{ disclaimer }] = checkIns;
+    expect(disclaimer.text).toBe('下雨了');
+    expect(
+      await Promise.all(
+        disclaimer.photos.map(async ({ path, url }) => [path, await (await fetch(url)).text()]),
+      ),
+    ).toStrictEqual([[cover, 'rain']]);
   });
 
   it('refuses a photo that isn’t the caller’s, isn’t uploaded, or is already used', async () => {

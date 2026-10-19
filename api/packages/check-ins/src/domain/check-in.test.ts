@@ -129,9 +129,9 @@ describe('CheckInDraft', () => {
     expect(issues({ ...trained, createdAt: '2026-10-18T14:03:00' })).toStrictEqual(['createdAt']);
   });
 
-  it('refuses a disclaimer longer than 40 characters', () => {
+  it('refuses a disclaimer longer than 80 characters', () => {
     expect(
-      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '累'.repeat(41) } }),
+      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '累'.repeat(81) } }),
     ).toStrictEqual(['disclaimer.text']);
   });
 });
@@ -141,9 +141,18 @@ describe('photos on a check-in', () => {
   const cover = photo('1d2e3f4a-5b6c-4d7e-8f9a-0b1c2d3e4f5a');
   const second = photo('2e3f4a5b-6c7d-4e8f-9a0b-1c2d3e4f5a6b');
 
-  it('takes 1 to 3 on a 练了 or a meal, the cover first', () => {
+  it('takes 1 to 3 on any kind, the cover first', () => {
     expect(issues({ ...trained, training: { sport: 'run', photos: [cover, second] } })).toBe('ok');
     expect(issues({ ...base, kind: 'cheatMeal', meal: { photos: [cover] } })).toBe('ok');
+    expect(
+      photosOf(
+        CheckInDraft.parse({
+          ...base,
+          kind: 'disclaimer',
+          disclaimer: { text: '困', photos: [second, cover] },
+        }),
+      ),
+    ).toStrictEqual([second, cover]);
     expect(
       photosOf(
         CheckInDraft.parse({ ...base, kind: 'healthyMeal', meal: { photos: [second, cover] } }),
@@ -151,7 +160,7 @@ describe('photos on a check-in', () => {
     ).toStrictEqual([second, cover]);
   });
 
-  it('refuses none listed, a repeat, or photos on a disclaimer', () => {
+  it('refuses none listed, a repeat, or more than 3', () => {
     expect(issues({ ...trained, training: { sport: 'run', photos: [] } })).toStrictEqual([
       'training.photos',
     ]);
@@ -159,8 +168,12 @@ describe('photos on a check-in', () => {
       issues({ ...trained, training: { sport: 'run', photos: [cover, cover] } }),
     ).toStrictEqual(['training.photos']);
     expect(
-      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '困', photos: [cover] } }),
-    ).toStrictEqual(['disclaimer']);
+      issues({
+        ...base,
+        kind: 'disclaimer',
+        disclaimer: { text: '困', photos: [cover, second, photo(squad), photo(otherSquad)] },
+      }),
+    ).toStrictEqual(['disclaimer.photos']);
   });
 });
 
@@ -190,9 +203,14 @@ describe('a saved check-in', () => {
     expect(
       entryFromStored({ kind: 'healthyMeal', payload: storedPayload(meal), photos }),
     ).toStrictEqual({ kind: 'healthyMeal', meal: { caption: '沙拉', photos } });
-    expect(() =>
-      entryFromStored({ kind: 'disclaimer', payload: { version: 1, text: '困' }, photos }),
-    ).toThrow('photos');
+    const disclaimer = recordFromDraft(
+      CheckInDraft.parse({ ...base, kind: 'disclaimer', disclaimer: { text: '困', photos } }),
+      ids,
+    );
+    expect(storedPayload(disclaimer)).toStrictEqual({ version: 1, text: '困' });
+    expect(
+      entryFromStored({ kind: 'disclaimer', payload: storedPayload(disclaimer), photos }),
+    ).toStrictEqual({ kind: 'disclaimer', disclaimer: { text: '困', photos } });
   });
 
   it('refuses stored fields that break the shape', () => {

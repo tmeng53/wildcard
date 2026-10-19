@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server';
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from './adapters/postgres.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
@@ -27,6 +28,7 @@ const app = createApp({
     photos,
     clock: () => new Date(),
   }),
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   photos,
   log,
   admin: {

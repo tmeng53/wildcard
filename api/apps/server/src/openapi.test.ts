@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
@@ -27,6 +28,7 @@ describe('openapi.json', () => {
         },
       }),
       photos,
+      members: createMembers({ store: createPostgresProfileStore(db) }),
       log: createLog(() => undefined),
       admin: {
         admins: {

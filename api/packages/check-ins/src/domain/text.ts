@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Text rules shared by every check-in field people type. They match the app's contract
-// (ios/Packages/Contracts), which trims with Swift's `.whitespacesAndNewlines` and counts
+// Text rules shared by every check-in field people type. They match the app's own checks
+// (ios/Packages/Contracts), which trim with Swift's `.whitespacesAndNewlines` and count
 // `Character`s, so text the app accepts is accepted here and nothing more.
 
 /**
@@ -50,8 +50,19 @@ function isBlank(text: string): boolean {
   return true;
 }
 
-/** A typed text: trimmed, then 1 to `max` characters, never blank, on one line if asked. */
-function typedText({ max, oneLine }: { readonly max: number; readonly oneLine: boolean }) {
+/**
+ * A typed text: trimmed, then 1 to `max` characters, never blank, on one line if asked. The
+ * OpenAPI document carries `max` as `x-max-characters`, which the app's limits are tested against.
+ */
+function typedText({
+  max,
+  oneLine,
+  description,
+}: {
+  readonly max: number;
+  readonly oneLine: boolean;
+  readonly description: string;
+}) {
   return z
     .string()
     .max(RAW_LIMIT)
@@ -68,22 +79,29 @@ function typedText({ max, oneLine }: { readonly max: number; readonly oneLine: b
       if (count > max) {
         context.addIssue({ code: 'custom', message: `Must be at most ${String(max)} characters` });
       }
-    });
+    })
+    .meta({ description, 'x-max-characters': max });
 }
 
 /** The optional line under a 练了 or a meal: trimmed, 1 to 60 characters, one line. */
-export const Caption = typedText({ max: 60, oneLine: true }).meta({
+export const Caption = typedText({
+  max: 60,
+  oneLine: true,
   description: 'Trimmed, then 1 to 60 characters as people see them, on one line.',
 });
 
-/** A 今日免责声明: trimmed, 1 to 40 characters, and it may span lines. */
-export const DisclaimerText = typedText({ max: 40, oneLine: false }).meta({
-  description: 'Trimmed, then 1 to 40 characters as people see them; may span lines.',
+/** A 今日免责声明: trimmed, 1 to 80 characters, and it may span lines. */
+export const DisclaimerText = typedText({
+  max: 80,
+  oneLine: false,
+  description: 'Trimmed, then 1 to 80 characters as people see them; may span lines.',
 });
 
 /** 其他: a sport the member names: trimmed, 1 to 20 characters, one line with plain spaces. */
-export const CustomSportName = typedText({ max: 20, oneLine: true })
-  .refine((name) => !NOT_A_NAME.test(name), {
-    message: 'Must be one line, with no tabs or unusual spaces',
-  })
-  .meta({ description: 'Trimmed, then 1 to 20 characters as people see them, on one line.' });
+export const CustomSportName = typedText({
+  max: 20,
+  oneLine: true,
+  description: 'Trimmed, then 1 to 20 characters as people see them, on one line.',
+}).refine((name) => !NOT_A_NAME.test(name), {
+  message: 'Must be one line, with no tabs or unusual spaces',
+});
