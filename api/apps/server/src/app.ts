@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { CheckIns } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Squads } from '@wildcard/squads';
 import { z } from 'zod';
 
 import { RequestInvalidError, RouteNotFoundError } from './errors.js';
@@ -12,12 +13,14 @@ import { checkIns } from './routes/check-ins.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
+import { squads } from './routes/squads.js';
 
 export interface AppDependencies {
   readonly db: Database;
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
   readonly members: Members;
+  readonly squads: Squads;
   readonly photos: PhotoStorage;
   readonly log: Log;
 }
@@ -41,6 +44,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
+  app.route('/', squads(deps));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((error, c) => {

@@ -1,0 +1,21 @@
+{
+  "name": "@wildcard/typed-text",
+  "private": true,
+  "type": "module",
+  "wildcard": {
+    "kind": "supporting"
+  },
+  "exports": {
+    ".": {
+      "@wildcard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  }
+}
