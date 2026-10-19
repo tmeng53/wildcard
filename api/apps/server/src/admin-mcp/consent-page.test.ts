@@ -8,8 +8,10 @@ import { z } from 'zod';
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { AuthUnavailableError } from '../errors.js';
 import { createLog } from '../log.js';
 import { config, signUp } from '../test-kit/local-supabase.js';
+import type { OAuthConsent } from '../ports.js';
 import { consentPage } from './consent-page.js';
 
 // The consent page against local Supabase Auth's OAuth 2.1 server: a hand-registered client asks
@@ -25,16 +27,18 @@ const consent = createSupabaseOAuthConsent({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
-const pageWith = (passwordSignIn: boolean) =>
+const pageWith = (
+  options: { passwordSignIn?: boolean; consent?: OAuthConsent; log?: (line: string) => void } = {},
+) =>
   consentPage({
-    consent,
+    consent: options.consent ?? consent,
     verifyToken,
     admins: createAdmins({ store: createPostgresAdminStore(db), clock: () => new Date() }),
     publicUrl: new URL('http://localhost:8080'),
-    passwordSignIn,
-    log: createLog(() => undefined),
+    passwordSignIn: options.passwordSignIn ?? true,
+    log: createLog(options.log ?? (() => undefined)),
   });
-const page = pageWith(true);
+const page = pageWith();
 const callback = 'http://localhost:9999/callback';
 let clientId: string;
 
@@ -95,16 +99,23 @@ const form = (fields: Record<string, string>) => ({
 const cookieFrom = (response: Response) =>
   response.headers.getSetCookie().map((each) => each.split(';')[0] ?? '');
 
-async function signIn(id: string, credentials: { email: string; password: string }) {
-  return page.request(
+/** Signs in on the page, `on` another build of it where given. */
+async function signIn(
+  id: string,
+  credentials: { email: string; password: string; on?: typeof page },
+) {
+  return (credentials.on ?? page).request(
     '/oauth/consent/sign-in',
     form({ authorization_id: id, email: credentials.email, password: credentials.password }),
   );
 }
 
-async function answer(id: string, options: { answer: string; cookie: readonly string[] }) {
+async function answer(
+  id: string,
+  options: { answer: string; cookie: readonly string[]; on?: typeof page },
+) {
   const request = form({ authorization_id: id, answer: options.answer });
-  return page.request('/oauth/consent/answer', {
+  return (options.on ?? page).request('/oauth/consent/answer', {
     ...request,
     headers: { ...request.headers, cookie: options.cookie.join('; ') },
   });
@@ -169,6 +180,29 @@ describe('the consent page', () => {
     // A copy of the cookie kept from before can't answer again: its sign-in is signed out.
     const replayed = await answer(id, { answer: 'approve', cookie });
     expect(replayed.status).toBe(401);
+  });
+
+  it('still sends the answer on when signing out fails', async () => {
+    const admin = await member({ admin: true });
+    const { id, verifier } = await authorizationRequest();
+    const logged: string[] = [];
+    const flaky = pageWith({
+      consent: { ...consent, signOut: () => Promise.reject(new AuthUnavailableError()) },
+      log: (line) => logged.push(line),
+    });
+    const cookie = cookieFrom(await signIn(id, { ...admin, on: flaky }));
+
+    const approved = await answer(id, { answer: 'approve', cookie, on: flaky });
+
+    expect(approved.status).toBe(303);
+    const redirect = new URL(z.string().parse(approved.headers.get('location')));
+    expect(await verifyToken(await tokenFor(redirect, verifier))).toStrictEqual({
+      userId: admin.userId,
+      oauthClient: clientId,
+    });
+    expect(
+      logged.map((line) => z.object({ message: z.string() }).parse(JSON.parse(line)).message),
+    ).toStrictEqual(['consent page sign-out failed']);
   });
 
   it('sends a denial back to the client', async () => {
@@ -262,7 +296,7 @@ describe('the consent page', () => {
 
   it('offers no password sign-in where it is off', async () => {
     const { id } = await authorizationRequest();
-    const off = pageWith(false);
+    const off = pageWith({ passwordSignIn: false });
 
     const shown = await (await off.request(`/oauth/consent?authorization_id=${id}`)).text();
     const posted = await off.request(

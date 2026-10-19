@@ -58,6 +58,18 @@ export function consentPage(deps: ConsentPageDependencies) {
   } as const;
   const callbackUrl = new URL(`${PATH}/callback`, deps.publicUrl);
 
+  /**
+   * Ends this page's sign-in at the provider. Best effort: by now the answer may have been
+   * recorded, and the admin must still be sent on; the cookie is gone and the token expires.
+   */
+  const signOut = async (session: ConsentSession) => {
+    try {
+      await deps.consent.signOut(session);
+    } catch (error) {
+      deps.log.error('consent page sign-out failed', { error });
+    }
+  };
+
   /** Checks the fresh sign-in, then shows what the client asks, or sends an earlier answer on. */
   const afterSignIn = async (
     c: Context,
@@ -70,13 +82,13 @@ export function consentPage(deps: ConsentPageDependencies) {
       const caller = await deps.verifyToken(session.accessToken);
       await deps.admins.requireAdmin(caller.userId);
     } catch (error) {
-      await deps.consent.signOut(session);
+      await signOut(session);
       if (!(error instanceof NotAnAdminError)) throw error;
       return c.html(notAnAdmin(), 403);
     }
     const request = await deps.consent.request(authorizationId, session);
     if (request.kind === 'answered') {
-      await deps.consent.signOut(session);
+      await signOut(session);
       return c.redirect(request.redirectUrl.href, 303);
     }
     setCookie(c, SESSION_COOKIE, `${authorizationId}~${session.accessToken}`, cookie);
@@ -135,7 +147,7 @@ export function consentPage(deps: ConsentPageDependencies) {
     const session = { accessToken: saved.secret };
     if (saved.authorizationId !== form.authorization_id) {
       // One sign-in, one answer: a sign-in sent with another request is used up too.
-      await deps.consent.signOut(session);
+      await signOut(session);
       throw new ConsentSignInRequiredError();
     }
     try {
@@ -148,7 +160,7 @@ export function consentPage(deps: ConsentPageDependencies) {
       });
       return c.redirect(next.href, 303);
     } finally {
-      await deps.consent.signOut(session);
+      await signOut(session);
     }
   });
 
