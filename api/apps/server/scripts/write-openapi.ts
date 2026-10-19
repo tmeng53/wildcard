@@ -34,6 +34,7 @@ const app = createApp({
   verifyToken: unused,
   accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
   revokeAppleSignIn: undefined,
+  publicRoutes: { proxyHops: 1, inviteLookups: unused },
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
