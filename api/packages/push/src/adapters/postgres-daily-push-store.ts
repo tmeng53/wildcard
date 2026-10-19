@@ -41,16 +41,25 @@ export function createPostgresDailyPushStore(db: Kysely<DB>): DailyPushStore {
         .where('day', 'in', [...new Set(withPhone.flatMap((member) => dayOf.get(member) ?? []))])
         .execute();
       const done = new Set(handled.map(({ member_id, day }) => `${member_id} ${day}`));
-      return withPhone.flatMap((member) => {
+      const due = withPhone.filter((member) => !done.has(`${member} ${dayOf.get(member) ?? ''}`));
+      if (due.length === 0) return [];
+      const last = await db
+        .selectFrom('daily_pushes')
+        .select(['member_id', (eb) => eb.fn.max('handled_at').as('handled_at')])
+        .where('member_id', 'in', due)
+        .groupBy('member_id')
+        .execute();
+      const lastOf = new Map(last.map((row) => [row.member_id, new Date(row.handled_at)]));
+      return due.flatMap((member) => {
         const day = dayOf.get(member);
-        return day === undefined || done.has(`${member} ${day}`) ? [] : [{ member, day }];
+        return day === undefined ? [] : [{ member, day, lastHandledAt: lastOf.get(member) }];
       });
     },
 
-    async claim({ member, day, quiet }) {
+    async claim({ member, day, quiet, at }) {
       const row = await db
         .insertInto('daily_pushes')
-        .values({ member_id: member, day: LocalDay.parse(day), quiet })
+        .values({ member_id: member, day: LocalDay.parse(day), quiet, handled_at: at })
         .onConflict((conflict) => conflict.columns(['member_id', 'day']).doNothing())
         .returning('member_id')
         .executeTakeFirst();

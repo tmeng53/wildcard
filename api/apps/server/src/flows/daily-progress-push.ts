@@ -14,9 +14,6 @@ import type { Log } from '../log.js';
 /** The daily push goes out at this hour on each member's own clock, or later that evening. */
 export const DAILY_PUSH_HOUR = 18;
 
-/** How far back the daily push looks for what teammates did: the day since the last one. */
-const WINDOW_MS = 24 * 60 * 60 * 1000;
-
 /** How many members' pushes are put together at once. */
 const AT_ONCE = 4;
 
@@ -71,8 +68,8 @@ export interface DailyProgressRun {
 
 /**
  * Sends each member their one push of the day once their clock passes 6pm: the squad's week so
- * far and who reacted to, poked or otherwise cheered them on in the last day. Meant to run every
- * few minutes; each member's day is handled once, claimed before sending, so runs can overlap or
+ * far and who reacted to, poked or otherwise cheered them on since their last one. Meant to run
+ * every few minutes; each member's day is handled once, claimed before sending, so runs can overlap or
  * repeat. A member whose squad was quiet and who got nothing gets no push that day.
  */
 export async function sendDailyProgress(
@@ -80,6 +77,9 @@ export async function sendDailyProgress(
 ): Promise<DailyProgressRun> {
   const now = deps.clock();
   const evening = await deps.members.pastLocalHour({ hour: DAILY_PUSH_HOUR, now });
+  const dayBefore = new Map<string, Date>(
+    evening.map(({ member, hourTheDayBefore }) => [member, hourTheDayBefore]),
+  );
   const due = await deps.push.dailyDue(
     evening.map(({ member, day }) => ({
       member: PushMember.parse(member),
@@ -89,7 +89,17 @@ export async function sendDailyProgress(
   const outcomes: Outcome[] = [];
   for (let start = 0; start < due.length; start += AT_ONCE) {
     const batch = due.slice(start, start + AT_ONCE);
-    outcomes.push(...(await Promise.all(batch.map((each) => handle(deps, { ...each, now })))));
+    outcomes.push(
+      ...(await Promise.all(
+        batch.map(async (each) => {
+          // Always there: every member due is one of this evening's.
+          const earliest = dayBefore.get(each.member);
+          if (earliest === undefined) return 'failed';
+          const last = each.lastHandledAt ?? earliest;
+          return handle(deps, { ...each, since: last > earliest ? last : earliest, until: now });
+        }),
+      )),
+    );
   }
   const count = (outcome: Outcome) => outcomes.filter((each) => each === outcome).length;
   return {
@@ -104,17 +114,22 @@ export async function sendDailyProgress(
 
 type Outcome = 'sent' | 'unsent' | 'quiet' | 'skipped' | 'failed';
 
-/** A member whose push is due, and the moment of this run. */
-type Due = DailyCandidate & { readonly now: Date };
+/**
+ * A member whose push is due, and what it covers: from their last one (or 6pm on their clock the
+ * day before, if that is later) to this run, which their day is then handled at. So consecutive
+ * pushes meet, and nothing is counted twice or left out, whenever in the evening a run reaches
+ * them.
+ */
+type Due = DailyCandidate & { readonly since: Date; readonly until: Date };
 
 /** One member's push. Never throws, so one member's failure never stops the others'. */
 async function handle(deps: DailyProgressDependencies, due: Due): Promise<Outcome> {
-  const { member, day } = due;
+  const { member, day, until } = due;
   let notification: PushNotification | undefined;
   try {
     notification = await compose(deps, due);
     const quiet = notification === undefined;
-    if (!(await deps.push.claimDaily({ member, day, quiet }))) return 'skipped';
+    if (!(await deps.push.claimDaily({ member, day, quiet, at: until }))) return 'skipped';
     if (notification === undefined) return 'quiet';
   } catch (error) {
     deps.log.error('daily push not put together', { member, day, error });
@@ -136,12 +151,12 @@ async function handle(deps: DailyProgressDependencies, due: Due): Promise<Outcom
 /** The member's push for today, or `undefined` when there is nothing to tell them. */
 async function compose(
   deps: DailyProgressDependencies,
-  { member, day, now }: Due,
+  { member, day, since, until }: Due,
 ): Promise<PushNotification | undefined> {
   // The squad the app shows: the one they joined first.
   const [squad] = await deps.squads.listMine(SquadMember.parse(member));
   if (squad === undefined) return undefined;
-  const window = { member, since: new Date(now.getTime() - WINDOW_MS), until: now };
+  const window = { member, since, until };
   const [today, ...received] = await Promise.all([
     deps.checkIns.squadToday({
       viewer: CheckInMember.parse(member),

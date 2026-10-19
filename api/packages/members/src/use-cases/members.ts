@@ -1,5 +1,5 @@
 import type { MemberId, Profile } from '../domain/profile.js';
-import type { ProfileStore } from '../ports.js';
+import type { PastLocalHour, ProfileStore } from '../ports.js';
 import { findProfile } from './members/find-profile.js';
 import { saveProfile, type SaveProfileInput } from './members/save-profile.js';
 
@@ -16,12 +16,10 @@ export interface Members {
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**
    * Everyone whose own clock at `now` reads `hour` o'clock or later, before midnight, with their
-   * local day (`YYYY-MM-DD`). Members who haven't saved a time zone aren't on it.
+   * local day (`YYYY-MM-DD`) and when their clock read `hour` o'clock the day before. Members who
+   * haven't saved a time zone aren't on it.
    */
-  pastLocalHour(input: {
-    readonly hour: number;
-    readonly now: Date;
-  }): Promise<{ readonly member: MemberId; readonly day: string }[]>;
+  pastLocalHour(input: { readonly hour: number; readonly now: Date }): Promise<PastLocalHour[]>;
 }
 
 export function createMembers(deps: { readonly store: ProfileStore }): Members {

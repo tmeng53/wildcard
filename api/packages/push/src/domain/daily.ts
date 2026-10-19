@@ -11,3 +11,8 @@ export interface DailyCandidate {
   readonly member: MemberId;
   readonly day: LocalDay;
 }
+
+/** A member whose daily push is due, and when their last one was handled. */
+export interface DuePush extends DailyCandidate {
+  readonly lastHandledAt: Date | undefined;
+}

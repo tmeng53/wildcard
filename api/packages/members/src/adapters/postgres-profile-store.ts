@@ -49,14 +49,25 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
     async pastLocalHour({ hour, now }) {
       // Postgres turns the moment into each member's wall-clock time with its own zone data,
       // the same data that checked the zone when it was saved.
+      // The day before's hour comes from the same zone data, so it moves with a clock change.
       const local = sql`(${now}::timestamptz at time zone profiles.time_zone)`;
       const rows = await db
         .selectFrom('profiles')
-        .select(['member_id', sql<string>`${local}::date::text`.as('day')])
+        .select([
+          'member_id',
+          sql<string>`${local}::date::text`.as('day'),
+          sql<Date>`((${local})::date - 1 + make_time(${hour}::int, 0, 0)) at time zone profiles.time_zone`.as(
+            'hour_the_day_before',
+          ),
+        ])
         .where(sql<boolean>`extract(hour from ${local}) >= ${hour}`)
         .orderBy('member_id')
         .execute();
-      return rows.map(({ member_id, day }) => ({ member: MemberId.parse(member_id), day }));
+      return rows.map((row) => ({
+        member: MemberId.parse(row.member_id),
+        day: row.day,
+        hourTheDayBefore: new Date(row.hour_the_day_before),
+      }));
     },
 
     async save(member: MemberId, profile) {

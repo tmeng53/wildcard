@@ -7,7 +7,7 @@ export { createOffSender } from './adapters/off-sender.js';
 export { createPostgresDailyPushStore } from './adapters/postgres-daily-push-store.js';
 export { createPostgresDeviceStore, type PushTables } from './adapters/postgres-device-store.js';
 export { createPostgresSettingsStore } from './adapters/postgres-settings-store.js';
-export { LocalDay, type DailyCandidate } from './domain/daily.js';
+export { LocalDay, type DailyCandidate, type DuePush } from './domain/daily.js';
 export { DeviceToken, MemberId, PushEnvironment, type Device } from './domain/device.js';
 export { apnsPayload, type EventValue, type PushNotification } from './domain/notification.js';
 export { DEFAULT_PUSH_SETTINGS, PushTopic, type PushSettings } from './domain/topic.js';

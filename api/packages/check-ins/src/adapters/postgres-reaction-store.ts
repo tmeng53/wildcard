@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId } from '../domain/check-in.js';
+import { MemberId, SquadId } from '../domain/check-in.js';
 import { ReactionKind, type Reaction } from '../domain/reaction.js';
 import type { ReactionStore } from '../ports.js';
 import type { DB } from './tables.js';
@@ -59,6 +59,14 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
           'check_in_reactions.member_id',
           'check_in_reactions.kind',
           'check_in_reactions.reacted_at',
+          (eb) =>
+            eb
+              .selectFrom('check_in_squads')
+              .select(
+                sql<string[]>`array_agg(check_in_squads.squad_id order by position)`.as('ids'),
+              )
+              .whereRef('check_in_squads.check_in_id', '=', 'check_ins.id')
+              .as('audience'),
         ])
         .where('check_ins.member_id', '=', member)
         .where('check_in_reactions.reacted_at', '>=', since)
@@ -68,7 +76,9 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
         .execute();
       // A kind this release no longer has is left out, not an error.
       return rows.flatMap((row) =>
-        ReactionKind.safeParse(row.kind).success ? [fromRow(row)] : [],
+        ReactionKind.safeParse(row.kind).success
+          ? [{ ...fromRow(row), audience: (row.audience ?? []).map((id) => SquadId.parse(id)) }]
+          : [],
       );
     },
   };

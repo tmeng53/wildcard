@@ -288,6 +288,37 @@ describe('the daily progress push', () => {
     ]);
   });
 
+  it('counts from the last push on, so a reaction is never counted twice', async () => {
+    const [eve, mate] = [await member(evening), await member(morning)];
+    const squad = await squadOf(eve, mate);
+    await react({ token: mate.token, checkIn: await trained(eve, squad), kind: 'cheer' });
+    // Yesterday's push went out after that cheer, so it carried it.
+    const yesterday = new Date(Date.parse(dayAt(eve.offset)) - 24 * HOUR)
+      .toISOString()
+      .slice(0, 10);
+    await sql`insert into public.daily_pushes (member_id, day, quiet, handled_at)
+      values (${eve.userId}, ${yesterday}, false, now())`.execute(db);
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      { alert: { key: 'push.dailyProgress', args: ['1', '10'] }, event: { received: {} } },
+    ]);
+  });
+
+  it('leaves out a reaction from a teammate no longer in the squad the check-in went to', async () => {
+    const [eve, mate] = [await member(evening), await member(morning)];
+    const first = await squadOf(eve, mate);
+    // Still teammates, in another squad.
+    await squadOf(eve, mate);
+    await react({ token: mate.token, checkIn: await trained(eve, first), kind: 'cheer' });
+    await sql`delete from public.squad_members where squad_id = ${first} and member_id = ${mate.userId}`.execute(
+      db,
+    );
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      { alert: { key: 'push.dailyProgress' }, event: { squad: first, received: {} } },
+    ]);
+  });
+
   it('sends nothing to a member who turned it off', async () => {
     const eve = await member(evening);
     const mate = await member(morning);

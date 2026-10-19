@@ -1,11 +1,11 @@
-import type { MemberId } from '../../domain/check-in.js';
+import type { MemberId, SquadId } from '../../domain/check-in.js';
 import type { ReactionKind } from '../../domain/reaction.js';
 import type { CheckInStore, ReactionStore } from '../../ports.js';
 
 /**
  * Who reacted to the member's check-ins in `[since, until)`, by kind: each teammate once per
- * kind, however many check-ins they reacted to. Only teammates in one of the member's squads
- * now count, as in the reactions the member sees.
+ * kind, however many check-ins they reacted to. A reaction counts only while its author and the
+ * member still share a squad the check-in went to, as in the reactions the member sees.
  */
 export async function reactionsReceived(
   { store, reactions }: { readonly store: CheckInStore; readonly reactions: ReactionStore },
@@ -20,10 +20,14 @@ export async function reactionsReceived(
     store.squadsOf(member),
   ]);
   if (received.length === 0) return new Map();
-  const teammates = await store.membersOfAny([...squads]);
+  const membersOf = new Map<SquadId, ReadonlySet<MemberId>>(
+    await Promise.all(
+      [...squads].map(async (squad) => [squad, new Set(await store.membersOf(squad))] as const),
+    ),
+  );
   const byKind = new Map<ReactionKind, Set<MemberId>>();
-  for (const { member: from, kind } of received) {
-    if (!teammates.has(from)) continue;
+  for (const { member: from, kind, audience } of received) {
+    if (!audience.some((squad) => membersOf.get(squad)?.has(from) === true)) continue;
     const people = byKind.get(kind) ?? new Set<MemberId>();
     people.add(from);
     byKind.set(kind, people);

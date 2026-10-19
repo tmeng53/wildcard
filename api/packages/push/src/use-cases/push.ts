@@ -1,4 +1,4 @@
-import type { DailyCandidate, LocalDay } from '../domain/daily.js';
+import type { DailyCandidate, DuePush, LocalDay } from '../domain/daily.js';
 import type { Device, DeviceToken, MemberId } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
 import type { PushSettings } from '../domain/topic.js';
@@ -32,15 +32,16 @@ export interface Push {
    * Of these members, each on their own today, those whose daily push is due: they have a phone,
    * haven't turned it off, and today's hasn't been handled.
    */
-  dailyDue(candidates: readonly DailyCandidate[]): Promise<DailyCandidate[]>;
+  dailyDue(candidates: readonly DailyCandidate[]): Promise<DuePush[]>;
   /**
-   * Marks the member's daily push for `day` handled, `quiet` when there's nothing to send. False when another run already
-   * did, and then this one must not send it.
+   * Marks the member's daily push for `day` handled `at` that moment, `quiet` when there's nothing
+   * to send. False when another run already did, and then this one must not send it.
    */
   claimDaily(input: {
     readonly member: MemberId;
     readonly day: LocalDay;
     readonly quiet: boolean;
+    readonly at: Date;
   }): Promise<boolean>;
 }
 
