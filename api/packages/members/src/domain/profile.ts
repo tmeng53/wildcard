@@ -11,7 +11,7 @@ export type MemberId = z.infer<typeof MemberId>;
  */
 export const TimeZone = z
   .string()
-  .regex(/^[A-Za-z]+(\/[A-Za-z0-9_+-]+)*$/, 'Must be an IANA time zone name')
+  .regex(/^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+)*$/, 'Must be an IANA time zone name')
   .max(64);
 export type TimeZone = z.infer<typeof TimeZone>;
 

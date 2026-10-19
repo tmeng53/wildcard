@@ -174,6 +174,7 @@ describe('PUT /me/profile', () => {
   it.each([
     ['by its old name', 'Asia/Calcutta'],
     ['with no area', 'GMT'],
+    ['with digits in its first part', 'EST5EDT'],
   ])('accepts a zone iOS may report %s', async (_case, timeZone) => {
     const { token } = await signUp();
     const profile = { version: 1, timeZone };

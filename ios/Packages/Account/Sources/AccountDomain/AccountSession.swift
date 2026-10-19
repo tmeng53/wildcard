@@ -75,7 +75,6 @@ public actor AccountSession {
         let new = try await provider.signIn(with: credential)
         // In memory first, so a renewal of the old session that finishes during the save sees
         // it was replaced and saves nothing.
-        let previous = session
         session = new
         restored = true
         renewal = nil
@@ -83,10 +82,13 @@ public actor AccountSession {
         do {
             try await store.save(new)
         } catch {
+            // Signed out rather than back on the old session, whose renewal may already have
+            // used its refresh token.
             if session == new {
-                session = previous
+                session = nil
                 publish()
             }
+            try? await provider.signOut(new)
             throw error
         }
         return new.member
@@ -192,10 +194,9 @@ public actor AccountSession {
             result = .failure(error)
         }
         // Signed out, or signed in again, while renewing: the result belongs to an old session.
-        guard let latest = session else { return .failure(.signedOut) }
-        guard latest.refreshToken == current.refreshToken else {
+        guard let latest = session, latest.refreshToken == current.refreshToken else {
             if case .success(let orphan) = result { try? await provider.signOut(orphan) }
-            return .success(())
+            return session == nil ? .failure(.signedOut) : .success(())
         }
         switch result {
         case .success(let new):

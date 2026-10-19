@@ -111,7 +111,7 @@
               "timeZone": {
                 "type": "string",
                 "maxLength": 64,
-                "pattern": "^[A-Za-z]+(\\/[A-Za-z0-9_+-]+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
                 "description": "The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.",
                 "example": "America/Los_Angeles"
               }
@@ -142,7 +142,7 @@
           "timeZone": {
             "type": "string",
             "maxLength": 64,
-            "pattern": "^[A-Za-z]+(\\/[A-Za-z0-9_+-]+)*$",
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
             "description": "The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.",
             "example": "America/Los_Angeles"
           }
