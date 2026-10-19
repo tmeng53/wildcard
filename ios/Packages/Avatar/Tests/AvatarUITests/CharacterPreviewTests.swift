@@ -178,18 +178,21 @@ struct CharacterPreviewTests {
             performances.append((idling, cheering))
         }
         try writeGIF(
-            frames(seconds: 10.5) { time in
+            // 20 frames a second keeps the long, wide GIF small enough to print in CI's log.
+            frames(seconds: 10.5, fps: 20) { time in
                 try sideBySide(
                     zip(looks, performances).map { look, performance in
                         let onStage = time < 8 ? performance.idling : performance.cheering
                         return try look.render(image: onStage.pose(at: time), scale: 1, background: Self.mist)
                     })
             },
-            to: url)
+            fps: 20, to: url)
     }
 
-    private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
-        try (0..<Int((seconds * Self.fps).rounded())).map { index in try render(Double(index) / Self.fps) }
+    private func frames(
+        seconds: Double, fps: Double = CharacterPreviewTests.fps, _ render: (Double) throws -> CGImage
+    ) throws -> [CGImage] {
+        try (0..<Int((seconds * fps).rounded())).map { index in try render(Double(index) / fps) }
     }
 
     /// Images side by side, as one image.
@@ -237,12 +240,12 @@ struct CharacterPreviewTests {
         #expect(CGImageDestinationFinalize(destination))
     }
 
-    private func writeGIF(_ images: [CGImage], to url: URL) throws {
+    private func writeGIF(_ images: [CGImage], fps: Double = CharacterPreviewTests.fps, to url: URL) throws {
         let destination = try #require(
             CGImageDestinationCreateWithURL(url as CFURL, UTType.gif.identifier as CFString, images.count, nil))
         let loopForever = [kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: 0]]
         CGImageDestinationSetProperties(destination, loopForever as CFDictionary)
-        let delay = 1 / Self.fps
+        let delay = 1 / fps
         let frame = [
             kCGImagePropertyGIFDictionary as String: [
                 kCGImagePropertyGIFDelayTime as String: delay, kCGImagePropertyGIFUnclampedDelayTime as String: delay,

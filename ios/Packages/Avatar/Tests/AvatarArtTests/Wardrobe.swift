@@ -2,8 +2,8 @@ import AvatarArt
 import AvatarDomain
 
 /// The squad, then one look for every other body, hair and face part in the bundle (a body in
-/// a tee and shorts, a hair or face part on the lifter), so tests that run over looks cover
-/// every piece of art.
+/// a tee and shorts, a hair or face part on the lifter), and a person and each kind of animal
+/// holding every prop, so tests that run over looks cover every piece of art.
 let wardrobe: [Outfit] = {
     let squad = PlaceholderCharacter.squad
     func unworn(_ slot: Slot) -> [String] {
@@ -17,7 +17,14 @@ let wardrobe: [Outfit] = {
             return look
         }
     }
-    return squad + bodies + onLifter
+    // One body per species with every prop, since an animal can hold one too.
+    let firsts = ["peach", "cat", "shiba", "collie", "rabbit", "lop", "bear"]
+    let armed = firsts.flatMap { body in
+        PlaceholderCharacter.variants(for: "prop").map {
+            Outfit(["body": body, "top": "tee", "bottom": "shorts", "prop": $0])
+        }
+    }
+    return squad + bodies + onLifter + armed
 }()
 
 /// Coats whose pattern is the point (a calico's patches, a husky's mask): their art keeps

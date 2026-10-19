@@ -211,7 +211,7 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
 
 /// Every look stays inside the canvas through every frame of every persona's clips, with its
 /// species' moves on top, so a view sized to
-/// the art never cuts off an ear or a racket. The bottom edge is left out: the shadow sits on it.
+/// the art never cuts off an ear, a tail or a racket. Only the shadow may touch the bottom edge.
 @Test(arguments: Persona.allCases, wardrobe)
 func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
@@ -227,8 +227,10 @@ func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
                 for shape in part.art.flatMap(\.shapes) {
                     let margin = (shape.stroke?.width ?? 0) / 2
                     for point in outline(shape.path).map(placement.transform.apply(to:)) {
+                        let bottom = part.id == "shadow" || point.y + margin <= figure.height
                         #expect(
-                            point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0,
+                            point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0
+                                && bottom,
                             "\(persona.rawValue) \(name) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
                     }
                 }
