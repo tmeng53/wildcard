@@ -1,0 +1,8 @@
+# How scripts/swift-openapi.sh turns api/apps/server/openapi.json into Swift.
+generate:
+  - types
+accessModifier: public
+namingStrategy: idiomatic
+# Generated code keeps the generator's style, not ours; .swiftlint.yml excludes it too.
+additionalFileComments:
+  - swift-format-ignore-file
