@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 100.39 97.93 C 103.5 103.78 96.54 113.57 84.83 119.8 C 73.13 126.02 61.12 126.32 58.01 120.47 C 54.9 114.62 61.86 104.83 73.57 98.6 C 85.27 92.38 97.28 92.08 100.39 97.93 Z" fill="#FFFFFF" fill-opacity="0.5"/>
+  <ellipse cx="78" cy="184.8" rx="12" ry="8.4" fill="#FF8FA3" fill-opacity="0.5"/>
+  <ellipse cx="162" cy="184.8" rx="12" ry="8.4" fill="#FF8FA3" fill-opacity="0.5"/>
+</svg>

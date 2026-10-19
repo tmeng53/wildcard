@@ -9,8 +9,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL", "flapR", "nose", "eyes",
-            "brows", "glasses", "mouthSmile", "mouthOpen", "propR", "armL", "armR",
+            "shadow", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL", "flapR", "crown", "nose",
+            "eyes", "brows", "glasses", "mouthSmile", "mouthOpen", "propR", "armL", "armR",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
     #expect(try figure.part("propR").art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
@@ -97,7 +97,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 20)
+    #expect(figure.parts.count == 21)
 }
 
 @Test(arguments: Persona.allCases)
@@ -157,21 +157,28 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     #expect(try openMouth(.deadpan, at: 5.5) == 1)
 }
 
-/// Rabbits and dogs carry their ears as parts of their own, upright ones behind the head and
-/// floppy ones over it, so the moves can turn them; rabbits move their noses too.
-@Test func rabbitsAndDogsMoveTheirEarsOnTheirOwn() throws {
-    let choices = try PlaceholderCharacter.editorChoices()
-    let floppy: Set = ["lop", "golden", "collie"]
-    for species in choices.species where ["dog", "rabbit"].contains(species.id) {
-        for body in species.bodies {
-            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
-            let ears: [PartID] = floppy.contains(body) ? ["flapL", "flapR"] : ["earL", "earR"]
-            let others: [PartID] = floppy.contains(body) ? ["earL", "earR"] : ["flapL", "flapR"]
-            #expect(try ears.allSatisfy { try !figure.part($0).art.isEmpty }, "\(body)")
-            #expect(try others.allSatisfy { try figure.part($0).art.isEmpty }, "\(body)")
-            #expect(try figure.part("nose").art.isEmpty == (species.id == "dog"), "\(body)")
+/// Rabbits and pointy-eared dogs carry their ears as parts of their own, so the moves can turn
+/// them: upright ears behind the head, a lop's floppy ones over it; rabbits move their noses too.
+/// Dogs whose ears don't move (a golden's, a bichon's) keep them in the head's art, drawn as before.
+@Test func earsThatMoveArePartsOfTheirOwn() throws {
+    let parts: [String: [PartID]] = [
+        "rabbit": ["earL", "earR", "nose"], "dutch": ["earL", "earR", "nose"], "lop": ["flapL", "flapR", "nose"],
+        "shiba": ["earL", "earR"], "corgi": ["earL", "earR"], "husky": ["earL", "earR"],
+        "golden": [], "collie": [], "bichon": [],
+    ]
+    for (body, moving) in parts {
+        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
+        for part in ["earL", "earR", "flapL", "flapR", "nose"] as [PartID] {
+            #expect(try figure.part(part).art.isEmpty == !moving.contains(part), "\(body) \(part)")
         }
     }
+}
+
+/// A hat sits over floppy ears, as it did before the ears were parts of their own.
+@Test func hatsSitOverFloppyEars() throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "lop", "hat": "cap"]))
+    #expect(try figure.index("crown") > figure.index("flapL") && figure.index("crown") > figure.index("flapR"))
+    #expect(try figure.part("crown").art.count == 2)
 }
 
 /// The same pose, give or take floating-point rounding.
@@ -209,10 +216,10 @@ func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for name in ["idle", "cheer"] {
         let bound = try figure.bind(PlaceholderCharacter.clip(name, persona: persona, body: outfit.variants["body"]))
-        // An idle with its species' moves on top repeats only once both loops line up, so
-        // this plays it for as long as the longer of the two.
-        let accents = bound.clip.loops ? bound.clip.accents.map { $0.clip.duration / $0.tempo } : []
-        for frame in 0...Int(((accents + [bound.clip.duration]).max() ?? 0) * 50) {
+        // An idle with its species' moves on top lines its two loops up differently each time
+        // round, so it plays for 20 s, a few rounds of the longest.
+        let seconds = bound.clip.accents.isEmpty || !bound.clip.loops ? bound.clip.duration : 20
+        for frame in 0...Int(seconds * 50) {
             let time = Double(frame) / 50
             for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
             where placement.opacity > 0 {

@@ -151,7 +151,7 @@ struct CharacterPreviewTests {
         try writePNG(stacked(rows), to: url)
     }
 
-    /// A person, a cat, two dogs, a rabbit and a bear, each on another persona, idling with their
+    /// A person, a cat, two dogs, a rabbit, a bear and a lop in a cap, each on another persona, idling with their
     /// species' moves on top (a yawn, a head tilt, ears, a belly scratch), then cheering at 8 s.
     private func writeSpecies(to url: URL) throws {
         let cast: [(Persona, Outfit)] = [
@@ -161,6 +161,7 @@ struct CharacterPreviewTests {
             (.deadpan, Outfit(["body": "golden", "top": "tee", "bottom": "shorts"])),
             (.showoff, Outfit(["body": "rabbit", "top": "tee", "bottom": "shorts"])),
             (.shy, PlaceholderCharacter.bear),
+            (.drama, Outfit(["body": "lop", "hat": "cap", "top": "tee", "bottom": "shorts"])),
         ]
         var looks: [Frame] = []
         var performances: [Performance] = []

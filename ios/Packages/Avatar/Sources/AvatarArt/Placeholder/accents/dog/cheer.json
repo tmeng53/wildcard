@@ -11,22 +11,6 @@
       { "t": 1.0, "v": 0, "ease": "easeInOut" }, { "t": 1.062, "v": 22, "ease": "easeInOut" }, { "t": 1.188, "v": -22, "ease": "easeInOut" }, { "t": 1.25, "v": 0, "ease": "easeInOut" },
       { "t": 1.312, "v": 22, "ease": "easeInOut" }, { "t": 1.438, "v": -22, "ease": "easeInOut" }, { "t": 1.5, "v": 0, "ease": "easeInOut" }, { "t": 1.562, "v": 22, "ease": "easeInOut" },
       { "t": 1.688, "v": -22, "ease": "easeInOut" }, { "t": 1.75, "v": 0, "ease": "easeInOut" }, { "t": 1.812, "v": 22, "ease": "easeInOut" }, { "t": 1.938, "v": -22, "ease": "easeInOut" },
-      { "t": 2.0, "v": 0, "ease": "easeInOut" } ] },
-    { "part": "earL", "channel": "y", "keys": [
-      { "t": 0, "v": 0 }, { "t": 0.2, "v": 0 }, { "t": 0.45, "v": 6, "ease": "easeInOut" }, { "t": 0.7, "v": -3, "ease": "easeInOut" },
-      { "t": 0.95, "v": 4, "ease": "easeInOut" }, { "t": 1.2, "v": -1.5, "ease": "easeInOut" }, { "t": 1.45, "v": 1, "ease": "easeInOut" }, { "t": 1.7, "v": 0, "ease": "easeInOut" },
-      { "t": 2, "v": 0 } ] },
-    { "part": "earR", "channel": "y", "keys": [
-      { "t": 0, "v": 0 }, { "t": 0.2, "v": 0 }, { "t": 0.45, "v": 6, "ease": "easeInOut" }, { "t": 0.7, "v": -3, "ease": "easeInOut" },
-      { "t": 0.95, "v": 4, "ease": "easeInOut" }, { "t": 1.2, "v": -1.5, "ease": "easeInOut" }, { "t": 1.45, "v": 1, "ease": "easeInOut" }, { "t": 1.7, "v": 0, "ease": "easeInOut" },
-      { "t": 2, "v": 0 } ] },
-    { "part": "flapL", "channel": "y", "keys": [
-      { "t": 0, "v": 0 }, { "t": 0.2, "v": 0 }, { "t": 0.45, "v": 6, "ease": "easeInOut" }, { "t": 0.7, "v": -3, "ease": "easeInOut" },
-      { "t": 0.95, "v": 4, "ease": "easeInOut" }, { "t": 1.2, "v": -1.5, "ease": "easeInOut" }, { "t": 1.45, "v": 1, "ease": "easeInOut" }, { "t": 1.7, "v": 0, "ease": "easeInOut" },
-      { "t": 2, "v": 0 } ] },
-    { "part": "flapR", "channel": "y", "keys": [
-      { "t": 0, "v": 0 }, { "t": 0.2, "v": 0 }, { "t": 0.45, "v": 6, "ease": "easeInOut" }, { "t": 0.7, "v": -3, "ease": "easeInOut" },
-      { "t": 0.95, "v": 4, "ease": "easeInOut" }, { "t": 1.2, "v": -1.5, "ease": "easeInOut" }, { "t": 1.45, "v": 1, "ease": "easeInOut" }, { "t": 1.7, "v": 0, "ease": "easeInOut" },
-      { "t": 2, "v": 0 } ] }
+      { "t": 2.0, "v": 0, "ease": "easeInOut" } ] }
   ]
 }
