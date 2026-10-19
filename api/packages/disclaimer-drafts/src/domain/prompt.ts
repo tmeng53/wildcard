@@ -1,9 +1,6 @@
-import {
-  STYLE_NAMES,
-  type DraftReason,
-  type DraftStyle,
-  type PromptMeme,
-} from './draft-request.js';
+import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+
+import { STYLE_NAMES, type DraftReason, type PromptMeme } from './draft-request.js';
 
 // The prompt for 请假条 drafts. The product spec owns its wording and its eval cases:
 // change it there first, then here. The reply names its outcome, so a reason about self-harm
@@ -40,7 +37,7 @@ export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写�
 /** The user message: the reason, the style, and this week's memes for that style, if any. */
 export function promptFor(request: {
   readonly reason: DraftReason;
-  readonly style: DraftStyle;
+  readonly style: DisclaimerStyle;
   readonly memes: readonly PromptMeme[];
 }): string {
   const lines = [`原因：${request.reason}`, `风格：${STYLE_NAMES[request.style]}`];

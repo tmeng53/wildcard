@@ -15,8 +15,13 @@ describe('a meme draft', () => {
     expect(MemeDraft.parse(city)).toStrictEqual({ ...city, phrase: 'city不city' });
   });
 
+  it('counts characters as people see them, so an emoji is one', () => {
+    expect(MemeDraft.safeParse({ ...city, phrase: '👍🏽'.repeat(30) }).success).toBe(true);
+  });
+
   it.each([
     ['no background', { ...city, background: ' ' }],
+    ['a phrase of only zero-width spaces', { ...city, phrase: '\u200B\u200B' }],
     ['no styles', { ...city, styles: [] }],
     ['a style twice', { ...city, styles: ['funny', 'funny'] }],
     ['a style the app lacks', { ...city, styles: ['wholesome'] }],

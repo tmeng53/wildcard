@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import { graphemeCount, type DraftReason } from './draft-request.js';
+import { graphemeCount } from '@wildcard/typed-text';
+
+import type { DraftReason } from './draft-request.js';
 
 // What the model answers, and the checks every answer passes before a member sees it. An
 // answer that fails a check is never shown in part: the app shows its dice suggestions

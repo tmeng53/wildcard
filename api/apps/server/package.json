@@ -16,6 +16,7 @@
     "@wildcard/admins": "workspace:*",
     "@wildcard/check-ins": "workspace:*",
     "@wildcard/disclaimer-drafts": "workspace:*",
+    "@wildcard/disclaimer-styles": "workspace:*",
     "@wildcard/errors": "workspace:*",
     "@wildcard/members": "workspace:*",
     "@wildcard/memes": "workspace:*",
