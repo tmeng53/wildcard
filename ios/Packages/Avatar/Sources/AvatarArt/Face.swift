@@ -17,10 +17,22 @@ extension PlaceholderCharacter {
 }
 
 extension Outfit {
+    /// Puts on a variant, or takes the slot off with nil, which drops its color too: a color
+    /// needs a variant to paint. Brows put on without a color of their own take the hair's.
+    public mutating func wear(_ variant: String?, in slot: Slot) {
+        variants[slot] = variant
+        if variant == nil {
+            colors[slot] = nil
+        } else if slot == "brows", colors["brows"] == nil {
+            colors["brows"] = colors["hair"]
+        }
+    }
+
     /// Dyes the hair, and the brows with it unless the look gave them a color of their own:
-    /// brows follow the hair until someone picks them separately.
+    /// brows follow the hair until someone picks them separately. A look without brows gets
+    /// no brow color, since a color needs a variant to paint.
     public mutating func dyeHair(_ color: RGBAColor) {
-        if colors["brows"] == colors["hair"] { colors["brows"] = color }
+        if variants["brows"] != nil, colors["brows"] == colors["hair"] { colors["brows"] = color }
         colors["hair"] = color
     }
 }

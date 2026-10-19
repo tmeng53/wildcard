@@ -75,6 +75,20 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(look.colors["hair"] == blonde && look.colors["brows"] == black)
     let figure = try PlaceholderCharacter.figure(wearing: look)
     #expect(figure.parts[8].art[0].shapes.allSatisfy { $0.stroke?.color == black })
+
+    // Without brows, only the hair takes the color, and the look still builds.
+    var browless = Outfit(["body": "peach", "hair": "bob"])
+    browless.dyeHair(auburn)
+    #expect(browless.colors == ["hair": auburn])
+    _ = try PlaceholderCharacter.figure(wearing: browless)
+    // Brows put on later take the dyed hair's color.
+    browless.wear("bold", in: "brows")
+    #expect(browless.colors["brows"] == auburn)
+    _ = try PlaceholderCharacter.figure(wearing: browless)
+    // Taking brows off drops their color, so the look still builds.
+    look.wear(nil, in: "brows")
+    #expect(look.colors["brows"] == nil && look.variants["brows"] == nil)
+    _ = try PlaceholderCharacter.figure(wearing: look)
 }
 
 @Test(arguments: wardrobe)
