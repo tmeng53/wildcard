@@ -62,7 +62,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     log: createLog((line) => logged.push(JSON.parse(line))),
-    admin: adminOn(db),
+    admin: adminOn(),
   });
   const call = async (
     ...[method, path, token, body, contentType = 'application/json']: [

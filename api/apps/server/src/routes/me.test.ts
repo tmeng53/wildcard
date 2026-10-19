@@ -50,7 +50,7 @@ async function send(
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
-    admin: adminOn(db),
+    admin: adminOn(),
   });
   try {
     const response = await app.request(path, init);

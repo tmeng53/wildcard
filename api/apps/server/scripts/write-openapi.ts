@@ -53,8 +53,8 @@ const app = createApp({
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(unused),
   admin: {
-    admins: { requireAdmin: unused, logChange: unused, listLog: unused },
-    tools: [],
+    admins: () => ({ requireAdmin: unused, logChange: unused, listLog: unused }),
+    tools: () => [],
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL('http://localhost:54321/auth/v1'),
   },

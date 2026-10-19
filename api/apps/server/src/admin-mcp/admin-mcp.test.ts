@@ -55,7 +55,7 @@ beforeAll(async () => {
       },
       (info: AddressInfo) => {
         const publicUrl = new URL(`http://localhost:${String(info.port)}`);
-        const admin = adminOn(db);
+        const admin = adminOn();
         const photos = {
           createUploadUrl: unused,
           exists: unused,
@@ -93,11 +93,22 @@ beforeAll(async () => {
           log: createLog(() => undefined),
           admin: {
             ...admin,
+            // Writing the log fails for a meme marked so, as a dropped connection would.
+            admins: (scope) => {
+              const admins = admin.admins(scope);
+              return {
+                ...admins,
+                logChange: (entry) =>
+                  String(entry.arguments.phrase).startsWith(logFails)
+                    ? Promise.reject(new Error('the log is unreachable'))
+                    : admins.logChange(entry),
+              };
+            },
             publicUrl,
-            tools: [
-              listAdminLog(admin),
+            tools: (scope) => [
+              listAdminLog({ admins: admin.admins(scope) }),
               ...memeTools({
-                memes: createMemes({ store: createPostgresMemeStore(db), clock: () => now }),
+                memes: createMemes({ store: createPostgresMemeStore(scope), clock: () => now }),
                 clock: () => now,
               }),
               // A tool that changes something, standing in for the meme tools.
@@ -124,6 +135,7 @@ afterAll(async () => {
 });
 
 const now = new Date('2026-10-19T16:00:00.000Z');
+const logFails = '日志断了';
 const unused = () => Promise.reject(new Error('the admin tools use no photos'));
 
 /** A member signed up through local Supabase Auth, on the admin list when asked. */
@@ -327,6 +339,39 @@ describe('the admin MCP server', () => {
       'turn_off_meme',
       'turn_on_meme',
     ]);
+    await client.close();
+  });
+
+  it('keeps no change whose log row could not be written', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const phrase = `${logFails}${randomUUID().slice(0, 8)}`;
+    await client.callTool({
+      name: 'add_memes',
+      arguments: {
+        memes: [
+          {
+            phrase,
+            background: '网线被拔了。',
+            meaning: '断了。',
+            styles: ['funny'],
+            source: '微博',
+          },
+        ],
+      },
+    });
+
+    const failed = await client.callTool({ name: 'turn_off_meme', arguments: { phrase } });
+
+    expect(failed.isError).toBe(true);
+    const meme = await sql<{ disabled_at: Date | null }>`
+      select disabled_at from public.memes where phrase = ${phrase}
+    `.execute(db);
+    expect(meme.rows).toStrictEqual([{ disabled_at: null }]);
+    const rows = await sql<{ action: { tool: string } }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by id
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action.tool)).toStrictEqual(['add_memes']);
     await client.close();
   });
 

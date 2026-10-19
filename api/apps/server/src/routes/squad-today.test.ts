@@ -54,7 +54,7 @@ const app = createApp({
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   log: createLog(() => undefined),
-  admin: adminOn(db),
+  admin: adminOn(),
 });
 
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */

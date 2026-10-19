@@ -79,7 +79,7 @@ function appWith(model: LanguageModel) {
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     log: createLog((line) => logged.push(JSON.parse(line))),
-    admin: adminOn(db),
+    admin: adminOn(),
   });
   return { app, logged };
 }

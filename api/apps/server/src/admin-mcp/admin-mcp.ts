@@ -10,15 +10,18 @@ import { Hono } from 'hono';
 
 import { AdminSignInRequiredError, AuthTokenMissingError } from '../errors.js';
 import type { Log } from '../log.js';
-import type { VerifyToken } from '../ports.js';
+import type { Database, VerifyToken } from '../ports.js';
 import { problemResponse } from '../problem.js';
 import { bearerToken } from '../require-caller.js';
 import type { AdminTool } from './admin-tool.js';
 
 export interface AdminMcpDependencies {
+  readonly db: Database;
   readonly verifyToken: VerifyToken;
-  readonly admins: Admins;
-  readonly tools: readonly AdminTool[];
+  /** The admin list and log, working on `db` or on a transaction of it. */
+  readonly admins: (db: Database) => Admins;
+  /** The tools, working on `db` or on a transaction of it. */
+  readonly tools: (db: Database) => readonly AdminTool[];
   /** Where clients reach this API; the MCP server is at `/mcp` under it. */
   readonly publicUrl: URL;
   /** The OAuth 2.1 authorization server that signs admins in (Supabase Auth's issuer). */
@@ -34,6 +37,8 @@ export interface AdminMcpDependencies {
  * https://modelcontextprotocol.io/specification/latest/basic/authorization
  */
 export function adminMcp(deps: AdminMcpDependencies) {
+  const admins = deps.admins(deps.db);
+  const tools = deps.tools(deps.db);
   const resource = new URL('/mcp', deps.publicUrl);
   const metadataUrl = getOAuthProtectedResourceMetadataUrl(resource);
   // RFC 9728 protected resource metadata. https://www.rfc-editor.org/rfc/rfc9728
@@ -49,7 +54,7 @@ export function adminMcp(deps: AdminMcpDependencies) {
       // Set below, after the admin check; a request never reaches the handler without it.
       const admin = AdminId.parse(authInfo?.extra?.admin);
       const server = new McpServer({ name: 'wildcard-admin', version: '1.0.0' });
-      for (const tool of deps.tools) {
+      for (const tool of tools) {
         server.registerTool(
           tool.name,
           {
@@ -60,10 +65,9 @@ export function adminMcp(deps: AdminMcpDependencies) {
           },
           async (input): Promise<CallToolResult> => {
             try {
-              const result = await tool.run(input, { admin });
-              if (tool.changes) {
-                await deps.admins.logChange({ admin, tool: tool.name, arguments: input });
-              }
+              const result = tool.changes
+                ? await runLogged(deps, { name: tool.name, input, admin })
+                : await tool.run(input, { admin });
               return { content: [{ type: 'text', text: JSON.stringify(result) }] };
             } catch (error) {
               return toolFailure(error, { tool: tool.name, log: deps.log });
@@ -88,7 +92,7 @@ export function adminMcp(deps: AdminMcpDependencies) {
       const token = bearerToken(c.req.header('authorization'));
       const caller = await deps.verifyToken(token);
       if (caller.oauthClient === undefined) throw new AdminSignInRequiredError();
-      const admin = await deps.admins.requireAdmin(caller.userId);
+      const admin = await admins.requireAdmin(caller.userId);
       authInfo = { token, clientId: caller.oauthClient, scopes: [], extra: { admin } };
     } catch (error) {
       if (!isAppError(error) || error.status !== 'UNAUTHENTICATED') throw error;
@@ -122,4 +126,26 @@ function toolFailure(
     isError: true,
     content: [{ type: 'text', text: 'The tool failed. Try again shortly.' }],
   };
+}
+
+/**
+ * Runs a tool that changes something and logs the call in one transaction, so a change is
+ * never kept without its log row, nor logged without the change.
+ */
+function runLogged(
+  deps: AdminMcpDependencies,
+  call: {
+    readonly name: AdminTool['name'];
+    readonly input: Record<string, unknown>;
+    readonly admin: AdminId;
+  },
+) {
+  const { name, input, admin } = call;
+  return deps.db.transaction().execute(async (trx) => {
+    const tool = deps.tools(trx).find((each) => each.name === name);
+    if (tool === undefined) throw new Error(`No admin tool ${name} in the transaction`);
+    const result = await tool.run(input, { admin });
+    await deps.admins(trx).logChange({ admin, tool: name, arguments: input });
+    return result;
+  });
 }

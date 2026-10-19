@@ -53,7 +53,7 @@ async function getHealth(db: Database) {
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog((line) => lines.push(line)),
-    admin: adminOn(db),
+    admin: adminOn(),
   });
   try {
     const response = await app.request('/health');
@@ -129,7 +129,7 @@ describe('an unknown route', () => {
       push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
-      admin: adminOn(db),
+      admin: adminOn(),
     });
     const response = await app.request('/nope', { method: 'POST' });
     expect([response.status, await response.json()]).toStrictEqual([

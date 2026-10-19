@@ -42,9 +42,10 @@ export interface AppDependencies {
   readonly log: Log;
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
-    readonly admins: Admins;
-    /** Its tools; `main.ts` lists them. */
-    readonly tools: readonly AdminTool[];
+    /** The admin list and log, working on the database or on a transaction of it. */
+    readonly admins: (db: Database) => Admins;
+    /** Its tools, working on the database or on a transaction of it; `main.ts` lists them. */
+    readonly tools: (db: Database) => readonly AdminTool[];
     /** Where clients reach this API. */
     readonly publicUrl: URL;
     /** The OAuth 2.1 authorization server that signs admins in. */
@@ -78,7 +79,10 @@ export function createApp(deps: AppDependencies) {
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
-  app.route('/', adminMcp({ ...deps.admin, verifyToken: deps.verifyToken, log: deps.log }));
+  app.route(
+    '/',
+    adminMcp({ ...deps.admin, db: deps.db, verifyToken: deps.verifyToken, log: deps.log }),
+  );
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((thrown, c) => {

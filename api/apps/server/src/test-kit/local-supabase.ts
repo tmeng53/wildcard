@@ -35,9 +35,10 @@ export async function signOut(token: string) {
 }
 
 /** The admin MCP server's settings on local Supabase, with these tools. */
-export function adminOn(db: Database, tools: readonly AdminTool[] = []) {
+export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []) {
   return {
-    admins: createAdmins({ store: createPostgresAdminStore(db), clock: () => new Date() }),
+    admins: (db: Database) =>
+      createAdmins({ store: createPostgresAdminStore(db), clock: () => new Date() }),
     tools,
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL(`${config.supabaseUrl}/auth/v1`),

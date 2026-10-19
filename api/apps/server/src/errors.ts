@@ -156,11 +156,6 @@ export class RouteNotFoundError extends AppError {
 }
 
 /**
- * Thrown when the admin tools get a token from our own app's sign-in. Admin tools take only a
- * token issued to the MCP client through the OAuth sign-in, so a token from a phone can't reach
- * them. Sign in from the MCP client.
- */
-/**
  * Thrown when a token issued to an OAuth client (an MCP client signing an admin in) calls the
  * app's routes: those take only the app's own sign-in, so a third-party client a member
  * approved can't act as them.
@@ -175,6 +170,11 @@ export class AppSignInRequiredError extends AppError {
   }
 }
 
+/**
+ * Thrown when the admin tools get a token from our own app's sign-in. Admin tools take only a
+ * token issued to an MCP client through the OAuth sign-in, which keeps the two kinds of token
+ * apart. Sign in from the MCP client.
+ */
 export class AdminSignInRequiredError extends AppError {
   override readonly name = 'AdminSignInRequiredError';
   readonly reason = 'ADMIN_SIGN_IN_REQUIRED';

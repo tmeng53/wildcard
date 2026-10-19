@@ -55,7 +55,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
-    admin: adminOn(db),
+    admin: adminOn(),
   });
   try {
     const response = await app.request('/photo-uploads', { method: 'POST', headers });

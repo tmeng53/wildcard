@@ -52,7 +52,7 @@ const app = createApp({
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(() => undefined),
-  admin: adminOn(db),
+  admin: adminOn(),
 });
 
 async function call({

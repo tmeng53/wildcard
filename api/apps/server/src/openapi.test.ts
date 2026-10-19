@@ -56,12 +56,12 @@ describe('openapi.json', () => {
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
       admin: {
-        admins: {
+        admins: () => ({
           requireAdmin: () => Promise.reject(new Error('unused')),
           logChange: () => Promise.reject(new Error('unused')),
           listLog: () => Promise.reject(new Error('unused')),
-        },
-        tools: [],
+        }),
+        tools: () => [],
         publicUrl: new URL('http://localhost:8080'),
         authorizationServer: new URL('http://localhost:54321/auth/v1'),
       },
