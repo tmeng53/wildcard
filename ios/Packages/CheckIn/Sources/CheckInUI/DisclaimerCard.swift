@@ -135,7 +135,10 @@ struct DisclaimerCard: View {
         }
         isWriting = true
         defer { isWriting = false }
-        switch await model.suggestions(for: reason) {
+        let result = await model.suggestions(for: reason)
+        // The field may have changed while the writer worked; its answer is about the old reason.
+        guard entry.text.trimmingCharacters(in: .whitespaces) == reason else { return }
+        switch result {
         case .drafts(let lines):
             let fitted = lines.map(DisclaimerEntry.fit).filter { !$0.isEmpty }
             drafts = fitted.isEmpty ? DiceDisclaimerWriter.rollDefault(3) : Array(fitted.prefix(3))

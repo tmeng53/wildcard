@@ -126,23 +126,33 @@ private struct Stage: View {
     /// How far below the top of the figure's frame the bubble's tail ends: the art leaves this
     /// much room above the hair for hats and the cheer's jump.
     private static let headroom: Double = 0.16
+    /// Width over height of the empty spot that stands in for missing art.
+    private static let placeholderAspect: Double = 0.6
 
     let model: TodayModel
 
     var body: some View {
+        figure
+            .frame(height: Self.figureHeight)
+            .overlay(alignment: .top) {
+                PayoffBubble(line: model.payoff?.line)
+                    .alignmentGuide(.top) { $0[.bottom] - Self.figureHeight * Self.headroom }
+            }
+            .overlay(alignment: .topTrailing) {
+                PinnedCover(cover: model.payoff?.cover)
+                    .alignmentGuide(.trailing) { $0[.leading] + Space.xxs }
+                    .alignmentGuide(.top) { $0[.top] - Self.figureHeight * 0.18 }
+            }
+            .frame(maxWidth: .infinity)
+    }
+
+    /// The character, or an empty spot of its size if its art failed to load, so a post still
+    /// shows its line and cover.
+    @ViewBuilder private var figure: some View {
         if let player = model.player {
             CharacterView(player: player)
-                .frame(height: Self.figureHeight)
-                .overlay(alignment: .top) {
-                    PayoffBubble(line: model.payoff?.line)
-                        .alignmentGuide(.top) { $0[.bottom] - Self.figureHeight * Self.headroom }
-                }
-                .overlay(alignment: .topTrailing) {
-                    PinnedCover(cover: model.payoff?.cover)
-                        .alignmentGuide(.trailing) { $0[.leading] + Space.xxs }
-                        .alignmentGuide(.top) { $0[.top] - Self.figureHeight * 0.18 }
-                }
-                .frame(maxWidth: .infinity)
+        } else {
+            Color.clear.frame(width: Self.figureHeight * Self.placeholderAspect)
         }
     }
 }

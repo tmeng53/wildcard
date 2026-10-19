@@ -1,8 +1,8 @@
 import Contracts
 
 /// What the 免责声明 card holds: the line being written, and whether the writer refused to joke
-/// about it. A refused reason can't be posted, so teammates never see it; any edit, a dice roll
-/// or a picked draft makes a new line that can.
+/// about it. A refused reason can't be posted, so teammates never see it; any edit or a picked
+/// draft makes a new line that can.
 struct DisclaimerEntry: Hashable, Sendable {
     private(set) var text = ""
     private(set) var isBlocked = false
