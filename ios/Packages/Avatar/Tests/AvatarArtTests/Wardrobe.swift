@@ -1,11 +1,12 @@
 import AvatarArt
 import AvatarDomain
+import AvatarLooks
 
 /// The squad, then one look for every other body, hair and face part in the bundle (a body in
 /// a tee and shorts, a hair or face part on the lifter), and a person and each kind of animal
 /// holding every prop, so tests that run over looks cover every piece of art.
 let wardrobe: [Outfit] = {
-    let squad = PlaceholderCharacter.squad
+    let squad = Looks.squad
     func unworn(_ slot: Slot) -> [String] {
         PlaceholderCharacter.variants(for: slot).filter { variant in !squad.contains { $0.variants[slot] == variant } }
     }

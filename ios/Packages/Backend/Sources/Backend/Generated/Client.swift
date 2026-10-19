@@ -2757,7 +2757,7 @@ internal struct Client: APIProtocol {
     }
     /// Where a squad’s day and week stand
     ///
-    /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
+    /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday, and a member who hasn’t saved a weekly plan has the default one. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.

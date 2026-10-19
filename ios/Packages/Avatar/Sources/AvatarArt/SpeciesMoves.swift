@@ -1,19 +1,13 @@
 import AvatarDomain
 
 extension PlaceholderCharacter {
-    /// The species a body belongs to, as `editor.json` groups them (`person` for people), or
-    /// nil for a body it doesn't list.
-    public static func species(of body: String) -> String? {
-        if people.contains(body) { return "person" }
-        return (try? editorChoices())?.species.first { $0.bodies.contains(body) }?.id
-    }
-
-    /// A persona's `idle` or `cheer`, with the moves of `body`'s species on top: a cat's yawn,
-    /// a dog's wag, a rabbit's ears. Each species' moves are `accents/<species>/<name>.json`;
-    /// one that has none for this clip plays the persona's clip as it is.
-    public static func clip(_ name: String, persona: Persona, body: String?) throws(AvatarError) -> Clip {
+    /// A persona's `idle` or `cheer`, with the moves of a species on top (an `editor.json`
+    /// species id): a cat's yawn, a dog's wag, a rabbit's ears. Each species' moves are
+    /// `accents/<species>/<name>.json`; one that has none for this clip plays the persona's
+    /// clip as it is.
+    public static func clip(_ name: String, persona: Persona, species: String?) throws(AvatarError) -> Clip {
         let clip = try clip(name, persona: persona)
-        guard let body, let species = species(of: body), let data = try? file("accents/\(species)/\(name).json")
+        guard let species, let data = try? file("accents/\(species)/\(name).json")
         else { return clip }
         return try clip.accented(by: Clip.decode(data), tempo: persona.accentTempo, strength: persona.accentStrength)
     }

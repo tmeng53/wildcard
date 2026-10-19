@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import AvatarArt
 import AvatarDomain
+import AvatarLooks
 import AvatarUI
 import Foundation
 import ImageIO
@@ -26,7 +27,7 @@ struct CharacterPreviewTests {
     @Test(.enabled(if: CharacterPreviewTests.folder != nil)) func writePreviews() throws {
         let folder = try #require(Self.folder)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let squad = try PlaceholderCharacter.squad.map { outfit in try Frame(outfit: outfit) }
+        let squad = try Looks.squad.map { outfit in try Frame(outfit: outfit) }
         try writePNG(
             sideBySide(
                 squad.map { look in try look.render(image: look.figure.restPose, scale: 2, background: Self.mist) }),
@@ -93,7 +94,7 @@ struct CharacterPreviewTests {
             (PlaceholderCharacter.lifter, "body"), (PlaceholderCharacter.lifter, "hair"),
             (sparkly, "eyes"), (PlaceholderCharacter.lifter, "brows"),
             (PlaceholderCharacter.lifter, "top"), (PlaceholderCharacter.lifter, "bottom"),
-            (PlaceholderCharacter.cat, "body"), (PlaceholderCharacter.bear, "body"),
+            (Looks.cat, "body"), (Looks.bear, "body"),
         ]
         let sheet = try rows.map { outfit, slot in
             let variant = try #require(outfit.variants[slot])
@@ -128,7 +129,7 @@ struct CharacterPreviewTests {
         try writePNG(stacked(rows), to: url)
     }
 
-    /// A row per face slot, each of its variants on the lifter; then the baller's face at the
+    /// A row per face slot, each of its variants on the lifter; then the athlete's face at the
     /// height of each persona's cheer, open mouth and raised brows.
     private func writeFaces(to url: URL) throws {
         var rows = try PlaceholderCharacter.faceSlots.map { slot in
@@ -140,13 +141,13 @@ struct CharacterPreviewTests {
                     return try look.render(image: look.figure.restPose, scale: 1, background: Self.mist)
                 })
         }
-        let baller = try Frame(outfit: PlaceholderCharacter.baller)
+        let athlete = try Frame(outfit: Looks.athlete)
         rows.append(
             try sideBySide(
                 Persona.allCases.map { persona in
-                    let cheer = try baller.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
-                    let pose = baller.figure.pose(cheer, at: persona == .deadpan ? 1.3 : 0.7)
-                    return try baller.render(image: pose, scale: 1, background: Self.mist)
+                    let cheer = try athlete.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
+                    let pose = athlete.figure.pose(cheer, at: persona == .deadpan ? 1.3 : 0.7)
+                    return try athlete.render(image: pose, scale: 1, background: Self.mist)
                 }))
         try writePNG(stacked(rows), to: url)
     }
@@ -160,20 +161,21 @@ struct CharacterPreviewTests {
             (.energetic, Outfit(["body": "shiba", "top": "tee", "bottom": "shorts"])),
             (.deadpan, Outfit(["body": "golden", "top": "tee", "bottom": "shorts"])),
             (.showoff, Outfit(["body": "rabbit", "top": "tee", "bottom": "shorts"])),
-            (.shy, PlaceholderCharacter.bear),
+            (.shy, Looks.bear),
             (.drama, Outfit(["body": "lop", "hat": "cap", "top": "tee", "bottom": "shorts"])),
         ]
         var looks: [Frame] = []
         var performances: [(idling: Performance, cheering: Performance)] = []
         for (persona, outfit) in cast {
             let look = try Frame(outfit: outfit)
-            let body = outfit.variants["body"]
-            let idle = try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: body))
+            let species = Looks.species(of: outfit)
+            let idle = try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona, species: species))
             let idling = Performance(figure: look.figure, idle: idle)
             // A clip played ahead of its time shows its first frame until then, so the cheer
             // is only on stage from 8 s.
             var cheering = idling
-            cheering.play(try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, body: body)), at: 8)
+            cheering.play(
+                try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, species: species)), at: 8)
             looks.append(look)
             performances.append((idling, cheering))
         }

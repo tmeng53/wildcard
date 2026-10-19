@@ -1,10 +1,11 @@
 import AvatarArt
 import AvatarDomain
+import AvatarLooks
 import Foundation
 import Testing
 
 /// The bundled files load and fit together, so a broken edit to them fails here, not on a phone.
-@Test(arguments: PlaceholderCharacter.squad)
+@Test(arguments: Looks.squad)
 func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
@@ -14,11 +15,12 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "eyes", "brows", "glasses", "mouthSmile", "mouthOpen", "propR", "armL", "armR",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
-    #expect(try figure.part("propR").art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
-    #expect(try figure.part("tail").art.count == (outfit == PlaceholderCharacter.cat ? 1 : 0))
+    #expect(try figure.part("propR").art.count == (outfit == Looks.bear ? 0 : 1))
+    #expect(try figure.part("tail").art.count == (outfit == Looks.cat ? 1 : 0))
     // Everyone has eyes and both mouths; only people pick brows.
     #expect(try ["eyes", "mouthSmile", "mouthOpen"].allSatisfy { try figure.part($0).art.count == 1 })
-    let isPerson = PlaceholderCharacter.people.contains(outfit.variants["body"] ?? "")
+    let people = try PlaceholderCharacter.editorChoices().species.filter(\.wearsHair).flatMap(\.bodies)
+    let isPerson = people.contains(outfit.variants["body"] ?? "")
     #expect(try figure.part("brows").art.count == (isPerson ? 1 : 0))
     // The open mouth waits hidden until the cheer swaps it in.
     #expect(figure.layout(figure.restPose)[try figure.index("mouthOpen")].opacity == 0)
@@ -29,7 +31,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(
         PlaceholderCharacter.variants(for: "body") == [
             "bear", "bichon", "calico", "cat", "collie", "corgi", "dutch", "golden", "husky", "lihua", "lop",
-            "orangewhite", "peach", "rabbit", "ragdoll", "shiba", "siamese", "tan", "tortie", "tuxedo",
+            "orangewhite", "peach", "rabbit", "ragdoll", "shiba", "siamese", "tortie", "tuxedo",
         ])
     #expect(
         PlaceholderCharacter.variants(for: "hair") == [
@@ -43,56 +45,17 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(PlaceholderCharacter.variants(for: "cape").isEmpty)
 }
 
-/// People pick hair and a face; animals keep the default face their coat goes with.
-@Test func theEditorOffersAFaceToPeopleOnly() {
-    #expect(
-        PlaceholderCharacter.slots(for: "tan") == [
-            "body", "hair", "eyes", "brows", "mouth", "cheeks", "glasses", "hat", "top", "bottom", "prop",
-        ])
-    #expect(PlaceholderCharacter.slots(for: "cat") == ["body", "hat", "top", "bottom", "prop"])
-    #expect(PlaceholderCharacter.people.allSatisfy(PlaceholderCharacter.variants(for: "body").contains))
-}
-
 /// A cat leaves its face out and still gets round eyes and a smile; a person can pick others.
 @Test func looksWithoutAFaceWearTheDefaultOne() throws {
-    let cat = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.cat)
+    let cat = try PlaceholderCharacter.figure(wearing: Looks.cat)
     let plain = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "eyes": "round", "mouth": "smile"]))
     let bare = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
     #expect(try cat.part("eyes").art == plain.part("eyes").art)
     #expect(try bare.part("eyes").art == plain.part("eyes").art)
     #expect(try bare.part("mouthSmile").art == plain.part("mouthSmile").art)
-    let baller = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.baller)
-    #expect(try baller.part("eyes").art != plain.part("eyes").art)
-    #expect(try baller.part("mouthSmile").art != plain.part("mouthSmile").art)
-}
-
-/// Brows take the hair's color until they're given their own.
-@Test func browsFollowTheHairUntilPickedSeparately() throws {
-    let (auburn, blonde, black) = try (
-        #require(RGBAColor(hex: "#A2452F")), #require(RGBAColor(hex: "#E2BF74")), #require(RGBAColor(hex: "#2A2333"))
-    )
-    var look = PlaceholderCharacter.lifter
-    look.dyeHair(auburn)
-    #expect(look.colors["hair"] == auburn && look.colors["brows"] == auburn)
-    look.colors["brows"] = black
-    look.dyeHair(blonde)
-    #expect(look.colors["hair"] == blonde && look.colors["brows"] == black)
-    let figure = try PlaceholderCharacter.figure(wearing: look)
-    #expect(try figure.part("brows").art[0].shapes.allSatisfy { $0.stroke?.color == black })
-
-    // Without brows, only the hair takes the color, and the look still builds.
-    var browless = Outfit(["body": "peach", "hair": "bob"])
-    browless.dyeHair(auburn)
-    #expect(browless.colors == ["hair": auburn])
-    _ = try PlaceholderCharacter.figure(wearing: browless)
-    // Brows put on later take the dyed hair's color.
-    browless.wear("bold", in: "brows")
-    #expect(browless.colors["brows"] == auburn)
-    _ = try PlaceholderCharacter.figure(wearing: browless)
-    // Taking brows off drops their color, so the look still builds.
-    look.wear(nil, in: "brows")
-    #expect(look.colors["brows"] == nil && look.variants["brows"] == nil)
-    _ = try PlaceholderCharacter.figure(wearing: look)
+    let athlete = try PlaceholderCharacter.figure(wearing: Looks.athlete)
+    #expect(try athlete.part("eyes").art != plain.part("eyes").art)
+    #expect(try athlete.part("mouthSmile").art != plain.part("mouthSmile").art)
 }
 
 @Test(arguments: wardrobe)
@@ -119,10 +82,12 @@ func everyPersonaHasAnIdleAndACheer(persona: Persona) throws {
 /// so the idle still loops without a jump and the cheer still lands where the idle starts.
 @Test(arguments: Persona.allCases, ["peach", "cat", "shiba", "golden", "rabbit", "lop", "bear"])
 func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
+    let look = Outfit(["body": body])
+    let figure = try PlaceholderCharacter.figure(wearing: look)
+    let species = Looks.species(of: look)
     let plainIdle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
-    let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: body))
-    let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, body: body))
+    let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona, species: species))
+    let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, species: species))
     #expect(idle.clip.accents.count == 1)
     #expect(idle.clip.accents.first?.tempo == persona.accentTempo)
     #expect(idle.clip.accents.first?.strength == persona.accentStrength)
@@ -131,23 +96,23 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     #expect(nearlyEqual(figure.pose(cheer, at: cheer.clip.duration), figure.pose(idle, at: 0)))
 }
 
-/// Bodies the editor doesn't list, or a species with no moves, play the persona's clip as is.
-@Test func speciesFollowTheEditorsGroups() throws {
-    #expect(PlaceholderCharacter.species(of: "tan") == "person")
-    #expect(PlaceholderCharacter.species(of: "lop") == "rabbit")
-    #expect(PlaceholderCharacter.species(of: "husky") == "dog")
-    #expect(PlaceholderCharacter.species(of: "dragon") == nil)
-    #expect(try PlaceholderCharacter.clip("idle", persona: .shy, body: "dragon").accents.isEmpty)
-    #expect(try PlaceholderCharacter.clip("idle", persona: .shy, body: nil).accents.isEmpty)
+/// Every species the editor groups has moves of its own; one it doesn't, or none, plays the
+/// persona's clip as is.
+@Test func everySpeciesHasMoves() throws {
+    for species in try PlaceholderCharacter.editorChoices().species.map(\.id) {
+        #expect(try PlaceholderCharacter.clip("idle", persona: .shy, species: species).accents.count == 1)
+    }
+    #expect(try PlaceholderCharacter.clip("idle", persona: .shy, species: "dragon").accents.isEmpty)
+    #expect(try PlaceholderCharacter.clip("idle", persona: .shy, species: nil).accents.isEmpty)
 }
 
 /// A cat yawns now and then: its mouth opens wide and its eyes shut, later for a deadpan cat,
 /// which does everything slowly.
 @Test func catsYawn() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.cat)
+    let figure = try PlaceholderCharacter.figure(wearing: Looks.cat)
     let mouth = try figure.index("mouthOpen")
     func openMouth(_ persona: Persona, at time: Double) throws -> Double {
-        let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: "cat"))
+        let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona, species: "cat"))
         return figure.layout(figure.pose(idle, at: time))[mouth].opacity
     }
     #expect(try openMouth(.energetic, at: 0) == 0)
@@ -216,7 +181,8 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
 func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for name in ["idle", "cheer"] {
-        let bound = try figure.bind(PlaceholderCharacter.clip(name, persona: persona, body: outfit.variants["body"]))
+        let bound = try figure.bind(
+            PlaceholderCharacter.clip(name, persona: persona, species: Looks.species(of: outfit)))
         // An idle with its species' moves on top lines its two loops up differently each time
         // round, so it plays for 20 s, a few rounds of the longest.
         let seconds = bound.clip.accents.isEmpty || !bound.clip.loops ? bound.clip.duration : 20
@@ -279,15 +245,15 @@ private func outline(_ path: [PathElement]) -> [Point] {
     return points
 }
 
-/// Every body the editor groups is bundled, and every bundled body except `tan` (a skin tone the
-/// person's swatches cover) is in a group; every prop it offers is bundled.
+/// Every body the editor groups is bundled, and every bundled body is in a group; every prop
+/// it offers is bundled.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
     #expect(choices.species.map(\.wearsHair) == [true, false, false, false, false])
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
-    #expect(Set(grouped).union(["tan"]) == Set(PlaceholderCharacter.variants(for: "body")))
+    #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
     #expect(choices.props == ["dumbbell", "racket"])
     #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
 }
@@ -301,5 +267,14 @@ private func outline(_ path: [PathElement]) -> [Point] {
 @Test func editorChoicesOfAnotherVersionAreRejected() {
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try EditorChoices.decode(Data(#"{"version": 2, "species": [], "props": []}"#.utf8))
+    }
+}
+
+/// A misspelt key fails instead of loading as if it were absent.
+@Test func editorChoicesWithAnUnknownKeyAreRejected() {
+    #expect(throws: AvatarError.malformedJSON(#".species[0]: unknown key "hiar""#)) {
+        try EditorChoices.decode(
+            Data(#"{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "props": []}"#.utf8)
+        )
     }
 }

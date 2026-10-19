@@ -32,8 +32,9 @@ export interface WeeklyPlans {
   }): Promise<WeeklyPlan>;
 }
 
-async function find(
-  { store }: Deps,
+/** The member's plan for a week: saved for it, carried over from an earlier week, or the default. */
+export async function findWeeklyPlan(
+  { store }: { readonly store: WeeklyPlanStore },
   { member, weekStart }: { readonly member: MemberId; readonly weekStart: WeekStart },
 ): Promise<WeeklyPlan> {
   const latest = await store.latestFrom(member, weekStart);
@@ -47,12 +48,12 @@ async function find(
 
 export function createWeeklyPlans(deps: Deps): WeeklyPlans {
   return {
-    find: (input) => find(deps, input),
+    find: (input) => findWeeklyPlan(deps, input),
     async save({ member, weekStart, days }) {
       const calendar = await deps.calendarOf(member);
       if (calendar === undefined) throw new TimeZoneNotSetError();
       const { timeZone, joinedAt } = calendar;
-      const current = await find(deps, { member, weekStart });
+      const current = await findWeeklyPlan(deps, { member, weekStart });
       checkPlanChange({
         current,
         next: days,

@@ -10,6 +10,7 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
+import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import {
   CheckInDraft,
   CheckInId,
@@ -37,6 +38,7 @@ const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   reactions: createPostgresReactionStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf,
   clock: () => now,
@@ -192,6 +194,7 @@ describe('saving a check-in', () => {
     const late = createCheckIns({
       store: createPostgresCheckInStore(db),
       reactions: createPostgresReactionStore(db),
+      plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf,
       clock: () => new Date('2026-10-25T00:00:00.000Z'),
@@ -258,6 +261,7 @@ describe('saving a check-in', () => {
           },
         },
         reactions: createPostgresReactionStore(db),
+        plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf,
         clock: () => now,

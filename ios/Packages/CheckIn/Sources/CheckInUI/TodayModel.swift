@@ -57,12 +57,14 @@ public final class TodayModel {
         self.photoSource = photoSource
         player = try? CharacterPlayer(
             figure: PlaceholderCharacter.figure(wearing: Self.look),
-            idle: PlaceholderCharacter.clip("idle", persona: Self.persona, body: Self.look.variants["body"]))
+            idle: PlaceholderCharacter.clip("idle", persona: Self.persona, species: Self.species))
     }
 
     /// The member's look and persona; picked at sign-up once onboarding lands.
     private static let look = PlaceholderCharacter.lifter
     private static let persona = Persona.energetic
+    /// The lifter's species, whose moves play on top of the persona's.
+    private static let species = "person"
 
     var unavailable: Set<Meaning> {
         (board?.myStatus.allowsDisclaimer ?? true) ? [] : [.disclaimer]
@@ -149,7 +151,7 @@ public final class TodayModel {
         payoff = Payoff(meaning: draft.meaning, line: line, cover: cover)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.meaning != .disclaimer,
-            let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, body: Self.look.variants["body"])
+            let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)
         {
             try? player?.play(cheer)
         }
