@@ -52,6 +52,8 @@ jobs:
       # Only the services the database and API tests use.
       - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
       - run: scripts/verify.sh supabase api
+      # The verify-wildcard API journeys, over HTTP against the built server.
+      - run: scripts/api-journeys.sh
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.
