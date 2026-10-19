@@ -140,6 +140,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
+    /// Three AI drafts for a disclaimer
+    ///
+    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    ///
+    /// - Remark: HTTP `POST /disclaimer-drafts`.
+    /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
+    func writeDisclaimerDrafts(_ input: Operations.WriteDisclaimerDrafts.Input) async throws -> Operations.WriteDisclaimerDrafts.Output
     /// The signed-in member’s plan for a week
     ///
     /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
@@ -434,6 +441,21 @@ extension APIProtocol {
         try await getSquadToday(Operations.GetSquadToday.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// Three AI drafts for a disclaimer
+    ///
+    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    ///
+    /// - Remark: HTTP `POST /disclaimer-drafts`.
+    /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
+    public func writeDisclaimerDrafts(
+        headers: Operations.WriteDisclaimerDrafts.Input.Headers = .init(),
+        body: Operations.WriteDisclaimerDrafts.Input.Body
+    ) async throws -> Operations.WriteDisclaimerDrafts.Output {
+        try await writeDisclaimerDrafts(Operations.WriteDisclaimerDrafts.Input(
+            headers: headers,
+            body: body
         ))
     }
     /// The signed-in member’s plan for a week

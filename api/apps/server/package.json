@@ -9,11 +9,13 @@
     "start": "node dist/src/main.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.132.1",
     "@hono/node-server": "2.1.5",
     "@hono/zod-openapi": "1.6.3",
     "@modelcontextprotocol/server": "2.3.1",
     "@wildcard/admins": "workspace:*",
     "@wildcard/check-ins": "workspace:*",
+    "@wildcard/disclaimer-drafts": "workspace:*",
     "@wildcard/errors": "workspace:*",
     "@wildcard/members": "workspace:*",
     "@wildcard/memes": "workspace:*",

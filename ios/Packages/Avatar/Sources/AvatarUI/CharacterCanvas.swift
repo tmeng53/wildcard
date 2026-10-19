@@ -38,21 +38,27 @@ public struct FigureDrawing {
     }
 }
 
-/// Draws one frame: every part where its placement puts it, scaled to fit the view.
+/// Draws one frame: every part where its placement puts it, scaled to fit the view. Pass
+/// `crop`, in canvas points, to fit only that part of the canvas, such as the head for a
+/// hairstyle thumbnail; what falls outside it is clipped.
 public struct CharacterCanvas: View {
     let drawing: FigureDrawing
     let placements: [Placement]
+    let crop: CGRect?
 
-    public init(drawing: FigureDrawing, placements: [Placement]) {
+    public init(drawing: FigureDrawing, placements: [Placement], crop: CGRect? = nil) {
         self.drawing = drawing
         self.placements = placements
+        self.crop = crop
     }
 
     public var body: some View {
         Canvas { context, size in
-            let scale = min(size.width / drawing.width, size.height / drawing.height)
+            let area = crop ?? CGRect(x: 0, y: 0, width: drawing.width, height: drawing.height)
+            let scale = min(size.width / area.width, size.height / area.height)
             let fit = CGAffineTransform(scaleX: scale, y: scale).translatedBy(
-                x: (size.width / scale - drawing.width) / 2, y: (size.height / scale - drawing.height) / 2)
+                x: (size.width / scale - area.width) / 2 - area.minX,
+                y: (size.height / scale - area.height) / 2 - area.minY)
             for (shapes, placement) in zip(drawing.parts, placements) where placement.opacity > 0 && !shapes.isEmpty {
                 var part = context
                 part.transform = CGAffineTransform(placement.transform).concatenating(fit)

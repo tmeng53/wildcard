@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
+import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Push } from '@wildcard/push';
@@ -15,6 +16,7 @@ import type { Log } from './log.js';
 import type { Accounts, Database, PhotoStorage, RevokeAppleSignIn, VerifyToken } from './ports.js';
 import { problemResponse } from './problem.js';
 import { checkIns } from './routes/check-ins.js';
+import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
 import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
@@ -35,6 +37,7 @@ export interface AppDependencies {
   readonly members: Members;
   readonly squads: Squads;
   readonly photos: PhotoStorage;
+  readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
   readonly log: Log;
   /** The admin MCP server at `/mcp`. */
@@ -72,6 +75,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', devices(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
+  app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
   app.route('/', adminMcp({ ...deps.admin, verifyToken: deps.verifyToken, log: deps.log }));
@@ -79,7 +83,9 @@ export function createApp(deps: AppDependencies) {
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((thrown, c) => {
     const error = fromHono(thrown);
-    if (!isAppError(error) || HTTP_STATUS[error.status] >= 500) {
+    // Drafts being off is how the server runs until it has a key, which main.ts logs once.
+    const expected = error instanceof DisclaimerWriterOffError;
+    if (!expected && (!isAppError(error) || HTTP_STATUS[error.status] >= 500)) {
       deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
     }
     return problemResponse(error);

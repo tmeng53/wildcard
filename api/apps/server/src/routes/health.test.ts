@@ -43,6 +43,7 @@ async function getHealth(db: Database) {
     revokeAppleSignIn: undefined,
     checkIns: checkInsOn(db),
     photos,
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
@@ -118,6 +119,7 @@ describe('an unknown route', () => {
       revokeAppleSignIn: undefined,
       checkIns: checkInsOn(db),
       photos,
+      disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       weeklyPlans: createWeeklyPlans({
         store: createPostgresWeeklyPlanStore(db),
         calendarOf: () => Promise.resolve(undefined),

@@ -87,6 +87,7 @@ beforeAll(async () => {
             store: createPostgresSquadStore(db),
             inviteCodes: randomInviteCodes,
           }),
+          disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
           push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
           photos,
           log: createLog(() => undefined),

@@ -45,6 +45,7 @@ describe('openapi.json', () => {
         },
       }),
       photos,
+      disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       weeklyPlans: createWeeklyPlans({
         store: createPostgresWeeklyPlanStore(db),
         calendarOf: () => Promise.resolve(undefined),

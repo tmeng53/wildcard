@@ -1,5 +1,6 @@
 import type { AdminTables } from '@wildcard/admins';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
+import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
@@ -67,11 +68,12 @@ export type RevokeAppleSignIn = (authorizationCode: string) => Promise<void>;
  * (`pnpm db-types`), never written by hand.
  */
 export type Tables = CheckInTables &
+  DisclaimerDraftTables &
   MemberTables &
+  MemeTables &
   PushTables &
   SquadTables &
-  AdminTables &
-  MemeTables;
+  AdminTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

@@ -33,6 +33,7 @@ describe('readConfig', () => {
       supabaseUrl: 'http://127.0.0.1:54321',
       supabaseSecretKey: 'sb_secret_local',
       publicUrl: new URL('http://localhost:8080'),
+      anthropicApiKey: undefined,
       appleSignInKey: undefined,
       apns: undefined,
     });

@@ -14,6 +14,9 @@
       "path": "packages/check-ins"
     },
     {
+      "path": "packages/disclaimer-drafts"
+    },
+    {
       "path": "packages/members"
     },
     {

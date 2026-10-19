@@ -60,6 +60,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     members,
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     log: createLog((line) => logged.push(JSON.parse(line))),
     admin: adminOn(db),
   });

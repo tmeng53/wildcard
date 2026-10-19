@@ -53,6 +53,7 @@ const app = createApp({
   members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   log: createLog(() => undefined),
   admin: adminOn(db),
 });

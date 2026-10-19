@@ -9,7 +9,7 @@ import SwiftUI
 /// it every display frame; `play` is the only thing callers do.
 @MainActor @Observable
 public final class CharacterPlayer {
-    public let drawing: FigureDrawing
+    public private(set) var drawing: FigureDrawing
     private var performance: Performance
     /// Clip times count from here, so they stay small and precise.
     private let epoch: Date
@@ -19,6 +19,18 @@ public final class CharacterPlayer {
         epoch = now
         performance = Performance(figure: figure, idle: try figure.bind(idle))
     }
+
+    /// Switches to another outfit, idle or both from now, blending from the current pose, so
+    /// a character being dressed doesn't snap. The figure must come from the same rig.
+    public func wear(_ figure: Figure, idle: Clip, now: Date = .now) throws(AvatarError) {
+        let bound = try figure.bind(idle)
+        performance = Performance(
+            continuing: performance, figure: figure, idle: bound, at: now.timeIntervalSince(epoch))
+        drawing = FigureDrawing(figure)
+    }
+
+    /// The figure on screen.
+    public var figure: Figure { performance.figure }
 
     /// Plays a clip from now, blending from the current pose. One-shot clips return to idle.
     public func play(_ clip: Clip, now: Date = .now) throws(AvatarError) {

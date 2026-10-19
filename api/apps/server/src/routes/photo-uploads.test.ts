@@ -45,6 +45,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),

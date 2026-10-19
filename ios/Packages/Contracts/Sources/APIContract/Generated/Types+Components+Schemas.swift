@@ -2802,6 +2802,280 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts`.
+        @frozen public enum DisclaimerDrafts: Codable, Hashable, Sendable {
+            /// Drafts to pick from.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1`.
+            public struct Case1Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1/version`.
+                @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                    case _1 = 1
+                }
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1/version`.
+                public var version: Components.Schemas.DisclaimerDrafts.Case1Payload.VersionPayload
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case drafts = "drafts"
+                }
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1/kind`.
+                public var kind: Components.Schemas.DisclaimerDrafts.Case1Payload.KindPayload
+                /// Three drafts to swipe through, each one line of 15 to 80 characters. The member may edit the one they pick before posting it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1/drafts`.
+                public var drafts: [Swift.String]
+                /// Creates a new `Case1Payload`.
+                ///
+                /// - Parameters:
+                ///   - version:
+                ///   - kind:
+                ///   - drafts: Three drafts to swipe through, each one line of 15 to 80 characters. The member may edit the one they pick before posting it.
+                public init(
+                    version: Components.Schemas.DisclaimerDrafts.Case1Payload.VersionPayload,
+                    kind: Components.Schemas.DisclaimerDrafts.Case1Payload.KindPayload,
+                    drafts: [Swift.String]
+                ) {
+                    self.version = version
+                    self.kind = kind
+                    self.drafts = drafts
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case version
+                    case kind
+                    case drafts
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.version = try container.decode(
+                        Components.Schemas.DisclaimerDrafts.Case1Payload.VersionPayload.self,
+                        forKey: .version
+                    )
+                    self.kind = try container.decode(
+                        Components.Schemas.DisclaimerDrafts.Case1Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.drafts = try container.decode(
+                        [Swift.String].self,
+                        forKey: .drafts
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "version",
+                        "kind",
+                        "drafts"
+                    ])
+                }
+            }
+            /// Drafts to pick from.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case1`.
+            case case1(Components.Schemas.DisclaimerDrafts.Case1Payload)
+            /// The reason speaks of self-harm. No drafts: show the member the care line and the 988 buttons. Nobody else sees anything.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case2`.
+            public struct Case2Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case2/version`.
+                @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                    case _1 = 1
+                }
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case2/version`.
+                public var version: Components.Schemas.DisclaimerDrafts.Case2Payload.VersionPayload
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case2/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case care = "care"
+                }
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case2/kind`.
+                public var kind: Components.Schemas.DisclaimerDrafts.Case2Payload.KindPayload
+                /// Creates a new `Case2Payload`.
+                ///
+                /// - Parameters:
+                ///   - version:
+                ///   - kind:
+                public init(
+                    version: Components.Schemas.DisclaimerDrafts.Case2Payload.VersionPayload,
+                    kind: Components.Schemas.DisclaimerDrafts.Case2Payload.KindPayload
+                ) {
+                    self.version = version
+                    self.kind = kind
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case version
+                    case kind
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.version = try container.decode(
+                        Components.Schemas.DisclaimerDrafts.Case2Payload.VersionPayload.self,
+                        forKey: .version
+                    )
+                    self.kind = try container.decode(
+                        Components.Schemas.DisclaimerDrafts.Case2Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "version",
+                        "kind"
+                    ])
+                }
+            }
+            /// The reason speaks of self-harm. No drafts: show the member the care line and the 988 buttons. Nobody else sees anything.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case2`.
+            case case2(Components.Schemas.DisclaimerDrafts.Case2Payload)
+            /// The AI doesn’t write about this reason. Show the dice suggestions.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case3`.
+            public struct Case3Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case3/version`.
+                @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                    case _1 = 1
+                }
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case3/version`.
+                public var version: Components.Schemas.DisclaimerDrafts.Case3Payload.VersionPayload
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case3/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case declined = "declined"
+                }
+                /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case3/kind`.
+                public var kind: Components.Schemas.DisclaimerDrafts.Case3Payload.KindPayload
+                /// Creates a new `Case3Payload`.
+                ///
+                /// - Parameters:
+                ///   - version:
+                ///   - kind:
+                public init(
+                    version: Components.Schemas.DisclaimerDrafts.Case3Payload.VersionPayload,
+                    kind: Components.Schemas.DisclaimerDrafts.Case3Payload.KindPayload
+                ) {
+                    self.version = version
+                    self.kind = kind
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case version
+                    case kind
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.version = try container.decode(
+                        Components.Schemas.DisclaimerDrafts.Case3Payload.VersionPayload.self,
+                        forKey: .version
+                    )
+                    self.kind = try container.decode(
+                        Components.Schemas.DisclaimerDrafts.Case3Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "version",
+                        "kind"
+                    ])
+                }
+            }
+            /// The AI doesn’t write about this reason. Show the dice suggestions.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts/case3`.
+            case case3(Components.Schemas.DisclaimerDrafts.Case3Payload)
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
+                do {
+                    self = .case1(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case2(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case3(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .case1(value):
+                    try value.encode(to: encoder)
+                case let .case2(value):
+                    try value.encode(to: encoder)
+                case let .case3(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DisclaimerDraftRequest`.
+        public struct DisclaimerDraftRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDraftRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDraftRequest/version`.
+            public var version: Components.Schemas.DisclaimerDraftRequest.VersionPayload
+            /// Why the member didn’t train today, as they typed it: 1 to 100 characters. Only this and the style go to the AI, never names, photos or squads.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDraftRequest/reason`.
+            public var reason: Swift.String
+            /// funny 搞笑, unhinged 发疯, heroic 中二 or stubborn 嘴硬.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDraftRequest/style`.
+            @frozen public enum StylePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case funny = "funny"
+                case unhinged = "unhinged"
+                case heroic = "heroic"
+                case stubborn = "stubborn"
+            }
+            /// funny 搞笑, unhinged 发疯, heroic 中二 or stubborn 嘴硬.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDraftRequest/style`.
+            public var style: Components.Schemas.DisclaimerDraftRequest.StylePayload
+            /// Creates a new `DisclaimerDraftRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - reason: Why the member didn’t train today, as they typed it: 1 to 100 characters. Only this and the style go to the AI, never names, photos or squads.
+            ///   - style: funny 搞笑, unhinged 发疯, heroic 中二 or stubborn 嘴硬.
+            public init(
+                version: Components.Schemas.DisclaimerDraftRequest.VersionPayload,
+                reason: Swift.String,
+                style: Components.Schemas.DisclaimerDraftRequest.StylePayload
+            ) {
+                self.version = version
+                self.reason = reason
+                self.style = style
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case reason
+                case style
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.DisclaimerDraftRequest.VersionPayload.self,
+                    forKey: .version
+                )
+                self.reason = try container.decode(
+                    Swift.String.self,
+                    forKey: .reason
+                )
+                self.style = try container.decode(
+                    Components.Schemas.DisclaimerDraftRequest.StylePayload.self,
+                    forKey: .style
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "reason",
+                    "style"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WeeklyPlan`.
         public struct WeeklyPlan: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/version`.
