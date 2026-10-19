@@ -6,8 +6,8 @@ private let squadA = SquadID(UUID(uuidString: "33333333-3333-3333-3333-333333333
 private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444444")!)
 
 @Test func disclaimerLengthCountsCharactersPeopleSee() throws {
-    #expect(try Disclaimer(String(repeating: "累", count: 40)).text.count == 40)
-    #expect(throws: ContractsError.disclaimerLength(41)) { try Disclaimer(String(repeating: "累", count: 41)) }
+    #expect(try Disclaimer(String(repeating: "累", count: 80)).text.count == 80)
+    #expect(throws: ContractsError.disclaimerLength(81)) { try Disclaimer(String(repeating: "累", count: 81)) }
     #expect(throws: ContractsError.disclaimerLength(0)) { try Disclaimer("   ") }
     #expect(try Disclaimer("  腿还在酸\n明天一定  ").text == "腿还在酸\n明天一定")
 }

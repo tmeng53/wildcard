@@ -947,7 +947,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/DisclaimerView`.
         public struct DisclaimerView: Codable, Hashable, Sendable {
-            /// Trimmed, then 1 to 40 characters as people see them; may span lines.
+            /// Trimmed, then 1 to 80 characters as people see them; may span lines.
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerView/text`.
             public var text: Swift.String
@@ -958,7 +958,7 @@ extension Components {
             /// Creates a new `DisclaimerView`.
             ///
             /// - Parameters:
-            ///   - text: Trimmed, then 1 to 40 characters as people see them; may span lines.
+            ///   - text: Trimmed, then 1 to 80 characters as people see them; may span lines.
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             public init(
                 text: Swift.String,
@@ -1531,7 +1531,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/Disclaimer`.
         public struct Disclaimer: Codable, Hashable, Sendable {
-            /// Trimmed, then 1 to 40 characters as people see them; may span lines.
+            /// Trimmed, then 1 to 80 characters as people see them; may span lines.
             ///
             /// - Remark: Generated from `#/components/schemas/Disclaimer/text`.
             public var text: Swift.String
@@ -1542,7 +1542,7 @@ extension Components {
             /// Creates a new `Disclaimer`.
             ///
             /// - Parameters:
-            ///   - text: Trimmed, then 1 to 40 characters as people see them; may span lines.
+            ///   - text: Trimmed, then 1 to 80 characters as people see them; may span lines.
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             public init(
                 text: Swift.String,
