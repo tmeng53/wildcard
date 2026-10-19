@@ -21,7 +21,7 @@ import Testing
             checkIn("disclaimer", on: "2026-10-19"), checkIn("trained", on: "2026-10-19"),
         ])
     #expect(log.training(on: day("2026-10-19")) == .trained)
-    // The 免责声明 stays in the log for the feed.
+    // The 请假条 stays in the log for the feed.
     #expect(log.checkIns.count == 2)
 }
 
@@ -87,7 +87,7 @@ import Testing
             checkIn("disclaimer", on: "2026-10-21"), checkIn("disclaimer", on: "2026-10-22"),
         ])
     try log.checkPost(checkIn("disclaimer", on: "2026-10-23"), today: day("2026-10-23"), memberSquads: [runners])
-    // Training after a 免责声明 is always welcome.
+    // Training after a 请假条 is always welcome.
     try log.checkPost(checkIn("trained", on: "2026-10-22"), today: day("2026-10-22"), memberSquads: [runners])
 }
 

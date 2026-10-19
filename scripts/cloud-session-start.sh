@@ -34,6 +34,15 @@ if [ -d supabase ]; then
       sleep 0.5
     done
   fi
+  # Signed-in pulls get Docker Hub's higher rate limit. The cloud environment may set these;
+  # the token goes in on stdin, never on the command line.
+  if docker info >/dev/null 2>&1 && [ -n "${DOCKERHUB_USERNAME:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+    if printf '%s' "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin >/tmp/docker-login.log 2>&1; then
+      ready+=("Docker Hub sign-in")
+    else
+      missing+=("Docker Hub sign-in, so pulls are anonymous (see /tmp/docker-login.log)")
+    fi
+  fi
   if ! docker info >/dev/null 2>&1; then
     missing+=("Docker (see /tmp/dockerd.log)")
   # Same CLI choice as scripts/verify.sh: a real binary if installed, else npx.
