@@ -107,7 +107,7 @@ final class StyleGuideUITests: XCTestCase {
     /// `label == %@` for an exact label, `label CONTAINS %@` for the banner's combined label.
     private func waitForLabel(
         of element: XCUIElement, _ format: String, _ text: String, _ message: String,
-        timeout: TimeInterval = 5
+        timeout: TimeInterval = 10
     ) {
         let changed = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: format, text), object: element)

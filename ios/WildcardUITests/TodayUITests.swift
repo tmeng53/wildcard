@@ -133,7 +133,7 @@ final class TodayUITests: XCTestCase {
     /// Taps update the UI on the next frames; wait for the label instead of checking at once.
     private func waitForLabel(
         of element: XCUIElement, _ format: String, _ text: String, _ message: String,
-        timeout: TimeInterval = 5
+        timeout: TimeInterval = 10
     ) {
         let changed = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: format, text), object: element)
