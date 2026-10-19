@@ -181,7 +181,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
       token: bo.token,
       body: {
         version: 1,
-        kind: 'fire',
+        kind: 'highlight',
       },
     });
 
@@ -195,12 +195,18 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
         event: { type: 'reaction', checkIn: run.id, member: ann.userId, kind: 'cheer', count: '1' },
       },
       {
-        alert: { key: 'push.reaction.fire', args: ['2'] },
+        alert: { key: 'push.reaction.highlight', args: ['2'] },
         category: 'reaction',
         thread: `check-in:${run.id}`,
         collapseId: `reactions:${run.id}`,
         interruption: 'passive',
-        event: { type: 'reaction', checkIn: run.id, member: bo.userId, kind: 'fire', count: '2' },
+        event: {
+          type: 'reaction',
+          checkIn: run.id,
+          member: bo.userId,
+          kind: 'highlight',
+          count: '2',
+        },
       },
     ]);
 
@@ -213,7 +219,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
       version: 1,
       reactions: [
         { member: ann.userId, kind: 'cheer' },
-        { member: bo.userId, kind: 'fire' },
+        { member: bo.userId, kind: 'highlight' },
       ],
     });
   });
@@ -240,6 +246,18 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     });
     expect([first.status, again.status, changed.status]).toStrictEqual([201, 200, 200]);
     expect(again.body).toStrictEqual(first.body);
+    expect(sentTo(tracysPhone)).toHaveLength(1);
+  });
+
+  it('doesn’t tell the author again when a reaction is taken off and put back', async () => {
+    const [tracy, ann] = [await signUp(), await signUp()];
+    const tracysPhone = await phoneOf(tracy.token);
+    const run = await checkIn(tracy.token, await squadOf(tracy, ann));
+    const path = `/check-ins/${run.id}/reactions/mine`;
+    for (let round = 0; round < 3; round += 1) {
+      await call('PUT', { path, token: ann.token, body: { version: 1, kind: 'cheer' } });
+      await call('DELETE', { path, token: ann.token });
+    }
     expect(sentTo(tracysPhone)).toHaveLength(1);
   });
 

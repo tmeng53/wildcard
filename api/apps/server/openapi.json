@@ -931,7 +931,8 @@
             "type": "string",
             "enum": [
               "cheer",
-              "fire",
+              "highlight",
+              "steady",
               "lol"
             ],
             "description": "Which reaction. The app shows each with its own copy; the set is a first draft."
@@ -964,7 +965,8 @@
             "type": "string",
             "enum": [
               "cheer",
-              "fire",
+              "highlight",
+              "steady",
               "lol"
             ],
             "description": "Which reaction. The app shows each with its own copy; the set is a first draft."
@@ -999,7 +1001,8 @@
                   "type": "string",
                   "enum": [
                     "cheer",
-                    "fire",
+                    "highlight",
+                    "steady",
                     "lol"
                   ],
                   "description": "Which reaction. The app shows each with its own copy; the set is a first draft."

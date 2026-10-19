@@ -6,6 +6,10 @@ import type { Log } from '../log.js';
 // Who hears about what. A flow, since it joins two modules: check-ins say who sees a check-in,
 // push reaches their phones. Notifications carry String Catalog keys, not words, so the copy is
 // the app's. Sending never fails the request that caused it: a failure is logged and dropped.
+// It holds the request up for at most SEND_WAIT_MS, then finishes on its own: on Cloud Run the CPU
+// may slow once a response is sent, so the usual send completes before it.
+
+const SEND_WAIT_MS = 2000;
 
 interface Deps {
   readonly checkIns: CheckIns;
@@ -83,16 +87,29 @@ async function send(
     }>;
   },
 ): Promise<void> {
-  try {
-    const { members, notification } = await build();
-    const outcome = await push.notifyMembers({
-      members: members.map((member) => MemberId.parse(member)),
-      notification,
-    });
-    if (outcome.failures.length > 0) {
-      log.error('push failed', { about, failures: outcome.failures });
+  const sending = (async () => {
+    try {
+      const { members, notification } = await build();
+      const outcome = await push.notifyMembers({
+        members: members.map((member) => MemberId.parse(member)),
+        notification,
+      });
+      if (outcome.failures.length > 0) {
+        log.error('push failed', { about, failures: outcome.failures });
+      }
+    } catch (error) {
+      log.error('push failed', { about, error });
     }
-  } catch (error) {
-    log.error('push failed', { about, error });
+  })();
+  let timer: NodeJS.Timeout | undefined;
+  const waited = new Promise<'late'>((resolve) => {
+    timer = setTimeout(() => {
+      resolve('late');
+    }, SEND_WAIT_MS);
+    timer.unref();
+  });
+  if ((await Promise.race([sending, waited])) === 'late') {
+    log.info('push still sending after the response', { about });
   }
+  clearTimeout(timer);
 }

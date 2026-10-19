@@ -12,7 +12,10 @@ create table public.check_in_reactions (
   check_in_id uuid not null references public.check_ins (id) on delete cascade,
   member_id uuid not null references auth.users (id) on delete cascade,
   kind text not null,
-  reacted_at timestamptz not null default now(),
+  reacted_at timestamptz not null,
+  -- Set when the member takes the reaction off. The row stays, so putting it back isn't
+  -- a new reaction and doesn't notify the author again.
+  removed_at timestamptz,
   primary key (check_in_id, member_id)
 );
 

@@ -18,7 +18,8 @@ export interface Reacted {
 
 /**
  * Leaves the member's reaction on a teammate's check-in, in place of any they left before. The
- * same reaction again changes nothing (not even its time), so a retry is safe. Throws
+ * same reaction again changes nothing (not even its time), so a retry is safe. Only a member's
+ * first reaction on a check-in is `created`: putting one back after taking it off is `changed`. Throws
  * `CheckInNotFoundError` for a check-in they can't see and `OwnCheckInReactionError` for their own.
  */
 export async function reactToCheckIn(
@@ -29,7 +30,7 @@ export async function reactToCheckIn(
   }: { readonly store: CheckInStore; readonly reactions: ReactionStore; readonly clock: Clock },
   { checkIn: id, member, kind }: ReactToCheckInInput,
 ): Promise<Reacted> {
-  const checkIn = await findVisibleCheckIn(store, { id, viewer: member });
+  const { checkIn } = await findVisibleCheckIn(store, { id, viewer: member });
   if (checkIn.member === member) throw new OwnCheckInReactionError();
   const asked = { member, kind, reactedAt: clock() };
   const outcome = await reactions.save(id, asked);

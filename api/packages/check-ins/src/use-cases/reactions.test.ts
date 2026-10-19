@@ -87,11 +87,11 @@ describe('reacting to a check-in', () => {
       { member: ann, kind: 'cheer', reactedAt: new Date('2026-10-18T20:05:00.000Z') },
     ]);
     now = new Date('2026-10-18T20:06:00.000Z');
-    await checkIns.react({ checkIn: run.id, member: bo, kind: 'fire' });
+    await checkIns.react({ checkIn: run.id, member: bo, kind: 'highlight' });
 
     const expected = [
       { member: ann, kind: 'cheer', reactedAt: new Date('2026-10-18T20:05:00.000Z') },
-      { member: bo, kind: 'fire', reactedAt: new Date('2026-10-18T20:06:00.000Z') },
+      { member: bo, kind: 'highlight', reactedAt: new Date('2026-10-18T20:06:00.000Z') },
     ];
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual(
       expected,
@@ -171,6 +171,57 @@ describe('reacting to a check-in', () => {
     await expect(
       checkIns.react({ checkIn: run.id, member: bo, kind: 'cheer' }),
     ).rejects.toBeInstanceOf(CheckInNotFoundError);
+  });
+});
+
+describe('who sees which reactions', () => {
+  it('shows a teammate only reactions from the squads they share the check-in through', async () => {
+    const [tracy, ann, bo] = [await newMember(), await newMember(), await newMember()];
+    // Ann is in the runners only, Bo in the climbers only; Tracy sends to both.
+    const runners = await newSquad(tracy, ann);
+    const climbers = await newSquad(tracy, bo);
+    const run = await trained(tracy, runners, climbers);
+    now = new Date('2026-10-18T20:05:00.000Z');
+    await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    now = new Date('2026-10-18T20:06:00.000Z');
+    await checkIns.react({ checkIn: run.id, member: bo, kind: 'steady' });
+
+    const annsReaction = {
+      member: ann,
+      kind: 'cheer',
+      reactedAt: new Date('2026-10-18T20:05:00.000Z'),
+    };
+    const bosReaction = {
+      member: bo,
+      kind: 'steady',
+      reactedAt: new Date('2026-10-18T20:06:00.000Z'),
+    };
+    expect(await checkIns.listReactions({ checkIn: run.id, viewer: ann })).toStrictEqual([
+      annsReaction,
+    ]);
+    expect(await checkIns.listReactions({ checkIn: run.id, viewer: bo })).toStrictEqual([
+      bosReaction,
+    ]);
+    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
+      annsReaction,
+      bosReaction,
+    ]);
+
+    // Once Bo leaves the climbers, his reaction no longer shows, even to Tracy.
+    await leave(climbers, bo);
+    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
+      annsReaction,
+    ]);
+  });
+
+  it('counts a reaction put back after taking it off as changed, not new', async () => {
+    const [tracy, ann] = [await newMember(), await newMember()];
+    const run = await trained(tracy, await newSquad(tracy, ann));
+    const first = await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    await checkIns.removeReaction({ checkIn: run.id, member: ann });
+    const back = await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    expect([first.outcome, back.outcome]).toStrictEqual(['created', 'changed']);
+    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toHaveLength(1);
   });
 });
 

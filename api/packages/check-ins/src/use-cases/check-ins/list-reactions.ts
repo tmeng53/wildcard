@@ -4,13 +4,15 @@ import type { CheckInStore, ReactionStore } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
 /**
- * A check-in's reactions, oldest first, for its author or a teammate who can see it. Throws
- * `CheckInNotFoundError` otherwise.
+ * A check-in's reactions, oldest first, for its author or a teammate who can see it: only those
+ * from members of the squads the viewer sees it through, so a reaction never reveals another
+ * squad. Throws `CheckInNotFoundError` for a check-in they can't see.
  */
 export async function listReactions(
   { store, reactions }: { readonly store: CheckInStore; readonly reactions: ReactionStore },
-  { checkIn, viewer }: { readonly checkIn: CheckInId; readonly viewer: MemberId },
+  { checkIn: id, viewer }: { readonly checkIn: CheckInId; readonly viewer: MemberId },
 ): Promise<Reaction[]> {
-  await findVisibleCheckIn(store, { id: checkIn, viewer });
-  return reactions.list(checkIn);
+  const { through } = await findVisibleCheckIn(store, { id, viewer });
+  const [all, members] = await Promise.all([reactions.list(id), store.membersOf(through)]);
+  return all.filter((reaction) => members.has(reaction.member));
 }

@@ -35,7 +35,8 @@ export interface CheckInReactions {
   check_in_id: string;
   kind: string;
   member_id: string;
-  reacted_at: Generated<Timestamp>;
+  reacted_at: Timestamp;
+  removed_at: Timestamp | null;
 }
 
 export interface CheckIns {
