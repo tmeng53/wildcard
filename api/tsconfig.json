@@ -1,9 +1,20 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/errors" },
-    { "path": "packages/check-ins" },
-    { "path": "packages/disclaimer-drafts" },
-    { "path": "apps/server" }
+    {
+      "path": "packages/errors"
+    },
+    {
+      "path": "packages/check-ins"
+    },
+    {
+      "path": "packages/disclaimer-drafts"
+    },
+    {
+      "path": "packages/members"
+    },
+    {
+      "path": "apps/server"
+    }
   ]
 }

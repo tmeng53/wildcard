@@ -1,4 +1,5 @@
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -21,6 +22,7 @@ async function getHealth(db: Database) {
     checkIns: checkInsOn(db),
     photos,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+    members: createMembers({ store: createPostgresProfileStore(db) }),
     log: createLog((line) => lines.push(line)),
   });
   try {
@@ -86,6 +88,7 @@ describe('an unknown route', () => {
       checkIns: checkInsOn(db),
       photos,
       disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+      members: createMembers({ store: createPostgresProfileStore(db) }),
       log: createLog(() => undefined),
     });
     const response = await app.request('/nope', { method: 'POST' });

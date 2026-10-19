@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
@@ -28,6 +29,7 @@ describe('openapi.json', () => {
       }),
       photos,
       disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+      members: createMembers({ store: createPostgresProfileStore(db) }),
       log: createLog(() => undefined),
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');

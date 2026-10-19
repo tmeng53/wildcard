@@ -3,6 +3,7 @@
 import { writeFileSync } from 'node:fs';
 
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
@@ -21,6 +22,7 @@ const app = createApp({
   photos,
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
   disclaimerDrafts: { write: unused },
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

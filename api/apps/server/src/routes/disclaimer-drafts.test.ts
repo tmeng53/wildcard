@@ -1,5 +1,6 @@
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -42,6 +43,7 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
       allowance: createPostgresDraftAllowance(db),
       clock: () => new Date(),
     }),
+    members: createMembers({ store: createPostgresProfileStore(db) }),
     log: createLog(() => undefined),
   });
   return { app, requests: recorded.requests };

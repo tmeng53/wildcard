@@ -101,11 +101,55 @@
             "type": "string",
             "format": "uuid",
             "description": "The signed-in member’s Supabase Auth user id."
+          },
+          "profile": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "timeZone": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+                "description": "The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.",
+                "example": "America/Los_Angeles"
+              }
+            },
+            "required": [
+              "timeZone"
+            ],
+            "additionalProperties": false,
+            "description": "Null until the member first saves one, right after signing up."
           }
         },
         "required": [
           "version",
-          "userId"
+          "userId",
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+            "description": "The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.",
+            "example": "America/Los_Angeles"
+          }
+        },
+        "required": [
+          "version",
+          "timeZone"
         ],
         "additionalProperties": false
       },
@@ -1106,6 +1150,7 @@
       "get": {
         "operationId": "getMe",
         "summary": "The signed-in member",
+        "description": "Who the bearer token belongs to, and their profile once they have saved one.",
         "security": [
           {
             "bearer": []
@@ -1118,6 +1163,70 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile": {
+      "put": {
+        "operationId": "putMyProfile",
+        "summary": "Save the signed-in member’s profile",
+        "description": "Creates the profile on the first save, right after signing up, and replaces it after that. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid profile, or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }

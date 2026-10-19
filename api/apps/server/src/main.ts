@@ -6,6 +6,7 @@ import {
   createPostgresDraftAllowance,
   type LanguageModel,
 } from '@wildcard/disclaimer-drafts';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 
@@ -38,6 +39,7 @@ const app = createApp({
     photos,
     clock: () => new Date(),
   }),
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   photos,
   disclaimerDrafts: createDisclaimerDrafts({
     model,
