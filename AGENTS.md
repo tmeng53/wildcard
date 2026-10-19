@@ -110,6 +110,9 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 - **Review feedback is a symptom, not a to-do list.** Every finding (a person's, a bot's, a verifier's note) is a claim to check before acting; answer each on the PR, fixed (with the commit) or not and why. Read the whole review first and group findings by cause. When a PR gets findings a second time, post one short root-cause note before pushing a fix, then rework it into the simplest design. When in doubt, ask a human.
 - **Who merges:** the owner thread merges most PRs itself once they're green, verified and reviewed. Tracy merges a key technical decision or a major UI change she didn't ask for. The exact rule is in `raise-pr` (Merging).
 - Only change what the PR is about. Never force-push `main`; never edit or delete other people's comments.
+- **A change removes what it replaces.** When a decision changes, the PR that builds the new way deletes the old one everywhere (app, API, database, docs, AGENTS.md), even in other packages. Removing it is in scope; a PR isn't done while the old path still exists.
+- **No backward compatibility until real users.** Edit migrations, stored shapes and names in place; no shims, no add-then-alter migrations.
+- **When a parallel PR lands, the later one wires them together** (or opens an issue saying what is left unwired).
 - **If agents can't agree** after one round of replies, post a **Decision needed:** where the discussion is (`wildcard-docs`) and stop work on that point until a human answers.
 - **Ground decisions in evidence:** link one to three credible sources (Apple, Supabase, standards, well-known engineering blogs), or say there are none.
 - **When a decision or review comment would hold in any project,** also open a PR adding it to `sponge-ai-lab/engineering-skills`.
@@ -132,6 +135,7 @@ Flag only real problems: bugs, broken rules, missing evidence. Formatting and an
 - A hard-coded user-facing string outside the String Catalog.
 - A UI change without screenshots, a test that can't fail, or a mocked database.
 - A PR based on another open PR, or one that mixes unrelated changes.
+- Code the change leaves dead or duplicated (an old rule kept after it moved, a second type for the same thing), or an old name after a rename.
 
 ## Keeping this file current
 
