@@ -49,7 +49,7 @@ struct NeutralTests {
             }
         }
         #expect(SceneTheme.allCases.filter { isWarm($0.colors.wash) } == [.track, .tennis, .climbing])
-        #expect(Meaning.allCases.filter { isWarm($0.accent(in: .pool).wash) } == [.indulgence])
+        #expect(Meaning.allCases.filter { isWarm($0.accent(in: .pool).wash) } == [.cheatMeal])
     }
 
     /// Body-size text needs 4.5:1 (WCAG 2.2, 1.4.3).
