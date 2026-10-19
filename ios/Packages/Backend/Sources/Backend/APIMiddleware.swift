@@ -5,9 +5,12 @@ import HTTPTypes
 import OpenAPIRuntime
 
 /// Sends the member's access token, and once more with a renewed one when the API refuses it:
-/// the API can refuse a token before its expiry (signed out elsewhere, a rotated key).
+/// the API can refuse a token before its expiry (signed out elsewhere, a rotated key). When it
+/// refuses the renewed one too, `refused` ends the session, so the account and the calls agree
+/// the member is signed out.
 struct BearerToken: ClientMiddleware {
     let accessToken: WildcardAPI.AccessToken
+    let refused: @Sendable () async -> Void
 
     func intercept(
         _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
@@ -24,7 +27,9 @@ struct BearerToken: ClientMiddleware {
         let token = try await current(rejected: nil)
         let answer = try await send(token)
         guard answer.0.status == .unauthorized else { return answer }
-        return try await send(try await current(rejected: token))
+        let retried = try await send(try await current(rejected: token))
+        if retried.0.status == .unauthorized { await refused() }
+        return retried
     }
 
     private func current(rejected: String?) async throws(APIError) -> String {
