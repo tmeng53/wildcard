@@ -23,6 +23,7 @@ public actor AccountSession {
     private var restored = false
     private var restoring: Task<AccountError?, Never>?
     private var renewal: Task<Result<Void, AccountError>, Never>?
+    private var lastWrite: Task<Result<Void, AccountError>, Never>?
     private var observers: [Int: AsyncStream<AccountState>.Continuation] = [:]
     private var nextObserver = 0
 
@@ -74,19 +75,20 @@ public actor AccountSession {
         }
         let new = try await provider.signIn(with: credential)
         // In memory first, so a renewal of the old session that finishes during the save sees
-        // it was replaced and saves nothing.
+        // it was replaced and keeps nothing.
         session = new
         restored = true
         renewal = nil
         publish()
         do {
-            try await store.save(new)
+            try await persist()
         } catch {
-            // Signed out rather than back on the old session, whose renewal may already have
-            // used its refresh token.
+            // Signed out, on the device too, rather than back on the old session, whose renewal
+            // may already have used its refresh token.
             if session == new {
                 session = nil
                 publish()
+                try? await persist()
             }
             try? await provider.signOut(new)
             throw error
@@ -97,8 +99,9 @@ public actor AccountSession {
     /// A current access token for our API. Pass `rejected` with the token the API just refused
     /// (it can refuse one before its expiry), and it is renewed unless it was already replaced.
     ///
-    /// Throws `signedOut` when nobody is signed in or the session can't be renewed, and
-    /// `unavailable` when renewing needs the provider and it can't be reached.
+    /// Throws `signedOut` when nobody is signed in or the session can't be renewed, `unavailable`
+    /// when renewing needs the provider and it can't be reached, and `storeLocked` or
+    /// `storeFailed` while the stored session can't be read yet.
     public func accessToken(rejected: String? = nil) async throws(AccountError) -> String {
         try await ensureRestored()
         guard let current = session else { throw .signedOut }
@@ -118,7 +121,7 @@ public actor AccountSession {
         publish()
         let cleared: Result<Void, AccountError>
         do {
-            try await store.clear()
+            try await persist()
             cleared = .success(())
         } catch {
             cleared = .failure(error)
@@ -150,6 +153,7 @@ public actor AccountSession {
     /// must not be cleared.
     private func loadStored() async -> AccountError? {
         let stored: Session?
+        var unreadable = false
         do throws(AccountError) {
             stored = try await store.load()
         } catch let error where error == .storeLocked || error == .storeFailed {
@@ -158,13 +162,14 @@ public actor AccountSession {
         } catch {
             // Garbled, or written by a build that reads another version: sign in again.
             stored = nil
-            try? await store.clear()
+            unreadable = true
         }
         // Signed in while reading: the new session wins.
         if restored { return nil }
         session = stored
         restored = true
         publish()
+        if unreadable { try? await persist() }
         return nil
     }
 
@@ -203,14 +208,40 @@ public actor AccountSession {
             session = new
             // If the save fails the member stays signed in until the app quits, and signs in
             // again at the next launch: the stored refresh token is already used up.
-            try? await store.save(new)
+            try? await persist()
             return .success(())
         case .failure(.signedOut):
             session = nil
             publish()
-            try? await store.clear()
+            try? await persist()
             return .failure(.signedOut)
         case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// Writes the session in memory to the store, after any write already under way. Each write
+    /// reads the session when its turn comes, so the store always ends on the latest one: a
+    /// renewal's save can never land after a sign-out's clear.
+    private func persist() async throws(AccountError) {
+        let previous = lastWrite
+        let write = Task { () -> Result<Void, AccountError> in
+            _ = await previous?.value
+            return await self.writeCurrent()
+        }
+        lastWrite = write
+        try await write.value.get()
+    }
+
+    private func writeCurrent() async -> Result<Void, AccountError> {
+        do throws(AccountError) {
+            if let session {
+                try await store.save(session)
+            } else {
+                try await store.clear()
+            }
+            return .success(())
+        } catch {
             return .failure(error)
         }
     }

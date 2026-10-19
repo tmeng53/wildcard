@@ -204,7 +204,7 @@ private func account(
 }
 
 @Test func aSignInTheDeviceCantSaveLeavesTheMemberSignedOut() async throws {
-    let store = MemoryStore()
+    let store = MemoryStore(session("stored"))
     await store.failSaves()
     let account = account(FakeProvider(), store)
 
@@ -212,6 +212,29 @@ private func account(
         try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
     }
     #expect(try await account.restore() == .signedOut)
+    // The next launch doesn't bring the old session back either.
+    #expect(await store.saved == nil)
+    #expect(try await AccountSession(provider: FakeProvider(), store: store, now: { start }).restore() == .signedOut)
+}
+
+@Test func signingOutDuringARenewalsSaveStaysSignedOutAfterRelaunch() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))])
+    let store = MemoryStore(session("stored", expiresIn: 0))
+    let account = account(provider, store)
+    #expect(try await account.restore() == .signedIn(tracy))
+    await store.gateSaves()
+
+    let token = Task { try await account.accessToken() }
+    while await store.savesWaiting == 0 { await Task.yield() }
+    let signOut = Task { try await account.signOut() }
+    for _ in 0..<100 { await Task.yield() }
+    await store.releaseSaves()
+
+    // Signed out before the renewal finished, so its caller gets no token.
+    await #expect(throws: AccountError.signedOut) { try await token.value }
+    try await signOut.value
+    #expect(await store.saved == nil)
+    #expect(try await AccountSession(provider: provider, store: store, now: { start }).restore() == .signedOut)
 }
 
 @Test func aSignInTheDeviceCantSaveDuringARenewalLeavesTheMemberSignedOut() async throws {

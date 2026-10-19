@@ -37,8 +37,12 @@ actor MemoryStore: SessionStore {
     private var savesFail = false
     private var clearsFail = false
 
+    private var savesGated = false
+    private var waitingSaves: [CheckedContinuation<Void, Never>] = []
+
     func save(_ session: Session) async throws(AccountError) {
         if savesFail { throw .storeFailed }
+        if savesGated { await withCheckedContinuation { waitingSaves.append($0) } }
         saved = session
     }
 
@@ -52,6 +56,14 @@ actor MemoryStore: SessionStore {
     func unlock() { failsToLoad = nil }
     func failSaves() { savesFail = true }
     func failClears() { clearsFail = true }
+    /// Holds each save until `releaseSaves()`, like a slow Keychain write.
+    func gateSaves() { savesGated = true }
+    func releaseSaves() {
+        savesGated = false
+        for continuation in waitingSaves { continuation.resume() }
+        waitingSaves = []
+    }
+    var savesWaiting: Int { waitingSaves.count }
 }
 
 /// The auth provider. Each refresh answers with the next entry of `renewals`; with `gated`, a
