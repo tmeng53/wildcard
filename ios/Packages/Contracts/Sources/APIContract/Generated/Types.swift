@@ -51,6 +51,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /photo-uploads`.
     /// - Remark: Generated from `#/paths//photo-uploads/post(createPhotoUpload)`.
     func createPhotoUpload(_ input: Operations.CreatePhotoUpload.Input) async throws -> Operations.CreatePhotoUpload.Output
+    /// Where a squad’s day and week stand
+    ///
+    /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/today`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
+    func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -141,6 +148,21 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//photo-uploads/post(createPhotoUpload)`.
     public func createPhotoUpload(headers: Operations.CreatePhotoUpload.Input.Headers = .init()) async throws -> Operations.CreatePhotoUpload.Output {
         try await createPhotoUpload(Operations.CreatePhotoUpload.Input(headers: headers))
+    }
+    /// Where a squad’s day and week stand
+    ///
+    /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/today`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
+    public func getSquadToday(
+        path: Operations.GetSquadToday.Input.Path,
+        headers: Operations.GetSquadToday.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadToday.Output {
+        try await getSquadToday(Operations.GetSquadToday.Input(
+            path: path,
+            headers: headers
+        ))
     }
 }
 
