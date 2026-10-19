@@ -171,9 +171,12 @@ describe('PUT /me/profile', () => {
     ]);
   });
 
-  it('accepts a zone iOS may still report by its old name', async () => {
+  it.each([
+    ['by its old name', 'Asia/Calcutta'],
+    ['with no area', 'GMT'],
+  ])('accepts a zone iOS may report %s', async (_case, timeZone) => {
     const { token } = await signUp();
-    const profile = { version: 1, timeZone: 'Asia/Calcutta' };
+    const profile = { version: 1, timeZone };
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
   });
 

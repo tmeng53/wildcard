@@ -26,6 +26,9 @@ public struct KeychainSessionStore: SessionStore {
             return try StoredSession.decode(data)
         case errSecItemNotFound:
             return nil
+        // Not readable before the first unlock after a restart; the item is still there.
+        case errSecInteractionNotAllowed:
+            throw .storeLocked
         default:
             throw .storeFailed
         }
@@ -42,6 +45,8 @@ public struct KeychainSessionStore: SessionStore {
             add[kSecValueData] = data
             add[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             guard SecItemAdd(add as CFDictionary, nil) == errSecSuccess else { throw .storeFailed }
+        case errSecInteractionNotAllowed:
+            throw .storeLocked
         default:
             throw .storeFailed
         }

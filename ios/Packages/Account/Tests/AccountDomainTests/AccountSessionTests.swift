@@ -14,22 +14,34 @@ private func account(
 @Test func aStoredSessionSignsTheMemberInAtLaunch() async throws {
     let provider = FakeProvider()
     let account = account(provider, MemoryStore(session("stored")))
-    #expect(await account.restore() == .signedIn(tracy))
+    #expect(try await account.restore() == .signedIn(tracy))
     #expect(try await account.accessToken() == "access-stored")
     #expect(await provider.refreshed.isEmpty)
 }
 
-@Test func noStoredSessionMeansSignedOut() async {
+@Test func noStoredSessionMeansSignedOut() async throws {
     let account = account(FakeProvider(), MemoryStore())
-    #expect(await account.restore() == .signedOut)
+    #expect(try await account.restore() == .signedOut)
     await #expect(throws: AccountError.signedOut) { try await account.accessToken() }
 }
 
-@Test func anUnreadableStoredSessionIsClearedAndSignsOut() async {
+@Test func anUnreadableStoredSessionIsClearedAndSignsOut() async throws {
     let store = MemoryStore(session("stored"), failsToLoad: .unsupportedVersion(2))
     let account = account(FakeProvider(), store)
-    #expect(await account.restore() == .signedOut)
+    #expect(try await account.restore() == .signedOut)
     #expect(await store.saved == nil)
+}
+
+@Test func aLockedStoreKeepsTheSessionUntilTheDeviceIsUnlocked() async throws {
+    let store = MemoryStore(session("stored"), failsToLoad: .storeLocked)
+    let account = account(FakeProvider(), store)
+
+    await #expect(throws: AccountError.storeLocked) { try await account.restore() }
+    await #expect(throws: AccountError.storeLocked) { try await account.accessToken() }
+    #expect(await store.saved == session("stored"))
+    await store.unlock()
+    #expect(try await account.restore() == .signedIn(tracy))
+    #expect(try await account.accessToken() == "access-stored")
 }
 
 // MARK: - Renewing
@@ -64,13 +76,13 @@ private func account(
     #expect(await provider.refreshed == ["refresh-stored"])
 }
 
-@Test func aSessionTheProviderWontRenewSignsOut() async {
+@Test func aSessionTheProviderWontRenewSignsOut() async throws {
     let provider = FakeProvider(renewals: [.failure(.signedOut)])
     let store = MemoryStore(session("stored", expiresIn: 0))
     let account = account(provider, store)
 
     await #expect(throws: AccountError.signedOut) { try await account.accessToken() }
-    #expect(await account.restore() == .signedOut)
+    #expect(try await account.restore() == .signedOut)
     #expect(await store.saved == nil)
 }
 
@@ -95,6 +107,20 @@ private func account(
     #expect(await provider.refreshed == ["refresh-stored"])
 }
 
+@Test func signingInDuringARenewalHandsOutTheNewSession() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))], gated: true)
+    let store = MemoryStore(session("stored", expiresIn: 0))
+    let account = account(provider, store)
+
+    async let token = account.accessToken()
+    while await provider.refreshesWaiting == 0 { await Task.yield() }
+    try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    await provider.release()
+
+    #expect(try await token == "access-signed-in")
+    #expect(await store.saved == session("signed-in"))
+}
+
 // MARK: - Signing in and out
 
 @Test func signingInSavesTheSession() async throws {
@@ -105,7 +131,7 @@ private func account(
     #expect(try await account.accessToken() == "access-signed-in")
 }
 
-@Test func aRejectedCredentialLeavesTheMemberSignedOut() async {
+@Test func aRejectedCredentialLeavesTheMemberSignedOut() async throws {
     let provider = FakeProvider()
     await provider.failSignIn(with: .credentialRejected)
     let store = MemoryStore()
@@ -114,7 +140,7 @@ private func account(
     await #expect(throws: AccountError.credentialRejected) {
         try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
     }
-    #expect(await account.restore() == .signedOut)
+    #expect(try await account.restore() == .signedOut)
     #expect(await store.saved == nil)
 }
 
@@ -125,9 +151,31 @@ private func account(
     let account = account(provider, store)
 
     try await account.signOut()
-    #expect(await account.restore() == .signedOut)
+    #expect(try await account.restore() == .signedOut)
     #expect(await store.saved == nil)
     #expect(await provider.signedOut == [session("stored")])
+}
+
+@Test func aSignInTheDeviceCantSaveLeavesTheMemberSignedOut() async throws {
+    let store = MemoryStore()
+    await store.failSaves()
+    let account = account(FakeProvider(), store)
+
+    await #expect(throws: AccountError.storeFailed) {
+        try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    }
+    #expect(try await account.restore() == .signedOut)
+}
+
+@Test func signingOutStillEndsTheProviderSessionWhenTheStoreFails() async throws {
+    let provider = FakeProvider()
+    let store = MemoryStore(session("stored"))
+    await store.failClears()
+    let account = account(provider, store)
+
+    await #expect(throws: AccountError.storeFailed) { try await account.signOut() }
+    #expect(await provider.signedOut == [session("stored")])
+    #expect(try await account.restore() == .signedOut)
 }
 
 @Test func observersSeeEachChange() async throws {

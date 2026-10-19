@@ -34,11 +34,24 @@ actor MemoryStore: SessionStore {
         return saved
     }
 
-    func save(_ session: Session) async throws(AccountError) { saved = session }
+    private var savesFail = false
+    private var clearsFail = false
+
+    func save(_ session: Session) async throws(AccountError) {
+        if savesFail { throw .storeFailed }
+        saved = session
+    }
+
     func clear() async throws(AccountError) {
+        if clearsFail { throw .storeFailed }
         saved = nil
         failsToLoad = nil
     }
+
+    /// The device's first unlock since it restarted.
+    func unlock() { failsToLoad = nil }
+    func failSaves() { savesFail = true }
+    func failClears() { clearsFail = true }
 }
 
 /// The auth provider. Each refresh answers with the next entry of `renewals`; with `gated`, a

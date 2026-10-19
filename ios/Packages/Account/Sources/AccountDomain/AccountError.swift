@@ -12,6 +12,10 @@ public enum AccountError: Error, Equatable, Sendable {
     case unavailable
     /// The secure store on the device refused to save or read the session.
     case storeFailed
+    /// The secure store can't be read until the device is unlocked for the first time since it
+    /// restarted (iOS can launch the app in the background before that). The session is kept;
+    /// try again after unlock.
+    case storeLocked
     /// Stored session JSON carries a `version` this build doesn't read.
     case unsupportedVersion(Int)
 }
