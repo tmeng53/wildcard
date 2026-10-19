@@ -16,7 +16,10 @@ import { zonesOf } from './member-zones.js';
 export interface SquadWeekSummary extends WeekSummary {
   readonly from: WeekStart;
   readonly to: string;
-  /** Every member's own Sunday is over, so the week's numbers won't change. */
+  /**
+   * Every member's own Sunday is over. A check-in sent up to 48 hours late or a reaction left
+   * later can still change the numbers.
+   */
   readonly final: boolean;
 }
 

@@ -63,8 +63,9 @@ export const WeekSummaryBody = z
     week: z.strictObject({ from: WeekStart, to: LocalDay }),
     final: z.boolean().meta({
       description:
-        'Every member’s own Sunday is over, so the numbers won’t change. Before that the week ' +
-        'is still being played.',
+        'Every member’s own Sunday is over: the week has been played and the card can show. ' +
+        'Numbers can still move a little after that, from a check-in sent up to 48 hours late ' +
+        'or a reaction left later. Before that the week is still being played.',
     }),
     awards: z.array(Award).meta({
       description: 'The awards someone won this week; one nobody won is left out.',
