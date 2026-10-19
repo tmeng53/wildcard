@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 /**
- * The listed sports, as the app's contract has them (`Sport` in ios/Packages/Contracts), in
- * the picker's order. A new sport is a contract change: the app and this list change together.
+ * The listed sports, in the picker's order. This is the list of record: the app's `Sport`
+ * (ios/Packages/Contracts) is tested against the OpenAPI document, so a new sport lands here
+ * first and the app follows.
  */
 export const SPORTS = [
   // 跑走
@@ -72,5 +73,8 @@ export const SPORTS = [
 ] as const;
 
 /** A 练了's `sport`: a listed sport, or `custom` with the member's own name in `customSport`. */
-export const SportKey = z.enum([...SPORTS, 'custom']);
+export const SportKey = z.enum([...SPORTS, 'custom']).meta({
+  id: 'Sport',
+  description: 'A listed sport, or `custom` with the member’s own name in `customSport`.',
+});
 export type SportKey = z.infer<typeof SportKey>;

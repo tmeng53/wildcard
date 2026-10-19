@@ -196,6 +196,16 @@ describe('PUT /check-ins/{id}', () => {
       'application/problem+json',
       'REQUEST_INVALID',
     ]);
+    const malformed = await app.request(`/check-ins/${randomUUID()}`, {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${me.token}`, 'content-type': 'application/json' },
+      body: 'nope',
+    });
+    expect([
+      malformed.status,
+      malformed.headers.get('content-type'),
+      z.object({ reason: z.string() }).parse(await malformed.json()).reason,
+    ]).toStrictEqual([400, 'application/problem+json', 'REQUEST_INVALID']);
   });
 
   it('asks a caller with no token to sign in', async () => {
