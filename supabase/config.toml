@@ -368,7 +368,8 @@ enabled = false
 # Enable OAuth server functionality. The admin MCP server (the API's /mcp route) signs its
 # admins in through it.
 enabled = true
-# Path for OAuth consent flow UI
+# Path for OAuth consent flow UI, under site_url. Our API serves it, so in production site_url is
+# the API's URL, and additional_redirect_urls lists <API URL>/oauth/consent/callback for Apple.
 authorization_url_path = "/oauth/consent"
 # No dynamic client registration: a client's token acts as the member at Supabase Auth too, so
 # only clients we register by hand (POST /auth/v1/admin/oauth/clients with the secret key) may

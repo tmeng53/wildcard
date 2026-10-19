@@ -65,6 +65,15 @@ describe('openapi.json', () => {
         tools: () => [],
         publicUrl: new URL('http://localhost:8080'),
         authorizationServer: new URL('http://localhost:54321/auth/v1'),
+        consent: {
+          signInWithPassword: () => Promise.reject(new Error('unused')),
+          appleSignInUrl: () => new URL('http://localhost:54321/auth/v1/authorize'),
+          exchangeCode: () => Promise.reject(new Error('unused')),
+          request: () => Promise.reject(new Error('unused')),
+          answer: () => Promise.reject(new Error('unused')),
+          signOut: () => Promise.reject(new Error('unused')),
+        },
+        passwordSignIn: false,
       },
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');

@@ -63,6 +63,55 @@ export interface Accounts {
  */
 export type RevokeAppleSignIn = (authorizationCode: string) => Promise<void>;
 
+/** A member signed in on the consent page: their access token, used once and then signed out. */
+export interface ConsentSession {
+  readonly accessToken: string;
+}
+
+/** What an OAuth client asks a member to approve on the consent page. */
+export type ConsentRequest =
+  | {
+      readonly kind: 'ask';
+      readonly clientName: string;
+      /** Where the client gets its answer back. */
+      readonly redirectUri: string;
+      readonly scope: string;
+    }
+  /** The member approved this client before, so the provider answered already. */
+  | { readonly kind: 'answered'; readonly redirectUrl: URL };
+
+/**
+ * The authorization server's side of the admin MCP sign-in (an OAuth 2.1 server): signs an
+ * admin in on the consent page, reads what the client asks and records the admin's answer.
+ * Throws `AuthUnavailableError` when the provider can't be reached.
+ */
+export interface OAuthConsent {
+  /** Undefined for a wrong email or password. For local and test stacks only. */
+  readonly signInWithPassword: (credentials: {
+    readonly email: string;
+    readonly password: string;
+  }) => Promise<ConsentSession | undefined>;
+  /** Where to send the browser to sign in with Apple; it comes back to `redirectTo` with a code. */
+  readonly appleSignInUrl: (options: {
+    readonly redirectTo: URL;
+    readonly codeChallenge: string;
+  }) => URL;
+  /** The session for the code Apple's sign-in came back with; undefined when it is refused. */
+  readonly exchangeCode: (options: {
+    readonly code: string;
+    readonly codeVerifier: string;
+  }) => Promise<ConsentSession | undefined>;
+  /** Throws `ConsentRequestNotFoundError` for a request that is unknown or expired. */
+  readonly request: (authorizationId: string, session: ConsentSession) => Promise<ConsentRequest>;
+  /** Records the answer; resolves to where the browser goes next, back to the client. */
+  readonly answer: (
+    authorizationId: string,
+    options: { readonly session: ConsentSession; readonly approve: boolean },
+  ) => Promise<URL>;
+  /** Ends the session, so the sign-in made for one answer can't be used again. */
+  readonly signOut: (session: ConsentSession) => Promise<void>;
+}
+
 /**
  * The tables the API reads and writes, each module's generated from the migrations
  * (`pnpm db-types`), never written by hand.

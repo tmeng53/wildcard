@@ -58,6 +58,15 @@ const app = createApp({
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL('http://localhost:54321/auth/v1'),
+    consent: {
+      signInWithPassword: unused,
+      appleSignInUrl: unused,
+      exchangeCode: unused,
+      request: unused,
+      answer: unused,
+      signOut: unused,
+    },
+    passwordSignIn: false,
   },
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

@@ -1,7 +1,7 @@
 # Sourced, not run: starts the built API (api/apps/server/dist) against local Supabase on a free
 # port, as Cloud Run starts it (naming itself by that URL, as the admin MCP server's metadata
-# needs), without an Anthropic key (CI has none, and the drafts journey proves the server runs
-# without one), and stops it when the calling script exits. Needs the status variables of
+# needs), with the consent page's password sign-in on (local Supabase has no Apple), without an
+# Anthropic key (CI has none, and the drafts journey proves the server runs without one), and stops it when the calling script exits. Needs the status variables of
 # `supabase status -o env` (DB_URL, API_URL, SECRET_KEY) already set.
 # Sets $api (its URL), $server (its pid) and $api_log (its output).
 start_api_server() {
@@ -11,7 +11,7 @@ start_api_server() {
   port="$(node -e 'const s=require("net").createServer().listen(0,()=>{console.log(s.address().port);s.close()})')"
   api="http://127.0.0.1:$port"
   api_log="$(mktemp)"
-  env -u ANTHROPIC_API_KEY PORT="$port" PUBLIC_URL="$api" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
+  env -u ANTHROPIC_API_KEY PORT="$port" PUBLIC_URL="$api" ADMIN_PASSWORD_SIGN_IN=on DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
     node api/apps/server/dist/src/main.js >"$api_log" 2>&1 &
   server=$!
   trap 'kill "$server" 2>/dev/null || true; rm -f "$api_log"' EXIT

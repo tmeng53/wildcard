@@ -31,6 +31,7 @@ import {
   createSupabaseTokenVerifier,
   supabaseAuthIssuer,
 } from './adapters/supabase-auth.js';
+import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
@@ -120,6 +121,11 @@ const app = createApp({
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
+    consent: createSupabaseOAuthConsent({
+      supabaseUrl: config.supabaseUrl,
+      secretKey: config.supabaseSecretKey,
+    }),
+    passwordSignIn: config.adminPasswordSignIn,
   },
 });
 
