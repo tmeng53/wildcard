@@ -27,12 +27,15 @@ public struct CharacterDraft: Hashable, Sendable {
         self.nickname = String(nickname.prefix(Self.nicknameLimit))
     }
 
-    /// What the character wears: the picks, minus hair on an animal.
+    /// What the character wears: the picks, minus hair and a person's face on an animal, whose
+    /// face comes with its coat.
     public var outfit: Outfit {
         guard !wearsHair else { return picks }
         var outfit = picks
-        outfit.variants["hair"] = nil
-        outfit.colors["hair"] = nil
+        for slot in ["hair"] + PlaceholderCharacter.faceSlots {
+            outfit.variants[slot] = nil
+            outfit.colors[slot] = nil
+        }
         return outfit
     }
 
@@ -77,6 +80,10 @@ public struct CharacterDraft: Hashable, Sendable {
         guard let variant = picks.variants[slot], picks.colors[slot] != color else { return false }
         if let color, !catalog.swatches(for: slot, wearing: variant).contains(color) { return false }
         var next = picks
+        // Brows that match the hair follow it to its new color.
+        if slot == "hair", next.variants["brows"] != nil, next.colors["brows"] == next.colors["hair"] {
+            next.colors["brows"] = color
+        }
         next.colors[slot] = color
         commit(next)
         return true

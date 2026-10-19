@@ -37,6 +37,26 @@ import Testing
     #expect(editing.outfit.variants["hair"] == "bob")
 }
 
+/// An animal's face comes with its coat, so a person's brows and cheeks stay with the person.
+@Test func animalsWearNoPersonsFace() {
+    var editing = draft(Outfit(["body": "peach", "hair": "bob", "brows": "soft", "cheeks": "rosy"]))
+    editing.pick("cat", for: "body")
+    #expect(editing.outfit == Outfit(["body": "cat"]))
+    editing.pick("peach", for: "body")
+    #expect(editing.outfit.variants["brows"] == "soft")
+}
+
+/// Brows in the hair's color follow it when the hair is dyed; brows of their own color stay.
+@Test func browsFollowTheHairColor() {
+    var editing = draft(Outfit(["body": "peach", "hair": "bob", "brows": "soft"]))
+    editing.pickColor(hairColors[1], for: "hair")
+    #expect(editing.outfit.colors["brows"] == hairColors[1])
+    var ownBrows = draft(
+        Outfit(["body": "peach", "hair": "bob", "brows": "soft"], colors: ["brows": hairColors[0]]))
+    ownBrows.pickColor(hairColors[1], for: "hair")
+    #expect(ownBrows.outfit.colors["brows"] == hairColors[0])
+}
+
 @Test func aCoatColorDoesNotCarryToAnotherCoat() {
     var editing = draft(Outfit(["body": "cat"], colors: ["body": fur[0]]))
     editing.pick("calico", for: "body")

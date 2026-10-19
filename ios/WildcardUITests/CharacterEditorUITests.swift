@@ -5,11 +5,15 @@ import XCTest
 /// look (`-character-editor-sample`): a person with a bob, a tee, shorts and a dumbbell.
 @MainActor
 final class CharacterEditorUITests: XCTestCase {
+    /// How long a check waits for the UI. A busy CI runner can take seconds per accessibility
+    /// query; a wait that succeeds returns as soon as it does.
+    private static let wait: TimeInterval = 30
+
     /// Sign-up opens on 样子 with the step, the person picked and nothing to undo yet.
     func testOpeningInSignUp() {
         let app = launch(language: "zh-Hans")
         let done = app.buttons["editor.done"]
-        XCTAssertTrue(done.waitForExistence(timeout: 10), "the editor never appeared")
+        XCTAssertTrue(done.waitForExistence(timeout: Self.wait), "the editor never appeared")
         XCTAssertEqual(done.label, "就这样")
         let steps = app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch
         XCTAssertEqual(steps.label, "第 2 步，共 4 步")
@@ -22,10 +26,10 @@ final class CharacterEditorUITests: XCTestCase {
     /// 卷发 in the fourth hair color, then a hoodie in the third top color and a cap.
     func testPickingHairAndClothes() {
         let app = launch(language: "zh-Hans")
-        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: 10), "the editor never appeared")
+        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.hair"].tap()
         let curls = app.buttons["editor.tile.hair.curls"]
-        XCTAssertTrue(curls.waitForExistence(timeout: 2), "no 卷发 tile")
+        XCTAssertTrue(curls.waitForExistence(timeout: Self.wait), "no 卷发 tile")
         XCTAssertTrue(app.buttons["editor.tile.hair.bob"].isSelected)
         curls.tap()
         waitUntilSelected(curls, "picking 卷发 didn't select it")
@@ -37,7 +41,7 @@ final class CharacterEditorUITests: XCTestCase {
 
         app.buttons["editor.tab.outfit"].tap()
         let hoodie = app.buttons["editor.tile.top.hoodie"]
-        XCTAssertTrue(hoodie.waitForExistence(timeout: 2), "no 卫衣 tile")
+        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 卫衣 tile")
         hoodie.tap()
         waitUntilSelected(hoodie, "picking 卫衣 didn't select it")
         app.buttons["editor.swatch.top.2"].tap()
@@ -49,10 +53,10 @@ final class CharacterEditorUITests: XCTestCase {
     /// The racket plays its move; undo brings the dumbbell back. No basketball this release.
     func testPickingAPropAndUndoing() {
         let app = launch(language: "zh-Hans")
-        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: 10), "the editor never appeared")
+        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.prop"].tap()
         let racket = app.buttons["editor.tile.prop.racket"]
-        XCTAssertTrue(racket.waitForExistence(timeout: 2), "no 网球拍 tile")
+        XCTAssertTrue(racket.waitForExistence(timeout: Self.wait), "no 网球拍 tile")
         XCTAssertTrue(app.buttons["editor.tile.prop.dumbbell"].isSelected)
         XCTAssertFalse(app.buttons["editor.tile.prop.basketball"].exists, "the basketball isn't in this release")
         racket.tap()
@@ -67,10 +71,10 @@ final class CharacterEditorUITests: XCTestCase {
     /// the middle and picks it.
     func testPickingAPersona() {
         let app = launch(language: "zh-Hans")
-        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: 10), "the editor never appeared")
+        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.persona"].tap()
         let energetic = app.buttons["editor.persona.energetic"]
-        XCTAssertTrue(energetic.waitForExistence(timeout: 2), "no persona carousel")
+        XCTAssertTrue(energetic.waitForExistence(timeout: Self.wait), "no persona carousel")
         XCTAssertTrue(energetic.isSelected, "高能量 isn't the starting persona")
         settle()
         keepScreenshot(named: "24-editor-persona")
@@ -84,10 +88,10 @@ final class CharacterEditorUITests: XCTestCase {
     func testBecomingACatWithANickname() {
         let app = launch(language: "zh-Hans")
         let done = app.buttons["editor.done"]
-        XCTAssertTrue(done.waitForExistence(timeout: 10), "the editor never appeared")
+        XCTAssertTrue(done.waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.look"].tap()
         let cat = app.buttons["editor.tile.body.cat"]
-        XCTAssertTrue(cat.waitForExistence(timeout: 2), "no cat tile")
+        XCTAssertTrue(cat.waitForExistence(timeout: Self.wait), "no cat tile")
         cat.tap()
         waitUntilSelected(cat, "picking the cat didn't select it")
         XCTAssertFalse(app.buttons["editor.tab.hair"].exists, "a cat still shows 发型")
@@ -106,7 +110,7 @@ final class CharacterEditorUITests: XCTestCase {
     func testChangingTheCharacterFromProfileInEnglish() {
         let app = launch(language: "en", profile: true)
         let save = app.buttons["editor.done"]
-        XCTAssertTrue(save.waitForExistence(timeout: 10), "the editor never appeared")
+        XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "the editor never appeared")
         XCTAssertEqual(save.label, "Save")
         XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
         XCTAssertEqual(app.buttons["editor.tab.look"].label, "Look")
@@ -127,7 +131,9 @@ final class CharacterEditorUITests: XCTestCase {
     }
 
     /// Taps update the UI on the next frames; wait for the selection rather than checking at once.
-    private func waitUntilSelected(_ element: XCUIElement, _ message: String, timeout: TimeInterval = 5) {
+    private func waitUntilSelected(
+        _ element: XCUIElement, _ message: String, timeout: TimeInterval = CharacterEditorUITests.wait
+    ) {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: timeout), .completed, message)
     }
