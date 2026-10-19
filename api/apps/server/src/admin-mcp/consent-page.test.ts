@@ -214,7 +214,12 @@ describe('the consent page', () => {
     const noSignIn = await answer(first.id, { answer: 'approve', cookie: [] });
     const otherRequest = await answer(second.id, { answer: 'approve', cookie });
 
-    expect([noSignIn.status, otherRequest.status]).toStrictEqual([401, 401]);
+    // That sign-in is used up, so it can't then answer the request it was made for.
+    const afterwards = await answer(first.id, { answer: 'approve', cookie });
+
+    expect([noSignIn.status, otherRequest.status, afterwards.status]).toStrictEqual([
+      401, 401, 401,
+    ]);
     expect(await noSignIn.text()).toContain('Sign in again to answer this request.');
   });
 

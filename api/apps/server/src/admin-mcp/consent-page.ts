@@ -131,8 +131,13 @@ export function consentPage(deps: ConsentPageDependencies) {
     const form = Answer.parse(await c.req.parseBody());
     const saved = split(getCookie(c, SESSION_COOKIE));
     deleteCookie(c, SESSION_COOKIE, cookie);
-    if (saved?.authorizationId !== form.authorization_id) throw new ConsentSignInRequiredError();
+    if (saved === undefined) throw new ConsentSignInRequiredError();
     const session = { accessToken: saved.secret };
+    if (saved.authorizationId !== form.authorization_id) {
+      // One sign-in, one answer: a sign-in sent with another request is used up too.
+      await deps.consent.signOut(session);
+      throw new ConsentSignInRequiredError();
+    }
     try {
       // Checked again: the token may have expired, or the admin been taken off the list.
       const caller = await deps.verifyToken(session.accessToken);
