@@ -16,14 +16,19 @@ const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 
 async function createPhotoUpload(headers: Record<string, string>, storageUrl = config.supabaseUrl) {
   const db = createDatabase(config.databaseUrl);
+  const photos = createSupabasePhotoStorage({
+    supabaseUrl: storageUrl,
+    secretKey: config.supabaseSecretKey,
+  });
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
-    photos: createSupabasePhotoStorage({
-      supabaseUrl: storageUrl,
-      secretKey: config.supabaseSecretKey,
+    photos,
+    checkIns: createCheckIns({
+      store: createPostgresCheckInStore(db),
+      photos,
+      clock: () => new Date(),
     }),
-    checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
     log: createLog(() => undefined),
   });
   try {
@@ -73,12 +78,16 @@ describe('POST /photo-uploads', () => {
     });
     const path = PhotoPath.parse(body.path);
     expect(await photos.exists(path)).toBe(true);
-    const view = await fetch(await photos.createViewUrl(path, 60));
+    const view = await fetch(
+      z.instanceof(URL).parse((await photos.createViewUrls([path], 60)).get(path)),
+    );
     expect(new Uint8Array(await view.arrayBuffer())).toStrictEqual(JPEG);
 
     // The same URL can never replace the photo, even before a check-in uses it.
     expect(await upload(body.uploadUrl, { body: 'something else' })).toBe('KeyAlreadyExists');
-    const again = await fetch(await photos.createViewUrl(path, 60));
+    const again = await fetch(
+      z.instanceof(URL).parse((await photos.createViewUrls([path], 60)).get(path)),
+    );
     expect(new Uint8Array(await again.arrayBuffer())).toStrictEqual(JPEG);
   });
 

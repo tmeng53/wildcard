@@ -5,16 +5,18 @@ import {
   DayRange,
   Disclaimer,
   LocalDay,
-  Meal,
   MemberId,
   SquadId,
-  Training,
+  photosOf,
+  storedMealFields,
+  storedTrainingFields,
   type CheckInRecord,
   type CheckIns,
+  type PhotoRef,
 } from '@wildcard/check-ins';
 
 import { bodyVersion } from '../body-version.js';
-import type { VerifyToken } from '../ports.js';
+import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
@@ -34,12 +36,29 @@ const checkInFields = {
   }),
 };
 
+/** How long a photo's view URL works. The app lists again for fresh ones. */
+const PHOTO_VIEW_SECONDS = 60 * 60;
+
+const photoViews = {
+  photos: z
+    .array(
+      z.strictObject({
+        path: z.string().meta({ description: 'The photo’s name, as the check-in was saved with.' }),
+        url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
+      }),
+    )
+    .optional()
+    .meta({ description: '1 to 3 photos, the cover first. Missing when there are none.' }),
+};
+const TrainingView = z.strictObject({ ...storedTrainingFields, ...photoViews });
+const MealView = z.strictObject({ ...storedMealFields, ...photoViews });
+
 /** A saved check-in, as the app's contract has it (`CheckIn` in ios/Packages/Contracts). */
 export const CheckIn = z
   .discriminatedUnion('kind', [
-    z.strictObject({ ...checkInFields, kind: z.literal('trained'), training: Training }),
-    z.strictObject({ ...checkInFields, kind: z.literal('healthyMeal'), meal: Meal }),
-    z.strictObject({ ...checkInFields, kind: z.literal('cheatMeal'), meal: Meal }),
+    z.strictObject({ ...checkInFields, kind: z.literal('trained'), training: TrainingView }),
+    z.strictObject({ ...checkInFields, kind: z.literal('healthyMeal'), meal: MealView }),
+    z.strictObject({ ...checkInFields, kind: z.literal('cheatMeal'), meal: MealView }),
     z.strictObject({ ...checkInFields, kind: z.literal('disclaimer'), disclaimer: Disclaimer }),
   ])
   .openapi('CheckIn');
@@ -48,7 +67,28 @@ const CheckInList = z
   .strictObject({ version: bodyVersion(1), checkIns: z.array(CheckIn) })
   .openapi('CheckInList');
 
-function wire(record: CheckInRecord) {
+/** Signs a view URL for every photo of these check-ins, in one call to storage. */
+async function viewUrls(photos: PhotoStorage, records: readonly CheckInRecord[]) {
+  const paths = records.flatMap((record) => photosOf(record).map(({ path }) => path));
+  return photos.createViewUrls(paths, PHOTO_VIEW_SECONDS);
+}
+
+type ViewUrls = Awaited<ReturnType<typeof viewUrls>>;
+
+/** The check-in as the app reads it: each photo with the URL to view it. */
+function wire(record: CheckInRecord, urls: ViewUrls) {
+  const withUrls = <T extends { readonly photos?: readonly PhotoRef[] | undefined }>({
+    photos,
+    ...fields
+  }: T) => {
+    if (photos === undefined) return fields;
+    const views = photos.map(({ path }) => {
+      const url = urls.get(path);
+      if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
+      return { path, url: url.href };
+    });
+    return { ...fields, photos: views };
+  };
   const base = {
     version: 1 as const,
     id: record.id,
@@ -59,10 +99,10 @@ function wire(record: CheckInRecord) {
   };
   switch (record.kind) {
     case 'trained':
-      return { ...base, kind: record.kind, training: record.training };
+      return { ...base, kind: record.kind, training: withUrls(record.training) };
     case 'healthyMeal':
     case 'cheatMeal':
-      return { ...base, kind: record.kind, meal: record.meal };
+      return { ...base, kind: record.kind, meal: withUrls(record.meal) };
     case 'disclaimer':
       return { ...base, kind: record.kind, disclaimer: record.disclaimer };
   }
@@ -70,14 +110,18 @@ function wire(record: CheckInRecord) {
 
 const signedInFailures = {
   401: problem('No bearer token, or not a valid one'),
-  503: problem('Sign-in can’t be checked right now'),
+  503: problem('Sign-in or photo storage can’t be reached right now'),
 };
 
 /**
  * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` and
  * `GET /me/check-ins` read them back for a range of days.
  */
-export function checkIns(deps: { readonly verifyToken: VerifyToken; readonly checkIns: CheckIns }) {
+export function checkIns(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly checkIns: CheckIns;
+  readonly photos: PhotoStorage;
+}) {
   const save = createRoute({
     method: 'put',
     path: '/check-ins/{id}',
@@ -85,7 +129,8 @@ export function checkIns(deps: { readonly verifyToken: VerifyToken; readonly che
     summary: 'Save a check-in',
     description:
       'The app makes the id, so a save can be retried: the same check-in again answers 200 ' +
-      'with the saved one, different contents under a saved id answer 409.',
+      'with the saved one, different contents under a saved id answer 409. Photos are ' +
+      'uploaded first, through `POST /photo-uploads`, and listed by path.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -103,10 +148,13 @@ export function checkIns(deps: { readonly verifyToken: VerifyToken; readonly che
       201: { description: 'Saved', content: { 'application/json': { schema: CheckIn } } },
       400: problem(
         'Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, ' +
-          'or counted for the wrong day',
+          'counted for the wrong day, or with a photo that isn’t uploaded',
       ),
-      403: problem('Sent to a squad the member isn’t in'),
-      409: problem('The id holds a different check-in, or today’s disclaimer is already posted'),
+      403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
+      409: problem(
+        'The id holds a different check-in, today’s disclaimer is already posted, or another ' +
+          'check-in uses one of the photos',
+      ),
       ...signedInFailures,
     },
   });
@@ -159,7 +207,8 @@ export function checkIns(deps: { readonly verifyToken: VerifyToken; readonly che
         member: MemberId.parse(c.var.caller.userId),
         draft: c.req.valid('json'),
       });
-      return created ? c.json(wire(checkIn), 201) : c.json(wire(checkIn), 200);
+      const body = wire(checkIn, await viewUrls(deps.photos, [checkIn]));
+      return created ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(listForSquad, async (c) => {
       const records = await deps.checkIns.listForSquad({
@@ -167,13 +216,21 @@ export function checkIns(deps: { readonly verifyToken: VerifyToken; readonly che
         squad: c.req.valid('param').squadId,
         days: c.req.valid('query'),
       });
-      return c.json({ version: 1 as const, checkIns: records.map(wire) }, 200);
+      const urls = await viewUrls(deps.photos, records);
+      return c.json(
+        { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
+        200,
+      );
     })
     .openapi(listMine, async (c) => {
       const records = await deps.checkIns.listMine({
         member: MemberId.parse(c.var.caller.userId),
         days: c.req.valid('query'),
       });
-      return c.json({ version: 1 as const, checkIns: records.map(wire) }, 200);
+      const urls = await viewUrls(deps.photos, records);
+      return c.json(
+        { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
+        200,
+      );
     });
 }

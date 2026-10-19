@@ -71,3 +71,36 @@ export class SquadNotJoinedError extends AppError {
     super(`You aren’t in squad ${squadId}.`);
   }
 }
+
+/** Thrown for a photo in another member's folder: a member only uses photos they uploaded. */
+export class PhotoNotYoursError extends AppError {
+  override readonly name = 'PhotoNotYoursError';
+  readonly reason = 'PHOTO_NOT_YOURS';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor(readonly path: string) {
+    super(`Photo ${path} isn’t one of yours.`);
+  }
+}
+
+/** Thrown for a photo that hasn't been uploaded: finish the upload, then save again. */
+export class PhotoNotUploadedError extends AppError {
+  override readonly name = 'PhotoNotUploadedError';
+  readonly reason = 'PHOTO_NOT_UPLOADED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly path: string) {
+    super(`Photo ${path} hasn’t been uploaded yet.`);
+  }
+}
+
+/** Thrown for a photo another check-in already uses: each photo belongs to one check-in. */
+export class PhotoInUseError extends AppError {
+  override readonly name = 'PhotoInUseError';
+  readonly reason = 'PHOTO_IN_USE';
+  readonly status = 'ALREADY_EXISTS';
+
+  constructor() {
+    super('A photo in this check-in is already used by another check-in.');
+  }
+}
