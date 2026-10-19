@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -27,6 +28,7 @@ const app = createApp({
     photos,
     clock: () => new Date(),
   }),
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   log: createLog(() => undefined),
 });
 

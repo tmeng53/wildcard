@@ -176,21 +176,58 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Me/userId`.
             public var userId: Swift.String
+            /// Null until the member first saves one, right after signing up.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/profile`.
+            public struct ProfilePayload: Codable, Hashable, Sendable {
+                /// The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/timeZone`.
+                public var timeZone: Swift.String
+                /// Creates a new `ProfilePayload`.
+                ///
+                /// - Parameters:
+                ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
+                public init(timeZone: Swift.String) {
+                    self.timeZone = timeZone
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case timeZone
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.timeZone = try container.decode(
+                        Swift.String.self,
+                        forKey: .timeZone
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "timeZone"
+                    ])
+                }
+            }
+            /// Null until the member first saves one, right after signing up.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/profile`.
+            public var profile: Components.Schemas.Me.ProfilePayload?
             /// Creates a new `Me`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - userId: The signed-in member’s Supabase Auth user id.
+            ///   - profile: Null until the member first saves one, right after signing up.
             public init(
                 version: Components.Schemas.Me.VersionPayload,
-                userId: Swift.String
+                userId: Swift.String,
+                profile: Components.Schemas.Me.ProfilePayload? = nil
             ) {
                 self.version = version
                 self.userId = userId
+                self.profile = profile
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case userId
+                case profile
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -202,9 +239,58 @@ extension Components {
                     Swift.String.self,
                     forKey: .userId
                 )
+                self.profile = try container.decodeIfPresent(
+                    Components.Schemas.Me.ProfilePayload.self,
+                    forKey: .profile
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
-                    "userId"
+                    "userId",
+                    "profile"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Profile`.
+        public struct Profile: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Profile/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Profile/version`.
+            public var version: Components.Schemas.Profile.VersionPayload
+            /// The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/timeZone`.
+            public var timeZone: Swift.String
+            /// Creates a new `Profile`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
+            public init(
+                version: Components.Schemas.Profile.VersionPayload,
+                timeZone: Swift.String
+            ) {
+                self.version = version
+                self.timeZone = timeZone
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case timeZone
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Profile.VersionPayload.self,
+                    forKey: .version
+                )
+                self.timeZone = try container.decode(
+                    Swift.String.self,
+                    forKey: .timeZone
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "timeZone"
                 ])
             }
         }

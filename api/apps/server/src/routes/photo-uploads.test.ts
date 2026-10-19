@@ -1,4 +1,5 @@
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -29,6 +30,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       photos,
       clock: () => new Date(),
     }),
+    members: createMembers({ store: createPostgresProfileStore(db) }),
     log: createLog(() => undefined),
   });
   try {

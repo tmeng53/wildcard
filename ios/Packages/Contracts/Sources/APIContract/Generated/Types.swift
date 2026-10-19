@@ -13,9 +13,18 @@ public protocol APIProtocol: Sendable {
     func getHealth(_ input: Operations.GetHealth.Input) async throws -> Operations.GetHealth.Output
     /// The signed-in member
     ///
+    /// Who the bearer token belongs to, and their profile once they have saved one.
+    ///
     /// - Remark: HTTP `GET /me`.
     /// - Remark: Generated from `#/paths//me/get(getMe)`.
     func getMe(_ input: Operations.GetMe.Input) async throws -> Operations.GetMe.Output
+    /// Save the signed-in member’s profile
+    ///
+    /// Creates the profile on the first save, right after signing up, and replaces it after that. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/profile`.
+    /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)`.
+    func putMyProfile(_ input: Operations.PutMyProfile.Input) async throws -> Operations.PutMyProfile.Output
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -55,10 +64,27 @@ extension APIProtocol {
     }
     /// The signed-in member
     ///
+    /// Who the bearer token belongs to, and their profile once they have saved one.
+    ///
     /// - Remark: HTTP `GET /me`.
     /// - Remark: Generated from `#/paths//me/get(getMe)`.
     public func getMe(headers: Operations.GetMe.Input.Headers = .init()) async throws -> Operations.GetMe.Output {
         try await getMe(Operations.GetMe.Input(headers: headers))
+    }
+    /// Save the signed-in member’s profile
+    ///
+    /// Creates the profile on the first save, right after signing up, and replaces it after that. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/profile`.
+    /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)`.
+    public func putMyProfile(
+        headers: Operations.PutMyProfile.Input.Headers = .init(),
+        body: Operations.PutMyProfile.Input.Body
+    ) async throws -> Operations.PutMyProfile.Output {
+        try await putMyProfile(Operations.PutMyProfile.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// Save a check-in
     ///
