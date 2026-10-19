@@ -7,7 +7,7 @@ import {
   StreamableHTTPClientTransport,
   UnauthorizedError,
   type OAuthClientProvider,
-  type StoredOAuthClientInformation,
+  type OAuthClientInformation,
   type StoredOAuthTokens,
 } from '@modelcontextprotocol/client';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
@@ -36,6 +36,7 @@ let server: ServerType;
 let mcpUrl: URL;
 
 beforeAll(async () => {
+  registered = await registerClient();
   const port = await new Promise<number>((resolve) => {
     // Listen first: the server names itself by its URL, which needs the port.
     let app: ReturnType<typeof createApp> | undefined;
@@ -107,6 +108,29 @@ async function member(options: { admin: boolean }) {
   return signedUp;
 }
 
+const clientMetadata = {
+  client_name: 'Admin MCP test',
+  redirect_uris: ['http://localhost:9999/callback'],
+  token_endpoint_auth_method: 'none',
+  grant_types: ['authorization_code', 'refresh_token'],
+  response_types: ['code'],
+};
+
+/** Registers the MCP client by hand, as an admin does for Claude Code or claude.ai. */
+async function registerClient(): Promise<OAuthClientInformation> {
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/admin/oauth/clients`, {
+    method: 'POST',
+    headers: {
+      apikey: config.supabaseSecretKey,
+      authorization: `Bearer ${config.supabaseSecretKey}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(clientMetadata),
+  });
+  return { client_id: z.object({ client_id: z.uuid() }).parse(await response.json()).client_id };
+}
+let registered: OAuthClientInformation;
+
 /**
  * An MCP client's OAuth state, kept in memory. "Opening the browser" approves the request as
  * the member, as they would on the consent screen.
@@ -114,24 +138,15 @@ async function member(options: { admin: boolean }) {
 function clientSignedInAs(session: { readonly token: string }): OAuthClientProvider & {
   readonly code: () => string;
 } {
-  let information: StoredOAuthClientInformation | undefined;
   let tokens: StoredOAuthTokens | undefined;
   let verifier = '';
   let code = '';
   const authHeaders = { apikey: publishableKey, authorization: `Bearer ${session.token}` };
   return {
-    redirectUrl: 'http://localhost:9999/callback',
-    clientMetadata: {
-      client_name: 'Admin MCP test',
-      redirect_uris: ['http://localhost:9999/callback'],
-      token_endpoint_auth_method: 'none',
-      grant_types: ['authorization_code', 'refresh_token'],
-      response_types: ['code'],
-    },
-    clientInformation: () => information,
-    saveClientInformation: (saved) => {
-      information = saved;
-    },
+    redirectUrl: clientMetadata.redirect_uris[0],
+    clientMetadata,
+    // Registered by hand; with no saveClientInformation the client can't register itself.
+    clientInformation: () => registered,
     tokens: () => tokens,
     saveTokens: (saved) => {
       tokens = saved;
@@ -286,6 +301,15 @@ describe('the admin MCP server', () => {
       'turn_on_meme',
     ]);
     await client.close();
+  });
+
+  it('lets no client register itself, so only clients we registered get a member’s approval', async () => {
+    const response = await fetch(`${config.supabaseUrl}/auth/v1/oauth/clients/register`, {
+      method: 'POST',
+      headers: { apikey: publishableKey, 'content-type': 'application/json' },
+      body: JSON.stringify({ ...clientMetadata, client_name: 'Someone else' }),
+    });
+    expect(response.ok).toBe(false);
   });
 
   it('refuses a member who signed in but is not on the admin list', async () => {

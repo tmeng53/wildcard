@@ -370,9 +370,10 @@ enabled = false
 enabled = true
 # Path for OAuth consent flow UI
 authorization_url_path = "/oauth/consent"
-# Allow dynamic client registration: MCP clients (Claude Code, claude.ai) register themselves.
-# Registering grants nothing: only a member on the admins list can use the admin tools.
-allow_dynamic_registration = true
+# No dynamic client registration: a client's token acts as the member at Supabase Auth too, so
+# only clients we register by hand (POST /auth/v1/admin/oauth/clients with the secret key) may
+# ask a member to approve one. Claude Code and claude.ai take a pre-registered client ID.
+allow_dynamic_registration = false
 
 [edge_runtime]
 enabled = true
