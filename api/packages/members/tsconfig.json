@@ -7,5 +7,5 @@
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../errors" }]
+  "references": [{ "path": "../errors" }, { "path": "../typed-text" }]
 }

@@ -1,7 +1,7 @@
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 
-import { Profile, type MemberId } from '../domain/profile.js';
+import { MemberId, Profile } from '../domain/profile.js';
 import type { ProfileStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -14,10 +14,27 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
     async find(member) {
       const row = await db
         .selectFrom('profiles')
-        .select('time_zone')
+        .select(['time_zone', 'catchphrase'])
         .where('member_id', '=', member)
         .executeTakeFirst();
-      return row === undefined ? undefined : Profile.parse({ timeZone: row.time_zone });
+      return row === undefined
+        ? undefined
+        : Profile.parse({ timeZone: row.time_zone, catchphrase: row.catchphrase });
+    },
+
+    async catchphrases(members) {
+      if (members.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('profiles')
+        .select(['member_id', 'catchphrase'])
+        .where('member_id', 'in', members)
+        .where('catchphrase', 'is not', null)
+        .execute();
+      return new Map(
+        rows.flatMap(({ member_id, catchphrase }) =>
+          catchphrase === null ? [] : [[MemberId.parse(member_id), catchphrase] as const],
+        ),
+      );
     },
 
     async joinedAt(member) {
@@ -30,14 +47,13 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
     },
 
     async save(member: MemberId, profile) {
+      const columns = { time_zone: profile.timeZone, catchphrase: profile.catchphrase };
       try {
         await db
           .insertInto('profiles')
-          .values({ member_id: member, time_zone: profile.timeZone })
+          .values({ member_id: member, ...columns })
           .onConflict((conflict) =>
-            conflict
-              .column('member_id')
-              .doUpdateSet({ time_zone: profile.timeZone, updated_at: sql`now()` }),
+            conflict.column('member_id').doUpdateSet({ ...columns, updated_at: sql`now()` }),
           )
           .execute();
         return true;
