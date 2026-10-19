@@ -156,800 +156,713 @@
       "CheckIn": {
         "oneOf": [
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "member": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The member who made it."
-              },
-              "day": {
-                "type": "string",
-                "format": "date",
-                "description": "The member’s local day it counts for."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the member made it, in UTC with milliseconds.",
-                "example": "2026-10-18T14:03:00.000Z"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "trained"
-                ]
-              },
-              "training": {
-                "type": "object",
-                "properties": {
-                  "sport": {
-                    "type": "string",
-                    "enum": [
-                      "run",
-                      "walk",
-                      "hike",
-                      "trailRun",
-                      "strength",
-                      "crossfit",
-                      "hyrox",
-                      "kettlebell",
-                      "spin",
-                      "elliptical",
-                      "rowing",
-                      "hiit",
-                      "jumpRope",
-                      "aerobics",
-                      "yoga",
-                      "matPilates",
-                      "reformerPilates",
-                      "barre",
-                      "stretching",
-                      "swim",
-                      "surf",
-                      "paddleboard",
-                      "kayak",
-                      "tennis",
-                      "badminton",
-                      "pickleball",
-                      "tableTennis",
-                      "squash",
-                      "basketball",
-                      "soccer",
-                      "volleyball",
-                      "golf",
-                      "baseballSoftball",
-                      "ultimate",
-                      "roadCycling",
-                      "mountainBiking",
-                      "climb",
-                      "ski",
-                      "snowboard",
-                      "skate",
-                      "boxing",
-                      "kickboxing",
-                      "jiuJitsu",
-                      "martialArts",
-                      "dance",
-                      "dogWalk",
-                      "walkCommute",
-                      "bikeCommute",
-                      "deepClean",
-                      "moving",
-                      "strollerWalk",
-                      "gardening",
-                      "custom"
-                    ]
-                  },
-                  "customSport": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
-                  },
-                  "caption": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "The photo’s name, as the check-in was saved with."
-                        },
-                        "url": {
-                          "type": "string",
-                          "format": "uri",
-                          "description": "`GET` the photo here. It works for an hour."
-                        }
-                      },
-                      "required": [
-                        "path",
-                        "url"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "description": "1 to 3 photos, the cover first. Missing when there are none."
-                  }
-                },
-                "required": [
-                  "sport"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "id",
-              "member",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "training"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/TrainedCheckIn"
           },
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "member": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The member who made it."
-              },
-              "day": {
-                "type": "string",
-                "format": "date",
-                "description": "The member’s local day it counts for."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the member made it, in UTC with milliseconds.",
-                "example": "2026-10-18T14:03:00.000Z"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "healthyMeal"
-                ]
-              },
-              "meal": {
-                "type": "object",
-                "properties": {
-                  "caption": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "The photo’s name, as the check-in was saved with."
-                        },
-                        "url": {
-                          "type": "string",
-                          "format": "uri",
-                          "description": "`GET` the photo here. It works for an hour."
-                        }
-                      },
-                      "required": [
-                        "path",
-                        "url"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "description": "1 to 3 photos, the cover first. Missing when there are none."
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "id",
-              "member",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "meal"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/HealthyMealCheckIn"
           },
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "member": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The member who made it."
-              },
-              "day": {
-                "type": "string",
-                "format": "date",
-                "description": "The member’s local day it counts for."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the member made it, in UTC with milliseconds.",
-                "example": "2026-10-18T14:03:00.000Z"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "cheatMeal"
-                ]
-              },
-              "meal": {
-                "type": "object",
-                "properties": {
-                  "caption": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "The photo’s name, as the check-in was saved with."
-                        },
-                        "url": {
-                          "type": "string",
-                          "format": "uri",
-                          "description": "`GET` the photo here. It works for an hour."
-                        }
-                      },
-                      "required": [
-                        "path",
-                        "url"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "description": "1 to 3 photos, the cover first. Missing when there are none."
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "id",
-              "member",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "meal"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/CheatMealCheckIn"
           },
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "member": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The member who made it."
-              },
-              "day": {
-                "type": "string",
-                "format": "date",
-                "description": "The member’s local day it counts for."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the member made it, in UTC with milliseconds.",
-                "example": "2026-10-18T14:03:00.000Z"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "disclaimer"
-                ]
-              },
-              "disclaimer": {
-                "type": "object",
-                "properties": {
-                  "text": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 80 characters as people see them; may span lines."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "The photo’s name, as the check-in was saved with."
-                        },
-                        "url": {
-                          "type": "string",
-                          "format": "uri",
-                          "description": "`GET` the photo here. It works for an hour."
-                        }
-                      },
-                      "required": [
-                        "path",
-                        "url"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "description": "1 to 3 photos, the cover first. Missing when there are none."
-                  }
-                },
-                "required": [
-                  "text"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "id",
-              "member",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "disclaimer"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/DisclaimerCheckIn"
           }
-        ]
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "trained": "#/components/schemas/TrainedCheckIn",
+            "healthyMeal": "#/components/schemas/HealthyMealCheckIn",
+            "cheatMeal": "#/components/schemas/CheatMealCheckIn",
+            "disclaimer": "#/components/schemas/DisclaimerCheckIn"
+          }
+        }
+      },
+      "TrainedCheckIn": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member who made it."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day it counts for."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member made it, in UTC with milliseconds.",
+            "example": "2026-10-18T14:03:00.000Z"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained"
+            ]
+          },
+          "training": {
+            "$ref": "#/components/schemas/TrainingView"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "member",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "training"
+        ],
+        "additionalProperties": false
+      },
+      "TrainingView": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/Sport"
+          },
+          "customSport": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+            "x-max-characters": 20
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
+            "x-max-characters": 60
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "description": "1 to 3 photos, the cover first. Missing when there are none."
+          }
+        },
+        "required": [
+          "sport"
+        ],
+        "additionalProperties": false
+      },
+      "Sport": {
+        "type": "string",
+        "enum": [
+          "run",
+          "walk",
+          "hike",
+          "trailRun",
+          "strength",
+          "crossfit",
+          "hyrox",
+          "kettlebell",
+          "spin",
+          "elliptical",
+          "rowing",
+          "hiit",
+          "jumpRope",
+          "aerobics",
+          "yoga",
+          "matPilates",
+          "reformerPilates",
+          "barre",
+          "stretching",
+          "swim",
+          "surf",
+          "paddleboard",
+          "kayak",
+          "tennis",
+          "badminton",
+          "pickleball",
+          "tableTennis",
+          "squash",
+          "basketball",
+          "soccer",
+          "volleyball",
+          "golf",
+          "baseballSoftball",
+          "ultimate",
+          "roadCycling",
+          "mountainBiking",
+          "climb",
+          "ski",
+          "snowboard",
+          "skate",
+          "boxing",
+          "kickboxing",
+          "jiuJitsu",
+          "martialArts",
+          "dance",
+          "dogWalk",
+          "walkCommute",
+          "bikeCommute",
+          "deepClean",
+          "moving",
+          "strollerWalk",
+          "gardening",
+          "custom"
+        ],
+        "description": "A listed sport, or `custom` with the member’s own name in `customSport`."
+      },
+      "PhotoView": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The photo’s name, as the check-in was saved with."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "`GET` the photo here. It works for an hour."
+          }
+        },
+        "required": [
+          "path",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "HealthyMealCheckIn": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member who made it."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day it counts for."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member made it, in UTC with milliseconds.",
+            "example": "2026-10-18T14:03:00.000Z"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "healthyMeal"
+            ]
+          },
+          "meal": {
+            "$ref": "#/components/schemas/MealView"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "member",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "meal"
+        ],
+        "additionalProperties": false
+      },
+      "MealView": {
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
+            "x-max-characters": 60
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "description": "1 to 3 photos, the cover first. Missing when there are none."
+          }
+        },
+        "additionalProperties": false
+      },
+      "CheatMealCheckIn": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member who made it."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day it counts for."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member made it, in UTC with milliseconds.",
+            "example": "2026-10-18T14:03:00.000Z"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cheatMeal"
+            ]
+          },
+          "meal": {
+            "$ref": "#/components/schemas/MealView"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "member",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "meal"
+        ],
+        "additionalProperties": false
+      },
+      "DisclaimerCheckIn": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member who made it."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day it counts for."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member made it, in UTC with milliseconds.",
+            "example": "2026-10-18T14:03:00.000Z"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "disclaimer"
+            ]
+          },
+          "disclaimer": {
+            "$ref": "#/components/schemas/DisclaimerView"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "member",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "disclaimer"
+        ],
+        "additionalProperties": false
+      },
+      "DisclaimerView": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 80 characters as people see them; may span lines.",
+            "x-max-characters": 80
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "description": "1 to 3 photos, the cover first. Missing when there are none."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
       },
       "CheckInDraft": {
         "oneOf": [
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "day": {
-                "type": "string",
-                "format": "date"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "minItems": 1,
-                "maxItems": 3
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "trained"
-                ]
-              },
-              "training": {
-                "type": "object",
-                "properties": {
-                  "sport": {
-                    "type": "string",
-                    "enum": [
-                      "run",
-                      "walk",
-                      "hike",
-                      "trailRun",
-                      "strength",
-                      "crossfit",
-                      "hyrox",
-                      "kettlebell",
-                      "spin",
-                      "elliptical",
-                      "rowing",
-                      "hiit",
-                      "jumpRope",
-                      "aerobics",
-                      "yoga",
-                      "matPilates",
-                      "reformerPilates",
-                      "barre",
-                      "stretching",
-                      "swim",
-                      "surf",
-                      "paddleboard",
-                      "kayak",
-                      "tennis",
-                      "badminton",
-                      "pickleball",
-                      "tableTennis",
-                      "squash",
-                      "basketball",
-                      "soccer",
-                      "volleyball",
-                      "golf",
-                      "baseballSoftball",
-                      "ultimate",
-                      "roadCycling",
-                      "mountainBiking",
-                      "climb",
-                      "ski",
-                      "snowboard",
-                      "skate",
-                      "boxing",
-                      "kickboxing",
-                      "jiuJitsu",
-                      "martialArts",
-                      "dance",
-                      "dogWalk",
-                      "walkCommute",
-                      "bikeCommute",
-                      "deepClean",
-                      "moving",
-                      "strollerWalk",
-                      "gardening",
-                      "custom"
-                    ]
-                  },
-                  "customSport": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
-                  },
-                  "caption": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-                        }
-                      },
-                      "required": [
-                        "path"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "minItems": 1,
-                    "maxItems": 3,
-                    "description": "1 to 3 photos, the cover first. Leave it out for none."
-                  }
-                },
-                "required": [
-                  "sport"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "training"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/TrainedCheckInDraft"
           },
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "day": {
-                "type": "string",
-                "format": "date"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "minItems": 1,
-                "maxItems": 3
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "healthyMeal"
-                ]
-              },
-              "meal": {
-                "type": "object",
-                "properties": {
-                  "caption": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-                        }
-                      },
-                      "required": [
-                        "path"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "minItems": 1,
-                    "maxItems": 3,
-                    "description": "1 to 3 photos, the cover first. Leave it out for none."
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "meal"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/HealthyMealCheckInDraft"
           },
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "day": {
-                "type": "string",
-                "format": "date"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "minItems": 1,
-                "maxItems": 3
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "cheatMeal"
-                ]
-              },
-              "meal": {
-                "type": "object",
-                "properties": {
-                  "caption": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-                        }
-                      },
-                      "required": [
-                        "path"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "minItems": 1,
-                    "maxItems": 3,
-                    "description": "1 to 3 photos, the cover first. Leave it out for none."
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "meal"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/CheatMealCheckInDraft"
           },
           {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "integer",
-                "enum": [
-                  1
-                ]
-              },
-              "day": {
-                "type": "string",
-                "format": "date"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "audience": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "minItems": 1,
-                "maxItems": 3
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "disclaimer"
-                ]
-              },
-              "disclaimer": {
-                "type": "object",
-                "properties": {
-                  "text": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "description": "Trimmed, then 1 to 80 characters as people see them; may span lines."
-                  },
-                  "photos": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-                        }
-                      },
-                      "required": [
-                        "path"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "minItems": 1,
-                    "maxItems": 3,
-                    "description": "1 to 3 photos, the cover first. Leave it out for none."
-                  }
-                },
-                "required": [
-                  "text"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "day",
-              "createdAt",
-              "audience",
-              "kind",
-              "disclaimer"
-            ],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/DisclaimerCheckInDraft"
           }
-        ]
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "trained": "#/components/schemas/TrainedCheckInDraft",
+            "healthyMeal": "#/components/schemas/HealthyMealCheckInDraft",
+            "cheatMeal": "#/components/schemas/CheatMealCheckInDraft",
+            "disclaimer": "#/components/schemas/DisclaimerCheckInDraft"
+          }
+        }
+      },
+      "TrainedCheckInDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 3
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained"
+            ]
+          },
+          "training": {
+            "$ref": "#/components/schemas/Training"
+          }
+        },
+        "required": [
+          "version",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "training"
+        ],
+        "additionalProperties": false
+      },
+      "Training": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/Sport"
+          },
+          "customSport": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+            "x-max-characters": 20
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
+            "x-max-characters": 60
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoRef"
+            },
+            "minItems": 1,
+            "maxItems": 3,
+            "description": "1 to 3 photos, the cover first. Leave it out for none."
+          }
+        },
+        "required": [
+          "sport"
+        ],
+        "additionalProperties": false
+      },
+      "PhotoRef": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "HealthyMealCheckInDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 3
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "healthyMeal"
+            ]
+          },
+          "meal": {
+            "$ref": "#/components/schemas/Meal"
+          }
+        },
+        "required": [
+          "version",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "meal"
+        ],
+        "additionalProperties": false
+      },
+      "Meal": {
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
+            "x-max-characters": 60
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoRef"
+            },
+            "minItems": 1,
+            "maxItems": 3,
+            "description": "1 to 3 photos, the cover first. Leave it out for none."
+          }
+        },
+        "additionalProperties": false
+      },
+      "CheatMealCheckInDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 3
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cheatMeal"
+            ]
+          },
+          "meal": {
+            "$ref": "#/components/schemas/Meal"
+          }
+        },
+        "required": [
+          "version",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "meal"
+        ],
+        "additionalProperties": false
+      },
+      "DisclaimerCheckInDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "audience": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 3
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "disclaimer"
+            ]
+          },
+          "disclaimer": {
+            "$ref": "#/components/schemas/Disclaimer"
+          }
+        },
+        "required": [
+          "version",
+          "day",
+          "createdAt",
+          "audience",
+          "kind",
+          "disclaimer"
+        ],
+        "additionalProperties": false
+      },
+      "Disclaimer": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 80 characters as people see them; may span lines.",
+            "x-max-characters": 80
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoRef"
+            },
+            "minItems": 1,
+            "maxItems": 3,
+            "description": "1 to 3 photos, the cover first. Leave it out for none."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
       },
       "CheckInList": {
         "type": "object",
@@ -1034,67 +947,13 @@
                       ]
                     },
                     "sport": {
-                      "type": "string",
-                      "enum": [
-                        "run",
-                        "walk",
-                        "hike",
-                        "trailRun",
-                        "strength",
-                        "crossfit",
-                        "hyrox",
-                        "kettlebell",
-                        "spin",
-                        "elliptical",
-                        "rowing",
-                        "hiit",
-                        "jumpRope",
-                        "aerobics",
-                        "yoga",
-                        "matPilates",
-                        "reformerPilates",
-                        "barre",
-                        "stretching",
-                        "swim",
-                        "surf",
-                        "paddleboard",
-                        "kayak",
-                        "tennis",
-                        "badminton",
-                        "pickleball",
-                        "tableTennis",
-                        "squash",
-                        "basketball",
-                        "soccer",
-                        "volleyball",
-                        "golf",
-                        "baseballSoftball",
-                        "ultimate",
-                        "roadCycling",
-                        "mountainBiking",
-                        "climb",
-                        "ski",
-                        "snowboard",
-                        "skate",
-                        "boxing",
-                        "kickboxing",
-                        "jiuJitsu",
-                        "martialArts",
-                        "dance",
-                        "dogWalk",
-                        "walkCommute",
-                        "bikeCommute",
-                        "deepClean",
-                        "moving",
-                        "strollerWalk",
-                        "gardening",
-                        "custom"
-                      ]
+                      "$ref": "#/components/schemas/Sport"
                     },
                     "customSport": {
                       "type": "string",
                       "maxLength": 1000,
-                      "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
+                      "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+                      "x-max-characters": 20
                     }
                   },
                   "required": [
@@ -1163,67 +1022,13 @@
                       ]
                     },
                     "sport": {
-                      "type": "string",
-                      "enum": [
-                        "run",
-                        "walk",
-                        "hike",
-                        "trailRun",
-                        "strength",
-                        "crossfit",
-                        "hyrox",
-                        "kettlebell",
-                        "spin",
-                        "elliptical",
-                        "rowing",
-                        "hiit",
-                        "jumpRope",
-                        "aerobics",
-                        "yoga",
-                        "matPilates",
-                        "reformerPilates",
-                        "barre",
-                        "stretching",
-                        "swim",
-                        "surf",
-                        "paddleboard",
-                        "kayak",
-                        "tennis",
-                        "badminton",
-                        "pickleball",
-                        "tableTennis",
-                        "squash",
-                        "basketball",
-                        "soccer",
-                        "volleyball",
-                        "golf",
-                        "baseballSoftball",
-                        "ultimate",
-                        "roadCycling",
-                        "mountainBiking",
-                        "climb",
-                        "ski",
-                        "snowboard",
-                        "skate",
-                        "boxing",
-                        "kickboxing",
-                        "jiuJitsu",
-                        "martialArts",
-                        "dance",
-                        "dogWalk",
-                        "walkCommute",
-                        "bikeCommute",
-                        "deepClean",
-                        "moving",
-                        "strollerWalk",
-                        "gardening",
-                        "custom"
-                      ]
+                      "$ref": "#/components/schemas/Sport"
                     },
                     "customSport": {
                       "type": "string",
                       "maxLength": 1000,
-                      "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
+                      "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+                      "x-max-characters": 20
                     }
                   },
                   "required": [
