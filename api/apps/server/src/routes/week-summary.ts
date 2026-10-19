@@ -121,9 +121,9 @@ export function weekSummary(deps: {
       'winners are named and only the signed-in member’s own counts are shown, so nobody is ' +
       'ranked last. Reactions count only from members of the squad now. Any week that has ' +
       'started can be read; until `final`, it is still being played. Only for members of the ' +
-      'squad. The words come in the first language of the request’s `Accept-Language` they are ' +
-      'written in (Chinese or English), Chinese otherwise; the app leaves that header to the ' +
-      'system, which lists the phone’s languages.',
+      'squad. The words come in the language of the request’s `Accept-Language` they are written ' +
+      'in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that ' +
+      'header to the system, which lists the phone’s languages.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {

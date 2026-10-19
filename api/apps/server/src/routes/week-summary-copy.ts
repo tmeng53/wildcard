@@ -12,17 +12,21 @@ const isLanguage = (tag: string, language: string) =>
   tag === language || tag.startsWith(`${language}-`);
 
 /**
- * The first language in `Accept-Language`, in the order listed (as iOS sends them), that the
- * summary is written in; Chinese when none is. A range marked `q=0` (not acceptable) is skipped.
+ * The language in `Accept-Language` the summary is written in that the client weighs highest
+ * (`q`, 1 when left out), the earlier one on a tie; Chinese when none is. A range weighed `q=0`
+ * is not acceptable.
  */
 export function languageOf(acceptLanguage: string | undefined): Language {
+  let best: { language: Language; q: number } | undefined;
   for (const range of (acceptLanguage ?? '').split(',')) {
     const [tag = '', ...parameters] = range.split(';').map((part) => part.trim().toLowerCase());
-    if (parameters.some((parameter) => /^q=0(\.0{0,3})?$/.test(parameter))) continue;
-    if (isLanguage(tag, 'zh')) return 'zh-Hans';
-    if (isLanguage(tag, 'en')) return 'en';
+    const weight = parameters.find((parameter) => parameter.startsWith('q='));
+    const q = weight === undefined ? 1 : Number(weight.slice(2));
+    if (!(q > 0 && q <= 1)) continue;
+    const language = isLanguage(tag, 'zh') ? 'zh-Hans' : isLanguage(tag, 'en') ? 'en' : undefined;
+    if (language !== undefined && (best === undefined || q > best.q)) best = { language, q };
   }
-  return 'zh-Hans';
+  return best?.language ?? 'zh-Hans';
 }
 
 type Words = Readonly<Record<Language, string>>;
