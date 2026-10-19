@@ -36,6 +36,12 @@ public enum AvatarError: Error, Equatable, Sendable {
     case invalidEasing(clip: String, part: PartID, channel: Channel)
     /// Two tracks in one clip move the same channel of the same part.
     case duplicateTrack(clip: String, part: PartID, channel: Channel)
+    /// An accent that loops on a one-shot clip, or plays once on a looping one.
+    case accentMismatch(clip: String, accent: String)
+    /// An accent whose tempo isn't a positive number, or whose strength is negative.
+    case invalidAccent(clip: String, accent: String)
+    /// An accent track that doesn't start and end at rest (no offset, scale 1).
+    case accentNotAtRest(accent: String, part: PartID, channel: Channel)
 }
 
 /// What's wrong in an SVG file. Art is exported flat: paths and basic shapes with fills

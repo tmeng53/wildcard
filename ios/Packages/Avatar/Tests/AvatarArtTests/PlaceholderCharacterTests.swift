@@ -9,18 +9,18 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "root", "tail", "legL", "legR", "torso", "head", "eyes", "brows", "glasses", "mouthSmile",
-            "mouthOpen", "propR", "armL", "armR",
+            "shadow", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL", "flapR", "nose", "eyes",
+            "brows", "glasses", "mouthSmile", "mouthOpen", "propR", "armL", "armR",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
-    #expect(figure.parts[12].art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
-    #expect(figure.parts[2].art.count == (outfit == PlaceholderCharacter.cat ? 1 : 0))
+    #expect(try figure.part("propR").art.count == (outfit == PlaceholderCharacter.bear ? 0 : 1))
+    #expect(try figure.part("tail").art.count == (outfit == PlaceholderCharacter.cat ? 1 : 0))
     // Everyone has eyes and both mouths; only people pick brows.
-    #expect([7, 10, 11].allSatisfy { figure.parts[$0].art.count == 1 })
+    #expect(try ["eyes", "mouthSmile", "mouthOpen"].allSatisfy { try figure.part($0).art.count == 1 })
     let isPerson = PlaceholderCharacter.people.contains(outfit.variants["body"] ?? "")
-    #expect(figure.parts[8].art.count == (isPerson ? 1 : 0))
+    #expect(try figure.part("brows").art.count == (isPerson ? 1 : 0))
     // The open mouth waits hidden until the cheer swaps it in.
-    #expect(figure.layout(figure.restPose)[11].opacity == 0)
+    #expect(figure.layout(figure.restPose)[try figure.index("mouthOpen")].opacity == 0)
 }
 
 /// Every body and hair the editor can offer, by folder name.
@@ -57,10 +57,12 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let cat = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.cat)
     let plain = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "eyes": "round", "mouth": "smile"]))
     let bare = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
-    #expect(cat.parts[7].art == plain.parts[7].art)
-    #expect(bare.parts[7].art == plain.parts[7].art && bare.parts[10].art == plain.parts[10].art)
+    #expect(try cat.part("eyes").art == plain.part("eyes").art)
+    #expect(try bare.part("eyes").art == plain.part("eyes").art)
+    #expect(try bare.part("mouthSmile").art == plain.part("mouthSmile").art)
     let baller = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.baller)
-    #expect(baller.parts[7].art != plain.parts[7].art && baller.parts[10].art != plain.parts[10].art)
+    #expect(try baller.part("eyes").art != plain.part("eyes").art)
+    #expect(try baller.part("mouthSmile").art != plain.part("mouthSmile").art)
 }
 
 /// Brows take the hair's color until they're given their own.
@@ -75,7 +77,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     look.dyeHair(blonde)
     #expect(look.colors["hair"] == blonde && look.colors["brows"] == black)
     let figure = try PlaceholderCharacter.figure(wearing: look)
-    #expect(figure.parts[8].art[0].shapes.allSatisfy { $0.stroke?.color == black })
+    #expect(try figure.part("brows").art[0].shapes.allSatisfy { $0.stroke?.color == black })
 
     // Without brows, only the hair takes the color, and the look still builds.
     var browless = Outfit(["body": "peach", "hair": "bob"])
@@ -95,7 +97,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 15)
+    #expect(figure.parts.count == 20)
 }
 
 @Test(arguments: Persona.allCases)
@@ -110,6 +112,66 @@ func everyPersonaHasAnIdleAndACheer(persona: Persona) throws {
     // The cheer lands where the idle starts (half-closed eyes included, for deadpan), so
     // handing back to idle doesn't jump either.
     #expect(nearlyEqual(figure.pose(cheer, at: cheer.clip.duration), figure.pose(idle, at: 0)))
+}
+
+/// Each species moves its own way on top of every persona: the moves start and end at rest,
+/// so the idle still loops without a jump and the cheer still lands where the idle starts.
+@Test(arguments: Persona.allCases, ["peach", "cat", "shiba", "golden", "rabbit", "lop", "bear"])
+func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
+    let plainIdle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
+    let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: body))
+    let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, body: body))
+    #expect(idle.clip.accents.count == 1)
+    #expect(idle.clip.accents.first?.tempo == persona.accentTempo)
+    #expect(idle.clip.accents.first?.strength == persona.accentStrength)
+    #expect(cheer.clip.accents.count == (["peach", "cat"].contains(body) ? 0 : 1))
+    #expect(nearlyEqual(figure.pose(idle, at: 0), figure.pose(plainIdle, at: 0)))
+    #expect(nearlyEqual(figure.pose(cheer, at: cheer.clip.duration), figure.pose(idle, at: 0)))
+}
+
+/// Bodies the editor doesn't list, or a species with no moves, play the persona's clip as is.
+@Test func speciesFollowTheEditorsGroups() throws {
+    #expect(PlaceholderCharacter.species(of: "tan") == "person")
+    #expect(PlaceholderCharacter.species(of: "lop") == "rabbit")
+    #expect(PlaceholderCharacter.species(of: "husky") == "dog")
+    #expect(PlaceholderCharacter.species(of: "dragon") == nil)
+    #expect(try PlaceholderCharacter.clip("idle", persona: .shy, body: "dragon").accents.isEmpty)
+    #expect(try PlaceholderCharacter.clip("idle", persona: .shy, body: nil).accents.isEmpty)
+}
+
+/// A cat yawns now and then: its mouth opens wide and its eyes shut, later for a deadpan cat,
+/// which does everything slowly.
+@Test func catsYawn() throws {
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.cat)
+    let mouth = try figure.index("mouthOpen")
+    func openMouth(_ persona: Persona, at time: Double) throws -> Double {
+        let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: "cat"))
+        return figure.layout(figure.pose(idle, at: time))[mouth].opacity
+    }
+    #expect(try openMouth(.energetic, at: 0) == 0)
+    // The yawn is 3.3 to 4.5 s into the cat's loop: 2.4 to 3.2 s for an energetic cat
+    // (1.4 times as fast), 4.7 to 6.4 s for a deadpan one (0.7 times).
+    #expect(try openMouth(.energetic, at: 2.8) == 1)
+    #expect(try openMouth(.deadpan, at: 2.8) == 0)
+    #expect(try openMouth(.deadpan, at: 5.5) == 1)
+}
+
+/// Rabbits and dogs carry their ears as parts of their own, upright ones behind the head and
+/// floppy ones over it, so the moves can turn them; rabbits move their noses too.
+@Test func rabbitsAndDogsMoveTheirEarsOnTheirOwn() throws {
+    let choices = try PlaceholderCharacter.editorChoices()
+    let floppy: Set = ["lop", "golden", "collie"]
+    for species in choices.species where ["dog", "rabbit"].contains(species.id) {
+        for body in species.bodies {
+            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
+            let ears: [PartID] = floppy.contains(body) ? ["flapL", "flapR"] : ["earL", "earR"]
+            let others: [PartID] = floppy.contains(body) ? ["earL", "earR"] : ["flapL", "flapR"]
+            #expect(try ears.allSatisfy { try !figure.part($0).art.isEmpty }, "\(body)")
+            #expect(try others.allSatisfy { try figure.part($0).art.isEmpty }, "\(body)")
+            #expect(try figure.part("nose").art.isEmpty == (species.id == "dog"), "\(body)")
+        }
+    }
 }
 
 /// The same pose, give or take floating-point rounding.
@@ -139,14 +201,18 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
     #expect(abs((try rootValues(.shy, \.x).min() ?? 0) - -10) < 0.5)
 }
 
-/// Every look stays inside the canvas through every frame of every persona's clips, so a view sized to
+/// Every look stays inside the canvas through every frame of every persona's clips, with its
+/// species' moves on top, so a view sized to
 /// the art never cuts off an ear or a racket. The bottom edge is left out: the shadow sits on it.
 @Test(arguments: Persona.allCases, wardrobe)
 func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for name in ["idle", "cheer"] {
-        let bound = try figure.bind(PlaceholderCharacter.clip(name, persona: persona))
-        for frame in 0...Int(bound.clip.duration * 50) {
+        let bound = try figure.bind(PlaceholderCharacter.clip(name, persona: persona, body: outfit.variants["body"]))
+        // An idle with its species' moves on top repeats only once both loops line up, so
+        // this plays it for as long as the longer of the two.
+        let accents = bound.clip.loops ? bound.clip.accents.map { $0.clip.duration / $0.tempo } : []
+        for frame in 0...Int(((accents + [bound.clip.duration]).max() ?? 0) * 50) {
             let time = Double(frame) / 50
             for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
             where placement.opacity > 0 {

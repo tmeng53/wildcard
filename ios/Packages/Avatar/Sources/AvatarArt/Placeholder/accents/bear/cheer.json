@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "name": "cheer",
+  "duration": 2,
+  "loops": false,
+  "tracks": [
+    { "part": "torso", "channel": "x", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.0, "v": 0 }, { "t": 1.12, "v": -4, "ease": "easeInOut" }, { "t": 1.24, "v": 4, "ease": "easeInOut" },
+      { "t": 1.36, "v": -4, "ease": "easeInOut" }, { "t": 1.48, "v": 4, "ease": "easeInOut" }, { "t": 1.6, "v": -3, "ease": "easeInOut" }, { "t": 1.72, "v": 3, "ease": "easeInOut" },
+      { "t": 1.84, "v": -1.5, "ease": "easeInOut" }, { "t": 1.96, "v": 0, "ease": "easeInOut" }, { "t": 2, "v": 0 } ] },
+    { "part": "torso", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0.0 }, { "t": 1.0, "v": 0.0 }, { "t": 1.12, "v": 2.4, "ease": "easeInOut" }, { "t": 1.24, "v": -2.4, "ease": "easeInOut" },
+      { "t": 1.36, "v": 2.4, "ease": "easeInOut" }, { "t": 1.48, "v": -2.4, "ease": "easeInOut" }, { "t": 1.6, "v": 1.8, "ease": "easeInOut" }, { "t": 1.72, "v": -1.8, "ease": "easeInOut" },
+      { "t": 1.84, "v": 0.9, "ease": "easeInOut" }, { "t": 1.96, "v": 0.0, "ease": "easeInOut" }, { "t": 2, "v": 0.0 } ] }
+  ]
+}

@@ -160,10 +160,12 @@ public final class CharacterEditorModel {
         }
     }
 
+    /// The persona's clip with the moves of the draft's species on top.
     private func clip(_ name: String) -> Clip? {
-        let key = "\(draft.persona.rawValue)/\(name)"
+        let body = draft.outfit.variants["body"]
+        let key = "\(draft.persona.rawValue)/\(name)/\(body ?? "")"
         if let clip = clips[key] { return clip }
-        let clip = try? PlaceholderCharacter.clip(name, persona: draft.persona)
+        let clip = try? PlaceholderCharacter.clip(name, persona: draft.persona, body: body)
         clips[key] = clip
         return clip
     }
