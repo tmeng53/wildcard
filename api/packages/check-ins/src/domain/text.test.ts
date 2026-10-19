@@ -64,9 +64,9 @@ describe('DisclaimerText', () => {
     expect(DisclaimerText.parse('\n昨天加班\n今天躺平\n')).toBe('昨天加班\n今天躺平');
   });
 
-  it('refuses more than 40 characters and blank text', () => {
-    expect(DisclaimerText.parse('累'.repeat(40))).toBe('累'.repeat(40));
-    expect(DisclaimerText.safeParse('累'.repeat(41)).success).toBe(false);
+  it('refuses more than 80 characters and blank text', () => {
+    expect(DisclaimerText.parse('累'.repeat(80))).toBe('累'.repeat(80));
+    expect(DisclaimerText.safeParse('累'.repeat(81)).success).toBe(false);
     expect(DisclaimerText.safeParse('\n \n').success).toBe(false);
   });
 });
