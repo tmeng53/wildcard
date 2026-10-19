@@ -51,7 +51,9 @@ jobs:
       - run: npm install --global pnpm@10.28.0
       # Only the services the database and API tests use.
       - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
-      - run: scripts/verify.sh supabase api
+      # The runner image ships Swift, for the app's Backend adapters.
+      - run: swift --version
+      - run: scripts/verify.sh supabase api backend
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.

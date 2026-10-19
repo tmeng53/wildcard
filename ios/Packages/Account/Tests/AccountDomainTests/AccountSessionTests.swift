@@ -1,0 +1,142 @@
+import AccountDomain
+import Contracts
+import Foundation
+import Testing
+
+private func account(
+    _ provider: FakeProvider, _ store: MemoryStore, clock: TestClock = TestClock()
+) -> AccountSession {
+    AccountSession(provider: provider, store: store, now: { clock.now })
+}
+
+// MARK: - Restoring
+
+@Test func aStoredSessionSignsTheMemberInAtLaunch() async throws {
+    let provider = FakeProvider()
+    let account = account(provider, MemoryStore(session("stored")))
+    #expect(await account.restore() == .signedIn(tracy))
+    #expect(try await account.accessToken() == "access-stored")
+    #expect(await provider.refreshed.isEmpty)
+}
+
+@Test func noStoredSessionMeansSignedOut() async {
+    let account = account(FakeProvider(), MemoryStore())
+    #expect(await account.restore() == .signedOut)
+    await #expect(throws: AccountError.signedOut) { try await account.accessToken() }
+}
+
+@Test func anUnreadableStoredSessionIsClearedAndSignsOut() async {
+    let store = MemoryStore(session("stored"), failsToLoad: .unsupportedVersion(2))
+    let account = account(FakeProvider(), store)
+    #expect(await account.restore() == .signedOut)
+    #expect(await store.saved == nil)
+}
+
+// MARK: - Renewing
+
+@Test func aTokenCloseToExpiryIsRenewedAndTheNewSessionSaved() async throws {
+    let clock = TestClock()
+    let provider = FakeProvider(renewals: [.success(session("renewed", expiresIn: 7200))])
+    let store = MemoryStore(session("stored", expiresIn: 3600))
+    let account = account(provider, store, clock: clock)
+
+    clock.advance(by: 3600 - 61)
+    #expect(try await account.accessToken() == "access-stored")
+    clock.advance(by: 1)
+    #expect(try await account.accessToken() == "access-renewed")
+    #expect(await provider.refreshed == ["refresh-stored"])
+    #expect(await store.saved == session("renewed", expiresIn: 7200))
+}
+
+@Test func callersAskingAtOnceShareOneRenewal() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))], gated: true)
+    let account = account(provider, MemoryStore(session("stored", expiresIn: 0)))
+
+    async let first = account.accessToken()
+    async let second = account.accessToken()
+    async let third = account.accessToken()
+    while await provider.refreshesWaiting == 0 { await Task.yield() }
+    // Give the other two callers every chance to start a second renewal.
+    for _ in 0..<100 { await Task.yield() }
+    await provider.release()
+
+    #expect(try await [first, second, third] == ["access-renewed", "access-renewed", "access-renewed"])
+    #expect(await provider.refreshed == ["refresh-stored"])
+}
+
+@Test func aSessionTheProviderWontRenewSignsOut() async {
+    let provider = FakeProvider(renewals: [.failure(.signedOut)])
+    let store = MemoryStore(session("stored", expiresIn: 0))
+    let account = account(provider, store)
+
+    await #expect(throws: AccountError.signedOut) { try await account.accessToken() }
+    #expect(await account.restore() == .signedOut)
+    #expect(await store.saved == nil)
+}
+
+@Test func anUnreachableProviderKeepsTheSession() async throws {
+    let provider = FakeProvider(renewals: [.failure(.unavailable), .success(session("renewed"))])
+    let store = MemoryStore(session("stored", expiresIn: 0))
+    let account = account(provider, store)
+
+    await #expect(throws: AccountError.unavailable) { try await account.accessToken() }
+    #expect(await store.saved == session("stored", expiresIn: 0))
+    #expect(try await account.accessToken() == "access-renewed")
+    #expect(await provider.refreshed == ["refresh-stored", "refresh-stored"])
+}
+
+@Test func aTokenTheApiRefusedIsRenewedOnce() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))])
+    let account = account(provider, MemoryStore(session("stored")))
+
+    #expect(try await account.accessToken(rejected: "access-stored") == "access-renewed")
+    // A second caller that was refused the same old token gets the new one, with no renewal.
+    #expect(try await account.accessToken(rejected: "access-stored") == "access-renewed")
+    #expect(await provider.refreshed == ["refresh-stored"])
+}
+
+// MARK: - Signing in and out
+
+@Test func signingInSavesTheSession() async throws {
+    let store = MemoryStore()
+    let account = account(FakeProvider(), store)
+    #expect(try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce")) == tracy)
+    #expect(await store.saved == session("signed-in"))
+    #expect(try await account.accessToken() == "access-signed-in")
+}
+
+@Test func aRejectedCredentialLeavesTheMemberSignedOut() async {
+    let provider = FakeProvider()
+    await provider.failSignIn(with: .credentialRejected)
+    let store = MemoryStore()
+    let account = account(provider, store)
+
+    await #expect(throws: AccountError.credentialRejected) {
+        try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    }
+    #expect(await account.restore() == .signedOut)
+    #expect(await store.saved == nil)
+}
+
+@Test func signingOutClearsTheDeviceEvenWhenTheProviderIsUnreachable() async throws {
+    let provider = FakeProvider()
+    await provider.failSignOut()
+    let store = MemoryStore(session("stored"))
+    let account = account(provider, store)
+
+    try await account.signOut()
+    #expect(await account.restore() == .signedOut)
+    #expect(await store.saved == nil)
+    #expect(await provider.signedOut == [session("stored")])
+}
+
+@Test func observersSeeEachChange() async throws {
+    let account = account(FakeProvider(), MemoryStore())
+    var states = await account.states().makeAsyncIterator()
+
+    #expect(await states.next() == .signedOut)
+    try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    #expect(await states.next() == .signedIn(tracy))
+    try await account.signOut()
+    #expect(await states.next() == .signedOut)
+}

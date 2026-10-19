@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # With no arguments it runs every check. CI's jobs name the parts their runner can run:
-# swift and web on macOS, supabase and api on Linux (macOS runners have no Docker).
-parts="${*:-swift web supabase api}"
+# swift and web on macOS, supabase, api and backend on Linux (macOS runners have no Docker).
+parts="${*:-swift web supabase api backend}"
 want() { [[ " $parts " == *" $1 "* ]]; }
 
 ran=0
@@ -31,6 +31,12 @@ if want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
 
   for pkg in ios/Packages/*/; do
     [ -f "$pkg/Package.swift" ] || continue
+    # Backend's tests talk to local Supabase, so they run in the backend part; here it only builds.
+    if [ "$pkg" = "ios/Packages/Backend/" ]; then
+      echo "==> swift build $pkg"
+      swift build --package-path "$pkg" --build-tests
+      continue
+    fi
     echo "==> swift test $pkg"
     swift test --package-path "$pkg"
     ran=1
@@ -75,6 +81,24 @@ if want api && [ -f api/package.json ]; then
     DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
       SUPABASE_SECRET_KEY="$SECRET_KEY" \
       pnpm --dir api test
+  )
+  ran=1
+fi
+
+# The app's provider adapters, against local Supabase's Auth (needs `supabase start`).
+if want backend && [ -f ios/Packages/Backend/Package.swift ] && ! type -P swift >/dev/null && [ "${CI:-}" != "true" ]; then
+  echo "==> backend: Swift isn't installed here"
+  inconclusive+=("backend")
+elif want backend && [ -f ios/Packages/Backend/Package.swift ]; then
+  echo "==> backend"
+  (
+    status="$(supabase status -o env 2>/dev/null)" || {
+      echo "backend: local Supabase isn't running (supabase start)" >&2
+      exit 1
+    }
+    eval "$status"
+    SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
+      swift test --package-path ios/Packages/Backend
   )
   ran=1
 fi

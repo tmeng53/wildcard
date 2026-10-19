@@ -1,0 +1,85 @@
+import AccountDomain
+import Contracts
+import Foundation
+import Synchronization
+
+let tracy = MemberID(UUID(uuid: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)))
+let start = Date(timeIntervalSince1970: 1_792_368_000)  // 2026-10-19T00:00:00Z
+
+func session(_ name: String, expiresIn seconds: TimeInterval = 3600) -> Session {
+    Session(
+        member: tracy, accessToken: "access-\(name)", refreshToken: "refresh-\(name)",
+        expiresAt: start.addingTimeInterval(seconds))
+}
+
+/// A clock the test moves by hand.
+final class TestClock: Sendable {
+    private let seconds = Mutex(0.0)
+    var now: Date { start.addingTimeInterval(seconds.withLock { $0 }) }
+    func advance(by delta: TimeInterval) { seconds.withLock { $0 += delta } }
+}
+
+/// The secure store, in memory.
+actor MemoryStore: SessionStore {
+    var saved: Session?
+    var failsToLoad: AccountError?
+
+    init(_ saved: Session? = nil, failsToLoad: AccountError? = nil) {
+        self.saved = saved
+        self.failsToLoad = failsToLoad
+    }
+
+    func load() async throws(AccountError) -> Session? {
+        if let failsToLoad { throw failsToLoad }
+        return saved
+    }
+
+    func save(_ session: Session) async throws(AccountError) { saved = session }
+    func clear() async throws(AccountError) {
+        saved = nil
+        failsToLoad = nil
+    }
+}
+
+/// The auth provider. Each refresh answers with the next entry of `renewals`; with `gated`, a
+/// refresh waits until the test calls `release()`, so callers can pile up behind it.
+actor FakeProvider: AuthProvider {
+    private var renewals: [Result<Session, AccountError>]
+    private let gated: Bool
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+    private(set) var refreshed: [String] = []
+    private(set) var signedOut: [Session] = []
+    var signInResult: Result<Session, AccountError> = .success(session("signed-in"))
+    var signOutFails = false
+
+    init(renewals: [Result<Session, AccountError>] = [], gated: Bool = false) {
+        self.renewals = renewals
+        self.gated = gated
+    }
+
+    func signIn(with credential: Credential) async throws(AccountError) -> Session {
+        try signInResult.get()
+    }
+
+    func refresh(_ refreshToken: String) async throws(AccountError) -> Session {
+        refreshed.append(refreshToken)
+        if gated { await withCheckedContinuation { waiting.append($0) } }
+        guard !renewals.isEmpty else { throw .unavailable }
+        return try renewals.removeFirst().get()
+    }
+
+    func signOut(_ session: Session) async throws(AccountError) {
+        signedOut.append(session)
+        if signOutFails { throw .unavailable }
+    }
+
+    func release() {
+        for continuation in waiting { continuation.resume() }
+        waiting = []
+    }
+
+    var refreshesWaiting: Int { waiting.count }
+
+    func failSignIn(with error: AccountError) { signInResult = .failure(error) }
+    func failSignOut() { signOutFails = true }
+}
