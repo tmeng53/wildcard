@@ -16,9 +16,9 @@ func checkIn(
     let id = CheckInID(UUID())
     let entry: CheckIn.Entry =
         switch kind {
-        case "trained": .trained(try! Training(activity: .sport(.run), minutes: 30))
-        case "healthy": .healthyMeal(Meal(slot: .lunch))
-        case "cheat": .cheatMeal(Meal(slot: .dinner))
+        case "trained": .trained(Training(activity: .sport(.run)))
+        case "healthy": .healthyMeal(Meal())
+        case "cheat": .cheatMeal(Meal())
         default: .disclaimer(try! Disclaimer("加班到十点"))
         }
     return CheckIn(
