@@ -18,7 +18,7 @@ export function isOwnPhoto(path: PhotoPath, member: string): boolean {
 }
 
 /** One photo of a check-in, as `POST /photo-uploads` named it. */
-export const PhotoRef = z.strictObject({ path: PhotoPath });
+export const PhotoRef = z.strictObject({ path: PhotoPath }).meta({ id: 'PhotoRef' });
 export type PhotoRef = z.infer<typeof PhotoRef>;
 
 /** A check-in's photos: 1 to 3, no repeats, in the member's order. The first is the cover. */

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 // @wildcard/typed-text: the rules for text people type (a caption, a disclaimer, a name). They
-// match the app's contract (ios/Packages/Contracts), which trims with Swift's
-// `.whitespacesAndNewlines` and counts `Character`s, so text the app accepts is accepted here
+// match the app's own checks (ios/Packages/Contracts), which trim with Swift's
+// `.whitespacesAndNewlines` and count `Character`s, so text the app accepts is accepted here
 // and nothing more.
 
 /**
@@ -51,8 +51,19 @@ function isBlank(text: string): boolean {
   return true;
 }
 
-/** A typed text: trimmed, then 1 to `max` characters, never blank, on one line if asked. */
-export function typedText({ max, oneLine }: { readonly max: number; readonly oneLine: boolean }) {
+/**
+ * A typed text: trimmed, then 1 to `max` characters, never blank, on one line if asked. The
+ * OpenAPI document carries `max` as `x-max-characters`, which the app's limits are tested against.
+ */
+export function typedText({
+  max,
+  oneLine,
+  description,
+}: {
+  readonly max: number;
+  readonly oneLine: boolean;
+  readonly description: string;
+}) {
   return z
     .string()
     .max(RAW_LIMIT)
@@ -69,12 +80,19 @@ export function typedText({ max, oneLine }: { readonly max: number; readonly one
       if (count > max) {
         context.addIssue({ code: 'custom', message: `Must be at most ${String(max)} characters` });
       }
-    });
+    })
+    .meta({ description, 'x-max-characters': max });
 }
 
 /** A name (a custom sport, a squad): trimmed, 1 to `max` characters, one line with plain spaces. */
-export function nameText({ max }: { readonly max: number }) {
-  return typedText({ max, oneLine: true }).refine((name) => !NOT_A_NAME.test(name), {
+export function nameText({
+  max,
+  description,
+}: {
+  readonly max: number;
+  readonly description: string;
+}) {
+  return typedText({ max, oneLine: true, description }).refine((name) => !NOT_A_NAME.test(name), {
     message: 'Must be one line, with no tabs or unusual spaces',
   });
 }

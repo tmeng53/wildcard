@@ -16,7 +16,8 @@ export const SQUAD_MEMBER_LIMIT = 8;
 export const SQUADS_PER_MEMBER = 3;
 
 /** A squad's name, as its creator types it: trimmed, then 1 to 20 characters, on one line. */
-export const SquadName = nameText({ max: 20 }).meta({
+export const SquadName = nameText({
+  max: 20,
   description: 'Trimmed, then 1 to 20 characters as people see them, on one line.',
 });
 export type SquadName = z.infer<typeof SquadName>;

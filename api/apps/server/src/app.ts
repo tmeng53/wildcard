@@ -3,6 +3,7 @@ import type { CheckIns } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Squads } from '@wildcard/squads';
+import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
 import { RequestInvalidError, RouteNotFoundError } from './errors.js';
@@ -47,7 +48,12 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squads(deps));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
-  app.onError((error, c) => {
+  app.onError((thrown, c) => {
+    // Hono's own validator throws a 400 for a body that isn't JSON: answer it like any bad body.
+    const error =
+      thrown instanceof HTTPException && thrown.status === 400
+        ? new RequestInvalidError(thrown.message, { cause: thrown })
+        : thrown;
     if (!isAppError(error) || HTTP_STATUS[error.status] >= 500) {
       deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
     }

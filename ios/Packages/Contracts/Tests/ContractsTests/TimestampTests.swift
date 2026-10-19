@@ -15,8 +15,8 @@ import Testing
 
 @Test func aDateWithMicrosecondsRoundTripsThroughTheWire() throws {
     let made = Timestamp(Date(timeIntervalSince1970: 1_760_745_600.123456))
-    let wire = try WireJSON.encoder().encode([made])
-    #expect(try WireJSON.decoder().decode([Timestamp].self, from: wire) == [made])
+    let wire = try JSONEncoder().encode([made])
+    #expect(try JSONDecoder().decode([Timestamp].self, from: wire) == [made])
     #expect(made.millisecondsSince1970 == 1_760_745_600_123)
 }
 
