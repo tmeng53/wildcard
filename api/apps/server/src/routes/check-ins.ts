@@ -24,7 +24,10 @@ const checkInFields = {
   version: bodyVersion(1),
   id: z.uuid(),
   member: z.uuid().meta({ description: 'The member who made it.' }),
-  day: LocalDay.meta({ description: 'The member’s local day it counts for.' }),
+  day: LocalDay.meta({
+    description:
+      'The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.',
+  }),
   createdAt: z.iso.datetime().meta({
     description: 'When the member made it, in UTC with milliseconds.',
     example: '2026-10-18T14:03:00.000Z',

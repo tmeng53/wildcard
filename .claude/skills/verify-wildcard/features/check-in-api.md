@@ -48,6 +48,6 @@ Check at the source, with the ids from the log:
 Each must be refused with a problem naming its reason, and nothing may change:
 
 - A `createdAt` more than 48 hours ago (`CHECK_IN_TOO_OLD`) or ahead of the server's clock (`CHECK_IN_IN_THE_FUTURE`).
-- A `day` more than one day from `createdAt`'s UTC date (`CHECK_IN_DAY_MISMATCH`).
+- A `day` the member hadn't reached at `createdAt` in their profile's time zone (3am rule), or more than one day before it; with no profile, more than one day from `createdAt`'s UTC date (`CHECK_IN_DAY_MISMATCH`).
 - A member who left the squad: their check-ins drop out of the squad's list.
 - A day range longer than 31 days (400).
