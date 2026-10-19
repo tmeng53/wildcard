@@ -313,40 +313,54 @@ fi
 
 if want squad-today; then
   # A squad of its own, so the other journeys' check-ins don't count here; the shared one comes
-  # back at the end.
+  # back at the end. Runner and napper plan to train every day, rester to rest every day.
   shared_squad="$squad"
   read -r runner runner_token <<<"$(sign_up)"
   read -r napper napper_token <<<"$(sign_up)"
+  read -r rester rester_token <<<"$(sign_up)"
   read -r zone today monday <<<"$(noon_zone)"
-  for token in "$runner_token" "$napper_token"; do
+  for token in "$runner_token" "$napper_token" "$rester_token"; do
     call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
     expect 200
   done
-  squad_of "$runner_token" "$napper_token"
+  squad_of "$runner_token" "$napper_token" "$rester_token"
+  plan_of() { jq -cn --arg kind "$1" '{version: 1, days: [range(7) | {kind: $kind}]}'; }
+  for token in "$runner_token" "$napper_token"; do
+    call PUT "/me/weekly-plans/$monday" "$token" "$(plan_of train)"
+    expect 200
+  done
+  call PUT "/me/weekly-plans/$monday" "$rester_token" "$(plan_of rest)"
+  expect 200
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" healthyMeal '"meal":{"caption":"沙拉"}')"
   expect 201
-  call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}')"
+  # A minute before the runner's check-ins, however long the earlier journeys took: the napper
+  # checked in first today.
+  earlier="$(node -p "new Date(Date.parse('$now') - 60_000).toISOString()")"
+  call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}' | sed "s/$now/$earlier/")"
   expect 201
-  echo "squad-today: in $zone ($today) runner trained and ate a healthy meal, napper posted a disclaimer"
+  echo "squad-today: in $zone ($today) runner trained and ate a healthy meal, napper posted a disclaimer first, rester plans to rest"
 
   call GET "/squads/$squad/today" "$napper_token"
   expect 200
-  [ "$(jq -c '[.members[] | [.member, .day, .training, .latestMeal]]' <<<"$body")" = \
-    "$(jq -cn --arg a "$runner" --arg b "$napper" --arg d "$today" '[[$a,$d,"trained","healthyMeal"],[$b,$d,"disclaimer",null]]')" ] ||
-    fail "members should be runner (trained, healthy meal) then napper (disclaimer): $body"
-  [ "$(jq -c '[.today, .me.week.trainedDays, .me.lifetimeTrainedDays, .squadWeek.trainedDays]' <<<"$body")" = \
-    '[{"trained":1,"disclaimer":1,"everyoneTrained":false},0,0,1]' ] || fail "counts should be 1 trained, 1 disclaimer; napper 0; squad 1: $body"
-  echo "squad-today: napper sees runner trained, self on a disclaimer; 1 trained, 1 disclaimer, squad week 1"
+  [ "$(jq -c '[.members[] | [.member, .day, .training, .latestMeal, .plannedRest, .firstCheckInAt != null]]' <<<"$body")" = \
+    "$(jq -cn --arg a "$runner" --arg b "$napper" --arg c "$rester" --arg d "$today" \
+      '[[$b,$d,"disclaimer",null,false,true],[$a,$d,"trained","healthyMeal",false,true],[$c,$d,"notCheckedIn",null,true,false]]')" ] ||
+    fail "members should be napper (first check-in), runner, then rester (planned rest): $body"
+  [ "$(jq -c '[.today, .me.week.trainedDays, .me.week.plannedDays, .me.lifetimeTrainedDays, .squadWeek]' <<<"$body")" = \
+    '[{"trained":1,"disclaimer":1,"resting":1,"everyoneTrained":false},0,7,0,{"trainedDays":1,"plannedDays":14}]' ] ||
+    fail "counts should be 1 trained, 1 disclaimer, 1 resting; napper 0/7; squad 1/14: $body"
+  echo "squad-today: napper sees self first, then runner, then rester; 1 trained, 1 disclaimer, 1 resting; 本周 0/7, squad 1/14"
 
   call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
   call GET "/squads/$squad/today" "$napper_token"
   expect 200
-  [ "$(jq -c '[.members[1].training, .today, .me.week.trainedDays, .squadWeek.trainedDays]' <<<"$body")" = \
-    '["trained",{"trained":2,"disclaimer":0,"everyoneTrained":true},1,2]' ] || fail "napper's 练了 should win over the disclaimer: $body"
-  echo "squad-today: napper trained after all, so 练了 wins over the disclaimer and everyone trained"
+  [ "$(jq -c '[.members[0].training, .today, .me.week.trainedDays, .squadWeek]' <<<"$body")" = \
+    '["trained",{"trained":2,"disclaimer":0,"resting":1,"everyoneTrained":true},1,{"trainedDays":2,"plannedDays":14}]' ] ||
+    fail "napper's 练了 should win over the disclaimer, and the rester's rest day count toward everyone: $body"
+  echo "squad-today: napper trained after all, so 练了 wins over the disclaimer; with rester resting, everyone trained"
 
   call GET "/squads/$squad/today" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED

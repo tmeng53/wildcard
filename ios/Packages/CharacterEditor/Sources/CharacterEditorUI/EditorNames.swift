@@ -46,7 +46,7 @@ enum EditorNames {
 
     private static let variants = [
         // Bodies
-        "peach": "人", "tan": "人", "cat": "猫", "tuxedo": "奶牛猫", "calico": "三花", "tortie": "玳瑁",
+        "peach": "人", "cat": "猫", "tuxedo": "奶牛猫", "calico": "三花", "tortie": "玳瑁",
         "orangewhite": "橘猫", "lihua": "狸花", "siamese": "暹罗", "ragdoll": "布偶", "shiba": "柴犬", "golden": "金毛",
         "corgi": "柯基", "husky": "哈士奇", "collie": "边牧", "bichon": "比熊", "rabbit": "兔子", "lop": "垂耳兔",
         "dutch": "荷兰兔", "bear": "熊",
@@ -56,7 +56,6 @@ enum EditorNames {
         // Hats, clothes and props
         "cap": "棒球帽", "headband": "发带", "hoodie": "卫衣", "jersey": "球衣", "tank": "背心", "tee": "T恤",
         "greenshorts": "运动短裤", "leggings": "紧身裤", "shorts": "短裤", "dumbbell": "哑铃", "racket": "网球拍",
-        "basketball": "篮球",
     ]
 }
 #endif

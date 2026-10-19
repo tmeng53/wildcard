@@ -2497,6 +2497,14 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/latestMeal`.
                 public var latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload?
+                /// Today is a rest day in their weekly plan, whatever they checked in.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/plannedRest`.
+                public var plannedRest: Swift.Bool
+                /// When their first check-in today sent to this squad was made, of any kind, in UTC. Missing when none.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/firstCheckInAt`.
+                public var firstCheckInAt: Foundation.Date?
                 /// Creates a new `MembersPayloadPayload`.
                 ///
                 /// - Parameters:
@@ -2504,22 +2512,30 @@ extension Components {
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
+                ///   - plannedRest: Today is a rest day in their weekly plan, whatever they checked in.
+                ///   - firstCheckInAt: When their first check-in today sent to this squad was made, of any kind, in UTC. Missing when none.
                 public init(
                     member: Swift.String,
                     day: Swift.String,
                     training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload,
-                    latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload? = nil
+                    latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload? = nil,
+                    plannedRest: Swift.Bool,
+                    firstCheckInAt: Foundation.Date? = nil
                 ) {
                     self.member = member
                     self.day = day
                     self.training = training
                     self.latestMeal = latestMeal
+                    self.plannedRest = plannedRest
+                    self.firstCheckInAt = firstCheckInAt
                 }
                 public enum CodingKeys: String, CodingKey {
                     case member
                     case day
                     case training
                     case latestMeal
+                    case plannedRest
+                    case firstCheckInAt
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -2539,19 +2555,29 @@ extension Components {
                         Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload.self,
                         forKey: .latestMeal
                     )
+                    self.plannedRest = try container.decode(
+                        Swift.Bool.self,
+                        forKey: .plannedRest
+                    )
+                    self.firstCheckInAt = try container.decodeIfPresent(
+                        Foundation.Date.self,
+                        forKey: .firstCheckInAt
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "member",
                         "day",
                         "training",
-                        "latestMeal"
+                        "latestMeal",
+                        "plannedRest",
+                        "firstCheckInAt"
                     ])
                 }
             }
-            /// Everyone in the squad now, the signed-in member included, in join order.
+            /// Everyone in the squad now, the signed-in member included, in the home screen’s order: first those who checked in today, by their first check-in; then those on a planned rest day; then everyone else. Ties keep the order members joined.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadToday/members`.
             public typealias MembersPayload = [Components.Schemas.SquadToday.MembersPayloadPayload]
-            /// Everyone in the squad now, the signed-in member included, in join order.
+            /// Everyone in the squad now, the signed-in member included, in the home screen’s order: first those who checked in today, by their first check-in; then those on a planned rest day; then everyone else. Ties keep the order members joined.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadToday/members`.
             public var members: Components.Schemas.SquadToday.MembersPayload
@@ -2565,7 +2591,11 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/disclaimer`.
                 public var disclaimer: Swift.Int
-                /// Every member’s today is trained.
+                /// Members on a planned rest day with no 练了 or 请假条 today.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/today/resting`.
+                public var resting: Swift.Int
+                /// At least one member trained today and every member who did not train is on a planned rest day, whatever they checked in (全员上场).
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/everyoneTrained`.
                 public var everyoneTrained: Swift.Bool
@@ -2574,19 +2604,23 @@ extension Components {
                 /// - Parameters:
                 ///   - trained: Members whose today is trained.
                 ///   - disclaimer: Members whose today is a 请假条 with no 练了.
-                ///   - everyoneTrained: Every member’s today is trained.
+                ///   - resting: Members on a planned rest day with no 练了 or 请假条 today.
+                ///   - everyoneTrained: At least one member trained today and every member who did not train is on a planned rest day, whatever they checked in (全员上场).
                 public init(
                     trained: Swift.Int,
                     disclaimer: Swift.Int,
+                    resting: Swift.Int,
                     everyoneTrained: Swift.Bool
                 ) {
                     self.trained = trained
                     self.disclaimer = disclaimer
+                    self.resting = resting
                     self.everyoneTrained = everyoneTrained
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trained
                     case disclaimer
+                    case resting
                     case everyoneTrained
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -2599,6 +2633,10 @@ extension Components {
                         Swift.Int.self,
                         forKey: .disclaimer
                     )
+                    self.resting = try container.decode(
+                        Swift.Int.self,
+                        forKey: .resting
+                    )
                     self.everyoneTrained = try container.decode(
                         Swift.Bool.self,
                         forKey: .everyoneTrained
@@ -2606,6 +2644,7 @@ extension Components {
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "trained",
                         "disclaimer",
+                        "resting",
                         "everyoneTrained"
                     ])
                 }
@@ -2624,25 +2663,33 @@ extension Components {
                     ///
                     /// - Remark: Generated from `#/components/schemas/SquadToday/me/week/trainedDays`.
                     public var trainedDays: Swift.Int
+                    /// Training days in this week’s plan: the y in 本周 x/y.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SquadToday/me/week/plannedDays`.
+                    public var plannedDays: Swift.Int
                     /// Creates a new `WeekPayload`.
                     ///
                     /// - Parameters:
                     ///   - from:
                     ///   - to:
                     ///   - trainedDays: Days this week with a 练了, wherever it was sent. Several on one day count once.
+                    ///   - plannedDays: Training days in this week’s plan: the y in 本周 x/y.
                     public init(
                         from: Swift.String,
                         to: Swift.String,
-                        trainedDays: Swift.Int
+                        trainedDays: Swift.Int,
+                        plannedDays: Swift.Int
                     ) {
                         self.from = from
                         self.to = to
                         self.trainedDays = trainedDays
+                        self.plannedDays = plannedDays
                     }
                     public enum CodingKeys: String, CodingKey {
                         case from
                         case to
                         case trainedDays
+                        case plannedDays
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -2658,10 +2705,15 @@ extension Components {
                             Swift.Int.self,
                             forKey: .trainedDays
                         )
+                        self.plannedDays = try container.decode(
+                            Swift.Int.self,
+                            forKey: .plannedDays
+                        )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
                             "from",
                             "to",
-                            "trainedDays"
+                            "trainedDays",
+                            "plannedDays"
                         ])
                     }
                 }
@@ -2711,15 +2763,25 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/trainedDays`.
                 public var trainedDays: Swift.Int
+                /// Training days planned this week, added up over the members’ plans, each in their own week.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/plannedDays`.
+                public var plannedDays: Swift.Int
                 /// Creates a new `SquadWeekPayload`.
                 ///
                 /// - Parameters:
                 ///   - trainedDays: Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad.
-                public init(trainedDays: Swift.Int) {
+                ///   - plannedDays: Training days planned this week, added up over the members’ plans, each in their own week.
+                public init(
+                    trainedDays: Swift.Int,
+                    plannedDays: Swift.Int
+                ) {
                     self.trainedDays = trainedDays
+                    self.plannedDays = plannedDays
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
+                    case plannedDays
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -2727,8 +2789,13 @@ extension Components {
                         Swift.Int.self,
                         forKey: .trainedDays
                     )
+                    self.plannedDays = try container.decode(
+                        Swift.Int.self,
+                        forKey: .plannedDays
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "trainedDays"
+                        "trainedDays",
+                        "plannedDays"
                     ])
                 }
             }
@@ -2739,7 +2806,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - squad:
-            ///   - members: Everyone in the squad now, the signed-in member included, in join order.
+            ///   - members: Everyone in the squad now, the signed-in member included, in the home screen’s order: first those who checked in today, by their first check-in; then those on a planned rest day; then everyone else. Ties keep the order members joined.
             ///   - today:
             ///   - me:
             ///   - squadWeek:

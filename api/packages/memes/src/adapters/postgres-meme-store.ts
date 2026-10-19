@@ -61,5 +61,15 @@ export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
         .executeTakeFirst();
       return row !== undefined;
     },
+
+    async turnOn(phrase) {
+      const row = await db
+        .updateTable('memes')
+        .set({ disabled_at: null })
+        .where('phrase', '=', phrase)
+        .returning('id')
+        .executeTakeFirst();
+      return row !== undefined;
+    },
   };
 }

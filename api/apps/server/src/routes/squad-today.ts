@@ -24,6 +24,17 @@ const MemberToday = z.strictObject({
     .enum(['healthyMeal', 'cheatMeal'])
     .optional()
     .meta({ description: 'Their latest meal today sent to this squad. Missing when none.' }),
+  plannedRest: z
+    .boolean()
+    .meta({ description: 'Today is a rest day in their weekly plan, whatever they checked in.' }),
+  firstCheckInAt: z.iso
+    .datetime()
+    .optional()
+    .meta({
+      description:
+        'When their first check-in today sent to this squad was made, of any kind, in UTC. Missing ' +
+        'when none.',
+    }),
 });
 
 export const SquadToday = z
@@ -31,12 +42,20 @@ export const SquadToday = z
     version: bodyVersion(1),
     squad: z.uuid(),
     members: z.array(MemberToday).meta({
-      description: 'Everyone in the squad now, the signed-in member included, in join order.',
+      description:
+        'Everyone in the squad now, the signed-in member included, in the home screen’s order: ' +
+        'first those who checked in today, by their first check-in; then those on a planned ' +
+        'rest day; then everyone else. Ties keep the order members joined.',
     }),
     today: z.strictObject({
       trained: count('Members whose today is trained.'),
       disclaimer: count('Members whose today is a 请假条 with no 练了.'),
-      everyoneTrained: z.boolean().meta({ description: 'Every member’s today is trained.' }),
+      resting: count('Members on a planned rest day with no 练了 or 请假条 today.'),
+      everyoneTrained: z.boolean().meta({
+        description:
+          'At least one member trained today and every member who did not train is on a planned rest day, ' +
+          'whatever they checked in (全员上场).',
+      }),
     }),
     me: z.strictObject({
       week: z.strictObject({
@@ -45,6 +64,7 @@ export const SquadToday = z
         trainedDays: count(
           'Days this week with a 练了, wherever it was sent. Several on one day count once.',
         ),
+        plannedDays: count('Training days in this week’s plan: the y in 本周 x/y.'),
       }),
       lifetimeTrainedDays: count('Days ever with a 练了.'),
     }),
@@ -52,6 +72,9 @@ export const SquadToday = z
       trainedDays: count(
         'Days trained this week, added up over the members, each in their own week and from ' +
           'check-ins sent to this squad.',
+      ),
+      plannedDays: count(
+        'Training days planned this week, added up over the members’ plans, each in their own week.',
       ),
     }),
   })
@@ -69,7 +92,8 @@ export function squadToday(deps: {
     summary: 'Where a squad’s day and week stand',
     description:
       'Each member’s today and this week’s counts, as the home screen shows them. Every member’s ' +
-      'day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t ' +
+      'day and week are their own, in their time zone; weeks start on Monday, and a member who ' +
+      'hasn’t saved a weekly plan has the default one. A member who hasn’t ' +
       'saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -95,12 +119,15 @@ export function squadToday(deps: {
       {
         version: 1 as const,
         squad,
-        members: today.members.map(({ latestMeal, ...member }) =>
-          latestMeal === undefined ? member : { ...member, latestMeal },
-        ),
+        members: today.members.map(({ latestMeal, firstCheckInAt, ...member }) => ({
+          ...member,
+          ...(latestMeal === undefined ? {} : { latestMeal }),
+          ...(firstCheckInAt === undefined ? {} : { firstCheckInAt: firstCheckInAt.toISOString() }),
+        })),
         today: {
           trained: today.trainedToday,
           disclaimer: today.disclaimerToday,
+          resting: today.restingToday,
           everyoneTrained: today.everyoneTrained,
         },
         me: {
@@ -108,10 +135,11 @@ export function squadToday(deps: {
             from: today.myWeek.from,
             to: today.myWeek.to,
             trainedDays: today.myWeek.trainedDays,
+            plannedDays: today.myWeek.plannedDays,
           },
           lifetimeTrainedDays: today.myLifetimeTrainedDays,
         },
-        squadWeek: { trainedDays: today.squadTrainedDays },
+        squadWeek: today.squadWeek,
       },
       200,
     );

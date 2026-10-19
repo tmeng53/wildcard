@@ -5,6 +5,9 @@
       "path": "packages/errors"
     },
     {
+      "path": "packages/admins"
+    },
+    {
       "path": "packages/typed-text"
     },
     {

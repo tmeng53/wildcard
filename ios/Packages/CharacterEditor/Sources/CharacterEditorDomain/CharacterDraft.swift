@@ -39,11 +39,10 @@ public struct CharacterDraft: Hashable, Sendable {
         return outfit
     }
 
-    /// Whether the body is a person's, who wears hair: a species that wears it, or any skin
-    /// the art draws as a person, such as a look handed over in a skin the editor doesn't list.
+    /// Whether the body is a person's, who wears hair: a species that wears it.
     public var wearsHair: Bool {
         guard let body = picks.variants["body"] else { return false }
-        return PlaceholderCharacter.people.contains(body) || catalog.species(of: body)?.wearsHair == true
+        return catalog.species(of: body)?.wearsHair == true
     }
 
     public var canUndo: Bool { !history.isEmpty }
@@ -57,7 +56,7 @@ public struct CharacterDraft: Hashable, Sendable {
 
     /// Wears `variant` in `slot`, or nothing there when nil. A color stays when the new
     /// variant can wear it too: hair keeps its color across styles, skin across people. An
-    /// animal's coat starts from its own colors.
+    /// animal's coat starts from its own colors. Brows put on without a color take the hair's.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
         guard picks.variants[slot] != variant else { return false }
@@ -72,25 +71,22 @@ public struct CharacterDraft: Hashable, Sendable {
             keepsColor = false
         }
         if !keepsColor { next.colors[slot] = nil }
+        if slot == "brows", variant != nil, next.colors["brows"] == nil { next.colors["brows"] = picks.colors["hair"] }
         commit(next)
         return true
     }
 
-    /// Colors `slot` with one of its swatches, or back to its art's own color when nil.
+    /// Colors `slot` with one of its swatches, or back to its art's own color when nil. Brows
+    /// follow the hair until they're given a color of their own.
     @discardableResult
     public mutating func pickColor(_ color: RGBAColor?, for slot: Slot) -> Bool {
         guard let variant = picks.variants[slot], picks.colors[slot] != color else { return false }
         if let color, !catalog.swatches(for: slot, wearing: variant).contains(color) { return false }
         var next = picks
-        if slot == "hair", let color {
-            next.dyeHair(color)
-        } else {
-            // Back to the art's own hair color: brows that matched the hair go back with it.
-            if slot == "hair", next.variants["brows"] != nil, next.colors["brows"] == next.colors["hair"] {
-                next.colors["brows"] = nil
-            }
-            next.colors[slot] = color
+        if slot == "hair", next.variants["brows"] != nil, next.colors["brows"] == next.colors["hair"] {
+            next.colors["brows"] = color
         }
+        next.colors[slot] = color
         commit(next)
         return true
     }

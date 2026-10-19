@@ -15,6 +15,7 @@ import { createApp } from '../app.js';
 import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
+import { adminOn } from '../test-kit/local-supabase.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
@@ -28,6 +29,7 @@ const checkInsOn = (db: Database) =>
   createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
+    plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -52,6 +54,7 @@ async function getHealth(db: Database) {
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog((line) => lines.push(line)),
+    admin: adminOn(),
   });
   try {
     const response = await app.request('/health');
@@ -127,6 +130,7 @@ describe('an unknown route', () => {
       push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
+      admin: adminOn(),
     });
     const response = await app.request('/nope', { method: 'POST' });
     expect([response.status, await response.json()]).toStrictEqual([

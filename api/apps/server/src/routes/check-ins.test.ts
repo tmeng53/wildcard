@@ -18,7 +18,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -38,6 +38,7 @@ const app = createApp({
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
+    plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -52,6 +53,7 @@ const app = createApp({
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(() => undefined),
+  admin: adminOn(),
 });
 
 async function call({

@@ -86,7 +86,17 @@ describe('createSupabaseTokenVerifier', () => {
     const key = await newKey();
     published = [key.publicKey];
     const verify = createSupabaseTokenVerifier({ supabaseUrl });
-    expect(await verify(await token(key))).toStrictEqual({ userId });
+    expect(await verify(await token(key))).toStrictEqual({ userId, oauthClient: undefined });
+  });
+
+  it('says which OAuth client a token was issued to', async () => {
+    const key = await newKey();
+    published = [key.publicKey];
+    const verify = createSupabaseTokenVerifier({ supabaseUrl });
+    expect(await verify(await token(key, { client_id: 'claude-code' }))).toStrictEqual({
+      userId,
+      oauthClient: 'claude-code',
+    });
   });
 
   it.each([
@@ -128,7 +138,7 @@ describe('createSupabaseTokenVerifier', () => {
     expect({ fetches, tooSoon, afterCooldown }).toStrictEqual({
       fetches: 2,
       tooSoon: 'AUTH_TOKEN_INVALID',
-      afterCooldown: { userId },
+      afterCooldown: { userId, oauthClient: undefined },
     });
   });
 
@@ -147,8 +157,8 @@ describe('createSupabaseTokenVerifier', () => {
     const after = await reasonFor(verify, jwt);
 
     expect({ before, within, after }).toStrictEqual({
-      before: { userId },
-      within: { userId },
+      before: { userId, oauthClient: undefined },
+      within: { userId, oauthClient: undefined },
       after: 'AUTH_TOKEN_INVALID',
     });
   });

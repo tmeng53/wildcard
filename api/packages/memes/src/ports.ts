@@ -11,6 +11,8 @@ export interface MemeStore {
   listApprovedBetween(range: { readonly from: Date; readonly to: Date }): Promise<MemeRecord[]>;
   /** Turns a meme off at `at`. Says whether the library has that phrase. */
   turnOff(phrase: MemePhrase, at: Date): Promise<boolean>;
+  /** Turns a meme back on. Says whether the library has that phrase. */
+  turnOn(phrase: MemePhrase): Promise<boolean>;
 }
 
 /** The current time. */
