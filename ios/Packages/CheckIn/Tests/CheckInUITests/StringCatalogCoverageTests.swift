@@ -2,6 +2,8 @@ import Contracts
 import Foundation
 import Testing
 
+@testable import CheckInUI
+
 /// SwiftPM doesn't extract string keys, so a `Text` whose key is missing from the String Catalog
 /// silently shows Chinese in English. This reads CheckInUI's sources and catalog as files, so
 /// it runs on Linux too.
@@ -34,6 +36,15 @@ struct StringCatalogCoverageTests {
         #expect(source.contains("今天是战略性休息"))
         #expect(try Self.english(for: "今天是战略性休息") == "Today is a strategic rest day")
         #expect(try Self.english(for: "周三不练腿俱乐部") != nil)
+    }
+
+    /// A dice line goes into the field as is, so in every language it must fit a 免责声明.
+    @Test func everyDiceLineFitsADisclaimer() throws {
+        for line in DiceDisclaimerWriter.lines {
+            #expect(line.count <= Disclaimer.maxLength, "\(line)")
+            let english = try #require(try Self.english(for: line), "\(line) has no English")
+            #expect(english.count <= Disclaimer.maxLength, "\(english) is \(english.count) characters")
+        }
     }
 
     /// The care line's copy is the approved wording, and points at 988 and 911.

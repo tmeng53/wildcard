@@ -10,9 +10,8 @@ struct DisclaimerCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: TodayModel
-    @State private var text = ""
+    @State private var entry = DisclaimerEntry()
     @State private var drafts: [String] = []
-    @State private var isBlocked = false
     @State private var isWriting = false
     @State private var rolls = 0
 
@@ -37,20 +36,22 @@ struct DisclaimerCard: View {
             }
 
             VStack(alignment: .trailing, spacing: Space.xxs) {
-                TextField(text: $text, axis: .vertical) {
+                TextField(
+                    text: Binding {
+                        entry.text
+                    } set: {
+                        entry.write($0)
+                    }, axis: .vertical
+                ) {
                     Text("编个借口吧…", bundle: .module)
                 }
                 .typeStyle(TypeRamp.field)
                 .lineLimit(1...3)
                 .padding(Sizing.fieldInset)
                 .background(Color(Palette.white).opacity(0.7), in: RoundedRectangle(cornerRadius: Radius.s))
-                .onChange(of: text) { _, typed in
-                    let fitted = Self.fit(typed)
-                    if fitted != typed { text = fitted }
-                }
                 .accessibilityIdentifier("disclaimer.field")
-                if text.count >= Disclaimer.maxLength - 10 {
-                    Text(verbatim: "\(text.count)/\(Disclaimer.maxLength)")
+                if entry.text.count >= Disclaimer.maxLength - 10 {
+                    Text(verbatim: "\(entry.text.count)/\(Disclaimer.maxLength)")
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .textTertiary, in: theme))
                         .monospacedDigit()
@@ -61,7 +62,7 @@ struct DisclaimerCard: View {
                 ChoicePill(Text("帮我写", bundle: .module), systemImage: "sparkles", isSelected: false) {
                     Task { await write() }
                 }
-                .disabled(isWriting || text.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(isWriting || entry.text.trimmingCharacters(in: .whitespaces).isEmpty)
                 .accessibilityIdentifier("disclaimer.write")
                 ChoicePill(Text("换一个", bundle: .module), systemImage: "dice", isSelected: false) {
                     roll()
@@ -74,12 +75,12 @@ struct DisclaimerCard: View {
                 }
             }
 
-            if isBlocked {
+            if entry.isBlocked {
                 CareLine()
             } else if !drafts.isEmpty {
                 VStack(spacing: Space.xs) {
                     ForEach(Array(drafts.enumerated()), id: \.offset) { index, draft in
-                        DraftChoice(line: draft, isSelected: draft == text) { text = draft }
+                        DraftChoice(line: draft, isSelected: draft == entry.text) { entry.write(draft) }
                             .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
@@ -87,7 +88,7 @@ struct DisclaimerCard: View {
             }
 
             Button {
-                guard let disclaimer = try? Disclaimer(text) else { return }
+                guard let disclaimer = entry.disclaimer else { return }
                 Task { await model.post(.disclaimer(disclaimer)) }
             } label: {
                 Group {
@@ -100,7 +101,7 @@ struct DisclaimerCard: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(model.isSending || (try? Disclaimer(text)) == nil)
+            .disabled(model.isSending || entry.disclaimer == nil)
             .accessibilityIdentifier("disclaimer.post")
 
             if model.sendFailed {
@@ -112,34 +113,27 @@ struct DisclaimerCard: View {
         .padding(Space.m)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
         .animation(.wildcard(Motion.panel, reduceMotion: reduceMotion), value: drafts)
-        .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: isBlocked)
+        .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: entry.isBlocked)
         .sensoryFeedback(.selection, trigger: rolls)
     }
 
     private func write() async {
         isWriting = true
         defer { isWriting = false }
-        switch await model.suggestions(for: text) {
+        switch await model.suggestions(for: entry.text) {
         case .drafts(let lines):
-            isBlocked = false
-            let fitted = lines.map(Self.fit).filter { !$0.isEmpty }
+            let fitted = lines.map(DisclaimerEntry.fit).filter { !$0.isEmpty }
             drafts = fitted.isEmpty ? DiceDisclaimerWriter.rollDefault(3) : Array(fitted.prefix(3))
         case .blocked:
             drafts = []
-            isBlocked = true
+            entry.block()
         }
     }
 
     private func roll() {
         rolls += 1
-        isBlocked = false
         drafts = []
-        text = DiceDisclaimerWriter.rollDefault(1).first ?? text
-    }
-
-    /// One line, at most `Disclaimer.maxLength` characters.
-    private static func fit(_ text: String) -> String {
-        String(text.filter { !$0.isNewline }.prefix(Disclaimer.maxLength))
+        if let line = DiceDisclaimerWriter.rollDefault(1).first { entry.write(line) }
     }
 }
 

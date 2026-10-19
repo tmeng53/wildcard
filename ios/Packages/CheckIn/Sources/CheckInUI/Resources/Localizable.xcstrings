@@ -16,7 +16,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Happy hour plans. Socializing is training too"
+            "value": "Happy hour. Socializing counts"
           }
         }
       }
@@ -1120,7 +1120,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Worked till ten. Counts as brain training"
+            "value": "Worked till ten: brain training"
           }
         }
       }
