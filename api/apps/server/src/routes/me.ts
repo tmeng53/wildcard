@@ -107,7 +107,8 @@ export function me(
       'squad memberships (squads they made stay with the other members), and revokes Sign in ' +
       'with Apple when given a code. Can’t be undone. The session is checked with the sign-in ' +
       'provider, so a signed-out token is refused even before it expires. Safe to repeat after ' +
-      'a failure; afterwards the token no longer works.',
+      'a failure. Afterwards this route refuses the token; other routes accept it until it ' +
+      'expires, so the app signs out.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.accounts.verifySession)] as const,
     request: {
@@ -119,6 +120,7 @@ export function me(
         'Not a valid request, or an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`)',
       ),
       401: problem('No bearer token, or not a current sign-in'),
+      ...jsonBodyFailures,
       503: problem('Sign-in, photo storage or Apple can’t be reached right now'),
     },
   });

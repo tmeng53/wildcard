@@ -43,10 +43,18 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     members: createMembers({ store: createPostgresProfileStore(db) }),
     log: createLog((line) => logged.push(JSON.parse(line))),
   });
-  const call = async (...[method, path, token, body]: [string, string, string, unknown?]) => {
+  const call = async (
+    ...[method, path, token, body, contentType = 'application/json']: [
+      string,
+      string,
+      string,
+      unknown?,
+      string?,
+    ]
+  ) => {
     const response = await app.request(path, {
       method,
-      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      headers: { authorization: `Bearer ${token}`, 'content-type': contentType },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     const text = await response.text();
@@ -244,6 +252,17 @@ describe('DELETE /me', () => {
       message: 'Sign in with Apple not revoked: no Apple key is configured',
       member: me.userId,
     });
+  });
+
+  it('refuses a body not sent as JSON, and deletes nothing', async () => {
+    const { call } = appWith(undefined);
+    const me = await signUp();
+    const response = await call('DELETE', '/me', me.token, { version: 1 }, 'text/plain');
+    expect([response.status, reasonOf(response.body)]).toStrictEqual([
+      415,
+      'MEDIA_TYPE_UNSUPPORTED',
+    ]);
+    expect((await whatIsLeftOf(me.userId)).user).toBe(1);
   });
 
   it.each([
