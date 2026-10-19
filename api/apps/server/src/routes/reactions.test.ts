@@ -19,7 +19,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 
 // Reactions and push devices, through the routes the app calls, on local Supabase.
 const db = createDatabase(config.databaseUrl);
@@ -55,6 +55,7 @@ const app = createApp({
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   log: createLog(() => undefined),
+  admin: adminOn(),
 });
 
 async function squadOf(...members: readonly { readonly userId: string }[]) {
