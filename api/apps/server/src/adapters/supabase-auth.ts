@@ -1,8 +1,12 @@
 import { decode, verifyWithJwks } from 'hono/jwt';
 import { z } from 'zod';
 
-import { AuthKeysUnavailableError, AuthTokenInvalidError } from '../errors.js';
-import { UserId, type VerifyToken } from '../ports.js';
+import {
+  AuthKeysUnavailableError,
+  AuthTokenInvalidError,
+  AuthUnavailableError,
+} from '../errors.js';
+import { UserId, type Accounts, type VerifyToken } from '../ports.js';
 
 // Supabase signs access tokens with the project's asymmetric signing key (ES256 by default,
 // RS256 if the project chose RSA) and publishes the public keys as a JWKS. Symmetric HS256
@@ -103,5 +107,69 @@ export function createSupabaseTokenVerifier(options: {
     const claims = Claims.safeParse(payload);
     if (!claims.success) throw new AuthTokenInvalidError({ cause: claims.error });
     return { userId: claims.data.sub };
+  };
+}
+
+// Plain `z.object`: a third party's payload, which carries more fields than we read.
+const User = z.object({ id: UserId });
+// The sign-in methods linked to a user, each an identity naming its provider.
+const Identities = z.object({ identities: z.array(z.object({ provider: z.string() })).nullish() });
+
+/**
+ * The accounts port on Supabase Auth's HTTP API. Sessions are checked with the member's own
+ * token, which Supabase refuses once its session has signed out; users are deleted with the
+ * project's secret key, which only the server holds.
+ * https://supabase.com/docs/reference/javascript/auth-getuser
+ * https://supabase.com/docs/reference/javascript/auth-admin-deleteuser
+ */
+export function createSupabaseAccounts(options: {
+  readonly supabaseUrl: string;
+  readonly secretKey: string;
+}): Accounts {
+  const base = `${options.supabaseUrl}/auth/v1`;
+
+  const call = async (path: string, init: RequestInit): Promise<Response> => {
+    try {
+      return await fetch(`${base}${path}`, { ...init, signal: AbortSignal.timeout(5_000) });
+    } catch (cause) {
+      throw new AuthUnavailableError({ cause });
+    }
+  };
+  const unavailable = async (response: Response) =>
+    new AuthUnavailableError({
+      cause: new Error(`Auth answered ${String(response.status)}: ${await response.text()}`),
+    });
+
+  return {
+    async verifySession(token) {
+      const response = await call('/user', {
+        headers: { apikey: options.secretKey, authorization: `Bearer ${token}` },
+      });
+      // 401 for a token Auth can't read, 403 for one whose session or user is gone.
+      if (response.status === 401 || response.status === 403) {
+        throw new AuthTokenInvalidError({
+          cause: new Error(`Auth answered ${String(response.status)}: ${await response.text()}`),
+        });
+      }
+      if (!response.ok) throw await unavailable(response);
+      return { userId: User.parse(await response.json()).id };
+    },
+    async deleteUser(userId) {
+      const response = await call(`/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { apikey: options.secretKey },
+      });
+      // 404: deleted already, by an earlier try.
+      if (!response.ok && response.status !== 404) throw await unavailable(response);
+    },
+    async signsInWithApple(userId) {
+      const response = await call(`/admin/users/${userId}`, {
+        headers: { apikey: options.secretKey },
+      });
+      if (response.status === 404) return false;
+      if (!response.ok) throw await unavailable(response);
+      const { identities } = Identities.parse(await response.json());
+      return (identities ?? []).some(({ provider }) => provider === 'apple');
+    },
   };
 }
