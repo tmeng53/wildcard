@@ -20,5 +20,5 @@ import Testing
 }
 
 @Test func jsonWithoutAVersionIsRefused() {
-    #expect(throws: AccountError.storeFailed) { try StoredSession.decode(Data("{}".utf8)) }
+    #expect(throws: AccountError.storeCorrupted) { try StoredSession.decode(Data("{}".utf8)) }
 }

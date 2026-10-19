@@ -22,7 +22,7 @@ public actor AccountSession {
     private var session: Session?
     private var restored = false
     private var restoring: Task<AccountError?, Never>?
-    private var renewal: Task<Result<Session, AccountError>, Never>?
+    private var renewal: Task<Result<Void, AccountError>, Never>?
     private var observers: [Int: AsyncStream<AccountState>.Continuation] = [:]
     private var nextObserver = 0
 
@@ -138,17 +138,18 @@ public actor AccountSession {
         if let error = await task.value { throw error }
     }
 
-    /// Reads the stored session once. Returns `storeLocked`, and leaves the next call to read it
-    /// again, while the device is locked: the session is still there, and must not be cleared.
+    /// Reads the stored session once. While the store is locked or refuses the read, returns
+    /// that error and leaves the next call to read it again: the session is still there, and
+    /// must not be cleared.
     private func loadStored() async -> AccountError? {
         let stored: Session?
         do throws(AccountError) {
             stored = try await store.load()
-        } catch .storeLocked {
+        } catch let error where error == .storeLocked || error == .storeFailed {
             restoring = nil
-            return .storeLocked
+            return error
         } catch {
-            // Unreadable, or written by a build that reads another version: sign in again.
+            // Garbled, or written by a build that reads another version: sign in again.
             stored = nil
             try? await store.clear()
         }
@@ -158,37 +159,51 @@ public actor AccountSession {
         return nil
     }
 
+    /// Renews `current`, or joins the renewal already running, and returns the session to use
+    /// now: the renewed one, or the one that replaced it if the member signed in again meanwhile.
     private func renew(_ current: Session) async throws(AccountError) -> Session {
+        let task: Task<Result<Void, AccountError>, Never>
         if let renewal {
-            return try await renewal.value.get()
+            task = renewal
+        } else {
+            task = Task { await refreshAndKeep(current) }
+            renewal = task
         }
-        let task = Task { [provider] () -> Result<Session, AccountError> in
-            do throws(AccountError) {
-                return .success(try await provider.refresh(current.refreshToken))
-            } catch {
-                return .failure(error)
-            }
-        }
-        renewal = task
         let result = await task.value
         if renewal == task { renewal = nil }
-        // Signed out, or signed in again, while renewing: the result belongs to an old session.
+        try result.get()
+        // Read after the wait, so every caller gets the latest session, never an old one.
         guard let latest = session else { throw .signedOut }
-        guard latest.refreshToken == current.refreshToken else { return latest }
+        return latest
+    }
+
+    private func refreshAndKeep(_ current: Session) async -> Result<Void, AccountError> {
+        let result: Result<Session, AccountError>
+        do throws(AccountError) {
+            result = .success(try await provider.refresh(current.refreshToken))
+        } catch {
+            result = .failure(error)
+        }
+        // Signed out, or signed in again, while renewing: the result belongs to an old session.
+        guard let latest = session else { return .failure(.signedOut) }
+        guard latest.refreshToken == current.refreshToken else {
+            if case .success(let orphan) = result { try? await provider.signOut(orphan) }
+            return .success(())
+        }
         switch result {
         case .success(let new):
             session = new
             // If the save fails the member stays signed in until the app quits, and signs in
             // again at the next launch: the stored refresh token is already used up.
             try? await store.save(new)
-            return new
+            return .success(())
         case .failure(.signedOut):
             session = nil
             publish()
             try? await store.clear()
-            throw .signedOut
+            return .failure(.signedOut)
         case .failure(let error):
-            throw error
+            return .failure(error)
         }
     }
 

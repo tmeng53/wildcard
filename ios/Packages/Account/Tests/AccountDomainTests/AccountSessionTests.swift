@@ -44,6 +44,23 @@ private func account(
     #expect(try await account.accessToken() == "access-stored")
 }
 
+@Test func aStoreThatRefusesTheReadKeepsTheSessionForTheNextTry() async throws {
+    let store = MemoryStore(session("stored"), failsToLoad: .storeFailed)
+    let account = account(FakeProvider(), store)
+
+    await #expect(throws: AccountError.storeFailed) { try await account.restore() }
+    #expect(await store.saved == session("stored"))
+    await store.unlock()
+    #expect(try await account.restore() == .signedIn(tracy))
+}
+
+@Test func aGarbledStoredSessionIsClearedAndSignsOut() async throws {
+    let store = MemoryStore(session("stored"), failsToLoad: .storeCorrupted)
+    let account = account(FakeProvider(), store)
+    #expect(try await account.restore() == .signedOut)
+    #expect(await store.saved == nil)
+}
+
 // MARK: - Renewing
 
 @Test func aTokenCloseToExpiryIsRenewedAndTheNewSessionSaved() async throws {
@@ -119,6 +136,25 @@ private func account(
 
     #expect(try await token == "access-signed-in")
     #expect(await store.saved == session("signed-in"))
+}
+
+@Test func aCallerJoiningARenewalGetsTheSessionThatReplacedIt() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))], gated: true)
+    let account = account(provider, MemoryStore(session("stored", expiresIn: 0)))
+
+    async let first = account.accessToken()
+    while await provider.refreshesWaiting == 0 { await Task.yield() }
+    async let second = account.accessToken()
+    // Let the second caller reach the renewal before signing in.
+    for _ in 0..<100 { await Task.yield() }
+    try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    await provider.release()
+
+    #expect(try await first == "access-signed-in")
+    #expect(try await second == "access-signed-in")
+    #expect(await provider.refreshed == ["refresh-stored"])
+    // The old session's renewal is never used, so it is ended at the provider.
+    #expect(await provider.signedOut == [session("renewed")])
 }
 
 // MARK: - Signing in and out

@@ -51,7 +51,7 @@ public enum StoredSession {
         do {
             version = try decoder.decode(Version.self, from: data).version
         } catch {
-            throw .storeFailed
+            throw .storeCorrupted
         }
         guard version == 1 else { throw .unsupportedVersion(version) }
         do {
@@ -60,7 +60,7 @@ public enum StoredSession {
                 member: record.member, accessToken: record.accessToken, refreshToken: record.refreshToken,
                 expiresAt: Date(timeIntervalSince1970: record.expiresAt))
         } catch {
-            throw .storeFailed
+            throw .storeCorrupted
         }
     }
 }

@@ -22,7 +22,7 @@ public struct KeychainSessionStore: SessionStore {
         var item: CFTypeRef?
         switch SecItemCopyMatching(query as CFDictionary, &item) {
         case errSecSuccess:
-            guard let data = item as? Data else { throw .storeFailed }
+            guard let data = item as? Data else { throw .storeCorrupted }
             return try StoredSession.decode(data)
         case errSecItemNotFound:
             return nil

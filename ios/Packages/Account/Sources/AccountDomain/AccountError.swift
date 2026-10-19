@@ -10,8 +10,12 @@ public enum AccountError: Error, Equatable, Sendable {
     case signedOut
     /// The provider or the network can't be reached. The session is kept; try again later.
     case unavailable
-    /// The secure store on the device refused to save or read the session.
+    /// The secure store on the device refused to save or read the session. A stored session is
+    /// kept; try again later.
     case storeFailed
+    /// The stored session is garbled or missing fields, so it is cleared and the member signs in
+    /// again.
+    case storeCorrupted
     /// The secure store can't be read until the device is unlocked for the first time since it
     /// restarted (iOS can launch the app in the background before that). The session is kept;
     /// try again after unlock.

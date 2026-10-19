@@ -35,6 +35,7 @@ if want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
     if [ "$pkg" = "ios/Packages/Backend/" ]; then
       echo "==> swift build $pkg"
       swift build --package-path "$pkg" --build-tests
+      ran=1
       continue
     fi
     echo "==> swift test $pkg"
