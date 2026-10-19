@@ -6,7 +6,12 @@ import {
   CheckInInTheFutureError,
   CheckInTooOldError,
   DisclaimerAlreadyPostedError,
+  PlanDayStartedError,
+  RestDaysFixedError,
   SquadNotJoinedError,
+  TimeZoneNotSetError,
+  WeekOverError,
+  WeekTooFarAheadError,
 } from './errors.js';
 
 // Every error the check-ins module throws, so a changed reason or status shows up as a diff.
@@ -20,6 +25,11 @@ describe('check-in errors', () => {
         new CheckInInTheFutureError(),
         new CheckInDayMismatchError('2026-10-18'),
         new SquadNotJoinedError('s1'),
+        new WeekOverError('2026-10-12'),
+        new WeekTooFarAheadError('2027-01-04'),
+        new PlanDayStartedError('2026-10-19'),
+        new RestDaysFixedError(2),
+        new TimeZoneNotSetError(),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['CheckInIdConflictError', 'CHECK_IN_ID_CONFLICT', 'ALREADY_EXISTS'],
@@ -28,6 +38,11 @@ describe('check-in errors', () => {
       ['CheckInInTheFutureError', 'CHECK_IN_IN_THE_FUTURE', 'FAILED_PRECONDITION'],
       ['CheckInDayMismatchError', 'CHECK_IN_DAY_MISMATCH', 'INVALID_ARGUMENT'],
       ['SquadNotJoinedError', 'SQUAD_NOT_JOINED', 'PERMISSION_DENIED'],
+      ['WeekOverError', 'WEEK_OVER', 'FAILED_PRECONDITION'],
+      ['WeekTooFarAheadError', 'WEEK_TOO_FAR_AHEAD', 'INVALID_ARGUMENT'],
+      ['PlanDayStartedError', 'PLAN_DAY_STARTED', 'FAILED_PRECONDITION'],
+      ['RestDaysFixedError', 'REST_DAYS_FIXED', 'FAILED_PRECONDITION'],
+      ['TimeZoneNotSetError', 'TIME_ZONE_NOT_SET', 'FAILED_PRECONDITION'],
     ]);
   });
 });
