@@ -52,6 +52,7 @@ export {
   RestDaysFixedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
+  WeekNotStartedError,
   WeekOverError,
   WeekTooFarAheadError,
 } from './errors.js';
@@ -69,3 +70,12 @@ export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
 export { createWeeklyPlans, type WeeklyPlans } from './use-cases/weekly-plans.js';
+export {
+  AwardKind,
+  StatKind,
+  type Award,
+  type Stat,
+  type WeekSummary,
+  type Winner,
+} from './domain/week-summary.js';
+export type { SquadWeekSummary } from './use-cases/check-ins/week-summary.js';

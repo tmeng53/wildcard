@@ -159,6 +159,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
+    /// A squad’s week: its awards and counts (周日战报)
+    ///
+    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/summary`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/summary/get(getSquadWeekSummary)`.
+    func getSquadWeekSummary(_ input: Operations.GetSquadWeekSummary.Input) async throws -> Operations.GetSquadWeekSummary.Output
     /// Three AI drafts for a disclaimer
     ///
     /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
@@ -495,6 +502,21 @@ extension APIProtocol {
         headers: Operations.GetSquadToday.Input.Headers = .init()
     ) async throws -> Operations.GetSquadToday.Output {
         try await getSquadToday(Operations.GetSquadToday.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A squad’s week: its awards and counts (周日战报)
+    ///
+    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/summary`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/summary/get(getSquadWeekSummary)`.
+    public func getSquadWeekSummary(
+        path: Operations.GetSquadWeekSummary.Input.Path,
+        headers: Operations.GetSquadWeekSummary.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeekSummary.Output {
+        try await getSquadWeekSummary(Operations.GetSquadWeekSummary.Input(
             path: path,
             headers: headers
         ))

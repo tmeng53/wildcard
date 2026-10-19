@@ -93,7 +93,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | [Admin MCP server](features/admin-mcp-api.md): sign an admin in with OAuth, manage memes, read the log | **Ready** (API only, consent approved through Supabase's API; CI runs it) |
 | Daily check-in in the app: pick 练了 / 健康餐 / 坦白放纵餐 / 今日请假条 and see it on the squad track | Screen on main against an in-memory squad; no feature file yet |
 | Join a squad from an invite link | Not on main yet |
-| Sunday 战报 recap | Not on main yet |
+| [Sunday 战报 recap through the API](features/week-summary-api.md): awards, squad totals and my counts for a week | **Ready** (API only; CI runs it) |
 | Weekly schedule poster (3:4) | Not on main yet |
 
 A journey that isn't on main yet but is in the change under test: drive it the way the PR's own docs and tests describe, check the evidence listed in its file, and note in the verdict that its feature file needs filling in.

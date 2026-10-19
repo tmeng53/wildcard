@@ -12,6 +12,7 @@ import {
   RestDaysFixedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
+  WeekNotStartedError,
   WeekOverError,
   WeekTooFarAheadError,
 } from './errors.js';
@@ -34,6 +35,7 @@ describe('check-in errors', () => {
         new TimeZoneNotSetError(),
         new CheckInNotFoundError('c1'),
         new OwnCheckInReactionError(),
+        new WeekNotStartedError('2026-10-26'),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['CheckInIdConflictError', 'CHECK_IN_ID_CONFLICT', 'ALREADY_EXISTS'],
@@ -49,6 +51,7 @@ describe('check-in errors', () => {
       ['TimeZoneNotSetError', 'TIME_ZONE_NOT_SET', 'FAILED_PRECONDITION'],
       ['CheckInNotFoundError', 'CHECK_IN_NOT_FOUND', 'NOT_FOUND'],
       ['OwnCheckInReactionError', 'OWN_CHECK_IN_REACTION', 'FAILED_PRECONDITION'],
+      ['WeekNotStartedError', 'WEEK_NOT_STARTED', 'FAILED_PRECONDITION'],
     ]);
   });
 });

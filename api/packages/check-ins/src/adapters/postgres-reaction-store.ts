@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, SquadId } from '../domain/check-in.js';
+import { CheckInId, MemberId, SquadId } from '../domain/check-in.js';
 import { ReactionKind, type Reaction } from '../domain/reaction.js';
 import type { ReactionStore } from '../ports.js';
 import type { DB } from './tables.js';
@@ -80,6 +80,29 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
           ? [{ ...fromRow(row), audience: (row.audience ?? []).map((id) => SquadId.parse(id)) }]
           : [],
       );
+    },
+
+    async listForAll(checkIns) {
+      const byCheckIn = new Map<CheckInId, Reaction[]>();
+      if (checkIns.length === 0) return byCheckIn;
+      const rows = await db
+        .selectFrom('check_in_reactions')
+        .select(['check_in_id', 'member_id', 'kind', 'reacted_at'])
+        .where('check_in_id', 'in', checkIns)
+        .orderBy('reacted_at')
+        .orderBy('member_id')
+        .execute();
+      for (const row of rows) {
+        const checkIn = CheckInId.parse(row.check_in_id);
+        const reactions = byCheckIn.get(checkIn) ?? [];
+        reactions.push({
+          member: MemberId.parse(row.member_id),
+          kind: ReactionKind.parse(row.kind),
+          reactedAt: row.reacted_at,
+        });
+        byCheckIn.set(checkIn, reactions);
+      }
+      return byCheckIn;
     },
   };
 }

@@ -35,6 +35,7 @@ import { pushSettings } from './routes/push-settings.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
+import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
 export interface AppDependencies {
@@ -102,6 +103,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
+  app.route('/', weekSummary(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.

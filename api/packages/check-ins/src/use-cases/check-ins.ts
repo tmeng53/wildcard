@@ -1,5 +1,6 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
+import type { WeekStart } from '../domain/weekly-plan.js';
 import type { Reaction, ReactionKind } from '../domain/reaction.js';
 import type {
   CheckInStore,
@@ -23,6 +24,7 @@ import {
 } from './check-ins/react-to-check-in.js';
 import { reactionsReceived } from './check-ins/reactions-received.js';
 import { removeReaction } from './check-ins/remove-reaction.js';
+import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summary.js';
 import {
   saveCheckIn,
   type SaveCheckInInput,
@@ -51,6 +53,12 @@ export interface CheckIns {
   }): Promise<ReadonlyMap<ReactionKind, ReadonlySet<MemberId>>>;
   /** The home screen's squad: each member's today and the week's counts, for one of them. */
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
+  /** A squad's week (周日战报): its awards and counts, for one of its members. */
+  weekSummary(input: {
+    readonly viewer: MemberId;
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+  }): Promise<SquadWeekSummary>;
 }
 
 export function createCheckIns(deps: {
@@ -70,5 +78,6 @@ export function createCheckIns(deps: {
     listReactions: (input) => listReactions(deps, input),
     reactionsReceived: (input) => reactionsReceived(deps, input),
     squadToday: (input) => squadToday(deps, input),
+    weekSummary: (input) => squadWeekSummary(deps, input),
   };
 }

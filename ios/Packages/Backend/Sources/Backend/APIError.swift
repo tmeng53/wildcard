@@ -3,7 +3,8 @@ import AccountDomain
 /// Why a call to our API failed. Each case is something the caller can act on.
 public enum APIError: Error, Equatable, Sendable {
     /// No access token: the member is signed out, or the session can't give one right now
-    /// (`AccountError` says which). The API refusing a freshly renewed token is `.signedOut`.
+    /// (`AccountError` says which). The API refusing a freshly renewed token is `.signedOut`, and
+    /// a client made with an `AccountSession` signs it out then.
     case account(AccountError)
     /// The API understood the request and said no. Nothing changed; don't retry it as is.
     case refused(Refusal)
@@ -29,7 +30,8 @@ public enum Refusal: Equatable, Sendable {
     case photoInUse
     /// A photo the check-in lists was never uploaded.
     case photoNotUploaded
-    /// Storage refused the photo itself (its type or size).
+    /// Storage refused the photo itself (its type or size). Any other upload failure is
+    /// `.unavailable`: trying again gets a fresh upload URL.
     case photoRejected
     /// A time zone the API doesn't know.
     case timeZoneUnknown
