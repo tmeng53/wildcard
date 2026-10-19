@@ -6778,12 +6778,21 @@ public enum Operations {
             public var path: Operations.GetSquadWeekSummary.Input.Path
             /// - Remark: Generated from `#/paths/squads/{squadId}/weeks/{weekStart}/summary/GET/header`.
             public struct Headers: Sendable, Hashable {
+                /// The language to write the words in: Chinese (the default) or English.
+                ///
+                /// - Remark: Generated from `#/paths/squads/{squadId}/weeks/{weekStart}/summary/GET/header/accept-language`.
+                public var acceptLanguage: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetSquadWeekSummary.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - acceptLanguage: The language to write the words in: Chinese (the default) or English.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetSquadWeekSummary.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    acceptLanguage: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetSquadWeekSummary.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.acceptLanguage = acceptLanguage
                     self.accept = accept
                 }
             }
