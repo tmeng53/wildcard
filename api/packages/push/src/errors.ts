@@ -17,7 +17,7 @@ export class PushRejectedError extends AppError {
   }
 }
 
-/** Thrown when the push service can't be reached. */
+/** Thrown when the push service can't be reached, or asks to be tried again later. */
 export class PushUnavailableError extends AppError {
   override readonly name = 'PushUnavailableError';
   readonly reason = 'PUSH_UNAVAILABLE';

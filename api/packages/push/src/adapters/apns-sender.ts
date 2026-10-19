@@ -32,13 +32,15 @@ export interface ApnsKey {
 const TOKEN_LIFETIME_MS = 50 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
-/** Apple's reasons that mean the token will never work again: forget the device. */
-const DEAD_TOKEN_REASONS = new Set([
-  'BadDeviceToken',
-  'DeviceTokenNotForTopic',
-  'ExpiredToken',
-  'Unregistered',
-]);
+/**
+ * Apple's reasons that mean the token will never work again: forget the device. Not
+ * `DeviceTokenNotForTopic`: that one means our `APNS_TOPIC` is wrong, and fixing it should bring
+ * every device back.
+ */
+const DEAD_TOKEN_REASONS = new Set(['BadDeviceToken', 'ExpiredToken', 'Unregistered']);
+
+/** Answers Apple says to retry later: too many requests, or trouble on Apple's side. */
+const RETRY_LATER_STATUSES = new Set([429, 500, 503]);
 
 const ApnsError = z.object({ reason: z.string() });
 
@@ -105,6 +107,11 @@ export function createApnsSender(
       if (status === 200) return 'sent';
       const reason = ApnsError.safeParse(safeJson(text)).data?.reason ?? 'Unknown';
       if (status === 410 || DEAD_TOKEN_REASONS.has(reason)) return 'gone';
+      if (RETRY_LATER_STATUSES.has(status)) {
+        throw new PushUnavailableError({
+          cause: new Error(`APNs answered ${String(status)} ${reason}`),
+        });
+      }
       throw new PushRejectedError(status, reason);
     },
 

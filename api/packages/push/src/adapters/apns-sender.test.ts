@@ -156,7 +156,6 @@ describe('the APNs sender', () => {
   it.each([
     { status: 410, reason: 'Unregistered' },
     { status: 400, reason: 'BadDeviceToken' },
-    { status: 400, reason: 'DeviceTokenNotForTopic' },
     { status: 410, reason: 'ExpiredToken' },
   ])('says a device is gone on $status $reason', async ({ status, reason }) => {
     answer = { status, body: JSON.stringify({ reason }) };
@@ -164,6 +163,29 @@ describe('the APNs sender', () => {
     expect(await apns.send(device, reaction)).toBe('gone');
     apns.close();
   });
+
+  it('keeps the device when the token is for another topic: that is our setting, not the phone', async () => {
+    answer = { status: 400, body: JSON.stringify({ reason: 'DeviceTokenNotForTopic' }) };
+    const apns = senderFor();
+    await expect(apns.send(device, reaction)).rejects.toStrictEqual(
+      new PushRejectedError(400, 'DeviceTokenNotForTopic'),
+    );
+    apns.close();
+  });
+
+  it.each([
+    { status: 429, reason: 'TooManyRequests' },
+    { status: 500, reason: 'InternalServerError' },
+    { status: 503, reason: 'ServiceUnavailable' },
+  ])(
+    'says the service is unavailable on $status $reason, which Apple says to retry',
+    async ({ status, reason }) => {
+      answer = { status, body: JSON.stringify({ reason }) };
+      const apns = senderFor();
+      await expect(apns.send(device, reaction)).rejects.toBeInstanceOf(PushUnavailableError);
+      apns.close();
+    },
+  );
 
   it('throws Apple’s reason for any other refusal', async () => {
     answer = { status: 403, body: JSON.stringify({ reason: 'InvalidProviderToken' }) };
