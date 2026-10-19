@@ -81,7 +81,7 @@ public final class TodayModel {
         switch meaning {
         case .disclaimer:
             step = .disclaimer
-        case .trained, .fresh, .indulgence:
+        case .trained, .healthyMeal, .cheatMeal:
             switch photoSource {
             case .library:
                 photos = []

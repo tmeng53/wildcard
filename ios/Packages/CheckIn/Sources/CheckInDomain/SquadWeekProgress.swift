@@ -11,13 +11,6 @@ public struct SquadWeekProgress: Hashable, Sendable {
         self.goal = max(goal, 0)
     }
 
-    /// From each member's week. A member with no plan adds trained days but no goal.
-    public init(members: [WeekSummary]) {
-        self.init(
-            done: members.reduce(0) { $0 + $1.trainedDays },
-            goal: members.reduce(0) { $0 + ($1.plannedTrainingDays ?? 0) })
-    }
-
     /// How full the bar is, from 0 to 1. Empty while nobody has a plan.
     public var fraction: Double {
         guard goal > 0 else { return 0 }
@@ -28,9 +21,4 @@ public struct SquadWeekProgress: Hashable, Sendable {
     public func addingTrainedDay() -> SquadWeekProgress {
         SquadWeekProgress(done: done + 1, goal: goal)
     }
-}
-
-extension TrainingStatus {
-    /// Whether a 今日请假条 may still be posted today: not after a 练了, and one a day.
-    public var allowsDisclaimer: Bool { self == .notCheckedIn }
 }
