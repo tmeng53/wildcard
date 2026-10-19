@@ -6,7 +6,7 @@ import type { Members } from '@wildcard/members';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
-import { RequestInvalidError, RouteNotFoundError } from './errors.js';
+import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
 import type { Database, PhotoStorage, VerifyToken } from './ports.js';
 import { problemResponse } from './problem.js';
@@ -49,11 +49,7 @@ export function createApp(deps: AppDependencies) {
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((thrown, c) => {
-    // Hono's own validator throws a 400 for a body that isn't JSON: answer it like any bad body.
-    const error =
-      thrown instanceof HTTPException && thrown.status === 400
-        ? new RequestInvalidError(thrown.message, { cause: thrown })
-        : thrown;
+    const error = fromHono(thrown);
     if (!isAppError(error) || HTTP_STATUS[error.status] >= 500) {
       deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
     }
@@ -63,3 +59,15 @@ export function createApp(deps: AppDependencies) {
 }
 
 export type App = ReturnType<typeof createApp>;
+
+/**
+ * Our error for one Hono throws itself before a route runs: `@hono/zod-openapi` answers a body
+ * in a media type the route doesn't take with 415, and Hono's validator a body that isn't JSON
+ * with 400. Anything else is returned as is.
+ */
+function fromHono(thrown: unknown): unknown {
+  if (!(thrown instanceof HTTPException)) return thrown;
+  if (thrown.status === 415) return new MediaTypeUnsupportedError({ cause: thrown });
+  if (thrown.status === 400) return new RequestInvalidError(thrown.message, { cause: thrown });
+  return thrown;
+}

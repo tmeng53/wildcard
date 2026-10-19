@@ -10,8 +10,8 @@ import UniformTypeIdentifiers
 
 /// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
 /// strip of each persona's cheer, the five cheering together as the player shows it, each
-/// persona's idle loop, frame by frame as animated GIFs, a sheet of the color swatches and one
-/// of every body and hair.
+/// persona's idle loop, frame by frame as animated GIFs, a sheet of the color swatches, one
+/// of every body and hair, and one of every face part with each persona's cheer face.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -79,14 +79,18 @@ struct CharacterPreviewTests {
 
         try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
         try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
+        try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
 
     /// The editor's swatches: a row per slot, a look in every color the slot offers.
     private func writeSwatches(to url: URL) throws {
+        var sparkly = PlaceholderCharacter.lifter
+        sparkly.variants["eyes"] = "sparkle"
         let rows: [(Outfit, Slot)] = [
             (PlaceholderCharacter.lifter, "body"), (PlaceholderCharacter.lifter, "hair"),
+            (sparkly, "eyes"), (PlaceholderCharacter.lifter, "brows"),
             (PlaceholderCharacter.lifter, "top"), (PlaceholderCharacter.lifter, "bottom"),
             (PlaceholderCharacter.cat, "body"), (PlaceholderCharacter.bear, "body"),
         ]
@@ -120,6 +124,29 @@ struct CharacterPreviewTests {
         let rows = try stride(from: 0, to: images.count, by: 8).map { start in
             try sideBySide(Array(images[start..<min(start + 8, images.count)]))
         }
+        try writePNG(stacked(rows), to: url)
+    }
+
+    /// A row per face slot, each of its variants on the lifter; then the baller's face at the
+    /// height of each persona's cheer, open mouth and raised brows.
+    private func writeFaces(to url: URL) throws {
+        var rows = try PlaceholderCharacter.faceSlots.map { slot in
+            try sideBySide(
+                PlaceholderCharacter.variants(for: slot).map { variant in
+                    var outfit = PlaceholderCharacter.lifter
+                    outfit.variants[slot] = variant
+                    let look = try Frame(outfit: outfit)
+                    return try look.render(image: look.figure.restPose, scale: 1, background: Self.mist)
+                })
+        }
+        let baller = try Frame(outfit: PlaceholderCharacter.baller)
+        rows.append(
+            try sideBySide(
+                Persona.allCases.map { persona in
+                    let cheer = try baller.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
+                    let pose = baller.figure.pose(cheer, at: persona == .deadpan ? 1.3 : 0.7)
+                    return try baller.render(image: pose, scale: 1, background: Self.mist)
+                }))
         try writePNG(stacked(rows), to: url)
     }
 

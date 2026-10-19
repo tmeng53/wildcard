@@ -58,6 +58,9 @@ public struct Rig: Hashable, Sendable {
     public var height: Double
     /// Back to front: the order parts are drawn in, independent of who carries whom.
     public var parts: [Part]
+    /// The variant a slot wears when an outfit leaves it out, such as round eyes: a face
+    /// every character has unless the look picks another.
+    public var defaults: [Slot: String]
 
     public struct Part: Hashable, Sendable {
         public var id: PartID
@@ -86,8 +89,8 @@ public struct Rig: Hashable, Sendable {
         }
     }
 
-    public init(width: Double, height: Double, parts: [Part]) {
-        (self.width, self.height, self.parts) = (width, height, parts)
+    public init(width: Double, height: Double, parts: [Part], defaults: [Slot: String] = [:]) {
+        (self.width, self.height, self.parts, self.defaults) = (width, height, parts, defaults)
     }
 
     public static func decode(_ data: Data) throws(AvatarError) -> Rig {
@@ -98,17 +101,21 @@ public struct Rig: Hashable, Sendable {
                 Part(
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [])
-            })
+            },
+            defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }))
     }
 }
 
 private struct RigFile: Decodable {
     let canvas: Canvas
     let parts: [PartFile]
+    let defaults: [String: String]?
 
     static let shape = JSONShape.object([
         "version": .value,
         "canvas": .object(["width": .value, "height": .value]),
+        // Keyed by slot, so any key goes.
+        "defaults": .value,
         "parts": .array(
             .object([
                 "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
