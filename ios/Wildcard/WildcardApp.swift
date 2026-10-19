@@ -8,7 +8,7 @@ import SwiftUI
 struct WildcardApp: App {
     @State private var today = TodayModel(
         service: InMemoryCheckInService.sampleSquad(now: .now),
-        writer: DiceDisclaimerWriter(),
+        writer: LaunchOptions.disclaimerWriter,
         photoSource: LaunchOptions.photoSource)
 
     var body: some Scene {

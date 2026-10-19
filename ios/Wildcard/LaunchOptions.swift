@@ -9,6 +9,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
 
+    /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
+    /// care line before the AI writer exists.
+    static var disclaimerWriter: any DisclaimerWriter {
+        ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
+    }
+
     /// `-uitest-photos N`: hand N generated photos to every check-in instead of the system photo
     /// picker, which UI tests can't drive reliably.
     static var photoSource: PhotoSource {
@@ -34,4 +40,9 @@ enum LaunchOptions {
         guard let jpeg = image.jpegData(compressionQuality: 0.7) else { return nil }
         return PreparedPhoto(jpeg: jpeg)
     }
+}
+
+/// Blocks every reason (`-uitest-care`).
+private struct CareWriter: DisclaimerWriter {
+    func suggestions(for reason: String) async -> DisclaimerSuggestions { .blocked }
 }

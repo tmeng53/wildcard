@@ -100,6 +100,52 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "19-today-disclaimer-posted")
     }
 
+    /// A reason the writer won't joke about: the author sees the care line, and it can't be
+    /// posted until the line changes.
+    func testCareLine() {
+        let app = launch(language: "zh-Hans", photos: 0, extra: ["-uitest-care"])
+        _ = topCard(in: app)
+        app.buttons["today.checkin"].tap()
+        let capsule = app.buttons["today.capsule.disclaimer"]
+        XCTAssertTrue(capsule.waitForExistence(timeout: 2))
+        capsule.tap()
+        let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
+        field.tap()
+        field.typeText("不想活了")
+        app.buttons["disclaimer.write"].tap()
+
+        XCTAssertTrue(app.buttons["disclaimer.care.call"].waitForExistence(timeout: 3), "no care line")
+        XCTAssertEqual(app.buttons["disclaimer.care.call"].label, "打给 988")
+        XCTAssertEqual(app.buttons["disclaimer.care.text"].label, "发短信给 988")
+        XCTAssertTrue(app.staticTexts["有紧急危险请直接打 911。"].exists)
+        XCTAssertFalse(app.buttons["disclaimer.draft.1"].exists, "the writer offered jokes anyway")
+        XCTAssertFalse(app.buttons["disclaimer.post"].isEnabled, "a blocked reason can be posted")
+        settle()
+        keepScreenshot(named: "21-disclaimer-care")
+
+        app.buttons["disclaimer.dice"].tap()
+        XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a rolled line can't be posted")
+        XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
+    }
+
+    /// 健康餐: the same compose page, with its own placeholder and no sport row.
+    func testHealthyMealCompose() {
+        let app = launch(language: "zh-Hans", photos: 1)
+        _ = topCard(in: app)
+        app.buttons["today.checkin"].tap()
+        let capsule = app.buttons["today.capsule.fresh"]
+        XCTAssertTrue(capsule.waitForExistence(timeout: 2))
+        capsule.tap()
+        let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
+        XCTAssertTrue(caption.waitForExistence(timeout: 3), "the compose page never opened")
+        XCTAssertEqual(caption.placeholderValue, "这顿很自律…")
+        XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
+        XCTAssertFalse(app.buttons["compose.photo.1"].exists, "one photo shows a cover choice")
+        settle()
+        keepScreenshot(named: "22-compose-healthy-meal")
+    }
+
     func testTodayInEnglish() {
         let app = launch(language: "en", photos: 0)
         XCTAssertTrue(topCard(in: app).label.contains("Skip Leg Day Club"))
@@ -108,12 +154,13 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "20-today-en")
     }
 
-    private func launch(language: String, photos: Int) -> XCUIApplication {
+    private func launch(language: String, photos: Int, extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += [
-            "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
-        ]
+        app.launchArguments +=
+            [
+                "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
+            ] + extra
         app.launch()
         return app
     }
