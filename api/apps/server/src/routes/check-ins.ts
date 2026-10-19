@@ -3,11 +3,11 @@ import {
   CheckInDraft,
   CheckInId,
   DayRange,
-  Disclaimer,
   LocalDay,
   MemberId,
   SquadId,
   photosOf,
+  storedDisclaimerFields,
   storedMealFields,
   storedTrainingFields,
   type CheckInRecord,
@@ -52,6 +52,7 @@ const photoViews = {
 };
 const TrainingView = z.strictObject({ ...storedTrainingFields, ...photoViews });
 const MealView = z.strictObject({ ...storedMealFields, ...photoViews });
+const DisclaimerView = z.strictObject({ ...storedDisclaimerFields, ...photoViews });
 
 /** A saved check-in, as the app's contract has it (`CheckIn` in ios/Packages/Contracts). */
 export const CheckIn = z
@@ -59,7 +60,7 @@ export const CheckIn = z
     z.strictObject({ ...checkInFields, kind: z.literal('trained'), training: TrainingView }),
     z.strictObject({ ...checkInFields, kind: z.literal('healthyMeal'), meal: MealView }),
     z.strictObject({ ...checkInFields, kind: z.literal('cheatMeal'), meal: MealView }),
-    z.strictObject({ ...checkInFields, kind: z.literal('disclaimer'), disclaimer: Disclaimer }),
+    z.strictObject({ ...checkInFields, kind: z.literal('disclaimer'), disclaimer: DisclaimerView }),
   ])
   .openapi('CheckIn');
 
@@ -104,7 +105,7 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     case 'cheatMeal':
       return { ...base, kind: record.kind, meal: withUrls(record.meal) };
     case 'disclaimer':
-      return { ...base, kind: record.kind, disclaimer: record.disclaimer };
+      return { ...base, kind: record.kind, disclaimer: withUrls(record.disclaimer) };
   }
 }
 

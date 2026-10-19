@@ -497,6 +497,29 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 40 characters as people see them; may span lines."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "description": "The photo’s name, as the check-in was saved with."
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "description": "`GET` the photo here. It works for an hour."
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "1 to 3 photos, the cover first. Missing when there are none."
                   }
                 },
                 "required": [
@@ -845,6 +868,25 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 40 characters as people see them; may span lines."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                        }
+                      },
+                      "required": [
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "description": "1 to 3 photos, the cover first. Leave it out for none."
                   }
                 },
                 "required": [

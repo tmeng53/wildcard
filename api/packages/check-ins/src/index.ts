@@ -16,6 +16,7 @@ export {
   SquadId,
   Training,
   photosOf,
+  storedDisclaimerFields,
   storedMealFields,
   storedTrainingFields,
   type CheckInRecord,
