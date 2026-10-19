@@ -1,4 +1,9 @@
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
@@ -22,6 +27,11 @@ async function getHealth(db: Database) {
     verifyToken: notCalled,
     checkIns: checkInsOn(db),
     photos,
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: () => Promise.resolve(undefined),
+      clock: () => new Date(),
+    }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog((line) => lines.push(line)),
@@ -88,6 +98,11 @@ describe('an unknown route', () => {
       verifyToken: notCalled,
       checkIns: checkInsOn(db),
       photos,
+      weeklyPlans: createWeeklyPlans({
+        store: createPostgresWeeklyPlanStore(db),
+        calendarOf: () => Promise.resolve(undefined),
+        clock: () => new Date(),
+      }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),

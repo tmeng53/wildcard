@@ -1,4 +1,9 @@
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
@@ -29,6 +34,11 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,
+      clock: () => new Date(),
+    }),
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),

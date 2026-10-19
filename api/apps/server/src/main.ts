@@ -1,5 +1,10 @@
 import { serve } from '@hono/node-server';
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
@@ -9,6 +14,7 @@ import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
+import { memberCalendar } from './member-calendar.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
@@ -18,6 +24,7 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+const members = createMembers({ store: createPostgresProfileStore(db) });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -26,7 +33,12 @@ const app = createApp({
     photos,
     clock: () => new Date(),
   }),
-  members: createMembers({ store: createPostgresProfileStore(db) }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(),
+  }),
+  members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   photos,
   log,

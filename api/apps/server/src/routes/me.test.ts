@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sign } from 'hono/jwt';
@@ -29,6 +34,11 @@ async function send(
       clock: () => new Date(),
     }),
     photos,
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: () => Promise.resolve(undefined),
+      clock: () => new Date(),
+    }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
@@ -183,16 +193,21 @@ describe('PUT /me/profile', () => {
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
   });
 
-  it('refuses a zone that doesn’t exist', async () => {
+  it.each([
+    ['that doesn’t exist', 'Mars/Jezero_Crater'],
+    // Postgres knows these, but Node can't read days in them.
+    ['only Postgres knows', 'posix/America/Los_Angeles'],
+    ['that is a placeholder', 'Factory'],
+  ])('refuses a zone %s', async (...[, timeZone]) => {
     const { token } = await signUp();
-    expect(await putProfile(token, { version: 1, timeZone: 'Mars/Jezero_Crater' })).toStrictEqual([
+    expect(await putProfile(token, { version: 1, timeZone })).toStrictEqual([
       400,
       {
         version: 1,
         type: 'about:blank',
         title: 'Bad Request',
         status: 400,
-        detail: 'Mars/Jezero_Crater is not a known time zone.',
+        detail: `${timeZone} is not a known time zone.`,
         reason: 'TIME_ZONE_UNKNOWN',
         errorStatus: 'INVALID_ARGUMENT',
       },
