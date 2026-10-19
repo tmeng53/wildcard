@@ -4,7 +4,7 @@
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
 #     [squad-today] [reactions] [devices] [account]   (no arguments: all)
-# Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
+# Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
 # Bash 4.4+; macOS ships bash 3.2, where every check still stops the run through `fail`.
@@ -352,7 +352,6 @@ if want squad-today; then
 fi
 
 if want reactions; then
-  squad_of "$me_token" "$mate_token"
   post="$(new_id)"
   call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
   expect 201
