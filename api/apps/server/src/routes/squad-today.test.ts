@@ -212,4 +212,12 @@ describe('GET /squads/{squadId}/today', () => {
     });
     expect(await call('GET', { path: `/squads/${squad}/today` })).toMatchObject({ status: 401 });
   });
+
+  it('refuses a squad id that isn’t one', async () => {
+    const { token } = await member();
+    expect(await call('GET', { path: '/squads/not-a-squad/today', token })).toMatchObject({
+      status: 400,
+      body: { reason: 'REQUEST_INVALID' },
+    });
+  });
 });

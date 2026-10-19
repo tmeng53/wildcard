@@ -113,6 +113,7 @@ export function squadToday(deps: {
         description: 'The squad’s day',
         content: { 'application/json': { schema: SquadToday } },
       },
+      400: problem('Not a valid squad id'),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The member isn’t in this squad'),
       503: problem('Sign-in can’t be checked right now'),
