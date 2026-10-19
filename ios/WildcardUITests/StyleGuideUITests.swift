@@ -4,6 +4,11 @@ import XCTest
 /// (scripts/ios-test.sh).
 @MainActor
 final class StyleGuideUITests: XCTestCase {
+    /// How long a check waits for the UI. On a busy CI runner one accessibility query can take
+    /// several seconds, so a 5s wait gets one or two looks before it times out; a wait that
+    /// succeeds returns as soon as it does, so a generous limit only slows a real failure.
+    private static let wait: TimeInterval = 30
+
     /// Every scene recolors the style guide; the check-in opens into its four capsules.
     func testStyleGuideInChinese() {
         let app = launch(language: "zh-Hans")
@@ -32,7 +37,7 @@ final class StyleGuideUITests: XCTestCase {
         let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "免责")]
         for (meaning, label) in capsules {
             let capsule = app.buttons["styleguide.capsule.\(meaning)"]
-            XCTAssertTrue(capsule.waitForExistence(timeout: 2), "no \(label) capsule")
+            XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
         }
         Thread.sleep(forTimeInterval: 0.8)
@@ -65,7 +70,7 @@ final class StyleGuideUITests: XCTestCase {
         app.swipeUp()
         XCTAssertTrue(app.buttons["styleguide.picker.pill.run"].isSelected, "跑步 isn't picked to start")
         let walk = app.buttons["styleguide.picker.tile.walk"]
-        XCTAssertTrue(walk.waitForExistence(timeout: 2), "no 快走 tile")
+        XCTAssertTrue(walk.waitForExistence(timeout: Self.wait), "no 快走 tile")
         XCTAssertFalse(walk.isSelected)
         XCTAssertTrue(app.buttons["styleguide.picker.category.runWalk"].isSelected)
         Thread.sleep(forTimeInterval: 0.6)
@@ -98,7 +103,7 @@ final class StyleGuideUITests: XCTestCase {
     /// The squad banner, which VoiceOver reads as one element.
     private func banner(in app: XCUIApplication) -> XCUIElement {
         let banner = app.descendants(matching: .any).matching(identifier: "styleguide.banner").firstMatch
-        XCTAssertTrue(banner.waitForExistence(timeout: 10), "the style guide never appeared")
+        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the style guide never appeared")
         return banner
     }
 
@@ -107,7 +112,7 @@ final class StyleGuideUITests: XCTestCase {
     /// `label == %@` for an exact label, `label CONTAINS %@` for the banner's combined label.
     private func waitForLabel(
         of element: XCUIElement, _ format: String, _ text: String, _ message: String,
-        timeout: TimeInterval = 5
+        timeout: TimeInterval = StyleGuideUITests.wait
     ) {
         let changed = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: format, text), object: element)

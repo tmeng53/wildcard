@@ -2,6 +2,7 @@ import { z } from '@hono/zod-openapi';
 import { toProblemDetails } from '@wildcard/errors';
 
 import { bodyVersion } from './body-version.js';
+import { MediaTypeUnsupportedError } from './errors.js';
 
 /**
  * Every failed request answers with this body, as `application/problem+json`: RFC 9457 problem
@@ -35,11 +36,25 @@ export function problem(description: string) {
   return { description, content: { 'application/problem+json': { schema: Problem } } };
 }
 
+/** The failure every route with a JSON body documents: a body sent in another media type. */
+export const jsonBodyFailures = {
+  415: problem('The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)'),
+};
+
 /** The response for a failed request. Anything that isn't one of our errors answers 500. */
 export function problemResponse(error: unknown): Response {
-  const body: Problem = { version: 1, ...toProblemDetails(error) };
+  const body: Problem = { version: 1, ...toProblemDetails(error), ...httpOverride(error) };
   return new Response(JSON.stringify(body), {
     status: body.status,
     headers: { 'content-type': 'application/problem+json' },
   });
+}
+
+/** The HTTP status HTTP itself requires for an error, in place of its error status's usual one. */
+function httpOverride(error: unknown) {
+  // RFC 9110, 15.5.16: a body in a media type the route doesn't take is 415.
+  if (error instanceof MediaTypeUnsupportedError) {
+    return { status: 415, title: 'Unsupported Media Type' };
+  }
+  return {};
 }
