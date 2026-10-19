@@ -116,8 +116,8 @@ struct ComposeView: View {
             }
             .accessibilityIdentifier("compose.caption")
             // The count shows only near the limit, so the field stays quiet.
-            if caption.count >= PostBody.captionLimit - 10 {
-                Text(verbatim: "\(caption.count)/\(PostBody.captionLimit)")
+            if caption.count >= Caption.maxLength - 10 {
+                Text(verbatim: "\(caption.count)/\(Caption.maxLength)")
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .textTertiary, in: theme))
                     .monospacedDigit()
@@ -128,8 +128,8 @@ struct ComposeView: View {
     private var placeholder: Text {
         switch meaning {
         case .trained: Text("炫耀一下成果…", bundle: .module)
-        case .fresh: Text("这顿很自律…", bundle: .module)
-        case .indulgence, .disclaimer: Text("坦白从宽…", bundle: .module)
+        case .healthyMeal: Text("这顿很自律…", bundle: .module)
+        case .cheatMeal, .disclaimer: Text("坦白从宽…", bundle: .module)
         }
     }
 
@@ -137,8 +137,8 @@ struct ComposeView: View {
         let body = PostBody(photos: model.photos, caption: caption)
         return switch meaning {
         case .trained: .trained(currentActivity, body)
-        case .fresh: .healthyMeal(body)
-        case .indulgence, .disclaimer: .cheatMeal(body)
+        case .healthyMeal: .healthyMeal(body)
+        case .cheatMeal, .disclaimer: .cheatMeal(body)
         }
     }
 }

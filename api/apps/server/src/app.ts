@@ -22,7 +22,7 @@ import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { reactions } from './routes/reactions.js';
-import { squads } from './routes/squads.js';
+import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
@@ -36,6 +36,8 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
+  /** Rate limits for the routes anyone can call without signing in. */
+  readonly publicRoutes: PublicRoutes;
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;

@@ -22,8 +22,8 @@ extension Meaning {
     public var capsuleLabel: Text {
         switch self {
         case .trained: Text("练了", bundle: .module)
-        case .fresh: Text("健康餐", bundle: .module)
-        case .indulgence: Text("放纵餐", bundle: .module)
+        case .healthyMeal: Text("健康餐", bundle: .module)
+        case .cheatMeal: Text("放纵餐", bundle: .module)
         case .disclaimer: Text("请假", bundle: .module)
         }
     }
@@ -32,8 +32,8 @@ extension Meaning {
     public var fullName: Text {
         switch self {
         case .trained: Text("练了", bundle: .module)
-        case .fresh: Text("健康餐", bundle: .module)
-        case .indulgence: Text("坦白放纵餐", bundle: .module)
+        case .healthyMeal: Text("健康餐", bundle: .module)
+        case .cheatMeal: Text("坦白放纵餐", bundle: .module)
         case .disclaimer: Text("今日请假条", bundle: .module)
         }
     }
@@ -41,8 +41,8 @@ extension Meaning {
     public var symbol: String {
         switch self {
         case .trained: "dumbbell.fill"
-        case .fresh: "leaf.fill"
-        case .indulgence: "birthday.cake.fill"
+        case .healthyMeal: "leaf.fill"
+        case .cheatMeal: "birthday.cake.fill"
         case .disclaimer: "moon.stars.fill"
         }
     }
@@ -50,8 +50,8 @@ extension Meaning {
     public var tint: ColorRole {
         switch self {
         case .trained: .meaningTrained
-        case .fresh: .meaningFresh
-        case .indulgence: .meaningIndulgence
+        case .healthyMeal: .meaningFresh
+        case .cheatMeal: .meaningIndulgence
         case .disclaimer: .meaningDisclaimer
         }
     }
@@ -59,8 +59,8 @@ extension Meaning {
     public var ink: ColorRole {
         switch self {
         case .trained: .meaningTrainedInk
-        case .fresh: .meaningFreshInk
-        case .indulgence: .meaningIndulgenceInk
+        case .healthyMeal: .meaningFreshInk
+        case .cheatMeal: .meaningIndulgenceInk
         case .disclaimer: .meaningDisclaimerInk
         }
     }
@@ -68,8 +68,8 @@ extension Meaning {
     public var wash: ColorRole {
         switch self {
         case .trained: .meaningTrainedWash
-        case .fresh: .meaningFreshWash
-        case .indulgence: .meaningIndulgenceWash
+        case .healthyMeal: .meaningFreshWash
+        case .cheatMeal: .meaningIndulgenceWash
         case .disclaimer: .meaningDisclaimerWash
         }
     }
@@ -77,8 +77,8 @@ extension Meaning {
     public var text: ColorRole {
         switch self {
         case .trained: .meaningTrainedText
-        case .fresh: .meaningFreshText
-        case .indulgence: .meaningIndulgenceText
+        case .healthyMeal: .meaningFreshText
+        case .cheatMeal: .meaningIndulgenceText
         case .disclaimer: .meaningDisclaimerText
         }
     }

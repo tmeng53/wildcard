@@ -184,3 +184,17 @@ export class AdminSignInRequiredError extends AppError {
     super('Sign in from your MCP client to use the admin tools.');
   }
 }
+
+/**
+ * Thrown when a caller asks a route anyone can call too often. Wait `retryAfterSeconds`, which
+ * the response also gives as `Retry-After`.
+ */
+export class RequestsTooFrequentError extends AppError {
+  override readonly name = 'RequestsTooFrequentError';
+  readonly reason = 'REQUESTS_TOO_FREQUENT';
+  readonly status = 'RESOURCE_EXHAUSTED';
+
+  constructor(readonly retryAfterSeconds: number) {
+    super('Too many requests. Try again shortly.');
+  }
+}

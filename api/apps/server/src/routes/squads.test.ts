@@ -13,6 +13,7 @@ import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wild
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { createMemoryRateLimit } from '../adapters/memory-rate-limit.js';
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
@@ -36,6 +37,10 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  publicRoutes: {
+    proxyHops: 1,
+    inviteLookups: createMemoryRateLimit({ limit: 3, windowSeconds: 600, clock: () => new Date() }),
+  },
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
@@ -288,5 +293,53 @@ describe('reading and leaving squads', () => {
     expect(SquadListBody.parse(after.body).squads.map(({ id }) => id)).toStrictEqual([mine.id]);
     const gone = await call({ method: 'GET', path: `/squads/${theirs.id}`, token: me.token });
     expect(reason(gone)).toBe('SQUAD_NOT_JOINED');
+  });
+});
+
+describe('GET /public/squad-invites/{inviteCode}', () => {
+  /** A lookup from the web invite page, as a client at `address`. */
+  async function lookUp(code: string, address: string) {
+    const response = await app.request(`/public/squad-invites/${code}`, {
+      // Cloud Run adds the connecting address last; the first entry is the client's own claim.
+      headers: { 'x-forwarded-for': `198.51.100.1, ${address}` },
+    });
+    const text = await response.text();
+    return {
+      status: response.status,
+      cacheControl: response.headers.get('cache-control'),
+      retryAfter: response.headers.get('retry-after'),
+      body: z.unknown().parse(JSON.parse(text)),
+    };
+  }
+
+  it('shows anyone the name, size and whether it is full, and nothing about who is in it', async () => {
+    const creator = await signUp();
+    const squad = await newSquad(creator.token, '周末网球');
+    const typed = `${squad.inviteCode.slice(0, 4).toLowerCase()}-${squad.inviteCode.slice(4)}`;
+    expect(await lookUp(typed, '203.0.113.10')).toStrictEqual({
+      status: 200,
+      cacheControl: 'no-store',
+      retryAfter: null,
+      body: { version: 1, name: '周末网球', memberCount: 1, full: false },
+    });
+  });
+
+  it('answers an unknown code and one that can’t be a code alike', async () => {
+    for (const code of ['ZZZZZZZZ', 'not-a-code!']) {
+      const response = await lookUp(code, '203.0.113.11');
+      expect([response.status, reason(response)]).toStrictEqual([404, 'INVITE_CODE_UNKNOWN']);
+    }
+  });
+
+  it('refuses a client after 3 lookups, whatever it claims to be, and lets others through', async () => {
+    const statuses = [];
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      statuses.push((await lookUp('ZZZZZZZZ', '203.0.113.12')).status);
+    }
+    expect(statuses).toStrictEqual([404, 404, 404, 429]);
+    const refused = await lookUp('ZZZZZZZZ', '203.0.113.12');
+    expect([refused.status, reason(refused)]).toStrictEqual([429, 'REQUESTS_TOO_FREQUENT']);
+    expect(Number(refused.retryAfter)).toBeGreaterThan(590);
+    expect((await lookUp('ZZZZZZZZ', '203.0.113.13')).status).toBe(404);
   });
 });

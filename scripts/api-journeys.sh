@@ -217,6 +217,15 @@ if want squad; then
     fail "preview should show the name and 2 members only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
+  # The web invite page, before anyone signs in: no token, only the name, size and whether full.
+  call GET "/public/squad-invites/$typed" ""
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false}' ] ||
+    fail "public preview should show the name, size and full only: $body"
+  call GET "/public/squad-invites/ZZZZZZZZ" ""
+  expect 404 INVITE_CODE_UNKNOWN
+  echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
+
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 201
   [ "$(jq -r '.members | map(.userId) | last' <<<"$body")" = "$newcomer" ] || fail "newcomer isn't last: $body"
