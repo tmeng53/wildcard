@@ -1225,16 +1225,6 @@
         }
       }
     },
-    "换一个": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Roll again"
-          }
-        }
-      }
-    },
     "搜索运动": {
       "localizations": {
         "en": {

@@ -4,8 +4,11 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 今日免责声明 (spec rev 186, section 1): a glass card over the scene. Type the reason and let
-/// the writer turn it into three lines, or roll the dice; up to 40 characters; 打卡.
+/// 今日免责声明 (spec rev 186, section 1): a glass card over the scene. The line is the hero,
+/// written straight onto the card in large type like a new post, with × and 打卡 in the same
+/// places as the compose page's 取消 and 发布. One ✨ button offers lines in a row of chips
+/// above the keyboard: from the typed reason, or at random when there is none. Up to 40
+/// characters.
 struct DisclaimerCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -14,36 +17,19 @@ struct DisclaimerCard: View {
     @State private var entry = DisclaimerEntry()
     @State private var drafts: [String] = []
     @State private var isWriting = false
-    @State private var rolls = 0
+    @State private var batches = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.m) {
-            HStack {
-                Text("今日免责声明", bundle: .module)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .textPrimary, in: theme))
-                    .accessibilityAddTraits(.isHeader)
-                Spacer()
-                Button {
-                    model.cancel()
-                } label: {
-                    Image(systemName: "xmark")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color(role: .textSecondary, in: theme))
-                        .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                }
-                .accessibilityLabel(Text("关闭", bundle: .module))
-                .accessibilityIdentifier("disclaimer.close")
-            }
+            bar
 
             VStack(alignment: .trailing, spacing: Space.xxs) {
                 TextField(text: $text, axis: .vertical) {
                     Text("编个借口吧…", bundle: .module)
                 }
-                .typeStyle(TypeRamp.field)
+                .typeStyle(TypeRamp.title)
+                .foregroundStyle(Color(role: .textPrimary, in: theme))
                 .lineLimit(1...3)
-                .padding(Sizing.fieldInset)
-                .background(Color(Palette.white).opacity(0.7), in: RoundedRectangle(cornerRadius: Radius.s))
                 .accessibilityIdentifier("disclaimer.field")
                 .onChange(of: text) { _, typed in
                     // The field shows exactly what will be posted: no newlines, at most 40 characters.
@@ -59,51 +45,11 @@ struct DisclaimerCard: View {
                 }
             }
 
-            HStack(spacing: Sizing.pillGap) {
-                ChoicePill(Text("帮我写", bundle: .module), systemImage: "sparkles", isSelected: false) {
-                    Task { await write() }
-                }
-                .disabled(isWriting || entry.text.trimmingCharacters(in: .whitespaces).isEmpty)
-                .accessibilityIdentifier("disclaimer.write")
-                ChoicePill(Text("换一个", bundle: .module), systemImage: "dice", isSelected: false) {
-                    roll()
-                }
-                .accessibilityIdentifier("disclaimer.dice")
-                if isWriting {
-                    Text("正在编借口…", bundle: .module)
-                        .typeStyle(TypeRamp.caption)
-                        .foregroundStyle(Color(role: .textSecondary, in: theme))
-                }
-            }
-
             if entry.isBlocked {
                 CareLine()
-            } else if !drafts.isEmpty {
-                VStack(spacing: Space.xs) {
-                    ForEach(Array(drafts.enumerated()), id: \.offset) { index, draft in
-                        DraftChoice(line: draft, isSelected: draft == entry.text) { text = draft }
-                            .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
+            } else {
+                suggestions
             }
-
-            Button {
-                guard let disclaimer = entry.disclaimer else { return }
-                Task { await model.post(.disclaimer(disclaimer)) }
-            } label: {
-                Group {
-                    if model.isSending {
-                        ProgressView()
-                    } else {
-                        Text("打卡", bundle: .module).typeStyle(TypeRamp.action)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled(model.isSending || entry.disclaimer == nil)
-            .accessibilityIdentifier("disclaimer.post")
 
             if model.sendFailed {
                 Text("没发出去，再点一次打卡", bundle: .module)
@@ -115,13 +61,81 @@ struct DisclaimerCard: View {
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
         .animation(.wildcard(Motion.panel, reduceMotion: reduceMotion), value: drafts)
         .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: entry.isBlocked)
-        .sensoryFeedback(.selection, trigger: rolls)
+        .sensoryFeedback(.selection, trigger: batches)
     }
 
+    /// × on the left, the title in the middle, 打卡 on the right: the compose page's layout.
+    private var bar: some View {
+        HStack {
+            Button {
+                model.cancel()
+            } label: {
+                Image(systemName: "xmark")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color(role: .textSecondary, in: theme))
+                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget, alignment: .leading)
+            }
+            .accessibilityLabel(Text("关闭", bundle: .module))
+            .accessibilityIdentifier("disclaimer.close")
+            Spacer()
+            Button {
+                guard let disclaimer = entry.disclaimer else { return }
+                Task { await model.post(.disclaimer(disclaimer)) }
+            } label: {
+                if model.isSending {
+                    ProgressView()
+                } else {
+                    Text("打卡", bundle: .module)
+                        .typeStyle(TypeRamp.headline)
+                        .foregroundStyle(
+                            Color(role: entry.disclaimer == nil ? .textTertiary : .signatureText, in: theme))
+                }
+            }
+            .frame(minHeight: Sizing.minimumTapTarget)
+            .disabled(model.isSending || entry.disclaimer == nil)
+            .accessibilityIdentifier("disclaimer.post")
+        }
+        .overlay {
+            Text("今日免责声明", bundle: .module)
+                .typeStyle(TypeRamp.headline)
+                .foregroundStyle(Color(role: .textPrimary, in: theme))
+                .accessibilityAddTraits(.isHeader)
+        }
+    }
+
+    /// ✨ and the lines it offered, in one row that scrolls sideways.
+    private var suggestions: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Sizing.pillGap) {
+                ChoicePill(
+                    isWriting ? Text("正在编借口…", bundle: .module) : Text("帮我写", bundle: .module),
+                    systemImage: "sparkles", isSelected: false
+                ) {
+                    Task { await write() }
+                }
+                .disabled(isWriting)
+                .accessibilityIdentifier("disclaimer.write")
+                ForEach(Array(drafts.enumerated()), id: \.offset) { index, draft in
+                    DraftChoice(line: draft, isSelected: draft == entry.text) { text = draft }
+                        .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
+            }
+        }
+        .scrollClipDisabled()
+    }
+
+    /// Lines from the typed reason, or three at random when nothing is typed yet.
     private func write() async {
+        batches += 1
+        let reason = entry.text.trimmingCharacters(in: .whitespaces)
+        guard !reason.isEmpty else {
+            drafts = DiceDisclaimerWriter.rollDefault(3)
+            return
+        }
         isWriting = true
         defer { isWriting = false }
-        switch await model.suggestions(for: entry.text) {
+        switch await model.suggestions(for: reason) {
         case .drafts(let lines):
             let fitted = lines.map(DisclaimerEntry.fit).filter { !$0.isEmpty }
             drafts = fitted.isEmpty ? DiceDisclaimerWriter.rollDefault(3) : Array(fitted.prefix(3))
@@ -130,15 +144,10 @@ struct DisclaimerCard: View {
             entry.block()
         }
     }
-
-    private func roll() {
-        rolls += 1
-        drafts = []
-        if let line = DiceDisclaimerWriter.rollDefault(1).first { text = line }
-    }
 }
 
-/// A line the writer offered. Tapping it puts it in the field, where it can still be edited.
+/// A line the writer offered, as a chip. Tapping it puts it in the field, where it can still
+/// be edited.
 private struct DraftChoice: View {
     @Environment(\.sceneTheme) private var theme
     let line: String
@@ -150,14 +159,13 @@ private struct DraftChoice: View {
             Text(verbatim: line)
                 .typeStyle(TypeRamp.callout)
                 .foregroundStyle(Color(role: .textPrimary, in: theme))
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Space.s)
-                .background(Color(Palette.white).opacity(0.7), in: RoundedRectangle(cornerRadius: Radius.s))
+                .lineLimit(1)
+                .padding(.horizontal, Space.s)
+                .frame(minHeight: Sizing.minimumTapTarget)
+                .background(Color(Palette.white).opacity(0.7), in: Capsule())
                 .overlay {
                     if isSelected {
-                        RoundedRectangle(cornerRadius: Radius.s)
-                            .strokeBorder(Color(role: .signature, in: theme), lineWidth: 2)
+                        Capsule().strokeBorder(Color(role: .signature, in: theme), lineWidth: 2)
                     }
                 }
         }

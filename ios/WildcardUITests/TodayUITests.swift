@@ -74,22 +74,27 @@ final class TodayUITests: XCTestCase {
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
         field.tap()
-        field.typeText("加班")
         settle()
         let close = app.buttons["disclaimer.close"]
         XCTAssertGreaterThanOrEqual(close.frame.minY, 44, "the card slid under the status bar: \(close.frame)")
+
+        // Nothing typed yet: ✨ offers three lines at random.
         app.buttons["disclaimer.write"].tap()
         let first = app.buttons["disclaimer.draft.1"]
         XCTAssertTrue(first.waitForExistence(timeout: 3), "帮我写 gave no drafts")
         XCTAssertTrue(app.buttons["disclaimer.draft.3"].exists, "帮我写 gave fewer than 3 drafts")
+        let picked = first.label
         first.tap()
         settle()
+        XCTAssertEqual(field.value as? String, picked, "a picked draft didn't fill the field")
+        XCTAssertTrue(first.isSelected, "the picked draft isn't marked")
         keepScreenshot(named: "18-disclaimer-drafts")
 
-        app.buttons["disclaimer.dice"].tap()
-        XCTAssertFalse(app.buttons["disclaimer.draft.1"].exists, "the dice kept the old drafts")
+        // With a line in the field, ✨ writes from it.
+        app.buttons["disclaimer.write"].tap()
+        XCTAssertTrue(app.buttons["disclaimer.draft.3"].waitForExistence(timeout: 3), "帮我写 gave no new drafts")
         let line = field.value as? String ?? ""
-        XCTAssertFalse(line.isEmpty, "the dice left the field empty")
+        XCTAssertFalse(line.isEmpty, "the field lost its line")
         app.buttons["disclaimer.post"].tap()
 
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
@@ -143,8 +148,8 @@ final class TodayUITests: XCTestCase {
         settle()
         keepScreenshot(named: "21-disclaimer-care")
 
-        app.buttons["disclaimer.dice"].tap()
-        XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a rolled line can't be posted")
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "好累")
+        XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a changed line can't be posted")
         XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
     }
 
