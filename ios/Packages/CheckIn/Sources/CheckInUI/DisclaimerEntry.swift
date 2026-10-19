@@ -2,13 +2,15 @@ import Contracts
 
 /// What the 请假条 bubble holds: the line being written, the member's own words, and whether
 /// the writer refused to joke about them. A refused reason can't be posted, so teammates never
-/// see it; any edit or a new suggested line makes a line that can.
+/// see it; a line that posts as something else can, while one that only differs in spacing can't.
 struct DisclaimerEntry: Hashable, Sendable {
     private(set) var text = ""
     /// What the member typed themselves: the reason the writer riffs on, and what
     /// 用回我写的 brings back after a suggested line replaced it.
     private(set) var mine = ""
-    private(set) var isBlocked = false
+    /// The refused line as it would post, compared after `Disclaimer` trims it, so spaces
+    /// around the same words don't unblock it.
+    private var blocked: String?
 
     /// The member typed: the line, fitted to one line of at most `Disclaimer.maxLength`
     /// characters, becomes their own words.
@@ -17,13 +19,11 @@ struct DisclaimerEntry: Hashable, Sendable {
         guard fitted != text else { return }
         text = fitted
         mine = fitted
-        isBlocked = false
     }
 
     /// The writer offered `line`: it replaces the line and keeps the member's own words.
     mutating func suggest(_ line: String) {
         text = Self.fit(line)
-        isBlocked = false
     }
 
     /// Whether a suggested line replaced words the member typed.
@@ -36,12 +36,21 @@ struct DisclaimerEntry: Hashable, Sendable {
 
     /// The writer read the member's words as self-harm.
     mutating func block() {
-        isBlocked = true
+        blocked = Self.posted(text)
+    }
+
+    /// Whether the line would post as the refused one.
+    var isBlocked: Bool {
+        blocked != nil && Self.posted(text) == blocked
     }
 
     /// The line to post, or nil while it is empty, too long or blocked.
     var disclaimer: Disclaimer? {
         isBlocked ? nil : try? Disclaimer(text)
+    }
+
+    private static func posted(_ text: String) -> String? {
+        (try? Disclaimer(text))?.text
     }
 
     /// The next lines to offer: the writer's `lines` first, then `spare` ones, each fitted, each

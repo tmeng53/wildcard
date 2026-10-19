@@ -16,6 +16,17 @@ import Testing
         #expect(entry.disclaimer == nil)
     }
 
+    @Test func spacesAroundABlockedReasonKeepItBlocked() {
+        var entry = DisclaimerEntry()
+        entry.write("今天不想动")
+        entry.block()
+        entry.write("今天不想动 ")
+        #expect(entry.isBlocked)
+        #expect(entry.disclaimer == nil)
+        entry.write(" 今天不想动")
+        #expect(entry.disclaimer == nil)
+    }
+
     @Test func aNewLineCanBePostedAgain() {
         var entry = DisclaimerEntry()
         entry.write("今天不想动")
