@@ -46,11 +46,11 @@ import Testing
     #expect(editing.outfit.variants["brows"] == "soft")
 }
 
-/// A person handed over in a skin the editor doesn't list keeps their hair and face.
-@Test func anyPersonsSkinWearsHair() {
-    let editing = draft(Outfit(["body": "tan", "hair": "buzz", "brows": "bold"]))
-    #expect(editing.wearsHair)
-    #expect(editing.outfit == Outfit(["body": "tan", "hair": "buzz", "brows": "bold"]))
+/// A body the editor doesn't list is no person: it wears no hair or face.
+@Test func anUnlistedBodyWearsNoHair() {
+    let editing = draft(Outfit(["body": "robot", "hair": "buzz", "brows": "bold"]))
+    #expect(!editing.wearsHair)
+    #expect(editing.outfit == Outfit(["body": "robot"]))
 }
 
 /// Brows in the hair's color follow it when the hair is dyed; brows of their own color stay.
@@ -64,6 +64,19 @@ import Testing
         Outfit(["body": "peach", "hair": "bob", "brows": "soft"], colors: ["brows": hairColors[0]]))
     ownBrows.pickColor(hairColors[1], for: "hair")
     #expect(ownBrows.outfit.colors["brows"] == hairColors[0])
+}
+
+/// Brows put on take the dyed hair's color; taken off, their color goes with them.
+@Test func browsPutOnTakeTheHairColor() {
+    var editing = draft()
+    editing.pickColor(hairColors[1], for: "hair")
+    #expect(changed(&editing) { $0.pick("soft", for: "brows") })
+    #expect(editing.outfit.colors["brows"] == hairColors[1])
+    #expect(changed(&editing) { $0.pick(nil, for: "brows") })
+    #expect(editing.outfit.colors["brows"] == nil)
+    var undyed = draft()
+    undyed.pick("soft", for: "brows")
+    #expect(undyed.outfit.colors["brows"] == nil)
 }
 
 @Test func aCoatColorDoesNotCarryToAnotherCoat() {

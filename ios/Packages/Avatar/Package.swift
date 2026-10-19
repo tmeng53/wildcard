@@ -21,8 +21,10 @@ let package = Package(
             dependencies: ["AvatarDomain", .product(name: "DesignSystem", package: "DesignSystem")],
             resources: [.copy("Placeholder")]),
         .target(name: "AvatarUI", dependencies: ["AvatarDomain", "AvatarArt"]),
+        // The looks the tests and previews share; no product, so only this package's tests see it.
+        .target(name: "AvatarLooks", dependencies: ["AvatarArt", "AvatarDomain"], path: "Tests/AvatarLooks"),
         .testTarget(name: "AvatarDomainTests", dependencies: ["AvatarDomain"]),
-        .testTarget(name: "AvatarArtTests", dependencies: ["AvatarArt", "AvatarDomain"]),
-        .testTarget(name: "AvatarUITests", dependencies: ["AvatarUI", "AvatarArt", "AvatarDomain"]),
+        .testTarget(name: "AvatarArtTests", dependencies: ["AvatarArt", "AvatarDomain", "AvatarLooks"]),
+        .testTarget(name: "AvatarUITests", dependencies: ["AvatarUI", "AvatarArt", "AvatarDomain", "AvatarLooks"]),
     ]
 )

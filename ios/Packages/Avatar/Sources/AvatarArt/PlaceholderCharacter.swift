@@ -10,20 +10,6 @@ public enum PlaceholderCharacter {
         "body": "peach", "hair": "bob", "brows": "soft", "cheeks": "rosy", "top": "tee", "bottom": "shorts",
         "prop": "dumbbell",
     ])
-    /// A cat in a cap and tank top, with a tennis racket.
-    public static let cat = Outfit([
-        "body": "cat", "hat": "cap", "top": "tank", "bottom": "greenshorts", "prop": "racket",
-    ])
-    /// A bear in a hoodie and leggings, hands free.
-    public static let bear = Outfit(["body": "bear", "top": "hoodie", "bottom": "leggings"])
-    /// Sharp eyes, bold brows, a smirk and freckles, a headband, a jersey and a basketball.
-    public static let baller = Outfit([
-        "body": "tan", "hair": "buzz", "eyes": "sharp", "brows": "bold", "mouth": "smirk", "cheeks": "freckles",
-        "hat": "headband", "top": "jersey", "bottom": "shorts", "prop": "basketball",
-    ])
-    /// Four looks from the same rig: different species, faces, hair, hats, clothes and props.
-    /// Any look can play any persona's clips.
-    public static let squad = [lifter, cat, bear, baller]
 
     /// Every variant a look can pick for `slot`, by name, sorted: what the character editor
     /// offers. Adding art is adding a folder, so this reads the bundle instead of a list.
