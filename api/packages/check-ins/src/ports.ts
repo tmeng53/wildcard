@@ -49,5 +49,10 @@ export interface WeeklyPlanStore {
   }): Promise<void>;
 }
 
-/** The member's IANA time zone, from their profile, or `undefined` before they save one. */
-export type MemberTimeZone = (member: MemberId) => Promise<string | undefined>;
+/**
+ * The member's IANA time zone and when they joined, from their profile, or `undefined` before
+ * they save one.
+ */
+export type MemberCalendar = (
+  member: MemberId,
+) => Promise<{ readonly timeZone: string; readonly joinedAt: Date } | undefined>;

@@ -17,3 +17,7 @@ create table public.weekly_plans (
 
 -- No grants (the default privileges in the first migration see to that) and no policies.
 alter table public.weekly_plans enable row level security;
+
+-- When the member joined: their profile is saved right after their first sign-in. Days of
+-- the week before it weren't theirs, so a plan may still change them.
+alter table public.profiles add column created_at timestamptz not null default now();

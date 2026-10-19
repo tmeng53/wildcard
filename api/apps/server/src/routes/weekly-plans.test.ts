@@ -12,6 +12,7 @@ import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
+import { memberCalendar } from '../member-calendar.js';
 import { config, signUp } from '../test-kit/local-supabase.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -32,7 +33,7 @@ const app = createApp({
   }),
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
-    timeZoneOf: async (member) => (await members.findProfile(member))?.timeZone,
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   members,

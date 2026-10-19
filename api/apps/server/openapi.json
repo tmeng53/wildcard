@@ -1782,7 +1782,7 @@
       "put": {
         "operationId": "saveMyWeeklyPlan",
         "summary": "Save the signed-in member’s plan for a week",
-        "description": "Replaces the week’s plan; saving the same plan again changes nothing. Past weeks are read-only, and a member plans up to 4 weeks ahead. Once the current week has a plan of the member’s own, its number of rest days is fixed, days before today stay as they were, and today stays a training or a rest day (its sport may change). Weeks still on the default plan and later weeks change freely. Today is read in the member’s profile time zone, and a day lasts until 3am.",
+        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
         "security": [
           {
             "bearer": []

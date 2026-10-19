@@ -20,6 +20,15 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
       return row === undefined ? undefined : Profile.parse({ timeZone: row.time_zone });
     },
 
+    async joinedAt(member) {
+      const row = await db
+        .selectFrom('profiles')
+        .select('created_at')
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return row === undefined ? undefined : new Date(row.created_at);
+    },
+
     async save(member: MemberId, profile) {
       try {
         await db

@@ -28,7 +28,7 @@ const app = createApp({
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
-    timeZoneOf: unused,
+    calendarOf: unused,
     clock: unused,
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),

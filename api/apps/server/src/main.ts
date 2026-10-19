@@ -13,6 +13,7 @@ import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
+import { memberCalendar } from './member-calendar.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
@@ -33,7 +34,7 @@ const app = createApp({
   }),
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
-    timeZoneOf: async (member) => (await members.findProfile(member))?.timeZone,
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   members,

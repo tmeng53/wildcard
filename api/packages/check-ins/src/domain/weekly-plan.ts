@@ -122,40 +122,48 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
   return Number(part('hour')) < GRACE_HOURS ? addDays(calendarDay, -1) : calendarDay;
 }
 
-const restDays = (days: PlanDays) => days.filter((day) => day.kind === 'rest').length;
+const restDays = (days: readonly PlanDay[]) => days.filter((day) => day.kind === 'rest').length;
 
 /**
  * Checks that a member may replace `current` (the week's plan as it stands) with `next` on
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
- * at most `WEEKS_AHEAD` weeks ahead. In the current week, once it has a plan of the member's own
- * (saved or carried over), the number of rest days is fixed, days before today can't change,
- * and today stays a training or a rest day (its sport may change). Later weeks, and a week
- * still on the default plan, change freely.
+ * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
+ * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
+ * days before today stay as they were, today stays a training or a rest day (its sport may
+ * change), and the number of rest days stays the same. Days before the member joined weren't
+ * theirs, so they change freely, and so does the whole week on the day a member joins, while it
+ * is still on the default plan: that is where they first make their plan.
  */
 export function checkPlanChange({
   current,
   next,
   today,
+  joinedOn,
 }: {
   readonly current: WeeklyPlan;
   readonly next: PlanDays;
   readonly today: LocalDay;
+  readonly joinedOn: LocalDay;
 }): void {
   const thisWeek = weekStartOf(today);
   if (current.weekStart < thisWeek) throw new WeekOverError(current.weekStart);
   if (current.weekStart > addDays(thisWeek, 7 * WEEKS_AHEAD)) {
     throw new WeekTooFarAheadError(current.weekStart);
   }
-  if (current.weekStart > thisWeek || current.source === 'default') return;
+  if (current.weekStart > thisWeek) return;
+  if (current.source === 'default' && joinedOn >= today) return;
 
-  for (const [index, day] of next.entries()) {
+  const from = joinedOn > thisWeek ? joinedOn : thisWeek;
+  const first = Math.round((Date.parse(from) - Date.parse(thisWeek)) / DAY);
+  for (let index = first; index < 7; index += 1) {
     const date = addDays(thisWeek, index);
     if (date > today) break;
     const before = current.days[index];
-    const unchanged = date < today ? isDeepStrictEqual(before, day) : before?.kind === day.kind;
+    const after = next[index];
+    const unchanged =
+      date < today ? isDeepStrictEqual(before, after) : before?.kind === after?.kind;
     if (!unchanged) throw new PlanDayStartedError(date);
   }
-  if (restDays(next) !== restDays(current.days)) {
-    throw new RestDaysFixedError(restDays(current.days));
-  }
+  const kept = restDays(current.days.slice(first));
+  if (restDays(next.slice(first)) !== kept) throw new RestDaysFixedError(kept);
 }

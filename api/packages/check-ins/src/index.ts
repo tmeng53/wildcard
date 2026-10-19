@@ -55,7 +55,7 @@ export type {
   CheckInStore,
   Clock,
   InsertOutcome,
-  MemberTimeZone,
+  MemberCalendar,
   PhotoFiles,
   WeeklyPlanStore,
 } from './ports.js';

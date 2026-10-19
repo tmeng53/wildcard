@@ -8,11 +8,11 @@ import {
   type WeeklyPlan,
 } from '../domain/weekly-plan.js';
 import { TimeZoneNotSetError } from '../errors.js';
-import type { Clock, MemberTimeZone, WeeklyPlanStore } from '../ports.js';
+import type { Clock, MemberCalendar, WeeklyPlanStore } from '../ports.js';
 
 interface Deps {
   readonly store: WeeklyPlanStore;
-  readonly timeZoneOf: MemberTimeZone;
+  readonly calendarOf: MemberCalendar;
   readonly clock: Clock;
 }
 
@@ -23,7 +23,7 @@ export interface WeeklyPlans {
   /**
    * Saves the member's plan for a week and returns it. Throws `TimeZoneNotSetError` before the
    * member has a profile, and the errors of `checkPlanChange` for a change the rules don't allow.
-   * Saving the plan the week already has changes nothing, so a save can be retried.
+   * Repeating a save gives the same result, so a save can be retried.
    */
   save(input: {
     readonly member: MemberId;
@@ -49,10 +49,16 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
   return {
     find: (input) => find(deps, input),
     async save({ member, weekStart, days }) {
-      const timeZone = await deps.timeZoneOf(member);
-      if (timeZone === undefined) throw new TimeZoneNotSetError();
+      const calendar = await deps.calendarOf(member);
+      if (calendar === undefined) throw new TimeZoneNotSetError();
+      const { timeZone, joinedAt } = calendar;
       const current = await find(deps, { member, weekStart });
-      checkPlanChange({ current, next: days, today: localDayAt(deps.clock(), timeZone) });
+      checkPlanChange({
+        current,
+        next: days,
+        today: localDayAt(deps.clock(), timeZone),
+        joinedOn: localDayAt(joinedAt, timeZone),
+      });
       await deps.store.save({ member, weekStart, days });
       return { weekStart, days, source: 'saved' };
     },

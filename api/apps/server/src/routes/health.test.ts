@@ -28,7 +28,7 @@ async function getHealth(db: Database) {
     photos,
     weeklyPlans: createWeeklyPlans({
       store: createPostgresWeeklyPlanStore(db),
-      timeZoneOf: () => Promise.resolve(undefined),
+      calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
@@ -98,7 +98,7 @@ describe('an unknown route', () => {
       photos,
       weeklyPlans: createWeeklyPlans({
         store: createPostgresWeeklyPlanStore(db),
-        timeZoneOf: () => Promise.resolve(undefined),
+        calendarOf: () => Promise.resolve(undefined),
         clock: () => new Date(),
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),

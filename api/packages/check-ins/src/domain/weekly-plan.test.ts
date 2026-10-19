@@ -99,14 +99,16 @@ describe('checkPlanChange', () => {
     source,
   });
   /** `'allowed'`, or the error the change throws on `today`. */
-  const changeOn = (today: string) => (current: WeeklyPlan, next: Days) => {
-    try {
-      checkPlanChange({ current, next, today });
-      return 'allowed';
-    } catch (error) {
-      return error;
-    }
-  };
+  const changeOn =
+    (today: string, joinedOn = '2026-09-01') =>
+    (current: WeeklyPlan, next: Days) => {
+      try {
+        checkPlanChange({ current, next, today, joinedOn });
+        return 'allowed';
+      } catch (error) {
+        return error;
+      }
+    };
   // Today is Wednesday.
   const change = changeOn('2026-10-21');
 
@@ -149,8 +151,34 @@ describe('checkPlanChange', () => {
     );
   });
 
-  it('lets the whole current week change while it is still on the default plan', () => {
-    expect(change(plan('default'), [rest, rest, rest, train, train, train, train])).toBe('allowed');
+  it('holds a default plan to the same rules once the member has been here a day', () => {
+    expect(change(plan('default'), [rest, rest, rest, train, train, train, train])).toStrictEqual(
+      new PlanDayStartedError('2026-10-19'),
+    );
+  });
+
+  it('lets the whole week change on the day a member joins, while it is on the default', () => {
+    const joinedToday = changeOn('2026-10-21', '2026-10-21');
+    const allTraining: Days = [train, train, train, train, train, train, train];
+    expect(joinedToday(plan('default'), allTraining)).toBe('allowed');
+    // Once they have saved, today's kind is fixed like anyone's.
+    expect(joinedToday(plan('saved'), allTraining)).toStrictEqual(
+      new PlanDayStartedError('2026-10-21'),
+    );
+  });
+
+  it('lets days before the member joined change, and counts rest days from then', () => {
+    // Joined on Tuesday; today is Wednesday.
+    const joinedTuesday = changeOn('2026-10-21', '2026-10-20');
+    expect(joinedTuesday(plan('default'), [rest, train, rest, train, train, train, rest])).toBe(
+      'allowed',
+    );
+    expect(
+      joinedTuesday(plan('default'), [run, rest, rest, train, train, train, train]),
+    ).toStrictEqual(new PlanDayStartedError('2026-10-20'));
+    expect(
+      joinedTuesday(plan('default'), [run, train, rest, train, train, train, train]),
+    ).toStrictEqual(new RestDaysFixedError(2));
   });
 
   it('lets a later week change freely, up to 4 weeks ahead', () => {

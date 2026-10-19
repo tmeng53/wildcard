@@ -9,7 +9,12 @@ import type { CheckInTables } from '../adapters/postgres-check-in-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { MemberId } from '../domain/check-in.js';
 import { WeekStart, type PlanDays } from '../domain/weekly-plan.js';
-import { RestDaysFixedError, TimeZoneNotSetError, WeekOverError } from '../errors.js';
+import {
+  PlanDayStartedError,
+  RestDaysFixedError,
+  TimeZoneNotSetError,
+  WeekOverError,
+} from '../errors.js';
 import { createWeeklyPlans } from './weekly-plans.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -22,18 +27,22 @@ afterAll(() => db.destroy());
 
 // Wednesday 2026-10-21, 13:00 in Los Angeles.
 let now = new Date('2026-10-21T20:00:00.000Z');
-// Members' time zones: their profiles, which the members module keeps.
-const timeZones = new Map<string, string>();
+// Members' time zones and when they joined: their profiles, which the members module keeps.
+const calendars = new Map<string, { timeZone: string; joinedAt: Date }>();
 const plans = createWeeklyPlans({
   store: createPostgresWeeklyPlanStore(db),
-  timeZoneOf: (member) => Promise.resolve(timeZones.get(member)),
+  calendarOf: (member) => Promise.resolve(calendars.get(member)),
   clock: () => now,
 });
 
-async function newMember({ timeZone = 'America/Los_Angeles' } = {}) {
+/** A member who joined today, unless `joinedAt` says when. */
+async function newMember({
+  timeZone = 'America/Los_Angeles',
+  joinedAt = new Date('2026-10-21T17:00:00.000Z'),
+} = {}) {
   const id = MemberId.parse(randomUUID());
   await sql`insert into auth.users (id) values (${id})`.execute(db);
-  timeZones.set(id, timeZone);
+  calendars.set(id, { timeZone, joinedAt });
   return id;
 }
 
@@ -100,14 +109,40 @@ describe('saving a week’s plan', () => {
     ]);
   });
 
-  it('lets a member who signs up mid-week plan the whole week', async () => {
+  it('lets a member who signs up mid-week plan the whole week that day', async () => {
     const member = await newMember();
     const days: PlanDays = [rest, rest, rest, train, train, train, train];
     expect((await plans.save({ member, weekStart: thisWeek, days })).days).toStrictEqual(days);
   });
 
+  it('keeps the days since a member joined, even on the default plan', async () => {
+    // Joined weeks ago and never planned: Monday and Tuesday can't turn into rest days now.
+    const longAgo = await newMember({ joinedAt: new Date('2026-09-01T17:00:00.000Z') });
+    await expect(
+      plans.save({
+        member: longAgo,
+        weekStart: thisWeek,
+        days: [rest, rest, rest, train, train, train, train],
+      }),
+    ).rejects.toThrow(new PlanDayStartedError('2026-10-19'));
+    // Joined on Tuesday: Monday wasn't theirs, Tuesday was.
+    const tuesday = await newMember({ joinedAt: new Date('2026-10-20T17:00:00.000Z') });
+    await expect(
+      plans.save({
+        member: tuesday,
+        weekStart: thisWeek,
+        days: [rest, rest, rest, train, train, train, train],
+      }),
+    ).rejects.toThrow(new PlanDayStartedError('2026-10-20'));
+    // Monday can rest too: from Tuesday on, the week keeps its two rest days.
+    const days: PlanDays = [rest, train, rest, train, train, train, rest];
+    expect((await plans.save({ member: tuesday, weekStart: thisWeek, days })).days).toStrictEqual(
+      days,
+    );
+  });
+
   it('keeps the rest days of this week, even when its plan is carried over', async () => {
-    const member = await newMember();
+    const member = await newMember({ joinedAt: new Date('2026-10-14T17:00:00.000Z') });
     // Saved last week, so this week carries it over.
     now = new Date('2026-10-14T20:00:00.000Z');
     await plans.save({ member, weekStart: lastWeek, days: mine });
@@ -148,7 +183,9 @@ describe('saving a week’s plan', () => {
       await expect(
         plans.save({ member: shanghai, weekStart: thisWeek, days: mine }),
       ).rejects.toThrow(new WeekOverError('2026-10-19'));
-      await plans.save({ member: losAngeles, weekStart: thisWeek, days: mine });
+      // Still Sunday there: the week takes a save (the default as it is, as every day has begun).
+      const defaultDays: PlanDays = [train, train, rest, train, train, train, rest];
+      await plans.save({ member: losAngeles, weekStart: thisWeek, days: defaultDays });
     } finally {
       now = new Date('2026-10-21T20:00:00.000Z');
     }
@@ -156,7 +193,7 @@ describe('saving a week’s plan', () => {
 
   it('needs the member’s time zone first', async () => {
     const member = await newMember();
-    timeZones.delete(member);
+    calendars.delete(member);
     await expect(plans.save({ member, weekStart: thisWeek, days: mine })).rejects.toThrow(
       new TimeZoneNotSetError(),
     );

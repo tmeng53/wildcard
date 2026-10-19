@@ -35,7 +35,7 @@ async function send(
     photos,
     weeklyPlans: createWeeklyPlans({
       store: createPostgresWeeklyPlanStore(db),
-      timeZoneOf: () => Promise.resolve(undefined),
+      calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
