@@ -5,9 +5,10 @@ import Foundation
 /// art, bundled with this package. Art and motion are placeholders; the file formats and
 /// the player are what's real.
 public enum PlaceholderCharacter {
-    /// A bob, a tee, shorts and a small dumbbell.
+    /// A bob, soft brows, rosy cheeks, a tee, shorts and a small dumbbell.
     public static let lifter = Outfit([
-        "body": "peach", "hair": "bob", "top": "tee", "bottom": "shorts", "prop": "dumbbell",
+        "body": "peach", "hair": "bob", "brows": "soft", "cheeks": "rosy", "top": "tee", "bottom": "shorts",
+        "prop": "dumbbell",
     ])
     /// A cat in a cap and tank top, with a tennis racket.
     public static let cat = Outfit([
@@ -15,12 +16,13 @@ public enum PlaceholderCharacter {
     ])
     /// A bear in a hoodie and leggings, hands free.
     public static let bear = Outfit(["body": "bear", "top": "hoodie", "bottom": "leggings"])
-    /// A headband, a jersey and a basketball.
+    /// Sharp eyes, bold brows, a smirk and freckles, a headband, a jersey and a basketball.
     public static let baller = Outfit([
-        "body": "tan", "hair": "buzz", "hat": "headband", "top": "jersey", "bottom": "shorts", "prop": "basketball",
+        "body": "tan", "hair": "buzz", "eyes": "sharp", "brows": "bold", "mouth": "smirk", "cheeks": "freckles",
+        "hat": "headband", "top": "jersey", "bottom": "shorts", "prop": "basketball",
     ])
-    /// Four looks from the same rig: different species, hair, hats, clothes and props. Any look
-    /// can play any persona's clips.
+    /// Four looks from the same rig: different species, faces, hair, hats, clothes and props.
+    /// Any look can play any persona's clips.
     public static let squad = [lifter, cat, bear, baller]
 
     /// Every variant a look can pick for `slot`, by name, sorted: what the character editor

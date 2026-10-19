@@ -7,6 +7,7 @@ import {
   AuthTokenInvalidError,
   AuthTokenMissingError,
   DatabaseUnavailableError,
+  MediaTypeUnsupportedError,
   RequestInvalidError,
   RouteNotFoundError,
 } from './errors.js';
@@ -21,6 +22,7 @@ describe('server errors', () => {
         new AuthKeysUnavailableError(),
         new DatabaseUnavailableError(),
         new RequestInvalidError('bad'),
+        new MediaTypeUnsupportedError(),
         new RouteNotFoundError('GET', '/nope'),
         new AdminSignInRequiredError(),
         new AppSignInRequiredError(),
@@ -31,6 +33,7 @@ describe('server errors', () => {
       ['AuthKeysUnavailableError', 'AUTH_KEYS_UNAVAILABLE', 'UNAVAILABLE'],
       ['DatabaseUnavailableError', 'DATABASE_UNAVAILABLE', 'UNAVAILABLE'],
       ['RequestInvalidError', 'REQUEST_INVALID', 'INVALID_ARGUMENT'],
+      ['MediaTypeUnsupportedError', 'MEDIA_TYPE_UNSUPPORTED', 'INVALID_ARGUMENT'],
       ['RouteNotFoundError', 'ROUTE_NOT_FOUND', 'NOT_FOUND'],
       ['AdminSignInRequiredError', 'ADMIN_SIGN_IN_REQUIRED', 'UNAUTHENTICATED'],
       ['AppSignInRequiredError', 'APP_SIGN_IN_REQUIRED', 'UNAUTHENTICATED'],
