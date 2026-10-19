@@ -253,14 +253,13 @@ struct DisclaimerComposer: View {
         if let first = drafts.first { take(first) }
     }
 
-    /// Lines from the member's own words, or at random when they typed none. Lines already on
-    /// offer aren't offered again.
+    /// Up to three lines on offer, none of them already shown: from the member's own words, or
+    /// at random when they typed none, topped up with dice lines when the writer has too few new ones.
     private func fetch(style: DisclaimerStyle) async -> [String] {
         let shown = Set(drafts + [entry.text])
+        let spare = DiceDisclaimerWriter.rollDefault(DiceDisclaimerWriter.lines.count)
         let reason = entry.mine.trimmingCharacters(in: .whitespaces)
-        guard !reason.isEmpty else {
-            return DiceDisclaimerWriter.rollDefault(DiceDisclaimerWriter.lines.count).filter { !shown.contains($0) }
-        }
+        guard !reason.isEmpty else { return DisclaimerEntry.newLines(from: [], spare: spare, shown: shown) }
         isWriting = true
         defer { isWriting = false }
         let result = await model.suggestions(for: reason, style: style)
@@ -268,12 +267,7 @@ struct DisclaimerComposer: View {
         guard entry.mine.trimmingCharacters(in: .whitespaces) == reason else { return [] }
         switch result {
         case .drafts(let lines):
-            // Each line once, and new ones first: 换一组 should offer something new.
-            var seen = Set<String>()
-            let fitted = lines.map(DisclaimerEntry.fit).filter { !$0.isEmpty && seen.insert($0).inserted }
-            let fresh = fitted.filter { !shown.contains($0) }
-            if !fresh.isEmpty { return fresh }
-            return fitted.isEmpty ? DiceDisclaimerWriter.rollDefault(3) : fitted
+            return DisclaimerEntry.newLines(from: lines, spare: spare, shown: shown)
         case .blocked:
             entry.block()
             isEditing = false

@@ -44,6 +44,13 @@ struct DisclaimerEntry: Hashable, Sendable {
         isBlocked ? nil : try? Disclaimer(text)
     }
 
+    /// The next lines to offer: the writer's `lines` first, then `spare` ones, each fitted, each
+    /// once, none of them `shown`, at most `count` of them. So a refill never repeats a line.
+    static func newLines(from lines: [String], spare: [String], shown: Set<String>, count: Int = 3) -> [String] {
+        var taken = shown
+        return (lines + spare).map(fit).filter { !$0.isEmpty && taken.insert($0).inserted }.prefix(count).map { $0 }
+    }
+
     static func fit(_ text: String) -> String {
         String(text.filter { !$0.isNewline }.prefix(Disclaimer.maxLength))
     }
