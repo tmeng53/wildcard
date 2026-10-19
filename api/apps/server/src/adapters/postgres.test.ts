@@ -39,7 +39,7 @@ describe('createDatabase', () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
       await sql`select 1`.execute(trx);
     });
-    await expect(transaction).rejects.toThrow();
+    await expect(transaction).rejects.toThrow(/not queryable/);
 
     const { rows } = await sql<{ one: number }>`select 1 as one`.execute(db);
     expect(rows).toStrictEqual([{ one: 1 }]);
