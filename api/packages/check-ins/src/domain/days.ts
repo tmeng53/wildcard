@@ -22,7 +22,7 @@ export function weekOf(day: LocalDay): Week {
  */
 export type TrainingStatus = 'trained' | 'disclaimer' | 'notCheckedIn';
 
-/** A 练了 wins over a 免责声明 posted earlier the same day. */
+/** A 练了 wins over a 请假条 posted earlier the same day. */
 export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): TrainingStatus {
   const kinds = new Set(checkIns.filter((each) => each.day === day).map(({ kind }) => kind));
   if (kinds.has('trained')) return 'trained';

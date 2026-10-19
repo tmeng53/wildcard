@@ -2474,7 +2474,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
                 public var day: Swift.String
-                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/training`.
                 @frozen public enum TrainingPayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -2482,7 +2482,7 @@ extension Components {
                     case disclaimer = "disclaimer"
                     case notCheckedIn = "notCheckedIn"
                 }
-                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/training`.
                 public var training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload
@@ -2510,7 +2510,7 @@ extension Components {
                 /// - Parameters:
                 ///   - member:
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
-                ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
                 ///   - plannedRest: Today is a rest day in their weekly plan, whatever they checked in.
                 ///   - firstCheckInAt: When their first check-in today sent to this squad was made, of any kind, in UTC. Missing when none.
@@ -2587,11 +2587,11 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/trained`.
                 public var trained: Swift.Int
-                /// Members whose today is a 免责声明 with no 练了.
+                /// Members whose today is a 请假条 with no 练了.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/disclaimer`.
                 public var disclaimer: Swift.Int
-                /// Members on a planned rest day with no 练了 or 免责声明 today.
+                /// Members on a planned rest day with no 练了 or 请假条 today.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/resting`.
                 public var resting: Swift.Int
@@ -2603,8 +2603,8 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - trained: Members whose today is trained.
-                ///   - disclaimer: Members whose today is a 免责声明 with no 练了.
-                ///   - resting: Members on a planned rest day with no 练了 or 免责声明 today.
+                ///   - disclaimer: Members whose today is a 请假条 with no 练了.
+                ///   - resting: Members on a planned rest day with no 练了 or 请假条 today.
                 ///   - everyoneTrained: At least one member trained today and every member who did not train is on a planned rest day, whatever they checked in (全员上场).
                 public init(
                     trained: Swift.Int,
