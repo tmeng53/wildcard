@@ -9,6 +9,7 @@ import {
   createPostgresCheckInStore,
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
+import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
 import {
   CheckInDraft,
   CheckInId,
@@ -35,6 +36,7 @@ const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) }
 const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
+  reactions: createPostgresReactionStore(db),
   photos,
   calendarOf,
   clock: () => now,
@@ -189,6 +191,7 @@ describe('saving a check-in', () => {
     await checkIns.save({ id, member, draft: body });
     const late = createCheckIns({
       store: createPostgresCheckInStore(db),
+      reactions: createPostgresReactionStore(db),
       photos,
       calendarOf,
       clock: () => new Date('2026-10-25T00:00:00.000Z'),
@@ -254,6 +257,7 @@ describe('saving a check-in', () => {
             return Promise.resolve(undefined);
           },
         },
+        reactions: createPostgresReactionStore(db),
         photos,
         calendarOf,
         clock: () => now,

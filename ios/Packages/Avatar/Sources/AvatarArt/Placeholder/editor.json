@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "species": [
+    { "id": "person", "bodies": ["peach"], "hair": true },
+    { "id": "cat", "bodies": ["cat", "tuxedo", "calico", "tortie", "orangewhite", "lihua", "siamese", "ragdoll"] },
+    { "id": "dog", "bodies": ["shiba", "golden", "corgi", "husky", "collie", "bichon"] },
+    { "id": "rabbit", "bodies": ["rabbit", "lop", "dutch"] },
+    { "id": "bear", "bodies": ["bear"] }
+  ],
+  "props": ["dumbbell", "racket"]
+}

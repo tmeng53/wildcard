@@ -132,6 +132,14 @@ public struct Clip: Hashable, Sendable {
         }
     }
 
+    /// A loop that moves nothing, so the character holds its rest pose: for a character being
+    /// dressed, which shouldn't fidget while someone picks its clothes.
+    public static let still = Clip(checked: "still", duration: 1, loops: true, tracks: [])
+
+    private init(checked name: String, duration: Double, loops: Bool, tracks: [Track]) {
+        (self.name, self.duration, self.loops, self.tracks) = (name, duration, loops, tracks)
+    }
+
     public init(name: String, duration: Double, loops: Bool, tracks: [Track]) throws(AvatarError) {
         guard duration > 0, duration.isFinite else { throw .invalidDuration(clip: name) }
         var moved: Set<String> = []

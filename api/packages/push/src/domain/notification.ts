@@ -1,0 +1,51 @@
+/**
+ * A push notification, written without its words. The alert names a key in the app's String
+ * Catalog (APNs `loc-key`), so the copy lives in the app, Chinese first, and changes without a
+ * server release.
+ */
+export interface PushNotification {
+  readonly alert: {
+    /** The String Catalog key of the alert's text, e.g. `push.daily.squadTrained`. */
+    readonly key: string;
+    /** Values for the key's `%@` placeholders, in order. */
+    readonly args?: readonly string[];
+  };
+  /**
+   * The notification category the app registers (`UNNotificationCategory`), which picks the
+   * buttons shown on it.
+   */
+  readonly category: string;
+  /** Notifications with the same thread are grouped together on the phone. */
+  readonly thread: string;
+  /**
+   * A later notification with the same collapse id replaces this one on the phone instead of
+   * stacking next to it. At most 64 bytes.
+   */
+  readonly collapseId?: string;
+  /**
+   * `passive` shows quietly in the notification list, with no sound and no lighting up the
+   * screen; `active` is a normal notification.
+   */
+  readonly interruption: 'passive' | 'active';
+  /** What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`. */
+  readonly event: Readonly<Record<string, string>>;
+}
+
+/** The APNs JSON payload for a notification, with the `version` every wire body carries. */
+export function apnsPayload(notification: PushNotification) {
+  const { alert, category, thread, interruption, event } = notification;
+  return {
+    version: 1,
+    aps: {
+      alert: {
+        'loc-key': alert.key,
+        ...(alert.args === undefined ? {} : { 'loc-args': alert.args }),
+      },
+      category,
+      'thread-id': thread,
+      'interruption-level': interruption,
+      ...(interruption === 'active' ? { sound: 'default' } : {}),
+    },
+    event,
+  };
+}

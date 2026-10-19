@@ -58,6 +58,41 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /photo-uploads`.
     /// - Remark: Generated from `#/paths//photo-uploads/post(createPhotoUpload)`.
     func createPhotoUpload(_ input: Operations.CreatePhotoUpload.Input) async throws -> Operations.CreatePhotoUpload.Output
+    /// React to a teammate’s check-in
+    ///
+    /// Leaves the caller’s reaction, in place of any they left before. The same reaction again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/reactions/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/mine/put(reactToCheckIn)`.
+    func reactToCheckIn(_ input: Operations.ReactToCheckIn.Input) async throws -> Operations.ReactToCheckIn.Output
+    /// Take your reaction off a check-in
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/reactions/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/mine/delete(removeMyReaction)`.
+    func removeMyReaction(_ input: Operations.RemoveMyReaction.Input) async throws -> Operations.RemoveMyReaction.Output
+    /// A check-in’s reactions
+    ///
+    /// Oldest first, for its author and the teammates who can see it.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
+    func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
+    /// Get push notifications on this phone
+    ///
+    /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
+    ///
+    /// - Remark: HTTP `PUT /me/devices`.
+    /// - Remark: Generated from `#/paths//me/devices/put(registerMyDevice)`.
+    func registerMyDevice(_ input: Operations.RegisterMyDevice.Input) async throws -> Operations.RegisterMyDevice.Output
+    /// Stop push notifications on this phone
+    ///
+    /// For signing out. Safe to repeat, and does nothing for a phone that isn’t yours.
+    ///
+    /// - Remark: HTTP `POST /me/devices/remove`.
+    /// - Remark: Generated from `#/paths//me/devices/remove/post(removeMyDevice)`.
+    func removeMyDevice(_ input: Operations.RemoveMyDevice.Input) async throws -> Operations.RemoveMyDevice.Output
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -105,6 +140,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
+    /// Three AI drafts for a disclaimer
+    ///
+    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    ///
+    /// - Remark: HTTP `POST /disclaimer-drafts`.
+    /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
+    func writeDisclaimerDrafts(_ input: Operations.WriteDisclaimerDrafts.Input) async throws -> Operations.WriteDisclaimerDrafts.Output
     /// The signed-in member’s plan for a week
     ///
     /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
@@ -225,6 +267,83 @@ extension APIProtocol {
     public func createPhotoUpload(headers: Operations.CreatePhotoUpload.Input.Headers = .init()) async throws -> Operations.CreatePhotoUpload.Output {
         try await createPhotoUpload(Operations.CreatePhotoUpload.Input(headers: headers))
     }
+    /// React to a teammate’s check-in
+    ///
+    /// Leaves the caller’s reaction, in place of any they left before. The same reaction again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/reactions/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/mine/put(reactToCheckIn)`.
+    public func reactToCheckIn(
+        path: Operations.ReactToCheckIn.Input.Path,
+        headers: Operations.ReactToCheckIn.Input.Headers = .init(),
+        body: Operations.ReactToCheckIn.Input.Body
+    ) async throws -> Operations.ReactToCheckIn.Output {
+        try await reactToCheckIn(Operations.ReactToCheckIn.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your reaction off a check-in
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/reactions/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/mine/delete(removeMyReaction)`.
+    public func removeMyReaction(
+        path: Operations.RemoveMyReaction.Input.Path,
+        headers: Operations.RemoveMyReaction.Input.Headers = .init()
+    ) async throws -> Operations.RemoveMyReaction.Output {
+        try await removeMyReaction(Operations.RemoveMyReaction.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A check-in’s reactions
+    ///
+    /// Oldest first, for its author and the teammates who can see it.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
+    public func listCheckInReactions(
+        path: Operations.ListCheckInReactions.Input.Path,
+        headers: Operations.ListCheckInReactions.Input.Headers = .init()
+    ) async throws -> Operations.ListCheckInReactions.Output {
+        try await listCheckInReactions(Operations.ListCheckInReactions.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Get push notifications on this phone
+    ///
+    /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
+    ///
+    /// - Remark: HTTP `PUT /me/devices`.
+    /// - Remark: Generated from `#/paths//me/devices/put(registerMyDevice)`.
+    public func registerMyDevice(
+        headers: Operations.RegisterMyDevice.Input.Headers = .init(),
+        body: Operations.RegisterMyDevice.Input.Body
+    ) async throws -> Operations.RegisterMyDevice.Output {
+        try await registerMyDevice(Operations.RegisterMyDevice.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Stop push notifications on this phone
+    ///
+    /// For signing out. Safe to repeat, and does nothing for a phone that isn’t yours.
+    ///
+    /// - Remark: HTTP `POST /me/devices/remove`.
+    /// - Remark: Generated from `#/paths//me/devices/remove/post(removeMyDevice)`.
+    public func removeMyDevice(
+        headers: Operations.RemoveMyDevice.Input.Headers = .init(),
+        body: Operations.RemoveMyDevice.Input.Body
+    ) async throws -> Operations.RemoveMyDevice.Output {
+        try await removeMyDevice(Operations.RemoveMyDevice.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -322,6 +441,21 @@ extension APIProtocol {
         try await getSquadToday(Operations.GetSquadToday.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// Three AI drafts for a disclaimer
+    ///
+    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    ///
+    /// - Remark: HTTP `POST /disclaimer-drafts`.
+    /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
+    public func writeDisclaimerDrafts(
+        headers: Operations.WriteDisclaimerDrafts.Input.Headers = .init(),
+        body: Operations.WriteDisclaimerDrafts.Input.Body
+    ) async throws -> Operations.WriteDisclaimerDrafts.Output {
+        try await writeDisclaimerDrafts(Operations.WriteDisclaimerDrafts.Input(
+            headers: headers,
+            body: body
         ))
     }
     /// The signed-in member’s plan for a week

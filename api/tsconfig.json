@@ -11,10 +11,16 @@
       "path": "packages/check-ins"
     },
     {
+      "path": "packages/disclaimer-drafts"
+    },
+    {
       "path": "packages/members"
     },
     {
       "path": "packages/memes"
+    },
+    {
+      "path": "packages/push"
     },
     {
       "path": "packages/squads"

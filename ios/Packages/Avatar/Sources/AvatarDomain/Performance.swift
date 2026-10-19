@@ -26,6 +26,18 @@ public struct Performance: Sendable {
         current = Playing(clip: idle, start: time, from: nil)
     }
 
+    /// Carries on from `previous` in another outfit or with another idle, such as a character
+    /// being dressed in the editor: the new idle starts at `time`, blending from the pose
+    /// `previous` shows then. Both figures come from the same rig, so the poses line up; if they
+    /// don't, the new idle starts without a blend.
+    public init(continuing previous: Performance, figure: Figure, idle: BoundClip, at time: Double) {
+        self.init(figure: figure, idle: idle, startingAt: time, blendDuration: previous.blendDuration)
+        let onScreen = previous.pose(at: time)
+        if onScreen.parts.count == figure.parts.count {
+            current.from = onScreen
+        }
+    }
+
     /// Starts a clip now, blending from whatever is on screen.
     public mutating func play(_ clip: BoundClip, at time: Double) {
         current = Playing(clip: clip, start: time, from: pose(at: time))
