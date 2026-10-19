@@ -55,8 +55,11 @@ export const PlanDay = z
   });
 export type PlanDay = z.infer<typeof PlanDay>;
 
-/** Exactly seven days, Monday first. */
-export const PlanDays = z.array(PlanDay).length(7);
+/**
+ * Exactly seven days, Monday first. Written as `min` and `max`, which the OpenAPI document
+ * states as `minItems` and `maxItems`; it drops `length`.
+ */
+export const PlanDays = z.array(PlanDay).min(7).max(7);
 export type PlanDays = z.infer<typeof PlanDays>;
 
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
