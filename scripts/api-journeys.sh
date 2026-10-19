@@ -312,7 +312,9 @@ if want weekly-plan; then
 fi
 
 if want squad-today; then
-  # A squad of its own, so the other journeys' check-ins don't count here.
+  # A squad of its own, so the other journeys' check-ins don't count here; the shared one comes
+  # back at the end.
+  shared_squad="$squad"
   read -r runner runner_token <<<"$(sign_up)"
   read -r napper napper_token <<<"$(sign_up)"
   read -r zone today monday <<<"$(noon_zone)"
@@ -349,6 +351,7 @@ if want squad-today; then
   call GET "/squads/$squad/today" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
   echo "squad-today: outsider refused (403 SQUAD_NOT_JOINED)"
+  squad="$shared_squad"
 fi
 
 if want reactions; then
