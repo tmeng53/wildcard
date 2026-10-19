@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
-import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
@@ -22,6 +22,8 @@ async function send(
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
+    accounts: createSupabaseAccounts({ supabaseUrl, secretKey: config.supabaseSecretKey }),
+    revokeAppleSignIn: undefined,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,

@@ -16,10 +16,16 @@ describe('openapi.json', () => {
       createUploadUrl: () => Promise.reject(new Error('unused')),
       exists: () => Promise.reject(new Error('unused')),
       createViewUrls: () => Promise.reject(new Error('unused')),
+      deleteAllOf: () => Promise.reject(new Error('unused')),
     };
     const app = createApp({
       db,
       verifyToken: () => Promise.reject(new Error('unused')),
+      accounts: {
+        verifySession: () => Promise.reject(new Error('unused')),
+        deleteUser: () => Promise.reject(new Error('unused')),
+      },
+      revokeAppleSignIn: undefined,
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
         photos,

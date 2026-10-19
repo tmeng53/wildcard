@@ -3,7 +3,8 @@ import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins'
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from './adapters/postgres.js';
-import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
+import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
@@ -17,9 +18,20 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+if (config.appleSignInKey === undefined) {
+  log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
+}
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  accounts: createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  revokeAppleSignIn:
+    config.appleSignInKey === undefined
+      ? undefined
+      : createAppleSignInRevoker(config.appleSignInKey),
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,

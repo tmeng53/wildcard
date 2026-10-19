@@ -4,7 +4,9 @@ import { randomUUID, webcrypto, type JsonWebKey } from 'node:crypto';
 import { sign } from 'hono/jwt';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createSupabaseTokenVerifier } from './supabase-auth.js';
+import { UserId } from '../ports.js';
+import { config, signOut, signUp } from '../test-kit/local-supabase.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from './supabase-auth.js';
 
 // A stand-in issuer serving a JWKS whose private keys the test holds, so it can sign tokens
 // local Supabase never would (expired, wrong audience) and rotate keys. GET /me's tests cover
@@ -147,5 +149,58 @@ describe('createSupabaseTokenVerifier', () => {
       within: { userId },
       after: 'AUTH_TOKEN_INVALID',
     });
+  });
+});
+
+// Against local Supabase Auth.
+describe('createSupabaseAccounts', () => {
+  const accounts = createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  });
+  const reasonOf = async (promise: Promise<unknown>) => {
+    try {
+      return await promise;
+    } catch (error) {
+      return error instanceof Error && 'reason' in error ? error.reason : error;
+    }
+  };
+
+  it('accepts a current session, and refuses it once signed out', async () => {
+    const { token, userId } = await signUp();
+    expect(await accounts.verifySession(token)).toStrictEqual({ userId });
+    await signOut(token);
+    expect(await reasonOf(accounts.verifySession(token))).toBe('AUTH_TOKEN_INVALID');
+  });
+
+  it('refuses what isn’t a token', async () => {
+    expect(await reasonOf(accounts.verifySession('not-a-jwt'))).toBe('AUTH_TOKEN_INVALID');
+  });
+
+  it('deletes a user, whose session then stops working, and a repeat is fine', async () => {
+    const { token, userId } = await signUp();
+    await accounts.deleteUser(UserId.parse(userId));
+    expect(await reasonOf(accounts.verifySession(token))).toBe('AUTH_TOKEN_INVALID');
+    await accounts.deleteUser(UserId.parse(userId));
+  });
+
+  it('says Auth is unavailable when it can’t be reached or refuses the secret key', async () => {
+    const { token, userId } = await signUp();
+    // Nothing listens on port 1.
+    const unreachable = createSupabaseAccounts({
+      supabaseUrl: 'http://127.0.0.1:1',
+      secretKey: config.supabaseSecretKey,
+    });
+    const wrongKey = createSupabaseAccounts({
+      supabaseUrl: config.supabaseUrl,
+      secretKey: 'sb_secret_not-the-key',
+    });
+    expect(
+      await Promise.all([
+        reasonOf(unreachable.verifySession(token)),
+        reasonOf(unreachable.deleteUser(UserId.parse(userId))),
+        reasonOf(wrongKey.deleteUser(UserId.parse(userId))),
+      ]),
+    ).toStrictEqual(['AUTH_UNAVAILABLE', 'AUTH_UNAVAILABLE', 'AUTH_UNAVAILABLE']);
   });
 });

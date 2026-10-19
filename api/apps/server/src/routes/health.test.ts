@@ -10,7 +10,12 @@ import type { Database } from '../ports.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
-const photos = { createUploadUrl: notCalled, exists: notCalled, createViewUrls: notCalled };
+const photos = {
+  createUploadUrl: notCalled,
+  exists: notCalled,
+  createViewUrls: notCalled,
+  deleteAllOf: notCalled,
+};
 const checkInsOn = (db: Database) =>
   createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: () => new Date() });
 
@@ -19,6 +24,8 @@ async function getHealth(db: Database) {
   const app = createApp({
     db,
     verifyToken: notCalled,
+    accounts: { verifySession: notCalled, deleteUser: notCalled },
+    revokeAppleSignIn: undefined,
     checkIns: checkInsOn(db),
     photos,
     members: createMembers({ store: createPostgresProfileStore(db) }),
@@ -84,6 +91,8 @@ describe('an unknown route', () => {
     const app = createApp({
       db,
       verifyToken: notCalled,
+      accounts: { verifySession: notCalled, deleteUser: notCalled },
+      revokeAppleSignIn: undefined,
       checkIns: checkInsOn(db),
       photos,
       members: createMembers({ store: createPostgresProfileStore(db) }),

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  AppleAuthorizationCodeInvalidError,
+  AppleSignInUnavailableError,
   AuthKeysUnavailableError,
   AuthTokenInvalidError,
   AuthTokenMissingError,
+  AuthUnavailableError,
   DatabaseUnavailableError,
   RequestInvalidError,
   RouteNotFoundError,
@@ -17,6 +20,9 @@ describe('server errors', () => {
         new AuthTokenMissingError(),
         new AuthTokenInvalidError(),
         new AuthKeysUnavailableError(),
+        new AuthUnavailableError(),
+        new AppleAuthorizationCodeInvalidError(),
+        new AppleSignInUnavailableError(),
         new DatabaseUnavailableError(),
         new RequestInvalidError('bad'),
         new RouteNotFoundError('GET', '/nope'),
@@ -25,6 +31,13 @@ describe('server errors', () => {
       ['AuthTokenMissingError', 'AUTH_TOKEN_MISSING', 'UNAUTHENTICATED'],
       ['AuthTokenInvalidError', 'AUTH_TOKEN_INVALID', 'UNAUTHENTICATED'],
       ['AuthKeysUnavailableError', 'AUTH_KEYS_UNAVAILABLE', 'UNAVAILABLE'],
+      ['AuthUnavailableError', 'AUTH_UNAVAILABLE', 'UNAVAILABLE'],
+      [
+        'AppleAuthorizationCodeInvalidError',
+        'APPLE_AUTHORIZATION_CODE_INVALID',
+        'INVALID_ARGUMENT',
+      ],
+      ['AppleSignInUnavailableError', 'APPLE_SIGN_IN_UNAVAILABLE', 'UNAVAILABLE'],
       ['DatabaseUnavailableError', 'DATABASE_UNAVAILABLE', 'UNAVAILABLE'],
       ['RequestInvalidError', 'REQUEST_INVALID', 'INVALID_ARGUMENT'],
       ['RouteNotFoundError', 'ROUTE_NOT_FOUND', 'NOT_FOUND'],

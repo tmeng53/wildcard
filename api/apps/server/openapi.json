@@ -153,6 +153,27 @@
         ],
         "additionalProperties": false
       },
+      "AccountDeletion": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "appleAuthorizationCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens."
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
       "CheckIn": {
         "oneOf": [
           {
@@ -1065,6 +1086,61 @@
           },
           "503": {
             "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMe",
+        "summary": "Delete the signed-in member’s account",
+        "description": "Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure; afterwards the token no longer works.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountDeletion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Not a valid request, or an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a current sign-in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in, photo storage or Apple can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {
