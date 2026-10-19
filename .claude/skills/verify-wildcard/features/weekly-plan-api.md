@@ -34,7 +34,7 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 ## Evidence
 
-- `psql "$DB_URL" -c "select week_start, days from public.weekly_plans where member_id = '<planner>'"`: one row, next week's Monday, with `飞盘` trimmed.
+- `psql "$DB_URL" -c "select week_start, payload from public.weekly_plans where member_id = '<planner>'"`: one row, next week's Monday, with `飞盘` trimmed.
 
 ## Worth probing
 

@@ -430,6 +430,7 @@ if want account; then
   call PUT /me/profile "$leaver_token" '{"version":1,"timeZone":"America/Toronto"}'
   expect 200
   call GET /me "$leaver_token"
+  expect 200
   [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto"}' ] || fail "the profile should be saved: $body"
   echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved"
 
