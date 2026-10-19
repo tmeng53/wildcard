@@ -1,4 +1,4 @@
--- The meme library: trending memes the AI may weave into a 今日免责声明. Claude picks
+-- The meme library: trending memes the AI may weave into a 今日请假条. Claude picks
 -- candidates each week; only the ones Tracy approves are saved here. Each is used for a
 -- while after its approval, then left out (that rule lives in the API's memes module).
 -- As with every table, only our API reads and writes it; the database keeps what must stay

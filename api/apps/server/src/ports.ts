@@ -157,3 +157,11 @@ export interface PhotoStorage {
    */
   readonly deleteAllOf: (member: UserId) => Promise<void>;
 }
+
+/**
+ * Counts one more request from `key` (such as a client's address) and says whether it is within
+ * the limit, or how many seconds until it is. For routes anyone can call without signing in.
+ */
+export type RateLimit = (
+  key: string,
+) => { readonly allowed: true } | { readonly allowed: false; readonly retryAfterSeconds: number };

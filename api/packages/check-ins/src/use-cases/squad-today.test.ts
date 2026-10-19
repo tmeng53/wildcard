@@ -114,14 +114,14 @@ describe('a squad’s today', () => {
     const squad = await newSquad(me, tokyo, noZone, leaver);
     const elsewhere = await newSquad(me);
 
-    // Me: last Sunday, Monday twice, Tuesday to another squad, then a 免责 and a 练了 today.
+    // Me: last Sunday, Monday twice, Tuesday to another squad, then a 请假条 and a 练了 today.
     await checkedIn(me, { kind: 'trained', day: '2026-10-18', audience: [squad] });
     await checkedIn(me, { kind: 'trained', day: '2026-10-19', audience: [squad] });
     await checkedIn(me, { kind: 'trained', day: '2026-10-19', audience: [squad, elsewhere] });
     await checkedIn(me, { kind: 'trained', day: '2026-10-20', audience: [elsewhere] });
     await checkedIn(me, { kind: 'disclaimer', day: '2026-10-21', audience: [squad], hour: 17 });
     await checkedIn(me, { kind: 'trained', day: '2026-10-21', audience: [squad], hour: 19 });
-    // Tokyo is on Thursday: trained Tuesday, and a 免责 today.
+    // Tokyo is on Thursday: trained Tuesday, and a 请假条 today.
     await checkedIn(tokyo, { kind: 'trained', day: '2026-10-20', audience: [squad] });
     await checkedIn(tokyo, { kind: 'disclaimer', day: '2026-10-22', audience: [squad] });
     await checkedIn(tokyo, { kind: 'trained', day: '2026-10-21', audience: [elsewhere] });

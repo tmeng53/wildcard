@@ -133,6 +133,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
     func joinSquad(_ input: Operations.JoinSquad.Input) async throws -> Operations.JoinSquad.Output
+    /// The squad an invite code belongs to, for anyone
+    ///
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    ///
+    /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
+    /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
+    func getPublicSquadInvite(_ input: Operations.GetPublicSquadInvite.Input) async throws -> Operations.GetPublicSquadInvite.Output
     /// Where a squad’s day and week stand
     ///
     /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday, and a member who hasn’t saved a weekly plan has the default one. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
@@ -424,6 +431,21 @@ extension APIProtocol {
         headers: Operations.JoinSquad.Input.Headers = .init()
     ) async throws -> Operations.JoinSquad.Output {
         try await joinSquad(Operations.JoinSquad.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// The squad an invite code belongs to, for anyone
+    ///
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    ///
+    /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
+    /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
+    public func getPublicSquadInvite(
+        path: Operations.GetPublicSquadInvite.Input.Path,
+        headers: Operations.GetPublicSquadInvite.Input.Headers = .init()
+    ) async throws -> Operations.GetPublicSquadInvite.Output {
+        try await getPublicSquadInvite(Operations.GetPublicSquadInvite.Input(
             path: path,
             headers: headers
         ))

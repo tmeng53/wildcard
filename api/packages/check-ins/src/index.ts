@@ -1,4 +1,4 @@
-// @wildcard/check-ins: daily check-ins (练了, 健康餐, 坦白放纵餐, 今日免责声明), teammates'
+// @wildcard/check-ins: daily check-ins (练了, 健康餐, 坦白放纵餐, 今日请假条), teammates'
 // reactions on them, the weekly plans 本周 counts them against, their rules and their tables.
 
 export {

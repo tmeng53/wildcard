@@ -90,7 +90,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | [Push devices through the API](features/devices-api.md): register, move to another member, remove | **Ready** (API only, no APNs key; CI runs it) |
 | [Profile and account deletion through the API](features/account-api.md): save a profile, delete everything | **Ready** (API only, no Apple key; CI runs it) |
 | [Admin MCP server](features/admin-mcp-api.md): sign an admin in with OAuth, manage memes, read the log | **Ready** (API only, consent approved through Supabase's API; CI runs it) |
-| Daily check-in: pick 练了 / 吃得干净 / 今日免责声明 and see it on the squad track | Not on main yet |
+| Daily check-in in the app: pick 练了 / 健康餐 / 坦白放纵餐 / 今日请假条 and see it on the squad track | Screen on main against an in-memory squad; no feature file yet |
 | Join a squad from an invite link | Not on main yet |
 | Sunday 战报 recap | Not on main yet |
 | Weekly schedule poster (3:4) | Not on main yet |

@@ -35,9 +35,9 @@ export interface SquadToday {
    */
   readonly members: readonly SquadMemberToday[];
   readonly trainedToday: number;
-  /** Members whose today is a 免责声明 with no 练了. */
+  /** Members whose today is a 请假条 with no 练了. */
   readonly disclaimerToday: number;
-  /** Members on a planned rest day with no 练了 or 免责声明. */
+  /** Members on a planned rest day with no 练了 or 请假条. */
   readonly restingToday: number;
   /** At least one member trained today and every member who didn't is on a planned rest day (全员上场). */
   readonly everyoneTrained: boolean;

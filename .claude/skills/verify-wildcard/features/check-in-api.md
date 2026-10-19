@@ -2,7 +2,7 @@
 
 **Status: Ready** since the check-in API (#25), driven over HTTP by `scripts/api-journeys.sh check-in`; CI's `supabase` job runs it. The app's screen for it is in #26 and isn't covered here.
 
-A member saves a 练了 check-in to their squad, a squad-mate posts today's 免责声明, and both read the squad back. The app makes each check-in's id, so a retry answers with the saved one. Stand-in: members sign up with email and password (the app uses Sign in with Apple). The squad is made through the squad routes (`squad-api.md`).
+A member saves a 练了 check-in to their squad, a squad-mate posts today's 请假条, and both read the squad back. The app makes each check-in's id, so a retry answers with the saved one. Stand-in: members sign up with email and password (the app uses Sign in with Apple). The squad is made through the squad routes (`squad-api.md`).
 
 Code: `api/apps/server/src/routes/check-ins.ts`, `api/packages/check-ins`.
 
@@ -40,7 +40,7 @@ A `FAIL:` line (it prints the answer and the server's log), a missing line or a 
 
 Check at the source, with the ids from the log:
 
-- `psql "$DB_URL" -c "select id, member_id, day, kind, payload from public.check_ins where member_id in ('<me>', '<mate>')"`: exactly two rows, the 练了 (payload `{"version": 1, "sport": "custom", "customSport": "飞盘", "caption": "累但爽"}`) and the 免责声明; the refused calls left nothing.
+- `psql "$DB_URL" -c "select id, member_id, day, kind, payload from public.check_ins where member_id in ('<me>', '<mate>')"`: exactly two rows, the 练了 (payload `{"version": 1, "sport": "custom", "customSport": "飞盘", "caption": "累但爽"}`) and the 请假条; the refused calls left nothing.
 - `select * from public.check_in_squads where check_in_id in ('<id>', '<id>')`: each lists the squad at position 1.
 
 ## Worth probing

@@ -3,7 +3,7 @@ import { typedText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 // A meme in the library: a phrase trending among Chinese speakers (or in North American
-// Chinese work life), with enough background that the AI writing a 今日免责声明 knows what it
+// Chinese work life), with enough background that the AI writing a 今日请假条 knows what it
 // means and how people use it. The example lines Tracy reads when she approves a meme stay out
 // of the library on purpose (Tracy, 2026-10-19): the AI would copy them.
 

@@ -2456,6 +2456,76 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PublicSquadInvite`.
+        public struct PublicSquadInvite: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/version`.
+            public var version: Components.Schemas.PublicSquadInvite.VersionPayload
+            /// The squad’s name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/name`.
+            public var name: Swift.String
+            /// How many members it has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/memberCount`.
+            public var memberCount: Swift.Int
+            /// True when it has 8 members and can’t take more.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/full`.
+            public var full: Swift.Bool
+            /// Creates a new `PublicSquadInvite`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: The squad’s name.
+            ///   - memberCount: How many members it has now.
+            ///   - full: True when it has 8 members and can’t take more.
+            public init(
+                version: Components.Schemas.PublicSquadInvite.VersionPayload,
+                name: Swift.String,
+                memberCount: Swift.Int,
+                full: Swift.Bool
+            ) {
+                self.version = version
+                self.name = name
+                self.memberCount = memberCount
+                self.full = full
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+                case memberCount
+                case full
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.PublicSquadInvite.VersionPayload.self,
+                    forKey: .version
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                self.memberCount = try container.decode(
+                    Swift.Int.self,
+                    forKey: .memberCount
+                )
+                self.full = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .full
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "name",
+                    "memberCount",
+                    "full"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
         public struct SquadToday: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadToday/version`.
@@ -2474,7 +2544,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
                 public var day: Swift.String
-                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/training`.
                 @frozen public enum TrainingPayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -2482,7 +2552,7 @@ extension Components {
                     case disclaimer = "disclaimer"
                     case notCheckedIn = "notCheckedIn"
                 }
-                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/training`.
                 public var training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload
@@ -2510,7 +2580,7 @@ extension Components {
                 /// - Parameters:
                 ///   - member:
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
-                ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
                 ///   - plannedRest: Today is a rest day in their weekly plan, whatever they checked in.
                 ///   - firstCheckInAt: When their first check-in today sent to this squad was made, of any kind, in UTC. Missing when none.
@@ -2587,11 +2657,11 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/trained`.
                 public var trained: Swift.Int
-                /// Members whose today is a 免责声明 with no 练了.
+                /// Members whose today is a 请假条 with no 练了.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/disclaimer`.
                 public var disclaimer: Swift.Int
-                /// Members on a planned rest day with no 练了 or 免责声明 today.
+                /// Members on a planned rest day with no 练了 or 请假条 today.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/resting`.
                 public var resting: Swift.Int
@@ -2603,8 +2673,8 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - trained: Members whose today is trained.
-                ///   - disclaimer: Members whose today is a 免责声明 with no 练了.
-                ///   - resting: Members on a planned rest day with no 练了 or 免责声明 today.
+                ///   - disclaimer: Members whose today is a 请假条 with no 练了.
+                ///   - resting: Members on a planned rest day with no 练了 or 请假条 today.
                 ///   - everyoneTrained: At least one member trained today and every member who did not train is on a planned rest day, whatever they checked in (全员上场).
                 public init(
                     trained: Swift.Int,

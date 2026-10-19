@@ -1,4 +1,4 @@
-// @wildcard/memes: the meme library the AI draws on for 今日免责声明, its rules and its table.
+// @wildcard/memes: the meme library the AI draws on for 今日请假条, its rules and its table.
 
 export { createPostgresMemeStore, type MemeTables } from './adapters/postgres-meme-store.js';
 export { MemeDraft, MemeId, MemePhrase, type MemeRecord } from './domain/meme.js';

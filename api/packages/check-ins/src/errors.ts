@@ -14,7 +14,7 @@ export class CheckInIdConflictError extends AppError {
   }
 }
 
-/** Thrown for a second 今日免责声明 on the same day: a member posts at most one a day. */
+/** Thrown for a second 今日请假条 on the same day: a member posts at most one a day. */
 export class DisclaimerAlreadyPostedError extends AppError {
   override readonly name = 'DisclaimerAlreadyPostedError';
   readonly reason = 'DISCLAIMER_ALREADY_POSTED';

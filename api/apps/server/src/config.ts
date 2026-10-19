@@ -13,6 +13,10 @@ const Environment = z.object({
   // `on` lets admins sign in with an email and password on the admin MCP consent page, as they
   // can on local Supabase. Off in production, where admins sign in with Apple.
   ADMIN_PASSWORD_SIGN_IN: z.enum(['on', 'off']).default('off'),
+  // How many of our own proxies add an address to `X-Forwarded-For` before a request reaches the
+  // server: 1 for Cloud Run on its own, more behind a load balancer. Public routes rate-limit by
+  // the client address found this many entries from the end.
+  PROXY_HOPS: z.coerce.number().pipe(z.int().min(1).max(5)).default(1),
   // For AI 请假条 drafts. Without it the server still runs and the app shows its dice.
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
@@ -57,6 +61,8 @@ export interface Config {
   readonly publicUrl: URL;
   /** Admins may sign in with an email and password on the consent page (local stacks only). */
   readonly adminPasswordSignIn: boolean;
+  /** How many of our proxies add to `X-Forwarded-For`; see `clientAddress`. */
+  readonly proxyHops: number;
   readonly anthropicApiKey: string | undefined;
   /** Sign in with Apple's key; undefined until it is set up. */
   readonly appleSignInKey:
@@ -116,6 +122,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
     publicUrl: new URL(result.data.PUBLIC_URL ?? `http://localhost:${String(result.data.PORT)}`),
     adminPasswordSignIn: result.data.ADMIN_PASSWORD_SIGN_IN === 'on',
+    proxyHops: result.data.PROXY_HOPS,
     anthropicApiKey: result.data.ANTHROPIC_API_KEY,
     appleSignInKey,
     apns:

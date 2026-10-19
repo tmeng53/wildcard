@@ -7,7 +7,7 @@ export const Caption = typedText({
   description: 'Trimmed, then 1 to 60 characters as people see them, on one line.',
 });
 
-/** A 今日免责声明: trimmed, 1 to 80 characters, and it may span lines. */
+/** A 今日请假条: trimmed, 1 to 80 characters, and it may span lines. */
 export const DisclaimerText = typedText({
   max: 80,
   oneLine: false,

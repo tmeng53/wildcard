@@ -4,7 +4,7 @@ public enum ContractsError: Error, Equatable, Sendable {
     case invalidDay(String)
     /// An id that isn't a UUID.
     case invalidID(String)
-    /// A 免责声明 that is empty or longer than `Disclaimer.maxLength` characters.
+    /// A 请假条 that is empty or longer than `Disclaimer.maxLength` characters.
     case disclaimerLength(Int)
     /// A caption that is empty or longer than `Caption.maxLength` characters.
     case captionLength(Int)

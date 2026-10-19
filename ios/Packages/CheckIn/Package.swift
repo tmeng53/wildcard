@@ -1,9 +1,9 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// Checking in. `CheckInDomain` holds the rules (which day a check-in counts for, what may be
-// posted or deleted, the weekly, squad and lifetime counts); it is pure Swift on top of
-// `Contracts`, so it builds and tests on Linux. `CheckInUI` is the 今天 screen: the 打卡 burst,
+// Checking in. `CheckInDomain` holds what the screen reads (the squad's week, whether a
+// 请假条 may still be posted, why a check-in was refused); the rules themselves live in the
+// API. It is pure Swift, so it builds and tests on Linux. `CheckInUI` is the 今天 screen: the 打卡 burst,
 // the photo and compose steps, the 请假条 card and the payoff on the scene.
 let package = Package(
     name: "CheckIn",
@@ -19,7 +19,7 @@ let package = Package(
         .package(path: "../Avatar"),
     ],
     targets: [
-        .target(name: "CheckInDomain", dependencies: ["Contracts"]),
+        .target(name: "CheckInDomain"),
         .target(
             name: "CheckInUI",
             dependencies: [
@@ -31,7 +31,7 @@ let package = Package(
             ],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
-        .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain", "Contracts"]),
+        .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain"]),
         // The screen's non-visual parts, and its String Catalog read as a file; runs on Linux too.
         .testTarget(name: "CheckInUITests", dependencies: ["CheckInUI", "CheckInDomain", "Contracts"]),
     ]
