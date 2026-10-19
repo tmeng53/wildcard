@@ -78,6 +78,8 @@ struct CharacterToneTests {
             ])
         #expect(Palette.catFur.map(\.hex) == ["#F2A65A", "#F6E6CC", "#A3A7B0", "#4A4650", "#FBFAF6", "#C9874F"])
         #expect(Palette.bearFur.map(\.hex) == ["#B98563", "#7E5236", "#D9B07E", "#F2EFE8", "#3F393B", "#A8927E"])
+        #expect(Palette.dogFur.map(\.hex) == ["#E2B26C", "#F1DDB8", "#D98B4A", "#7A4E36", "#2F2B34", "#FBFAF6"])
+        #expect(Palette.rabbitFur.map(\.hex) == ["#FBFAF6", "#E9D2B4", "#B98A64", "#9C9AA3", "#5C5862", "#3D3842"])
         #expect(
             Palette.hairColors.map(\.hex) == [
                 "#2A2333", "#4A2F25", "#6B4330", "#B07B4A", "#E2BF74", "#A2452F", "#C4C2CA",
