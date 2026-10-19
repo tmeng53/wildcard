@@ -75,14 +75,14 @@ final class TodayUITests: XCTestCase {
         // The page opens on writing the reason, with nothing to post yet.
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "the keyboard isn't up")
         XCTAssertEqual(field.placeholderValue, "为什么没练？")
-        XCTAssertEqual(source.label, "随便来几句")
+        XCTAssertEqual(source.label, "灵感：随机")
         XCTAssertFalse(post.isEnabled, "an empty excuse can be posted")
 
         field.typeText("deadline")
         settle()
         // With the keyboard up, the excuse and 发布 stay in view.
         XCTAssertTrue(field.isHittable, "the excuse is hidden under the keyboard")
-        XCTAssertTrue(post.isHittable, "发布免责声明 is hidden under the keyboard")
+        XCTAssertTrue(post.isHittable, "发到小队 is hidden under the keyboard")
         XCTAssertFalse(app.buttons["disclaimer.restore"].exists, "用回我写的 shows before anything replaced the words")
 
         // Picking a style writes lines from the typed words, and the first lands at once.
@@ -92,7 +92,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(first.waitForExistence(timeout: 3), "picking a style offered no lines")
         settle()
         XCTAssertTrue(funny.isSelected, "the picked style isn't marked")
-        XCTAssertEqual(source.label, "照着「deadline」编")
+        XCTAssertEqual(source.label, "灵感：deadline")
         XCTAssertEqual(field.value as? String, first.label, "picking a style didn't put its first line up")
         XCTAssertTrue(first.isSelected, "the line in the excuse isn't marked")
         keepScreenshot(named: "18-disclaimer-styled")
@@ -112,6 +112,9 @@ final class TodayUITests: XCTestCase {
         let line = field.value as? String ?? ""
         XCTAssertNotEqual(line, "deadline", "换一组 left the typed words")
         XCTAssertEqual(line, app.buttons["disclaimer.draft.1"].label)
+        // 编辑 starts typing again, and the count shows while typing.
+        app.buttons["disclaimer.edit"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "编辑 didn't start typing")
         XCTAssertEqual(
             app.staticTexts["disclaimer.count"].label, "\(line.count)/40", "the count doesn't match the excuse")
         post.tap()
