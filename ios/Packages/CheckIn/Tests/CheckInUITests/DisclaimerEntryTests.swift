@@ -66,12 +66,26 @@ import Testing
         #expect(entry.disclaimer?.text == "今天是战略性休息")
     }
 
-    @Test func aSuggestedLineCanBePostedAfterABlock() {
+    @Test func nothingCanBePostedWhileTheReasonIsRefused() {
         var entry = DisclaimerEntry()
         entry.write("今天不想动")
         entry.block()
         entry.suggest("下雨，场地条件不允许")
-        #expect(entry.disclaimer?.text == "下雨，场地条件不允许")
+        #expect(entry.isBlocked)
+        #expect(entry.disclaimer == nil)
+    }
+
+    @Test func aRefusalAfterSuggestedLinesStillHoldsOnTheMembersWords() {
+        var entry = DisclaimerEntry()
+        entry.write("今天不想动")
+        entry.suggest("今天是战略性休息")
+        entry.block()
+        // The refused words replace the suggested line, so there is nothing to bring back.
+        #expect(entry.text == "今天不想动")
+        #expect(!entry.canRestore)
+        entry.restore()
+        #expect(entry.isBlocked)
+        #expect(entry.disclaimer == nil)
     }
 }
 

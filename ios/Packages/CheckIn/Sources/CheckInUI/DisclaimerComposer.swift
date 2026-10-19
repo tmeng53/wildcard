@@ -270,6 +270,7 @@ struct DisclaimerComposer: View {
             return DisclaimerEntry.newLines(from: lines, spare: spare, shown: shown)
         case .blocked:
             entry.block()
+            text = entry.text
             isEditing = false
             return []
         }

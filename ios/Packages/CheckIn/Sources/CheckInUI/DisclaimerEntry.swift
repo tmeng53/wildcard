@@ -1,15 +1,16 @@
 import Contracts
 
 /// What the 请假条 bubble holds: the line being written, the member's own words, and whether
-/// the writer refused to joke about them. A refused reason can't be posted, so teammates never
-/// see it; a line that posts as something else can, while one that only differs in spacing can't.
+/// the writer refused to joke about them. The writer is asked about the member's words, so a
+/// refusal holds on those words: while they post as the refused reason (spacing aside), nothing
+/// can be posted and no suggested line is offered; once the member writes something else, it can.
 struct DisclaimerEntry: Hashable, Sendable {
     private(set) var text = ""
     /// What the member typed themselves: the reason the writer riffs on, and what
     /// 用回我写的 brings back after a suggested line replaced it.
     private(set) var mine = ""
-    /// The refused line as it would post, compared after `Disclaimer` trims it, so spaces
-    /// around the same words don't unblock it.
+    /// The refused words as they would post, compared after `Disclaimer` trims them, so spaces
+    /// around the same words don't unblock them.
     private var blocked: String?
 
     /// The member typed: the line, fitted to one line of at most `Disclaimer.maxLength`
@@ -34,14 +35,16 @@ struct DisclaimerEntry: Hashable, Sendable {
         text = mine
     }
 
-    /// The writer read the member's words as self-harm.
+    /// The writer read the member's words as self-harm: they replace any suggested line, so the
+    /// care line never sits next to a joke.
     mutating func block() {
-        blocked = Self.posted(text)
+        blocked = Self.posted(mine)
+        text = mine
     }
 
-    /// Whether the line would post as the refused one.
+    /// Whether the member's words are the refused ones.
     var isBlocked: Bool {
-        blocked != nil && Self.posted(text) == blocked
+        blocked != nil && Self.posted(mine) == blocked
     }
 
     /// The line to post, or nil while it is empty, too long or blocked.
