@@ -1,8 +1,17 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/errors" },
-    { "path": "packages/check-ins" },
-    { "path": "apps/server" }
+    {
+      "path": "packages/errors"
+    },
+    {
+      "path": "packages/check-ins"
+    },
+    {
+      "path": "packages/memes"
+    },
+    {
+      "path": "apps/server"
+    }
   ]
 }
