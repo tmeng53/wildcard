@@ -25,11 +25,11 @@ import Testing
         #expect(entry.disclaimer?.text == "下雨，场地条件不允许")
     }
 
-    @Test func aLineIsOneLineOfAtMostFortyCharacters() {
+    @Test func aLineIsOneLineOfAtMostEightyCharacters() {
         var entry = DisclaimerEntry()
-        entry.write("第一行\n" + String(repeating: "累", count: 45))
-        #expect(entry.text == "第一行" + String(repeating: "累", count: 37))
-        #expect(entry.text.count == 40)
+        entry.write("第一行\n" + String(repeating: "累", count: 85))
+        #expect(entry.text == "第一行" + String(repeating: "累", count: 77))
+        #expect(entry.text.count == 80)
         entry.write("   ")
         #expect(entry.disclaimer == nil)
     }
