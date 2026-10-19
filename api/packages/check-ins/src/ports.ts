@@ -1,6 +1,7 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
+import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
@@ -32,3 +33,21 @@ export interface PhotoFiles {
 
 /** The current time. */
 export type Clock = () => Date;
+
+/** Where members' weekly plans are kept: a row only for each week the member changed. */
+export interface WeeklyPlanStore {
+  /** The member's plan saved for `weekStart` or, failing that, for the latest week before it. */
+  latestFrom(
+    member: MemberId,
+    weekStart: WeekStart,
+  ): Promise<{ readonly weekStart: WeekStart; readonly days: PlanDays } | undefined>;
+  /** Saves the member's plan for a week, replacing any saved before. */
+  save(plan: {
+    readonly member: MemberId;
+    readonly weekStart: WeekStart;
+    readonly days: PlanDays;
+  }): Promise<void>;
+}
+
+/** The member's IANA time zone, from their profile, or `undefined` before they save one. */
+export type MemberTimeZone = (member: MemberId) => Promise<string | undefined>;

@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { sign } from 'hono/jwt';
 import { describe, expect, it } from 'vitest';
@@ -28,6 +33,11 @@ async function send(
       clock: () => new Date(),
     }),
     photos,
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      timeZoneOf: () => Promise.resolve(undefined),
+      clock: () => new Date(),
+    }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     log: createLog(() => undefined),
   });
