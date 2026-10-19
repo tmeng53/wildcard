@@ -44,6 +44,12 @@ describe('outcomeOf', () => {
     ],
     ['an emoji', ['闹钟响了三次，我和被子的谈判进入加时赛 😴', good[1] ?? '', good[2] ?? '']],
     ['body talk', ['今天吃太多了胖了一圈，决定原地休息一天。', good[1] ?? '', good[2] ?? '']],
+    ['a body metric', ['今天体脂不想被打扰，决定原地休息一天。', good[1] ?? '', good[2] ?? '']],
+    ['a macro', ['蛋白质今天放假了，我也跟着原地休息一天。', good[1] ?? '', good[2] ?? '']],
+    [
+      'calories in English',
+      ['今天的 Calories 自己燃烧去吧，我先原地休息。', good[1] ?? '', good[2] ?? ''],
+    ],
     [
       'the whole reason echoed',
       ['早上没起来，所以今天就先这样吧朋友们。', good[1] ?? '', good[2] ?? ''],
