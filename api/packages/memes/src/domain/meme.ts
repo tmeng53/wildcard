@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // A meme in the library: a phrase trending among Chinese speakers (or in North American
-// Chinese work life), with enough background that the AI writing a 今日免责声明 knows what it
+// Chinese work life), with enough background that the AI writing a 今日请假条 knows what it
 // means and how people use it. The example lines Tracy reads when she approves a meme stay out
 // of the library on purpose (Tracy, 2026-10-19): the AI would copy them.
 
@@ -12,7 +12,7 @@ export type MemeId = z.infer<typeof MemeId>;
 export const MemePhrase = z.string().trim().min(1).max(30);
 export type MemePhrase = z.infer<typeof MemePhrase>;
 
-/** The 免责声明 styles a meme suits, as the wire names them (搞笑, 发疯, 中二, 嘴硬). */
+/** The 请假条 styles a meme suits, as the wire names them (搞笑, 发疯, 中二, 嘴硬). */
 export const MemeStyle = z.enum(['funny', 'unhinged', 'heroic', 'stubborn']);
 export type MemeStyle = z.infer<typeof MemeStyle>;
 

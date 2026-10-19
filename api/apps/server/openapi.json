@@ -1276,7 +1276,7 @@
                     "disclaimer",
                     "notCheckedIn"
                   ],
-                  "description": "Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day."
+                  "description": "Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day."
                 },
                 "latestMeal": {
                   "type": "string",
@@ -1307,7 +1307,7 @@
               "disclaimer": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Members whose today is a 免责声明 with no 练了."
+                "description": "Members whose today is a 请假条 with no 练了."
               },
               "everyoneTrained": {
                 "type": "boolean",

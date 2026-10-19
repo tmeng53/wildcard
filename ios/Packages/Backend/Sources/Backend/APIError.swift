@@ -17,7 +17,7 @@ public enum APIError: Error, Equatable, Sendable {
 public enum Refusal: Equatable, Sendable {
     /// The check-in id already holds a different check-in.
     case checkInIDConflict
-    /// Today's 免责声明 is already posted; one a day.
+    /// Today's 请假条 is already posted; one a day.
     case disclaimerAlreadyPosted
     /// The member isn't in a squad the request names.
     case squadNotJoined

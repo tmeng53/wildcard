@@ -6,7 +6,7 @@ import { Photos, type PhotoRef } from './photos.js';
 import { SportKey } from './sports.js';
 import { Caption, CustomSportName, DisclaimerText } from './text.js';
 
-// A check-in: 练了, 健康餐, 坦白放纵餐 or 今日免责声明, with the kind's own fields under one
+// A check-in: 练了, 健康餐, 坦白放纵餐 or 今日请假条, with the kind's own fields under one
 // key named for the kind. These schemas are the contract: the OpenAPI document comes from them,
 // and the app's Swift types are generated from that (scripts/swift-openapi.sh).
 // Any kind may have photos; they live in their own table, not in the stored payload.
@@ -79,7 +79,7 @@ export type Training = z.infer<typeof Training>;
 export const Meal = z.strictObject(mealFields).meta({ id: 'Meal' });
 export type Meal = z.infer<typeof Meal>;
 
-/** 今日免责声明: the member's excuse for resting today, with optional photos. Never a caption. */
+/** 今日请假条: the member's excuse for resting today, with optional photos. Never a caption. */
 export const Disclaimer = z.strictObject(disclaimerFields).meta({ id: 'Disclaimer' });
 export type Disclaimer = z.infer<typeof Disclaimer>;
 

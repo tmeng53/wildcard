@@ -18,7 +18,7 @@ const MemberToday = z.strictObject({
   training: z.enum(['trained', 'disclaimer', 'notCheckedIn']).meta({
     description:
       'Where their today stands, from check-ins sent to this squad. A 练了 wins over a ' +
-      '免责声明 posted earlier the same day.',
+      '请假条 posted earlier the same day.',
   }),
   latestMeal: z
     .enum(['healthyMeal', 'cheatMeal'])
@@ -35,7 +35,7 @@ export const SquadToday = z
     }),
     today: z.strictObject({
       trained: count('Members whose today is trained.'),
-      disclaimer: count('Members whose today is a 免责声明 with no 练了.'),
+      disclaimer: count('Members whose today is a 请假条 with no 练了.'),
       everyoneTrained: z.boolean().meta({ description: 'Every member’s today is trained.' }),
     }),
     me: z.strictObject({

@@ -27,7 +27,7 @@ export interface SquadToday {
   /** Everyone in the squad now, in the order they joined. */
   readonly members: readonly SquadMemberToday[];
   readonly trainedToday: number;
-  /** Members whose today is a 免责声明 with no 练了. */
+  /** Members whose today is a 请假条 with no 练了. */
   readonly disclaimerToday: number;
   /** Every member has trained today. */
   readonly everyoneTrained: boolean;
