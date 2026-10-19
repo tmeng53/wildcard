@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { DisclaimerWriterUnavailableError, type LanguageModel } from '@wildcard/disclaimer-drafts';
 
-/** Claude Haiku 5.5: fast and cheap, and it won the blind test for 免责 copy (2026-10-18). */
+/** Claude Haiku 5.5: fast and cheap, and it won the blind test for 请假条 copy (2026-10-18). */
 export const ANTHROPIC_MODEL = 'claude-haiku-5-5';
 
 /**

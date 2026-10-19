@@ -7,7 +7,7 @@ const Environment = z.object({
   SUPABASE_URL: z.url({ protocol: /^https?$/ }),
   // A Supabase secret key (`sb_secret_…`), for Storage. Never the app's publishable key.
   SUPABASE_SECRET_KEY: z.string().startsWith('sb_secret_'),
-  // For AI 免责声明 drafts. Without it the server still runs and the app shows its dice.
+  // For AI 请假条 drafts. Without it the server still runs and the app shows its dice.
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
 });
 

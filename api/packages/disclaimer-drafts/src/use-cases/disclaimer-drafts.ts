@@ -5,7 +5,7 @@ import {
   type WriteDisclaimerDraftsInput,
 } from './disclaimer-drafts/write-disclaimer-drafts.js';
 
-/** AI drafts for 今日免责声明. */
+/** AI drafts for 请假条. */
 export interface DisclaimerDrafts {
   write(input: WriteDisclaimerDraftsInput): Promise<DraftsOutcome>;
 }

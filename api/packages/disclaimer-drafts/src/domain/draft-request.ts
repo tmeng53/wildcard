@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// What a member asks for when they tap 「编几句」 on a 今日免责声明: the reason they typed, and
+// What a member asks for when they tap 「编几句」 on a 请假条: the reason they typed, and
 // a style. The meme library supplies this week's memes; this module only reads them.
 
 export const MemberId = z.uuid().brand<'MemberId'>();

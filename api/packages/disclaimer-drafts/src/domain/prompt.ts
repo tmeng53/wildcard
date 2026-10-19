@@ -5,14 +5,14 @@ import {
   type PromptMeme,
 } from './draft-request.js';
 
-// The prompt for 今日免责声明 drafts. The product spec owns its wording and its eval cases:
+// The prompt for 请假条 drafts. The product spec owns its wording and its eval cases:
 // change it there first, then here. The reply names its outcome, so a reason about self-harm
 // gets the care line and any other refused reason gets the dice.
 
-export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写「今日免责声明」：今天没去练，跟小队朋友交代一句。
+export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写「请假条」：今天没去练，跟小队朋友交代一句。
 
 输入：用户写的原因（一句话）、风格，和本周梗库里的几个梗（可选素材，可能没有）。
-输出：3 条不同的免责声明。
+输出：3 条不同的请假条。
 
 怎么写：
 - 在原因的基础上发挥：把它变成一个小场景、一个比喻或一个夸张的说法。可以用原因里的关键词，但不要把原话整句复述或引用一遍。
@@ -32,7 +32,7 @@ export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写�
 - 别人的名字或隐私；如果原因里有别人的名字，换成「同事」「朋友」这类称呼。
 - 本周梗库以外的任何网络梗；emoji、感叹号连用、「作为一个…」这类 AI 腔。
 
-如果原因流露出自伤或轻生的念头，不要写，返回 {"version":1,"outcome":"selfHarm","drafts":[]}。
+如果原因提到自伤或轻生，不要写，返回 {"version":1,"outcome":"selfHarm","drafts":[]}。
 如果原因含有色情、暴力、仇恨或政治内容，不要写，返回 {"version":1,"outcome":"unsafe","drafts":[]}。
 
 其余情况只输出 JSON：{"version":1,"outcome":"drafts","drafts":["…","…","…"]}`;

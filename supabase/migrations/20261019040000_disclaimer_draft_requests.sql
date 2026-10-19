@@ -1,4 +1,4 @@
--- Requests for AI 今日免责声明 drafts, so each member asks at most a day's worth (the first
+-- Requests for AI 请假条 drafts, so each member asks at most a day's worth (the first
 -- batch and 5 换一批). The API counts a member's rows in the last 24 hours before it asks the
 -- model, and deletes their older rows as it goes, so the table stays small. As with every
 -- table, only our API reads and writes it.

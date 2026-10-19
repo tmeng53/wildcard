@@ -1,4 +1,4 @@
-// @wildcard/disclaimer-drafts: AI drafts for 今日免责声明, their prompt, the checks every draft
+// @wildcard/disclaimer-drafts: AI drafts for 请假条, their prompt, the checks every draft
 // passes, and each member's daily allowance.
 
 export {

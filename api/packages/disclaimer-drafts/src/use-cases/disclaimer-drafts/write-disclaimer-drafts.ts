@@ -19,7 +19,7 @@ export interface WriteDisclaimerDraftsInput {
 }
 
 /**
- * Three drafts for a member's 今日免责声明, written by the model from their reason, or the care
+ * Three drafts for a member's 请假条, written by the model from their reason, or the care
  * line, or a decline. Only asked for when the member taps the button, never as they type.
  */
 export async function writeDisclaimerDrafts(

@@ -68,7 +68,7 @@ function wire(outcome: DraftsOutcome): z.infer<typeof DisclaimerDraftList> {
 }
 
 /**
- * `POST /disclaimer-drafts`: three AI drafts for today's 今日免责声明. The app calls it only when
+ * `POST /disclaimer-drafts`: three AI drafts for today's 请假条. The app calls it only when
  * the member taps the button, never as they type.
  */
 export function disclaimerDrafts(deps: {
