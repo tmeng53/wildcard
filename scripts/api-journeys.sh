@@ -6,10 +6,17 @@
 # Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
-shopt -s inherit_errexit
+# Bash 4.4+; macOS ships bash 3.2, where every check still stops the run through `fail`.
+shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
 journeys="${*:-check-in photo-upload}"
+for journey in $journeys; do
+  case "$journey" in
+    check-in | photo-upload) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload)" >&2 && exit 2 ;;
+  esac
+done
 want() { [[ " $journeys " == *" $1 "* ]]; }
 
 supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else npx --yes supabase@2.121.0 "$@"; fi; }
