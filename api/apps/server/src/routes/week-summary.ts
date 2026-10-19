@@ -24,8 +24,7 @@ const Stat = z
         '`trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: ' +
         'training days in the weekly plan; `checkIns`: check-ins of every kind; ' +
         '`disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; ' +
-        '`reactionsReceived`: teammates’ reactions on them. A kind the app doesn’t know yet ' +
-        'is one it can skip.',
+        '`reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.',
     }),
     value: count('The count.'),
   })
@@ -39,7 +38,7 @@ const Award = z
         'and at least one, by their trained days. `crown` (皇冠): those on the podium with the ' +
         'most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 ' +
         'with the most reactions, at least one, the earliest posted on a tie, by its reactions. ' +
-        'A kind the app doesn’t know yet is one it can skip.',
+        'A new kind is a contract change.',
     }),
     winners: z
       .array(

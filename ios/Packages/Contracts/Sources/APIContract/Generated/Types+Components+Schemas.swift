@@ -3277,7 +3277,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/WeekAward`.
         public struct WeekAward: Codable, Hashable, Sendable {
-            /// `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A kind the app doesn’t know yet is one it can skip.
+            /// `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekAward/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -3285,7 +3285,7 @@ extension Components {
                 case crown = "crown"
                 case bestDisclaimer = "bestDisclaimer"
             }
-            /// `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A kind the app doesn’t know yet is one it can skip.
+            /// `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekAward/kind`.
             public var kind: Components.Schemas.WeekAward.KindPayload
@@ -3353,7 +3353,7 @@ extension Components {
             /// Creates a new `WeekAward`.
             ///
             /// - Parameters:
-            ///   - kind: `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A kind the app doesn’t know yet is one it can skip.
+            ///   - kind: `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change.
             ///   - winners: Who won it, in the order members joined the squad.
             public init(
                 kind: Components.Schemas.WeekAward.KindPayload,
@@ -3384,7 +3384,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/WeekStat`.
         public struct WeekStat: Codable, Hashable, Sendable {
-            /// `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A kind the app doesn’t know yet is one it can skip.
+            /// `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStat/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -3396,7 +3396,7 @@ extension Components {
                 case cheatMeals = "cheatMeals"
                 case reactionsReceived = "reactionsReceived"
             }
-            /// `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A kind the app doesn’t know yet is one it can skip.
+            /// `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStat/kind`.
             public var kind: Components.Schemas.WeekStat.KindPayload
@@ -3407,7 +3407,7 @@ extension Components {
             /// Creates a new `WeekStat`.
             ///
             /// - Parameters:
-            ///   - kind: `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A kind the app doesn’t know yet is one it can skip.
+            ///   - kind: `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.
             ///   - value: The count.
             public init(
                 kind: Components.Schemas.WeekStat.KindPayload,

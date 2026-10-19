@@ -1601,7 +1601,7 @@
               "crown",
               "bestDisclaimer"
             ],
-            "description": "`planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A kind the app doesn’t know yet is one it can skip."
+            "description": "`planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change."
           },
           "winners": {
             "type": "array",
@@ -1653,7 +1653,7 @@
               "cheatMeals",
               "reactionsReceived"
             ],
-            "description": "`trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A kind the app doesn’t know yet is one it can skip."
+            "description": "`trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change."
           },
           "value": {
             "type": "integer",
