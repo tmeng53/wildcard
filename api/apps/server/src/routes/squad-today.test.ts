@@ -7,6 +7,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -46,13 +47,16 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(() => undefined),
 });
 
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */
 async function squadOf(...joined: readonly { readonly userId: string }[]) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+    db,
+  );
   for (const [index, member] of joined.entries()) {
     const joinedAt = new Date(Date.UTC(2026, 9, 1, 0, index)).toISOString();
     await sql`insert into public.squad_members (squad_id, member_id, joined_at)

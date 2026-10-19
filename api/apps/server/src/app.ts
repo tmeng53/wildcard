@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Squads } from '@wildcard/squads';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
@@ -13,6 +14,7 @@ import { checkIns } from './routes/check-ins.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
+import { squads } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
@@ -25,6 +27,7 @@ export interface AppDependencies {
   readonly checkIns: CheckIns;
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
+  readonly squads: Squads;
   readonly photos: PhotoStorage;
   readonly log: Log;
 }
@@ -48,6 +51,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
+  app.route('/', squads(deps));
   app.route('/', squadToday(deps));
   app.route('/', weeklyPlans(deps));
 

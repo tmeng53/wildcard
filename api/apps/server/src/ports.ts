@@ -1,5 +1,6 @@
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { MemberTables } from '@wildcard/members';
+import type { SquadTables } from '@wildcard/squads';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -56,7 +57,7 @@ export type RevokeAppleSignIn = (authorizationCode: string) => Promise<void>;
  * The tables the API reads and writes, each module's generated from the migrations
  * (`pnpm db-types`), never written by hand.
  */
-export type Tables = CheckInTables & MemberTables;
+export type Tables = CheckInTables & MemberTables & SquadTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

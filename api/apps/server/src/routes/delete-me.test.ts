@@ -7,6 +7,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -54,6 +55,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       clock: () => new Date(),
     }),
     members,
+    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog((line) => logged.push(JSON.parse(line))),
   });
   const call = async (
@@ -79,17 +81,17 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
 
 const reasonOf = (body: unknown) => z.object({ reason: z.string() }).parse(body).reason;
 
-/** A squad made by `creator`, with these members. Squads have no routes yet. */
-async function squadOf(creator: string, ...members: readonly string[]) {
+/** A squad `creator` makes through the API, which `friend` joins by its invite code. */
+async function squadOf(
+  call: ReturnType<typeof appWith>['call'],
+  [creator, friend]: readonly [{ token: string }, { token: string }],
+) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name, created_by) values (${id}, 'squad', ${creator})`.execute(
-    db,
-  );
-  for (const member of members) {
-    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member})`.execute(
-      db,
-    );
-  }
+  const made = await call('PUT', `/squads/${id}`, creator.token, { version: 1, name: '早八跑团' });
+  expect(made.status).toBe(201);
+  const { inviteCode } = z.object({ inviteCode: z.string() }).parse(made.body);
+  const joined = await call('POST', `/squad-invites/${inviteCode}/accept`, friend.token);
+  expect(joined.status).toBe(201);
   return id;
 }
 
@@ -101,7 +103,7 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
     (await call('PUT', '/me/profile', me.token, { version: 1, timeZone: 'America/Toronto' }))
       .status,
   ).toBe(200);
-  const squad = await squadOf(me.userId, me.userId, friend.userId);
+  const squad = await squadOf(call, [me, friend]);
   const upload = async () => {
     const { body } = await call('POST', '/photo-uploads', me.token);
     const { path, uploadUrl } = z.object({ path: z.string(), uploadUrl: z.url() }).parse(body);

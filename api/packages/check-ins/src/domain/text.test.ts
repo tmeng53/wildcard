@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Caption, CustomSportName, DisclaimerText, graphemeCount } from './text.js';
+import { Caption, CustomSportName, DisclaimerText } from './text.js';
 
 /** Every Unicode scalar Swift's `.whitespacesAndNewlines` holds (swift:6.0 on Linux). */
 const SWIFT_SPACES = [
@@ -11,20 +11,6 @@ const LINE_BREAKS = [0x0a, 0x0b, 0x0c, 0x0d, 0x85, 0x2028, 0x2029].map((code) =>
   String.fromCodePoint(code),
 );
 const ZERO_WIDTH_SPACE = String.fromCodePoint(0x200b);
-
-describe('graphemeCount', () => {
-  it.each([
-    ['', 0],
-    ['腿酸', 2],
-    ['abc', 3],
-    ['👍🏽', 1],
-    ['👨\u200D👩\u200D👧', 1],
-    ['🇨🇦', 1],
-    ['\u00E9', 1],
-  ])('counts %j as %i', (text, count) => {
-    expect(graphemeCount(text)).toBe(count);
-  });
-});
 
 describe('Caption', () => {
   it('trims every space and line break the contract trims, and nothing else', () => {

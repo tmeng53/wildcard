@@ -44,7 +44,9 @@ async function newMember(timeZone?: string) {
 /** A squad its members joined in the order given, a minute apart. */
 async function newSquad(...members: MemberId[]) {
   const id = SquadId.parse(randomUUID());
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+    db,
+  );
   for (const [index, member] of members.entries()) {
     const joinedAt = new Date(Date.UTC(2026, 9, 1, 0, index)).toISOString();
     await sql`insert into public.squad_members (squad_id, member_id, joined_at)

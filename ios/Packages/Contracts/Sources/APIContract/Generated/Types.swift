@@ -58,6 +58,46 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /photo-uploads`.
     /// - Remark: Generated from `#/paths//photo-uploads/post(createPhotoUpload)`.
     func createPhotoUpload(_ input: Operations.CreatePhotoUpload.Input) async throws -> Operations.CreatePhotoUpload.Output
+    /// The signed-in member’s squads
+    ///
+    /// - Remark: HTTP `GET /me/squads`.
+    /// - Remark: Generated from `#/paths//me/squads/get(listMySquads)`.
+    func listMySquads(_ input: Operations.ListMySquads.Input) async throws -> Operations.ListMySquads.Output
+    /// A squad and who is in it
+    ///
+    /// Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/get(getSquad)`.
+    func getSquad(_ input: Operations.GetSquad.Input) async throws -> Operations.GetSquad.Output
+    /// Create a squad
+    ///
+    /// With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
+    func createSquad(_ input: Operations.CreateSquad.Input) async throws -> Operations.CreateSquad.Output
+    /// Leave a squad
+    ///
+    /// Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the member isn’t in changes nothing.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/members/me`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/me/delete(leaveSquad)`.
+    func leaveSquad(_ input: Operations.LeaveSquad.Input) async throws -> Operations.LeaveSquad.Output
+    /// The squad an invite code belongs to
+    ///
+    /// What the join screen shows before joining. Case, spaces and dashes in the code don’t matter.
+    ///
+    /// - Remark: HTTP `GET /squad-invites/{inviteCode}`.
+    /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/get(getSquadInvite)`.
+    func getSquadInvite(_ input: Operations.GetSquadInvite.Input) async throws -> Operations.GetSquadInvite.Output
+    /// Join a squad by invite code
+    ///
+    /// Safe to repeat: joining a squad the member is in answers 200 with it.
+    ///
+    /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
+    /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
+    func joinSquad(_ input: Operations.JoinSquad.Input) async throws -> Operations.JoinSquad.Output
     /// Where a squad’s day and week stand
     ///
     /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
@@ -184,6 +224,90 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//photo-uploads/post(createPhotoUpload)`.
     public func createPhotoUpload(headers: Operations.CreatePhotoUpload.Input.Headers = .init()) async throws -> Operations.CreatePhotoUpload.Output {
         try await createPhotoUpload(Operations.CreatePhotoUpload.Input(headers: headers))
+    }
+    /// The signed-in member’s squads
+    ///
+    /// - Remark: HTTP `GET /me/squads`.
+    /// - Remark: Generated from `#/paths//me/squads/get(listMySquads)`.
+    public func listMySquads(headers: Operations.ListMySquads.Input.Headers = .init()) async throws -> Operations.ListMySquads.Output {
+        try await listMySquads(Operations.ListMySquads.Input(headers: headers))
+    }
+    /// A squad and who is in it
+    ///
+    /// Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/get(getSquad)`.
+    public func getSquad(
+        path: Operations.GetSquad.Input.Path,
+        headers: Operations.GetSquad.Input.Headers = .init()
+    ) async throws -> Operations.GetSquad.Output {
+        try await getSquad(Operations.GetSquad.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Create a squad
+    ///
+    /// With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
+    public func createSquad(
+        path: Operations.CreateSquad.Input.Path,
+        headers: Operations.CreateSquad.Input.Headers = .init(),
+        body: Operations.CreateSquad.Input.Body
+    ) async throws -> Operations.CreateSquad.Output {
+        try await createSquad(Operations.CreateSquad.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Leave a squad
+    ///
+    /// Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the member isn’t in changes nothing.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/members/me`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/me/delete(leaveSquad)`.
+    public func leaveSquad(
+        path: Operations.LeaveSquad.Input.Path,
+        headers: Operations.LeaveSquad.Input.Headers = .init()
+    ) async throws -> Operations.LeaveSquad.Output {
+        try await leaveSquad(Operations.LeaveSquad.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// The squad an invite code belongs to
+    ///
+    /// What the join screen shows before joining. Case, spaces and dashes in the code don’t matter.
+    ///
+    /// - Remark: HTTP `GET /squad-invites/{inviteCode}`.
+    /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/get(getSquadInvite)`.
+    public func getSquadInvite(
+        path: Operations.GetSquadInvite.Input.Path,
+        headers: Operations.GetSquadInvite.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadInvite.Output {
+        try await getSquadInvite(Operations.GetSquadInvite.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Join a squad by invite code
+    ///
+    /// Safe to repeat: joining a squad the member is in answers 200 with it.
+    ///
+    /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
+    /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
+    public func joinSquad(
+        path: Operations.JoinSquad.Input.Path,
+        headers: Operations.JoinSquad.Input.Headers = .init()
+    ) async throws -> Operations.JoinSquad.Output {
+        try await joinSquad(Operations.JoinSquad.Input(
+            path: path,
+            headers: headers
+        ))
     }
     /// Where a squad’s day and week stand
     ///

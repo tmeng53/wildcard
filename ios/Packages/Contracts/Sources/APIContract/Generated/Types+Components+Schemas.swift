@@ -1800,6 +1800,317 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadList`.
+        public struct SquadList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadList/version`.
+            public var version: Components.Schemas.SquadList.VersionPayload
+            /// The member’s squads, the earliest joined first: at most 3.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadList/squads`.
+            public var squads: [Components.Schemas.Squad]
+            /// Creates a new `SquadList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - squads: The member’s squads, the earliest joined first: at most 3.
+            public init(
+                version: Components.Schemas.SquadList.VersionPayload,
+                squads: [Components.Schemas.Squad]
+            ) {
+                self.version = version
+                self.squads = squads
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case squads
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadList.VersionPayload.self,
+                    forKey: .version
+                )
+                self.squads = try container.decode(
+                    [Components.Schemas.Squad].self,
+                    forKey: .squads
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "squads"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Squad`.
+        public struct Squad: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Squad/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Squad/version`.
+            public var version: Components.Schemas.Squad.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/Squad/id`.
+            public var id: Swift.String
+            /// The squad’s name, as its creator typed it, trimmed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Squad/name`.
+            public var name: Swift.String
+            /// Members share it to invite friends; an invite link carries it. 8 letters and digits, without 0, O, 1, I or L.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Squad/inviteCode`.
+            public var inviteCode: Swift.String
+            /// When it was created, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Squad/createdAt`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Squad/MembersPayload`.
+            public struct MembersPayloadPayload: Codable, Hashable, Sendable {
+                /// The member’s Supabase Auth user id.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Squad/MembersPayload/userId`.
+                public var userId: Swift.String
+                /// When they joined, in UTC.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Squad/MembersPayload/joinedAt`.
+                public var joinedAt: Foundation.Date
+                /// Creates a new `MembersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - userId: The member’s Supabase Auth user id.
+                ///   - joinedAt: When they joined, in UTC.
+                public init(
+                    userId: Swift.String,
+                    joinedAt: Foundation.Date
+                ) {
+                    self.userId = userId
+                    self.joinedAt = joinedAt
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case userId
+                    case joinedAt
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.userId = try container.decode(
+                        Swift.String.self,
+                        forKey: .userId
+                    )
+                    self.joinedAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .joinedAt
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "userId",
+                        "joinedAt"
+                    ])
+                }
+            }
+            /// Who is in it now, the earliest to join first: 1 to 8.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Squad/members`.
+            public typealias MembersPayload = [Components.Schemas.Squad.MembersPayloadPayload]
+            /// Who is in it now, the earliest to join first: 1 to 8.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Squad/members`.
+            public var members: Components.Schemas.Squad.MembersPayload
+            /// Creates a new `Squad`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            ///   - name: The squad’s name, as its creator typed it, trimmed.
+            ///   - inviteCode: Members share it to invite friends; an invite link carries it. 8 letters and digits, without 0, O, 1, I or L.
+            ///   - createdAt: When it was created, in UTC.
+            ///   - members: Who is in it now, the earliest to join first: 1 to 8.
+            public init(
+                version: Components.Schemas.Squad.VersionPayload,
+                id: Swift.String,
+                name: Swift.String,
+                inviteCode: Swift.String,
+                createdAt: Foundation.Date,
+                members: Components.Schemas.Squad.MembersPayload
+            ) {
+                self.version = version
+                self.id = id
+                self.name = name
+                self.inviteCode = inviteCode
+                self.createdAt = createdAt
+                self.members = members
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case name
+                case inviteCode
+                case createdAt
+                case members
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Squad.VersionPayload.self,
+                    forKey: .version
+                )
+                self.id = try container.decode(
+                    Swift.String.self,
+                    forKey: .id
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                self.inviteCode = try container.decode(
+                    Swift.String.self,
+                    forKey: .inviteCode
+                )
+                self.createdAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .createdAt
+                )
+                self.members = try container.decode(
+                    Components.Schemas.Squad.MembersPayload.self,
+                    forKey: .members
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "id",
+                    "name",
+                    "inviteCode",
+                    "createdAt",
+                    "members"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NewSquad`.
+        public struct NewSquad: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NewSquad/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/NewSquad/version`.
+            public var version: Components.Schemas.NewSquad.VersionPayload
+            /// Trimmed, then 1 to 20 characters as people see them, on one line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NewSquad/name`.
+            public var name: Swift.String
+            /// Creates a new `NewSquad`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: Trimmed, then 1 to 20 characters as people see them, on one line.
+            public init(
+                version: Components.Schemas.NewSquad.VersionPayload,
+                name: Swift.String
+            ) {
+                self.version = version
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.NewSquad.VersionPayload.self,
+                    forKey: .version
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "name"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadInvite`.
+        public struct SquadInvite: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/version`.
+            public var version: Components.Schemas.SquadInvite.VersionPayload
+            /// The squad’s name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/name`.
+            public var name: Swift.String
+            /// How many members it has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/memberCount`.
+            public var memberCount: Swift.Int
+            /// True when it has 8 members and can’t take more.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/full`.
+            public var full: Swift.Bool
+            /// True when the caller is in it already.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
+            public var joined: Swift.Bool
+            /// Creates a new `SquadInvite`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: The squad’s name.
+            ///   - memberCount: How many members it has now.
+            ///   - full: True when it has 8 members and can’t take more.
+            ///   - joined: True when the caller is in it already.
+            public init(
+                version: Components.Schemas.SquadInvite.VersionPayload,
+                name: Swift.String,
+                memberCount: Swift.Int,
+                full: Swift.Bool,
+                joined: Swift.Bool
+            ) {
+                self.version = version
+                self.name = name
+                self.memberCount = memberCount
+                self.full = full
+                self.joined = joined
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+                case memberCount
+                case full
+                case joined
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadInvite.VersionPayload.self,
+                    forKey: .version
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                self.memberCount = try container.decode(
+                    Swift.Int.self,
+                    forKey: .memberCount
+                )
+                self.full = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .full
+                )
+                self.joined = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .joined
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "name",
+                    "memberCount",
+                    "full",
+                    "joined"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
         public struct SquadToday: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadToday/version`.

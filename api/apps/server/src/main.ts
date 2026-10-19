@@ -6,6 +6,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
@@ -51,6 +52,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   photos,
   log,
 });
