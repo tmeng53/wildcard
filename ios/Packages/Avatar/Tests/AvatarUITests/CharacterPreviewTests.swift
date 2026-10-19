@@ -164,22 +164,25 @@ struct CharacterPreviewTests {
             (.drama, Outfit(["body": "lop", "hat": "cap", "top": "tee", "bottom": "shorts"])),
         ]
         var looks: [Frame] = []
-        var performances: [Performance] = []
+        var performances: [(idling: Performance, cheering: Performance)] = []
         for (persona, outfit) in cast {
             let look = try Frame(outfit: outfit)
             let body = outfit.variants["body"]
             let idle = try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: body))
-            var performance = Performance(figure: look.figure, idle: idle)
-            performance.play(
-                try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, body: body)), at: 8)
+            let idling = Performance(figure: look.figure, idle: idle)
+            // A clip played ahead of its time shows its first frame until then, so the cheer
+            // is only on stage from 8 s.
+            var cheering = idling
+            cheering.play(try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, body: body)), at: 8)
             looks.append(look)
-            performances.append(performance)
+            performances.append((idling, cheering))
         }
         try writeGIF(
             frames(seconds: 10.5) { time in
                 try sideBySide(
                     zip(looks, performances).map { look, performance in
-                        try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
+                        let onStage = time < 8 ? performance.idling : performance.cheering
+                        return try look.render(image: onStage.pose(at: time), scale: 1, background: Self.mist)
                     })
             },
             to: url)

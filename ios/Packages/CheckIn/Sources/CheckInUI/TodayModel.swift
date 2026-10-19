@@ -56,11 +56,12 @@ public final class TodayModel {
         self.writer = writer
         self.photoSource = photoSource
         player = try? CharacterPlayer(
-            figure: PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter),
-            idle: PlaceholderCharacter.clip("idle", persona: Self.persona))
+            figure: PlaceholderCharacter.figure(wearing: Self.look),
+            idle: PlaceholderCharacter.clip("idle", persona: Self.persona, body: Self.look.variants["body"]))
     }
 
-    /// The member's persona; picked at sign-up once onboarding lands.
+    /// The member's look and persona; picked at sign-up once onboarding lands.
+    private static let look = PlaceholderCharacter.lifter
     private static let persona = Persona.energetic
 
     var unavailable: Set<Meaning> {
@@ -147,7 +148,9 @@ public final class TodayModel {
         posts += 1
         payoff = Payoff(meaning: draft.meaning, line: line, cover: cover)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        if draft.meaning != .disclaimer, let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona) {
+        if draft.meaning != .disclaimer,
+            let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, body: Self.look.variants["body"])
+        {
             try? player?.play(cheer)
         }
     }
