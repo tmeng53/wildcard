@@ -1,6 +1,6 @@
 import Foundation
 
-/// One check-in: 练了, 健康餐, 坦白放纵餐 or 今日免责声明, as the app holds it. The wire shape
+/// One check-in: 练了, 健康餐, 坦白放纵餐 or 今日请假条, as the app holds it. The wire shape
 /// comes from the API's OpenAPI document (`APIContract` maps between the two); the rules (how
 /// many a day, which conflict, weekly counts, deleting) live in the `CheckIn` package.
 public struct CheckIn: Hashable, Sendable {
@@ -32,7 +32,7 @@ public struct CheckIn: Hashable, Sendable {
         case healthyMeal(Meal)
         /// 坦白放纵餐: shown as a confession, never counts toward anything.
         case cheatMeal(Meal)
-        /// 今日免责声明: a rest day with the member's excuse.
+        /// 今日请假条: a rest day with the member's excuse.
         case disclaimer(Disclaimer)
     }
 }
@@ -62,7 +62,7 @@ public struct Meal: Hashable, Sendable {
     }
 }
 
-/// 今日免责声明: the member's excuse for resting today, at most `maxLength` characters, with
+/// 今日请假条: the member's excuse for resting today, at most `maxLength` characters, with
 /// optional photos. The text may span lines.
 public struct Disclaimer: Hashable, Sendable {
     /// Characters, counted as people see them (a Chinese character or emoji is one). The API's
