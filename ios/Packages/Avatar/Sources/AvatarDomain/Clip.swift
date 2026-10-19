@@ -5,6 +5,14 @@ import Foundation
 public enum Channel: String, Hashable, Sendable, Codable, CaseIterable {
     // swiftlint:disable:next identifier_name - x and y are the clip files' own channel names.
     case rotation, x, y, scaleX, scaleY, opacity
+
+    /// An accent's value that leaves a part as it is.
+    var rest: Double {
+        switch self {
+        case .scaleX, .scaleY: 1
+        case .rotation, .x, .y, .opacity: 0
+        }
+    }
 }
 
 /// How a value travels from the previous key to this one.
@@ -93,6 +101,19 @@ public struct Clip: Hashable, Sendable {
     /// Loops forever (idle) or plays once and hands back to the idle clip (cheer).
     public var loops: Bool
     public var tracks: [Track]
+    /// Moves played on top, such as a species' own: a cat's yawn over any persona's idle.
+    public private(set) var accents: [Accent] = []
+
+    /// A clip played on top of another, such as a dog's wag over a persona's idle. Its values
+    /// are offsets from the clip below: rotation, x, y and opacity add to it, scales multiply
+    /// it. On a looping clip it loops on its own duration, `tempo` times as fast; on a one-shot
+    /// clip it is stretched to that clip's duration. `strength` scales how far it moves (not
+    /// its opacity, so a mouth is open or shut, never half there).
+    public struct Accent: Hashable, Sendable {
+        public let clip: Clip
+        public let tempo: Double
+        public let strength: Double
+    }
 
     public struct Track: Hashable, Sendable {
         public var part: PartID
@@ -157,6 +178,25 @@ public struct Clip: Hashable, Sendable {
             }
         }
         (self.name, self.duration, self.loops, self.tracks) = (name, duration, loops, tracks)
+    }
+
+    /// This clip with `accent` played on top. The accent loops if this clip does, and every
+    /// track starts and ends at rest, so it never jumps where clips hand over or loop.
+    public func accented(by accent: Clip, tempo: Double = 1, strength: Double = 1) throws(AvatarError) -> Clip {
+        guard accent.loops == loops else { throw .accentMismatch(clip: name, accent: accent.name) }
+        guard tempo > 0, tempo.isFinite, strength >= 0, strength.isFinite else {
+            throw .invalidAccent(clip: name, accent: accent.name)
+        }
+        for track in accent.tracks {
+            let rest = track.channel.rest
+            guard let first = track.keys.first, let last = track.keys.last,
+                abs(first.value - rest) < 1e-9, abs(last.value - rest) < 1e-9, first.time == 0,
+                last.time == accent.duration
+            else { throw .accentNotAtRest(accent: accent.name, part: track.part, channel: track.channel) }
+        }
+        var accented = self
+        accented.accents.append(Accent(clip: accent, tempo: tempo, strength: strength))
+        return accented
     }
 
     public static func decode(_ data: Data) throws(AvatarError) -> Clip {

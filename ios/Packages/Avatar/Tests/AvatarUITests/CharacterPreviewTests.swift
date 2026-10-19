@@ -81,6 +81,7 @@ struct CharacterPreviewTests {
         try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
         try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
         try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
+        try writeSpecies(to: folder.appendingPathComponent("08-species-moves.gif"))
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
@@ -151,8 +152,49 @@ struct CharacterPreviewTests {
         try writePNG(stacked(rows), to: url)
     }
 
-    private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
-        try (0..<Int((seconds * Self.fps).rounded())).map { index in try render(Double(index) / Self.fps) }
+    /// A person, a cat, two dogs, a rabbit, a bear and a lop in a cap, each on another persona, idling with their
+    /// species' moves on top (a yawn, a head tilt, ears, a belly scratch), then cheering at 8 s.
+    private func writeSpecies(to url: URL) throws {
+        let cast: [(Persona, Outfit)] = [
+            (.drama, PlaceholderCharacter.lifter),
+            (.deadpan, Outfit(["body": "cat", "top": "tee", "bottom": "shorts"])),
+            (.energetic, Outfit(["body": "shiba", "top": "tee", "bottom": "shorts"])),
+            (.deadpan, Outfit(["body": "golden", "top": "tee", "bottom": "shorts"])),
+            (.showoff, Outfit(["body": "rabbit", "top": "tee", "bottom": "shorts"])),
+            (.shy, Looks.bear),
+            (.drama, Outfit(["body": "lop", "hat": "cap", "top": "tee", "bottom": "shorts"])),
+        ]
+        var looks: [Frame] = []
+        var performances: [(idling: Performance, cheering: Performance)] = []
+        for (persona, outfit) in cast {
+            let look = try Frame(outfit: outfit)
+            let species = Looks.species(of: outfit)
+            let idle = try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona, species: species))
+            let idling = Performance(figure: look.figure, idle: idle)
+            // A clip played ahead of its time shows its first frame until then, so the cheer
+            // is only on stage from 8 s.
+            var cheering = idling
+            cheering.play(
+                try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, species: species)), at: 8)
+            looks.append(look)
+            performances.append((idling, cheering))
+        }
+        try writeGIF(
+            // 20 frames a second keeps the long, wide GIF small enough to print in CI's log.
+            frames(seconds: 10.5, fps: 20) { time in
+                try sideBySide(
+                    zip(looks, performances).map { look, performance in
+                        let onStage = time < 8 ? performance.idling : performance.cheering
+                        return try look.render(image: onStage.pose(at: time), scale: 1, background: Self.mist)
+                    })
+            },
+            fps: 20, to: url)
+    }
+
+    private func frames(
+        seconds: Double, fps: Double = CharacterPreviewTests.fps, _ render: (Double) throws -> CGImage
+    ) throws -> [CGImage] {
+        try (0..<Int((seconds * fps).rounded())).map { index in try render(Double(index) / fps) }
     }
 
     /// Images side by side, as one image.
@@ -200,12 +242,12 @@ struct CharacterPreviewTests {
         #expect(CGImageDestinationFinalize(destination))
     }
 
-    private func writeGIF(_ images: [CGImage], to url: URL) throws {
+    private func writeGIF(_ images: [CGImage], fps: Double = CharacterPreviewTests.fps, to url: URL) throws {
         let destination = try #require(
             CGImageDestinationCreateWithURL(url as CFURL, UTType.gif.identifier as CFString, images.count, nil))
         let loopForever = [kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: 0]]
         CGImageDestinationSetProperties(destination, loopForever as CFDictionary)
-        let delay = 1 / Self.fps
+        let delay = 1 / fps
         let frame = [
             kCGImagePropertyGIFDictionary as String: [
                 kCGImagePropertyGIFDelayTime as String: delay, kCGImagePropertyGIFUnclampedDelayTime as String: delay,

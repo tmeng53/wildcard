@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { DisclaimerStyle } from '@wildcard/disclaimer-styles';
 import {
   DraftReason,
-  DraftStyle,
   MemberId,
   type DisclaimerDrafts as DisclaimerDraftsModule,
   type DraftsOutcome,
@@ -21,7 +21,7 @@ export const DisclaimerDraftRequest = z
         'and the style go to the AI, never names, photos or squads.',
       example: '早上没起来',
     }),
-    style: DraftStyle.meta({
+    style: DisclaimerStyle.meta({
       description: 'funny 搞笑, unhinged 发疯, heroic 中二 or stubborn 嘴硬.',
     }),
   })

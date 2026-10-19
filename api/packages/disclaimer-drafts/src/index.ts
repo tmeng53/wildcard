@@ -5,7 +5,7 @@ export {
   createPostgresDraftAllowance,
   type DisclaimerDraftTables,
 } from './adapters/postgres-draft-allowance.js';
-export { DraftReason, DraftStyle, MemberId, type PromptMeme } from './domain/draft-request.js';
+export { DraftReason, MemberId, type PromptMeme } from './domain/draft-request.js';
 export type { DraftsOutcome } from './domain/drafts.js';
 export {
   DisclaimerDraftsUsedUpError,

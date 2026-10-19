@@ -1,7 +1,9 @@
+import { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+import { typedText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 // A meme in the library: a phrase trending among Chinese speakers (or in North American
-// Chinese work life), with enough background that the AI writing a 今日免责声明 knows what it
+// Chinese work life), with enough background that the AI writing a 今日请假条 knows what it
 // means and how people use it. The example lines Tracy reads when she approves a meme stay out
 // of the library on purpose (Tracy, 2026-10-19): the AI would copy them.
 
@@ -9,30 +11,27 @@ export const MemeId = z.uuid().brand<'MemeId'>();
 export type MemeId = z.infer<typeof MemeId>;
 
 /** The meme itself, e.g. 「city不city」. */
-export const MemePhrase = z.string().trim().min(1).max(30);
+export const MemePhrase = typedText({ max: 30, oneLine: false, description: 'The meme itself.' });
 export type MemePhrase = z.infer<typeof MemePhrase>;
 
-/** The 免责声明 styles a meme suits, as the wire names them (搞笑, 发疯, 中二, 嘴硬). */
-export const MemeStyle = z.enum(['funny', 'unhinged', 'heroic', 'stubborn']);
-export type MemeStyle = z.infer<typeof MemeStyle>;
-
-const Text = (max: number) => z.string().trim().min(1).max(max);
+/** A meme's text, counted in characters as people see them. */
+const Text = (max: number, description: string) => typedText({ max, oneLine: false, description });
 
 // The fields kept in `memes.payload`.
 const memeFields = {
   /** Where it came from and how it spread, in 2 or 3 sentences. */
-  background: Text(300),
+  background: Text(300, 'Where it came from and how it spread.'),
   /** What it means. */
-  meaning: Text(120),
+  meaning: Text(120, 'What it means.'),
   styles: z
-    .array(MemeStyle)
+    .array(DisclaimerStyle)
     .min(1)
     .max(4)
     .refine((styles) => new Set(styles).size === styles.length, {
       message: 'Must not list a style twice',
     }),
   /** Where it trends, e.g. 小红书. */
-  source: Text(60),
+  source: Text(60, 'Where it trends.'),
 };
 
 /** A meme Tracy approved, as it is handed to the library. */

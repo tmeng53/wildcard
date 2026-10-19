@@ -34,7 +34,7 @@ final class StyleGuideUITests: XCTestCase {
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
-        let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "请假")]
+        let capsules = [("trained", "练了"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")]
         for (meaning, label) in capsules {
             let capsule = app.buttons["styleguide.capsule.\(meaning)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
@@ -43,7 +43,7 @@ final class StyleGuideUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "06-pool-capsules-open")
 
-        app.buttons["styleguide.capsule.fresh"].tap()
+        app.buttons["styleguide.capsule.healthyMeal"].tap()
         waitForLabel(of: checkIn, "label == %@", "打卡", "the capsules didn't close")
 
         app.swipeUp()

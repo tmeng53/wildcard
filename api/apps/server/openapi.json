@@ -1242,6 +1242,36 @@
         ],
         "additionalProperties": false
       },
+      "PublicSquadInvite": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "The squad’s name."
+          },
+          "memberCount": {
+            "type": "integer",
+            "description": "How many members it has now."
+          },
+          "full": {
+            "type": "boolean",
+            "description": "True when it has 8 members and can’t take more."
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "memberCount",
+          "full"
+        ],
+        "additionalProperties": false
+      },
       "SquadToday": {
         "type": "object",
         "properties": {
@@ -1276,7 +1306,7 @@
                     "disclaimer",
                     "notCheckedIn"
                   ],
-                  "description": "Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day."
+                  "description": "Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day."
                 },
                 "latestMeal": {
                   "type": "string",
@@ -1317,12 +1347,12 @@
               "disclaimer": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Members whose today is a 免责声明 with no 练了."
+                "description": "Members whose today is a 请假条 with no 练了."
               },
               "resting": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Members on a planned rest day with no 练了 or 免责声明 today."
+                "description": "Members on a planned rest day with no 练了 or 请假条 today."
               },
               "everyoneTrained": {
                 "type": "boolean",
@@ -3219,6 +3249,72 @@
           },
           "503": {
             "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/squad-invites/{inviteCode}": {
+      "get": {
+        "operationId": "getPublicSquadInvite",
+        "summary": "The squad an invite code belongs to, for anyone",
+        "description": "What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "K7M2QX9P"
+            },
+            "required": true,
+            "name": "inviteCode",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squad",
+            "headers": {
+              "Cache-Control": {
+                "description": "`no-store`: the size changes as people join.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSquadInvite"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No squad has this code (`INVITE_CODE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many lookups from this address (`REQUESTS_TOO_FREQUENT`)",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until lookups from this address are taken again.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {

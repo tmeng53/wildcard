@@ -12,8 +12,9 @@ import {
 } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
-import type { VerifyToken } from '../ports.js';
+import type { RateLimit, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
+import { rateLimited } from '../rate-limited.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const inviteCodeField = z.string().meta({
@@ -67,6 +68,17 @@ const SquadInvite = z
   })
   .openapi('SquadInvite');
 
+const PublicSquadInvite = z
+  .strictObject({
+    version: bodyVersion(1),
+    name: z.string().meta({ description: 'The squad’s name.' }),
+    memberCount: z.int().meta({ description: 'How many members it has now.' }),
+    full: z.boolean().meta({
+      description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
+    }),
+  })
+  .openapi('PublicSquadInvite');
+
 function wire(squad: SquadRecord) {
   return {
     version: 1 as const,
@@ -94,11 +106,23 @@ const signedInFailures = {
 };
 const limitReached = `the member is in ${String(SQUADS_PER_MEMBER)} squads already (\`SQUAD_LIMIT_REACHED\`)`;
 
+/** What routes anyone can call without signing in need: a rate limit per client. */
+export interface PublicRoutes {
+  /** How many of our proxies add to `X-Forwarded-For`; see `clientAddress`. */
+  readonly proxyHops: number;
+  /** Invite lookups by the web invite page, per client address. */
+  readonly inviteLookups: RateLimit;
+}
+
 /**
  * Squads: create one with a name, preview and join one by invite code, list mine, read one, and
  * leave. A squad is never deleted; its members leave.
  */
-export function squads(deps: { readonly verifyToken: VerifyToken; readonly squads: Squads }) {
+export function squads(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly squads: Squads;
+  readonly publicRoutes: PublicRoutes;
+}) {
   const squadParams = z.strictObject({ squadId: SquadId });
   // Any text: one that can't be a code answers 404 like an unknown one, so the app has one case.
   const inviteParams = z.strictObject({ inviteCode: z.string().meta({ example: 'K7M2QX9P' }) });
@@ -197,6 +221,43 @@ export function squads(deps: { readonly verifyToken: VerifyToken; readonly squad
     },
   });
 
+  const publicPreview = createRoute({
+    method: 'get',
+    path: '/public/squad-invites/{inviteCode}',
+    operationId: 'getPublicSquadInvite',
+    summary: 'The squad an invite code belongs to, for anyone',
+    description:
+      'What the web invite page shows before the app is installed: no sign-in, so only the ' +
+      'name, the size and whether it is full; nothing about who is in it. Limited per client ' +
+      'address. Case, spaces and dashes in the code don’t matter.',
+    middleware: [
+      rateLimited(deps.publicRoutes.inviteLookups, deps.publicRoutes.proxyHops),
+    ] as const,
+    request: { params: inviteParams },
+    responses: {
+      200: {
+        description: 'The squad',
+        headers: {
+          'Cache-Control': {
+            description: '`no-store`: the size changes as people join.',
+            schema: { type: 'string' },
+          },
+        },
+        content: { 'application/json': { schema: PublicSquadInvite } },
+      },
+      404: problem('No squad has this code (`INVITE_CODE_UNKNOWN`)'),
+      429: {
+        ...problem('Too many lookups from this address (`REQUESTS_TOO_FREQUENT`)'),
+        headers: {
+          'Retry-After': {
+            description: 'Seconds until lookups from this address are taken again.',
+            schema: { type: 'integer' },
+          },
+        },
+      },
+    },
+  });
+
   const join = createRoute({
     method: 'post',
     path: '/squad-invites/{inviteCode}/accept',
@@ -219,7 +280,7 @@ export function squads(deps: { readonly verifyToken: VerifyToken; readonly squad
 
   const caller = (userId: string) => MemberId.parse(userId);
 
-  return new OpenAPIHono<SignedIn>()
+  const signedInRoutes = new OpenAPIHono<SignedIn>()
     .openapi(listMine, async (c) => {
       const mine = await deps.squads.listMine(caller(c.var.caller.userId));
       return c.json({ version: 1 as const, squads: mine.map(wire) }, 200);
@@ -260,4 +321,14 @@ export function squads(deps: { readonly verifyToken: VerifyToken; readonly squad
       });
       return joined ? c.json(wire(squad), 201) : c.json(wire(squad), 200);
     });
+
+  const publicRoutes = new OpenAPIHono().openapi(publicPreview, async (c) => {
+    const invite = await deps.squads.previewPublicInvite(
+      inviteCodeOf(c.req.valid('param').inviteCode),
+    );
+    c.header('cache-control', 'no-store');
+    return c.json({ version: 1 as const, ...invite }, 200);
+  });
+
+  return new OpenAPIHono().route('/', signedInRoutes).route('/', publicRoutes);
 }

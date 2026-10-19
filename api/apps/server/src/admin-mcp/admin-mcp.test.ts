@@ -33,6 +33,7 @@ import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, registers itself with local
@@ -70,6 +71,7 @@ beforeAll(async () => {
             secretKey: config.supabaseSecretKey,
           }),
           revokeAppleSignIn: undefined,
+          publicRoutes: unlimitedPublicRoutes,
           checkIns: createCheckIns({
             store: createPostgresCheckInStore(db),
             reactions: createPostgresReactionStore(db),

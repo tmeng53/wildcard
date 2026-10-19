@@ -53,8 +53,8 @@ public enum BurstLayout {
     public static func angle(for meaning: Meaning) -> Double {
         switch meaning {
         case .trained: 162
-        case .fresh: 118
-        case .indulgence: 62
+        case .healthyMeal: 118
+        case .cheatMeal: 62
         case .disclaimer: 18
         }
     }

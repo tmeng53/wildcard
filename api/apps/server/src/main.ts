@@ -24,6 +24,7 @@ import {
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
+import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
 import {
@@ -93,6 +94,16 @@ const app = createApp({
   }),
   members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  publicRoutes: {
+    proxyHops: config.proxyHops,
+    // Someone opening an invite link looks it up a few times at most; guessing a code takes
+    // billions of tries, so this only keeps the lookup from being hammered.
+    inviteLookups: createMemoryRateLimit({
+      limit: 30,
+      windowSeconds: 600,
+      clock: () => new Date(),
+    }),
+  },
   photos,
   disclaimerDrafts: createDisclaimerDrafts({
     model,
