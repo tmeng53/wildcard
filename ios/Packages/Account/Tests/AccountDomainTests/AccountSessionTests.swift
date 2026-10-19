@@ -54,6 +54,17 @@ private func account(
     #expect(try await account.restore() == .signedIn(tracy))
 }
 
+@Test func signingInReplacesAStoredSessionTheStoreKeepsRefusingToRead() async throws {
+    let store = MemoryStore(session("stored"), failsToLoad: .storeFailed)
+    let account = account(FakeProvider(), store)
+
+    await #expect(throws: AccountError.storeFailed) { try await account.restore() }
+    try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    #expect(try await account.restore() == .signedIn(tracy))
+    #expect(try await account.accessToken() == "access-signed-in")
+    #expect(await store.saved == session("signed-in"))
+}
+
 @Test func aGarbledStoredSessionIsClearedAndSignsOut() async throws {
     let store = MemoryStore(session("stored"), failsToLoad: .storeCorrupted)
     let account = account(FakeProvider(), store)

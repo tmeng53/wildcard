@@ -67,12 +67,17 @@ public actor AccountSession {
     /// Signs in, replacing any session on the device.
     @discardableResult
     public func signIn(with credential: Credential) async throws(AccountError) -> MemberID {
-        try await ensureRestored()
+        do {
+            try await ensureRestored()
+        } catch .storeFailed {
+            // The stored session can't be read; saving the new one replaces it.
+        }
         let new = try await provider.signIn(with: credential)
         // In memory first, so a renewal of the old session that finishes during the save sees
         // it was replaced and saves nothing.
         let previous = session
         session = new
+        restored = true
         renewal = nil
         publish()
         do {
@@ -153,6 +158,8 @@ public actor AccountSession {
             stored = nil
             try? await store.clear()
         }
+        // Signed in while reading: the new session wins.
+        if restored { return nil }
         session = stored
         restored = true
         publish()
