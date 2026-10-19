@@ -1145,22 +1145,22 @@
         }
       }
     },
-    "发到小队": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Send to squad"
-          }
-        }
-      }
-    },
     "发布": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Post"
+          }
+        }
+      }
+    },
+    "发布免责声明": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post disclaimer"
           }
         }
       }
@@ -1441,6 +1441,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Make up an excuse…"
+          }
+        }
+      }
+    },
+    "编几句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write a few"
           }
         }
       }
