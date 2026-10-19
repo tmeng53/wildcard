@@ -1,5 +1,5 @@
 import type { CheckInId, MemberId } from '../../domain/check-in.js';
-import type { CheckInStore, ReactionStore } from '../../ports.js';
+import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
 /**
@@ -7,9 +7,17 @@ import { findVisibleCheckIn } from './find-visible-check-in.js';
  * check-in they can't see.
  */
 export async function removeReaction(
-  { store, reactions }: { readonly store: CheckInStore; readonly reactions: ReactionStore },
+  {
+    store,
+    membership,
+    reactions,
+  }: {
+    readonly store: CheckInStore;
+    readonly membership: SquadMembership;
+    readonly reactions: ReactionStore;
+  },
   { checkIn, member }: { readonly checkIn: CheckInId; readonly member: MemberId },
 ): Promise<void> {
-  await findVisibleCheckIn(store, { id: checkIn, viewer: member });
+  await findVisibleCheckIn({ store, membership }, { id: checkIn, viewer: member });
   await reactions.remove(checkIn, member);
 }

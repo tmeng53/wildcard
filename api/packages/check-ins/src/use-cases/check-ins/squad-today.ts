@@ -9,7 +9,13 @@ import {
 } from '../../domain/days.js';
 import { localDayAt, plannedTrainingDays, WeekStart } from '../../domain/weekly-plan.js';
 import { SquadNotJoinedError } from '../../errors.js';
-import type { CheckInStore, Clock, MemberCalendar, WeeklyPlanStore } from '../../ports.js';
+import type {
+  CheckInStore,
+  Clock,
+  MemberCalendar,
+  SquadMembership,
+  WeeklyPlanStore,
+} from '../../ports.js';
 import { findWeeklyPlan } from '../weekly-plans.js';
 import { zonesOf } from './member-zones.js';
 
@@ -78,15 +84,16 @@ function homeOrder(a: SquadMemberToday, b: SquadMemberToday): number {
 export async function squadToday(
   deps: {
     readonly store: CheckInStore;
+    readonly membership: SquadMembership;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
   { viewer, squad }: { readonly viewer: MemberId; readonly squad: SquadId },
 ): Promise<SquadToday> {
-  const { store, plans, calendarOf, clock } = deps;
+  const { store, membership, plans, calendarOf, clock } = deps;
   const now = clock();
-  const memberIds = await store.membersOf(squad);
+  const memberIds = await membership.membersOf(squad);
 
   // A squad has at most 8 members, so one plan read each is fine.
   const zones = await zonesOf(calendarOf, { members: memberIds, viewer });
@@ -107,6 +114,7 @@ export async function squadToday(
   const [squadCheckIns, mine, myLifetimeTrainedDays] = await Promise.all([
     store.listForSquad({
       squad,
+      members: memberIds,
       from: members.map(({ week }) => week.from).reduce((a, b) => (a < b ? a : b)),
       to: members.map(({ week }) => week.to).reduce((a, b) => (a > b ? a : b)),
     }),

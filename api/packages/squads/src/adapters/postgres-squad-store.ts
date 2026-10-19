@@ -105,6 +105,37 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return withMembers(rows);
     },
 
+    async squadIdsOf(member) {
+      const rows = await db
+        .selectFrom('squad_members')
+        .select('squad_id')
+        .where('member_id', '=', member)
+        .execute();
+      return new Set(rows.map((row) => SquadId.parse(row.squad_id)));
+    },
+
+    async membersOf(squad) {
+      const rows = await db
+        .selectFrom('squad_members')
+        .select('member_id')
+        .where('squad_id', '=', squad)
+        .orderBy('joined_at')
+        .orderBy('member_id')
+        .execute();
+      return rows.map((row) => MemberId.parse(row.member_id));
+    },
+
+    async membersOfAny(squads) {
+      if (squads.length === 0) return new Set();
+      const rows = await db
+        .selectFrom('squad_members')
+        .select('member_id')
+        .distinct()
+        .where('squad_id', 'in', squads)
+        .execute();
+      return new Set(rows.map((row) => MemberId.parse(row.member_id)));
+    },
+
     async create({ id, name, inviteCode, creator }): Promise<CreateOutcome> {
       try {
         return await db.transaction().execute(async (trx): Promise<CreateOutcome> => {

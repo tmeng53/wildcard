@@ -40,6 +40,10 @@ describe('openapi.json', () => {
       publicRoutes: unlimitedPublicRoutes,
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
+        membership: createSquads({
+          store: createPostgresSquadStore(db),
+          inviteCodes: randomInviteCodes,
+        }),
         reactions: createPostgresReactionStore(db),
         plans: createPostgresWeeklyPlanStore(db),
         photos,

@@ -63,6 +63,7 @@ export type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
+  SquadMembership,
   WeeklyPlanStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';

@@ -22,6 +22,12 @@ export interface Squads {
   find(input: { squad: SquadId; viewer: MemberId }): Promise<Squad>;
   /** The squads a member is in now, the earliest joined first. */
   listMine(member: MemberId): Promise<Squad[]>;
+  /** The ids of the squads a member is in now: what other modules ask instead of reading tables. */
+  squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
+  /** The members in a squad now, in the order they joined. */
+  membersOf(squad: SquadId): Promise<MemberId[]>;
+  /** Everyone in any of these squads now, each once. */
+  membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**
    * Takes the member out of the squad; nothing happens if they aren't in it. A squad is never
    * deleted, even when its last member leaves: check-ins sent to it still point at it.
@@ -40,6 +46,9 @@ export function createSquads(deps: {
     previewPublicInvite: (inviteCode) => previewPublicInvite(deps, inviteCode),
     find: (input) => findSquad(deps, input),
     listMine: (member) => deps.store.squadsOf(member),
+    squadIdsOf: (member) => deps.store.squadIdsOf(member),
+    membersOf: (squad) => deps.store.membersOf(squad),
+    membersOfAny: (squads) => deps.store.membersOfAny(squads),
     leave: ({ squad, member }) => deps.store.leave(squad, member),
   };
 }
