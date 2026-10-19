@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [reactions] [devices] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [devices] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today reactions devices account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | reactions | devices | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, reactions, devices, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -386,6 +386,50 @@ if want squad-today; then
   call GET "/squads/$squad/today" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
   echo "squad-today: outsider refused (403 SQUAD_NOT_JOINED)"
+  squad="$shared_squad"
+fi
+
+if want week-summary; then
+  # A squad of its own for this week's 战报. Ace plans a week of rest, so one 练了 completes it;
+  # the writer posts a 请假条 and the fan laughs at it.
+  shared_squad="$squad"
+  read -r ace ace_token <<<"$(sign_up)"
+  read -r writer writer_token <<<"$(sign_up)"
+  read -r fan fan_token <<<"$(sign_up)"
+  read -r zone today monday <<<"$(noon_zone)"
+  for token in "$ace_token" "$writer_token" "$fan_token"; do
+    call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
+    expect 200
+  done
+  squad_of "$ace_token" "$writer_token" "$fan_token"
+  call PUT "/me/weekly-plans/$monday" "$ace_token" "$(jq -cn '{version: 1, days: [range(7) | {kind: "rest"}]}')"
+  expect 200
+  call PUT "/check-ins/$(new_id)" "$ace_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
+  expect 201
+  excuse="$(new_id)"
+  call PUT "/check-ins/$excuse" "$writer_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}')"
+  expect 201
+  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"kind":"lol"}'
+  expect 201
+  echo "week-summary: squad=$squad in $zone ($today) ace trained on a week planned all rest, writer posted a 请假条, fan laughed at it"
+
+  call GET "/squads/$squad/weeks/$monday/summary" "$fan_token"
+  expect 200
+  [ "$(jq -c '[.final, [.awards[] | [.kind, [.winners[] | [.member, .value, .checkIn]]]]]' <<<"$body")" = \
+    "$(jq -cn --arg a "$ace" --arg w "$writer" --arg e "$excuse" \
+      '[false, [["planCompleted",[[$a,1,null]]],["crown",[[$a,1,null]]],["bestDisclaimer",[[$w,1,$e]]]]]')" ] ||
+    fail "ace should complete the plan and wear the crown, and the writer's 请假条 be the best; not final yet: $body"
+  echo "week-summary: still being played; podium and crown ace (1 day), best 请假条 writer's (1 reaction)"
+  [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.kind == "lol") | .count], [.me.reactions[] | select(.kind == "lol") | .given]]' <<<"$body")" = \
+    '[[1,10,2],[1],[1]]' ] ||
+    fail "the squad should have 1 of 10 days trained in 2 check-ins and 1 lol, given by the fan: $body"
+  echo "week-summary: squad 1/10 days in 2 check-ins, 1 笑死, which the fan sees as given"
+
+  call GET "/squads/$squad/weeks/$(days_after "$monday" 7)/summary" "$fan_token"
+  expect 400 WEEK_NOT_STARTED
+  call GET "/squads/$squad/weeks/$monday/summary" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "week-summary: next week refused (400 WEEK_NOT_STARTED), outsider refused (403 SQUAD_NOT_JOINED)"
   squad="$shared_squad"
 fi
 
