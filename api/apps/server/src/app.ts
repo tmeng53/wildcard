@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
-import type { DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
+import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Push } from '@wildcard/push';
@@ -68,7 +68,9 @@ export function createApp(deps: AppDependencies) {
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((thrown, c) => {
     const error = fromHono(thrown);
-    if (!isAppError(error) || HTTP_STATUS[error.status] >= 500) {
+    // Drafts being off is how the server runs until it has a key, which main.ts logs once.
+    const expected = error instanceof DisclaimerWriterOffError;
+    if (!expected && (!isAppError(error) || HTTP_STATUS[error.status] >= 500)) {
       deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
     }
     return problemResponse(error);

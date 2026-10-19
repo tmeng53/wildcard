@@ -2,7 +2,7 @@
 # Drives the API the way the app does, over HTTP, against local Supabase: the built server
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
-#   scripts/api-journeys.sh [check-in] [photo-upload] [squad]   (no arguments: all)
+#   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts]   (no arguments: all)
 # Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -10,11 +10,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -29,11 +29,12 @@ eval "$status"
 pnpm --dir api install --frozen-lockfile >/dev/null
 pnpm --dir api build >/dev/null
 
-# The real server, on a free port, as Cloud Run starts it.
+# The real server, on a free port, as Cloud Run starts it, without an Anthropic key: CI has none,
+# and the drafts journey proves the server runs without one.
 port="$(node -e 'const s=require("net").createServer().listen(0,()=>{console.log(s.address().port);s.close()})')"
 api="http://127.0.0.1:$port"
 log="$(mktemp)"
-PORT="$port" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
+env -u ANTHROPIC_API_KEY PORT="$port" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
   node api/apps/server/dist/src/main.js >"$log" 2>&1 &
 server=$!
 tmp="$(mktemp -d)"
@@ -235,6 +236,29 @@ if want squad; then
   call GET /me/squads "$newcomer_token"
   [ "$(jq '.squads | length' <<<"$body")" = 0 ] || fail "newcomer still lists a squad: $body"
   echo "squad: newcomer left (204) and can't read it any more"
+fi
+
+if want disclaimer-drafts; then
+  ask() { echo "{\"version\":1,\"reason\":\"$1\",\"style\":\"$2\"}"; }
+  call POST /disclaimer-drafts "$me_token" "$(ask 早上没起来 funny)"
+  expect 503 DISCLAIMER_WRITER_UNAVAILABLE
+  if grep -q '"severity":"ERROR"' "$log"; then fail "drafts being off logged an error"; fi
+  echo "disclaimer-drafts: no key, so 503 DISCLAIMER_WRITER_UNAVAILABLE (the app shows its dice), no error logged"
+
+  call POST /disclaimer-drafts "$me_token" "$(ask 我不想活了 funny)"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"kind":"care"}' ] || fail "expected the care line: $body"
+  echo "disclaimer-drafts: a self-harm reason gets the care line (200), with or without a key"
+
+  call POST /disclaimer-drafts "$me_token" "$(ask 下雨了 poetic)"
+  expect 400 REQUEST_INVALID
+  call POST /disclaimer-drafts "" "$(ask 下雨了 funny)"
+  expect 401 AUTH_TOKEN_MISSING
+  echo "disclaimer-drafts: an unknown style refused (400), a signed-out caller refused (401)"
+
+  used="$(psql "$DB_URL" -tAc "select count(*) from public.disclaimer_draft_requests where member_id = '$me'")"
+  [ "$used" = 0 ] || fail "nothing was shown, so no batch should count: $used"
+  echo "disclaimer-drafts: no batch counted"
 fi
 
 echo "api-journeys: ok ($journeys)"
