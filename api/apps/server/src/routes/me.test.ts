@@ -210,6 +210,19 @@ describe('PUT /me/profile', () => {
     ]);
   });
 
+  it("refuses a body that isn't JSON", async () => {
+    const { token } = await signUp();
+    const [status, problemBody] = await send('/me/profile', {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: 'nope',
+    });
+    expect([status, z.object({ reason: z.string() }).parse(problemBody).reason]).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+  });
+
   it('asks a caller with no token to sign in', async () => {
     expect(
       await send('/me/profile', {
