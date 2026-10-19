@@ -29,6 +29,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       photos,
       clock: () => new Date(),
     }),
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     log: createLog(() => undefined),
   });
   try {

@@ -5,3 +5,4 @@ pnpm-lock.yaml
 openapi.json
 # Written by `pnpm db-types` from the migrations; scripts/verify.sh checks it is current.
 packages/check-ins/src/adapters/tables.ts
+packages/disclaimer-drafts/src/adapters/tables.ts

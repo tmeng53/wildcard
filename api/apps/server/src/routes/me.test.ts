@@ -24,6 +24,7 @@ async function getMe(headers: Record<string, string>, supabaseUrl = config.supab
       clock: () => new Date(),
     }),
     photos,
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     log: createLog(() => undefined),
   });
   try {

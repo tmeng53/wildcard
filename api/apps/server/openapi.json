@@ -955,6 +955,120 @@
           "uploadUrl"
         ],
         "additionalProperties": false
+      },
+      "DisclaimerDrafts": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "drafts"
+                ]
+              },
+              "drafts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Three drafts to swipe through, each one line of 15 to 80 characters. The member may edit the one they pick before posting it."
+              }
+            },
+            "required": [
+              "version",
+              "kind",
+              "drafts"
+            ],
+            "additionalProperties": false,
+            "description": "Drafts to pick from."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "care"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "description": "The reason speaks of self-harm. No drafts: show the member the care line and the 988 buttons. Nobody else sees anything."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "declined"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "description": "The AI doesn’t write about this reason. Show the dice suggestions."
+          }
+        ]
+      },
+      "DisclaimerDraftRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 800,
+            "description": "Why the member didn’t train today, as they typed it: 1 to 100 characters. Only this and the style go to the AI, never names, photos or squads.",
+            "example": "早上没起来"
+          },
+          "style": {
+            "type": "string",
+            "enum": [
+              "funny",
+              "unhinged",
+              "heroic",
+              "stubborn"
+            ],
+            "description": "funny 搞笑, unhinged 发疯, heroic 中二 or stubborn 嘴硬."
+          }
+        },
+        "required": [
+          "version",
+          "reason",
+          "style"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {}
@@ -1335,6 +1449,80 @@
           },
           "503": {
             "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/disclaimer-drafts": {
+      "post": {
+        "operationId": "writeDisclaimerDrafts",
+        "summary": "Three AI drafts for a disclaimer",
+        "description": "Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisclaimerDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Drafts, the care line, or a decline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisclaimerDrafts"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The member has used today’s batches",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or no drafts could be written, right now",
             "content": {
               "application/problem+json": {
                 "schema": {

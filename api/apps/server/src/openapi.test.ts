@@ -27,6 +27,7 @@ describe('openapi.json', () => {
         },
       }),
       photos,
+      disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       log: createLog(() => undefined),
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');

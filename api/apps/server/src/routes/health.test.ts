@@ -20,6 +20,7 @@ async function getHealth(db: Database) {
     verifyToken: notCalled,
     checkIns: checkInsOn(db),
     photos,
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     log: createLog((line) => lines.push(line)),
   });
   try {
@@ -84,6 +85,7 @@ describe('an unknown route', () => {
       verifyToken: notCalled,
       checkIns: checkInsOn(db),
       photos,
+      disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       log: createLog(() => undefined),
     });
     const response = await app.request('/nope', { method: 'POST' });

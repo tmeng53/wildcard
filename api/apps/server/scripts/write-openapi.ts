@@ -20,6 +20,7 @@ const app = createApp({
   verifyToken: unused,
   photos,
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
+  disclaimerDrafts: { write: unused },
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

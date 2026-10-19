@@ -1,5 +1,13 @@
 import { serve } from '@hono/node-server';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  DisclaimerWriterUnavailableError,
+  createDisclaimerDrafts,
+  createPostgresDraftAllowance,
+  type LanguageModel,
+} from '@wildcard/disclaimer-drafts';
+
+import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 
 import { createDatabase } from './adapters/postgres.js';
 import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
@@ -16,6 +24,12 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+// Without a key every request for drafts fails, so the app shows its dice.
+const model: LanguageModel =
+  config.anthropicApiKey === undefined
+    ? { answer: () => Promise.reject(new DisclaimerWriterUnavailableError()) }
+    : createAnthropicLanguageModel({ apiKey: config.anthropicApiKey });
+if (config.anthropicApiKey === undefined) log.info('no ANTHROPIC_API_KEY: AI drafts are off');
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -25,6 +39,13 @@ const app = createApp({
     clock: () => new Date(),
   }),
   photos,
+  disclaimerDrafts: createDisclaimerDrafts({
+    model,
+    // The meme library (api/packages/memes) plugs in here once it lands.
+    memes: () => Promise.resolve([]),
+    allowance: createPostgresDraftAllowance(db),
+    clock: () => new Date(),
+  }),
   log,
 });
 
