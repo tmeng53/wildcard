@@ -1,0 +1,676 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "T恤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tee"
+          }
+        }
+      }
+    },
+    "三花": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calico"
+          }
+        }
+      }
+    },
+    "上衣": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tops"
+          }
+        }
+      }
+    },
+    "下装": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bottoms"
+          }
+        }
+      }
+    },
+    "不戴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hat"
+          }
+        }
+      }
+    },
+    "不拿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing"
+          }
+        }
+      }
+    },
+    "中分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curtains"
+          }
+        }
+      }
+    },
+    "丸子头": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bun"
+          }
+        }
+      }
+    },
+    "人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Person"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "兔子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rabbit"
+          }
+        }
+      }
+    },
+    "卫衣": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoodie"
+          }
+        }
+      }
+    },
+    "卷发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curls"
+          }
+        }
+      }
+    },
+    "原色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original"
+          }
+        }
+      }
+    },
+    "双丸子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Space buns"
+          }
+        }
+      }
+    },
+    "双马尾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pigtails"
+          }
+        }
+      }
+    },
+    "发型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hair"
+          }
+        }
+      }
+    },
+    "发带": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Headband"
+          }
+        }
+      }
+    },
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "哈士奇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Husky"
+          }
+        }
+      }
+    },
+    "哑铃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dumbbell"
+          }
+        }
+      }
+    },
+    "垂耳兔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lop"
+          }
+        }
+      }
+    },
+    "奶牛猫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuxedo"
+          }
+        }
+      }
+    },
+    "寸头": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buzz cut"
+          }
+        }
+      }
+    },
+    "就这样": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's me"
+          }
+        }
+      }
+    },
+    "布偶": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ragdoll"
+          }
+        }
+      }
+    },
+    "帽子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hats"
+          }
+        }
+      }
+    },
+    "性格": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Persona"
+          }
+        }
+      }
+    },
+    "戏精": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drama"
+          }
+        }
+      }
+    },
+    "撤销": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        }
+      }
+    },
+    "昵称": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nickname"
+          }
+        }
+      }
+    },
+    "显眼包": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show-off"
+          }
+        }
+      }
+    },
+    "暹罗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siamese"
+          }
+        }
+      }
+    },
+    "柯基": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corgi"
+          }
+        }
+      }
+    },
+    "柴犬": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shiba"
+          }
+        }
+      }
+    },
+    "样子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look"
+          }
+        }
+      }
+    },
+    "棒球帽": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cap"
+          }
+        }
+      }
+    },
+    "橘猫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ginger & white"
+          }
+        }
+      }
+    },
+    "比熊": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bichon"
+          }
+        }
+      }
+    },
+    "波波头": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bob"
+          }
+        }
+      }
+    },
+    "淡人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deadpan"
+          }
+        }
+      }
+    },
+    "熊": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bear"
+          }
+        }
+      }
+    },
+    "狗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dog"
+          }
+        }
+      }
+    },
+    "狸花": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabby"
+          }
+        }
+      }
+    },
+    "狼尾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wolf cut"
+          }
+        }
+      }
+    },
+    "猫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cat"
+          }
+        }
+      }
+    },
+    "玳瑁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tortie"
+          }
+        }
+      }
+    },
+    "球衣": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jersey"
+          }
+        }
+      }
+    },
+    "短裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shorts"
+          }
+        }
+      }
+    },
+    "社恐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shy"
+          }
+        }
+      }
+    },
+    "穿搭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outfit"
+          }
+        }
+      }
+    },
+    "第 %lld 步，共 %lld 步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld of %lld"
+          }
+        }
+      }
+    },
+    "篮球": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basketball"
+          }
+        }
+      }
+    },
+    "紧身裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leggings"
+          }
+        }
+      }
+    },
+    "网球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tennis racket"
+          }
+        }
+      }
+    },
+    "背心": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tank top"
+          }
+        }
+      }
+    },
+    "荷兰兔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dutch rabbit"
+          }
+        }
+      }
+    },
+    "边牧": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Border collie"
+          }
+        }
+      }
+    },
+    "运动短裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gym shorts"
+          }
+        }
+      }
+    },
+    "返回": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "道具": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Props"
+          }
+        }
+      }
+    },
+    "金毛": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Golden"
+          }
+        }
+      }
+    },
+    "长发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long hair"
+          }
+        }
+      }
+    },
+    "随机换一个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "颜色 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color %lld"
+          }
+        }
+      }
+    },
+    "马尾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ponytail"
+          }
+        }
+      }
+    },
+    "高能量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "High energy"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

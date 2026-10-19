@@ -44,7 +44,7 @@ public enum PlaceholderCharacter {
         try Figure(rig: rig(), outfit: outfit, art: BundledArt())
     }
 
-    private static func file(_ path: String) throws(AvatarError) -> Data {
+    static func file(_ path: String) throws(AvatarError) -> Data {
         guard let data = try? Data(contentsOf: folder.appendingPathComponent(path)) else { throw .missingFile(path) }
         return data
     }

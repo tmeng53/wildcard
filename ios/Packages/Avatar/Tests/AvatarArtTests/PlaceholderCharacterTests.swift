@@ -1,5 +1,6 @@
 import AvatarArt
 import AvatarDomain
+import Foundation
 import Testing
 
 /// The bundled files load and fit together, so a broken edit to them fails here, not on a phone.
@@ -141,4 +142,29 @@ private func outline(_ path: [PathElement]) -> [Point] {
         }
     }
     return points
+}
+
+/// Every body the editor groups is bundled, and every bundled body except `tan` (a skin tone the
+/// person's swatches cover) is in a group; every prop it offers is bundled.
+@Test func theEditorOffersBundledArt() throws {
+    let choices = try PlaceholderCharacter.editorChoices()
+    #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
+    #expect(choices.species.map(\.wearsHair) == [true, false, false, false, false])
+    let grouped = choices.species.flatMap(\.bodies)
+    #expect(Set(grouped).count == grouped.count)
+    #expect(Set(grouped).union(["tan"]) == Set(PlaceholderCharacter.variants(for: "body")))
+    #expect(choices.props == ["dumbbell", "racket"])
+    #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
+}
+
+@Test func tonesNameTheColorAnUncoloredVariantShows() {
+    #expect(PlaceholderCharacter.tones(for: "top", wearing: "tee")?.base == RGBAColor(hex: "#2D5BA0"))
+    #expect(PlaceholderCharacter.tones(for: "body", wearing: "calico") == nil)
+    #expect(PlaceholderCharacter.tones(for: "prop", wearing: "dumbbell") == nil)
+}
+
+@Test func editorChoicesOfAnotherVersionAreRejected() {
+    #expect(throws: AvatarError.unsupportedVersion(2)) {
+        try EditorChoices.decode(Data(#"{"version": 2, "species": [], "props": []}"#.utf8))
+    }
 }
