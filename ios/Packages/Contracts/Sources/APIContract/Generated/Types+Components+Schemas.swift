@@ -294,6 +294,50 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/AccountDeletion`.
+        public struct AccountDeletion: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AccountDeletion/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AccountDeletion/version`.
+            public var version: Components.Schemas.AccountDeletion.VersionPayload
+            /// For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens. Required for an account that signs in with Apple once revocation is set up.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AccountDeletion/appleAuthorizationCode`.
+            public var appleAuthorizationCode: Swift.String?
+            /// Creates a new `AccountDeletion`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - appleAuthorizationCode: For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens. Required for an account that signs in with Apple once revocation is set up.
+            public init(
+                version: Components.Schemas.AccountDeletion.VersionPayload,
+                appleAuthorizationCode: Swift.String? = nil
+            ) {
+                self.version = version
+                self.appleAuthorizationCode = appleAuthorizationCode
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case appleAuthorizationCode
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AccountDeletion.VersionPayload.self,
+                    forKey: .version
+                )
+                self.appleAuthorizationCode = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .appleAuthorizationCode
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "appleAuthorizationCode"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckIn`.
         @frozen public enum CheckIn: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckIn/CheatMealCheckIn`.

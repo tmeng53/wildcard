@@ -5,17 +5,18 @@
  */
 export interface Log {
   error(message: string, fields?: Record<string, unknown>): void;
+  warn(message: string, fields?: Record<string, unknown>): void;
   info(message: string, fields?: Record<string, unknown>): void;
 }
 
 /** A log that writes each entry as one line to `write` (stdout in production). */
 export function createLog(write: (line: string) => void): Log {
   const entry =
-    (severity: 'ERROR' | 'INFO') =>
+    (severity: 'ERROR' | 'WARNING' | 'INFO') =>
     (message: string, fields: Record<string, unknown> = {}): void => {
       write(`${JSON.stringify({ severity, message, ...fields }, describeErrors)}\n`);
     };
-  return { error: entry('ERROR'), info: entry('INFO') };
+  return { error: entry('ERROR'), warn: entry('WARNING'), info: entry('INFO') };
 }
 
 /** `JSON.stringify` drops an Error's message and stack, which are what a log needs. */

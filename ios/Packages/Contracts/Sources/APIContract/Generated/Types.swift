@@ -18,6 +18,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me`.
     /// - Remark: Generated from `#/paths//me/get(getMe)`.
     func getMe(_ input: Operations.GetMe.Input) async throws -> Operations.GetMe.Output
+    /// Delete the signed-in member’s account
+    ///
+    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
+    ///
+    /// - Remark: HTTP `DELETE /me`.
+    /// - Remark: Generated from `#/paths//me/delete(deleteMe)`.
+    func deleteMe(_ input: Operations.DeleteMe.Input) async throws -> Operations.DeleteMe.Output
     /// Save the signed-in member’s profile
     ///
     /// Creates the profile on the first save, right after signing up, and replaces it after that. Safe to repeat.
@@ -131,6 +138,21 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/get(getMe)`.
     public func getMe(headers: Operations.GetMe.Input.Headers = .init()) async throws -> Operations.GetMe.Output {
         try await getMe(Operations.GetMe.Input(headers: headers))
+    }
+    /// Delete the signed-in member’s account
+    ///
+    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
+    ///
+    /// - Remark: HTTP `DELETE /me`.
+    /// - Remark: Generated from `#/paths//me/delete(deleteMe)`.
+    public func deleteMe(
+        headers: Operations.DeleteMe.Input.Headers = .init(),
+        body: Operations.DeleteMe.Input.Body
+    ) async throws -> Operations.DeleteMe.Output {
+        try await deleteMe(Operations.DeleteMe.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// Save the signed-in member’s profile
     ///
