@@ -1,5 +1,5 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
-import type { ReactionKind } from '../../domain/reaction.js';
+import { sharedSquads, type ReactionKind } from '../../domain/reaction.js';
 import type { CheckInStore, ReactionStore } from '../../ports.js';
 
 /**
@@ -27,7 +27,9 @@ export async function reactionsReceived(
   );
   const byKind = new Map<ReactionKind, Set<MemberId>>();
   for (const { member: from, kind, audience } of received) {
-    if (!audience.some((squad) => membersOf.get(squad)?.has(from) === true)) continue;
+    // The member is the author, so they see it through the squads it went to that they're in.
+    const through = sharedSquads({ audience }, { viewerSquads: squads, authorSquads: squads });
+    if (!through.some((squad) => membersOf.get(squad)?.has(from) === true)) continue;
     const people = byKind.get(kind) ?? new Set<MemberId>();
     people.add(from);
     byKind.set(kind, people);

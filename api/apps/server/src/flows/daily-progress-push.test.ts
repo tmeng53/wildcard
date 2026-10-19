@@ -304,6 +304,26 @@ describe('the daily progress push', () => {
     ]);
   });
 
+  it('looks back to 6pm the day before on their clock when there was no push before', async () => {
+    const eve = await member(evening);
+    const [before, after] = [await member(morning), await member(morning)];
+    const squad = await squadOf(eve, before, after);
+    const checkIn = await trained(eve, squad);
+    await react({ token: before.token, checkIn, kind: 'cheer' });
+    await react({ token: after.token, checkIn, kind: 'cheer' });
+    // 6pm yesterday on eve's clock, `offset` hours ahead of UTC.
+    const sixPm = Date.parse(dayAt(eve.offset)) - 24 * HOUR + (18 - eve.offset) * HOUR;
+    const at = (member: string, ms: number) =>
+      sql`update public.check_in_reactions set reacted_at = ${new Date(ms)}
+        where check_in_id = ${checkIn} and member_id = ${member}`.execute(db);
+    await at(before.userId, sixPm - 60_000);
+    await at(after.userId, sixPm + 60_000);
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      { alert: { args: ['1', '15', '1'] }, event: { received: { cheer: 1 } } },
+    ]);
+  });
+
   it('leaves out a reaction from a teammate no longer in the squad the check-in went to', async () => {
     const [eve, mate] = [await member(evening), await member(morning)];
     const first = await squadOf(eve, mate);
