@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AppleAuthorizationCodeInvalidError,
+  AppleAuthorizationCodeRequiredError,
   AppleSignInUnavailableError,
   AuthKeysUnavailableError,
   AuthTokenInvalidError,
@@ -23,6 +24,7 @@ describe('server errors', () => {
         new AuthKeysUnavailableError(),
         new AuthUnavailableError(),
         new AppleAuthorizationCodeInvalidError(),
+        new AppleAuthorizationCodeRequiredError(),
         new AppleSignInUnavailableError(),
         new DatabaseUnavailableError(),
         new RequestInvalidError('bad'),
@@ -37,6 +39,11 @@ describe('server errors', () => {
       [
         'AppleAuthorizationCodeInvalidError',
         'APPLE_AUTHORIZATION_CODE_INVALID',
+        'INVALID_ARGUMENT',
+      ],
+      [
+        'AppleAuthorizationCodeRequiredError',
+        'APPLE_AUTHORIZATION_CODE_REQUIRED',
         'INVALID_ARGUMENT',
       ],
       ['AppleSignInUnavailableError', 'APPLE_SIGN_IN_UNAVAILABLE', 'UNAVAILABLE'],

@@ -24,6 +24,7 @@ describe('openapi.json', () => {
       accounts: {
         verifySession: () => Promise.reject(new Error('unused')),
         deleteUser: () => Promise.reject(new Error('unused')),
+        signsInWithApple: () => Promise.reject(new Error('unused')),
       },
       revokeAppleSignIn: undefined,
       checkIns: createCheckIns({

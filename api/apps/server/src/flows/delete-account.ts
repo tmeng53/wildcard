@@ -1,3 +1,4 @@
+import { AppleAuthorizationCodeRequiredError } from '../errors.js';
 import type { Log } from '../log.js';
 import type { Accounts, PhotoStorage, RevokeAppleSignIn, UserId } from '../ports.js';
 
@@ -22,12 +23,15 @@ export async function deleteAccount(
   request: { readonly member: UserId; readonly appleAuthorizationCode: string | undefined },
 ): Promise<void> {
   const { member, appleAuthorizationCode } = request;
-  if (appleAuthorizationCode !== undefined) {
-    if (deps.revokeAppleSignIn === undefined) {
+  if (deps.revokeAppleSignIn === undefined) {
+    if (appleAuthorizationCode !== undefined) {
       deps.log.warn('Sign in with Apple not revoked: no Apple key is configured', { member });
-    } else {
-      await deps.revokeAppleSignIn(appleAuthorizationCode);
     }
+  } else if (appleAuthorizationCode !== undefined) {
+    await deps.revokeAppleSignIn(appleAuthorizationCode);
+  } else if (await deps.accounts.signsInWithApple(member)) {
+    // The server decides, not the app: an Apple account is never deleted with its grant left.
+    throw new AppleAuthorizationCodeRequiredError();
   }
   await deps.photos.deleteAllOf(member);
   await deps.accounts.deleteUser(member);

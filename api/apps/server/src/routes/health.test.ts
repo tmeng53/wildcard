@@ -24,7 +24,7 @@ async function getHealth(db: Database) {
   const app = createApp({
     db,
     verifyToken: notCalled,
-    accounts: { verifySession: notCalled, deleteUser: notCalled },
+    accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
     revokeAppleSignIn: undefined,
     checkIns: checkInsOn(db),
     photos,
@@ -91,7 +91,7 @@ describe('an unknown route', () => {
     const app = createApp({
       db,
       verifyToken: notCalled,
-      accounts: { verifySession: notCalled, deleteUser: notCalled },
+      accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
       revokeAppleSignIn: undefined,
       checkIns: checkInsOn(db),
       photos,

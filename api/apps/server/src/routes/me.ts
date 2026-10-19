@@ -43,7 +43,8 @@ export const AccountDeletion = z
       .meta({
         description:
           'For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with ' +
-          'Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens.',
+          'Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens. ' +
+          'Required for an account that signs in with Apple once revocation is set up.',
       }),
   })
   .openapi('AccountDeletion');
@@ -117,7 +118,9 @@ export function me(
     responses: {
       204: { description: 'Deleted' },
       400: problem(
-        'Not a valid request, or an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`)',
+        'Not a valid request, an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`), ' +
+          'or no Apple code for an account that signs in with Apple ' +
+          '(`APPLE_AUTHORIZATION_CODE_REQUIRED`)',
       ),
       401: problem('No bearer token, or not a current sign-in'),
       ...jsonBodyFailures,

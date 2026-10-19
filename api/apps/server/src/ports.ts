@@ -37,6 +37,11 @@ export interface Accounts {
    * nothing. Throws `AuthUnavailableError` when the provider can't be reached.
    */
   readonly deleteUser: (userId: UserId) => Promise<void>;
+  /**
+   * Whether the user signs in with Apple, so deleting them must revoke Apple's grant. False
+   * for a user who is gone. Throws `AuthUnavailableError` when the provider can't be reached.
+   */
+  readonly signsInWithApple: (userId: UserId) => Promise<boolean>;
 }
 
 /**

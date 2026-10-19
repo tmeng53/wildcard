@@ -2,10 +2,12 @@ import { createServer, type Server } from 'node:http';
 import { randomUUID, webcrypto, type JsonWebKey } from 'node:crypto';
 
 import { sign } from 'hono/jwt';
+import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { UserId } from '../ports.js';
 import { config, signOut, signUp } from '../test-kit/local-supabase.js';
+import { createDatabase } from './postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from './supabase-auth.js';
 
 // A stand-in issuer serving a JWKS whose private keys the test holds, so it can sign tokens
@@ -184,6 +186,26 @@ describe('createSupabaseAccounts', () => {
     await accounts.deleteUser(UserId.parse(userId));
   });
 
+  it('says whether a user signs in with Apple, from their linked identities', async () => {
+    const { userId } = await signUp();
+    const id = UserId.parse(userId);
+    const before = await accounts.signsInWithApple(id);
+    const db = createDatabase(config.databaseUrl);
+    try {
+      await sql`insert into auth.identities (provider_id, user_id, identity_data, provider, created_at, updated_at, last_sign_in_at)
+        values (${randomUUID()}, ${userId}, '{}'::jsonb, 'apple', now(), now(), now())`.execute(db);
+    } finally {
+      await db.destroy();
+    }
+    const after = await accounts.signsInWithApple(id);
+    await accounts.deleteUser(id);
+    expect([before, after, await accounts.signsInWithApple(id)]).toStrictEqual([
+      false,
+      true,
+      false,
+    ]);
+  });
+
   it('says Auth is unavailable when it can’t be reached or refuses the secret key', async () => {
     const { token, userId } = await signUp();
     // Nothing listens on port 1.
@@ -200,7 +222,13 @@ describe('createSupabaseAccounts', () => {
         reasonOf(unreachable.verifySession(token)),
         reasonOf(unreachable.deleteUser(UserId.parse(userId))),
         reasonOf(wrongKey.deleteUser(UserId.parse(userId))),
+        reasonOf(wrongKey.signsInWithApple(UserId.parse(userId))),
       ]),
-    ).toStrictEqual(['AUTH_UNAVAILABLE', 'AUTH_UNAVAILABLE', 'AUTH_UNAVAILABLE']);
+    ).toStrictEqual([
+      'AUTH_UNAVAILABLE',
+      'AUTH_UNAVAILABLE',
+      'AUTH_UNAVAILABLE',
+      'AUTH_UNAVAILABLE',
+    ]);
   });
 });

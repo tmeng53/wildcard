@@ -117,6 +117,17 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
   return { me, friend, squad };
 }
 
+/**
+ * Links an Apple identity to a member, as signing in with Apple does. Local Supabase can't do
+ * a real Sign in with Apple, so the test writes Auth's own record of it.
+ */
+async function linkAppleIdentity(member: string) {
+  await sql`insert into auth.identities (provider_id, user_id, identity_data, provider, created_at, updated_at, last_sign_in_at)
+    values (${randomUUID()}, ${member}, ${JSON.stringify({ sub: member })}::jsonb, 'apple', now(), now(), now())`.execute(
+    db,
+  );
+}
+
 /** How many rows of each kind are the member's, and how many files are in their folder. */
 async function whatIsLeftOf(member: string) {
   const count = async (query: ReturnType<typeof sql<{ n: number }>>) =>
@@ -223,6 +234,39 @@ describe('DELETE /me', () => {
       ['c0de'],
       nothing,
     ]);
+  });
+
+  it('refuses to delete an Apple account without a code, once revocation is set up', async () => {
+    const codes: string[] = [];
+    const { call } = appWith((code) => {
+      codes.push(code);
+      return Promise.resolve();
+    });
+    const { me } = await memberWithEverything(call);
+    await linkAppleIdentity(me.userId);
+    const refused = await call('DELETE', '/me', me.token, { version: 1 });
+    expect([refused.status, reasonOf(refused.body), codes]).toStrictEqual([
+      400,
+      'APPLE_AUTHORIZATION_CODE_REQUIRED',
+      [],
+    ]);
+    expect(await whatIsLeftOf(me.userId)).toStrictEqual(everything);
+    const deleted = await call('DELETE', '/me', me.token, {
+      version: 1,
+      appleAuthorizationCode: 'c0de',
+    });
+    expect([deleted.status, codes, await whatIsLeftOf(me.userId)]).toStrictEqual([
+      204,
+      ['c0de'],
+      nothing,
+    ]);
+  });
+
+  it('deletes an account that doesn’t sign in with Apple without a code', async () => {
+    const { call } = appWith(() => Promise.reject(new Error('Apple is not called')));
+    const me = await signUp();
+    const response = await call('DELETE', '/me', me.token, { version: 1 });
+    expect([response.status, await whatIsLeftOf(me.userId)]).toStrictEqual([204, nothing]);
   });
 
   it('deletes nothing when Apple refuses the code, so the app can retry with a new one', async () => {

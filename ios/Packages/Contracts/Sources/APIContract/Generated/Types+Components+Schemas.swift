@@ -302,7 +302,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/AccountDeletion/version`.
             public var version: Components.Schemas.AccountDeletion.VersionPayload
-            /// For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens.
+            /// For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens. Required for an account that signs in with Apple once revocation is set up.
             ///
             /// - Remark: Generated from `#/components/schemas/AccountDeletion/appleAuthorizationCode`.
             public var appleAuthorizationCode: Swift.String?
@@ -310,7 +310,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - appleAuthorizationCode: For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens.
+            ///   - appleAuthorizationCode: For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens. Required for an account that signs in with Apple once revocation is set up.
             public init(
                 version: Components.Schemas.AccountDeletion.VersionPayload,
                 appleAuthorizationCode: Swift.String? = nil

@@ -24,7 +24,7 @@ const photos = {
 const app = createApp({
   db,
   verifyToken: unused,
-  accounts: { verifySession: unused, deleteUser: unused },
+  accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
   revokeAppleSignIn: undefined,
   photos,
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),

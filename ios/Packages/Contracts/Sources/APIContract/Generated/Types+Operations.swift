@@ -497,7 +497,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid request, or an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`)
+            /// Not a valid request, an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`), or no Apple code for an account that signs in with Apple (`APPLE_AUTHORIZATION_CODE_REQUIRED`)
             ///
             /// - Remark: Generated from `#/paths//me/delete(deleteMe)/responses/400`.
             ///

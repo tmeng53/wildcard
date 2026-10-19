@@ -112,6 +112,8 @@ export function createSupabaseTokenVerifier(options: {
 
 // Plain `z.object`: a third party's payload, which carries more fields than we read.
 const User = z.object({ id: UserId });
+// The sign-in methods linked to a user, each an identity naming its provider.
+const Identities = z.object({ identities: z.array(z.object({ provider: z.string() })).nullish() });
 
 /**
  * The accounts port on Supabase Auth's HTTP API. Sessions are checked with the member's own
@@ -159,6 +161,15 @@ export function createSupabaseAccounts(options: {
       });
       // 404: deleted already, by an earlier try.
       if (!response.ok && response.status !== 404) throw await unavailable(response);
+    },
+    async signsInWithApple(userId) {
+      const response = await call(`/admin/users/${userId}`, {
+        headers: { apikey: options.secretKey },
+      });
+      if (response.status === 404) return false;
+      if (!response.ok) throw await unavailable(response);
+      const { identities } = Identities.parse(await response.json());
+      return (identities ?? []).some(({ provider }) => provider === 'apple');
     },
   };
 }

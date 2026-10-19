@@ -61,6 +61,21 @@ export class AppleAuthorizationCodeInvalidError extends AppError {
   }
 }
 
+/**
+ * Thrown when a member who signs in with Apple deletes their account without a fresh Sign in
+ * with Apple authorization code, so Apple's grant can't be revoked. Ask Apple for one and send
+ * it.
+ */
+export class AppleAuthorizationCodeRequiredError extends AppError {
+  override readonly name = 'AppleAuthorizationCodeRequiredError';
+  readonly reason = 'APPLE_AUTHORIZATION_CODE_REQUIRED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('This account signs in with Apple. Sign in with Apple again to delete it.');
+  }
+}
+
 /** Thrown when Apple's Sign in with Apple servers don't answer. Retry. */
 export class AppleSignInUnavailableError extends AppError {
   override readonly name = 'AppleSignInUnavailableError';
