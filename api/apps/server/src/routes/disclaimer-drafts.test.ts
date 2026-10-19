@@ -6,12 +6,13 @@ import {
 } from '@wildcard/check-ins';
 import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createAnthropicLanguageModel } from '../adapters/anthropic-language-model.js';
 import { createDatabase } from '../adapters/postgres.js';
-import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
@@ -32,9 +33,15 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+    accounts: createSupabaseAccounts({
+      supabaseUrl: config.supabaseUrl,
+      secretKey: config.supabaseSecretKey,
+    }),
+    revokeAppleSignIn: undefined,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,
+      calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     photos,
@@ -54,6 +61,7 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
+    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
   });
   return { app, requests: recorded.requests };

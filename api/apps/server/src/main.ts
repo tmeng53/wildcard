@@ -13,11 +13,12 @@ import {
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
-
 import { createDatabase } from './adapters/postgres.js';
-import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
+import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
@@ -39,13 +40,25 @@ const model: LanguageModel =
     : createAnthropicLanguageModel({ apiKey: config.anthropicApiKey });
 if (config.anthropicApiKey === undefined) log.info('no ANTHROPIC_API_KEY: AI drafts are off');
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
+if (config.appleSignInKey === undefined) {
+  log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
+}
 const members = createMembers({ store: createPostgresProfileStore(db) });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  accounts: createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  revokeAppleSignIn:
+    config.appleSignInKey === undefined
+      ? undefined
+      : createAppleSignInRevoker(config.appleSignInKey),
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
@@ -54,6 +67,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   photos,
   disclaimerDrafts: createDisclaimerDrafts({
     model,

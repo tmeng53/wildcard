@@ -3,26 +3,33 @@ import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
 import type { DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Squads } from '@wildcard/squads';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
-import type { Database, PhotoStorage, VerifyToken } from './ports.js';
+import type { Accounts, Database, PhotoStorage, RevokeAppleSignIn, VerifyToken } from './ports.js';
 import { problemResponse } from './problem.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
+import { squads } from './routes/squads.js';
+import { squadToday } from './routes/squad-today.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
 export interface AppDependencies {
   readonly db: Database;
   readonly verifyToken: VerifyToken;
+  readonly accounts: Accounts;
+  /** Undefined until the Sign in with Apple key is configured. */
+  readonly revokeAppleSignIn: RevokeAppleSignIn | undefined;
   readonly checkIns: CheckIns;
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
+  readonly squads: Squads;
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly log: Log;
@@ -47,6 +54,8 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
+  app.route('/', squads(deps));
+  app.route('/', squadToday(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
 

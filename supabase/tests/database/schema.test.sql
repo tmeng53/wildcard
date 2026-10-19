@@ -1,13 +1,13 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(19);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
   ('b0000000-0000-0000-0000-000000000002', 'bo@example.com');
-insert into public.squads (id, name, created_by) values
-  ('5a000000-0000-0000-0000-000000000001', '早八跑团', 'a0000000-0000-0000-0000-000000000001');
+insert into public.squads (id, name, created_by, invite_code) values
+  ('5a000000-0000-0000-0000-000000000001', '早八跑团', 'a0000000-0000-0000-0000-000000000001', 'K7M2QX9P');
 insert into public.squad_members (squad_id, member_id) values
   ('5a000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001'),
   ('5a000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002');
@@ -62,6 +62,17 @@ select lives_ok(
 select lives_ok(
   $$select pg_temp.check_in(gen_random_uuid(), 'a0000000-0000-0000-0000-000000000001', 'trained', '{"version":1,"sport":"swim","minutes":20}')$$,
   'other kinds that day are fine'
+);
+
+-- Invite codes.
+select throws_ok(
+  $$insert into public.squads (name, invite_code) values ('夜跑团', 'K7M2QX9P')$$,
+  '23505', 'duplicate key value violates unique constraint "squads_invite_code_key"',
+  'two squads never share an invite code, which the API reads as "make another"'
+);
+select throws_ok(
+  $$insert into public.squads (name) values ('夜跑团')$$,
+  '23502', null, 'every squad has an invite code'
 );
 
 -- Audience and photos.

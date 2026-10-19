@@ -5,11 +5,12 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
-import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
@@ -29,10 +30,16 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+    accounts: createSupabaseAccounts({
+      supabaseUrl: config.supabaseUrl,
+      secretKey: config.supabaseSecretKey,
+    }),
+    revokeAppleSignIn: undefined,
     photos,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,
+      calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
@@ -42,6 +49,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
   });
   try {

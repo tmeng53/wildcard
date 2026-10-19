@@ -16,6 +16,10 @@ export interface CheckInStore {
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
   /** The squads `member` is in now. */
   squadsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
+  /** The members in `squad` now, in the order they joined. */
+  membersOf(squad: SquadId): Promise<MemberId[]>;
+  /** Days ever with a 练了 from `member`. Several 练了 on one day count once. */
+  countTrainedDays(member: MemberId): Promise<number>;
   /**
    * Check-ins sent to `squad` from members still in it, newest day first, with their whole
    * audience.

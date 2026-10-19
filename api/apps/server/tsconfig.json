@@ -21,6 +21,9 @@
     },
     {
       "path": "../../packages/memes"
+    },
+    {
+      "path": "../../packages/squads"
     }
   ]
 }
