@@ -1,3 +1,5 @@
+import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+import { typedText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 // What a member asks for when they tap 「编几句」 on a 请假条: the reason they typed, and
@@ -6,40 +8,26 @@ import { z } from 'zod';
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
-/** The four styles (Tracy, 2026-10-19), as the wire names them. */
-export const DraftStyle = z.enum(['funny', 'unhinged', 'heroic', 'stubborn']);
-export type DraftStyle = z.infer<typeof DraftStyle>;
-
 /** Each style's name in the prompt. */
-export const STYLE_NAMES: Record<DraftStyle, string> = {
+export const STYLE_NAMES: Record<DisclaimerStyle, string> = {
   funny: '搞笑',
   unhinged: '发疯',
   heroic: '中二',
   stubborn: '嘴硬',
 };
 
-const graphemes = new Intl.Segmenter('und', { granularity: 'grapheme' });
-
-/** Characters as people see them: a Chinese character or an emoji is one. */
-export function graphemeCount(text: string): number {
-  return Array.from(graphemes.segment(text)).length;
-}
-
 /** The longest reason the model is sent, in characters. A reason is a sentence, not a story. */
 const REASON_MAX = 100;
 
 /**
- * The reason as typed. Line breaks and runs of spaces become one space, so the reason stays one
- * line of the prompt and can't pose as another field.
+ * The reason as typed. Line breaks and runs of spaces become one space first, so the reason stays
+ * one line of the prompt and can't pose as another field; then it follows the rules for typed text.
  */
 export const DraftReason = z
   .string()
   .max(REASON_MAX * 8)
-  .transform((text) => text.replace(/\s+/gu, ' ').trim())
-  .refine((text) => text.length > 0, { message: 'Must not be empty' })
-  .refine((text) => graphemeCount(text) <= REASON_MAX, {
-    message: `Must be at most ${String(REASON_MAX)} characters`,
-  })
+  .transform((text) => text.replace(/\s+/gu, ' '))
+  .pipe(typedText({ max: REASON_MAX, oneLine: true, description: 'The reason as typed.' }))
   .brand<'DraftReason'>();
 export type DraftReason = z.infer<typeof DraftReason>;
 
@@ -48,7 +36,7 @@ export interface PromptMeme {
   readonly phrase: string;
   readonly meaning: string;
   readonly background: string;
-  readonly styles: readonly DraftStyle[];
+  readonly styles: readonly DisclaimerStyle[];
 }
 
 /**

@@ -12,6 +12,10 @@
 create table public.squads (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  -- The code members share: a friend types it, or an invite link carries it, to join. The
+  -- API makes it and keeps every rule about joining (at most 8 members, at most 3 squads a
+  -- member); the database keeps codes unique, so two squads never answer to one code.
+  invite_code text not null unique,
   -- Null once the creator deletes their account: the squad belongs to its members.
   created_by uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now()
@@ -35,6 +39,9 @@ create table public.profiles (
   -- the member's weekly reset and their squad's daily recap time. A name, not an offset:
   -- offsets change with daylight saving, names don't.
   time_zone text not null,
+  -- When the member joined: the profile is saved right after their first sign-in. Days of
+  -- the week before it weren't theirs, so a weekly plan may still change them.
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
@@ -71,8 +78,6 @@ create table public.check_ins (
   day date not null,
   -- When the member made it, from their phone (it may sync later from offline).
   created_at timestamptz not null,
-  -- When the server took it.
-  received_at timestamptz not null default now(),
   kind public.check_in_kind not null,
   -- The kind's own fields (sport and minutes, meal slot, disclaimer text, caption), as
   -- stored JSON with its shape's version at the top: {"version": 1, ...}. The API owns

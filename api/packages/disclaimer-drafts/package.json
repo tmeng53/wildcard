@@ -13,7 +13,9 @@
     }
   },
   "dependencies": {
+    "@wildcard/disclaimer-styles": "workspace:*",
     "@wildcard/errors": "workspace:*",
+    "@wildcard/typed-text": "workspace:*",
     "kysely": "0.29.7",
     "zod": "4.6.7"
   },
