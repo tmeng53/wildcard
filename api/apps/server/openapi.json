@@ -483,7 +483,7 @@
             ]
           },
           "disclaimer": {
-            "$ref": "#/components/schemas/Disclaimer"
+            "$ref": "#/components/schemas/DisclaimerView"
           }
         },
         "required": [
@@ -498,7 +498,7 @@
         ],
         "additionalProperties": false
       },
-      "Disclaimer": {
+      "DisclaimerView": {
         "type": "object",
         "properties": {
           "text": {
@@ -506,6 +506,13 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 40 characters as people see them; may span lines.",
             "x-max-characters": 40
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoView"
+            },
+            "description": "1 to 3 photos, the cover first. Missing when there are none."
           }
         },
         "required": [
@@ -786,6 +793,30 @@
           "audience",
           "kind",
           "disclaimer"
+        ],
+        "additionalProperties": false
+      },
+      "Disclaimer": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 40 characters as people see them; may span lines.",
+            "x-max-characters": 40
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoRef"
+            },
+            "minItems": 1,
+            "maxItems": 3,
+            "description": "1 to 3 photos, the cover first. Leave it out for none."
+          }
+        },
+        "required": [
+          "text"
         ],
         "additionalProperties": false
       },

@@ -858,7 +858,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/kind`.
             public var kind: Components.Schemas.DisclaimerCheckIn.KindPayload
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/disclaimer`.
-            public var disclaimer: Components.Schemas.Disclaimer
+            public var disclaimer: Components.Schemas.DisclaimerView
             /// Creates a new `DisclaimerCheckIn`.
             ///
             /// - Parameters:
@@ -878,7 +878,7 @@ extension Components {
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
                 kind: Components.Schemas.DisclaimerCheckIn.KindPayload,
-                disclaimer: Components.Schemas.Disclaimer
+                disclaimer: Components.Schemas.DisclaimerView
             ) {
                 self.version = version
                 self.id = id
@@ -930,7 +930,7 @@ extension Components {
                     forKey: .kind
                 )
                 self.disclaimer = try container.decode(
-                    Components.Schemas.Disclaimer.self,
+                    Components.Schemas.DisclaimerView.self,
                     forKey: .disclaimer
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
@@ -945,21 +945,31 @@ extension Components {
                 ])
             }
         }
-        /// - Remark: Generated from `#/components/schemas/Disclaimer`.
-        public struct Disclaimer: Codable, Hashable, Sendable {
+        /// - Remark: Generated from `#/components/schemas/DisclaimerView`.
+        public struct DisclaimerView: Codable, Hashable, Sendable {
             /// Trimmed, then 1 to 40 characters as people see them; may span lines.
             ///
-            /// - Remark: Generated from `#/components/schemas/Disclaimer/text`.
+            /// - Remark: Generated from `#/components/schemas/DisclaimerView/text`.
             public var text: Swift.String
-            /// Creates a new `Disclaimer`.
+            /// 1 to 3 photos, the cover first. Missing when there are none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerView/photos`.
+            public var photos: [Components.Schemas.PhotoView]?
+            /// Creates a new `DisclaimerView`.
             ///
             /// - Parameters:
             ///   - text: Trimmed, then 1 to 40 characters as people see them; may span lines.
-            public init(text: Swift.String) {
+            ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
+            public init(
+                text: Swift.String,
+                photos: [Components.Schemas.PhotoView]? = nil
+            ) {
                 self.text = text
+                self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case text
+                case photos
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -967,8 +977,13 @@ extension Components {
                     Swift.String.self,
                     forKey: .text
                 )
+                self.photos = try container.decodeIfPresent(
+                    [Components.Schemas.PhotoView].self,
+                    forKey: .photos
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "text"
+                    "text",
+                    "photos"
                 ])
             }
         }
@@ -1511,6 +1526,48 @@ extension Components {
                     "audience",
                     "kind",
                     "disclaimer"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Disclaimer`.
+        public struct Disclaimer: Codable, Hashable, Sendable {
+            /// Trimmed, then 1 to 40 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Disclaimer/text`.
+            public var text: Swift.String
+            /// 1 to 3 photos, the cover first. Leave it out for none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Disclaimer/photos`.
+            public var photos: [Components.Schemas.PhotoRef]?
+            /// Creates a new `Disclaimer`.
+            ///
+            /// - Parameters:
+            ///   - text: Trimmed, then 1 to 40 characters as people see them; may span lines.
+            ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
+            public init(
+                text: Swift.String,
+                photos: [Components.Schemas.PhotoRef]? = nil
+            ) {
+                self.text = text
+                self.photos = photos
+            }
+            public enum CodingKeys: String, CodingKey {
+                case text
+                case photos
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.text = try container.decode(
+                    Swift.String.self,
+                    forKey: .text
+                )
+                self.photos = try container.decodeIfPresent(
+                    [Components.Schemas.PhotoRef].self,
+                    forKey: .photos
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "text",
+                    "photos"
                 ])
             }
         }

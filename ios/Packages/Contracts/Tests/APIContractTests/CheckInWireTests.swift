@@ -88,6 +88,20 @@ private func saved(_ kindAndFields: String) -> String {
             == checkIn(.disclaimer(try Disclaimer("腿还在酸"))))
 }
 
+@Test func aDisclaimerCarriesPhotosBothWays() throws {
+    let photos = try Photos([try PhotoRef(path: photoA)])
+    #expect(
+        try encode(try checkIn(.disclaimer(try Disclaimer("躺平也是训练", photos: photos))).draft)
+            .hasSuffix(
+                #""disclaimer":{"photos":[{"path":"\#(photoA)"}],"text":"躺平也是训练"},"kind":"disclaimer","version":1}"#
+            ))
+    let json = saved(
+        #""kind":"disclaimer","disclaimer":{"text":"躺平也是训练","photos":[{"path":"\#(photoA)","url":"https://storage.example.com/a"}]}"#
+    )
+    let viewed = try Photos([try PhotoRef(path: photoA, viewURL: URL(string: "https://storage.example.com/a"))])
+    #expect(try decode(json) == checkIn(.disclaimer(try Disclaimer("躺平也是训练", photos: viewed))))
+}
+
 @Test func aSixtyCharacterCaptionFromTheAPIReads() throws {
     let caption = String(repeating: "爽", count: 60)
     let read = try decode(saved(#""kind":"healthyMeal","meal":{"caption":"\#(caption)"}"#))

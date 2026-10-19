@@ -348,6 +348,51 @@ describe('photos on check-ins', () => {
     ]);
   });
 
+  it('saves a disclaimer with a photo, viewed like any other', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const cover = await uploadPhoto(me.token, 'rain');
+    const { day, createdAt } = todayAndNow();
+    const saved = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: me.token,
+      body: {
+        version: 1,
+        day,
+        createdAt,
+        audience: [squad],
+        kind: 'disclaimer',
+        disclaimer: { text: '下雨了', photos: [{ path: cover }] },
+      },
+    });
+    expect(saved.status).toBe(201);
+    const listed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    const { checkIns } = z
+      .object({
+        checkIns: z.tuple([
+          z.object({
+            disclaimer: z.object({
+              text: z.string(),
+              photos: z.array(z.object({ path: z.string(), url: z.url() })),
+            }),
+          }),
+        ]),
+      })
+      .parse(listed.body);
+    const [{ disclaimer }] = checkIns;
+    expect(disclaimer.text).toBe('下雨了');
+    expect(
+      await Promise.all(
+        disclaimer.photos.map(async ({ path, url }) => [path, await (await fetch(url)).text()]),
+      ),
+    ).toStrictEqual([[cover, 'rain']]);
+  });
+
   it('refuses a photo that isn’t the caller’s, isn’t uploaded, or is already used', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);

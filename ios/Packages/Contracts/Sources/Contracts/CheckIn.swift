@@ -62,19 +62,21 @@ public struct Meal: Hashable, Sendable {
     }
 }
 
-/// 今日免责声明: the member's excuse for resting today, at most `maxLength` characters. It
-/// may span lines.
+/// 今日免责声明: the member's excuse for resting today, at most `maxLength` characters, with
+/// optional photos. The text may span lines.
 public struct Disclaimer: Hashable, Sendable {
     /// Characters, counted as people see them (a Chinese character or emoji is one). The API's
     /// limit; `APIContract`'s tests fail when the two differ.
     public static let maxLength = 40
 
     public let text: String
+    public let photos: Photos?
 
-    public init(_ text: String) throws(ContractsError) {
+    public init(_ text: String, photos: Photos? = nil) throws(ContractsError) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard (1...Self.maxLength).contains(trimmed.count) else { throw .disclaimerLength(trimmed.count) }
         self.text = trimmed
+        self.photos = photos
     }
 }
 

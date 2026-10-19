@@ -53,7 +53,7 @@ func customSportLimitIsTheAPIs(schema: String) throws {
     #expect(try property("text", of: "Disclaimer")?.maxCharacters == Disclaimer.maxLength)
 }
 
-@Test(arguments: ["Training", "Meal"])
+@Test(arguments: ["Training", "Meal", "Disclaimer"])
 func photoCountIsTheAPIs(schema: String) throws {
     #expect(try property("photos", of: schema)?.maxItems == Photos.maxCount)
 }

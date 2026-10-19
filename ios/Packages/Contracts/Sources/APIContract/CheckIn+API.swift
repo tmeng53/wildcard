@@ -26,7 +26,9 @@ extension CheckIn {
         case .disclaimer(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, createdAt: checkIn.createdAt,
-                audience: checkIn.audience, entry: .disclaimer(Disclaimer(checkIn.disclaimer.text)))
+                audience: checkIn.audience,
+                entry: .disclaimer(
+                    Disclaimer(checkIn.disclaimer.text, photos: try Photos(wire: checkIn.disclaimer.photos))))
         }
     }
 
@@ -67,7 +69,7 @@ extension CheckIn {
             .disclaimer(
                 .init(
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .disclaimer,
-                    disclaimer: .init(text: disclaimer.text)))
+                    disclaimer: .init(text: disclaimer.text, photos: disclaimer.photos?.wire)))
         }
     }
 }

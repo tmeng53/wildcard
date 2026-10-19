@@ -122,6 +122,28 @@ describe('saving a check-in', () => {
     ).rejects.toMatchObject({ reason: 'CHECK_IN_ID_CONFLICT' });
   });
 
+  it('stores a disclaimer’s photos apart from its text', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const cover = photoOf(member);
+    const id = CheckInId.parse(randomUUID());
+    const body = draft({
+      audience: [squad],
+      kind: 'disclaimer',
+      disclaimer: { text: '下雨了', photos: [cover] },
+    });
+    const saved = await checkIns.save({ id, member, draft: body });
+    expect(await savedRows(id)).toStrictEqual([
+      {
+        kind: 'disclaimer',
+        payload: { version: 1, text: '下雨了' },
+        squads: [squad],
+        photos: [cover.path],
+      },
+    ]);
+    expect(photosOf(saved.checkIn)).toStrictEqual([cover]);
+  });
+
   it('refuses someone else’s photo, one not uploaded, or one another check-in uses', async () => {
     const member = await newMember();
     const other = await newMember();
