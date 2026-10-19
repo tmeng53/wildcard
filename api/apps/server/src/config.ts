@@ -7,6 +7,8 @@ const Environment = z.object({
   SUPABASE_URL: z.url({ protocol: /^https?$/ }),
   // A Supabase secret key (`sb_secret_…`), for Storage. Never the app's publishable key.
   SUPABASE_SECRET_KEY: z.string().startsWith('sb_secret_'),
+  // For AI 请假条 drafts. Without it the server still runs and the app shows its dice.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
   // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
   // until the key exists (deletions then skip Apple and log a warning).
   APPLE_TEAM_ID: z
@@ -46,6 +48,7 @@ export interface Config {
   readonly databaseUrl: string;
   readonly supabaseUrl: string;
   readonly supabaseSecretKey: string;
+  readonly anthropicApiKey: string | undefined;
   /** Sign in with Apple's key; undefined until it is set up. */
   readonly appleSignInKey:
     | {
@@ -102,6 +105,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     databaseUrl: result.data.DATABASE_URL,
     supabaseUrl: result.data.SUPABASE_URL.replace(/\/+$/, ''),
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
+    anthropicApiKey: result.data.ANTHROPIC_API_KEY,
     appleSignInKey,
     apns:
       APNS_KEY_ID === undefined ||

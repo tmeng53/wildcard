@@ -40,6 +40,7 @@ async function send(
       clock: () => new Date(),
     }),
     photos,
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
