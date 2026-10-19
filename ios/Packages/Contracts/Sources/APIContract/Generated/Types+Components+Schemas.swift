@@ -1756,5 +1756,350 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/Reaction`.
+        public struct Reaction: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Reaction/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Reaction/version`.
+            public var version: Components.Schemas.Reaction.VersionPayload
+            /// Who reacted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reaction/member`.
+            public var member: Swift.String
+            /// Which reaction. The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reaction/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case cheer = "cheer"
+                case highlight = "highlight"
+                case lol = "lol"
+            }
+            /// Which reaction. The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reaction/kind`.
+            public var kind: Components.Schemas.Reaction.KindPayload
+            /// When they reacted, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reaction/reactedAt`.
+            public var reactedAt: Foundation.Date
+            /// Creates a new `Reaction`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - member: Who reacted.
+            ///   - kind: Which reaction. The app shows each with its own copy.
+            ///   - reactedAt: When they reacted, in UTC with milliseconds.
+            public init(
+                version: Components.Schemas.Reaction.VersionPayload,
+                member: Swift.String,
+                kind: Components.Schemas.Reaction.KindPayload,
+                reactedAt: Foundation.Date
+            ) {
+                self.version = version
+                self.member = member
+                self.kind = kind
+                self.reactedAt = reactedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case member
+                case kind
+                case reactedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Reaction.VersionPayload.self,
+                    forKey: .version
+                )
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.Reaction.KindPayload.self,
+                    forKey: .kind
+                )
+                self.reactedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .reactedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "member",
+                    "kind",
+                    "reactedAt"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReactionDraft`.
+        public struct ReactionDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReactionDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReactionDraft/version`.
+            public var version: Components.Schemas.ReactionDraft.VersionPayload
+            /// Which reaction. The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case cheer = "cheer"
+                case highlight = "highlight"
+                case lol = "lol"
+            }
+            /// Which reaction. The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionDraft/kind`.
+            public var kind: Components.Schemas.ReactionDraft.KindPayload
+            /// Creates a new `ReactionDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind: Which reaction. The app shows each with its own copy.
+            public init(
+                version: Components.Schemas.ReactionDraft.VersionPayload,
+                kind: Components.Schemas.ReactionDraft.KindPayload
+            ) {
+                self.version = version
+                self.kind = kind
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ReactionDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.ReactionDraft.KindPayload.self,
+                    forKey: .kind
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "kind"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReactionList`.
+        public struct ReactionList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReactionList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReactionList/version`.
+            public var version: Components.Schemas.ReactionList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload`.
+            public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
+                /// Who reacted.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/member`.
+                public var member: Swift.String
+                /// Which reaction. The app shows each with its own copy.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case cheer = "cheer"
+                    case highlight = "highlight"
+                    case lol = "lol"
+                }
+                /// Which reaction. The app shows each with its own copy.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/kind`.
+                public var kind: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload
+                /// When they reacted, in UTC with milliseconds.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/reactedAt`.
+                public var reactedAt: Foundation.Date
+                /// Creates a new `ReactionsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member: Who reacted.
+                ///   - kind: Which reaction. The app shows each with its own copy.
+                ///   - reactedAt: When they reacted, in UTC with milliseconds.
+                public init(
+                    member: Swift.String,
+                    kind: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload,
+                    reactedAt: Foundation.Date
+                ) {
+                    self.member = member
+                    self.kind = kind
+                    self.reactedAt = reactedAt
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case kind
+                    case reactedAt
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.member = try container.decode(
+                        Swift.String.self,
+                        forKey: .member
+                    )
+                    self.kind = try container.decode(
+                        Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.reactedAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .reactedAt
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "member",
+                        "kind",
+                        "reactedAt"
+                    ])
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ReactionList/reactions`.
+            public typealias ReactionsPayload = [Components.Schemas.ReactionList.ReactionsPayloadPayload]
+            /// - Remark: Generated from `#/components/schemas/ReactionList/reactions`.
+            public var reactions: Components.Schemas.ReactionList.ReactionsPayload
+            /// Creates a new `ReactionList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - reactions:
+            public init(
+                version: Components.Schemas.ReactionList.VersionPayload,
+                reactions: Components.Schemas.ReactionList.ReactionsPayload
+            ) {
+                self.version = version
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case reactions
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ReactionList.VersionPayload.self,
+                    forKey: .version
+                )
+                self.reactions = try container.decode(
+                    Components.Schemas.ReactionList.ReactionsPayload.self,
+                    forKey: .reactions
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "reactions"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Device`.
+        public struct Device: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Device/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Device/version`.
+            public var version: Components.Schemas.Device.VersionPayload
+            /// The APNs device token iOS gave the app, hex-encoded.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Device/token`.
+            public var token: Swift.String
+            /// Which APNs servers the token is for: `sandbox` in a build run from Xcode, `production` in TestFlight and the App Store.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Device/environment`.
+            @frozen public enum EnvironmentPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case sandbox = "sandbox"
+                case production = "production"
+            }
+            /// Which APNs servers the token is for: `sandbox` in a build run from Xcode, `production` in TestFlight and the App Store.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Device/environment`.
+            public var environment: Components.Schemas.Device.EnvironmentPayload
+            /// Creates a new `Device`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - token: The APNs device token iOS gave the app, hex-encoded.
+            ///   - environment: Which APNs servers the token is for: `sandbox` in a build run from Xcode, `production` in TestFlight and the App Store.
+            public init(
+                version: Components.Schemas.Device.VersionPayload,
+                token: Swift.String,
+                environment: Components.Schemas.Device.EnvironmentPayload
+            ) {
+                self.version = version
+                self.token = token
+                self.environment = environment
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case token
+                case environment
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Device.VersionPayload.self,
+                    forKey: .version
+                )
+                self.token = try container.decode(
+                    Swift.String.self,
+                    forKey: .token
+                )
+                self.environment = try container.decode(
+                    Components.Schemas.Device.EnvironmentPayload.self,
+                    forKey: .environment
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "token",
+                    "environment"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DeviceRemoval`.
+        public struct DeviceRemoval: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DeviceRemoval/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DeviceRemoval/version`.
+            public var version: Components.Schemas.DeviceRemoval.VersionPayload
+            /// The APNs device token iOS gave the app, hex-encoded.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DeviceRemoval/token`.
+            public var token: Swift.String
+            /// Creates a new `DeviceRemoval`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - token: The APNs device token iOS gave the app, hex-encoded.
+            public init(
+                version: Components.Schemas.DeviceRemoval.VersionPayload,
+                token: Swift.String
+            ) {
+                self.version = version
+                self.token = token
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case token
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.DeviceRemoval.VersionPayload.self,
+                    forKey: .version
+                )
+                self.token = try container.decode(
+                    Swift.String.self,
+                    forKey: .token
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "token"
+                ])
+            }
+        }
     }
 }
