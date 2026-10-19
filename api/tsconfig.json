@@ -8,6 +8,9 @@
       "path": "packages/check-ins"
     },
     {
+      "path": "packages/members"
+    },
+    {
       "path": "packages/memes"
     },
     {

@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { CheckIns } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
+import type { Members } from '@wildcard/members';
 import { z } from 'zod';
 
 import { RequestInvalidError, RouteNotFoundError } from './errors.js';
@@ -16,6 +17,7 @@ export interface AppDependencies {
   readonly db: Database;
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
+  readonly members: Members;
   readonly photos: PhotoStorage;
   readonly log: Log;
 }

@@ -129,9 +129,9 @@ describe('CheckInDraft', () => {
     expect(issues({ ...trained, createdAt: '2026-10-18T14:03:00' })).toStrictEqual(['createdAt']);
   });
 
-  it('refuses a disclaimer longer than 40 characters', () => {
+  it('refuses a disclaimer longer than 80 characters', () => {
     expect(
-      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '累'.repeat(41) } }),
+      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '累'.repeat(81) } }),
     ).toStrictEqual(['disclaimer.text']);
   });
 });

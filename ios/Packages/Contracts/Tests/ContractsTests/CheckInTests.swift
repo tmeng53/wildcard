@@ -67,8 +67,8 @@ private func decode(_ json: String) throws -> CheckIn {
 }
 
 @Test func disclaimerLengthCountsCharactersPeopleSee() throws {
-    #expect(try Disclaimer(String(repeating: "累", count: 40)).text.count == 40)
-    #expect(throws: ContractsError.disclaimerLength(41)) { try Disclaimer(String(repeating: "累", count: 41)) }
+    #expect(try Disclaimer(String(repeating: "累", count: 80)).text.count == 80)
+    #expect(throws: ContractsError.disclaimerLength(81)) { try Disclaimer(String(repeating: "累", count: 81)) }
     #expect(throws: ContractsError.disclaimerLength(0)) { try Disclaimer("   ") }
 }
 

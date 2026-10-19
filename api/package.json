@@ -8,13 +8,13 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json && tsc --noEmit -p packages/check-ins/tsconfig.test.json && tsc --noEmit -p packages/memes/tsconfig.test.json",
+    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json && tsc --noEmit -p packages/check-ins/tsconfig.test.json && tsc --noEmit -p packages/members/tsconfig.test.json && tsc --noEmit -p packages/memes/tsconfig.test.json",
     "lint": "tsc --build && eslint . && prettier --check .",
     "format": "prettier --write .",
     "boundaries": "depcruise apps packages",
     "test": "vitest run",
     "openapi": "pnpm build && node apps/server/dist/scripts/write-openapi.js",
-    "db-types": "sh -c 'kysely-codegen --dialect postgres --date-parser string --include-pattern \"public.(check_ins|check_in_squads|check_in_photos|squad_members)\" --out-file packages/check-ins/src/adapters/tables.ts \"$@\" && kysely-codegen --dialect postgres --date-parser string --include-pattern \"public.memes\" --out-file packages/memes/src/adapters/tables.ts \"$@\"' db-types"
+    "db-types": "sh -c 'kysely-codegen --dialect postgres --date-parser string --include-pattern \"public.(check_ins|check_in_squads|check_in_photos|squad_members)\" --out-file packages/check-ins/src/adapters/tables.ts \"$@\" && kysely-codegen --dialect postgres --date-parser string --include-pattern public.profiles --out-file packages/members/src/adapters/tables.ts \"$@\" && kysely-codegen --dialect postgres --date-parser string --include-pattern public.memes --out-file packages/memes/src/adapters/tables.ts \"$@\"' db-types"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

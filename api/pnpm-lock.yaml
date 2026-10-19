@@ -59,6 +59,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../../packages/errors
+      '@wildcard/members':
+        specifier: workspace:*
+        version: link:../../packages/members
       hono:
         specifier: 4.13.13
         version: 4.13.13
@@ -103,6 +106,28 @@ importers:
 
   packages/errors:
     devDependencies:
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))
+
+  packages/members:
+    dependencies:
+      '@wildcard/errors':
+        specifier: workspace:*
+        version: link:../errors
+      kysely:
+        specifier: 0.29.7
+        version: 0.29.7
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       vitest:
         specifier: 5.0.5
         version: 5.0.5(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))

@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from './adapters/postgres.js';
 import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
@@ -24,6 +25,7 @@ const app = createApp({
     photos,
     clock: () => new Date(),
   }),
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   photos,
   log,
 });
