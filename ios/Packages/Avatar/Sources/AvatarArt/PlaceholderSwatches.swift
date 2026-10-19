@@ -11,7 +11,7 @@ extension PlaceholderCharacter {
     public static func swatches(for slot: Slot, wearing variant: String) -> [RGBAColor] {
         guard BundledArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
         return switch slot.description {
-        case "body": coats[variant] ?? []
+        case "body": bodySpecies[variant].flatMap { coats[$0] } ?? []
         case "hair", "brows": hair
         case "eyes": eyes
         case "top": tops
@@ -20,11 +20,16 @@ extension PlaceholderCharacter {
         }
     }
 
-    /// Skin for people, fur for the plain coats.
-    static let coats = [
-        "peach": skin, "tan": skin, "cat": catFur, "bear": bearFur, "golden": dogFur, "rabbit": rabbitFur,
-        "lop": rabbitFur,
-    ]
+    /// Skin for people, fur for animals, by species. A coat whose pattern is the point has no
+    /// `tones.json`, so it keeps its art's colors.
+    static let coats = ["person": skin, "cat": catFur, "dog": dogFur, "rabbit": rabbitFur, "bear": bearFur]
+
+    /// The species of every body in `editor.json`. A broken `editor.json` fails the tests, so
+    /// here it only leaves the bodies without swatches.
+    static let bodySpecies: [String: String] = {
+        let species = (try? editorChoices().species) ?? []
+        return Dictionary(species.flatMap { kind in kind.bodies.map { ($0, kind.id) } }) { first, _ in first }
+    }()
 
     static let skin = colors(Palette.skinTones)
     static let catFur = colors(Palette.catFur)

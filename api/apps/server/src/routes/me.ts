@@ -111,7 +111,14 @@ export function me(
       'a failure. Afterwards this route refuses the token; other routes accept it until it ' +
       'expires, so the app signs out.',
     security: [{ bearer: [] }],
-    middleware: [requireCaller(deps.accounts.verifySession)] as const,
+    middleware: [
+      requireCaller(async (token) => {
+        // The token first, which says whether it is the app's own sign-in; then its session.
+        const caller = await deps.verifyToken(token);
+        await deps.accounts.verifySession(token);
+        return caller;
+      }),
+    ] as const,
     request: {
       body: { required: true, content: { 'application/json': { schema: AccountDeletion } } },
     },

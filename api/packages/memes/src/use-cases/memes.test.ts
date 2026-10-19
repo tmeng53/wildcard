@@ -119,4 +119,20 @@ describe('the meme library', () => {
       MemeNotFoundError,
     );
   });
+
+  it('uses a meme again once it is turned back on', async () => {
+    const meme = draft('回锅梗');
+    now = new Date('2026-10-19T16:00:00.000Z');
+    await memes.addApproved({ memes: [meme], approvedAt: now });
+    await memes.turnOff(meme.phrase);
+    await memes.turnOn(meme.phrase);
+    await memes.turnOn(meme.phrase);
+    expect((await inUse(meme)).map(({ phrase }) => phrase)).toStrictEqual([meme.phrase]);
+  });
+
+  it('says so when the meme to turn back on is not in the library', async () => {
+    await expect(memes.turnOn(`没有这个梗${randomUUID()}`)).rejects.toBeInstanceOf(
+      MemeNotFoundError,
+    );
+  });
 });

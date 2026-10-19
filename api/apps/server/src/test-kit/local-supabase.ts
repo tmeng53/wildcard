@@ -1,8 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
+import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import { z } from 'zod';
 
+import type { AdminTool } from '../admin-mcp/admin-tool.js';
 import { readConfig } from '../config.js';
+import type { Database } from '../ports.js';
 
 // Tests only (the build leaves this folder out). Local Supabase, as `supabase status -o env`
 // prints it; scripts/verify.sh passes it in.
@@ -29,4 +32,15 @@ export async function signOut(token: string) {
     headers: { apikey: publishableKey, authorization: `Bearer ${token}` },
   });
   if (response.status !== 204) throw new Error(`logout answered ${String(response.status)}`);
+}
+
+/** The admin MCP server's settings on local Supabase, with these tools. */
+export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []) {
+  return {
+    admins: (db: Database) =>
+      createAdmins({ store: createPostgresAdminStore(db), clock: () => new Date() }),
+    tools,
+    publicUrl: new URL('http://localhost:8080'),
+    authorizationServer: new URL(`${config.supabaseUrl}/auth/v1`),
+  };
 }

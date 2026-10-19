@@ -1,3 +1,4 @@
+import type { AdminTables } from '@wildcard/admins';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
@@ -18,6 +19,11 @@ export type UserId = z.infer<typeof UserId>;
 /** Who is calling: the signed-in member a bearer token was issued to. */
 export interface Caller {
   readonly userId: UserId;
+  /**
+   * The OAuth client the token was issued to, when the member signed in through another app
+   * (an MCP client such as Claude) rather than ours. Undefined for our own app's sign-ins.
+   */
+  readonly oauthClient: string | undefined;
 }
 
 /**
@@ -32,9 +38,10 @@ export interface Accounts {
    * Checks a bearer token with the provider itself, so a session that has signed out is refused
    * even before its token expires. Slower than `VerifyToken`; for routes that can't be undone.
    * Throws `AuthTokenInvalidError` for a token that isn't a current sign-in,
-   * `AuthUnavailableError` when the provider can't be reached.
+   * `AuthUnavailableError` when the provider can't be reached. It can't tell which client a
+   * token was issued to, so routes check the token with `VerifyToken` first.
    */
-  readonly verifySession: VerifyToken;
+  readonly verifySession: (token: string) => Promise<{ readonly userId: UserId }>;
   /**
    * Deletes the user at the provider. The database deletes what references them with it (each
    * table's `on delete` in supabase/migrations). Deleting a user who is already gone does
@@ -65,7 +72,8 @@ export type Tables = CheckInTables &
   MemberTables &
   MemeTables &
   PushTables &
-  SquadTables;
+  SquadTables &
+  AdminTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;
