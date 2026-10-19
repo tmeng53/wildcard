@@ -99,8 +99,8 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
-        // Tap past the centered text so the cursor lands at the end, then delete it all.
-        nickname.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        // The first tap on a field puts the cursor after its text; delete more than it holds.
+        nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
         waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
         nickname.typeText("小汤")
