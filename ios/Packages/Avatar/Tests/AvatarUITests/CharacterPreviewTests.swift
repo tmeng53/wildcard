@@ -10,7 +10,8 @@ import UniformTypeIdentifiers
 
 /// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
 /// strip of each persona's cheer, the five cheering together as the player shows it, each
-/// persona's idle loop, frame by frame as animated GIFs, and a sheet of the color swatches.
+/// persona's idle loop, frame by frame as animated GIFs, a sheet of the color swatches and one
+/// of every body and hair.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -77,6 +78,7 @@ struct CharacterPreviewTests {
         }
 
         try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
+        try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
@@ -99,6 +101,26 @@ struct CharacterPreviewTests {
                 })
         }
         try writePNG(stacked(sheet), to: url)
+    }
+
+    /// Every body (in a tee and shorts), then every hair (on the lifter), eight to a row.
+    private func writeWardrobe(to url: URL) throws {
+        let bodies = PlaceholderCharacter.variants(for: "body").map {
+            Outfit(["body": $0, "top": "tee", "bottom": "shorts"])
+        }
+        let hairs = PlaceholderCharacter.variants(for: "hair").map { hair in
+            var look = PlaceholderCharacter.lifter
+            look.variants["hair"] = hair
+            return look
+        }
+        let images = try (bodies + hairs).map { outfit in
+            let look = try Frame(outfit: outfit)
+            return try look.render(image: look.figure.restPose, scale: 1, background: Self.mist)
+        }
+        let rows = try stride(from: 0, to: images.count, by: 8).map { start in
+            try sideBySide(Array(images[start..<min(start + 8, images.count)]))
+        }
+        try writePNG(stacked(rows), to: url)
     }
 
     private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {

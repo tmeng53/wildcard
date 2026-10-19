@@ -13,6 +13,8 @@ extension PlaceholderCharacter {
         case ("body", "peach"), ("body", "tan"): skin
         case ("body", "cat"): catFur
         case ("body", "bear"): bearFur
+        case ("body", "golden"): dogFur
+        case ("body", "rabbit"), ("body", "lop"): rabbitFur
         case ("hair", _): hair
         case ("top", _): tops
         case ("bottom", _): bottoms
@@ -23,6 +25,8 @@ extension PlaceholderCharacter {
     static let skin = colors(Palette.skinTones)
     static let catFur = colors(Palette.catFur)
     static let bearFur = colors(Palette.bearFur)
+    static let dogFur = colors(Palette.dogFur)
+    static let rabbitFur = colors(Palette.rabbitFur)
     static let hair = colors(Palette.hairColors)
     static let tops = colors([
         Palette.cobalt, Palette.mint, Palette.trackSignature, Palette.lavender, Palette.honey,
