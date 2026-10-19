@@ -2,7 +2,7 @@
 # Drives the API the way the app does, over HTTP, against local Supabase: the built server
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
-#   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts]   (no arguments: all)
+#   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [home]   (no arguments: all)
 # Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -10,11 +10,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts home}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | home) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, home)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -259,6 +259,51 @@ if want disclaimer-drafts; then
   used="$(psql "$DB_URL" -tAc "select count(*) from public.disclaimer_draft_requests where member_id = '$me'")"
   [ "$used" = 0 ] || fail "nothing was shown, so no batch should count: $used"
   echo "disclaimer-drafts: no batch counted"
+fi
+
+if want home; then
+  # Two members in UTC with profiles, so the home screen reads their days and plans: "lead"
+  # plans to train every day, "rester" keeps the default plan (rest on Wednesday and Sunday).
+  read -r lead lead_token <<<"$(sign_up)"
+  read -r rester rester_token <<<"$(sign_up)"
+  for token in "$lead_token" "$rester_token"; do
+    call PUT /me/profile "$token" '{"version":1,"timeZone":"UTC"}'
+    expect 200
+  done
+  squad_of "$lead_token" "$rester_token"
+  home_squad="$squad"
+  # Today in UTC with the 3am grace, and its week's Monday.
+  today="$(node -p 'new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10)')"
+  monday="$(node -p "const d = new Date('${today}T00:00:00Z'); d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7); d.toISOString().slice(0, 10)")"
+  call PUT "/me/weekly-plans/$monday" "$lead_token" '{"version":1,"days":[{"kind":"train"},{"kind":"train"},{"kind":"train"},{"kind":"train"},{"kind":"train"},{"kind":"train"},{"kind":"train"}]}'
+  expect 200
+  echo "home: squad=$home_squad lead=$lead rester=$rester today=$today; lead plans 7 training days"
+
+  at="$(node -p 'new Date(Date.now() - 60_000).toISOString()')"
+  call PUT "/check-ins/$(new_id)" "$lead_token" "{\"version\":1,\"day\":\"$today\",\"createdAt\":\"$at\",\"audience\":[\"$home_squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"run\"}}"
+  expect 201
+  echo "home: lead trained today (201)"
+
+  call GET "/squads/$home_squad/today" "$rester_token"
+  expect 200
+  # The rester has the default plan: today is a rest day on Wednesday and Sunday.
+  rest_today="$(node -p "[0, 3].includes(new Date('${today}T00:00:00Z').getUTCDay())")"
+  expected="$(jq -cn --arg lead "$lead" --arg rester "$rester" --arg today "$today" --argjson rest "$rest_today" '{
+    members: [
+      {member: $lead, day: $today, training: "trained", plannedRest: false},
+      {member: $rester, day: $today, training: "notCheckedIn", plannedRest: $rest}
+    ],
+    today: {trained: 1, disclaimer: 0, resting: (if $rest then 1 else 0 end), everyoneTrained: $rest},
+    me: {week: {trainedDays: 0, plannedDays: 5}, lifetimeTrainedDays: 0},
+    squadWeek: {trainedDays: 1, plannedDays: 12}
+  }')"
+  [ "$(jq -c '{members: [.members[] | {member, day, training, plannedRest}], today, me: {week: {trainedDays: .me.week.trainedDays, plannedDays: .me.week.plannedDays}, lifetimeTrainedDays: .me.lifetimeTrainedDays}, squadWeek}' <<<"$body")" = "$expected" ] ||
+    fail "the rester's home should be $expected: $body"
+  echo "home: rester sees lead trained, themself $( [ "$rest_today" = true ] && echo resting || echo 'not checked in'), 本周 0/5, squad 1/12 (200)"
+
+  call GET "/squads/$home_squad/today" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "home: outsider reading the squad's today refused (403 SQUAD_NOT_JOINED)"
 fi
 
 echo "api-journeys: ok ($journeys)"

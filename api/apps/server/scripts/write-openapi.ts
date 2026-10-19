@@ -38,6 +38,7 @@ const app = createApp({
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
+    plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: unused,
     clock: unused,
