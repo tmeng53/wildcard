@@ -47,7 +47,10 @@ export class CheckInInTheFutureError extends AppError {
   }
 }
 
-/** Thrown when a check-in's day is more than a day away from when it was made. */
+/**
+ * Thrown when a check-in's day is one the member hadn't reached when they made it, or is too far
+ * before it.
+ */
 export class CheckInDayMismatchError extends AppError {
   override readonly name = 'CheckInDayMismatchError';
   readonly reason = 'CHECK_IN_DAY_MISMATCH';

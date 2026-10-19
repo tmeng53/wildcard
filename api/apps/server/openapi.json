@@ -242,7 +242,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
           },
           "createdAt": {
             "type": "string",
@@ -410,7 +410,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
           },
           "createdAt": {
             "type": "string",
@@ -488,7 +488,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
           },
           "createdAt": {
             "type": "string",
@@ -547,7 +547,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
           },
           "createdAt": {
             "type": "string",
