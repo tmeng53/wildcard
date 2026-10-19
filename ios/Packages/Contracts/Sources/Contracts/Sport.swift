@@ -1,9 +1,9 @@
 import Foundation
 
-/// A sport from the list. New sports are a contract change. Names people see live in
-/// the String Catalog, keyed by the raw value. 生活也算练 sports count toward 本周
-/// like any other 练了.
-public enum Sport: String, CaseIterable, Hashable, Sendable, Codable {
+/// A sport from the list. The API's OpenAPI document is the list of record; `APIContract`'s
+/// tests fail when the two differ. Names people see live in the String Catalog, keyed by the
+/// raw value. 生活也算练 sports count toward 本周 like any other 练了.
+public enum Sport: String, CaseIterable, Hashable, Sendable {
     // 跑走
     case run, walk, hike, trailRun
     // 力量
@@ -48,7 +48,7 @@ public enum Sport: String, CaseIterable, Hashable, Sendable, Codable {
 }
 
 /// The picker's tabs, in the order they show. 其他 is a `CustomSport`, not a tab of sports.
-public enum SportCategory: String, CaseIterable, Hashable, Sendable, Codable {
+public enum SportCategory: String, CaseIterable, Hashable, Sendable {
     case runWalk, strength, cardio, mindBody, water, racket, ball, cycling, outdoorWinter, combat, dance, everyday
 
     /// This category's sports, in list order.
@@ -75,38 +75,7 @@ public struct CustomSport: Hashable, Sendable {
 }
 
 /// What a 练了 or a planned training day is: a listed sport or the member's own.
-/// On the wire it is `"sport": "<raw value>"`, or `"sport": "custom"` with `"customSport": "<name>"`.
 public enum Activity: Hashable, Sendable {
     case sport(Sport)
     case custom(CustomSport)
-
-    static let customRawValue = "custom"
-}
-
-extension KeyedDecodingContainer {
-    /// Reads an `Activity` from its two wire keys; nil when `sportKey` is absent.
-    func decodeActivityIfPresent(sport sportKey: Key, custom customKey: Key) throws -> Activity? {
-        guard let raw = try decodeIfPresent(String.self, forKey: sportKey) else {
-            guard !contains(customKey) else { throw ContractsError.strayCustomSport }
-            return nil
-        }
-        if raw == Activity.customRawValue {
-            return .custom(try CustomSport(try decode(String.self, forKey: customKey)))
-        }
-        guard !contains(customKey) else { throw ContractsError.strayCustomSport }
-        guard let sport = Sport(rawValue: raw) else { throw ContractsError.unknownSport(raw) }
-        return .sport(sport)
-    }
-}
-
-extension KeyedEncodingContainer {
-    mutating func encodeActivity(_ activity: Activity?, sport sportKey: Key, custom customKey: Key) throws {
-        switch activity {
-        case .sport(let sport): try encode(sport.rawValue, forKey: sportKey)
-        case .custom(let custom):
-            try encode(Activity.customRawValue, forKey: sportKey)
-            try encode(custom.name, forKey: customKey)
-        case nil: break
-        }
-    }
 }

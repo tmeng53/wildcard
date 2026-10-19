@@ -38,15 +38,17 @@ public enum StoredSession {
         let record = Record(
             version: 1, member: session.member, accessToken: session.accessToken,
             refreshToken: session.refreshToken, expiresAt: session.expiresAt.timeIntervalSince1970)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
         do {
-            return try WireJSON.encoder().encode(record)
+            return try encoder.encode(record)
         } catch {
             throw .storeFailed
         }
     }
 
     public static func decode(_ data: Data) throws(AccountError) -> Session {
-        let decoder = WireJSON.decoder()
+        let decoder = JSONDecoder()
         let version: Int
         do {
             version = try decoder.decode(Version.self, from: data).version

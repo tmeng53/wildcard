@@ -3,6 +3,7 @@ included:
   - ios
 excluded:
   - ios/**/.build
+  - ios/Packages/Contracts/Sources/APIContract/Generated  # scripts/swift-openapi.sh writes it
 opt_in_rules:
   - force_unwrapping
   - implicitly_unwrapped_optional
@@ -30,9 +31,9 @@ custom_rules:
     severity: error
   domain_imports_ui_or_backend:
     name: "Domain imports UI or Backend"
-    message: "AGENTS.md: Domain targets never import SwiftUI, UIKit or Backend."
+    message: "AGENTS.md: Domain targets never import SwiftUI, UIKit, Backend or APIContract."
     included: '.*/Sources/[^/]*Domain/.*\.swift'
-    regex: '^\s*(@testable\s+)?import\s+(SwiftUI|UIKit|Backend)\b'
+    regex: '^\s*(@testable\s+)?import\s+(SwiftUI|UIKit|Backend|APIContract)\b'
     severity: error
   olympic_terms:
     name: "Olympic terms"
