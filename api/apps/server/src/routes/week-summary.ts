@@ -121,19 +121,15 @@ export function weekSummary(deps: {
       'winners are named and only the signed-in member’s own counts are shown, so nobody is ' +
       'ranked last. Reactions count only from members of the squad now. Any week that has ' +
       'started can be read; until `final`, it is still being played. Only for members of the ' +
-      'squad.',
+      'squad. The words come in the first language of the request’s `Accept-Language` they are ' +
+      'written in (Chinese or English), Chinese otherwise; the app leaves that header to the ' +
+      'system, which lists the phone’s languages.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
       params: z.strictObject({
         squadId: SquadId,
         weekStart: WeekStart.meta({ description: 'The week’s Monday.', example: '2026-10-19' }),
-      }),
-      headers: z.object({
-        'accept-language': z.string().optional().meta({
-          description: 'The language to write the words in: Chinese (the default) or English.',
-          example: 'zh-Hans',
-        }),
       }),
     },
     responses: {
@@ -150,7 +146,7 @@ export function weekSummary(deps: {
 
   return new OpenAPIHono<SignedIn>().openapi(route, async (c) => {
     const { squadId: squad, weekStart } = c.req.valid('param');
-    const language = languageOf(c.req.valid('header')['accept-language']);
+    const language = languageOf(c.req.header('accept-language'));
     const summary = await deps.checkIns.weekSummary({
       viewer: MemberId.parse(c.var.caller.userId),
       squad,
