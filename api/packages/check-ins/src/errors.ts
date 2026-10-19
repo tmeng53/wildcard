@@ -144,6 +144,17 @@ export class WeekOverError extends AppError {
   }
 }
 
+/** Thrown for a week that hasn't started yet on the member's clock, so it has nothing to sum up. */
+export class WeekNotStartedError extends AppError {
+  override readonly name = 'WeekNotStartedError';
+  readonly reason = 'WEEK_NOT_STARTED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly weekStart: string) {
+    super(`The week of ${weekStart} hasn’t started yet.`);
+  }
+}
+
 /** Thrown for a plan more than 4 weeks after the current one. */
 export class WeekTooFarAheadError extends AppError {
   override readonly name = 'WeekTooFarAheadError';
