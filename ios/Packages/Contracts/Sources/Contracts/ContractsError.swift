@@ -1,11 +1,9 @@
 /// Why a contract value was rejected. Each case is something the caller can act on.
 public enum ContractsError: Error, Equatable, Sendable {
-    /// Stored or wire JSON carries a `version` this build doesn't read.
-    case unsupportedVersion(Int)
     /// A day string that isn't a real `YYYY-MM-DD` date.
     case invalidDay(String)
-    /// Training minutes outside `Training.minutesRange`.
-    case minutesOutOfRange(Int)
+    /// An id that isn't a UUID.
+    case invalidID(String)
     /// A 免责声明 that is empty or longer than `Disclaimer.maxLength` characters.
     case disclaimerLength(Int)
     /// A caption that is empty or longer than `Caption.maxLength` characters.
@@ -20,6 +18,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case planLength(Int)
     /// A photo path that is empty.
     case emptyPhotoPath
+    /// A photo view URL that isn't a URL.
+    case invalidPhotoURL(String)
     /// A check-in with no photos listed, or more than `Photos.maxCount`.
     case photoCount(Int)
     /// A check-in that lists the same photo twice.
@@ -30,10 +30,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case multilineCustomSport
     /// A `sport` key that isn't a listed sport or `custom`.
     case unknownSport(String)
-    /// A `customSport` name next to a listed sport, or with no sport at all.
+    /// A `customSport` name next to a listed sport, or `custom` with no name.
     case strayCustomSport
     /// A timestamp that isn't ISO 8601.
     case invalidTimestamp(String)
-    /// A check-in whose payload keys don't match its `kind`.
-    case payloadMismatch(String)
 }

@@ -1,0 +1,64 @@
+import APIContract
+import Contracts
+import Foundation
+import Testing
+
+// The few rules `Contracts` keeps so the app can shape what people type (how long a caption
+// may get, how many photos fit) must be the API's. Its OpenAPI document states them: lengths
+// people see as `x-max-characters`, counts as `maxItems`.
+
+/// The parts of the OpenAPI document these tests read.
+private struct Document: Decodable {
+    struct Components: Decodable { let schemas: [String: Schema] }
+
+    let components: Components
+}
+
+private final class Schema: Decodable, Sendable {
+    let properties: [String: Schema]?
+    let maxItems: Int?
+    let maxCharacters: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case properties, maxItems
+        case maxCharacters = "x-max-characters"
+    }
+}
+
+/// `field` of the schema `name` in the committed `api/apps/server/openapi.json`, which
+/// scripts/swift-openapi.sh generates from.
+private func property(_ field: String, of name: String) throws -> Schema? {
+    let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().appending(path: "../../../../../api/apps/server/openapi.json")
+    let document = try JSONDecoder().decode(Document.self, from: Data(contentsOf: url.standardizedFileURL))
+    return document.components.schemas[name]?.properties?[field]
+}
+
+@Test func sportsAreTheAPIsListPlusCustom() {
+    #expect(
+        Components.Schemas.Sport.allCases.map(\.rawValue) == Sport.allCases.map(\.rawValue) + ["custom"])
+}
+
+@Test(arguments: ["Training", "Meal", "TrainingView", "MealView"])
+func captionLimitIsTheAPIs(schema: String) throws {
+    #expect(try property("caption", of: schema)?.maxCharacters == Caption.maxLength)
+}
+
+@Test(arguments: ["Training", "TrainingView"])
+func customSportLimitIsTheAPIs(schema: String) throws {
+    #expect(try property("customSport", of: schema)?.maxCharacters == CustomSport.maxLength)
+}
+
+@Test func disclaimerLimitIsTheAPIs() throws {
+    #expect(try property("text", of: "Disclaimer")?.maxCharacters == Disclaimer.maxLength)
+}
+
+@Test(arguments: ["Training", "Meal"])
+func photoCountIsTheAPIs(schema: String) throws {
+    #expect(try property("photos", of: schema)?.maxItems == Photos.maxCount)
+}
+
+@Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
+func audienceSizeIsTheAPIs(schema: String) throws {
+    #expect(try property("audience", of: schema)?.maxItems == Audience.maxSquads)
+}
