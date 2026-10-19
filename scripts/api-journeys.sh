@@ -26,24 +26,11 @@ status="$(supabase status -o env 2>/dev/null)" || {
 }
 eval "$status"
 
-pnpm --dir api install --frozen-lockfile >/dev/null
-pnpm --dir api build >/dev/null
-
-# The real server, on a free port, as Cloud Run starts it, without an Anthropic key: CI has none,
-# and the drafts journey proves the server runs without one.
-port="$(node -e 'const s=require("net").createServer().listen(0,()=>{console.log(s.address().port);s.close()})')"
-api="http://127.0.0.1:$port"
-log="$(mktemp)"
-env -u ANTHROPIC_API_KEY PORT="$port" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
-  node api/apps/server/dist/src/main.js >"$log" 2>&1 &
-server=$!
+. scripts/lib/api-server.sh
+start_api_server
+log="$api_log"
 tmp="$(mktemp -d)"
 trap 'kill "$server" 2>/dev/null || true; rm -rf "$log" "$tmp"' EXIT
-for _ in $(seq 50); do
-  curl -sf "$api/health" >/dev/null && break
-  kill -0 "$server" 2>/dev/null || { cat "$log" >&2; exit 1; }
-  sleep 0.2
-done
 echo "server: $(curl -sf "$api/health")"
 
 fail() {
