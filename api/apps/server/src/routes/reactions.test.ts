@@ -235,40 +235,51 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
   });
 });
 
-describe('/me/devices/{token}', () => {
+describe('/me/devices', () => {
   it('registers a phone, and forgets it when its member signs out on it', async () => {
     const tracy = await signUp();
     const token = randomBytes(32).toString('hex');
-    const path = `/me/devices/${token.toUpperCase()}`;
+    const device = { version: 1, token: token.toUpperCase(), environment: 'sandbox' };
     expect(
-      await call('PUT', { path, token: tracy.token, body: { version: 1, environment: 'sandbox' } }),
-    ).toStrictEqual({ status: 200, body: { version: 1, environment: 'sandbox' } });
+      await call('PUT', { path: '/me/devices', token: tracy.token, body: device }),
+    ).toStrictEqual({ status: 200, body: { version: 1, token, environment: 'sandbox' } });
     expect(await phonesOf(tracy)).toStrictEqual([{ token, environment: 'sandbox' }]);
 
-    expect((await call('DELETE', { path, token: tracy.token })).status).toBe(204);
-    expect((await call('DELETE', { path, token: tracy.token })).status).toBe(204);
+    const removal = { path: '/me/devices/remove', token: tracy.token, body: { version: 1, token } };
+    expect((await call('POST', removal)).status).toBe(204);
+    expect((await call('POST', removal)).status).toBe(204);
     expect(await phonesOf(tracy)).toStrictEqual([]);
+  });
+
+  it('leaves another member’s phone alone', async () => {
+    const [tracy, ann] = [await signUp(), await signUp()];
+    const token = randomBytes(32).toString('hex');
+    await call('PUT', {
+      path: '/me/devices',
+      token: tracy.token,
+      body: { version: 1, token, environment: 'production' },
+    });
+    await call('POST', {
+      path: '/me/devices/remove',
+      token: ann.token,
+      body: { version: 1, token },
+    });
+    expect(await phonesOf(tracy)).toStrictEqual([{ token, environment: 'production' }]);
   });
 
   it.each([
     {
       case: 'a token that isn’t hex',
-      path: `/me/devices/${'z'.repeat(64)}`,
-      body: { version: 1, environment: 'sandbox' },
+      body: { version: 1, token: 'z'.repeat(64), environment: 'sandbox' },
     },
     {
       case: 'an unknown environment',
-      path: `/me/devices/${'a1'.repeat(32)}`,
-      body: { version: 1, environment: 'dev' },
+      body: { version: 1, token: 'a1'.repeat(32), environment: 'dev' },
     },
-    {
-      case: 'no version',
-      path: `/me/devices/${'a1'.repeat(32)}`,
-      body: { environment: 'sandbox' },
-    },
-  ])('refuses $case', async ({ path, body }) => {
+    { case: 'no version', body: { token: 'a1'.repeat(32), environment: 'sandbox' } },
+  ])('refuses $case', async ({ body }) => {
     const { token } = await signUp();
-    expect(await call('PUT', { path, token, body })).toMatchObject({
+    expect(await call('PUT', { path: '/me/devices', token, body })).toMatchObject({
       status: 400,
       body: { reason: 'REQUEST_INVALID' },
     });
@@ -277,8 +288,8 @@ describe('/me/devices/{token}', () => {
   it('asks a caller with no token to sign in', async () => {
     expect(
       await call('PUT', {
-        path: `/me/devices/${'a1'.repeat(32)}`,
-        body: { version: 1, environment: 'sandbox' },
+        path: '/me/devices',
+        body: { version: 1, token: 'a1'.repeat(32), environment: 'sandbox' },
       }),
     ).toMatchObject({ status: 401, body: { reason: 'AUTH_TOKEN_MISSING' } });
   });

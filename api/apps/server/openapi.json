@@ -1035,6 +1035,12 @@
               1
             ]
           },
+          "token": {
+            "type": "string",
+            "pattern": "^(?:[0-9A-Fa-f]{2}){16,100}$",
+            "description": "The APNs device token iOS gave the app, hex-encoded.",
+            "example": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+          },
           "environment": {
             "type": "string",
             "enum": [
@@ -1046,7 +1052,30 @@
         },
         "required": [
           "version",
+          "token",
           "environment"
+        ],
+        "additionalProperties": false
+      },
+      "DeviceRemoval": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^(?:[0-9A-Fa-f]{2}){16,100}$",
+            "description": "The APNs device token iOS gave the app, hex-encoded.",
+            "example": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+          }
+        },
+        "required": [
+          "version",
+          "token"
         ],
         "additionalProperties": false
       }
@@ -1741,28 +1770,14 @@
         }
       }
     },
-    "/me/devices/{token}": {
+    "/me/devices": {
       "put": {
         "operationId": "registerMyDevice",
         "summary": "Get push notifications on this phone",
-        "description": "The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat; a phone someone else used moves to the caller.",
+        "description": "The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.",
         "security": [
           {
             "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^(?:[0-9A-Fa-f]{2}){16,100}$",
-              "description": "The APNs device token iOS gave the app, hex-encoded.",
-              "example": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
-            },
-            "required": true,
-            "description": "The APNs device token iOS gave the app, hex-encoded.",
-            "name": "token",
-            "in": "path"
           }
         ],
         "requestBody": {
@@ -1817,9 +1832,11 @@
             }
           }
         }
-      },
-      "delete": {
-        "operationId": "unregisterMyDevice",
+      }
+    },
+    "/me/devices/remove": {
+      "post": {
+        "operationId": "removeMyDevice",
         "summary": "Stop push notifications on this phone",
         "description": "For signing out. Safe to repeat, and does nothing for a phone that isn’t yours.",
         "security": [
@@ -1827,20 +1844,16 @@
             "bearer": []
           }
         ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^(?:[0-9A-Fa-f]{2}){16,100}$",
-              "description": "The APNs device token iOS gave the app, hex-encoded.",
-              "example": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
-            },
-            "required": true,
-            "description": "The APNs device token iOS gave the app, hex-encoded.",
-            "name": "token",
-            "in": "path"
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRemoval"
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "204": {
             "description": "Stopped"

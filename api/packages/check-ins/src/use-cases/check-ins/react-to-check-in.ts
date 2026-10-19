@@ -1,4 +1,4 @@
-import type { CheckInId, CheckInRecord, MemberId } from '../../domain/check-in.js';
+import type { CheckInId, MemberId } from '../../domain/check-in.js';
 import type { Reaction, ReactionKind, ReactOutcome } from '../../domain/reaction.js';
 import { OwnCheckInReactionError } from '../../errors.js';
 import type { CheckInStore, Clock, ReactionStore } from '../../ports.js';
@@ -11,7 +11,6 @@ export interface ReactToCheckInInput {
 }
 
 export interface Reacted {
-  readonly checkIn: CheckInRecord;
   readonly reaction: Reaction;
   readonly outcome: ReactOutcome;
 }
@@ -36,5 +35,5 @@ export async function reactToCheckIn(
   // Unchanged keeps the time it was first left.
   const saved = (await reactions.list(id)).find((reaction) => reaction.member === member);
   // Taken off by a removal that ran at the same moment: answer with what was asked.
-  return { checkIn, reaction: saved ?? asked, outcome };
+  return { reaction: saved ?? asked, outcome };
 }
