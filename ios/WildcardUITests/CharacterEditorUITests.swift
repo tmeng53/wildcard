@@ -127,6 +127,9 @@ final class CharacterEditorUITests: XCTestCase {
         app.launchArguments += ["-character-editor", "-character-editor-sample"]
         if profile { app.launchArguments.append("-character-editor-profile") }
         app.launch()
+        // Close the app when the test ends, so the next launch never has to stop it: a busy
+        // simulator sometimes fails to ("Failed to terminate").
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app
     }
 
