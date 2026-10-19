@@ -12,14 +12,19 @@ import { createLog } from './log.js';
 const config = readConfig(process.env);
 const log = createLog((line) => process.stdout.write(line));
 const db = createDatabase(config.databaseUrl);
+const photos = createSupabasePhotoStorage({
+  supabaseUrl: config.supabaseUrl,
+  secretKey: config.supabaseSecretKey,
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
-  photos: createSupabasePhotoStorage({
-    supabaseUrl: config.supabaseUrl,
-    secretKey: config.supabaseSecretKey,
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    clock: () => new Date(),
   }),
+  photos,
   log,
 });
 

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { PhotoPath } from '../ports.js';
 import { config } from '../test-kit/local-supabase.js';
@@ -35,23 +36,41 @@ describe('createSupabasePhotoStorage', () => {
     expect(await photos.exists(path)).toBe(true);
   });
 
-  it('signs view URLs that expire', async () => {
-    const path = newPath();
-    await fetch(await photos.createUploadUrl(path), {
-      method: 'PUT',
-      headers: { 'content-type': 'image/webp' },
-      body: 'RIFF',
-    });
-    const url = await photos.createViewUrl(path, 1);
+  it('signs view URLs for several photos at once, which expire', async () => {
+    const [first, second] = [newPath(), newPath()];
+    for (const [path, body] of [
+      [first, 'RIFF'],
+      [second, 'RIFF2'],
+    ] as const) {
+      await fetch(await photos.createUploadUrl(path), {
+        method: 'PUT',
+        headers: { 'content-type': 'image/webp' },
+        body,
+      });
+    }
+    const urls = await photos.createViewUrls([second, first], 1);
+    expect([...urls.keys()]).toStrictEqual([second, first]);
+    const url = z.instanceof(URL).parse(urls.get(first));
     expect(await (await fetch(url)).text()).toBe('RIFF');
+    expect(await (await fetch(z.instanceof(URL).parse(urls.get(second)))).text()).toBe('RIFF2');
     await new Promise((resolve) => setTimeout(resolve, 2_100));
     const expired = await fetch(url);
     expect(expired.ok).toBe(false);
     expect(await expired.json()).toMatchObject({ code: 'InvalidJWT' });
   });
 
-  it('refuses to sign a view URL for a photo that was never uploaded', async () => {
-    expect(await reasonOf(photos.createViewUrl(newPath(), 60))).toBe('PHOTO_NOT_FOUND');
+  it('refuses to sign view URLs when a photo was never uploaded', async () => {
+    const path = newPath();
+    await fetch(await photos.createUploadUrl(path), { method: 'PUT', body: 'RIFF' });
+    expect(await reasonOf(photos.createViewUrls([path, newPath()], 60))).toBe('PHOTO_NOT_FOUND');
+  });
+
+  it('signs nothing for no photos, without calling Storage', async () => {
+    const offline = createSupabasePhotoStorage({
+      supabaseUrl: 'http://127.0.0.1:9',
+      secretKey: 'sb_secret_unused',
+    });
+    expect((await offline.createViewUrls([], 60)).size).toBe(0);
   });
 
   it('refuses a wrong secret key as unavailable, not as a missing photo', async () => {

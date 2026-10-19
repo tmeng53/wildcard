@@ -7,9 +7,11 @@ import {
   SquadId,
   entryFromStored,
   isSameCheckIn,
+  photosOf,
   recordFromDraft,
   storedPayload,
 } from './check-in.js';
+import { PhotoPath } from './photos.js';
 
 const squad = '6f1c1d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f';
 const otherSquad = '7a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
@@ -58,11 +60,8 @@ describe('CheckInDraft', () => {
     expect(issues({ ...base, kind: 'napped', disclaimer: { text: '困' } })).toStrictEqual(['kind']);
   });
 
-  it('refuses unknown fields: no calories, and no photos until they are supported', () => {
+  it('refuses unknown fields: no calories', () => {
     expect(issues({ ...trained, training: { ...trained.training, calories: 300 } })).toStrictEqual([
-      'training',
-    ]);
-    expect(issues({ ...trained, training: { ...trained.training, photos: [] } })).toStrictEqual([
       'training',
     ]);
     expect(
@@ -137,6 +136,34 @@ describe('CheckInDraft', () => {
   });
 });
 
+describe('photos on a check-in', () => {
+  const photo = (id: string) => ({ path: `${squad}/${id}` });
+  const cover = photo('1d2e3f4a-5b6c-4d7e-8f9a-0b1c2d3e4f5a');
+  const second = photo('2e3f4a5b-6c7d-4e8f-9a0b-1c2d3e4f5a6b');
+
+  it('takes 1 to 3 on a 练了 or a meal, the cover first', () => {
+    expect(issues({ ...trained, training: { sport: 'run', photos: [cover, second] } })).toBe('ok');
+    expect(issues({ ...base, kind: 'cheatMeal', meal: { photos: [cover] } })).toBe('ok');
+    expect(
+      photosOf(
+        CheckInDraft.parse({ ...base, kind: 'healthyMeal', meal: { photos: [second, cover] } }),
+      ),
+    ).toStrictEqual([second, cover]);
+  });
+
+  it('refuses none listed, a repeat, or photos on a disclaimer', () => {
+    expect(issues({ ...trained, training: { sport: 'run', photos: [] } })).toStrictEqual([
+      'training.photos',
+    ]);
+    expect(
+      issues({ ...trained, training: { sport: 'run', photos: [cover, cover] } }),
+    ).toStrictEqual(['training.photos']);
+    expect(
+      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '困', photos: [cover] } }),
+    ).toStrictEqual(['disclaimer']);
+  });
+});
+
 describe('a saved check-in', () => {
   const ids = {
     id: CheckInId.parse('1d2e3f4a-5b6c-4d7e-8f9a-0b1c2d3e4f5a'),
@@ -146,18 +173,34 @@ describe('a saved check-in', () => {
 
   it('stores its fields with their version, and reads them back', () => {
     expect(storedPayload(record)).toStrictEqual({ version: 1, sport: 'run' });
-    expect(entryFromStored({ kind: 'trained', payload: storedPayload(record) })).toStrictEqual({
-      kind: 'trained',
-      training: { sport: 'run' },
-    });
+    expect(
+      entryFromStored({ kind: 'trained', payload: storedPayload(record), photos: [] }),
+    ).toStrictEqual({ kind: 'trained', training: { sport: 'run' } });
+  });
+
+  it('keeps photos out of the stored fields, and reads them back from their rows', () => {
+    const photos = [
+      { path: PhotoPath.parse(`${ids.member}/3f4a5b6c-7d8e-4f9a-8b1c-2d3e4f5a6b7c`) },
+    ];
+    const meal = recordFromDraft(
+      CheckInDraft.parse({ ...base, kind: 'healthyMeal', meal: { caption: '沙拉', photos } }),
+      ids,
+    );
+    expect(storedPayload(meal)).toStrictEqual({ version: 1, caption: '沙拉' });
+    expect(
+      entryFromStored({ kind: 'healthyMeal', payload: storedPayload(meal), photos }),
+    ).toStrictEqual({ kind: 'healthyMeal', meal: { caption: '沙拉', photos } });
+    expect(() =>
+      entryFromStored({ kind: 'disclaimer', payload: { version: 1, text: '困' }, photos }),
+    ).toThrow('photos');
   });
 
   it('refuses stored fields that break the shape', () => {
     expect(() =>
-      entryFromStored({ kind: 'trained', payload: { version: 2, sport: 'run' } }),
+      entryFromStored({ kind: 'trained', payload: { version: 2, sport: 'run' }, photos: [] }),
     ).toThrow('version');
     expect(() =>
-      entryFromStored({ kind: 'trained', payload: { version: 1, sport: 'skydiving' } }),
+      entryFromStored({ kind: 'trained', payload: { version: 1, sport: 'skydiving' }, photos: [] }),
     ).toThrow('sport');
   });
 

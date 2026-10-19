@@ -15,9 +15,13 @@ export {
   MemberId,
   SquadId,
   Training,
+  photosOf,
+  storedMealFields,
+  storedTrainingFields,
   type CheckInRecord,
   type Entry,
 } from './domain/check-in.js';
+export { PhotoPath, PhotoRef, Photos, isOwnPhoto } from './domain/photos.js';
 export { DayRange } from './domain/day-range.js';
 export { SPORTS, SportKey } from './domain/sports.js';
 export {
@@ -26,7 +30,10 @@ export {
   CheckInInTheFutureError,
   CheckInTooOldError,
   DisclaimerAlreadyPostedError,
+  PhotoInUseError,
+  PhotoNotUploadedError,
+  PhotoNotYoursError,
   SquadNotJoinedError,
 } from './errors.js';
-export type { CheckInStore, Clock, InsertOutcome } from './ports.js';
+export type { CheckInStore, Clock, InsertOutcome, PhotoFiles } from './ports.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';

@@ -224,6 +224,29 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "description": "The photo’s name, as the check-in was saved with."
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "description": "`GET` the photo here. It works for an hour."
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "1 to 3 photos, the cover first. Missing when there are none."
                   }
                 },
                 "required": [
@@ -294,6 +317,29 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "description": "The photo’s name, as the check-in was saved with."
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "description": "`GET` the photo here. It works for an hour."
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "1 to 3 photos, the cover first. Missing when there are none."
                   }
                 },
                 "additionalProperties": false
@@ -361,6 +407,29 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "description": "The photo’s name, as the check-in was saved with."
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "description": "`GET` the photo here. It works for an hour."
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "1 to 3 photos, the cover first. Missing when there are none."
                   }
                 },
                 "additionalProperties": false
@@ -554,6 +623,25 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                        }
+                      },
+                      "required": [
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "description": "1 to 3 photos, the cover first. Leave it out for none."
                   }
                 },
                 "required": [
@@ -611,6 +699,25 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                        }
+                      },
+                      "required": [
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "description": "1 to 3 photos, the cover first. Leave it out for none."
                   }
                 },
                 "additionalProperties": false
@@ -665,6 +772,25 @@
                     "type": "string",
                     "maxLength": 1000,
                     "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                        }
+                      },
+                      "required": [
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "description": "1 to 3 photos, the cover first. Leave it out for none."
                   }
                 },
                 "additionalProperties": false
@@ -867,7 +993,7 @@
       "put": {
         "operationId": "saveCheckIn",
         "summary": "Save a check-in",
-        "description": "The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409.",
+        "description": "The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.",
         "security": [
           {
             "bearer": []
@@ -916,7 +1042,7 @@
             }
           },
           "400": {
-            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, or counted for the wrong day",
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day, or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -936,7 +1062,7 @@
             }
           },
           "403": {
-            "description": "Sent to a squad the member isn’t in",
+            "description": "Sent to a squad the member isn’t in, or with someone else’s photo",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -946,7 +1072,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, or today’s disclaimer is already posted",
+            "description": "The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -956,7 +1082,7 @@
             }
           },
           "503": {
-            "description": "Sign-in can’t be checked right now",
+            "description": "Sign-in or photo storage can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1049,7 +1175,7 @@
             }
           },
           "503": {
-            "description": "Sign-in can’t be checked right now",
+            "description": "Sign-in or photo storage can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1123,7 +1249,7 @@
             }
           },
           "503": {
-            "description": "Sign-in can’t be checked right now",
+            "description": "Sign-in or photo storage can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {

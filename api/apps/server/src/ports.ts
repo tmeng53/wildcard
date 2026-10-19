@@ -1,4 +1,4 @@
-import type { CheckInTables } from '@wildcard/check-ins';
+import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -30,22 +30,8 @@ export type Tables = CheckInTables;
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;
 
-/**
- * A check-in photo's name in storage: `<member id>/<photo id>`, both UUIDs. The first part is
- * the folder of the member who uploaded it; the server picks both parts, never the app.
- */
-export const PhotoPath = z
-  .string()
-  .regex(
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-  )
-  .brand<'PhotoPath'>();
-export type PhotoPath = z.infer<typeof PhotoPath>;
-
-/** Whether a photo is in this member's own folder: the only photos they may use or delete. */
-export function isOwnPhoto(path: PhotoPath, member: UserId): boolean {
-  return path.startsWith(`${member}/`);
-}
+// A photo's path and who owns it are check-in rules, so the check-ins module defines them.
+export { PhotoPath, isOwnPhoto } from '@wildcard/check-ins';
 
 /**
  * Where check-in photos are kept. Files are private: the app reaches them only through the
@@ -60,6 +46,12 @@ export interface PhotoStorage {
   readonly createUploadUrl: (path: PhotoPath) => Promise<URL>;
   /** Whether a photo has been uploaded to this path. */
   readonly exists: (path: PhotoPath) => Promise<boolean>;
-  /** A URL the app can `GET` the photo from for `expiresInSeconds`. Throws `PhotoNotFoundError`. */
-  readonly createViewUrl: (path: PhotoPath, expiresInSeconds: number) => Promise<URL>;
+  /**
+   * A URL the app can `GET` each photo from for `expiresInSeconds`, in one call however many
+   * there are. Throws `PhotoNotFoundError` when one of them isn't uploaded.
+   */
+  readonly createViewUrls: (
+    paths: readonly PhotoPath[],
+    expiresInSeconds: number,
+  ) => Promise<ReadonlyMap<PhotoPath, URL>>;
 }

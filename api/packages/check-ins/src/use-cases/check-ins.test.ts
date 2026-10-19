@@ -9,7 +9,14 @@ import {
   createPostgresCheckInStore,
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
-import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
+import {
+  CheckInDraft,
+  CheckInId,
+  MemberId,
+  SquadId,
+  photosOf,
+  type CheckInRecord,
+} from '../domain/check-in.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -21,7 +28,21 @@ const db = new Kysely<CheckInTables>({
 afterAll(() => db.destroy());
 
 const now = new Date('2026-10-18T20:00:00.000Z');
-const checkIns = createCheckIns({ store: createPostgresCheckInStore(db), clock: () => now });
+// Photo files: the paths uploaded so far. Storage itself is the server's adapter, tested there.
+const uploaded = new Set<string>();
+const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) };
+const checkIns = createCheckIns({
+  store: createPostgresCheckInStore(db),
+  photos,
+  clock: () => now,
+});
+
+/** A photo in the member's folder, uploaded unless asked not to be. */
+function photoOf(member: MemberId, { upload = true } = {}) {
+  const path = `${member}/${randomUUID()}`;
+  if (upload) uploaded.add(path);
+  return { path };
+}
 
 async function newMember() {
   const id = MemberId.parse(randomUUID());
@@ -54,9 +75,10 @@ function draft(body: { readonly audience: readonly string[] } & Record<string, u
 const disclaimer = (text: string) => ({ kind: 'disclaimer', disclaimer: { text } });
 
 async function savedRows(id: CheckInId) {
-  return sql<{ kind: string; payload: unknown; squads: string[] }>`
+  return sql<{ kind: string; payload: unknown; squads: string[]; photos: string[] }>`
     select kind, payload,
-      array(select squad_id::text from check_in_squads where check_in_id = c.id order by position) as squads
+      array(select squad_id::text from check_in_squads where check_in_id = c.id order by position) as squads,
+      array(select path from check_in_photos where check_in_id = c.id order by position) as photos
     from check_ins c where id = ${id}`
     .execute(db)
     .then((result) => result.rows);
@@ -70,8 +92,66 @@ describe('saving a check-in', () => {
     const saved = await checkIns.save({ id, member, draft: draft({ audience: [b, a] }) });
     expect(saved.created).toBe(true);
     expect(await savedRows(id)).toStrictEqual([
-      { kind: 'trained', payload: { version: 1, sport: 'run' }, squads: [b, a] },
+      { kind: 'trained', payload: { version: 1, sport: 'run' }, squads: [b, a], photos: [] },
     ]);
+  });
+
+  it('stores its photos in order, the cover first, and reads them back', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const [cover, second] = [photoOf(member), photoOf(member)];
+    const id = CheckInId.parse(randomUUID());
+    const body = draft({ audience: [squad], kind: 'cheatMeal', meal: { photos: [cover, second] } });
+    const saved = await checkIns.save({ id, member, draft: body });
+    expect(await savedRows(id)).toStrictEqual([
+      {
+        kind: 'cheatMeal',
+        payload: { version: 1 },
+        squads: [squad],
+        photos: [cover.path, second.path],
+      },
+    ]);
+    const retry = await checkIns.save({ id, member, draft: body });
+    expect([retry.created, retry.checkIn]).toStrictEqual([false, saved.checkIn]);
+    await expect(
+      checkIns.save({
+        id,
+        member,
+        draft: draft({ audience: [squad], kind: 'cheatMeal', meal: { photos: [second, cover] } }),
+      }),
+    ).rejects.toMatchObject({ reason: 'CHECK_IN_ID_CONFLICT' });
+  });
+
+  it('refuses someone else’s photo, one not uploaded, or one another check-in uses', async () => {
+    const member = await newMember();
+    const other = await newMember();
+    const squad = await newSquad(member, other);
+    const save = (...photos: { readonly path: string }[]) =>
+      checkIns.save({
+        id: CheckInId.parse(randomUUID()),
+        member,
+        draft: draft({ audience: [squad], training: { sport: 'run', photos } }),
+      });
+    const theirs = photoOf(other);
+    await expect(save(photoOf(member), theirs)).rejects.toMatchObject({
+      reason: 'PHOTO_NOT_YOURS',
+      path: theirs.path,
+    });
+    const missing = photoOf(member, { upload: false });
+    await expect(save(photoOf(member), missing)).rejects.toMatchObject({
+      reason: 'PHOTO_NOT_UPLOADED',
+      path: missing.path,
+    });
+    const used = photoOf(member);
+    await save(used);
+    await expect(save(photoOf(member), used)).rejects.toMatchObject({ reason: 'PHOTO_IN_USE' });
+    // A refused check-in leaves nothing behind.
+    const count = await sql<{
+      n: string;
+    }>`select count(*) as n from check_ins where member_id = ${member}`
+      .execute(db)
+      .then((result) => result.rows[0]?.n);
+    expect(count).toBe('1');
   });
 
   it('treats the same check-in again as saved, even after its time window', async () => {
@@ -82,6 +162,7 @@ describe('saving a check-in', () => {
     await checkIns.save({ id, member, draft: body });
     const late = createCheckIns({
       store: createPostgresCheckInStore(db),
+      photos,
       clock: () => new Date('2026-10-25T00:00:00.000Z'),
     });
     const retry = await late.save({
@@ -145,6 +226,7 @@ describe('saving a check-in', () => {
             return Promise.resolve(undefined);
           },
         },
+        photos,
         clock: () => now,
       });
     };
@@ -294,6 +376,28 @@ describe('listing check-ins', () => {
         days: { from: '2026-10-18', to: '2026-10-18' },
       }),
     ).rejects.toMatchObject({ reason: 'SQUAD_NOT_JOINED' });
+  });
+
+  it('lists each check-in with its photos', async () => {
+    const me = await newMember();
+    const squad = await newSquad(me);
+    const cover = photoOf(me);
+    const withPhoto = await save(me, {
+      audience: [squad],
+      training: { sport: 'swim', photos: [cover] },
+    });
+    const without = await save(me, { audience: [squad], createdAt: '2026-10-18T19:00:00.000Z' });
+    const days = { from: '2026-10-18', to: '2026-10-18' };
+    const photosIn = (records: readonly CheckInRecord[]) =>
+      records.map((record) => ({ id: record.id, photos: photosOf(record) }));
+    const expected = [
+      { id: withPhoto, photos: [cover] },
+      { id: without, photos: [] },
+    ];
+    expect(photosIn(await checkIns.listForSquad({ viewer: me, squad, days }))).toStrictEqual(
+      expected,
+    );
+    expect(photosIn(await checkIns.listMine({ member: me, days }))).toStrictEqual(expected);
   });
 
   it('shows a member all their own check-ins with their whole audience', async () => {

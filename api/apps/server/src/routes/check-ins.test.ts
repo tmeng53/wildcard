@@ -14,14 +14,19 @@ import { config, signUp } from '../test-kit/local-supabase.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
+const photos = createSupabasePhotoStorage({
+  supabaseUrl: config.supabaseUrl,
+  secretKey: config.supabaseSecretKey,
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
-  photos: createSupabasePhotoStorage({
-    supabaseUrl: config.supabaseUrl,
-    secretKey: config.supabaseSecretKey,
+  photos,
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    clock: () => new Date(),
   }),
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
   log: createLog(() => undefined),
 });
 
@@ -60,6 +65,19 @@ async function call({
     type: response.headers.get('content-type'),
     body: await response.json(),
   };
+}
+
+/** A photo the member uploads through `POST /photo-uploads`, as the app does; its path. */
+async function uploadPhoto(token: string, bytes: string) {
+  const { body } = await call({ method: 'POST', path: '/photo-uploads', token });
+  const { path, uploadUrl } = z.object({ path: z.string(), uploadUrl: z.url() }).parse(body);
+  const uploaded = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'content-type': 'image/jpeg' },
+    body: bytes,
+  });
+  expect(uploaded.ok).toBe(true);
+  return path;
 }
 
 /** Today as a UTC date, and a moment a minute ago: always inside the time window. */
@@ -274,5 +292,90 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
         })
       ).status,
     ).toBe(200);
+  });
+});
+
+describe('photos on check-ins', () => {
+  const ViewedPhotos = z.object({
+    training: z.object({ photos: z.array(z.object({ path: z.string(), url: z.url() })) }),
+  });
+
+  it('saves photos by path and answers each with a URL to view it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const [cover, second] = [
+      await uploadPhoto(me.token, 'cover'),
+      await uploadPhoto(me.token, 'two'),
+    ];
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const saved = await call({
+      method: 'PUT',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        day,
+        createdAt,
+        audience: [squad],
+        kind: 'trained',
+        training: { sport: 'run', photos: [{ path: cover }, { path: second }] },
+      },
+    });
+    expect(saved.status).toBe(201);
+    const viewed = async (body: unknown) =>
+      Promise.all(
+        ViewedPhotos.parse(body).training.photos.map(async ({ path, url }) => [
+          path,
+          await (await fetch(url)).text(),
+        ]),
+      );
+    expect(await viewed(saved.body)).toStrictEqual([
+      [cover, 'cover'],
+      [second, 'two'],
+    ]);
+
+    // A squad mate sees them too, through the squad's list.
+    const listed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    const [checkIn] = z.object({ checkIns: z.array(z.unknown()) }).parse(listed.body).checkIns;
+    expect(await viewed(checkIn)).toStrictEqual([
+      [cover, 'cover'],
+      [second, 'two'],
+    ]);
+  });
+
+  it('refuses a photo that isn’t the caller’s, isn’t uploaded, or is already used', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const put = async (path: string) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${randomUUID()}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'healthyMeal',
+          meal: { photos: [{ path }] },
+        },
+      });
+      return [status, z.object({ reason: z.string() }).safeParse(body).data?.reason ?? 'saved'];
+    };
+    expect(await put(await uploadPhoto(friend.token, 'theirs'))).toStrictEqual([
+      403,
+      'PHOTO_NOT_YOURS',
+    ]);
+    expect(await put(`${me.userId}/${randomUUID()}`)).toStrictEqual([400, 'PHOTO_NOT_UPLOADED']);
+    const mine = await uploadPhoto(me.token, 'mine');
+    expect(await put(mine)).toStrictEqual([201, 'saved']);
+    expect(await put(mine)).toStrictEqual([409, 'PHOTO_IN_USE']);
+    expect(await put('not-a-photo.jpg')).toStrictEqual([400, 'REQUEST_INVALID']);
   });
 });

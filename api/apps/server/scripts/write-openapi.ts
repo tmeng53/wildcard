@@ -14,12 +14,12 @@ const unused = (): never => {
 };
 // Never connected: the pool opens a connection only for a query.
 const db = createDatabase('postgres://localhost/unused');
-const photos = { createUploadUrl: unused, exists: unused, createViewUrl: unused };
+const photos = { createUploadUrl: unused, exists: unused, createViewUrls: unused };
 const app = createApp({
   db,
   verifyToken: unused,
   photos,
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: unused }),
+  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

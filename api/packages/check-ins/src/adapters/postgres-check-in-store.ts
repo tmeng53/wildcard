@@ -8,9 +8,11 @@ import {
   MemberId,
   SquadId,
   entryFromStored,
+  photosOf,
   storedPayload,
   type CheckInRecord,
 } from '../domain/check-in.js';
+import { PhotoPath, type PhotoRef } from '../domain/photos.js';
 import type { CheckInStore, InsertOutcome } from '../ports.js';
 import type { CheckIns, DB } from './tables.js';
 
@@ -18,9 +20,11 @@ import type { CheckIns, DB } from './tables.js';
 export type CheckInTables = DB;
 
 /** Which uniqueness rule a unique violation (23505) names. */
-const UNIQUE_RULES: Record<string, 'id' | 'dailyDisclaimer' | undefined> = {
+const UNIQUE_RULES: Record<string, 'id' | 'dailyDisclaimer' | 'photo' | undefined> = {
   check_ins_pkey: 'id',
   check_ins_one_disclaimer_a_day: 'dailyDisclaimer',
+  // The path is the key, so a photo belongs to one check-in.
+  check_in_photos_pkey: 'photo',
 };
 
 const Constraint = z.object({ constraint: z.string() });
@@ -41,23 +45,36 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
     day: string;
   };
 
-  /** Rows with their audiences, in the rows' order. */
+  /** Rows with their audiences and photos, in the rows' order. */
   async function withAudiences(rows: readonly Row[]): Promise<CheckInRecord[]> {
     if (rows.length === 0) return [];
-    const audienceRows = await db
-      .selectFrom('check_in_squads')
-      .select(['check_in_id', 'squad_id'])
-      .where(
-        'check_in_id',
-        'in',
-        rows.map((row) => row.id),
-      )
-      .orderBy('check_in_id')
-      .orderBy('position')
-      .execute();
+    const ids = rows.map((row) => row.id);
+    const [audienceRows, photoRows] = await Promise.all([
+      db
+        .selectFrom('check_in_squads')
+        .select(['check_in_id', 'squad_id'])
+        .where('check_in_id', 'in', ids)
+        .orderBy('check_in_id')
+        .orderBy('position')
+        .execute(),
+      db
+        .selectFrom('check_in_photos')
+        .select(['check_in_id', 'path'])
+        .where('check_in_id', 'in', ids)
+        .orderBy('check_in_id')
+        .orderBy('position')
+        .execute(),
+    ]);
     const audiences = new Map<string, SquadId[]>();
     for (const { check_in_id, squad_id } of audienceRows) {
       audiences.set(check_in_id, [...(audiences.get(check_in_id) ?? []), SquadId.parse(squad_id)]);
+    }
+    const photos = new Map<string, PhotoRef[]>();
+    for (const { check_in_id, path } of photoRows) {
+      photos.set(check_in_id, [
+        ...(photos.get(check_in_id) ?? []),
+        { path: PhotoPath.parse(path) },
+      ]);
     }
     return rows.map((row) => ({
       id: CheckInId.parse(row.id),
@@ -65,7 +82,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       day: LocalDay.parse(row.day),
       createdAt: row.created_at,
       audience: audiences.get(row.id) ?? [],
-      ...entryFromStored(row),
+      ...entryFromStored({ ...row, photos: photos.get(row.id) ?? [] }),
     }));
   }
 
@@ -104,6 +121,19 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               })),
             )
             .execute();
+          const photos = photosOf(checkIn);
+          if (photos.length > 0) {
+            await trx
+              .insertInto('check_in_photos')
+              .values(
+                photos.map(({ path }, index) => ({
+                  path,
+                  check_in_id: checkIn.id,
+                  position: index + 1,
+                })),
+              )
+              .execute();
+          }
         });
         return { saved: true };
       } catch (error) {

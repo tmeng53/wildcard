@@ -1,6 +1,6 @@
 import type { CheckInRecord, MemberId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
-import type { CheckInStore, Clock } from '../ports.js';
+import type { CheckInStore, Clock, PhotoFiles } from '../ports.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
 import {
   listSquadCheckIns,
@@ -21,6 +21,7 @@ export interface CheckIns {
 
 export function createCheckIns(deps: {
   readonly store: CheckInStore;
+  readonly photos: PhotoFiles;
   readonly clock: Clock;
 }): CheckIns {
   return {
