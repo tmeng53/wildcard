@@ -166,6 +166,19 @@ describe('joining by invite code', () => {
       },
     );
   });
+
+  it('previews the squad to anyone with only its name, size and whether it is full', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann, '周末网球');
+    expect(await squads.previewPublicInvite(squad.inviteCode)).toStrictEqual({
+      name: '周末网球',
+      memberCount: 1,
+      full: false,
+    });
+    await expect(squads.previewPublicInvite(InviteCode.parse('ZZZZZZZZ'))).rejects.toMatchObject({
+      reason: 'INVITE_CODE_UNKNOWN',
+    });
+  });
 });
 
 describe('leaving and listing', () => {

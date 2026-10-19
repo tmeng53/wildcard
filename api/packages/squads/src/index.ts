@@ -21,4 +21,4 @@ export {
 } from './errors.js';
 export type { CreateOutcome, JoinOutcome, NewSquad, SquadStore } from './ports.js';
 export { createSquads, type Squads } from './use-cases/squads.js';
-export type { InvitePreview } from './use-cases/squads/preview-invite.js';
+export type { InvitePreview, PublicInvitePreview } from './use-cases/squads/preview-invite.js';

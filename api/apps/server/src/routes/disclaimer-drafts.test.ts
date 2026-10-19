@@ -25,6 +25,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 import { recordedAnthropic, type Fixture } from '../test-kit/recorded-anthropic.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database, and the Claude
 // adapter answering from recorded responses instead of Anthropic.
@@ -56,6 +57,7 @@ function appWith(model: LanguageModel) {
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn: undefined,
+    publicRoutes: unlimitedPublicRoutes,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       reactions: createPostgresReactionStore(db),

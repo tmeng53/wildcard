@@ -2,7 +2,7 @@ import { z } from '@hono/zod-openapi';
 import { toProblemDetails } from '@wildcard/errors';
 
 import { bodyVersion } from './body-version.js';
-import { MediaTypeUnsupportedError } from './errors.js';
+import { MediaTypeUnsupportedError, RequestsTooFrequentError } from './errors.js';
 
 /**
  * Every failed request answers with this body, as `application/problem+json`: RFC 9457 problem
@@ -44,10 +44,11 @@ export const jsonBodyFailures = {
 /** The response for a failed request. Anything that isn't one of our errors answers 500. */
 export function problemResponse(error: unknown): Response {
   const body: Problem = { version: 1, ...toProblemDetails(error), ...httpOverride(error) };
-  return new Response(JSON.stringify(body), {
-    status: body.status,
-    headers: { 'content-type': 'application/problem+json' },
-  });
+  const headers = new Headers({ 'content-type': 'application/problem+json' });
+  if (error instanceof RequestsTooFrequentError) {
+    headers.set('retry-after', String(error.retryAfterSeconds));
+  }
+  return new Response(JSON.stringify(body), { status: body.status, headers });
 }
 
 /** The HTTP status HTTP itself requires for an error, in place of its error status's usual one. */

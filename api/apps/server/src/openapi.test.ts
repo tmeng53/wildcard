@@ -16,6 +16,7 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
+import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -35,6 +36,7 @@ describe('openapi.json', () => {
         signsInWithApple: () => Promise.reject(new Error('unused')),
       },
       revokeAppleSignIn: undefined,
+      publicRoutes: unlimitedPublicRoutes,
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
         reactions: createPostgresReactionStore(db),

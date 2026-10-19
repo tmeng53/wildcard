@@ -2456,6 +2456,76 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PublicSquadInvite`.
+        public struct PublicSquadInvite: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/version`.
+            public var version: Components.Schemas.PublicSquadInvite.VersionPayload
+            /// The squad’s name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/name`.
+            public var name: Swift.String
+            /// How many members it has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/memberCount`.
+            public var memberCount: Swift.Int
+            /// True when it has 8 members and can’t take more.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/full`.
+            public var full: Swift.Bool
+            /// Creates a new `PublicSquadInvite`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: The squad’s name.
+            ///   - memberCount: How many members it has now.
+            ///   - full: True when it has 8 members and can’t take more.
+            public init(
+                version: Components.Schemas.PublicSquadInvite.VersionPayload,
+                name: Swift.String,
+                memberCount: Swift.Int,
+                full: Swift.Bool
+            ) {
+                self.version = version
+                self.name = name
+                self.memberCount = memberCount
+                self.full = full
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+                case memberCount
+                case full
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.PublicSquadInvite.VersionPayload.self,
+                    forKey: .version
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                self.memberCount = try container.decode(
+                    Swift.Int.self,
+                    forKey: .memberCount
+                )
+                self.full = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .full
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "name",
+                    "memberCount",
+                    "full"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
         public struct SquadToday: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadToday/version`.

@@ -23,6 +23,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
 import { adminOn, config, signOut, signUp } from '../test-kit/local-supabase.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
 // its servers can't be called without a real key and a real sign-in.
@@ -44,6 +45,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn,
+    publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),

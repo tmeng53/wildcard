@@ -20,6 +20,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 async function send(
   path: string,
@@ -32,6 +33,7 @@ async function send(
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
     accounts: createSupabaseAccounts({ supabaseUrl, secretKey: config.supabaseSecretKey }),
     revokeAppleSignIn: undefined,
+    publicRoutes: unlimitedPublicRoutes,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       reactions: createPostgresReactionStore(db),
