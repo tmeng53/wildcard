@@ -204,6 +204,24 @@ describe('PUT /check-ins/{id}', () => {
       malformed.headers.get('content-type'),
       z.object({ reason: z.string() }).parse(await malformed.json()).reason,
     ]).toStrictEqual([400, 'application/problem+json', 'REQUEST_INVALID']);
+    for (const contentType of ['text/plain', undefined]) {
+      const headers: Record<string, string> = { authorization: `Bearer ${me.token}` };
+      if (contentType !== undefined) headers['content-type'] = contentType;
+      // Bytes, since a string body would get `text/plain` from `Request` when no type is given.
+      const body = new TextEncoder().encode(JSON.stringify(disclaimer('累')));
+      const sent = new Request('http://localhost/', { method: 'PUT', headers, body });
+      expect(sent.headers.get('content-type')).toBe(contentType ?? null);
+      const notJson = await app.request(`/check-ins/${randomUUID()}`, {
+        method: 'PUT',
+        headers,
+        body,
+      });
+      expect([
+        notJson.status,
+        notJson.headers.get('content-type'),
+        z.object({ reason: z.string() }).parse(await notJson.json()).reason,
+      ]).toStrictEqual([415, 'application/problem+json', 'MEDIA_TYPE_UNSUPPORTED']);
+    }
   });
 
   it('asks a caller with no token to sign in', async () => {

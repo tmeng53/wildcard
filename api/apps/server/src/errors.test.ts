@@ -8,6 +8,7 @@ import {
   AuthTokenMissingError,
   AuthUnavailableError,
   DatabaseUnavailableError,
+  MediaTypeUnsupportedError,
   RequestInvalidError,
   RouteNotFoundError,
 } from './errors.js';
@@ -25,6 +26,7 @@ describe('server errors', () => {
         new AppleSignInUnavailableError(),
         new DatabaseUnavailableError(),
         new RequestInvalidError('bad'),
+        new MediaTypeUnsupportedError(),
         new RouteNotFoundError('GET', '/nope'),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
@@ -40,6 +42,7 @@ describe('server errors', () => {
       ['AppleSignInUnavailableError', 'APPLE_SIGN_IN_UNAVAILABLE', 'UNAVAILABLE'],
       ['DatabaseUnavailableError', 'DATABASE_UNAVAILABLE', 'UNAVAILABLE'],
       ['RequestInvalidError', 'REQUEST_INVALID', 'INVALID_ARGUMENT'],
+      ['MediaTypeUnsupportedError', 'MEDIA_TYPE_UNSUPPORTED', 'INVALID_ARGUMENT'],
       ['RouteNotFoundError', 'ROUTE_NOT_FOUND', 'NOT_FOUND'],
     ]);
   });

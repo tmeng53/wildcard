@@ -90,6 +90,20 @@ export class RequestInvalidError extends AppError {
   readonly status = 'INVALID_ARGUMENT';
 }
 
+/**
+ * Thrown when a request's body isn't sent as JSON (`text/plain`, or no `Content-Type` at all) to a
+ * route that takes JSON. Send it as `application/json`. Answered with HTTP 415, as RFC 9110 asks.
+ */
+export class MediaTypeUnsupportedError extends AppError {
+  override readonly name = 'MediaTypeUnsupportedError';
+  readonly reason = 'MEDIA_TYPE_UNSUPPORTED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(options?: ErrorOptions) {
+    super('Send the body as application/json.', options);
+  }
+}
+
 /** Thrown when photo storage doesn't answer. Retry later. */
 export class PhotoStorageUnavailableError extends AppError {
   override readonly name = 'PhotoStorageUnavailableError';

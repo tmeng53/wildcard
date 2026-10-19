@@ -4,7 +4,7 @@ import { MemberId, TimeZone, type Members } from '@wildcard/members';
 import { bodyVersion } from '../body-version.js';
 import { deleteAccount, type DeleteAccountDependencies } from '../flows/delete-account.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const profileFields = {
@@ -92,6 +92,7 @@ export function me(
     responses: {
       200: { description: 'Saved', content: { 'application/json': { schema: ProfileBody } } },
       400: problem('Not a valid profile, or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)'),
+      ...jsonBodyFailures,
       ...unauthorized,
     },
   });
