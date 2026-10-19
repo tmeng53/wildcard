@@ -55,7 +55,9 @@ async function newMember() {
 
 async function newSquad(...members: MemberId[]) {
   const id = SquadId.parse(randomUUID());
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+    db,
+  );
   for (const member of members) {
     await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member})`.execute(
       db,

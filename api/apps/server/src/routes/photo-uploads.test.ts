@@ -5,6 +5,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -42,6 +43,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
   });
   try {

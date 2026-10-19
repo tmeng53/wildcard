@@ -7,6 +7,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
@@ -40,6 +41,7 @@ describe('openapi.json', () => {
         clock: () => new Date(),
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
+      squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');

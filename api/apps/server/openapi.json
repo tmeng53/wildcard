@@ -913,6 +913,148 @@
         ],
         "additionalProperties": false
       },
+      "SquadList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "squads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Squad"
+            },
+            "description": "The member’s squads, the earliest joined first: at most 3."
+          }
+        },
+        "required": [
+          "version",
+          "squads"
+        ],
+        "additionalProperties": false
+      },
+      "Squad": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The squad’s name, as its creator typed it, trimmed."
+          },
+          "inviteCode": {
+            "type": "string",
+            "description": "Members share it to invite friends; an invite link carries it. 8 letters and digits, without 0, O, 1, I or L.",
+            "example": "K7M2QX9P"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was created, in UTC."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The member’s Supabase Auth user id."
+                },
+                "joinedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When they joined, in UTC."
+                }
+              },
+              "required": [
+                "userId",
+                "joinedAt"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Who is in it now, the earliest to join first: 1 to 8."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "name",
+          "inviteCode",
+          "createdAt",
+          "members"
+        ],
+        "additionalProperties": false
+      },
+      "NewSquad": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+            "x-max-characters": 20
+          }
+        },
+        "required": [
+          "version",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "SquadInvite": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "The squad’s name."
+          },
+          "memberCount": {
+            "type": "integer",
+            "description": "How many members it has now."
+          },
+          "full": {
+            "type": "boolean",
+            "description": "True when it has 8 members and can’t take more."
+          },
+          "joined": {
+            "type": "boolean",
+            "description": "True when the caller is in it already."
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "memberCount",
+          "full",
+          "joined"
+        ],
+        "additionalProperties": false
+      },
       "SquadToday": {
         "type": "object",
         "properties": {
@@ -1669,6 +1811,435 @@
           },
           "503": {
             "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/squads": {
+      "get": {
+        "operationId": "listMySquads",
+        "summary": "The signed-in member’s squads",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}": {
+      "put": {
+        "operationId": "createSquad",
+        "summary": "Create a squad",
+        "description": "With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewSquad"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already created: this was a retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid name, or the member is in 3 squads already (`SQUAD_LIMIT_REACHED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The id holds another squad (`SQUAD_ID_CONFLICT`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getSquad",
+        "summary": "A squad and who is in it",
+        "description": "Only for its members.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/members/me": {
+      "delete": {
+        "operationId": "leaveSquad",
+        "summary": "Leave a squad",
+        "description": "Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the member isn’t in changes nothing.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Not in the squad any more"
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squad-invites/{inviteCode}": {
+      "get": {
+        "operationId": "getSquadInvite",
+        "summary": "The squad an invite code belongs to",
+        "description": "What the join screen shows before joining. Case, spaces and dashes in the code don’t matter.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "K7M2QX9P"
+            },
+            "required": true,
+            "name": "inviteCode",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadInvite"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No squad has this code (`INVITE_CODE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squad-invites/{inviteCode}/accept": {
+      "post": {
+        "operationId": "joinSquad",
+        "summary": "Join a squad by invite code",
+        "description": "Safe to repeat: joining a squad the member is in answers 200 with it.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "K7M2QX9P"
+            },
+            "required": true,
+            "name": "inviteCode",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Already in it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Joined",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The squad has 8 members (`SQUAD_FULL`), or the member is in 3 squads already (`SQUAD_LIMIT_REACHED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No squad has this code (`INVITE_CODE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
             "content": {
               "application/problem+json": {
                 "schema": {
