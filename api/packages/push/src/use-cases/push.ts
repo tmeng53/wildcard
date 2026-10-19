@@ -34,13 +34,13 @@ export interface Push {
    */
   dailyDue(candidates: readonly DailyCandidate[]): Promise<DailyCandidate[]>;
   /**
-   * Marks the member's daily push for `day` handled, sent or not. False when another run already
+   * Marks the member's daily push for `day` handled, `quiet` when there's nothing to send. False when another run already
    * did, and then this one must not send it.
    */
   claimDaily(input: {
     readonly member: MemberId;
     readonly day: LocalDay;
-    readonly sent: boolean;
+    readonly quiet: boolean;
   }): Promise<boolean>;
 }
 

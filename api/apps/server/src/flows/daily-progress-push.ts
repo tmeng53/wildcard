@@ -57,12 +57,15 @@ export interface DailyProgressDependencies {
 export interface DailyProgressRun {
   /** Members whose push was due: past 6pm, a phone, not turned off, not handled today. */
   readonly due: number;
+  /** Reached at least one of the member's phones. */
   readonly sent: number;
+  /** Had something to say but reached no phone: sending is off, or every phone failed. */
+  readonly unsent: number;
   /** Handled with nothing to say: no squad, or no one in it checked in and nothing came in. */
   readonly quiet: number;
   /** Another run handled them first. */
   readonly skipped: number;
-  /** Couldn't be put together; tried again on the next run. */
+  /** Failed before their day was claimed; tried again on the next run. */
   readonly failed: number;
 }
 
@@ -92,34 +95,42 @@ export async function sendDailyProgress(
   return {
     due: due.length,
     sent: count('sent'),
+    unsent: count('unsent'),
     quiet: count('quiet'),
     skipped: count('skipped'),
     failed: count('failed'),
   };
 }
 
-type Outcome = 'sent' | 'quiet' | 'skipped' | 'failed';
+type Outcome = 'sent' | 'unsent' | 'quiet' | 'skipped' | 'failed';
 
 /** A member whose push is due, and the moment of this run. */
 type Due = DailyCandidate & { readonly now: Date };
 
+/** One member's push. Never throws, so one member's failure never stops the others'. */
 async function handle(deps: DailyProgressDependencies, due: Due): Promise<Outcome> {
   const { member, day } = due;
   let notification: PushNotification | undefined;
   try {
     notification = await compose(deps, due);
+    const quiet = notification === undefined;
+    if (!(await deps.push.claimDaily({ member, day, quiet }))) return 'skipped';
+    if (notification === undefined) return 'quiet';
   } catch (error) {
     deps.log.error('daily push not put together', { member, day, error });
     return 'failed';
   }
-  const claimed = await deps.push.claimDaily({ member, day, sent: notification !== undefined });
-  if (!claimed) return 'skipped';
-  if (notification === undefined) return 'quiet';
-  const outcome = await deps.push.notifyMembers({ members: [member], notification });
-  if (outcome.failures.length > 0) {
-    deps.log.warn('daily push not sent to every phone', { member, failures: outcome.failures });
+  try {
+    const outcome = await deps.push.notifyMembers({ members: [member], notification });
+    if (outcome.failures.length > 0) {
+      deps.log.warn('daily push not sent to every phone', { member, failures: outcome.failures });
+    }
+    return outcome.sent > 0 ? 'sent' : 'unsent';
+  } catch (error) {
+    // Claimed already, so it isn't tried again: at most one push a day.
+    deps.log.error('daily push not sent', { member, day, error });
+    return 'unsent';
   }
-  return 'sent';
 }
 
 /** The member's push for today, or `undefined` when there is nothing to tell them. */

@@ -42,12 +42,12 @@ export interface DailyPushStore {
    */
   due(candidates: readonly DailyCandidate[]): Promise<DailyCandidate[]>;
   /**
-   * Marks the member's day handled, `sent` or not. False when it already was, so a day is only
-   * ever handled once, however many runs reach it at once.
+   * Marks the member's day handled, `quiet` when there was nothing to send. False when it already
+   * was, so a day is only ever handled once, however many runs reach it at once.
    */
   claim(handled: {
     readonly member: MemberId;
     readonly day: LocalDay;
-    readonly sent: boolean;
+    readonly quiet: boolean;
   }): Promise<boolean>;
 }

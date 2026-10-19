@@ -15,7 +15,7 @@ export interface DailyPushes {
   day: string;
   handled_at: Generated<Timestamp>;
   member_id: string;
-  sent: boolean;
+  quiet: boolean;
 }
 
 export interface PushDevices {

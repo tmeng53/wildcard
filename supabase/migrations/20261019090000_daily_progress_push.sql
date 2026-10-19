@@ -18,12 +18,12 @@ create table public.push_settings (
 -- Daily pushes ---------------------------------------------------------------------------
 
 -- One row per member per local day the daily push was handled, claimed before it is sent, so
--- two runs at once or a run repeated never send it twice. `sent` is false when there was
--- nothing to say that day.
+-- two runs at once or a run repeated never send it twice. `quiet` is true when there was
+-- nothing to say that day, so nothing was sent.
 create table public.daily_pushes (
   member_id uuid not null references auth.users (id) on delete cascade,
   day date not null,
-  sent boolean not null,
+  quiet boolean not null,
   handled_at timestamptz not null default now(),
   primary key (member_id, day)
 );

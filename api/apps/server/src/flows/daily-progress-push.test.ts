@@ -66,7 +66,7 @@ const pokeSource: InteractionSource = ({ member }) =>
   Promise.resolve(new Map([['poke', pokes.get(member) ?? new Set<string>()]]));
 const interactions = [reactionInteractions(checkIns), pokeSource];
 
-const app = createApp({
+const deps = {
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
   accounts: createSupabaseAccounts({
@@ -88,7 +88,8 @@ const app = createApp({
   log,
   jobs: { token: JOBS_TOKEN, interactions, clock: () => new Date() },
   admin: adminOn(),
-});
+};
+const app = createApp(deps);
 
 const run = () =>
   sendDailyProgress({
@@ -178,6 +179,15 @@ async function squadOf(...joined: readonly { readonly userId: string }[]) {
   return id;
 }
 
+/** The days the member's daily push was handled, from the database. */
+async function handled(member: string) {
+  const { rows } = await sql<{ day: string; quiet: boolean }>`
+    select day::text as day, quiet from public.daily_pushes where member_id = ${member}`.execute(
+    db,
+  );
+  return rows;
+}
+
 async function trained(who: { token: string; offset: number }, squad: string) {
   const id = randomUUID();
   const saved = await call('PUT', {
@@ -249,6 +259,7 @@ describe('the daily progress push', () => {
 
     await run();
     expect(sentTo.get(eve.phone)).toHaveLength(1);
+    expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: false }]);
   });
 
   it('stays quiet on a day the squad didn’t check in and nothing came in, even if it does later', async () => {
@@ -259,6 +270,7 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toBeUndefined();
     expect(sentTo.get(mate.phone)).toBeUndefined();
+    expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: true }]);
   });
 
   it('counts any source’s interactions with the reactions, and one alone is worth a push', async () => {
@@ -325,6 +337,7 @@ describe('POST /jobs/daily-progress-push', () => {
       version: 1,
       due: aCount,
       sent: aCount,
+      unsent: aCount,
       quiet: aCount,
       skipped: aCount,
       // Other tests write squads straight into the database, with invite codes no real squad has.
@@ -334,5 +347,15 @@ describe('POST /jobs/daily-progress-push', () => {
     expect(wrong.status).toBe(401);
     expect(await wrong.json()).toMatchObject({ reason: 'JOB_TOKEN_INVALID' });
     expect((await start()).status).toBe(401);
+  });
+
+  it('runs nothing on a server with no jobs token', async () => {
+    const off = createApp({ ...deps, jobs: { ...deps.jobs, token: undefined } });
+    const ran = await off.request('/jobs/daily-progress-push', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${JOBS_TOKEN}` },
+    });
+    expect(ran.status).toBe(503);
+    expect(await ran.json()).toMatchObject({ reason: 'JOBS_OFF' });
   });
 });

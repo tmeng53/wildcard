@@ -47,10 +47,10 @@ export function createPostgresDailyPushStore(db: Kysely<DB>): DailyPushStore {
       });
     },
 
-    async claim({ member, day, sent }) {
+    async claim({ member, day, quiet }) {
       const row = await db
         .insertInto('daily_pushes')
-        .values({ member_id: member, day: LocalDay.parse(day), sent })
+        .values({ member_id: member, day: LocalDay.parse(day), quiet })
         .onConflict((conflict) => conflict.columns(['member_id', 'day']).doNothing())
         .returning('member_id')
         .executeTakeFirst();
