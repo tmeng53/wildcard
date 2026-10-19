@@ -154,3 +154,33 @@ export class RouteNotFoundError extends AppError {
     super(`There is no ${method} ${path}.`);
   }
 }
+
+/**
+ * Thrown when a token issued to an OAuth client (an MCP client signing an admin in) calls the
+ * app's routes: those take only the app's own sign-in, so a third-party client a member
+ * approved can't act as them.
+ */
+export class AppSignInRequiredError extends AppError {
+  override readonly name = 'AppSignInRequiredError';
+  readonly reason = 'APP_SIGN_IN_REQUIRED';
+  readonly status = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Sign in from the app to do this.');
+  }
+}
+
+/**
+ * Thrown when the admin tools get a token from our own app's sign-in. Admin tools take only a
+ * token issued to an MCP client through the OAuth sign-in, which keeps the two kinds of token
+ * apart. Sign in from the MCP client.
+ */
+export class AdminSignInRequiredError extends AppError {
+  override readonly name = 'AdminSignInRequiredError';
+  readonly reason = 'ADMIN_SIGN_IN_REQUIRED';
+  readonly status = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Sign in from your MCP client to use the admin tools.');
+  }
+}

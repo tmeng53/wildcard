@@ -23,7 +23,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 import { recordedAnthropic, type Fixture } from '../test-kit/recorded-anthropic.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database, and the Claude
@@ -80,6 +80,7 @@ function appWith(model: LanguageModel) {
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     log: createLog((line) => logged.push(JSON.parse(line))),
+    admin: adminOn(),
   });
   return { app, logged };
 }

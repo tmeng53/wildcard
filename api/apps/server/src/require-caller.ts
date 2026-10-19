@@ -1,20 +1,29 @@
 import { createMiddleware } from 'hono/factory';
 
-import { AuthTokenInvalidError, AuthTokenMissingError } from './errors.js';
+import { AppSignInRequiredError, AuthTokenInvalidError, AuthTokenMissingError } from './errors.js';
 import type { Caller, VerifyToken } from './ports.js';
 
 export interface SignedIn {
   Variables: { caller: Caller };
 }
 
-/** Lets the request through only with a valid `Authorization: Bearer <token>`; sets `caller`. */
+/**
+ * Lets the request through only with a valid `Authorization: Bearer <token>` from the app's own
+ * sign-in; sets `caller`. A token issued to an OAuth client is for `/mcp` only.
+ */
 export function requireCaller(verifyToken: VerifyToken) {
   return createMiddleware<SignedIn>(async (c, next) => {
-    const header = c.req.header('authorization');
-    if (header === undefined) throw new AuthTokenMissingError();
-    const token = /^Bearer +(\S+)$/i.exec(header)?.[1];
-    if (token === undefined) throw new AuthTokenInvalidError();
-    c.set('caller', await verifyToken(token));
+    const caller = await verifyToken(bearerToken(c.req.header('authorization')));
+    if (caller.oauthClient !== undefined) throw new AppSignInRequiredError();
+    c.set('caller', caller);
     await next();
   });
+}
+
+/** The token in an `Authorization: Bearer <token>` header; throws when there is none. */
+export function bearerToken(header: string | undefined): string {
+  if (header === undefined) throw new AuthTokenMissingError();
+  const token = /^Bearer +(\S+)$/i.exec(header)?.[1];
+  if (token === undefined) throw new AuthTokenInvalidError();
+  return token;
 }

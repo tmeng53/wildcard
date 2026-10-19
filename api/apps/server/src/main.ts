@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server';
+import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
   createCheckIns,
   createPostgresCheckInStore,
@@ -25,12 +26,19 @@ import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wild
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
-import { createSupabaseAccounts, createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
+import {
+  createSupabaseAccounts,
+  createSupabaseTokenVerifier,
+  supabaseAuthIssuer,
+} from './adapters/supabase-auth.js';
+import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
 import { memberCalendar } from './member-calendar.js';
+import type { Database } from './ports.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
@@ -56,6 +64,9 @@ const push = createPush({
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
+// The admin tools get a database or a transaction of it: each change commits with its log row.
+const adminsOn = (scope: Database) =>
+  createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -98,6 +109,18 @@ const app = createApp({
   }),
   push,
   log,
+  admin: {
+    admins: adminsOn,
+    tools: (scope) => [
+      listAdminLog({ admins: adminsOn(scope) }),
+      ...memeTools({
+        memes: createMemes({ store: createPostgresMemeStore(scope), clock: () => new Date() }),
+        clock: () => new Date(),
+      }),
+    ],
+    publicUrl: config.publicUrl,
+    authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
+  },
 });
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {

@@ -5,7 +5,7 @@ import Testing
 
 // The few rules `Contracts` keeps so the app can shape what people type (how long a caption
 // may get, how many photos fit) must be the API's. Its OpenAPI document states them: lengths
-// people see as `x-max-characters`, counts as `maxItems`.
+// people see as `x-max-characters`, counts as `minItems` and `maxItems`.
 
 /// The parts of the OpenAPI document these tests read.
 private struct Document: Decodable {
@@ -16,11 +16,12 @@ private struct Document: Decodable {
 
 private final class Schema: Decodable, Sendable {
     let properties: [String: Schema]?
+    let minItems: Int?
     let maxItems: Int?
     let maxCharacters: Int?
 
     enum CodingKeys: String, CodingKey {
-        case properties, maxItems
+        case properties, minItems, maxItems
         case maxCharacters = "x-max-characters"
     }
 }
@@ -61,4 +62,11 @@ func photoCountIsTheAPIs(schema: String) throws {
 @Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
 func audienceSizeIsTheAPIs(schema: String) throws {
     #expect(try property("audience", of: schema)?.maxItems == Audience.maxSquads)
+}
+
+@Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft"])
+func planLengthIsTheAPIs(schema: String) throws {
+    let days = try property("days", of: schema)
+    #expect(days?.minItems == WeeklyPlan.dayCount)
+    #expect(days?.maxItems == WeeklyPlan.dayCount)
 }

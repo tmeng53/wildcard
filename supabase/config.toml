@@ -365,11 +365,14 @@ enabled = false
 
 # OAuth server configuration
 [auth.oauth_server]
-# Enable OAuth server functionality
-enabled = false
+# Enable OAuth server functionality. The admin MCP server (the API's /mcp route) signs its
+# admins in through it.
+enabled = true
 # Path for OAuth consent flow UI
 authorization_url_path = "/oauth/consent"
-# Allow dynamic client registration
+# No dynamic client registration: a client's token acts as the member at Supabase Auth too, so
+# only clients we register by hand (POST /auth/v1/admin/oauth/clients with the secret key) may
+# ask a member to approve one. Claude Code and claude.ai take a pre-registered client ID.
 allow_dynamic_registration = false
 
 [edge_runtime]

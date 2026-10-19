@@ -7,12 +7,14 @@ import {
 } from './memes/add-approved-memes.js';
 import { listMemesInUse } from './memes/list-memes-in-use.js';
 import { turnOffMeme } from './memes/turn-off-meme.js';
+import { turnOnMeme } from './memes/turn-on-meme.js';
 
-/** The meme library: adding approved memes, reading the ones in use, turning one off. */
+/** The meme library: adding approved memes, reading the ones in use, turning one off or back on. */
 export interface Memes {
   addApproved(input: AddApprovedMemesInput): Promise<AddedMemes>;
   listInUse(): Promise<MemeRecord[]>;
   turnOff(phrase: MemePhrase): Promise<void>;
+  turnOn(phrase: MemePhrase): Promise<void>;
 }
 
 export function createMemes(deps: { readonly store: MemeStore; readonly clock: Clock }): Memes {
@@ -20,5 +22,6 @@ export function createMemes(deps: { readonly store: MemeStore; readonly clock: C
     addApproved: (input) => addApprovedMemes(deps, input),
     listInUse: () => listMemesInUse(deps),
     turnOff: (phrase) => turnOffMeme(deps, phrase),
+    turnOn: (phrase) => turnOnMeme(deps, phrase),
   };
 }
