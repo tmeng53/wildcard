@@ -36,18 +36,6 @@ public struct EditorChoices: Hashable, Sendable {
             props: file.props)
     }
 
-    public func species(of body: String) -> Species? {
-        species.first { $0.bodies.contains(body) }
-    }
-
-    /// The slots the character editor offers a look with this body, in the editor's order:
-    /// people get hair and a face, animals neither.
-    public func slots(for body: String) -> [Slot] {
-        let worn: [Slot] = ["hat", "top", "bottom", "prop"]
-        return species(of: body)?.wearsHair == true
-            ? ["body", "hair"] + PlaceholderCharacter.faceSlots + worn : ["body"] + worn
-    }
-
     private struct File: Decodable {
         static let shape = JSONShape.object([
             "version": .value, "props": .value,

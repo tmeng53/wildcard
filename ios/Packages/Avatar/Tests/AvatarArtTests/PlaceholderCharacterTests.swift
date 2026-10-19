@@ -18,8 +18,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(figure.parts[2].art.count == (outfit == Looks.cat ? 1 : 0))
     // Everyone has eyes and both mouths; only people pick brows.
     #expect([7, 10, 11].allSatisfy { figure.parts[$0].art.count == 1 })
-    let isPerson =
-        try PlaceholderCharacter.editorChoices().species(of: outfit.variants["body"] ?? "")?.wearsHair == true
+    let people = try PlaceholderCharacter.editorChoices().species.filter(\.wearsHair).flatMap(\.bodies)
+    let isPerson = people.contains(outfit.variants["body"] ?? "")
     #expect(figure.parts[8].art.count == (isPerson ? 1 : 0))
     // The open mouth waits hidden until the cheer swaps it in.
     #expect(figure.layout(figure.restPose)[11].opacity == 0)
@@ -42,16 +42,6 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(PlaceholderCharacter.variants(for: "cheeks") == ["flushed", "freckles", "rosy"])
     #expect(PlaceholderCharacter.variants(for: "glasses") == ["round", "square"])
     #expect(PlaceholderCharacter.variants(for: "cape").isEmpty)
-}
-
-/// People pick hair and a face; animals keep the default face their coat goes with.
-@Test func theEditorOffersAFaceToPeopleOnly() throws {
-    let choices = try PlaceholderCharacter.editorChoices()
-    #expect(
-        choices.slots(for: "peach") == [
-            "body", "hair", "eyes", "brows", "mouth", "cheeks", "glasses", "hat", "top", "bottom", "prop",
-        ])
-    #expect(choices.slots(for: "cat") == ["body", "hat", "top", "bottom", "prop"])
 }
 
 /// A cat leaves its face out and still gets round eyes and a smile; a person can pick others.
