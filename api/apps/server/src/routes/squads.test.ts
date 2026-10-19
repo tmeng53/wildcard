@@ -122,6 +122,17 @@ describe('PUT /squads/{squadId}', () => {
     ]);
   });
 
+  it('answers 415 for a body not sent as JSON', async () => {
+    const me = await signUp();
+    const response = await app.request(`/squads/${randomUUID()}`, {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${me.token}`, 'content-type': 'text/plain' },
+      body: JSON.stringify({ version: 1, name: '早八跑团' }),
+    });
+    const body = z.object({ reason: z.string() }).parse(await response.json());
+    expect([response.status, body.reason]).toStrictEqual([415, 'MEDIA_TYPE_UNSUPPORTED']);
+  });
+
   it('asks a caller with no token to sign in', async () => {
     const refused = await call({
       method: 'PUT',

@@ -13,7 +13,7 @@ import {
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const inviteCodeField = z.string().meta({
@@ -139,6 +139,7 @@ export function squads(deps: { readonly verifyToken: VerifyToken; readonly squad
       201: squadResponse('Created'),
       400: problem(`Not a valid name, or ${limitReached}`),
       409: problem('The id holds another squad (`SQUAD_ID_CONFLICT`)'),
+      ...jsonBodyFailures,
       ...signedInFailures,
     },
   });
