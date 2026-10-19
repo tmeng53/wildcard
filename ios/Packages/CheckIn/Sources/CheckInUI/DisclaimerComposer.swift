@@ -268,7 +268,11 @@ struct DisclaimerComposer: View {
         guard entry.mine.trimmingCharacters(in: .whitespaces) == reason else { return [] }
         switch result {
         case .drafts(let lines):
-            let fitted = lines.map(DisclaimerEntry.fit).filter { !$0.isEmpty }
+            // Each line once, and new ones first: 换一组 should offer something new.
+            var seen = Set<String>()
+            let fitted = lines.map(DisclaimerEntry.fit).filter { !$0.isEmpty && seen.insert($0).inserted }
+            let fresh = fitted.filter { !shown.contains($0) }
+            if !fresh.isEmpty { return fresh }
             return fitted.isEmpty ? DiceDisclaimerWriter.rollDefault(3) : fitted
         case .blocked:
             entry.block()

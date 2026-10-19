@@ -90,7 +90,7 @@ final class TodayUITests: XCTestCase {
         let write = app.buttons["disclaimer.write"]
         let first = writeFunnyLines(in: app)
         XCTAssertEqual(source.label, "灵感：deadline")
-        XCTAssertEqual(field.value as? String, first.label, "picking a style didn't put its first line up")
+        XCTAssertEqual(field.value as? String, first.label, "编几句 didn't put its first line up")
         XCTAssertTrue(first.isSelected, "the line in the excuse isn't marked")
         keepScreenshot(named: "18-disclaimer-styled")
 
