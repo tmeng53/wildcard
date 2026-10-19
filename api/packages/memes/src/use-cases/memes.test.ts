@@ -95,6 +95,16 @@ describe('the meme library', () => {
     expect((await inUse(old, recent)).map(({ phrase }) => phrase)).toStrictEqual([recent.phrase]);
   });
 
+  it('waits for a meme dated ahead until its day comes', async () => {
+    const meme = draft('明天的梗');
+    const approvedAt = new Date('2026-10-20T16:00:00.000Z');
+    await memes.addApproved({ memes: [meme], approvedAt });
+    now = new Date(approvedAt.getTime() - 1);
+    expect(await inUse(meme)).toStrictEqual([]);
+    now = approvedAt;
+    expect((await inUse(meme)).map(({ phrase }) => phrase)).toStrictEqual([meme.phrase]);
+  });
+
   it('never uses a meme again once it is turned off', async () => {
     const meme = draft('下头');
     now = new Date('2026-10-19T16:00:00.000Z');

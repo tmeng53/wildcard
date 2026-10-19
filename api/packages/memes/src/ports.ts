@@ -7,8 +7,8 @@ export interface MemeStore {
    * the database decides, so two saves at once can't add it twice. Returns the phrases added.
    */
   add(memes: readonly MemeDraft[], approvedAt: Date): Promise<MemePhrase[]>;
-  /** Memes approved at or after `since` and not turned off, newest first. */
-  listApprovedSince(since: Date): Promise<MemeRecord[]>;
+  /** Memes approved from `from` to `to` (both included) and not turned off, newest first. */
+  listApprovedBetween(range: { readonly from: Date; readonly to: Date }): Promise<MemeRecord[]>;
   /** Turns a meme off at `at`. Says whether the library has that phrase. */
   turnOff(phrase: MemePhrase, at: Date): Promise<boolean>;
 }

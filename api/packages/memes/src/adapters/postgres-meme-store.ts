@@ -27,11 +27,12 @@ export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
       return rows.map(({ phrase }) => phrase);
     },
 
-    async listApprovedSince(since) {
+    async listApprovedBetween({ from, to }) {
       const rows = await db
         .selectFrom('memes')
         .select(['id', 'phrase', 'payload', 'approved_at'])
-        .where('approved_at', '>=', since)
+        .where('approved_at', '>=', from)
+        .where('approved_at', '<=', to)
         .where('disabled_at', 'is', null)
         .orderBy('approved_at', 'desc')
         .orderBy('phrase')
