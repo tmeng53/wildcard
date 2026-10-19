@@ -203,6 +203,23 @@ private func account(
     #expect(await provider.signedOut == [session("stored")])
 }
 
+@Test func aRefusedTokenSignsOutOnlyTheSessionItBelongsTo() async throws {
+    let provider = FakeProvider()
+    let store = MemoryStore(session("stored"))
+    let account = account(provider, store)
+    _ = try await account.restore()
+
+    // Signed in again since the API refused the old session's token: the new one stays.
+    try await account.signIn(with: .apple(identityToken: "token", nonce: "nonce"))
+    try await account.signOut(ifCurrent: "access-stored")
+    #expect(try await account.restore() == .signedIn(tracy))
+    #expect(try await account.accessToken() == "access-signed-in")
+
+    try await account.signOut(ifCurrent: "access-signed-in")
+    #expect(try await account.restore() == .signedOut)
+    #expect(await store.saved == nil)
+}
+
 @Test func aSignInTheDeviceCantSaveLeavesTheMemberSignedOut() async throws {
     let store = MemoryStore(session("stored"))
     await store.failSaves()

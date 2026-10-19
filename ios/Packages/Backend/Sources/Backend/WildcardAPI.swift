@@ -21,9 +21,10 @@ public struct WildcardAPI: Sendable {
 
     /// - Parameters:
     ///   - url: where the API is served, such as `https://api.example.com`.
-    ///   - refused: called when the API refuses a freshly renewed token too: the session is over.
+    ///   - refused: called with a freshly renewed token the API refuses too: its session is over.
     public init(
-        url: URL, accessToken: @escaping AccessToken, refused: @escaping @Sendable () async -> Void = {},
+        url: URL, accessToken: @escaping AccessToken,
+        refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
         http: URLSession = .shared
     ) {
         client = Client(
@@ -34,12 +35,13 @@ public struct WildcardAPI: Sendable {
     }
 
     /// Calls with the account's tokens, and signs the account out when the API refuses a renewed
-    /// one, so screens following `AccountSession.states()` see the member signed out.
+    /// one, so screens following `AccountSession.states()` see the member signed out. A session
+    /// signed in while that call was on its way stays.
     public init(url: URL, account: AccountSession, http: URLSession = .shared) {
         self.init(
             url: url,
             accessToken: { rejected async throws(AccountError) in try await account.accessToken(rejected: rejected) },
-            refused: { try? await account.signOut() },
+            refused: { token in try? await account.signOut(ifCurrent: token) },
             http: http)
     }
 

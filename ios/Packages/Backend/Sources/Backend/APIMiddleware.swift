@@ -10,7 +10,8 @@ import OpenAPIRuntime
 /// the member is signed out.
 struct BearerToken: ClientMiddleware {
     let accessToken: WildcardAPI.AccessToken
-    let refused: @Sendable () async -> Void
+    /// Called with the renewed token the API refused too.
+    let refused: @Sendable (_ token: String) async -> Void
 
     func intercept(
         _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
@@ -27,8 +28,9 @@ struct BearerToken: ClientMiddleware {
         let token = try await current(rejected: nil)
         let answer = try await send(token)
         guard answer.0.status == .unauthorized else { return answer }
-        let retried = try await send(try await current(rejected: token))
-        if retried.0.status == .unauthorized { await refused() }
+        let renewed = try await current(rejected: token)
+        let retried = try await send(renewed)
+        if retried.0.status == .unauthorized { await refused(renewed) }
         return retried
     }
 
