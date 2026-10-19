@@ -20,6 +20,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { adminOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   dailyProgressNotification,
   reactionInteractions,
@@ -88,6 +89,7 @@ const deps = {
   log,
   jobs: { token: JOBS_TOKEN, interactions, clock: () => new Date() },
   admin: adminOn(),
+  publicRoutes: unlimitedPublicRoutes,
 };
 const app = createApp(deps);
 

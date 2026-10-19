@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "name": "idle",
+  "duration": 8,
+  "loops": true,
+  "tracks": [
+    { "part": "tail", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.0, "v": 0 }, { "t": 1.4, "v": 10, "ease": "easeInOut" }, { "t": 1.8, "v": -4, "ease": "easeInOut" },
+      { "t": 2.2, "v": 0, "ease": "easeInOut" }, { "t": 6.0, "v": 0 }, { "t": 6.4, "v": -10, "ease": "easeInOut" }, { "t": 6.8, "v": 4, "ease": "easeInOut" },
+      { "t": 7.2, "v": 0, "ease": "easeInOut" }, { "t": 8, "v": 0 } ] },
+    { "part": "mouthOpen", "channel": "opacity", "keys": [
+      { "t": 0, "v": 0 }, { "t": 3.0, "v": 0 }, { "t": 3.3, "v": 1, "ease": "easeOut" }, { "t": 4.5, "v": 1 },
+      { "t": 4.8, "v": 0, "ease": "easeIn" }, { "t": 8, "v": 0 } ] },
+    { "part": "mouthSmile", "channel": "opacity", "keys": [
+      { "t": 0, "v": 0 }, { "t": 3.0, "v": 0 }, { "t": 3.3, "v": -1, "ease": "easeOut" }, { "t": 4.5, "v": -1 },
+      { "t": 4.8, "v": 0, "ease": "easeIn" }, { "t": 8, "v": 0 } ] },
+    { "part": "mouthOpen", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 3.0, "v": 1 }, { "t": 3.8, "v": 1.5, "ease": "easeOut" }, { "t": 4.3, "v": 1.5 },
+      { "t": 4.8, "v": 1, "ease": "easeInOut" }, { "t": 8, "v": 1 } ] },
+    { "part": "mouthOpen", "channel": "scaleX", "keys": [
+      { "t": 0, "v": 1 }, { "t": 3.0, "v": 1 }, { "t": 3.8, "v": 1.2, "ease": "easeOut" }, { "t": 4.3, "v": 1.2 },
+      { "t": 4.8, "v": 1, "ease": "easeInOut" }, { "t": 8, "v": 1 } ] },
+    { "part": "eyes", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 3.0, "v": 1 }, { "t": 3.4, "v": 0.12, "ease": "easeInOut" }, { "t": 4.4, "v": 0.12 },
+      { "t": 4.8, "v": 1, "ease": "easeInOut" }, { "t": 8, "v": 1 } ] },
+    { "part": "head", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 3.0, "v": 0 }, { "t": 3.7, "v": -5, "ease": "easeInOut" }, { "t": 4.4, "v": -5 },
+      { "t": 4.9, "v": 0, "ease": "easeInOut" }, { "t": 8, "v": 0 } ] },
+    { "part": "head", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 3.0, "v": 0 }, { "t": 3.7, "v": -3, "ease": "easeInOut" }, { "t": 4.4, "v": -3 },
+      { "t": 4.9, "v": 0, "ease": "easeInOut" }, { "t": 8, "v": 0 } ] },
+    { "part": "torso", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 3.0, "v": 1 }, { "t": 3.7, "v": 1.03, "ease": "easeInOut" }, { "t": 4.4, "v": 1.03 },
+      { "t": 4.9, "v": 1, "ease": "easeInOut" }, { "t": 8, "v": 1 } ] }
+  ]
+}

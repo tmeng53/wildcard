@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { adminTool } from '../admin-tool.js';
 
-// The meme library's tools: what the AI writing a 今日免责声明 may draw on. Memes are turned
+// The meme library's tools: what the AI writing a 今日请假条 may draw on. Memes are turned
 // off, never deleted.
 
 interface MemeToolDependencies {

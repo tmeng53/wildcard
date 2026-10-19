@@ -76,9 +76,9 @@ public enum Meaning: String, CaseIterable, Sendable {
     /// 练了.
     case trained
     /// 健康餐.
-    case fresh
+    case healthyMeal
     /// 坦白放纵餐.
-    case indulgence
+    case cheatMeal
     /// 今日请假条.
     case disclaimer
 
@@ -90,8 +90,8 @@ public enum Meaning: String, CaseIterable, Sendable {
     public var accent: AccentFamily {
         switch self {
         case .trained: Self.family(Palette.cobalt, Palette.cobaltWash, Palette.cobaltText)
-        case .fresh: Self.family(Palette.mint, Palette.mintWash, Palette.mintText)
-        case .indulgence: Self.family(Palette.honey, Palette.honeyWash, Palette.honeyText)
+        case .healthyMeal: Self.family(Palette.mint, Palette.mintWash, Palette.mintText)
+        case .cheatMeal: Self.family(Palette.honey, Palette.honeyWash, Palette.honeyText)
         case .disclaimer: Self.family(Palette.lavender, Palette.lavenderWash, Palette.lavenderText)
         }
     }
@@ -156,14 +156,14 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .meaningTrainedInk: .accent(.trained, \.ink)
         case .meaningTrainedWash: .accent(.trained, \.wash)
         case .meaningTrainedText: .accent(.trained, \.text)
-        case .meaningFresh: .accent(.fresh, \.tint)
-        case .meaningFreshInk: .accent(.fresh, \.ink)
-        case .meaningFreshWash: .accent(.fresh, \.wash)
-        case .meaningFreshText: .accent(.fresh, \.text)
-        case .meaningIndulgence: .accent(.indulgence, \.tint)
-        case .meaningIndulgenceInk: .accent(.indulgence, \.ink)
-        case .meaningIndulgenceWash: .accent(.indulgence, \.wash)
-        case .meaningIndulgenceText: .accent(.indulgence, \.text)
+        case .meaningFresh: .accent(.healthyMeal, \.tint)
+        case .meaningFreshInk: .accent(.healthyMeal, \.ink)
+        case .meaningFreshWash: .accent(.healthyMeal, \.wash)
+        case .meaningFreshText: .accent(.healthyMeal, \.text)
+        case .meaningIndulgence: .accent(.cheatMeal, \.tint)
+        case .meaningIndulgenceInk: .accent(.cheatMeal, \.ink)
+        case .meaningIndulgenceWash: .accent(.cheatMeal, \.wash)
+        case .meaningIndulgenceText: .accent(.cheatMeal, \.text)
         case .meaningDisclaimer: .accent(.disclaimer, \.tint)
         case .meaningDisclaimerInk: .accent(.disclaimer, \.ink)
         case .meaningDisclaimerWash: .accent(.disclaimer, \.wash)

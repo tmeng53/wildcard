@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [reactions] [devices] [account]   (no arguments: all)
+#     [squad-today] [reactions] [devices] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today reactions devices account}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today reactions devices account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | reactions | devices | account) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, reactions, devices, account)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | reactions | devices | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, reactions, devices, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -217,6 +217,15 @@ if want squad; then
     fail "preview should show the name and 2 members only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
+  # The web invite page, before anyone signs in: no token, only the name, size and whether full.
+  call GET "/public/squad-invites/$typed" ""
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false}' ] ||
+    fail "public preview should show the name, size and full only: $body"
+  call GET "/public/squad-invites/ZZZZZZZZ" ""
+  expect 404 INVITE_CODE_UNKNOWN
+  echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
+
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 201
   [ "$(jq -r '.members | map(.userId) | last' <<<"$body")" = "$newcomer" ] || fail "newcomer isn't last: $body"
@@ -323,6 +332,15 @@ if want squad-today; then
     call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
     expect 200
   done
+  # The runner picks a catchphrase (口头禅); the napper's are refused, so theirs stays unset.
+  call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \"}"
+  expect 200
+  [ "$(jq -r .catchphrase <<<"$body")" = '冲就完了🔥' ] || fail "the catchphrase should be saved trimmed: $body"
+  call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"今天也是冲冲冲的一天!\"}"
+  expect 400 REQUEST_INVALID
+  call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"看abc.com\"}"
+  expect 400 REQUEST_INVALID
+  echo "squad-today: runner's catchphrase 冲就完了🔥 saved; napper's 11 characters and link refused (400)"
   squad_of "$runner_token" "$napper_token" "$rester_token"
   plan_of() { jq -cn --arg kind "$1" '{version: 1, days: [range(7) | {kind: $kind}]}'; }
   for token in "$runner_token" "$napper_token"; do
@@ -352,6 +370,9 @@ if want squad-today; then
     '[{"trained":1,"disclaimer":1,"resting":1,"everyoneTrained":false},0,7,0,{"trainedDays":1,"plannedDays":14}]' ] ||
     fail "counts should be 1 trained, 1 disclaimer, 1 resting; napper 0/7; squad 1/14: $body"
   echo "squad-today: napper sees self first, then runner, then rester; 1 trained, 1 disclaimer, 1 resting; 本周 0/7, squad 1/14"
+  [ "$(jq -c '[.members[] | .catchphrase]' <<<"$body")" = '[null,"冲就完了🔥",null]' ] ||
+    fail "squadmates should see the runner's catchphrase, and null for the others: $body"
+  echo "squad-today: napper sees runner's catchphrase 冲就完了🔥, null for self and rester"
 
   call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
@@ -445,7 +466,7 @@ if want account; then
   expect 200
   call GET /me "$leaver_token"
   expect 200
-  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto"}' ] || fail "the profile should be saved: $body"
+  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto","catchphrase":null}' ] || fail "the profile should be saved: $body"
   echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved"
 
   squad_of "$leaver_token" "$mate_token"
@@ -473,6 +494,166 @@ if want account; then
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 401
   echo "account: deleting again with the old token refused (401)"
+fi
+
+if want admin-mcp; then
+  # An MCP client registered by hand, as an admin registers Claude Code or claude.ai: dynamic
+  # registration is off.
+  callback="http://localhost:9999/callback"
+  registered="$(curl -s "$API_URL/auth/v1/admin/oauth/clients" -H "apikey: $SECRET_KEY" \
+    -H "authorization: Bearer $SECRET_KEY" -H 'content-type: application/json' \
+    --data "{\"client_name\":\"api-journeys\",\"redirect_uris\":[\"$callback\"],\"token_endpoint_auth_method\":\"none\",\"grant_types\":[\"authorization_code\",\"refresh_token\"],\"response_types\":[\"code\"]}")"
+  client_id="$(jq -r '.client_id // empty' <<<"$registered")"
+  # Supabase reads [auth.oauth_server] at `supabase start`: a stack started before it was
+  # enabled answers "OAuth server is disabled" until it restarts.
+  [[ "$client_id" =~ ^[0-9a-f-]{36}$ ]] || fail "registering the MCP client failed: $registered"
+  # sign_up_as EMAIL PASSWORD: like sign_up, with credentials the consent page can take.
+  sign_up_as() {
+    curl -sf "$API_URL/auth/v1/signup" -H "apikey: $PUBLISHABLE_KEY" -H 'content-type: application/json' \
+      --data "{\"email\":\"$1\",\"password\":\"$2\"}" | jq -r '"\(.user.id) \(.access_token)"'
+  }
+  admin_email="$(new_id)@example.com" admin_password="$(new_id)"
+  read -r admin admin_token <<<"$(sign_up_as "$admin_email" "$admin_password")"
+  member_email="$(new_id)@example.com" member_password="$(new_id)"
+  read -r member member_token <<<"$(sign_up_as "$member_email" "$member_password")"
+  [[ "$admin $member" =~ ^[0-9a-f-]{36}\ [0-9a-f-]{36}$ ]] || fail "sign-up failed"
+  psql "$DB_URL" -qc "insert into public.admins (member_id) values ('$admin')" >/dev/null
+  echo "admin-mcp: registered client $client_id; admin=$admin on the admin list"
+
+  # mcp TOKEN BODY: one JSON-RPC message to /mcp; sets $code, $body (the JSON-RPC answer, read
+  # out of the event stream when it is one) and $challenge (the WWW-Authenticate header).
+  mcp() {
+    local args=(-s -D "$tmp/headers" -o "$tmp/body" -w '%{http_code}' -X POST "$api/mcp"
+      -H 'content-type: application/json' -H 'accept: application/json, text/event-stream'
+      -H 'mcp-protocol-version: 2025-06-18' --data "$2")
+    [ -n "$1" ] && args+=(-H "authorization: Bearer $1")
+    code="$(curl "${args[@]}")"
+    challenge="$(tr -d '\r' <"$tmp/headers" | sed -n 's/^www-authenticate: //Ip')"
+    body="$(sed -n 's/^data: //p' "$tmp/body")"
+    [ -n "$body" ] || body="$(cat "$tmp/body")"
+  }
+  initialize='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"api-journeys","version":"1"}}}'
+
+  mcp "" "$initialize"
+  expect 401 AUTH_TOKEN_MISSING
+  metadata_url="$(sed -n 's/.*resource_metadata="\([^"]*\)".*/\1/p' <<<"$challenge")"
+  [ "$metadata_url" = "$api/.well-known/oauth-protected-resource/mcp" ] || fail "401 doesn't point at the metadata: $challenge"
+  metadata="$(curl -sf "$metadata_url")"
+  [ "$(jq -r '.resource + " " + .authorization_servers[0]' <<<"$metadata")" = "$api/mcp $API_URL/auth/v1" ] ||
+    fail "metadata should name /mcp and Supabase Auth: $metadata"
+  echo "admin-mcp: no token refused (401), pointing at metadata that names Supabase Auth"
+
+  mcp "$admin_token" "$initialize"
+  expect 401 ADMIN_SIGN_IN_REQUIRED
+  echo "admin-mcp: the app's own sign-in refused (401 ADMIN_SIGN_IN_REQUIRED)"
+
+  # authorize: the client asks Supabase Auth's OAuth 2.1 server for approval with PKCE, as an
+  # MCP client does; sets $id (the request the consent page answers) and $verifier.
+  authorize() {
+    local challenge_s256 location
+    verifier="$(node -p 'crypto.randomBytes(32).toString("base64url")')"
+    challenge_s256="$(node -p "crypto.createHash('sha256').update('$verifier').digest('base64url')")"
+    location="$(curl -s -o /dev/null -w '%{redirect_url}' -G "$API_URL/auth/v1/oauth/authorize" \
+      --data-urlencode response_type=code --data-urlencode "client_id=$client_id" \
+      --data-urlencode "redirect_uri=$callback" --data-urlencode "code_challenge=$challenge_s256" \
+      --data-urlencode code_challenge_method=S256 --data-urlencode "resource=$api/mcp")"
+    id="$(node -p "new URL('$location').searchParams.get('authorization_id') ?? ''")"
+    [ -n "$id" ] || fail "authorize didn't send the member to the consent page: $location"
+  }
+  # sign_in_on_page EMAIL PASSWORD: signs in on the consent page for $id, as a browser does;
+  # sets $code and $page (the HTML it answered), keeping its cookie in $jar.
+  jar="$tmp/consent-cookies"
+  sign_in_on_page() {
+    rm -f "$jar"
+    code="$(curl -s -o "$tmp/page" -w '%{http_code}' -c "$jar" -b "$jar" "$api/oauth/consent/sign-in" \
+      --data-urlencode "authorization_id=$id" --data-urlencode "email=$1" --data-urlencode "password=$2")"
+    page="$(cat "$tmp/page")"
+  }
+  # token_for REDIRECT: the access token for the code the browser was sent back with.
+  token_for() {
+    local authorization_code
+    authorization_code="$(node -p "new URL('$1').searchParams.get('code') ?? ''")"
+    [ -n "$authorization_code" ] || fail "the browser wasn't sent back with a code: $1"
+    curl -s -X POST "$API_URL/auth/v1/oauth/token" --data-urlencode grant_type=authorization_code \
+      --data-urlencode "code=$authorization_code" --data-urlencode "redirect_uri=$callback" \
+      --data-urlencode "client_id=$client_id" --data-urlencode "code_verifier=$verifier" \
+      --data-urlencode "resource=$api/mcp" | jq -r '.access_token // empty'
+  }
+
+  authorize
+  sign_in_on_page "$admin_email" wrong-password
+  [ "$code" = 401 ] && [[ "$page" == *"Wrong email or password."* ]] || fail "a wrong password: $code $page"
+  sign_in_on_page "$admin_email" "$admin_password"
+  [ "$code" = 200 ] && [[ "$page" == *"Let api-journeys manage Wildcard?"* ]] || fail "the consent page: $code $page"
+  answered="$(curl -s -o /dev/null -w '%{redirect_url}' -b "$jar" "$api/oauth/consent/answer" \
+    --data-urlencode "authorization_id=$id" --data-urlencode answer=approve)"
+  mcp_token="$(token_for "$answered")"
+  [ -n "$mcp_token" ] || fail "the OAuth token exchange failed"
+  echo "admin-mcp: a wrong password refused (401); admin signed in on the consent page, approved and got an OAuth token"
+
+  again="$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$api/oauth/consent/answer" \
+    --data-urlencode "authorization_id=$id" --data-urlencode answer=approve)"
+  [ "$again" = 401 ] || fail "the consent page's sign-in answered twice: $again"
+  echo "admin-mcp: that sign-in can't answer again (401)"
+
+  mcp "$mcp_token" "$initialize"
+  expect 200
+  [ "$(jq -r .result.serverInfo.name <<<"$body")" = wildcard-admin ] || fail "initialize: $body"
+  mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+  expect 200
+  tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme" ] || fail "tools: $body"
+  echo "admin-mcp: initialized and listed the tools ($tools)"
+
+  # tool NAME ARGUMENTS: calls a tool; sets $result (the text it answered) and $is_error.
+  tool() {
+    mcp "$mcp_token" "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"$1\",\"arguments\":$2}}"
+    expect 200
+    result="$(jq -r '.result.content[0].text' <<<"$body")"
+    is_error="$(jq -r '.result.isError // false' <<<"$body")"
+  }
+  phrase="班味$(new_id | cut -c1-8)"
+  tool add_memes "{\"memes\":[{\"phrase\":\"$phrase\",\"background\":\"上班上久了，人身上带着的那股疲惫劲儿。\",\"meaning\":\"一看就是打工人。\",\"styles\":[\"funny\"],\"source\":\"小红书\"}]}"
+  [ "$(jq -c '[.added, .alreadyThere]' <<<"$result")" = "[[\"$phrase\"],[]]" ] || fail "add_memes: $result"
+  tool list_memes '{}'
+  jq -e --arg p "$phrase" '.memes | any(.phrase == $p)' <<<"$result" >/dev/null || fail "$phrase isn't in use: $result"
+  echo "admin-mcp: added the meme $phrase and it is in use"
+
+  tool turn_off_meme "{\"phrase\":\"$phrase\"}"
+  [ "$is_error" = false ] || fail "turn_off_meme: $result"
+  tool list_memes '{}'
+  jq -e --arg p "$phrase" '.memes | all(.phrase != $p)' <<<"$result" >/dev/null || fail "$phrase is still in use: $result"
+  tool turn_off_meme '{"phrase":"没这个梗"}'
+  [ "$is_error $result" = "true MEME_NOT_FOUND: The meme library has no 「没这个梗」." ] || fail "missing meme: $result"
+  echo "admin-mcp: turned it off, so it is no longer in use; an unknown meme refused (MEME_NOT_FOUND)"
+
+  tool list_admin_log '{}'
+  [ "$(jq -r '[.changes[].tool] | join(",")' <<<"$result")" = "turn_off_meme,add_memes" ] || fail "admin log: $result"
+  logged="$(psql "$DB_URL" -tAc "select string_agg(action->>'tool', ',' order by id) from public.admin_actions where admin_id = '$admin'")"
+  [ "$logged" = "add_memes,turn_off_meme" ] || fail "admin_actions should hold the two changes, not the reads or the refusal: $logged"
+  echo "admin-mcp: the log holds the two changes, newest first, and no reads ($logged)"
+
+  call GET /me "$mcp_token"
+  expect 401 APP_SIGN_IN_REQUIRED
+  echo "admin-mcp: the OAuth token refused by the app's routes (401 APP_SIGN_IN_REQUIRED)"
+
+  authorize
+  sign_in_on_page "$member_email" "$member_password"
+  [ "$code" = 403 ] && [[ "$page" == *"isn’t an admin"* ]] || fail "a member not on the admin list: $code $page"
+  echo "admin-mcp: a member not on the admin list refused on the consent page (403)"
+
+  # Approving with their app session straight through Supabase's API, as a stolen session could.
+  authorizations="$API_URL/auth/v1/oauth/authorizations/$id"
+  curl -sf "$authorizations" -H "apikey: $PUBLISHABLE_KEY" -H "authorization: Bearer $member_token" >/dev/null ||
+    fail "reading the authorization request failed"
+  answered="$(curl -s -X POST "$authorizations/consent" -H "apikey: $PUBLISHABLE_KEY" \
+    -H "authorization: Bearer $member_token" -H 'content-type: application/json' --data '{"action":"approve"}' |
+    jq -r '.redirect_url // empty')"
+  member_mcp_token="$(token_for "$answered")"
+  [ -n "$member_mcp_token" ] || fail "the member's OAuth token exchange failed"
+  mcp "$member_mcp_token" "$initialize"
+  expect 403 NOT_AN_ADMIN
+  echo "admin-mcp: approving around the page still gets them nothing at /mcp (403 NOT_AN_ADMIN)"
 fi
 
 echo "api-journeys: ok ($journeys)"

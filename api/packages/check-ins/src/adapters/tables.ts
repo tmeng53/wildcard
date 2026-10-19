@@ -45,7 +45,6 @@ export interface CheckIns {
   kind: CheckInKind;
   member_id: string;
   payload: Json;
-  received_at: Generated<Timestamp>;
 }
 
 export interface CheckInSquads {

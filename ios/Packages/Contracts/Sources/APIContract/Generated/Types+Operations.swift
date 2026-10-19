@@ -824,7 +824,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid profile, or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
+            /// Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
             ///
             /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)/responses/400`.
             ///
@@ -6481,6 +6481,286 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "serviceUnavailable",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case applicationProblemJson
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .applicationProblemJson
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .applicationProblemJson:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .applicationProblemJson
+                ]
+            }
+        }
+    }
+    /// The squad an invite code belongs to, for anyone
+    ///
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    ///
+    /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
+    /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
+    public enum GetPublicSquadInvite {
+        public static let id: Swift.String = "getPublicSquadInvite"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/path/inviteCode`.
+                public var inviteCode: Swift.String
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - inviteCode:
+                public init(inviteCode: Swift.String) {
+                    self.inviteCode = inviteCode
+                }
+            }
+            public var path: Operations.GetPublicSquadInvite.Input.Path
+            /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetPublicSquadInvite.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetPublicSquadInvite.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GetPublicSquadInvite.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.GetPublicSquadInvite.Input.Path,
+                headers: Operations.GetPublicSquadInvite.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/200/headers`.
+                public struct Headers: Sendable, Hashable {
+                    /// `no-store`: the size changes as people join.
+                    ///
+                    /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/200/headers/Cache-Control`.
+                    public var cacheControl: Swift.String?
+                    /// Creates a new `Headers`.
+                    ///
+                    /// - Parameters:
+                    ///   - cacheControl: `no-store`: the size changes as people join.
+                    public init(cacheControl: Swift.String? = nil) {
+                        self.cacheControl = cacheControl
+                    }
+                }
+                /// Received HTTP response headers
+                public var headers: Operations.GetPublicSquadInvite.Output.Ok.Headers
+                /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PublicSquadInvite)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PublicSquadInvite {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetPublicSquadInvite.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - headers: Received HTTP response headers
+                ///   - body: Received HTTP response body
+                public init(
+                    headers: Operations.GetPublicSquadInvite.Output.Ok.Headers = .init(),
+                    body: Operations.GetPublicSquadInvite.Output.Ok.Body
+                ) {
+                    self.headers = headers
+                    self.body = body
+                }
+            }
+            /// The squad
+            ///
+            /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GetPublicSquadInvite.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GetPublicSquadInvite.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct NotFound: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/404/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/404/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetPublicSquadInvite.Output.NotFound.Body
+                /// Creates a new `NotFound`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetPublicSquadInvite.Output.NotFound.Body) {
+                    self.body = body
+                }
+            }
+            /// No squad has this code (`INVITE_CODE_UNKNOWN`)
+            ///
+            /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)/responses/404`.
+            ///
+            /// HTTP response code: `404 notFound`.
+            case notFound(Operations.GetPublicSquadInvite.Output.NotFound)
+            /// The associated value of the enum case if `self` is `.notFound`.
+            ///
+            /// - Throws: An error if `self` is not `.notFound`.
+            /// - SeeAlso: `.notFound`.
+            public var notFound: Operations.GetPublicSquadInvite.Output.NotFound {
+                get throws {
+                    switch self {
+                    case let .notFound(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "notFound",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct TooManyRequests: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/429/headers`.
+                public struct Headers: Sendable, Hashable {
+                    /// Seconds until lookups from this address are taken again.
+                    ///
+                    /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/429/headers/Retry-After`.
+                    public var retryAfter: Swift.Int?
+                    /// Creates a new `Headers`.
+                    ///
+                    /// - Parameters:
+                    ///   - retryAfter: Seconds until lookups from this address are taken again.
+                    public init(retryAfter: Swift.Int? = nil) {
+                        self.retryAfter = retryAfter
+                    }
+                }
+                /// Received HTTP response headers
+                public var headers: Operations.GetPublicSquadInvite.Output.TooManyRequests.Headers
+                /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/429/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/429/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetPublicSquadInvite.Output.TooManyRequests.Body
+                /// Creates a new `TooManyRequests`.
+                ///
+                /// - Parameters:
+                ///   - headers: Received HTTP response headers
+                ///   - body: Received HTTP response body
+                public init(
+                    headers: Operations.GetPublicSquadInvite.Output.TooManyRequests.Headers = .init(),
+                    body: Operations.GetPublicSquadInvite.Output.TooManyRequests.Body
+                ) {
+                    self.headers = headers
+                    self.body = body
+                }
+            }
+            /// Too many lookups from this address (`REQUESTS_TOO_FREQUENT`)
+            ///
+            /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)/responses/429`.
+            ///
+            /// HTTP response code: `429 tooManyRequests`.
+            case tooManyRequests(Operations.GetPublicSquadInvite.Output.TooManyRequests)
+            /// The associated value of the enum case if `self` is `.tooManyRequests`.
+            ///
+            /// - Throws: An error if `self` is not `.tooManyRequests`.
+            /// - SeeAlso: `.tooManyRequests`.
+            public var tooManyRequests: Operations.GetPublicSquadInvite.Output.TooManyRequests {
+                get throws {
+                    switch self {
+                    case let .tooManyRequests(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "tooManyRequests",
                             response: self
                         )
                     }

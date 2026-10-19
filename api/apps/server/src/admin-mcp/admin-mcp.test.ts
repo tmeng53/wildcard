@@ -25,6 +25,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
+import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
@@ -32,10 +33,12 @@ import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supab
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
-// (the official MCP SDK) discovers how to sign in from the 401, registers itself with local
-// Supabase Auth's OAuth 2.1 server, and the member approves it the way the consent screen does.
+// (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
+// Auth's OAuth 2.1 server as a client registered by hand, and the admin approves it on our
+// consent page.
 
 const db = createDatabase(config.databaseUrl);
 const publishableKey = z.string().min(1).parse(process.env.SUPABASE_PUBLISHABLE_KEY);
@@ -69,6 +72,7 @@ beforeAll(async () => {
             secretKey: config.supabaseSecretKey,
           }),
           revokeAppleSignIn: undefined,
+          publicRoutes: unlimitedPublicRoutes,
           checkIns: createCheckIns({
             store: createPostgresCheckInStore(db),
             reactions: createPostgresReactionStore(db),
@@ -106,6 +110,10 @@ beforeAll(async () => {
               };
             },
             publicUrl,
+            consent: createSupabaseOAuthConsent({
+              supabaseUrl: config.supabaseUrl,
+              secretKey: config.supabaseSecretKey,
+            }),
             tools: (scope) => [
               listAdminLog({ admins: admin.admins(scope) }),
               ...memeTools({
@@ -173,15 +181,49 @@ let registered: OAuthClientInformation;
 
 /**
  * An MCP client's OAuth state, kept in memory. "Opening the browser" approves the request as
- * the member, as they would on the consent screen.
+ * the member: on our consent page, as an admin does, or straight through Supabase Auth's API
+ * with the member's app session, as someone holding a stolen session could.
  */
-function clientSignedInAs(session: { readonly token: string }): OAuthClientProvider & {
-  readonly code: () => string;
-} {
+function clientSignedInAs(
+  member: { readonly token: string; readonly email: string; readonly password: string },
+  options: { readonly approveThrough: 'consent page' | 'auth API' } = {
+    approveThrough: 'consent page',
+  },
+): OAuthClientProvider & { readonly code: () => string } {
   let tokens: StoredOAuthTokens | undefined;
   let verifier = '';
   let code = '';
-  const authHeaders = { apikey: publishableKey, authorization: `Bearer ${session.token}` };
+  const approve = async (id: string): Promise<URL> => {
+    if (options.approveThrough === 'consent page') {
+      const form = (fields: Record<string, string>) => ({
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ authorization_id: id, ...fields }).toString(),
+        redirect: 'manual' as const,
+      });
+      const consentPage = new URL('/oauth/consent/', mcpUrl);
+      const signedIn = await fetch(
+        new URL('sign-in', consentPage),
+        form({ email: member.email, password: member.password }),
+      );
+      const cookie = signedIn.headers.getSetCookie().map((each) => each.split(';')[0]);
+      const request = form({ answer: 'approve' });
+      const approved = await fetch(new URL('answer', consentPage), {
+        ...request,
+        headers: { ...request.headers, cookie: cookie.join('; ') },
+      });
+      return new URL(z.string().parse(approved.headers.get('location')));
+    }
+    const authorizations = `${config.supabaseUrl}/auth/v1/oauth/authorizations/${id}`;
+    const authHeaders = { apikey: publishableKey, authorization: `Bearer ${member.token}` };
+    await fetch(authorizations, { headers: authHeaders });
+    const approved = await fetch(`${authorizations}/consent`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'approve' }),
+    });
+    return new URL(z.object({ redirect_url: z.url() }).parse(await approved.json()).redirect_url);
+  };
   return {
     redirectUrl: clientMetadata.redirect_uris[0],
     clientMetadata,
@@ -199,16 +241,7 @@ function clientSignedInAs(session: { readonly token: string }): OAuthClientProvi
       const redirect = await fetch(authorizationUrl, { redirect: 'manual' });
       const consentUrl = new URL(z.string().parse(redirect.headers.get('location')));
       const id = z.string().parse(consentUrl.searchParams.get('authorization_id'));
-      const authorizations = `${config.supabaseUrl}/auth/v1/oauth/authorizations/${id}`;
-      // What the consent screen does: shows the request, then approves it.
-      await fetch(authorizations, { headers: authHeaders });
-      const approved = await fetch(`${authorizations}/consent`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'content-type': 'application/json' },
-        body: JSON.stringify({ action: 'approve' }),
-      });
-      const { redirect_url } = z.object({ redirect_url: z.url() }).parse(await approved.json());
-      code = z.string().parse(new URL(redirect_url).searchParams.get('code'));
+      code = z.string().parse((await approve(id)).searchParams.get('code'));
     },
     code: () => code,
   };
@@ -386,7 +419,10 @@ describe('the admin MCP server', () => {
   });
 
   it('refuses a member who signed in but is not on the admin list', async () => {
-    const provider = clientSignedInAs(await member({ admin: false }));
+    // The consent page refuses them, so they approve through Supabase's API directly.
+    const provider = clientSignedInAs(await member({ admin: false }), {
+      approveThrough: 'auth API',
+    });
     const client = new Client({ name: 'admin-mcp-test', version: '1.0.0' });
     const first = new StreamableHTTPClientTransport(mcpUrl, { authProvider: provider });
     await expect(client.connect(first)).rejects.toThrow(UnauthorizedError);

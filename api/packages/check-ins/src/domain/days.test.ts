@@ -57,7 +57,7 @@ describe('weeks', () => {
 });
 
 describe('a day’s check-ins', () => {
-  it('counts a 练了 after a 免责声明 as trained', () => {
+  it('counts a 练了 after a 请假条 as trained', () => {
     const day = '2026-10-19';
     expect(trainingOn([checkIn('disclaimer', { day: day })], day)).toBe('disclaimer');
     expect(

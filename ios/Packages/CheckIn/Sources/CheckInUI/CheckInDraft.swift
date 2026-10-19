@@ -18,14 +18,11 @@ public struct PreparedPhoto: Hashable, Sendable, Identifiable {
 
 /// What a 练了 or a meal carries: up to three photos, the first the cover, and a line.
 public struct PostBody: Hashable, Sendable {
-    /// Characters, counted as people see them. The API allows 60 (Check-in API, PR #25).
-    public static let captionLimit = 60
-
     public let photos: [PreparedPhoto]
     public let caption: String?
 
     /// Keeps at most `Photos.maxCount` photos, and the caption trimmed, on one line and cut to
-    /// `captionLimit`; an empty caption is none.
+    /// `Caption.maxLength`; an empty caption is none.
     public init(photos: [PreparedPhoto], caption: String) {
         self.photos = Array(photos.prefix(Photos.maxCount))
         let line = Self.fitCaption(caption).trimmingCharacters(in: .whitespaces)
@@ -34,9 +31,9 @@ public struct PostBody: Hashable, Sendable {
 
     public var cover: PreparedPhoto? { photos.first }
 
-    /// What the caption field keeps while typing: no line breaks, at most `captionLimit`.
+    /// What the caption field keeps while typing: no line breaks, at most `Caption.maxLength`.
     static func fitCaption(_ text: String) -> String {
-        String(text.filter { !$0.isNewline }.prefix(captionLimit))
+        String(text.filter { !$0.isNewline }.prefix(Caption.maxLength))
     }
 }
 
@@ -51,8 +48,8 @@ public enum CheckInDraft: Hashable, Sendable {
     var meaning: Meaning {
         switch self {
         case .trained: .trained
-        case .healthyMeal: .fresh
-        case .cheatMeal: .indulgence
+        case .healthyMeal: .healthyMeal
+        case .cheatMeal: .cheatMeal
         case .disclaimer: .disclaimer
         }
     }

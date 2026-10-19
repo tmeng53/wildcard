@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "cheer",
+  "duration": 2,
+  "loops": false,
+  "tracks": [
+    { "part": "earL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.15, "v": 0 }, { "t": 0.43, "v": 12, "ease": "easeInOut" }, { "t": 0.71, "v": -9, "ease": "easeInOut" },
+      { "t": 0.99, "v": 6, "ease": "easeInOut" }, { "t": 1.27, "v": -3, "ease": "easeInOut" }, { "t": 1.55, "v": 0, "ease": "easeInOut" }, { "t": 2, "v": 0 } ] },
+    { "part": "earR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.15, "v": 0 }, { "t": 0.43, "v": -12, "ease": "easeInOut" }, { "t": 0.71, "v": 9, "ease": "easeInOut" },
+      { "t": 0.99, "v": -6, "ease": "easeInOut" }, { "t": 1.27, "v": 3, "ease": "easeInOut" }, { "t": 1.55, "v": 0, "ease": "easeInOut" }, { "t": 2, "v": 0 } ] },
+    { "part": "flapL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.15, "v": 0 }, { "t": 0.43, "v": -9, "ease": "easeInOut" }, { "t": 0.71, "v": 7, "ease": "easeInOut" },
+      { "t": 0.99, "v": -4, "ease": "easeInOut" }, { "t": 1.27, "v": 2, "ease": "easeInOut" }, { "t": 1.55, "v": 0, "ease": "easeInOut" }, { "t": 2, "v": 0 } ] },
+    { "part": "flapR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.15, "v": 0 }, { "t": 0.43, "v": 9, "ease": "easeInOut" }, { "t": 0.71, "v": -7, "ease": "easeInOut" },
+      { "t": 0.99, "v": 4, "ease": "easeInOut" }, { "t": 1.27, "v": -2, "ease": "easeInOut" }, { "t": 1.55, "v": 0, "ease": "easeInOut" }, { "t": 2, "v": 0 } ] },
+    { "part": "nose", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 1.5, "v": 1 }, { "t": 1.58, "v": 0.8 }, { "t": 1.66, "v": 1 },
+      { "t": 1.74, "v": 0.8 }, { "t": 1.82, "v": 1 }, { "t": 2, "v": 1 } ] }
+  ]
+}

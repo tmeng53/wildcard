@@ -75,6 +75,12 @@ describe('DraftReason', () => {
     expect(DraftReason.safeParse('累'.repeat(101)).success).toBe(false);
     expect(DraftReason.safeParse('累'.repeat(100)).success).toBe(true);
   });
+
+  it('counts an emoji as one character and refuses a blank one', () => {
+    expect(DraftReason.safeParse('👍🏽'.repeat(100)).success).toBe(true);
+    expect(DraftReason.safeParse('👍🏽'.repeat(101)).success).toBe(false);
+    expect(DraftReason.safeParse('\u200B').success).toBe(false);
+  });
 });
 
 describe('mentionsSelfHarm', () => {

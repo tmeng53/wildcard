@@ -96,3 +96,24 @@ export function nameText({
     message: 'Must be one line, with no tabs or unusual spaces',
   });
 }
+
+/**
+ * Top-level domains a pasted link usually ends in. A bare `name.tld` counts as a link only with
+ * one of these, so a word with a dot in it (`Mr.Bean`) is still text.
+ */
+const LINK_TLDS =
+  'com|net|org|io|co|cn|me|app|xyz|cc|tv|ly|gg|ai|dev|link|top|info|us|ca|uk|hk|tw|jp|site|shop|vip|club';
+
+/**
+ * A link in typed text: a scheme (`https://`, `weixin://`), `www.`, or a bare domain such as
+ * `abc.com`. Dots may be written as full-width `．` or `。`, as people do to get around filters.
+ */
+const LINK = new RegExp(
+  String.raw`[a-z][a-z0-9+.-]*:\/\/|www[.．。]|[a-z0-9-]+[.．。](?:${LINK_TLDS})(?![a-z0-9])`,
+  'iu',
+);
+
+/** True when the text holds something that reads as a link. */
+export function containsLink(text: string): boolean {
+  return LINK.test(text);
+}

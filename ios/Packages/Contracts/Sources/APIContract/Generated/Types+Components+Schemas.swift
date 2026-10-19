@@ -184,15 +184,25 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/timeZone`.
                 public var timeZone: Swift.String
+                /// What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/catchphrase`.
+                public var catchphrase: Swift.String?
                 /// Creates a new `ProfilePayload`.
                 ///
                 /// - Parameters:
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
-                public init(timeZone: Swift.String) {
+                ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+                public init(
+                    timeZone: Swift.String,
+                    catchphrase: Swift.String? = nil
+                ) {
                     self.timeZone = timeZone
+                    self.catchphrase = catchphrase
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
+                    case catchphrase
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -200,8 +210,13 @@ extension Components {
                         Swift.String.self,
                         forKey: .timeZone
                     )
+                    self.catchphrase = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .catchphrase
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "timeZone"
+                        "timeZone",
+                        "catchphrase"
                     ])
                 }
             }
@@ -262,21 +277,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Profile/timeZone`.
             public var timeZone: Swift.String
+            /// What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/catchphrase`.
+            public var catchphrase: Swift.String?
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
+            ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
             public init(
                 version: Components.Schemas.Profile.VersionPayload,
-                timeZone: Swift.String
+                timeZone: Swift.String,
+                catchphrase: Swift.String? = nil
             ) {
                 self.version = version
                 self.timeZone = timeZone
+                self.catchphrase = catchphrase
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case timeZone
+                case catchphrase
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -288,9 +311,14 @@ extension Components {
                     Swift.String.self,
                     forKey: .timeZone
                 )
+                self.catchphrase = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .catchphrase
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
-                    "timeZone"
+                    "timeZone",
+                    "catchphrase"
                 ])
             }
         }
@@ -2517,6 +2545,76 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PublicSquadInvite`.
+        public struct PublicSquadInvite: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/version`.
+            public var version: Components.Schemas.PublicSquadInvite.VersionPayload
+            /// The squad’s name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/name`.
+            public var name: Swift.String
+            /// How many members it has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/memberCount`.
+            public var memberCount: Swift.Int
+            /// True when it has 8 members and can’t take more.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/full`.
+            public var full: Swift.Bool
+            /// Creates a new `PublicSquadInvite`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: The squad’s name.
+            ///   - memberCount: How many members it has now.
+            ///   - full: True when it has 8 members and can’t take more.
+            public init(
+                version: Components.Schemas.PublicSquadInvite.VersionPayload,
+                name: Swift.String,
+                memberCount: Swift.Int,
+                full: Swift.Bool
+            ) {
+                self.version = version
+                self.name = name
+                self.memberCount = memberCount
+                self.full = full
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+                case memberCount
+                case full
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.PublicSquadInvite.VersionPayload.self,
+                    forKey: .version
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                self.memberCount = try container.decode(
+                    Swift.Int.self,
+                    forKey: .memberCount
+                )
+                self.full = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .full
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "name",
+                    "memberCount",
+                    "full"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
         public struct SquadToday: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadToday/version`.
@@ -2531,11 +2629,15 @@ extension Components {
             public struct MembersPayloadPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/member`.
                 public var member: Swift.String
+                /// What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/catchphrase`.
+                public var catchphrase: Swift.String?
                 /// The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
                 public var day: Swift.String
-                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/training`.
                 @frozen public enum TrainingPayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -2543,7 +2645,7 @@ extension Components {
                     case disclaimer = "disclaimer"
                     case notCheckedIn = "notCheckedIn"
                 }
-                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                /// Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/training`.
                 public var training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload
@@ -2570,13 +2672,15 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - member:
+                ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
-                ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 免责声明 posted earlier the same day.
+                ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
                 ///   - plannedRest: Today is a rest day in their weekly plan, whatever they checked in.
                 ///   - firstCheckInAt: When their first check-in today sent to this squad was made, of any kind, in UTC. Missing when none.
                 public init(
                     member: Swift.String,
+                    catchphrase: Swift.String? = nil,
                     day: Swift.String,
                     training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload,
                     latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload? = nil,
@@ -2584,6 +2688,7 @@ extension Components {
                     firstCheckInAt: Foundation.Date? = nil
                 ) {
                     self.member = member
+                    self.catchphrase = catchphrase
                     self.day = day
                     self.training = training
                     self.latestMeal = latestMeal
@@ -2592,6 +2697,7 @@ extension Components {
                 }
                 public enum CodingKeys: String, CodingKey {
                     case member
+                    case catchphrase
                     case day
                     case training
                     case latestMeal
@@ -2603,6 +2709,10 @@ extension Components {
                     self.member = try container.decode(
                         Swift.String.self,
                         forKey: .member
+                    )
+                    self.catchphrase = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .catchphrase
                     )
                     self.day = try container.decode(
                         Swift.String.self,
@@ -2626,6 +2736,7 @@ extension Components {
                     )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "member",
+                        "catchphrase",
                         "day",
                         "training",
                         "latestMeal",
@@ -2648,11 +2759,11 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/trained`.
                 public var trained: Swift.Int
-                /// Members whose today is a 免责声明 with no 练了.
+                /// Members whose today is a 请假条 with no 练了.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/disclaimer`.
                 public var disclaimer: Swift.Int
-                /// Members on a planned rest day with no 练了 or 免责声明 today.
+                /// Members on a planned rest day with no 练了 or 请假条 today.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/today/resting`.
                 public var resting: Swift.Int
@@ -2664,8 +2775,8 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - trained: Members whose today is trained.
-                ///   - disclaimer: Members whose today is a 免责声明 with no 练了.
-                ///   - resting: Members on a planned rest day with no 练了 or 免责声明 today.
+                ///   - disclaimer: Members whose today is a 请假条 with no 练了.
+                ///   - resting: Members on a planned rest day with no 练了 or 请假条 today.
                 ///   - everyoneTrained: At least one member trained today and every member who did not train is on a planned rest day, whatever they checked in (全员上场).
                 public init(
                     trained: Swift.Int,

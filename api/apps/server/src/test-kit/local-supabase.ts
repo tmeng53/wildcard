@@ -22,15 +22,19 @@ const publishableKey = z.string().min(1).parse(process.env.SUPABASE_PUBLISHABLE_
 
 const SignUp = z.object({ access_token: z.string(), user: z.object({ id: z.uuid() }) });
 
-/** Signs a new member up through local Supabase Auth and returns their real access token. */
+/**
+ * Signs a new member up through local Supabase Auth and returns their real access token, and
+ * the email and password they can sign in with again.
+ */
 export async function signUp() {
+  const credentials = { email: `${randomUUID()}@example.com`, password: randomUUID() };
   const response = await fetch(`${config.supabaseUrl}/auth/v1/signup`, {
     method: 'POST',
     headers: { apikey: publishableKey, 'content-type': 'application/json' },
-    body: JSON.stringify({ email: `${randomUUID()}@example.com`, password: randomUUID() }),
+    body: JSON.stringify(credentials),
   });
   const body = SignUp.parse(await response.json());
-  return { token: body.access_token, userId: body.user.id };
+  return { token: body.access_token, userId: body.user.id, ...credentials };
 }
 
 /** Signs a member's session out through local Supabase Auth, as the app's sign-out does. */
@@ -42,6 +46,8 @@ export async function signOut(token: string) {
   if (response.status !== 204) throw new Error(`logout answered ${String(response.status)}`);
 }
 
+const unused = () => Promise.reject(new Error('unused'));
+
 /** The admin MCP server's settings on local Supabase, with these tools. */
 export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []) {
   return {
@@ -50,6 +56,18 @@ export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []
     tools,
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL(`${config.supabaseUrl}/auth/v1`),
+    // Tests of the consent page pass Supabase's; the rest never reach it.
+    consent: {
+      signInWithPassword: unused,
+      appleSignInUrl: () => {
+        throw new Error('unused');
+      },
+      exchangeCode: unused,
+      request: unused,
+      answer: unused,
+      signOut: unused,
+    },
+    passwordSignIn: true,
   };
 }
 

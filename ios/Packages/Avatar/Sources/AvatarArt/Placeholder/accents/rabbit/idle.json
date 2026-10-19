@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": "idle",
+  "duration": 5.4,
+  "loops": true,
+  "tracks": [
+    { "part": "nose", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 0.3, "v": 1 }, { "t": 0.38, "v": 0.8, "ease": "easeInOut" }, { "t": 0.46, "v": 1, "ease": "easeInOut" },
+      { "t": 0.54, "v": 0.8, "ease": "easeInOut" }, { "t": 0.62, "v": 1, "ease": "easeInOut" }, { "t": 1.65, "v": 1 }, { "t": 1.73, "v": 0.8, "ease": "easeInOut" },
+      { "t": 1.81, "v": 1, "ease": "easeInOut" }, { "t": 1.89, "v": 0.8, "ease": "easeInOut" }, { "t": 1.97, "v": 1, "ease": "easeInOut" }, { "t": 3.0, "v": 1 },
+      { "t": 3.08, "v": 0.8, "ease": "easeInOut" }, { "t": 3.16, "v": 1, "ease": "easeInOut" }, { "t": 3.24, "v": 0.8, "ease": "easeInOut" }, { "t": 3.32, "v": 1, "ease": "easeInOut" },
+      { "t": 4.35, "v": 1 }, { "t": 4.43, "v": 0.8, "ease": "easeInOut" }, { "t": 4.51, "v": 1, "ease": "easeInOut" }, { "t": 4.59, "v": 0.8, "ease": "easeInOut" },
+      { "t": 4.67, "v": 1, "ease": "easeInOut" }, { "t": 5.4, "v": 1 } ] },
+    { "part": "earR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.8, "v": 0 }, { "t": 1.9, "v": -14, "ease": "easeOut" }, { "t": 2.0, "v": 0, "ease": "easeIn" },
+      { "t": 2.1, "v": -9, "ease": "easeOut" }, { "t": 2.25, "v": 0, "ease": "easeIn" }, { "t": 5.4, "v": 0 } ] },
+    { "part": "earL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 3.9, "v": 0 }, { "t": 4.0, "v": 14, "ease": "easeOut" }, { "t": 4.2, "v": 0, "ease": "easeIn" },
+      { "t": 5.4, "v": 0 } ] },
+    { "part": "flapR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0.0 }, { "t": 1.8, "v": 0.0 }, { "t": 1.9, "v": -8.4, "ease": "easeOut" }, { "t": 2.0, "v": 0.0, "ease": "easeIn" },
+      { "t": 2.1, "v": -5.4, "ease": "easeOut" }, { "t": 2.25, "v": 0.0, "ease": "easeIn" }, { "t": 5.4, "v": 0.0 } ] },
+    { "part": "flapL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0.0 }, { "t": 3.9, "v": 0.0 }, { "t": 4.0, "v": 8.4, "ease": "easeOut" }, { "t": 4.2, "v": 0.0, "ease": "easeIn" },
+      { "t": 5.4, "v": 0.0 } ] }
+  ]
+}

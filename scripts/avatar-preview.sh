@@ -34,7 +34,7 @@ echo "==> xcodebuild test Avatar on $sim"
   CODE_SIGNING_ALLOWED=NO)
 
 ls -l "$out/previews"
-for file in 01-outfits.png 02-cheer-frames.png 03-check-in-cheer.gif 04-idle-deadpan.gif 04-idle-energetic.gif 04-idle-showoff.gif 04-idle-drama.gif 04-idle-shy.gif 05-swatches.png 06-wardrobe.png 07-faces.png timings.txt; do
+for file in 01-outfits.png 02-cheer-frames.png 03-check-in-cheer.gif 04-idle-deadpan.gif 04-idle-energetic.gif 04-idle-showoff.gif 04-idle-drama.gif 04-idle-shy.gif 05-swatches.png 06-wardrobe.png 07-faces.png 08-species-moves.gif timings.txt; do
   [ -s "$out/previews/$file" ] || { echo "missing preview: $file" >&2; exit 1; }
 done
 cat "$out/previews/timings.txt"

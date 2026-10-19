@@ -15,6 +15,7 @@ import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 import { adminOn, noJobs, pushOn } from '../test-kit/local-supabase.js';
+import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
@@ -41,6 +42,7 @@ async function getHealth(db: Database) {
     verifyToken: notCalled,
     accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
     revokeAppleSignIn: undefined,
+    publicRoutes: unlimitedPublicRoutes,
     checkIns: checkInsOn(db),
     photos,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
@@ -118,6 +120,7 @@ describe('an unknown route', () => {
       verifyToken: notCalled,
       accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
       revokeAppleSignIn: undefined,
+      publicRoutes: unlimitedPublicRoutes,
       checkIns: checkInsOn(db),
       photos,
       disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },

@@ -9,6 +9,8 @@ export interface ProfileStore {
    * time zone.
    */
   save(member: MemberId, profile: Profile): Promise<boolean>;
+  /** The catchphrases these members picked, by member. Members without one are left out. */
+  catchphrases(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, string>>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**

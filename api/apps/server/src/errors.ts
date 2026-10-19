@@ -206,3 +206,48 @@ export class JobsOffError extends AppError {
     super('Jobs aren’t set up on this server.');
   }
 }
+
+/**
+ * Thrown when the consent page is opened for an OAuth request the sign-in provider doesn't know:
+ * a wrong link, or one that expired or was answered already. Start again from the MCP client.
+ */
+export class ConsentRequestNotFoundError extends AppError {
+  override readonly name = 'ConsentRequestNotFoundError';
+  readonly reason = 'CONSENT_REQUEST_NOT_FOUND';
+  readonly status = 'NOT_FOUND';
+
+  constructor(options?: ErrorOptions) {
+    super(
+      'This sign-in request has expired or was answered already. Connect again from the app asking.',
+      options,
+    );
+  }
+}
+
+/**
+ * Thrown when an answer on the consent page comes without a sign-in made on that page for that
+ * request in the last few minutes. Sign in again.
+ */
+export class ConsentSignInRequiredError extends AppError {
+  override readonly name = 'ConsentSignInRequiredError';
+  readonly reason = 'CONSENT_SIGN_IN_REQUIRED';
+  readonly status = 'UNAUTHENTICATED';
+
+  constructor(options?: ErrorOptions) {
+    super('Sign in again to answer this request.', options);
+  }
+}
+
+/**
+ * Thrown when a caller asks a route anyone can call too often. Wait `retryAfterSeconds`, which
+ * the response also gives as `Retry-After`.
+ */
+export class RequestsTooFrequentError extends AppError {
+  override readonly name = 'RequestsTooFrequentError';
+  readonly reason = 'REQUESTS_TOO_FREQUENT';
+  readonly status = 'RESOURCE_EXHAUSTED';
+
+  constructor(readonly retryAfterSeconds: number) {
+    super('Too many requests. Try again shortly.');
+  }
+}

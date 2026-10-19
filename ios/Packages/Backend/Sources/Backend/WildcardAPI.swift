@@ -48,10 +48,12 @@ public struct WildcardAPI: Sendable {
     /// Creates the profile, right after the first sign-in, or replaces it.
     public func save(_ profile: Profile) async throws(APIError) -> Profile {
         let saved = try await call {
-            try await client.putMyProfile(body: .json(.init(version: ._1, timeZone: profile.timeZone.identifier))).ok
-                .body.json
+            try await client.putMyProfile(
+                body: .json(
+                    .init(version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text))
+            ).ok.body.json
         }
-        return try Profile(timeZone: saved.timeZone)
+        return try Profile(timeZone: saved.timeZone, catchphrase: saved.catchphrase)
     }
 
     // MARK: - Check-ins
@@ -154,16 +156,26 @@ public struct Member: Hashable, Sendable {
 public struct Profile: Hashable, Sendable {
     /// Where the member lives, for their weekly reset.
     public let timeZone: TimeZone
+    /// What their character shouts when the squad cheers a teammate's 练了. Nil until they pick
+    /// one, and the app uses their persona's own line.
+    public let catchphrase: Catchphrase?
 
-    public init(timeZone: TimeZone) { self.timeZone = timeZone }
+    public init(timeZone: TimeZone, catchphrase: Catchphrase? = nil) {
+        self.timeZone = timeZone
+        self.catchphrase = catchphrase
+    }
 
-    init(timeZone identifier: String) throws(APIError) {
+    init(timeZone identifier: String, catchphrase: String?) throws(APIError) {
         guard let timeZone = TimeZone(identifier: identifier) else { throw .unreadableResponse }
-        self.init(timeZone: timeZone)
+        self.init(
+            timeZone: timeZone,
+            catchphrase: try catchphrase.map { text throws(APIError) in
+                do { return try Catchphrase(text) } catch { throw .unreadableResponse }
+            })
     }
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
-        try self.init(timeZone: wire.timeZone)
+        try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase)
     }
 }
 

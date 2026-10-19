@@ -4,7 +4,7 @@ public enum ContractsError: Error, Equatable, Sendable {
     case invalidDay(String)
     /// An id that isn't a UUID.
     case invalidID(String)
-    /// A 免责声明 that is empty or longer than `Disclaimer.maxLength` characters.
+    /// A 请假条 that is empty or longer than `Disclaimer.maxLength` characters.
     case disclaimerLength(Int)
     /// A caption that is empty or longer than `Caption.maxLength` characters.
     case captionLength(Int)
@@ -32,6 +32,10 @@ public enum ContractsError: Error, Equatable, Sendable {
     case unknownSport(String)
     /// A `customSport` name next to a listed sport, or `custom` with no name.
     case strayCustomSport
+    /// A catchphrase that is empty or longer than `Catchphrase.maxLength` characters.
+    case catchphraseLength(Int)
+    /// A catchphrase with a line break; it is one line.
+    case multilineCatchphrase
     /// A timestamp that isn't ISO 8601.
     case invalidTimestamp(String)
 }
