@@ -201,6 +201,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/typed-text':
+        specifier: workspace:*
+        version: link:../typed-text
       kysely:
         specifier: 0.29.7
         version: 0.29.7

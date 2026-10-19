@@ -47,10 +47,15 @@ private func photoBytes() -> Data {
     #expect(try await member.api.save(profile) == profile)
     #expect(try await member.api.me().profile == profile)
 
-    // Saving again replaces it.
-    let moved = Profile(timeZone: try #require(TimeZone(identifier: "America/Toronto")))
+    // Saving again replaces it, catchphrase included.
+    let moved = Profile(
+        timeZone: try #require(TimeZone(identifier: "America/Toronto")), catchphrase: try Catchphrase("冲就完了🔥"))
     #expect(try await member.api.save(moved) == moved)
     #expect(try await member.api.me().profile == moved)
+
+    // The whole profile is replaced, so saving without one clears it.
+    #expect(try await member.api.save(profile) == profile)
+    #expect(try await member.api.me().profile == profile)
 }
 
 @Test func aTrainedCheckInIsSavedOnceAndTheSquadSeesIt() async throws {

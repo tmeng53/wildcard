@@ -184,15 +184,25 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/timeZone`.
                 public var timeZone: Swift.String
+                /// What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/catchphrase`.
+                public var catchphrase: Swift.String?
                 /// Creates a new `ProfilePayload`.
                 ///
                 /// - Parameters:
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
-                public init(timeZone: Swift.String) {
+                ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+                public init(
+                    timeZone: Swift.String,
+                    catchphrase: Swift.String? = nil
+                ) {
                     self.timeZone = timeZone
+                    self.catchphrase = catchphrase
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
+                    case catchphrase
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -200,8 +210,13 @@ extension Components {
                         Swift.String.self,
                         forKey: .timeZone
                     )
+                    self.catchphrase = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .catchphrase
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "timeZone"
+                        "timeZone",
+                        "catchphrase"
                     ])
                 }
             }
@@ -262,21 +277,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Profile/timeZone`.
             public var timeZone: Swift.String
+            /// What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/catchphrase`.
+            public var catchphrase: Swift.String?
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
+            ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
             public init(
                 version: Components.Schemas.Profile.VersionPayload,
-                timeZone: Swift.String
+                timeZone: Swift.String,
+                catchphrase: Swift.String? = nil
             ) {
                 self.version = version
                 self.timeZone = timeZone
+                self.catchphrase = catchphrase
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case timeZone
+                case catchphrase
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -288,9 +311,14 @@ extension Components {
                     Swift.String.self,
                     forKey: .timeZone
                 )
+                self.catchphrase = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .catchphrase
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
-                    "timeZone"
+                    "timeZone",
+                    "catchphrase"
                 ])
             }
         }
@@ -2540,6 +2568,10 @@ extension Components {
             public struct MembersPayloadPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/member`.
                 public var member: Swift.String
+                /// What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/catchphrase`.
+                public var catchphrase: Swift.String?
                 /// The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
@@ -2579,6 +2611,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - member:
+                ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
@@ -2586,6 +2619,7 @@ extension Components {
                 ///   - firstCheckInAt: When their first check-in today sent to this squad was made, of any kind, in UTC. Missing when none.
                 public init(
                     member: Swift.String,
+                    catchphrase: Swift.String? = nil,
                     day: Swift.String,
                     training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload,
                     latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload? = nil,
@@ -2593,6 +2627,7 @@ extension Components {
                     firstCheckInAt: Foundation.Date? = nil
                 ) {
                     self.member = member
+                    self.catchphrase = catchphrase
                     self.day = day
                     self.training = training
                     self.latestMeal = latestMeal
@@ -2601,6 +2636,7 @@ extension Components {
                 }
                 public enum CodingKeys: String, CodingKey {
                     case member
+                    case catchphrase
                     case day
                     case training
                     case latestMeal
@@ -2612,6 +2648,10 @@ extension Components {
                     self.member = try container.decode(
                         Swift.String.self,
                         forKey: .member
+                    )
+                    self.catchphrase = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .catchphrase
                     )
                     self.day = try container.decode(
                         Swift.String.self,
@@ -2635,6 +2675,7 @@ extension Components {
                     )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "member",
+                        "catchphrase",
                         "day",
                         "training",
                         "latestMeal",

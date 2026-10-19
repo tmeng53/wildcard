@@ -114,6 +114,17 @@
                 "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
                 "description": "The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.",
                 "example": "America/Los_Angeles"
+              },
+              "catchphrase": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 1000,
+                "default": null,
+                "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
+                "x-max-characters": 10,
+                "example": "冲就完了🔥"
               }
             },
             "required": [
@@ -145,6 +156,17 @@
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
             "description": "The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.",
             "example": "America/Los_Angeles"
+          },
+          "catchphrase": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "default": null,
+            "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
+            "x-max-characters": 10,
+            "example": "冲就完了🔥"
           }
         },
         "required": [
@@ -1294,6 +1316,13 @@
                   "type": "string",
                   "format": "uuid"
                 },
+                "catchphrase": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line."
+                },
                 "day": {
                   "type": "string",
                   "format": "date",
@@ -1328,6 +1357,7 @@
               },
               "required": [
                 "member",
+                "catchphrase",
                 "day",
                 "training",
                 "plannedRest"
@@ -2107,7 +2137,7 @@
             }
           },
           "400": {
-            "description": "Not a valid profile, or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)",
+            "description": "Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2556,6 +2586,16 @@
               }
             }
           },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Sign-in can’t be checked right now",
             "content": {
@@ -2761,6 +2801,16 @@
               }
             }
           },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Sign-in can’t be checked right now",
             "content": {
@@ -2810,6 +2860,16 @@
           },
           "401": {
             "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3358,6 +3418,16 @@
               }
             }
           },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "No bearer token, or not a valid one",
             "content": {
@@ -3685,6 +3755,16 @@
           },
           "401": {
             "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
