@@ -2,7 +2,7 @@
 # Drives the API the way the app does, over HTTP, against local Supabase: the built server
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
-#   scripts/api-journeys.sh [check-in] [photo-upload]   (no arguments: both)
+#   scripts/api-journeys.sh [check-in] [photo-upload] [squad]   (no arguments: all)
 # Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -10,11 +10,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload}"
+journeys="${*:-check-in photo-upload squad}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -64,16 +64,18 @@ sign_up() {
     jq -r '"\(.user.id) \(.access_token)"'
 }
 
-# A squad with these member ids. Squads have no routes yet, so this writes the rows directly.
+# A squad the first token creates and the others join by its invite code, as the app does:
+# sets $squad and $invite_code.
 squad_of() {
-  local id
-  id="$(new_id)"
-  psql -q "$DB_URL" -v ON_ERROR_STOP=1 -c "insert into public.squads (id, name) values ('$id', 'journey')" >/dev/null
-  for member in "$@"; do
-    psql -q "$DB_URL" -v ON_ERROR_STOP=1 \
-      -c "insert into public.squad_members (squad_id, member_id) values ('$id', '$member')" >/dev/null
+  call PUT "/squads/$(new_id)" "$1" '{"version":1,"name":" 早八跑团 "}'
+  expect 201
+  squad="$(jq -r .id <<<"$body")"
+  invite_code="$(jq -r .inviteCode <<<"$body")"
+  shift
+  for token in "$@"; do
+    call POST "/squad-invites/$invite_code/accept" "$token"
+    expect 201
   done
-  echo "$id"
 }
 
 new_id() { node -p 'crypto.randomUUID()'; }
@@ -84,8 +86,8 @@ day="${now:0:10}"
 read -r me me_token <<<"$(sign_up)"
 read -r mate mate_token <<<"$(sign_up)"
 read -r outsider outsider_token <<<"$(sign_up)"
-squad="$(squad_of "$me" "$mate")"
 for m in "$me" "$mate" "$outsider"; do [[ "$m" =~ ^[0-9a-f-]{36}$ ]] || fail "sign-up failed"; done
+squad_of "$me_token" "$mate_token"
 echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
 if want check-in; then
@@ -181,6 +183,46 @@ if want photo-upload; then
   call PUT "/check-ins/$(new_id)" "$me_token" "${meal//$path/$never}"
   expect 400 PHOTO_NOT_UPLOADED
   echo "photo-upload: a photo never uploaded refused (400 PHOTO_NOT_UPLOADED)"
+fi
+
+if want squad; then
+  call GET /me/squads "$mate_token"
+  expect 200
+  [ "$(jq -c '[.squads[] | {id, name, members: [.members[].userId]}]' <<<"$body")" = \
+    "$(jq -cn --arg s "$squad" --arg a "$me" --arg b "$mate" '[{id: $s, name: "早八跑团", members: [$a, $b]}]')" ] ||
+    fail "mate's squads should be exactly $squad, named 早八跑团, with me then mate: $body"
+  echo "squad: mate's squads list $squad, name trimmed, me then mate"
+
+  read -r newcomer newcomer_token <<<"$(sign_up)"
+  typed="$(tr '[:upper:]' '[:lower:]' <<<"${invite_code:0:4}")-${invite_code:4}"
+  call GET "/squad-invites/$typed" "$newcomer_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false}' ] ||
+    fail "preview should show the name and 2 members only: $body"
+  echo "squad: newcomer previews $typed: 早八跑团, 2 members"
+
+  call POST "/squad-invites/$typed/accept" "$newcomer_token"
+  expect 201
+  [ "$(jq -r '.members | map(.userId) | last' <<<"$body")" = "$newcomer" ] || fail "newcomer isn't last: $body"
+  call POST "/squad-invites/$invite_code/accept" "$newcomer_token"
+  expect 200
+  echo "squad: newcomer joined (201), joining again answered 200"
+
+  call GET "/squad-invites/ZZZZZZZZ" "$newcomer_token"
+  expect 404 INVITE_CODE_UNKNOWN
+  echo "squad: an unknown code refused (404 INVITE_CODE_UNKNOWN)"
+
+  call GET "/squads/$squad" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "squad: outsider reading the squad refused (403 SQUAD_NOT_JOINED)"
+
+  call DELETE "/squads/$squad/members/me" "$newcomer_token"
+  expect 204
+  call GET "/squads/$squad" "$newcomer_token"
+  expect 403 SQUAD_NOT_JOINED
+  call GET /me/squads "$newcomer_token"
+  [ "$(jq '.squads | length' <<<"$body")" = 0 ] || fail "newcomer still lists a squad: $body"
+  echo "squad: newcomer left (204) and can't read it any more"
 fi
 
 echo "api-journeys: ok ($journeys)"

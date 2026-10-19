@@ -115,7 +115,7 @@ elif want backend && [ -f ios/Packages/Backend/Package.swift ]; then
     # The API client's tests call the built API, so it runs for as long as they do.
     . scripts/lib/api-server.sh
     start_api_server
-    SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" WILDCARD_API_URL="$api" DATABASE_URL="$DB_URL" \
+    SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" WILDCARD_API_URL="$api" \
       swift test --package-path ios/Packages/Backend
   )
   ran=1

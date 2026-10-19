@@ -1,5 +1,6 @@
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { MemberTables } from '@wildcard/members';
+import type { SquadTables } from '@wildcard/squads';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -22,11 +23,41 @@ export interface Caller {
  */
 export type VerifyToken = (token: string) => Promise<Caller>;
 
+/** The sign-in provider's own records of its users, for what a token alone can't settle. */
+export interface Accounts {
+  /**
+   * Checks a bearer token with the provider itself, so a session that has signed out is refused
+   * even before its token expires. Slower than `VerifyToken`; for routes that can't be undone.
+   * Throws `AuthTokenInvalidError` for a token that isn't a current sign-in,
+   * `AuthUnavailableError` when the provider can't be reached.
+   */
+  readonly verifySession: VerifyToken;
+  /**
+   * Deletes the user at the provider. The database deletes what references them with it (each
+   * table's `on delete` in supabase/migrations). Deleting a user who is already gone does
+   * nothing. Throws `AuthUnavailableError` when the provider can't be reached.
+   */
+  readonly deleteUser: (userId: UserId) => Promise<void>;
+  /**
+   * Whether the user signs in with Apple, so deleting them must revoke Apple's grant. False
+   * for a user who is gone. Throws `AuthUnavailableError` when the provider can't be reached.
+   */
+  readonly signsInWithApple: (userId: UserId) => Promise<boolean>;
+}
+
+/**
+ * Revokes the tokens Sign in with Apple issued for this app, so the member's Apple ID no longer
+ * lists it (required when an account is deleted, Apple TN3194). Takes a fresh authorization
+ * code from the app. Throws `AppleAuthorizationCodeInvalidError` for a code Apple refuses,
+ * `AppleSignInUnavailableError` when Apple can't be reached.
+ */
+export type RevokeAppleSignIn = (authorizationCode: string) => Promise<void>;
+
 /**
  * The tables the API reads and writes, each module's generated from the migrations
  * (`pnpm db-types`), never written by hand.
  */
-export type Tables = CheckInTables & MemberTables;
+export type Tables = CheckInTables & MemberTables & SquadTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;
@@ -55,4 +86,9 @@ export interface PhotoStorage {
     paths: readonly PhotoPath[],
     expiresInSeconds: number,
   ) => Promise<ReadonlyMap<PhotoPath, URL>>;
+  /**
+   * Deletes every photo in a member's folder, saved on a check-in or only uploaded. Safe to
+   * repeat.
+   */
+  readonly deleteAllOf: (member: UserId) => Promise<void>;
 }

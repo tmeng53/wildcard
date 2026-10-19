@@ -9,7 +9,7 @@ import FoundationNetworking
 #endif
 
 // What the tests run against: local Supabase (`supabase start`) and, for the API client, the
-// built API serving from it. `scripts/verify.sh backend` starts the API and passes all four.
+// built API serving from it. `scripts/verify.sh backend` starts the API and passes all three.
 
 private struct SignedUp: Decodable {
     struct User: Decodable { let id: MemberID }
@@ -53,14 +53,12 @@ struct SignedInMember {
 struct LocalStack {
     let supabase: LocalSupabase
     let apiURL: URL
-    let databaseURL: String
 
     init() throws {
         supabase = try LocalSupabase()
         let environment = ProcessInfo.processInfo.environment
         apiURL = try #require(
             environment["WILDCARD_API_URL"].flatMap(URL.init(string:)), "run through `scripts/verify.sh backend`")
-        databaseURL = try #require(environment["DATABASE_URL"])
     }
 
     func signedInMember() async throws -> SignedInMember {
@@ -71,23 +69,39 @@ struct LocalStack {
         return SignedInMember(id: member.id, account: account, api: WildcardAPI(url: apiURL, account: account))
     }
 
-    /// A squad of these members. Squads have no routes yet, so this writes the rows directly,
-    /// as `scripts/api-journeys.sh` does.
-    func squad(of members: SignedInMember...) throws -> SquadID {
+    /// A squad of these members: the first creates it through the API and the rest accept its
+    /// invite, as `scripts/api-journeys.sh` does. The client has no squad calls yet.
+    func squad(of creator: SignedInMember, _ others: SignedInMember...) async throws -> SquadID {
         let squad = SquadID(UUID())
-        var sql = "insert into public.squads (id, name) values ('\(squad)', 'backend tests');"
-        for member in members {
-            sql += "insert into public.squad_members (squad_id, member_id) values ('\(squad)', '\(member.id)');"
+        let created: CreatedSquad = try await send(
+            "PUT", "squads/\(squad)", as: creator, body: #"{"version":1,"name":"backend tests"}"#)
+        for member in others {
+            let _: JoinedSquad = try await send(
+                "POST", "squad-invites/\(created.inviteCode)/accept", as: member, body: nil)
         }
-        let psql = Process()
-        psql.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        psql.arguments = ["psql", "-q", databaseURL, "-v", "ON_ERROR_STOP=1", "-c", sql]
-        try psql.run()
-        psql.waitUntilExit()
-        try #require(psql.terminationStatus == 0, "psql couldn't write the squad")
         return squad
     }
+
+    private func send<Answer: Decodable>(
+        _ method: String, _ path: String, as member: SignedInMember, body: String?
+    ) async throws -> Answer {
+        var request = URLRequest(url: apiURL.appending(path: path))
+        request.httpMethod = method
+        request.setValue("Bearer \(try await member.account.accessToken())", forHTTPHeaderField: "Authorization")
+        if let body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = Data(body.utf8)
+        }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try #require(
+            (response as? HTTPURLResponse)?.statusCode == 201,
+            "\(method) \(path): \(String(bytes: data, encoding: .utf8) ?? "")")
+        return try JSONDecoder().decode(Answer.self, from: data)
+    }
 }
+
+private struct CreatedSquad: Decodable { let inviteCode: String }
+private struct JoinedSquad: Decodable {}
 
 /// The session kept in memory, where the app keeps it in the Keychain.
 actor MemorySessionStore: SessionStore {

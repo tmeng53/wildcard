@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
@@ -16,19 +22,33 @@ describe('openapi.json', () => {
       createUploadUrl: () => Promise.reject(new Error('unused')),
       exists: () => Promise.reject(new Error('unused')),
       createViewUrls: () => Promise.reject(new Error('unused')),
+      deleteAllOf: () => Promise.reject(new Error('unused')),
     };
     const app = createApp({
       db,
       verifyToken: () => Promise.reject(new Error('unused')),
+      accounts: {
+        verifySession: () => Promise.reject(new Error('unused')),
+        deleteUser: () => Promise.reject(new Error('unused')),
+        signsInWithApple: () => Promise.reject(new Error('unused')),
+      },
+      revokeAppleSignIn: undefined,
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
         photos,
+        calendarOf: () => Promise.resolve(undefined),
         clock: () => {
           throw new Error('unused');
         },
       }),
       photos,
+      weeklyPlans: createWeeklyPlans({
+        store: createPostgresWeeklyPlanStore(db),
+        calendarOf: () => Promise.resolve(undefined),
+        clock: () => new Date(),
+      }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
+      squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');

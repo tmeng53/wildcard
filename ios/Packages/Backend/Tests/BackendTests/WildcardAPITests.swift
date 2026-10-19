@@ -57,7 +57,7 @@ private func photoBytes() -> Data {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let mate = try await stack.signedInMember()
-    let squad = try stack.squad(of: author, mate)
+    let squad = try await stack.squad(of: author, mate)
     let trained = try checkIn(
         by: author, to: squad,
         .trained(Training(activity: .custom(try CustomSport("飞盘")), caption: try Caption("累但爽"))))
@@ -74,7 +74,7 @@ private func photoBytes() -> Data {
 @Test func differentContentsUnderTheSameIDAreRefused() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
-    let squad = try stack.squad(of: author)
+    let squad = try await stack.squad(of: author)
     let first = try checkIn(by: author, to: squad, .healthyMeal(Meal(caption: try Caption("沙拉"))))
     _ = try await author.api.save(first)
 
@@ -88,7 +88,7 @@ private func photoBytes() -> Data {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let mate = try await stack.signedInMember()
-    let squad = try stack.squad(of: author, mate)
+    let squad = try await stack.squad(of: author, mate)
     let bytes = photoBytes()
 
     let photo = try await author.api.upload(bytes, as: .jpeg)
@@ -117,7 +117,7 @@ private func photoBytes() -> Data {
 @Test func aPhotoThatWasNeverUploadedIsRefused() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
-    let squad = try stack.squad(of: author)
+    let squad = try await stack.squad(of: author)
     let missing = try PhotoRef(path: "\(author.id)/\(UUID().uuidString.lowercased())")
     let meal = try checkIn(by: author, to: squad, .healthyMeal(Meal(photos: try Photos([missing]))))
     await #expect(throws: APIError.refused(.photoNotUploaded)) { try await author.api.save(meal) }
@@ -134,7 +134,7 @@ private func photoBytes() -> Data {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let mate = try await stack.signedInMember()
-    let squad = try stack.squad(of: author, mate)
+    let squad = try await stack.squad(of: author, mate)
     let photo = try await author.api.upload(photoBytes(), as: .heic)
     let disclaimer = try checkIn(
         by: author, to: squad, .disclaimer(try Disclaimer("腿还在酸，今天先躺平", photos: try Photos([photo]))))
@@ -150,7 +150,7 @@ private func photoBytes() -> Data {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let outsider = try await stack.signedInMember()
-    let squad = try stack.squad(of: author)
+    let squad = try await stack.squad(of: author)
     let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport(.run))))
 
     await #expect(throws: APIError.refused(.squadNotJoined)) { try await outsider.api.save(trained) }
