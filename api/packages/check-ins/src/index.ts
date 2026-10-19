@@ -59,5 +59,7 @@ export type {
   PhotoFiles,
   WeeklyPlanStore,
 } from './ports.js';
+export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
+export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
 export { createWeeklyPlans, type WeeklyPlans } from './use-cases/weekly-plans.js';

@@ -9,6 +9,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
@@ -25,13 +26,19 @@ const app = createApp({
   db,
   verifyToken: unused,
   photos,
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: unused,
+    clock: unused,
+  }),
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: unused,
     clock: unused,
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

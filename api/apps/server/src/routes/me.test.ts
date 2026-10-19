@@ -7,6 +7,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sign } from 'hono/jwt';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -30,6 +31,7 @@ async function send(
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,
+      calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     photos,
@@ -39,6 +41,7 @@ async function send(
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
   });
   try {
