@@ -54,6 +54,8 @@ jobs:
       # The runner image ships Swift, for the app's Backend adapters.
       - run: swift --version
       - run: scripts/verify.sh supabase api backend
+      # The verify-wildcard API journeys, over HTTP against the built server.
+      - run: scripts/api-journeys.sh
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.
