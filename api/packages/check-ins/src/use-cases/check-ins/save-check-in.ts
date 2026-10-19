@@ -17,7 +17,7 @@ import {
   PhotoNotYoursError,
   SquadNotJoinedError,
 } from '../../errors.js';
-import type { CheckInStore, Clock, PhotoFiles } from '../../ports.js';
+import type { CheckInStore, Clock, MemberCalendar, PhotoFiles } from '../../ports.js';
 
 export interface SaveCheckInInput {
   readonly id: CheckInId;
@@ -40,15 +40,21 @@ export async function saveCheckIn(
   {
     store,
     photos,
+    calendarOf,
     clock,
-  }: { readonly store: CheckInStore; readonly photos: PhotoFiles; readonly clock: Clock },
+  }: {
+    readonly store: CheckInStore;
+    readonly photos: PhotoFiles;
+    readonly calendarOf: MemberCalendar;
+    readonly clock: Clock;
+  },
   { id, member, draft }: SaveCheckInInput,
 ): Promise<SavedCheckIn> {
   const checkIn = recordFromDraft(draft, { id, member });
   const retry = await asRetry(store, checkIn);
   if (retry !== undefined) return retry;
 
-  checkCheckInTime(checkIn, clock());
+  checkCheckInTime(checkIn, { now: clock(), timeZone: (await calendarOf(member))?.timeZone });
   const joined = await store.squadsOf(member);
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
