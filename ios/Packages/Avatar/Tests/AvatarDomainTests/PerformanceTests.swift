@@ -33,3 +33,23 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(abs(performance.pose(at: 1.6).parts[1].rotation - 30) < 1e-9)
     #expect(abs(performance.pose(at: 1.7).parts[1].rotation - 20) < 1e-9)
 }
+
+@Test func aNewOutfitCarriesOnFromThePoseOnScreen() throws {
+    let (figure, idle, cheer) = try setUp()
+    var performance = Performance(figure: figure, idle: idle, blendDuration: 0.2)
+    performance.play(cheer, at: 1)
+    // Dressed mid-cheer, with the arm at 50°: the new idle blends down from there.
+    let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
+    let restyled = Performance(continuing: performance, figure: dressed, idle: try dressed.bind(idle.clip), at: 1.5)
+    #expect(restyled.figure == dressed)
+    #expect(restyled.pose(at: 1.5).parts[1].rotation == 50)
+    #expect(abs(restyled.pose(at: 1.6).parts[1].rotation - 25) < 1e-9)
+    #expect(restyled.pose(at: 1.7).parts[1].rotation == 0)
+}
+
+@Test func standingStillHoldsTheRestPose() throws {
+    let figure = try figure()
+    let performance = Performance(figure: figure, idle: try figure.bind(.still))
+    #expect(performance.pose(at: 0.4) == figure.restPose)
+    #expect(performance.pose(at: 7.3) == figure.restPose)
+}
