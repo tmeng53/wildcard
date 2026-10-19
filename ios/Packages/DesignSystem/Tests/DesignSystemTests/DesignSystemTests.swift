@@ -70,7 +70,8 @@ struct NeutralTests {
 }
 
 struct CharacterToneTests {
-    /// The avatar's skin, fur and hair swatches, as Tracy approved them (2026-10-18).
+    /// The avatar's skin, fur and hair swatches, as Tracy approved them (2026-10-18), and its eye colors
+    /// (2026-10-19).
     @Test func tonesMatchTheApprovedSpec() {
         #expect(
             Palette.skinTones.map(\.hex) == [
@@ -84,6 +85,8 @@ struct CharacterToneTests {
             Palette.hairColors.map(\.hex) == [
                 "#2A2333", "#4A2F25", "#6B4330", "#B07B4A", "#E2BF74", "#A2452F", "#C4C2CA",
             ])
+        #expect(
+            Palette.eyeColors.map(\.hex) == ["#22252E", "#4A3326", "#8A5A2B", "#4A6FA5", "#4F7A5E", "#6B6F80"])
     }
 }
 

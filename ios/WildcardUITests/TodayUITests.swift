@@ -4,6 +4,9 @@ import XCTest
 /// from `-uitest-photos`, since UI tests can't drive the system photo picker reliably.
 @MainActor
 final class TodayUITests: XCTestCase {
+    /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
+    private static let wait: TimeInterval = 30
+
     /// 练了 with three photos: pick a cover, write a caption, post, and land back on the scene
     /// with the squad bar ticked up. Afterwards 请假 is greyed out for the day.
     func testTrainedCheckIn() {
@@ -21,7 +24,7 @@ final class TodayUITests: XCTestCase {
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
         for (meaning, label) in [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "请假")] {
             let capsule = app.buttons["today.capsule.\(meaning)"]
-            XCTAssertTrue(capsule.waitForExistence(timeout: 2), "no \(label) capsule")
+            XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
         }
         settle()
@@ -29,7 +32,7 @@ final class TodayUITests: XCTestCase {
 
         app.buttons["today.capsule.trained"].tap()
         let post = app.buttons["compose.post"]
-        XCTAssertTrue(post.waitForExistence(timeout: 3), "the compose page never opened")
+        XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "the compose page never opened")
         XCTAssertTrue(app.buttons["compose.sport.run"].isSelected, "the last sport used (跑步) isn't picked")
         app.buttons["compose.photo.2"].tap()
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
@@ -44,7 +47,7 @@ final class TodayUITests: XCTestCase {
 
         post.tap()
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: 5), "no payoff bubble after posting")
+        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after posting")
         XCTAssertTrue(bubble.label.contains("晨跑 5 公里，腿还在"))
         waitForLabel(of: card, "label CONTAINS %@", "15/22", "the squad bar didn't tick up to 15/22")
         XCTAssertTrue(card.label.contains("今天 4 人练了"))
@@ -54,7 +57,7 @@ final class TodayUITests: XCTestCase {
 
         checkIn.tap()
         let disclaimer = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(disclaimer.waitForExistence(timeout: 2))
+        XCTAssertTrue(disclaimer.waitForExistence(timeout: Self.wait))
         disclaimer.tap()
         XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "请假 opened after training")
         settle()
@@ -73,7 +76,7 @@ final class TodayUITests: XCTestCase {
         let source = app.staticTexts["disclaimer.source"]
         XCTAssertGreaterThanOrEqual(close.frame.minY, 44, "the header slid under the status bar: \(close.frame)")
         // The page opens on writing the reason, with nothing to post yet.
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "the keyboard isn't up")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "the keyboard isn't up")
         XCTAssertEqual(field.placeholderValue, "为什么没练？")
         XCTAssertEqual(source.label, "灵感：随机")
         XCTAssertFalse(post.isEnabled, "an empty excuse can be posted")
@@ -112,14 +115,14 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(line, app.buttons["disclaimer.draft.1"].label)
         // 编辑 starts typing again, and the count shows while typing.
         app.buttons["disclaimer.edit"].tap()
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "编辑 didn't start typing")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "编辑 didn't start typing")
         XCTAssertEqual(
             app.staticTexts["disclaimer.count"].label.split(separator: "/").first, "\(line.count)",
             "the count doesn't match the excuse")
         post.tap()
 
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: 5), "no payoff bubble after the 请假条")
+        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
         XCTAssertTrue(bubble.label.contains(line))
         XCTAssertTrue(card.label.contains("14/22"), "a 请假条 moved the squad bar")
         settle()
@@ -157,7 +160,7 @@ final class TodayUITests: XCTestCase {
         app.buttons["disclaimer.style.funny"].tap()
         app.buttons["disclaimer.write"].tap()
 
-        XCTAssertTrue(app.buttons["disclaimer.care.call"].waitForExistence(timeout: 3), "no care line")
+        XCTAssertTrue(app.buttons["disclaimer.care.call"].waitForExistence(timeout: Self.wait), "no care line")
         XCTAssertEqual(app.buttons["disclaimer.care.call"].label, "打给 988")
         XCTAssertEqual(app.buttons["disclaimer.care.text"].label, "发短信给 988")
         XCTAssertTrue(app.staticTexts["有紧急危险请直接打 911。"].exists)
@@ -187,7 +190,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(write.label, "编几句")
         write.tap()
         let first = app.buttons["disclaimer.draft.1"]
-        XCTAssertTrue(first.waitForExistence(timeout: 3), "编几句 offered no lines")
+        XCTAssertTrue(first.waitForExistence(timeout: Self.wait), "编几句 offered no lines")
         settle()
         return first
     }
@@ -196,10 +199,10 @@ final class TodayUITests: XCTestCase {
     private func openDisclaimer(in app: XCUIApplication) -> XCUIElement {
         app.buttons["today.checkin"].tap()
         let capsule = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(capsule.waitForExistence(timeout: 2))
+        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait))
         capsule.tap()
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 请假条 page never opened")
+        XCTAssertTrue(field.waitForExistence(timeout: Self.wait), "the 请假条 page never opened")
         return field
     }
 
@@ -209,10 +212,10 @@ final class TodayUITests: XCTestCase {
         _ = topCard(in: app)
         app.buttons["today.checkin"].tap()
         let capsule = app.buttons["today.capsule.fresh"]
-        XCTAssertTrue(capsule.waitForExistence(timeout: 2))
+        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait))
         capsule.tap()
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
-        XCTAssertTrue(caption.waitForExistence(timeout: 3), "the compose page never opened")
+        XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
         XCTAssertEqual(caption.placeholderValue, "这顿很自律…")
         XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
         XCTAssertFalse(app.buttons["compose.photo.1"].exists, "one photo shows a cover choice")
@@ -242,7 +245,7 @@ final class TodayUITests: XCTestCase {
     /// The top card, which VoiceOver reads as one element.
     private func topCard(in app: XCUIApplication) -> XCUIElement {
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: 10), "今天 never appeared")
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared")
         return card
     }
 
@@ -254,7 +257,7 @@ final class TodayUITests: XCTestCase {
     /// Taps update the UI on the next frames; wait for the label instead of checking at once.
     private func waitForLabel(
         of element: XCUIElement, _ format: String, _ text: String, _ message: String,
-        timeout: TimeInterval = 10
+        timeout: TimeInterval = TodayUITests.wait
     ) {
         let changed = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: format, text), object: element)

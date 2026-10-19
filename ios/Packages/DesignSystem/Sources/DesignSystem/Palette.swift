@@ -128,4 +128,13 @@ public enum Palette {
         SRGBColor(red: 0xA2, green: 0x45, blue: 0x2F),
         SRGBColor(red: 0xC4, green: 0xC2, blue: 0xCA),
     ]
+    /// Eyes: near-black, dark brown, amber brown, blue, green, gray.
+    public static let eyeColors = [
+        SRGBColor(red: 0x22, green: 0x25, blue: 0x2E),
+        SRGBColor(red: 0x4A, green: 0x33, blue: 0x26),
+        SRGBColor(red: 0x8A, green: 0x5A, blue: 0x2B),
+        SRGBColor(red: 0x4A, green: 0x6F, blue: 0xA5),
+        SRGBColor(red: 0x4F, green: 0x7A, blue: 0x5E),
+        SRGBColor(red: 0x6B, green: 0x6F, blue: 0x80),
+    ]
 }

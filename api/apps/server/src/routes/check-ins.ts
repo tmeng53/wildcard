@@ -17,7 +17,7 @@ import {
 
 import { bodyVersion } from '../body-version.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const checkInFields = {
@@ -42,25 +42,41 @@ const PHOTO_VIEW_SECONDS = 60 * 60;
 const photoViews = {
   photos: z
     .array(
-      z.strictObject({
-        path: z.string().meta({ description: 'The photo’s name, as the check-in was saved with.' }),
-        url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
-      }),
+      z
+        .strictObject({
+          path: z
+            .string()
+            .meta({ description: 'The photo’s name, as the check-in was saved with.' }),
+          url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
+        })
+        .openapi('PhotoView'),
     )
     .optional()
     .meta({ description: '1 to 3 photos, the cover first. Missing when there are none.' }),
 };
-const TrainingView = z.strictObject({ ...storedTrainingFields, ...photoViews });
-const MealView = z.strictObject({ ...storedMealFields, ...photoViews });
-const DisclaimerView = z.strictObject({ ...storedDisclaimerFields, ...photoViews });
+const TrainingView = z
+  .strictObject({ ...storedTrainingFields, ...photoViews })
+  .openapi('TrainingView');
+const MealView = z.strictObject({ ...storedMealFields, ...photoViews }).openapi('MealView');
+const DisclaimerView = z
+  .strictObject({ ...storedDisclaimerFields, ...photoViews })
+  .openapi('DisclaimerView');
 
-/** A saved check-in, as the app's contract has it (`CheckIn` in ios/Packages/Contracts). */
+/** A saved check-in, as the app reads it. */
 export const CheckIn = z
   .discriminatedUnion('kind', [
-    z.strictObject({ ...checkInFields, kind: z.literal('trained'), training: TrainingView }),
-    z.strictObject({ ...checkInFields, kind: z.literal('healthyMeal'), meal: MealView }),
-    z.strictObject({ ...checkInFields, kind: z.literal('cheatMeal'), meal: MealView }),
-    z.strictObject({ ...checkInFields, kind: z.literal('disclaimer'), disclaimer: DisclaimerView }),
+    z
+      .strictObject({ ...checkInFields, kind: z.literal('trained'), training: TrainingView })
+      .openapi('TrainedCheckIn'),
+    z
+      .strictObject({ ...checkInFields, kind: z.literal('healthyMeal'), meal: MealView })
+      .openapi('HealthyMealCheckIn'),
+    z
+      .strictObject({ ...checkInFields, kind: z.literal('cheatMeal'), meal: MealView })
+      .openapi('CheatMealCheckIn'),
+    z
+      .strictObject({ ...checkInFields, kind: z.literal('disclaimer'), disclaimer: DisclaimerView })
+      .openapi('DisclaimerCheckIn'),
   ])
   .openapi('CheckIn');
 
@@ -156,6 +172,7 @@ export function checkIns(deps: {
         'The id holds a different check-in, today’s disclaimer is already posted, or another ' +
           'check-in uses one of the photos',
       ),
+      ...jsonBodyFailures,
       ...signedInFailures,
     },
   });

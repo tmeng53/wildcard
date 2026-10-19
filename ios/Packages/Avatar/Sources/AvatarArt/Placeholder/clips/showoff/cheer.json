@@ -55,6 +55,9 @@
       { "t": 1.6, "v": 0 } ] },
     { "part": "mouthOpen", "channel": "scaleY", "keys": [
       { "t": 0, "v": 0.6 }, { "t": 0.18, "v": 0.6 }, { "t": 0.45, "v": 1.15, "ease": "backOut" },
-      { "t": 1.55, "v": 0.8 }, { "t": 1.6, "v": 1, "ease": "hold" } ] }
+      { "t": 1.55, "v": 0.8 }, { "t": 1.6, "v": 1, "ease": "hold" } ] },
+    { "part": "brows", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.18, "v": -4.8, "ease": "backOut" }, { "t": 0.85, "v": -4.8 },
+      { "t": 1, "v": -7.2, "ease": "easeOut" }, { "t": 1.5, "v": -7.2 }, { "t": 1.7, "v": 0, "ease": "easeInOut" } ] }
   ]
 }

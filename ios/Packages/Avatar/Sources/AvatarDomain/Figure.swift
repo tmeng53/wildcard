@@ -9,8 +9,8 @@ public protocol ArtSource {
 }
 
 /// Which variant each slot wears, such as `top: tee` and `prop: dumbbell`, and the color
-/// a slot is recolored to, if any. A slot left out wears nothing; a slot with no color
-/// keeps its art's own.
+/// a slot is recolored to, if any. A slot left out wears the rig's default for it, or
+/// nothing; a slot with no color keeps its art's own.
 public struct Outfit: Hashable, Sendable {
     public var variants: [Slot: String]
     /// The new main color per slot. The variant's `tones.json` says which of its art's
@@ -46,7 +46,9 @@ public struct Figure: Hashable, Sendable {
         let parents = try Self.parents(rig.parts)
         evaluationOrder = try Self.order(rig.parts.map(\.id), parents)
 
-        let recolors = try Self.recolors(outfit, source)
+        // What the outfit picks, and the rig's default for each slot it leaves out.
+        let variants = rig.defaults.merging(outfit.variants) { _, picked in picked }
+        let recolors = try Self.recolors(variants, outfit.colors, source)
 
         var used: Set<Slot> = []
         /// Each recolored slot's art colors before recoloring, to check its tones against.
@@ -57,7 +59,7 @@ public struct Figure: Hashable, Sendable {
             for layer in part.layers {
                 let path: String
                 if let slot = layer.slot {
-                    guard let variant = outfit.variants[slot] else { continue }
+                    guard let variant = variants[slot] else { continue }
                     path = "\(slot)/\(variant)/\(layer.art).svg"
                     // A variant may leave a part bare, like a tank top with no sleeves.
                     guard let svg = source.text(at: path) else { continue }
@@ -76,18 +78,20 @@ public struct Figure: Hashable, Sendable {
             }
             built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks))
         }
-        if let (slot, variant) = outfit.variants.first(where: { !used.contains($0.key) }) {
+        if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
         }
-        try Self.checkTones(recolors, against: painted, outfit)
+        try Self.checkTones(recolors, against: painted, variants)
         (width, height, parts, self.parents) = (rig.width, rig.height, built, parents)
     }
 
     /// Each colored slot's tones, read from its variant's `tones.json`.
-    private static func recolors(_ outfit: Outfit, _ source: some ArtSource) throws(AvatarError) -> [Slot: Recolor] {
+    private static func recolors(
+        _ variants: [Slot: String], _ colors: [Slot: RGBAColor], _ source: some ArtSource
+    ) throws(AvatarError) -> [Slot: Recolor] {
         var recolors: [Slot: Recolor] = [:]
-        for (slot, color) in outfit.colors.sorted(by: { $0.key.description < $1.key.description }) {
-            guard let variant = outfit.variants[slot] else { throw .colorForBareSlot(slot) }
+        for (slot, color) in colors.sorted(by: { $0.key.description < $1.key.description }) {
+            guard let variant = variants[slot] else { throw .colorForBareSlot(slot) }
             guard let text = source.text(at: "\(slot)/\(variant)/tones.json") else {
                 throw .notRecolorable(slot: slot, variant: variant)
             }
@@ -105,12 +109,12 @@ public struct Figure: Hashable, Sendable {
     /// A tone the art never paints is a typo in `tones.json`, which would leave that color
     /// unchanged on the phone.
     private static func checkTones(
-        _ recolors: [Slot: Recolor], against painted: [Slot: [RGBAColor]], _ outfit: Outfit
+        _ recolors: [Slot: Recolor], against painted: [Slot: [RGBAColor]], _ variants: [Slot: String]
     ) throws(AvatarError) {
         for (slot, recolor) in recolors {
             let colors = painted[slot, default: []]
             if let unused = recolor.tones.all.first(where: { tone in !colors.contains { $0.sameRGB(as: tone) } }) {
-                throw .unusedTone(slot: slot, variant: outfit.variants[slot] ?? "", color: unused)
+                throw .unusedTone(slot: slot, variant: variants[slot] ?? "", color: unused)
             }
         }
     }

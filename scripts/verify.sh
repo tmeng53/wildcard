@@ -39,6 +39,10 @@ elif want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
     inconclusive+=("swiftlint")
   fi
 
+  # The app's API types are generated from api/apps/server/openapi.json and committed.
+  echo "==> swift openapi types are current"
+  scripts/swift-openapi.sh --verify
+
   for pkg in ios/Packages/*/; do
     [ -f "$pkg/Package.swift" ] || continue
     # Backend's tests talk to local Supabase, so they run in the backend part; here it only builds.
