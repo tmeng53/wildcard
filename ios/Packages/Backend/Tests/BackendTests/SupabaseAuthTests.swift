@@ -86,6 +86,18 @@ private struct LocalSupabase {
     try await supabase.auth.signOut(session)
 }
 
+@Test func signingOutWithAnExpiredAccessTokenStillEndsTheSession() async throws {
+    let supabase = try LocalSupabase()
+    let member = try await supabase.signUp()
+    let session = try await supabase.auth.signIn(with: .testMember(email: member.email, password: member.password))
+    // Supabase refuses a stale access token at logout the way it refuses an expired one.
+    let stale = Session(
+        member: session.member, accessToken: "expired", refreshToken: session.refreshToken,
+        expiresAt: session.expiresAt)
+    try await supabase.auth.signOut(stale)
+    await #expect(throws: AccountError.signedOut) { try await supabase.auth.refresh(session.refreshToken) }
+}
+
 @Test func anUnknownRefreshTokenSignsOut() async throws {
     let supabase = try LocalSupabase()
     await #expect(throws: AccountError.signedOut) { try await supabase.auth.refresh("unknown") }

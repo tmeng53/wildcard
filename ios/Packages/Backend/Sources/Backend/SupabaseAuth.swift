@@ -52,12 +52,17 @@ public struct SupabaseAuth: AuthProvider {
     }
 
     public func signOut(_ session: Session) async throws(AccountError) {
-        // `local` ends this device's session only; the member stays signed in elsewhere.
-        var request = request(path: "logout", query: [URLQueryItem(name: "scope", value: "local")])
-        request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
-        let (_, status) = try await send(request)
-        // 401 or 403: the session had already ended, which is what signing out wants.
-        guard (200..<300).contains(status) || status == 401 || status == 403 else { throw .unavailable }
+        let status = try await logout(accessToken: session.accessToken)
+        if (200..<300).contains(status) { return }
+        guard status == 401 || status == 403 else { throw .unavailable }
+        // Logout needs a live access token, and this one has expired (an idle app) or ended. The
+        // refresh token tells which: if it's refused too, the session is already over; otherwise
+        // sign out with the fresh token, so the session doesn't stay usable on the server.
+        switch try await token(grant: "refresh_token", body: ["refresh_token": session.refreshToken]) {
+        case .refused: return
+        case .issued(let renewed):
+            guard (200..<300).contains(try await logout(accessToken: renewed.accessToken)) else { throw .unavailable }
+        }
     }
 
     // MARK: - Private
@@ -78,6 +83,14 @@ public struct SupabaseAuth: AuthProvider {
 
     private struct AuthUser: Decodable {
         let id: MemberID
+    }
+
+    /// Ends this device's session (`local` scope; the member stays signed in elsewhere) and
+    /// returns the HTTP status.
+    private func logout(accessToken: String) async throws(AccountError) -> Int {
+        var request = request(path: "logout", query: [URLQueryItem(name: "scope", value: "local")])
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        return try await send(request).1
     }
 
     private func token(grant: String, body: [String: String]) async throws(AccountError) -> Outcome {
