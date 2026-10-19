@@ -182,6 +182,14 @@ describe('PUT /me/profile', () => {
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
   });
 
+  it('refuses a zone Postgres knows but the API’s clock can’t read', async () => {
+    const { token } = await signUp();
+    expect(await putProfile(token, { version: 1, timeZone: 'Factory' })).toMatchObject([
+      400,
+      { reason: 'TIME_ZONE_UNKNOWN' },
+    ]);
+  });
+
   it('refuses a zone that doesn’t exist', async () => {
     const { token } = await signUp();
     expect(await putProfile(token, { version: 1, timeZone: 'Mars/Jezero_Crater' })).toStrictEqual([

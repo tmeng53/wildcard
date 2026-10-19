@@ -15,6 +15,19 @@ export const TimeZone = z
   .max(64);
 export type TimeZone = z.infer<typeof TimeZone>;
 
+/**
+ * Whether the API's own clock can read times in `timeZone`. Postgres knows a few names Node
+ * doesn't (`Factory`), and every member's day is worked out in Node.
+ */
+export function isReadableTimeZone(timeZone: TimeZone): boolean {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** A member's own settings. Name and character join it with the sign-up flow. */
 export const Profile = z.strictObject({ timeZone: TimeZone });
 export type Profile = z.infer<typeof Profile>;

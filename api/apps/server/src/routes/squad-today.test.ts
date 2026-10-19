@@ -64,15 +64,16 @@ async function call(
   return { status: response.status, body: json };
 }
 
-// Everyone here lives on UTC, where today is the date 3 hours ago (the 3am grace).
-const today = () => new Date(Date.now() - 3 * 3_600_000).toISOString().slice(0, 10);
+const HOUR = 3_600_000;
+/** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
+const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
 
-async function member() {
+async function member(timeZone = 'UTC') {
   const signedUp = await signUp();
   const saved = await call('PUT', {
     path: '/me/profile',
     token: signedUp.token,
-    body: { version: 1, timeZone: 'UTC' },
+    body: { version: 1, timeZone },
   });
   expect(saved.status).toBe(200);
   return signedUp;
@@ -91,7 +92,9 @@ async function checkIn(
 describe('GET /squads/{squadId}/today', () => {
   it('gives each member’s today and the week’s counts', async () => {
     const [me, friend] = [await member(), await member()];
-    const squad = await squadOf(me, friend);
+    // 25 hours apart, so their todays are never the same date: each must be read in their own zone.
+    const [east, west] = [await member('Pacific/Kiritimati'), await member('Pacific/Pago_Pago')];
+    const squad = await squadOf(me, friend, east, west);
     await checkIn(me.token, { squad, kind: 'disclaimer', disclaimer: { text: '加班' } });
     await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
     await checkIn(friend.token, { squad, kind: 'healthyMeal', meal: {} });
@@ -112,6 +115,8 @@ describe('GET /squads/{squadId}/today', () => {
           training: 'notCheckedIn',
           latestMeal: 'healthyMeal',
         },
+        { member: east.userId, day: today(14), training: 'notCheckedIn' },
+        { member: west.userId, day: today(-11), training: 'notCheckedIn' },
       ],
       today: { trained: 1, disclaimer: 0, everyoneTrained: false },
       me: { week: { trainedDays: 0 }, lifetimeTrainedDays: 0 },
