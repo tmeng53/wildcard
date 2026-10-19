@@ -118,59 +118,96 @@ public struct TodayView: View {
     }
 }
 
-/// The character on the scene, with the payoff's bubble and pinned cover above it.
+/// The character on the scene. The payoff's bubble sits on its head, pointing down at it, and
+/// the cover photo is pinned beside it like a polaroid: one figure, not three objects.
 private struct Stage: View {
+    /// The figure's height on the scene.
+    private static let figureHeight: Double = 220
+    /// How far below the top of the figure's frame the bubble's tail ends: the art leaves this
+    /// much room above the hair for hats and the cheer's jump.
+    private static let headroom: Double = 0.16
+
     let model: TodayModel
 
     var body: some View {
-        VStack(spacing: Space.s) {
-            PayoffBubble(payoff: model.payoff)
-                .frame(minHeight: Space.xxl)
-            if let player = model.player {
-                CharacterView(player: player)
-                    .frame(height: 220)
-            }
+        if let player = model.player {
+            CharacterView(player: player)
+                .frame(height: Self.figureHeight)
+                .overlay(alignment: .top) {
+                    PayoffBubble(line: model.payoff?.line)
+                        .alignmentGuide(.top) { $0[.bottom] - Self.figureHeight * Self.headroom }
+                }
+                .overlay(alignment: .topTrailing) {
+                    PinnedCover(cover: model.payoff?.cover)
+                        .alignmentGuide(.trailing) { $0[.leading] + Space.xxs }
+                        .alignmentGuide(.top) { $0[.top] - Self.figureHeight * 0.18 }
+                }
+                .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
     }
 }
 
-/// The caption in a bubble over the character, with the cover photo pinned beside it like a
-/// polaroid. Nothing until the first post.
+/// The caption in a bubble with a tail. Nothing until the first post with a line.
 private struct PayoffBubble: View {
+    /// The widest a bubble grows before its line wraps.
+    private static let maxWidth: Double = 230
+    private static let tail: Double = 7
+
     @Environment(\.sceneTheme) private var theme
-    let payoff: TodayModel.Payoff?
+    let line: String?
 
     var body: some View {
-        if let payoff, payoff.line != nil || payoff.cover != nil {
-            HStack(alignment: .top, spacing: Space.xs) {
-                if let line = payoff.line {
-                    Text(verbatim: line)
-                        .typeStyle(TypeRamp.caption)
-                        .foregroundStyle(Color(role: .textPrimary, in: theme))
-                        .multilineTextAlignment(.leading)
-                        .padding(.horizontal, Space.s)
-                        .padding(.vertical, Space.xs)
-                        .frame(maxWidth: 230, alignment: .leading)
-                        .background(
-                            Color(Palette.white).opacity(0.94),
-                            in: RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
-                }
-                if let cover = payoff.cover {
-                    PhotoImage(photo: cover)
-                        .frame(width: 58, height: 58)
-                        .clipShape(RoundedRectangle(cornerRadius: Space.xxs, style: .continuous))
-                        .padding(Space.xxs)
-                        .background(Color(Palette.white), in: RoundedRectangle(cornerRadius: Space.xs))
-                        .rotationEffect(.degrees(8))
-                        .accessibilityHidden(true)
-                }
-            }
-            .padding(.horizontal, Space.gutter)
-            .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("today.bubble")
+        if let line {
+            Text(verbatim: line)
+                .typeStyle(TypeRamp.caption)
+                .foregroundStyle(Color(role: .textPrimary, in: theme))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Space.s)
+                .padding(.vertical, Space.xs)
+                .padding(.bottom, Self.tail)
+                .background(
+                    BubbleShape(cornerRadius: Radius.m, tail: Self.tail).fill(Color(Palette.white).opacity(0.94))
+                )
+                // A fixed-width frame centres the bubble; the text inside takes only the width it needs.
+                .frame(width: Self.maxWidth)
+                .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("today.bubble")
         }
+    }
+}
+
+/// The post's cover photo, pinned beside the character's head.
+private struct PinnedCover: View {
+    let cover: PreparedPhoto?
+
+    var body: some View {
+        if let cover {
+            PhotoImage(photo: cover)
+                .frame(width: 58, height: 58)
+                .clipShape(RoundedRectangle(cornerRadius: Space.xxs, style: .continuous))
+                .padding(Space.xxs)
+                .background(Color(Palette.white), in: RoundedRectangle(cornerRadius: Space.xs))
+                .rotationEffect(.degrees(8))
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+/// A rounded rectangle with a small tail at the middle of its bottom edge, pointing down.
+private struct BubbleShape: Shape {
+    let cornerRadius: Double
+    let tail: Double
+
+    func path(in rect: CGRect) -> Path {
+        let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tail)
+        var path = Path(roundedRect: body, cornerRadius: cornerRadius, style: .continuous)
+        path.move(to: CGPoint(x: rect.midX - tail, y: body.maxY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.midX + tail, y: body.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
