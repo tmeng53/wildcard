@@ -74,6 +74,7 @@ beforeAll(async () => {
             store: createPostgresCheckInStore(db),
             reactions: createPostgresReactionStore(db),
             photos,
+            plans: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),
             clock: () => new Date(),
           }),

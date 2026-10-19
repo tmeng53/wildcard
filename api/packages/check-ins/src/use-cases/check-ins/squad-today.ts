@@ -39,7 +39,7 @@ export interface SquadToday {
   readonly disclaimerToday: number;
   /** Members on a planned rest day with no 练了 or 免责声明. */
   readonly restingToday: number;
-  /** At least one member trained today and everyone else is on a planned rest day (全员上场). */
+  /** At least one member trained today and every member who didn't is on a planned rest day (全员上场). */
   readonly everyoneTrained: boolean;
   /** The viewer's own week, from all their check-ins wherever they went, against their plan. */
   readonly myWeek: Week & { readonly trainedDays: number; readonly plannedDays: number };

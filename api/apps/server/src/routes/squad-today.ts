@@ -53,7 +53,7 @@ export const SquadToday = z
       resting: count('Members on a planned rest day with no 练了 or 免责声明 today.'),
       everyoneTrained: z.boolean().meta({
         description:
-          'At least one member trained today and every other member is on a planned rest day, ' +
+          'At least one member trained today and every member who did not train is on a planned rest day, ' +
           'whatever they checked in (全员上场).',
       }),
     }),
