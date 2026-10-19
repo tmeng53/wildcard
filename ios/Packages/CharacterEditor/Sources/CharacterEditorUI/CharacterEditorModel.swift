@@ -67,9 +67,11 @@ public final class CharacterEditorModel {
         EditorTab.allCases.filter { $0 != .hair || draft.wearsHair }
     }
 
+    /// The field keeps what is typed, so pinyin still being composed is never cut; a name
+    /// longer than the limit just can't be saved.
     public var nickname: String {
         get { draft.nickname }
-        set { draft.nickname = String(newValue.prefix(CharacterDraft.nicknameLimit)) }
+        set { draft.nickname = newValue }
     }
 
     /// What to save, once the nickname is a valid one.

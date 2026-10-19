@@ -39,9 +39,11 @@ public struct CharacterDraft: Hashable, Sendable {
         return outfit
     }
 
-    /// Whether the body is a person's, who wears hair.
+    /// Whether the body is a person's, who wears hair: a species that wears it, or any skin
+    /// the art draws as a person, such as a look handed over in a skin the editor doesn't list.
     public var wearsHair: Bool {
-        picks.variants["body"].flatMap(catalog.species(of:))?.wearsHair ?? false
+        guard let body = picks.variants["body"] else { return false }
+        return PlaceholderCharacter.people.contains(body) || catalog.species(of: body)?.wearsHair == true
     }
 
     public var canUndo: Bool { !history.isEmpty }
@@ -80,11 +82,15 @@ public struct CharacterDraft: Hashable, Sendable {
         guard let variant = picks.variants[slot], picks.colors[slot] != color else { return false }
         if let color, !catalog.swatches(for: slot, wearing: variant).contains(color) { return false }
         var next = picks
-        // Brows that match the hair follow it to its new color.
-        if slot == "hair", next.variants["brows"] != nil, next.colors["brows"] == next.colors["hair"] {
-            next.colors["brows"] = color
+        if slot == "hair", let color {
+            next.dyeHair(color)
+        } else {
+            // Back to the art's own hair color: brows that matched the hair go back with it.
+            if slot == "hair", next.variants["brows"] != nil, next.colors["brows"] == next.colors["hair"] {
+                next.colors["brows"] = nil
+            }
+            next.colors[slot] = color
         }
-        next.colors[slot] = color
         commit(next)
         return true
     }

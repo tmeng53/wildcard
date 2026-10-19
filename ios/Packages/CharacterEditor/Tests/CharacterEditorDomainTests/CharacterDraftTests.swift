@@ -46,11 +46,20 @@ import Testing
     #expect(editing.outfit.variants["brows"] == "soft")
 }
 
+/// A person handed over in a skin the editor doesn't list keeps their hair and face.
+@Test func anyPersonsSkinWearsHair() {
+    let editing = draft(Outfit(["body": "tan", "hair": "buzz", "brows": "bold"]))
+    #expect(editing.wearsHair)
+    #expect(editing.outfit == Outfit(["body": "tan", "hair": "buzz", "brows": "bold"]))
+}
+
 /// Brows in the hair's color follow it when the hair is dyed; brows of their own color stay.
 @Test func browsFollowTheHairColor() {
     var editing = draft(Outfit(["body": "peach", "hair": "bob", "brows": "soft"]))
     editing.pickColor(hairColors[1], for: "hair")
     #expect(editing.outfit.colors["brows"] == hairColors[1])
+    editing.pickColor(nil, for: "hair")
+    #expect(editing.outfit.colors.isEmpty)
     var ownBrows = draft(
         Outfit(["body": "peach", "hair": "bob", "brows": "soft"], colors: ["brows": hairColors[0]]))
     ownBrows.pickColor(hairColors[1], for: "hair")
