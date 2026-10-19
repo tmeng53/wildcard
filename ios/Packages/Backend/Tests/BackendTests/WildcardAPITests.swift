@@ -1,8 +1,9 @@
 import AccountDomain
-import Backend
 import Contracts
 import Foundation
 import Testing
+
+@testable import Backend
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -184,6 +185,31 @@ private func photoBytes() -> Data {
     await #expect(throws: APIError.account(.signedOut)) { try await api.me() }
 }
 
+@Test func whenTheAPIRefusesTheAccountsRenewedTokenTheAccountIsSignedOut() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.supabase.signUp()
+    // A real sign-in whose tokens the API refuses, as after a signing-key mismatch.
+    let account = AccountSession(
+        provider: RefusedTokens(wrapping: stack.supabase.auth), store: MemorySessionStore(), now: { Date() })
+    _ = try await account.restore()
+    _ = try await account.signIn(with: .testMember(email: member.email, password: member.password))
+    let api = WildcardAPI(url: stack.apiURL, account: account)
+    await #expect(throws: APIError.account(.signedOut)) { try await api.me() }
+    #expect(try await account.restore() == .signedOut)
+}
+
+@Test(arguments: [
+    // What local Supabase Storage answers, each with HTTP 400.
+    (#"{"statusCode":"413","error":"Payload too large","code":"EntityTooLarge"}"#, true),
+    (#"{"statusCode":"415","error":"invalid_mime_type","code":"InvalidMimeType"}"#, true),
+    (#"{"statusCode":"409","error":"Duplicate","code":"KeyAlreadyExists"}"#, false),
+    (#"{"statusCode":"400","error":"InvalidJWT","code":"InvalidJWT"}"#, false),
+    ("not json", false),
+])
+func onlyThePhotosOwnSizeOrTypeIsRefusedForGood(answer: String, aboutThePhoto: Bool) {
+    #expect(StorageRefusal.isAboutThePhoto(Data(answer.utf8)) == aboutThePhoto)
+}
+
 @Test func afterSigningOutCallsNeedASignIn() async throws {
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
@@ -202,4 +228,25 @@ private func photoBytes() -> Data {
 private actor Asked {
     var rejected: [String?] = []
     func record(_ token: String?) { rejected.append(token) }
+}
+
+/// Supabase Auth with every session's access token swapped for one the API refuses.
+private struct RefusedTokens: AuthProvider {
+    let wrapping: SupabaseAuth
+
+    func signIn(with credential: Credential) async throws(AccountError) -> Session {
+        refused(try await wrapping.signIn(with: credential))
+    }
+
+    func refresh(_ refreshToken: String) async throws(AccountError) -> Session {
+        refused(try await wrapping.refresh(refreshToken))
+    }
+
+    func signOut(_ session: Session) async throws(AccountError) { try await wrapping.signOut(session) }
+
+    private func refused(_ session: Session) -> Session {
+        Session(
+            member: session.member, accessToken: "refused.token.here", refreshToken: session.refreshToken,
+            expiresAt: session.expiresAt)
+    }
 }

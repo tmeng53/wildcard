@@ -116,6 +116,21 @@ public actor AccountSession {
     public func signOut() async throws(AccountError) {
         try await ensureRestored()
         guard let current = session else { return }
+        try await end(current)
+    }
+
+    /// Signs out as `signOut()` does, but only while `accessToken` is still the session's: for
+    /// when the API refused it even after renewal. A session signed in since stays.
+    public func signOut(ifCurrent accessToken: String) async throws(AccountError) {
+        try await ensureRestored()
+        guard let current = session, current.accessToken == accessToken else { return }
+        try await end(current)
+    }
+
+    // MARK: - Private
+
+    /// Ends `current`, which must be the session: on the device first, then at the provider.
+    private func end(_ current: Session) async throws(AccountError) {
         session = nil
         renewal = nil
         publish()
@@ -129,8 +144,6 @@ public actor AccountSession {
         try? await provider.signOut(current)
         try cleared.get()
     }
-
-    // MARK: - Private
 
     private var state: AccountState {
         session.map { .signedIn($0.member) } ?? .signedOut

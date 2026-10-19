@@ -15,6 +15,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Account"),
         .package(path: "../Contracts"),
+        .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.2.0"),
     ],
@@ -24,6 +25,7 @@ let package = Package(
             dependencies: [
                 .product(name: "AccountDomain", package: "Account"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
+                .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
             ]),

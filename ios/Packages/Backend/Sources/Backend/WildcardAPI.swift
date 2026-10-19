@@ -21,18 +21,27 @@ public struct WildcardAPI: Sendable {
 
     /// - Parameters:
     ///   - url: where the API is served, such as `https://api.example.com`.
-    public init(url: URL, accessToken: @escaping AccessToken, http: URLSession = .shared) {
+    ///   - refused: called with a freshly renewed token the API refuses too: its session is over.
+    public init(
+        url: URL, accessToken: @escaping AccessToken,
+        refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
+        http: URLSession = .shared
+    ) {
         client = Client(
             serverURL: url, configuration: .api, transport: URLSessionTransport(configuration: .init(session: http)),
             // The first wraps the rest: `Problems` reads the answer after any retry.
-            middlewares: [Problems(), BearerToken(accessToken: accessToken)])
+            middlewares: [Problems(), BearerToken(accessToken: accessToken, refused: refused)])
         self.http = http
     }
 
+    /// Calls with the account's tokens, and signs the account out when the API refuses a renewed
+    /// one, so screens following `AccountSession.states()` see the member signed out. A session
+    /// signed in while that call was on its way stays.
     public init(url: URL, account: AccountSession, http: URLSession = .shared) {
         self.init(
             url: url,
             accessToken: { rejected async throws(AccountError) in try await account.accessToken(rejected: rejected) },
+            refused: { token in try? await account.signOut(ifCurrent: token) },
             http: http)
     }
 
@@ -101,15 +110,19 @@ public struct WildcardAPI: Sendable {
         request.httpMethod = "PUT"
         request.setValue(type.rawValue, forHTTPHeaderField: "Content-Type")
         let status: Int
+        let answer: Data
         do {
-            let (_, response) = try await http.upload(for: request, from: photo)
+            let (data, response) = try await http.upload(for: request, from: photo)
             status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            answer = data
         } catch {
             throw .unavailable
         }
         switch status {
         case 200..<300: return try read { () throws(ContractsError) in try PhotoRef(path: upload.path) }
-        case 400..<500: throw .refused(.photoRejected)
+        // Only the photo's own size or type is refused for good. Anything else (an expired
+        // upload token, a path already taken) passes with a fresh upload URL, which a retry gets.
+        case 400..<500 where StorageRefusal.isAboutThePhoto(answer): throw .refused(.photoRejected)
         default: throw .unavailable
         }
     }
@@ -176,6 +189,17 @@ public struct Profile: Hashable, Sendable {
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
         try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase)
+    }
+}
+
+/// What storage says when it refuses an upload. It answers 400 for every refusal and puts the
+/// real one in `code`, as Supabase Storage does.
+struct StorageRefusal: Decodable {
+    let code: String
+
+    static func isAboutThePhoto(_ answer: Data) -> Bool {
+        guard let refusal = try? JSONDecoder().decode(Self.self, from: answer) else { return false }
+        return ["EntityTooLarge", "InvalidMimeType"].contains(refusal.code)
     }
 }
 
