@@ -27,3 +27,18 @@ export class DisclaimerWriterUnavailableError extends AppError {
     super('Drafts can’t be written right now. Try again shortly.', options);
   }
 }
+
+/**
+ * Thrown when the server runs without a model, so drafts are off until one is configured. The
+ * wire answer is the same as `DisclaimerWriterUnavailableError`'s, and the app shows its dice;
+ * only the server tells them apart, since this one is expected and not worth an error log.
+ */
+export class DisclaimerWriterOffError extends AppError {
+  override readonly name = 'DisclaimerWriterOffError';
+  readonly reason = 'DISCLAIMER_WRITER_UNAVAILABLE';
+  readonly status = 'UNAVAILABLE';
+
+  constructor() {
+    super('Drafts can’t be written right now. Try again shortly.');
+  }
+}

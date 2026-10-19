@@ -83,6 +83,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | [Check-in through the API](features/check-in-api.md): save, retry and read back a squad's check-ins | **Ready** (API only; CI runs it) |
 | [Photo on a check-in through the API](features/photo-upload-api.md): upload, attach and view a photo | **Ready** (API only; CI runs it) |
 | [Squads through the API](features/squad-api.md): create, preview, join by invite code and leave | **Ready** (API only; CI runs it) |
+| [AI 请假条 drafts through the API](features/disclaimer-drafts-api.md): ask for drafts with no model key, the care line, refusals | **Ready** (API only, no key; CI runs it) |
 | Daily check-in: pick 练了 / 吃得干净 / 今日免责声明 and see it on the squad track | Not on main yet |
 | Join a squad from an invite link | Not on main yet |
 | Sunday 战报 recap | Not on main yet |

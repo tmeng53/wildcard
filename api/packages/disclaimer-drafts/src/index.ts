@@ -7,6 +7,10 @@ export {
 } from './adapters/postgres-draft-allowance.js';
 export { DraftReason, DraftStyle, MemberId, type PromptMeme } from './domain/draft-request.js';
 export type { DraftsOutcome } from './domain/drafts.js';
-export { DisclaimerDraftsUsedUpError, DisclaimerWriterUnavailableError } from './errors.js';
+export {
+  DisclaimerDraftsUsedUpError,
+  DisclaimerWriterOffError,
+  DisclaimerWriterUnavailableError,
+} from './errors.js';
 export type { Clock, DraftAllowance, LanguageModel, MemesInUse, Reservation } from './ports.js';
 export { createDisclaimerDrafts, type DisclaimerDrafts } from './use-cases/disclaimer-drafts.js';

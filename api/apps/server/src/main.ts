@@ -7,7 +7,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import {
-  DisclaimerWriterUnavailableError,
+  DisclaimerWriterOffError,
   createDisclaimerDrafts,
   createPostgresDraftAllowance,
   type LanguageModel,
@@ -43,7 +43,7 @@ const photos = createSupabasePhotoStorage({
 // Without a key every request for drafts fails, so the app shows its dice.
 const model: LanguageModel =
   config.anthropicApiKey === undefined
-    ? { answer: () => Promise.reject(new DisclaimerWriterUnavailableError()) }
+    ? { answer: () => Promise.reject(new DisclaimerWriterOffError()) }
     : createAnthropicLanguageModel({ apiKey: config.anthropicApiKey });
 if (config.anthropicApiKey === undefined) log.info('no ANTHROPIC_API_KEY: AI drafts are off');
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });

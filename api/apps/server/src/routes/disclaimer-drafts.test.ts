@@ -5,7 +5,12 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
-import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
+import {
+  DisclaimerWriterOffError,
+  createDisclaimerDrafts,
+  createPostgresDraftAllowance,
+  type LanguageModel,
+} from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -28,6 +33,17 @@ afterAll(() => db.destroy());
 
 function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
   const recorded = recordedAnthropic(...fixtures);
+  const model = createAnthropicLanguageModel({
+    apiKey: 'sk-ant-test',
+    baseURL: 'http://anthropic.test',
+    fetch: recorded.fetch,
+  });
+  return { ...appWith(model), requests: recorded.requests };
+}
+
+/** The server with this model, and what it logs (one parsed entry per line). */
+function appWith(model: LanguageModel) {
+  const logged: unknown[] = [];
   const photos = createSupabasePhotoStorage({
     supabaseUrl: config.supabaseUrl,
     secretKey: config.supabaseSecretKey,
@@ -49,11 +65,7 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
     }),
     photos,
     disclaimerDrafts: createDisclaimerDrafts({
-      model: createAnthropicLanguageModel({
-        apiKey: 'sk-ant-test',
-        baseURL: 'http://anthropic.test',
-        fetch: recorded.fetch,
-      }),
+      model,
       memes: () => Promise.resolve([]),
       allowance: createPostgresDraftAllowance(db),
       clock: () => new Date(),
@@ -66,9 +78,9 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
     }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
-    log: createLog(() => undefined),
+    log: createLog((line) => logged.push(JSON.parse(line))),
   });
-  return { app, requests: recorded.requests };
+  return { app, logged };
 }
 
 const Body = z.record(z.string(), z.unknown());
@@ -133,6 +145,29 @@ describe('POST /disclaimer-drafts', () => {
       expect(answer.body.reason).toBe('DISCLAIMER_WRITER_UNAVAILABLE');
     },
   );
+
+  it('answers 503 without an error log while drafts are off', async () => {
+    const { app, logged } = appWith({
+      answer: () => Promise.reject(new DisclaimerWriterOffError()),
+    });
+    const { token } = await signUp();
+    const answer = await ask(app, { token });
+    expect(answer).toMatchObject({
+      status: 503,
+      type: 'application/problem+json',
+      body: { reason: 'DISCLAIMER_WRITER_UNAVAILABLE' },
+    });
+    expect(logged).toStrictEqual([]);
+  });
+
+  it('logs an error when the model fails', async () => {
+    const { app, logged } = appAnswering('refusal');
+    const { token } = await signUp();
+    expect((await ask(app, { token })).status).toBe(503);
+    expect(logged).toMatchObject([
+      { severity: 'ERROR', error: { name: 'DisclaimerWriterUnavailableError' } },
+    ]);
+  });
 
   it('answers 429 after the day’s 6 batches', async () => {
     const { app } = appAnswering('drafts');
