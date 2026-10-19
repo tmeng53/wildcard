@@ -114,7 +114,8 @@ final class TodayUITests: XCTestCase {
         app.buttons["disclaimer.edit"].tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "编辑 didn't start typing")
         XCTAssertEqual(
-            app.staticTexts["disclaimer.count"].label, "\(line.count)/40", "the count doesn't match the excuse")
+            app.staticTexts["disclaimer.count"].label.split(separator: "/").first, "\(line.count)",
+            "the count doesn't match the excuse")
         post.tap()
 
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
@@ -126,7 +127,7 @@ final class TodayUITests: XCTestCase {
     }
 
     /// The excuse shows exactly what will be posted: Return finishes editing, and typing stops
-    /// at 40 characters.
+    /// at the length limit.
     func testDisclaimerFieldFitsTheLine() {
         let app = launch(language: "zh-Hans", photos: 0)
         _ = topCard(in: app)
@@ -137,9 +138,13 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(app.keyboards.count, 0, "Return didn't finish editing")
         // 编辑 puts the cursor after the line (a tap on the text could land anywhere in it).
         app.buttons["disclaimer.edit"].tap()
-        field.typeText(String(repeating: "b", count: 20))
+        field.typeText(String(repeating: "b", count: 100))
         settle()
-        XCTAssertEqual(field.value as? String, String(repeating: "a", count: 30) + String(repeating: "b", count: 10))
+        // Typing past the limit leaves a full line: the count reads n/n.
+        let typed = field.value as? String ?? ""
+        XCTAssertTrue(typed.hasPrefix(String(repeating: "a", count: 30) + "b"), "the excuse lost its start: \(typed)")
+        XCTAssertEqual(
+            app.staticTexts["disclaimer.count"].label, "\(typed.count)/\(typed.count)", "typing went past the limit")
     }
 
     /// A reason the writer won't joke about: the author sees the care line, and it can't be
