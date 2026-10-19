@@ -7,6 +7,18 @@ const Environment = z.object({
   SUPABASE_URL: z.url({ protocol: /^https?$/ }),
   // A Supabase secret key (`sb_secret_…`), for Storage. Never the app's publishable key.
   SUPABASE_SECRET_KEY: z.string().startsWith('sb_secret_'),
+  // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
+  // until the key exists (deletions then skip Apple and log a warning).
+  APPLE_TEAM_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  APPLE_KEY_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  APPLE_PRIVATE_KEY: z.string().includes('-----BEGIN PRIVATE KEY-----').optional(),
+  APPLE_CLIENT_ID: z.string().min(1).optional(),
   // Sending push notifications through APNs with a token-based `.p8` key. All four, or none:
   // without them the server sends no pushes.
   APNS_KEY_ID: z
@@ -26,6 +38,7 @@ const Environment = z.object({
   APNS_TOPIC: z.string().min(1).optional(),
 });
 
+const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
 const APNS = ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_PRIVATE_KEY', 'APNS_TOPIC'] as const;
 
 export interface Config {
@@ -33,13 +46,24 @@ export interface Config {
   readonly databaseUrl: string;
   readonly supabaseUrl: string;
   readonly supabaseSecretKey: string;
+  /** Sign in with Apple's key; undefined until it is set up. */
+  readonly appleSignInKey:
+    | {
+        readonly teamId: string;
+        readonly keyId: string;
+        readonly privateKey: string;
+        readonly clientId: string;
+      }
+    | undefined;
   /** Undefined until there is an APNs key: then no pushes are sent. */
-  readonly apns?: {
-    readonly keyId: string;
-    readonly teamId: string;
-    readonly privateKey: string;
-    readonly topic: string;
-  };
+  readonly apns:
+    | {
+        readonly keyId: string;
+        readonly teamId: string;
+        readonly privateKey: string;
+        readonly topic: string;
+      }
+    | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -47,6 +71,23 @@ export function readConfig(environment: Record<string, string | undefined>): Con
   const result = Environment.safeParse(environment);
   if (!result.success) {
     throw new Error(`Bad server environment:\n${z.prettifyError(result.error)}`);
+  }
+  const { APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY, APPLE_CLIENT_ID } = result.data;
+  const appleSignInKey =
+    APPLE_TEAM_ID !== undefined &&
+    APPLE_KEY_ID !== undefined &&
+    APPLE_PRIVATE_KEY !== undefined &&
+    APPLE_CLIENT_ID !== undefined
+      ? {
+          teamId: APPLE_TEAM_ID,
+          keyId: APPLE_KEY_ID,
+          // Secret managers often keep a PEM on one line, with `\n` for its line breaks.
+          privateKey: APPLE_PRIVATE_KEY.replaceAll('\\n', '\n'),
+          clientId: APPLE_CLIENT_ID,
+        }
+      : undefined;
+  if (appleSignInKey === undefined && APPLE_VARIABLES.some((name) => name in environment)) {
+    throw new Error(`Bad server environment: set all of ${APPLE_VARIABLES.join(', ')}, or none.`);
   }
   const { APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY, APNS_TOPIC } = result.data;
   const apnsSet = APNS.filter((name) => result.data[name] !== undefined);
@@ -61,18 +102,18 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     databaseUrl: result.data.DATABASE_URL,
     supabaseUrl: result.data.SUPABASE_URL.replace(/\/+$/, ''),
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
-    ...(APNS_KEY_ID === undefined ||
-    APNS_TEAM_ID === undefined ||
-    APNS_PRIVATE_KEY === undefined ||
-    APNS_TOPIC === undefined
-      ? {}
-      : {
-          apns: {
+    appleSignInKey,
+    apns:
+      APNS_KEY_ID === undefined ||
+      APNS_TEAM_ID === undefined ||
+      APNS_PRIVATE_KEY === undefined ||
+      APNS_TOPIC === undefined
+        ? undefined
+        : {
             keyId: APNS_KEY_ID,
             teamId: APNS_TEAM_ID,
             privateKey: APNS_PRIVATE_KEY,
             topic: APNS_TOPIC,
           },
-        }),
   };
 }

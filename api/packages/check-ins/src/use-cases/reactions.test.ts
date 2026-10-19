@@ -27,6 +27,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   reactions: createPostgresReactionStore(db),
   photos: { exists: () => Promise.resolve(true) },
+  calendarOf: () => Promise.resolve(undefined),
   clock: () => now,
 });
 
@@ -38,7 +39,9 @@ async function newMember() {
 
 async function newSquad(...members: MemberId[]) {
   const id = SquadId.parse(randomUUID());
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+    db,
+  );
   for (const member of members) await join(id, member);
   return id;
 }

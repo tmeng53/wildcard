@@ -60,10 +60,18 @@ export interface SquadMembers {
   squad_id: string;
 }
 
+export interface WeeklyPlans {
+  member_id: string;
+  payload: Json;
+  updated_at: Generated<Timestamp>;
+  week_start: string;
+}
+
 export interface DB {
   check_in_photos: CheckInPhotos;
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
   squad_members: SquadMembers;
+  weekly_plans: WeeklyPlans;
 }

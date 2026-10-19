@@ -2,6 +2,7 @@ import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
 import type { Reaction, ReactionKind, ReactOutcome } from './domain/reaction.js';
+import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
@@ -16,6 +17,10 @@ export interface CheckInStore {
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
   /** The squads `member` is in now. */
   squadsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
+  /** The members in `squad` now, in the order they joined. */
+  membersOf(squad: SquadId): Promise<MemberId[]>;
+  /** Days ever with a 练了 from `member`. Several 练了 on one day count once. */
+  countTrainedDays(member: MemberId): Promise<number>;
   /**
    * Check-ins sent to `squad` from members still in it, newest day first, with their whole
    * audience.
@@ -24,7 +29,7 @@ export interface CheckInStore {
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
   /** Everyone in any of these squads now, each once. */
-  membersOf(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
+  membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
 }
 
 /** Where reactions on check-ins are kept. */
@@ -48,3 +53,26 @@ export interface PhotoFiles {
 
 /** The current time. */
 export type Clock = () => Date;
+
+/** Where members' weekly plans are kept: a row only for each week the member changed. */
+export interface WeeklyPlanStore {
+  /** The member's plan saved for `weekStart` or, failing that, for the latest week before it. */
+  latestFrom(
+    member: MemberId,
+    weekStart: WeekStart,
+  ): Promise<{ readonly weekStart: WeekStart; readonly days: PlanDays } | undefined>;
+  /** Saves the member's plan for a week, replacing any saved before. */
+  save(plan: {
+    readonly member: MemberId;
+    readonly weekStart: WeekStart;
+    readonly days: PlanDays;
+  }): Promise<void>;
+}
+
+/**
+ * The member's IANA time zone and when they joined, from their profile, or `undefined` before
+ * they save one.
+ */
+export type MemberCalendar = (
+  member: MemberId,
+) => Promise<{ readonly timeZone: string; readonly joinedAt: Date } | undefined>;

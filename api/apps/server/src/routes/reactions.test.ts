@@ -4,17 +4,21 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
-import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
+import { memberCalendar } from '../member-calendar.js';
 import { config, signUp } from '../test-kit/local-supabase.js';
 
 // Reactions and push devices, through the routes the app calls, on local Supabase.
@@ -24,25 +28,39 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
-
+const members = createMembers({ store: createPostgresProfileStore(db) });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  accounts: createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  revokeAppleSignIn: undefined,
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
     photos,
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
-  members: createMembers({ store: createPostgresProfileStore(db) }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(),
+  }),
+  members,
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   log: createLog(() => undefined),
 });
 
 async function squadOf(...members: readonly { readonly userId: string }[]) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+    db,
+  );
   for (const member of members) {
     await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member.userId})`.execute(
       db,

@@ -13,6 +13,6 @@ export async function listReactions(
   { checkIn: id, viewer }: { readonly checkIn: CheckInId; readonly viewer: MemberId },
 ): Promise<Reaction[]> {
   const { through } = await findVisibleCheckIn(store, { id, viewer });
-  const [all, members] = await Promise.all([reactions.list(id), store.membersOf(through)]);
+  const [all, members] = await Promise.all([reactions.list(id), store.membersOfAny(through)]);
   return all.filter((reaction) => members.has(reaction.member));
 }

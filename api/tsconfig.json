@@ -5,6 +5,9 @@
       "path": "packages/errors"
     },
     {
+      "path": "packages/typed-text"
+    },
+    {
       "path": "packages/check-ins"
     },
     {
@@ -15,6 +18,9 @@
     },
     {
       "path": "packages/push"
+    },
+    {
+      "path": "packages/squads"
     },
     {
       "path": "apps/server"

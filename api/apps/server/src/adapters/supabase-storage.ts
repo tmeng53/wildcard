@@ -8,6 +8,8 @@ import type { PhotoPath, PhotoStorage } from '../ports.js';
 // can't reach it; it gets signed URLs from us. Upload URLs last 2 hours, a Supabase default.
 // https://supabase.com/docs/reference/javascript/storage-from-createsigneduploadurl
 // https://supabase.com/docs/reference/javascript/storage-from-createsignedurls
+// https://supabase.com/docs/reference/javascript/storage-from-list
+// https://supabase.com/docs/reference/javascript/storage-from-remove
 
 /** The check-in photos bucket, created by the migration with its size and type limits. */
 const BUCKET = 'check-in-photos';
@@ -19,6 +21,11 @@ const SignedViews = z.array(
   z.object({ path: z.string(), signedURL: z.string().startsWith('/object/sign/').nullable() }),
 );
 const StorageError = z.object({ code: z.string() });
+// The files in one folder, by name within it.
+const Listed = z.array(z.object({ name: z.string() }));
+
+/** The most Storage lists at once; a fuller folder is deleted a page at a time. */
+const LIST_LIMIT = 1000;
 
 /** The photo storage port on Supabase Storage. */
 export function createSupabasePhotoStorage(options: {
@@ -29,7 +36,7 @@ export function createSupabasePhotoStorage(options: {
 
   /** Calls Storage; answers its JSON body, or `undefined` when it says the object is missing. */
   const call = async (request: {
-    readonly method: 'GET' | 'POST';
+    readonly method: 'GET' | 'POST' | 'DELETE';
     readonly path: string;
     readonly body?: unknown;
   }): Promise<unknown> => {
@@ -57,6 +64,15 @@ export function createSupabasePhotoStorage(options: {
     throw new PhotoStorageUnavailableError({
       cause: new Error(`Storage answered ${String(response.status)}: ${JSON.stringify(json)}`),
     });
+  };
+
+  /** Calls Storage for a JSON answer, failing when it says something is missing. */
+  const callFor = async (request: Parameters<typeof call>[0]): Promise<unknown> => {
+    const json = await call(request);
+    if (json === undefined) {
+      throw new PhotoStorageUnavailableError({ cause: new Error(`${request.path}: NoSuchKey`) });
+    }
+    return json;
   };
 
   /** Storage's relative URLs are under /storage/v1. */
@@ -89,6 +105,33 @@ export function createSupabasePhotoStorage(options: {
           return [path, absolute(url)] as const;
         }),
       );
+    },
+    async deleteAllOf(member) {
+      // Each round deletes what the folder lists until it lists nothing, so a repeat, or a
+      // photo uploaded meanwhile, is covered too.
+      for (;;) {
+        const listed = Listed.parse(
+          await callFor({
+            method: 'POST',
+            path: `/object/list/${BUCKET}`,
+            body: { prefix: `${member}/`, limit: LIST_LIMIT },
+          }),
+        );
+        if (listed.length === 0) return;
+        const deleted = Listed.parse(
+          await callFor({
+            method: 'DELETE',
+            path: `/object/${BUCKET}`,
+            body: { prefixes: listed.map(({ name }) => `${member}/${name}`) },
+          }),
+        );
+        // Never loop on a listing that deleting doesn't shrink.
+        if (deleted.length === 0) {
+          throw new PhotoStorageUnavailableError({
+            cause: new Error(`Storage deleted none of ${String(listed.length)} listed photos`),
+          });
+        }
+      }
     },
   };
 }

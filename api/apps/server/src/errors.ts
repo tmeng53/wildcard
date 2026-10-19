@@ -36,6 +36,57 @@ export class AuthKeysUnavailableError extends AppError {
   }
 }
 
+/** Thrown when the sign-in provider itself doesn't answer, so a session can't be checked or a user deleted. Retry. */
+export class AuthUnavailableError extends AppError {
+  override readonly name = 'AuthUnavailableError';
+  readonly reason = 'AUTH_UNAVAILABLE';
+  readonly status = 'UNAVAILABLE';
+
+  constructor(options?: ErrorOptions) {
+    super('Sign-in can’t be checked right now. Try again shortly.', options);
+  }
+}
+
+/**
+ * Thrown when Apple refuses a Sign in with Apple authorization code: expired (codes last 5
+ * minutes), used already, or for another app. Ask Apple for a new one and send it again.
+ */
+export class AppleAuthorizationCodeInvalidError extends AppError {
+  override readonly name = 'AppleAuthorizationCodeInvalidError';
+  readonly reason = 'APPLE_AUTHORIZATION_CODE_INVALID';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(options?: ErrorOptions) {
+    super('Apple didn’t accept that authorization code. Sign in with Apple again.', options);
+  }
+}
+
+/**
+ * Thrown when a member who signs in with Apple deletes their account without a fresh Sign in
+ * with Apple authorization code, so Apple's grant can't be revoked. Ask Apple for one and send
+ * it.
+ */
+export class AppleAuthorizationCodeRequiredError extends AppError {
+  override readonly name = 'AppleAuthorizationCodeRequiredError';
+  readonly reason = 'APPLE_AUTHORIZATION_CODE_REQUIRED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('This account signs in with Apple. Sign in with Apple again to delete it.');
+  }
+}
+
+/** Thrown when Apple's Sign in with Apple servers don't answer. Retry. */
+export class AppleSignInUnavailableError extends AppError {
+  override readonly name = 'AppleSignInUnavailableError';
+  readonly reason = 'APPLE_SIGN_IN_UNAVAILABLE';
+  readonly status = 'UNAVAILABLE';
+
+  constructor(options?: ErrorOptions) {
+    super('Apple can’t be reached right now. Try again shortly.', options);
+  }
+}
+
 /** Thrown when the database doesn't answer. Retry later. */
 export class DatabaseUnavailableError extends AppError {
   override readonly name = 'DatabaseUnavailableError';

@@ -6,9 +6,12 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
@@ -20,19 +23,33 @@ const unused = (): never => {
 };
 // Never connected: the pool opens a connection only for a query.
 const db = createDatabase('postgres://localhost/unused');
-const photos = { createUploadUrl: unused, exists: unused, createViewUrls: unused };
+const photos = {
+  createUploadUrl: unused,
+  exists: unused,
+  createViewUrls: unused,
+  deleteAllOf: unused,
+};
 const app = createApp({
   db,
   verifyToken: unused,
+  accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
+  revokeAppleSignIn: undefined,
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
     photos,
+    calendarOf: unused,
+    clock: unused,
+  }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: unused,
     clock: unused,
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

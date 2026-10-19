@@ -3,6 +3,8 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import {
@@ -11,13 +13,16 @@ import {
   createPostgresDeviceStore,
   createPush,
 } from '@wildcard/push';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from './adapters/postgres.js';
-import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
+import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
+import { memberCalendar } from './member-calendar.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
@@ -27,6 +32,10 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+if (config.appleSignInKey === undefined) {
+  log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
+}
+const members = createMembers({ store: createPostgresProfileStore(db) });
 const push = createPush({
   store: createPostgresDeviceStore(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
@@ -35,13 +44,28 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  accounts: createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  revokeAppleSignIn:
+    config.appleSignInKey === undefined
+      ? undefined
+      : createAppleSignInRevoker(config.appleSignInKey),
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     reactions: createPostgresReactionStore(db),
     photos,
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
-  members: createMembers({ store: createPostgresProfileStore(db) }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(),
+  }),
+  members,
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   photos,
   push,
   log,

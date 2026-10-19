@@ -32,10 +32,13 @@ const now = new Date('2026-10-18T20:00:00.000Z');
 // Photo files: the paths uploaded so far. Storage itself is the server's adapter, tested there.
 const uploaded = new Set<string>();
 const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) };
+// Nobody here has a time zone: these tests don't read members' days.
+const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   reactions: createPostgresReactionStore(db),
   photos,
+  calendarOf,
   clock: () => now,
 });
 
@@ -54,7 +57,9 @@ async function newMember() {
 
 async function newSquad(...members: MemberId[]) {
   const id = SquadId.parse(randomUUID());
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+    db,
+  );
   for (const member of members) {
     await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member})`.execute(
       db,
@@ -188,6 +193,7 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       reactions: createPostgresReactionStore(db),
       photos,
+      calendarOf,
       clock: () => new Date('2026-10-25T00:00:00.000Z'),
     });
     const retry = await late.save({
@@ -253,6 +259,7 @@ describe('saving a check-in', () => {
         },
         reactions: createPostgresReactionStore(db),
         photos,
+        calendarOf,
         clock: () => now,
       });
     };

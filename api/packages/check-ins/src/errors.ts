@@ -129,3 +129,61 @@ export class OwnCheckInReactionError extends AppError {
     super('You can’t react to your own check-in.');
   }
 }
+
+/** Thrown for a change to a past week's plan: past weeks are kept as they were. */
+export class WeekOverError extends AppError {
+  override readonly name = 'WeekOverError';
+  readonly reason = 'WEEK_OVER';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly weekStart: string) {
+    super(`The week of ${weekStart} is over, so its plan can’t change.`);
+  }
+}
+
+/** Thrown for a plan more than 4 weeks after the current one. */
+export class WeekTooFarAheadError extends AppError {
+  override readonly name = 'WeekTooFarAheadError';
+  readonly reason = 'WEEK_TOO_FAR_AHEAD';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly weekStart: string) {
+    super(`The week of ${weekStart} is too far ahead to plan.`);
+  }
+}
+
+/**
+ * Thrown for a change to a day of the current week that has already started: earlier days stay
+ * as planned, and today stays a training or a rest day.
+ */
+export class PlanDayStartedError extends AppError {
+  override readonly name = 'PlanDayStartedError';
+  readonly reason = 'PLAN_DAY_STARTED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly day: string) {
+    super(`${day} has already started, so it can’t change in the plan.`);
+  }
+}
+
+/** Thrown when a change to the current week's plan adds or removes a rest day. Swap days instead. */
+export class RestDaysFixedError extends AppError {
+  override readonly name = 'RestDaysFixedError';
+  readonly reason = 'REST_DAYS_FIXED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly restDays: number) {
+    super(`This week keeps ${String(restDays)} rest days. Swap days instead.`);
+  }
+}
+
+/** Thrown when the member hasn't saved a profile, so their time zone, and so today, is unknown. */
+export class TimeZoneNotSetError extends AppError {
+  override readonly name = 'TimeZoneNotSetError';
+  readonly reason = 'TIME_ZONE_NOT_SET';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('Save your profile with your time zone first.');
+  }
+}

@@ -1,13 +1,14 @@
-import type { CheckInId, CheckInRecord, MemberId } from '../domain/check-in.js';
+import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
 import type { Reaction } from '../domain/reaction.js';
-import type { CheckInStore, Clock, PhotoFiles, ReactionStore } from '../ports.js';
+import type { CheckInStore, Clock, MemberCalendar, PhotoFiles, ReactionStore } from '../ports.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
 import { listReactions } from './check-ins/list-reactions.js';
 import {
   listSquadCheckIns,
   type ListSquadCheckInsInput,
 } from './check-ins/list-squad-check-ins.js';
+import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
   reactToCheckIn,
   type ReactToCheckInInput,
@@ -31,12 +32,15 @@ export interface CheckIns {
     readonly checkIn: CheckInId;
     readonly viewer: MemberId;
   }): Promise<Reaction[]>;
+  /** The home screen's squad: each member's today and the week's counts, for one of them. */
+  squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
 }
 
 export function createCheckIns(deps: {
   readonly store: CheckInStore;
   readonly reactions: ReactionStore;
   readonly photos: PhotoFiles;
+  readonly calendarOf: MemberCalendar;
   readonly clock: Clock;
 }): CheckIns {
   return {
@@ -46,5 +50,6 @@ export function createCheckIns(deps: {
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) => removeReaction(deps, input),
     listReactions: (input) => listReactions(deps, input),
+    squadToday: (input) => squadToday(deps, input),
   };
 }

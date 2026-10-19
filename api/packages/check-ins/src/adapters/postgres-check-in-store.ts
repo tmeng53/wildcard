@@ -153,6 +153,27 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return new Set(rows.map((row) => SquadId.parse(row.squad_id)));
     },
 
+    async membersOf(squad) {
+      const rows = await db
+        .selectFrom('squad_members')
+        .select('member_id')
+        .where('squad_id', '=', squad)
+        .orderBy('joined_at')
+        .orderBy('member_id')
+        .execute();
+      return rows.map((row) => MemberId.parse(row.member_id));
+    },
+
+    async countTrainedDays(member) {
+      const { days } = await db
+        .selectFrom('check_ins')
+        .select(sql<string>`count(distinct day)`.as('days'))
+        .where('member_id', '=', member)
+        .where('kind', '=', 'trained')
+        .executeTakeFirstOrThrow();
+      return Number(days);
+    },
+
     async listForSquad({ squad, from, to }) {
       const rows = await db
         .selectFrom('check_ins')
@@ -177,7 +198,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return withAudiences(rows);
     },
 
-    async membersOf(squads) {
+    async membersOfAny(squads) {
       if (squads.length === 0) return new Set();
       const rows = await db
         .selectFrom('squad_members')
