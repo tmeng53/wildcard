@@ -28,6 +28,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case customSportLength(Int)
     /// A 其他 sport name with a line break, tab or other control character.
     case multilineCustomSport
+    /// A 其他 sport name with nothing visible in it, or with a text-direction control.
+    case invisibleCustomSport
     /// A `sport` key that isn't a listed sport or `custom`.
     case unknownSport(String)
     /// A `customSport` name next to a listed sport, or `custom` with no name.

@@ -54,6 +54,16 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
     #expect(try CustomSport("飞盘 高尔夫 🏃‍♀️").name == "飞盘 高尔夫 🏃‍♀️")
 }
 
+@Test(arguments: ["\u{200D}", "\u{200C}", "\u{2060}", "\u{FEFF}", "\u{00AD}", "\u{200D} \u{200D}"])
+func customSportNameMustShowSomething(name: String) {
+    #expect(throws: ContractsError.invisibleCustomSport) { try CustomSport(name) }
+}
+
+@Test(arguments: ["\u{202E}", "\u{202A}", "\u{2066}", "\u{2069}", "\u{200E}", "\u{200F}", "\u{061C}"])
+func customSportNameHasNoDirectionControls(control: String) {
+    #expect(throws: ContractsError.invisibleCustomSport) { try CustomSport("飞盘\(control)golf") }
+}
+
 @Test func photosAreOneToThreeDistinctWithTheFirstAsCover() throws {
     let first = try PhotoRef(path: "m/a.jpg")
     let second = try PhotoRef(path: "m/b.jpg")

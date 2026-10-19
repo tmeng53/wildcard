@@ -24,6 +24,12 @@ const LINE_BREAKS = '\u000A\u000B\u000C\u000D\u0085\u2028\u2029';
  */
 const NOT_A_NAME = /\p{Cc}|(?![ \u3000])\p{White_Space}/u;
 
+/** A bidi control: U+202E, for one, flips the text after it. */
+const DIRECTION_CONTROL = /\p{Bidi_Control}/u;
+
+/** Something people can see: not a format character (a zero-width joiner) or a space. */
+const VISIBLE = /[^\p{Cf}\p{White_Space}]/u;
+
 /** Bounds the raw string before the per-character checks, so a huge body costs nothing. */
 const RAW_LIMIT = 1000;
 
@@ -92,9 +98,18 @@ export function nameText({
   readonly max: number;
   readonly description: string;
 }) {
-  return typedText({ max, oneLine: true, description }).refine((name) => !NOT_A_NAME.test(name), {
-    message: 'Must be one line, with no tabs or unusual spaces',
-  });
+  return (
+    typedText({ max, oneLine: true, description })
+      .refine((name) => !NOT_A_NAME.test(name), {
+        message: 'Must be one line, with no tabs or unusual spaces',
+      })
+      // As the contract's `CustomSport`: no name that shows as blank (only format characters,
+      // such as a lone zero-width joiner) or reads in a forced direction. Joiners inside a real
+      // name, as in 🏃‍♀️, are fine; blank text is already refused above.
+      .refine((name) => isBlank(name) || (VISIBLE.test(name) && !DIRECTION_CONTROL.test(name)), {
+        message: 'Must show something readable, with no direction controls',
+      })
+  );
 }
 
 /**

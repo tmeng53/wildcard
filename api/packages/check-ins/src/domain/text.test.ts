@@ -70,4 +70,20 @@ describe('CustomSportName', () => {
       [],
     );
   });
+
+  it('refuses a name made only of invisible characters', () => {
+    const invisible = ['\u200D', '\u200C', '\u2060', '\uFEFF', '\u00AD', '\u200D \u200D'];
+    expect(invisible.filter((name) => CustomSportName.safeParse(name).success)).toStrictEqual([]);
+  });
+
+  it('refuses direction controls anywhere', () => {
+    const controls = ['\u202E', '\u202A', '\u2066', '\u2069', '\u200E', '\u200F', '\u061C'];
+    expect(
+      controls.filter((char) => CustomSportName.safeParse(`飞盘${char}golf`).success),
+    ).toStrictEqual([]);
+  });
+
+  it('takes joiners inside a real name', () => {
+    expect(CustomSportName.parse('跑步🏃\u200D♀\uFE0F')).toBe('跑步🏃\u200D♀\uFE0F');
+  });
 });
