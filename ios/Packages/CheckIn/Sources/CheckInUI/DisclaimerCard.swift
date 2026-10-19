@@ -10,6 +10,7 @@ struct DisclaimerCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: TodayModel
+    @State private var text = ""
     @State private var entry = DisclaimerEntry()
     @State private var drafts: [String] = []
     @State private var isWriting = false
@@ -36,13 +37,7 @@ struct DisclaimerCard: View {
             }
 
             VStack(alignment: .trailing, spacing: Space.xxs) {
-                TextField(
-                    text: Binding {
-                        entry.text
-                    } set: {
-                        entry.write($0)
-                    }, axis: .vertical
-                ) {
+                TextField(text: $text, axis: .vertical) {
                     Text("编个借口吧…", bundle: .module)
                 }
                 .typeStyle(TypeRamp.field)
@@ -50,6 +45,12 @@ struct DisclaimerCard: View {
                 .padding(Sizing.fieldInset)
                 .background(Color(Palette.white).opacity(0.7), in: RoundedRectangle(cornerRadius: Radius.s))
                 .accessibilityIdentifier("disclaimer.field")
+                .onChange(of: text) { _, typed in
+                    // The field shows exactly what will be posted: no newlines, at most 40 characters.
+                    let fitted = DisclaimerEntry.fit(typed)
+                    if fitted != typed { text = fitted }
+                    entry.write(fitted)
+                }
                 if entry.text.count >= Disclaimer.maxLength - 10 {
                     Text(verbatim: "\(entry.text.count)/\(Disclaimer.maxLength)")
                         .typeStyle(TypeRamp.footnote)
@@ -80,7 +81,7 @@ struct DisclaimerCard: View {
             } else if !drafts.isEmpty {
                 VStack(spacing: Space.xs) {
                     ForEach(Array(drafts.enumerated()), id: \.offset) { index, draft in
-                        DraftChoice(line: draft, isSelected: draft == entry.text) { entry.write(draft) }
+                        DraftChoice(line: draft, isSelected: draft == entry.text) { text = draft }
                             .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
@@ -133,7 +134,7 @@ struct DisclaimerCard: View {
     private func roll() {
         rolls += 1
         drafts = []
-        if let line = DiceDisclaimerWriter.rollDefault(1).first { entry.write(line) }
+        if let line = DiceDisclaimerWriter.rollDefault(1).first { text = line }
     }
 }
 

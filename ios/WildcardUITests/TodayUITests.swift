@@ -100,6 +100,25 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "19-today-disclaimer-posted")
     }
 
+    /// The 免责声明 field shows exactly what will be posted: a Return is dropped and typing
+    /// stops at 40 characters.
+    func testDisclaimerFieldFitsTheLine() {
+        let app = launch(language: "zh-Hans", photos: 0)
+        _ = topCard(in: app)
+        app.buttons["today.checkin"].tap()
+        let capsule = app.buttons["today.capsule.disclaimer"]
+        XCTAssertTrue(capsule.waitForExistence(timeout: 2))
+        capsule.tap()
+
+        let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
+        field.tap()
+        field.typeText(String(repeating: "a", count: 30) + "\n" + String(repeating: "b", count: 20))
+        settle()
+        let expected = String(repeating: "a", count: 30) + String(repeating: "b", count: 10)
+        XCTAssertEqual(field.value as? String, expected)
+    }
+
     /// A reason the writer won't joke about: the author sees the care line, and it can't be
     /// posted until the line changes.
     func testCareLine() {
