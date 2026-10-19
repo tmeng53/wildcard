@@ -80,6 +80,7 @@ struct CharacterPreviewTests {
         try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
         try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
         try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
+        try writeSpecies(to: folder.appendingPathComponent("08-species-moves.gif"))
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
@@ -148,6 +149,39 @@ struct CharacterPreviewTests {
                     return try baller.render(image: pose, scale: 1, background: Self.mist)
                 }))
         try writePNG(stacked(rows), to: url)
+    }
+
+    /// A person, a cat, two dogs, a rabbit and a bear, each on another persona, idling with their
+    /// species' moves on top (a yawn, a head tilt, ears, a belly scratch), then cheering at 8 s.
+    private func writeSpecies(to url: URL) throws {
+        let cast: [(Persona, Outfit)] = [
+            (.drama, PlaceholderCharacter.lifter),
+            (.deadpan, Outfit(["body": "cat", "top": "tee", "bottom": "shorts"])),
+            (.energetic, Outfit(["body": "shiba", "top": "tee", "bottom": "shorts"])),
+            (.deadpan, Outfit(["body": "golden", "top": "tee", "bottom": "shorts"])),
+            (.showoff, Outfit(["body": "rabbit", "top": "tee", "bottom": "shorts"])),
+            (.shy, PlaceholderCharacter.bear),
+        ]
+        var looks: [Frame] = []
+        var performances: [Performance] = []
+        for (persona, outfit) in cast {
+            let look = try Frame(outfit: outfit)
+            let body = outfit.variants["body"]
+            let idle = try look.figure.bind(PlaceholderCharacter.clip("idle", persona: persona, body: body))
+            var performance = Performance(figure: look.figure, idle: idle)
+            performance.play(
+                try look.figure.bind(PlaceholderCharacter.clip("cheer", persona: persona, body: body)), at: 8)
+            looks.append(look)
+            performances.append(performance)
+        }
+        try writeGIF(
+            frames(seconds: 10.5) { time in
+                try sideBySide(
+                    zip(looks, performances).map { look, performance in
+                        try look.render(image: performance.pose(at: time), scale: 1, background: Self.mist)
+                    })
+            },
+            to: url)
     }
 
     private func frames(seconds: Double, _ render: (Double) throws -> CGImage) throws -> [CGImage] {
