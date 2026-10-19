@@ -1075,6 +1075,26 @@
         }
       }
     },
+    "中二": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anime hero"
+          }
+        }
+      }
+    },
+    "为什么没练？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why no workout today?"
+          }
+        }
+      }
+    },
     "今天 %lld 人练了": {
       "localizations": {
         "en": {
@@ -1131,6 +1151,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Post"
+          }
+        }
+      }
+    },
+    "发布免责声明": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post my disclaimer"
           }
         }
       }
@@ -1235,12 +1265,12 @@
         }
       }
     },
-    "换一句": {
+    "换一组": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Another one"
+            "value": "New set"
           }
         }
       }
@@ -1261,16 +1291,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Funny"
-          }
-        }
-      }
-    },
-    "文艺": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Poetic"
           }
         }
       }
@@ -1361,6 +1381,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show it off…"
+          }
+        }
+      }
+    },
+    "点击更改": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to edit"
+          }
+        }
+      }
+    },
+    "照着「%@」编": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riffing on “%@”"
           }
         }
       }
@@ -1461,6 +1501,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Disciplined, this one…"
+          }
+        }
+      }
+    },
+    "随便来几句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A few at random"
           }
         }
       }

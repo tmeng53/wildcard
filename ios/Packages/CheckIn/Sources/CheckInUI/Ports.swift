@@ -52,8 +52,8 @@ public enum DisclaimerStyle: String, CaseIterable, Hashable, Sendable {
     case funny
     /// 发疯: an excited meltdown ramble, never insulting.
     case unhinged
-    /// 文艺: a quiet image or metaphor.
-    case poetic
+    /// 中二: an anime hero's grand, dramatic voice.
+    case heroic
     /// 嘴硬: never admits to slacking off.
     case stubborn
 }

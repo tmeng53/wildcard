@@ -15,7 +15,11 @@ struct StringCatalogCoverageTests {
     @Test func everyLocalizedTextHasAnEnglishEntry() throws {
         let keys = try Self.localizedKeys()
         #expect(keys.count > 20, "found only \(keys.count) keys; is the pattern still right?")
-        let missing = try keys.filter { try Self.english(for: $0) == nil }
+        // An `Int` interpolation's key holds `%lld`, a `String`'s holds `%@`.
+        let missing = try keys.filter {
+            try Self.english(for: $0) == nil
+                && Self.english(for: $0.replacingOccurrences(of: "%lld", with: "%@")) == nil
+        }
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
@@ -53,7 +57,7 @@ struct StringCatalogCoverageTests {
         #expect(try Self.english(for: "发短信给 988") == "Text 988")
         #expect(try Self.english(for: "有紧急危险请直接打 911。") == "If you're in immediate danger, call 911.")
         let source = try String(
-            contentsOf: Self.sources.appendingPathComponent("DisclaimerComposer.swift"), encoding: .utf8)
+            contentsOf: Self.sources.appendingPathComponent("CareLine.swift"), encoding: .utf8)
         #expect(source.contains("\"tel:988\""))
         #expect(source.contains("\"sms:988\""))
     }
@@ -81,8 +85,8 @@ struct StringCatalogCoverageTests {
         return value?.isEmpty == false ? value : nil
     }
 
-    /// Every key in `Text("…", bundle: .module)`, with each `\(…)` read as the `%lld` an `Int`
-    /// interpolation becomes.
+    /// Every key in `Text("…", bundle: .module)`, with each `\(…)` read as `%lld`; the check also
+    /// accepts the `%@` a `String` interpolation becomes.
     private static func localizedKeys() throws -> Set<String> {
         let pattern = try NSRegularExpression(pattern: #"Text\("((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
         let interpolation = try NSRegularExpression(pattern: #"\\\([^)]*\)"#)
