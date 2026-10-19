@@ -11,9 +11,17 @@ import { z } from 'zod';
 
 import { adminMcp } from './admin-mcp/admin-mcp.js';
 import type { AdminTool } from './admin-mcp/admin-tool.js';
+import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
-import type { Accounts, Database, PhotoStorage, RevokeAppleSignIn, VerifyToken } from './ports.js';
+import type {
+  Accounts,
+  Database,
+  OAuthConsent,
+  PhotoStorage,
+  RevokeAppleSignIn,
+  VerifyToken,
+} from './ports.js';
 import { problemResponse } from './problem.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
@@ -52,6 +60,10 @@ export interface AppDependencies {
     readonly publicUrl: URL;
     /** The OAuth 2.1 authorization server that signs admins in. */
     readonly authorizationServer: URL;
+    /** That server's consent step, which the consent page at `/oauth/consent` drives. */
+    readonly consent: OAuthConsent;
+    /** Admins may sign in there with an email and password (local stacks only). */
+    readonly passwordSignIn: boolean;
   };
 }
 
@@ -84,6 +96,18 @@ export function createApp(deps: AppDependencies) {
   app.route(
     '/',
     adminMcp({ ...deps.admin, db: deps.db, verifyToken: deps.verifyToken, log: deps.log }),
+  );
+  // Where the authorization server sends an admin to approve an MCP client: an HTML page.
+  app.route(
+    '/',
+    consentPage({
+      consent: deps.admin.consent,
+      verifyToken: deps.verifyToken,
+      admins: deps.admin.admins(deps.db),
+      publicUrl: deps.admin.publicUrl,
+      passwordSignIn: deps.admin.passwordSignIn,
+      log: deps.log,
+    }),
   );
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));

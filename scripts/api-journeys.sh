@@ -507,7 +507,16 @@ if want admin-mcp; then
   # Supabase reads [auth.oauth_server] at `supabase start`: a stack started before it was
   # enabled answers "OAuth server is disabled" until it restarts.
   [[ "$client_id" =~ ^[0-9a-f-]{36}$ ]] || fail "registering the MCP client failed: $registered"
-  read -r admin admin_token <<<"$(sign_up)"
+  # sign_up_as EMAIL PASSWORD: like sign_up, with credentials the consent page can take.
+  sign_up_as() {
+    curl -sf "$API_URL/auth/v1/signup" -H "apikey: $PUBLISHABLE_KEY" -H 'content-type: application/json' \
+      --data "{\"email\":\"$1\",\"password\":\"$2\"}" | jq -r '"\(.user.id) \(.access_token)"'
+  }
+  admin_email="$(new_id)@example.com" admin_password="$(new_id)"
+  read -r admin admin_token <<<"$(sign_up_as "$admin_email" "$admin_password")"
+  member_email="$(new_id)@example.com" member_password="$(new_id)"
+  read -r member member_token <<<"$(sign_up_as "$member_email" "$member_password")"
+  [[ "$admin $member" =~ ^[0-9a-f-]{36}\ [0-9a-f-]{36}$ ]] || fail "sign-up failed"
   psql "$DB_URL" -qc "insert into public.admins (member_id) values ('$admin')" >/dev/null
   echo "admin-mcp: registered client $client_id; admin=$admin on the admin list"
 
@@ -538,10 +547,10 @@ if want admin-mcp; then
   expect 401 ADMIN_SIGN_IN_REQUIRED
   echo "admin-mcp: the app's own sign-in refused (401 ADMIN_SIGN_IN_REQUIRED)"
 
-  # oauth_token MEMBER_TOKEN: signs in through Supabase Auth's OAuth 2.1 server with PKCE, the
-  # member approving on the consent screen as the member's session would; prints the access token.
-  oauth_token() {
-    local verifier challenge_s256 location id redirect authorization_code
+  # authorize: the client asks Supabase Auth's OAuth 2.1 server for approval with PKCE, as an
+  # MCP client does; sets $id (the request the consent page answers) and $verifier.
+  authorize() {
+    local challenge_s256 location
     verifier="$(node -p 'crypto.randomBytes(32).toString("base64url")')"
     challenge_s256="$(node -p "crypto.createHash('sha256').update('$verifier').digest('base64url')")"
     location="$(curl -s -o /dev/null -w '%{redirect_url}' -G "$API_URL/auth/v1/oauth/authorize" \
@@ -549,22 +558,43 @@ if want admin-mcp; then
       --data-urlencode "redirect_uri=$callback" --data-urlencode "code_challenge=$challenge_s256" \
       --data-urlencode code_challenge_method=S256 --data-urlencode "resource=$api/mcp")"
     id="$(node -p "new URL('$location').searchParams.get('authorization_id') ?? ''")"
-    [ -n "$id" ] || fail "authorize didn't send the member to the consent screen: $location"
-    curl -sf "$API_URL/auth/v1/oauth/authorizations/$id" -H "apikey: $PUBLISHABLE_KEY" \
-      -H "authorization: Bearer $1" >/dev/null || fail "reading the authorization request failed"
-    redirect="$(curl -sf -X POST "$API_URL/auth/v1/oauth/authorizations/$id/consent" -H "apikey: $PUBLISHABLE_KEY" \
-      -H "authorization: Bearer $1" -H 'content-type: application/json' --data '{"action":"approve"}' |
-      jq -r '.redirect_url // empty')"
-    authorization_code="$(node -p "new URL('$redirect').searchParams.get('code') ?? ''")"
-    [ -n "$authorization_code" ] || fail "approving didn't redirect with a code: $redirect"
+    [ -n "$id" ] || fail "authorize didn't send the member to the consent page: $location"
+  }
+  # sign_in_on_page EMAIL PASSWORD: signs in on the consent page for $id, as a browser does;
+  # sets $code and $page (the HTML it answered), keeping its cookie in $jar.
+  jar="$tmp/consent-cookies"
+  sign_in_on_page() {
+    rm -f "$jar"
+    code="$(curl -s -o "$tmp/page" -w '%{http_code}' -c "$jar" -b "$jar" "$api/oauth/consent/sign-in" \
+      --data-urlencode "authorization_id=$id" --data-urlencode "email=$1" --data-urlencode "password=$2")"
+    page="$(cat "$tmp/page")"
+  }
+  # token_for REDIRECT: the access token for the code the browser was sent back with.
+  token_for() {
+    local authorization_code
+    authorization_code="$(node -p "new URL('$1').searchParams.get('code') ?? ''")"
+    [ -n "$authorization_code" ] || fail "the browser wasn't sent back with a code: $1"
     curl -s -X POST "$API_URL/auth/v1/oauth/token" --data-urlencode grant_type=authorization_code \
       --data-urlencode "code=$authorization_code" --data-urlencode "redirect_uri=$callback" \
       --data-urlencode "client_id=$client_id" --data-urlencode "code_verifier=$verifier" \
       --data-urlencode "resource=$api/mcp" | jq -r '.access_token // empty'
   }
-  mcp_token="$(oauth_token "$admin_token")"
+
+  authorize
+  sign_in_on_page "$admin_email" wrong-password
+  [ "$code" = 401 ] && [[ "$page" == *"Wrong email or password."* ]] || fail "a wrong password: $code $page"
+  sign_in_on_page "$admin_email" "$admin_password"
+  [ "$code" = 200 ] && [[ "$page" == *"Let api-journeys manage Wildcard?"* ]] || fail "the consent page: $code $page"
+  answered="$(curl -s -o /dev/null -w '%{redirect_url}' -b "$jar" "$api/oauth/consent/answer" \
+    --data-urlencode "authorization_id=$id" --data-urlencode answer=approve)"
+  mcp_token="$(token_for "$answered")"
   [ -n "$mcp_token" ] || fail "the OAuth token exchange failed"
-  echo "admin-mcp: admin approved the client on the consent screen and got an OAuth token"
+  echo "admin-mcp: a wrong password refused (401); admin signed in on the consent page, approved and got an OAuth token"
+
+  again="$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$api/oauth/consent/answer" \
+    --data-urlencode "authorization_id=$id" --data-urlencode answer=approve)"
+  [ "$again" = 401 ] || fail "the consent page's sign-in answered twice: $again"
+  echo "admin-mcp: that sign-in can't answer again (401)"
 
   mcp "$mcp_token" "$initialize"
   expect 200
@@ -607,11 +637,23 @@ if want admin-mcp; then
   expect 401 APP_SIGN_IN_REQUIRED
   echo "admin-mcp: the OAuth token refused by the app's routes (401 APP_SIGN_IN_REQUIRED)"
 
-  member_mcp_token="$(oauth_token "$me_token")"
+  authorize
+  sign_in_on_page "$member_email" "$member_password"
+  [ "$code" = 403 ] && [[ "$page" == *"isn’t an admin"* ]] || fail "a member not on the admin list: $code $page"
+  echo "admin-mcp: a member not on the admin list refused on the consent page (403)"
+
+  # Approving with their app session straight through Supabase's API, as a stolen session could.
+  authorizations="$API_URL/auth/v1/oauth/authorizations/$id"
+  curl -sf "$authorizations" -H "apikey: $PUBLISHABLE_KEY" -H "authorization: Bearer $member_token" >/dev/null ||
+    fail "reading the authorization request failed"
+  answered="$(curl -s -X POST "$authorizations/consent" -H "apikey: $PUBLISHABLE_KEY" \
+    -H "authorization: Bearer $member_token" -H 'content-type: application/json' --data '{"action":"approve"}' |
+    jq -r '.redirect_url // empty')"
+  member_mcp_token="$(token_for "$answered")"
   [ -n "$member_mcp_token" ] || fail "the member's OAuth token exchange failed"
   mcp "$member_mcp_token" "$initialize"
   expect 403 NOT_AN_ADMIN
-  echo "admin-mcp: a member not on the admin list refused, OAuth token and all (403 NOT_AN_ADMIN)"
+  echo "admin-mcp: approving around the page still gets them nothing at /mcp (403 NOT_AN_ADMIN)"
 fi
 
 echo "api-journeys: ok ($journeys)"
