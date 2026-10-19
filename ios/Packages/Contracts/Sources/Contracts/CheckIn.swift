@@ -166,7 +166,7 @@ public struct Meal: Hashable, Sendable, Codable {
 /// 今日免责声明: the member's one-line excuse for resting today.
 public struct Disclaimer: Hashable, Sendable, Codable {
     /// Characters, counted as people see them (a Chinese character or emoji is one).
-    public static let maxLength = 40
+    public static let maxLength = 80
 
     public let text: String
 

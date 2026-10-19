@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# Drives the API the way the app does, over HTTP, against local Supabase: the built server
+# (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
+# Supabase Storage. Each step prints one line; any unexpected answer stops the run.
+#   scripts/api-journeys.sh [check-in] [photo-upload]   (no arguments: both)
+# Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
+# say what each line means and which rows to check.
+set -euo pipefail
+# Bash 4.4+; macOS ships bash 3.2, where every check still stops the run through `fail`.
+shopt -s inherit_errexit 2>/dev/null || true
+cd "$(dirname "$0")/.."
+
+journeys="${*:-check-in photo-upload}"
+for journey in $journeys; do
+  case "$journey" in
+    check-in | photo-upload) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload)" >&2 && exit 2 ;;
+  esac
+done
+want() { [[ " $journeys " == *" $1 "* ]]; }
+
+supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else npx --yes supabase@2.121.0 "$@"; fi; }
+status="$(supabase status -o env 2>/dev/null)" || {
+  echo "api-journeys: local Supabase isn't running (supabase start)" >&2
+  exit 1
+}
+eval "$status"
+
+pnpm --dir api install --frozen-lockfile >/dev/null
+pnpm --dir api build >/dev/null
+
+# The real server, on a free port, as Cloud Run starts it.
+port="$(node -e 'const s=require("net").createServer().listen(0,()=>{console.log(s.address().port);s.close()})')"
+api="http://127.0.0.1:$port"
+log="$(mktemp)"
+PORT="$port" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
+  node api/apps/server/dist/src/main.js >"$log" 2>&1 &
+server=$!
+tmp="$(mktemp -d)"
+trap 'kill "$server" 2>/dev/null || true; rm -rf "$log" "$tmp"' EXIT
+for _ in $(seq 50); do
+  curl -sf "$api/health" >/dev/null && break
+  kill -0 "$server" 2>/dev/null || { cat "$log" >&2; exit 1; }
+  sleep 0.2
+done
+echo "server: $(curl -sf "$api/health")"
+
+fail() {
+  echo "FAIL: $*" >&2
+  echo "--- server log" >&2
+  cat "$log" >&2
+  exit 1
+}
+
+# call METHOD PATH TOKEN [BODY]: sets $code and $body (the response JSON).
+call() {
+  local args=(-s -o "$tmp/body" -w '%{http_code}' -X "$1" "$api$2" -H 'content-type: application/json')
+  [ -n "$3" ] && args+=(-H "authorization: Bearer $3")
+  [ $# -ge 4 ] && args+=(--data "$4")
+  code="$(curl "${args[@]}")"
+  body="$(cat "$tmp/body")"
+}
+
+# expect CODE [REASON]: the last call answered CODE (and, for a problem, this reason).
+expect() {
+  [ "$code" = "$1" ] || fail "expected $1, got $code: $body"
+  if [ $# -ge 2 ]; then
+    [ "$(jq -r .reason <<<"$body")" = "$2" ] || fail "expected reason $2: $body"
+  fi
+}
+
+# A new member signed up through Supabase Auth, as "<user id> <access token>".
+sign_up() {
+  curl -sf "$API_URL/auth/v1/signup" -H "apikey: $PUBLISHABLE_KEY" -H 'content-type: application/json' \
+    --data "{\"email\":\"$(new_id)@example.com\",\"password\":\"$(new_id)\"}" |
+    jq -r '"\(.user.id) \(.access_token)"'
+}
+
+# A squad with these member ids. Squads have no routes yet, so this writes the rows directly.
+squad_of() {
+  local id
+  id="$(new_id)"
+  psql -q "$DB_URL" -v ON_ERROR_STOP=1 -c "insert into public.squads (id, name) values ('$id', 'journey')" >/dev/null
+  for member in "$@"; do
+    psql -q "$DB_URL" -v ON_ERROR_STOP=1 \
+      -c "insert into public.squad_members (squad_id, member_id) values ('$id', '$member')" >/dev/null
+  done
+  echo "$id"
+}
+
+new_id() { node -p 'crypto.randomUUID()'; }
+# A minute ago, in UTC: always inside the API's 48-hour window, and its UTC day.
+now="$(node -p 'new Date(Date.now() - 60_000).toISOString()')"
+day="${now:0:10}"
+
+read -r me me_token <<<"$(sign_up)"
+read -r mate mate_token <<<"$(sign_up)"
+read -r outsider outsider_token <<<"$(sign_up)"
+squad="$(squad_of "$me" "$mate")"
+for m in "$me" "$mate" "$outsider"; do [[ "$m" =~ ^[0-9a-f-]{36}$ ]] || fail "sign-up failed"; done
+echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
+
+if want check-in; then
+  id="$(new_id)"
+  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"caption\":\"累但爽\"}}"
+  call PUT "/check-ins/$id" "$me_token" "$trained"
+  expect 201
+  [ "$(jq -r .training.customSport <<<"$body")" = "飞盘" ] || fail "custom sport not trimmed: $body"
+  echo "check-in: saved trained $id (201)"
+
+  call PUT "/check-ins/$id" "$me_token" "$trained"
+  expect 200
+  echo "check-in: retry answered with the saved one (200)"
+
+  call PUT "/check-ins/$id" "$me_token" "${trained/累但爽/改了}"
+  expect 409 CHECK_IN_ID_CONFLICT
+  echo "check-in: different contents under the same id refused (409 CHECK_IN_ID_CONFLICT)"
+
+  disclaimer() { echo "{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"disclaimer\",\"disclaimer\":{\"text\":\"$1\"}}"; }
+  first="$(new_id)"
+  call PUT "/check-ins/$first" "$mate_token" "$(disclaimer 腿还在酸)"
+  expect 201
+  echo "check-in: mate posted today's disclaimer $first (201)"
+  call PUT "/check-ins/$(new_id)" "$mate_token" "$(disclaimer 再来一条)"
+  expect 409 DISCLAIMER_ALREADY_POSTED
+  echo "check-in: a second disclaimer today refused (409 DISCLAIMER_ALREADY_POSTED)"
+
+  call PUT "/check-ins/$(new_id)" "$outsider_token" "$trained"
+  expect 403 SQUAD_NOT_JOINED
+  echo "check-in: outsider posting to the squad refused (403 SQUAD_NOT_JOINED)"
+
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
+  expect 200
+  [ "$(jq -c '[.checkIns[].id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
+    fail "squad list should hold exactly $id and $first: $body"
+  echo "check-in: mate sees both in the squad list ($(jq '.checkIns | length' <<<"$body") check-ins)"
+
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "check-in: outsider reading the squad refused (403 SQUAD_NOT_JOINED)"
+
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" ""
+  expect 401
+  echo "check-in: signed-out read refused (401)"
+
+  call GET "/me/check-ins?from=$day&to=$day" "$me_token"
+  expect 200
+  [ "$(jq -r '[.checkIns[].id] | join(",")' <<<"$body")" = "$id" ] || fail "my list should hold only $id: $body"
+  echo "check-in: my list holds only my own ($id)"
+fi
+
+if want photo-upload; then
+  call POST /photo-uploads "$me_token"
+  expect 201
+  path="$(jq -r .path <<<"$body")"
+  upload_url="$(jq -r .uploadUrl <<<"$body")"
+  [[ "$path" == "$me/"* ]] || fail "upload path isn't in my folder: $path"
+  echo "photo-upload: got an upload URL for $path (201)"
+
+  head -c 2048 /dev/urandom >"$tmp/photo.jpg"
+  uploaded="$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$upload_url" -H 'content-type: image/jpeg' --data-binary "@$tmp/photo.jpg")"
+  [ "$uploaded" = 200 ] || fail "upload answered $uploaded"
+  echo "photo-upload: uploaded 2048 bytes (200)"
+
+  again="$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$upload_url" -H 'content-type: image/jpeg' --data-binary "@$tmp/photo.jpg")"
+  [ "$again" != 200 ] || fail "the upload URL worked twice"
+  echo "photo-upload: the same upload URL refused a second upload ($again)"
+
+  id="$(new_id)"
+  meal="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"healthyMeal\",\"meal\":{\"caption\":\"沙拉\",\"photos\":[{\"path\":\"$path\"}]}}"
+  call PUT "/check-ins/$id" "$me_token" "$meal"
+  expect 201
+  echo "photo-upload: saved healthyMeal $id with the photo (201)"
+
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
+  expect 200
+  view_url="$(jq -r --arg id "$id" '.checkIns[] | select(.id == $id) | .meal.photos[0].url' <<<"$body")"
+  [ -n "$view_url" ] && [ "$view_url" != null ] || fail "mate's list has no photo URL for $id: $body"
+  curl -sf "$view_url" -o "$tmp/viewed.jpg" || fail "the view URL didn't serve the photo"
+  cmp -s "$tmp/photo.jpg" "$tmp/viewed.jpg" || fail "the photo served differs from the one uploaded"
+  echo "photo-upload: mate downloaded the same bytes through the view URL"
+
+  call PUT "/check-ins/$(new_id)" "$mate_token" "$meal"
+  expect 403 PHOTO_NOT_YOURS
+  echo "photo-upload: mate using my photo refused (403 PHOTO_NOT_YOURS)"
+
+  call PUT "/check-ins/$(new_id)" "$me_token" "$meal"
+  expect 409 PHOTO_IN_USE
+  echo "photo-upload: the photo on a second check-in refused (409 PHOTO_IN_USE)"
+
+  call POST /photo-uploads "$me_token"
+  never="$(jq -r .path <<<"$body")"
+  call PUT "/check-ins/$(new_id)" "$me_token" "${meal//$path/$never}"
+  expect 400 PHOTO_NOT_UPLOADED
+  echo "photo-upload: a photo never uploaded refused (400 PHOTO_NOT_UPLOADED)"
+fi
+
+echo "api-journeys: ok ($journeys)"

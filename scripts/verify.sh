@@ -10,7 +10,17 @@ want() { [[ " $parts " == *" $1 "* ]]; }
 
 ran=0
 inconclusive=()
-if want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
+# Without a Swift toolchain (cloud sessions where swift.org is blocked) the Swift checks are
+# inconclusive and the rest still run, so the database and API checks aren't skipped. CI must
+# have Swift.
+if want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null && ! command -v swift >/dev/null; then
+  if [ "${CI:-}" = "true" ]; then
+    echo "swift is not installed on this CI runner" >&2
+    exit 1
+  fi
+  echo "==> swift: not installed, so swift format, swiftlint and swift test did not run"
+  inconclusive+=("swift")
+elif want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
   echo "==> swift format lint"
   swift format lint --strict --recursive ios
   # SwiftLint isn't part of the Swift toolchain; scripts/install-swiftlint.sh installs the
