@@ -335,8 +335,9 @@ if want squad-today; then
   expect 201
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" healthyMeal '"meal":{"caption":"沙拉"}')"
   expect 201
-  # Two minutes ago, before the runner's check-ins: the napper checked in first today.
-  earlier="$(node -p 'new Date(Date.now() - 120_000).toISOString()')"
+  # A minute before the runner's check-ins, however long the earlier journeys took: the napper
+  # checked in first today.
+  earlier="$(node -p "new Date(Date.parse('$now') - 60_000).toISOString()")"
   call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}' | sed "s/$now/$earlier/")"
   expect 201
   echo "squad-today: in $zone ($today) runner trained and ate a healthy meal, napper posted a disclaimer first, rester plans to rest"
