@@ -37,7 +37,7 @@ public protocol CheckInService: Sendable {
     func post(_ draft: CheckInDraft) async throws(CheckInError) -> TodayBoard
 }
 
-/// What the 免责声明 writer came back with.
+/// What the 请假条 writer came back with.
 public enum DisclaimerSuggestions: Hashable, Sendable {
     /// Up to three lines to pick from, each at most `Disclaimer.maxLength`.
     case drafts([String])
@@ -46,7 +46,7 @@ public enum DisclaimerSuggestions: Hashable, Sendable {
     case blocked
 }
 
-/// The voice the writer takes (spec section 10 A): the 免责声明 bubble's style tabs.
+/// The voice the writer takes (spec section 10 A): the 请假条 bubble's style tabs.
 public enum DisclaimerStyle: String, CaseIterable, Hashable, Sendable {
     /// 搞笑: deadpan exaggeration, like a news bulletin or match commentary.
     case funny
@@ -58,7 +58,7 @@ public enum DisclaimerStyle: String, CaseIterable, Hashable, Sendable {
     case stubborn
 }
 
-/// Turns the member's reason into 免责声明 lines in a style. The AI writer is an adapter behind
+/// Turns the member's reason into 请假条 lines in a style. The AI writer is an adapter behind
 /// this; a writer that fails returns dice lines instead, so the member never sees an error.
 public protocol DisclaimerWriter: Sendable {
     func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions

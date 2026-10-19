@@ -12,7 +12,7 @@ private func fiveDayPlan(for member: MemberID) throws -> WeeklyPlan {
 }
 
 @Test func squadProgressSumsTrainedDaysAgainstEveryonesPlan() throws {
-    // Tracy trains twice on Monday and once Tuesday, and takes a 免责 on Wednesday:
+    // Tracy trains twice on Monday and once Tuesday, and takes a 请假 on Wednesday:
     // two days. Coco trains Monday: one day.
     let tracyLog = CheckInLog(
         member: tracy,

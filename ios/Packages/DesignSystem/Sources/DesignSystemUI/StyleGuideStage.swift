@@ -83,7 +83,7 @@ private struct SquadBanner: View {
                     Text("今天 3 人练了", bundle: .module)
                         .typeStyle(TypeRamp.callout)
                         .foregroundStyle(Color(role: .textPrimary, in: theme))
-                    Text("1 人免责声明", bundle: .module)
+                    Text("1 人请假", bundle: .module)
                         .typeStyle(TypeRamp.caption)
                         .foregroundStyle(Color(role: .textSecondary, in: theme))
                 }

@@ -67,7 +67,7 @@ public final class TodayModel {
         (board?.myStatus.allowsDisclaimer ?? true) ? [] : [.disclaimer]
     }
 
-    /// The scene blurs behind an open burst. The 免责声明 bubble keeps it sharp: the member
+    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
     /// writes on the scene itself.
     var isSceneDimmed: Bool { isBurstOpen }
 
@@ -146,7 +146,7 @@ public final class TodayModel {
         }
         posts += 1
         payoff = Payoff(meaning: draft.meaning, line: line, cover: cover)
-        // A 免责声明 has no cheer; the sleep cap and sign come with their art.
+        // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.meaning != .disclaimer, let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona) {
             try? player?.play(cheer)
         }

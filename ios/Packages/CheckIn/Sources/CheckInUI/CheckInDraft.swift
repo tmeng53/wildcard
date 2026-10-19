@@ -40,7 +40,7 @@ public struct PostBody: Hashable, Sendable {
     }
 }
 
-/// A check-in as the compose step and the 免责声明 card hand it over. The service adds the
+/// A check-in as the compose step and the 请假条 card hand it over. The service adds the
 /// member, the day, the time and the squads.
 public enum CheckInDraft: Hashable, Sendable {
     case trained(Activity, PostBody)

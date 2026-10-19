@@ -79,7 +79,7 @@ public enum Meaning: String, CaseIterable, Sendable {
     case fresh
     /// 坦白放纵餐.
     case indulgence
-    /// 今日免责声明.
+    /// 今日请假条.
     case disclaimer
 
     public func accent(in theme: SceneTheme) -> AccentFamily {

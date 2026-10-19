@@ -1,7 +1,7 @@
 import Contracts
 import Foundation
 
-/// The dice: ready-made 免责声明 lines, from the spec's copy table. They stand in whenever the
+/// The dice: ready-made 请假条 lines, from the spec's copy table. They stand in whenever the
 /// AI writer is blocked, offline or missing, so the member never sees an error.
 public struct DiceDisclaimerWriter: DisclaimerWriter {
     /// String Catalog keys; the Chinese line is the key.

@@ -18,7 +18,7 @@ public struct TodayView: View {
 
     public var body: some View {
         let theme = model.board?.scene ?? .track
-        // The 免责声明 composer and the compose page make room for the keyboard. The scene sits in
+        // The 请假条 composer and the compose page make room for the keyboard. The scene sits in
         // the background, so it neither sizes this stack nor moves with the keyboard: as a layer
         // of it, the scene, taller than what the keyboard leaves, would push the composer and the
         // page up under the status bar.
@@ -63,17 +63,17 @@ public struct TodayView: View {
                         .padding(.horizontal, Space.gutter)
                         .padding(.top, Space.xs)
                         .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
-                        // Out of the way while the 免责声明 composer is up.
+                        // Out of the way while the 请假条 composer is up.
                         .opacity(model.step == .disclaimer ? 0 : 1)
                         .offset(y: model.step == .disclaimer ? -Space.s : 0)
                 }
                 Spacer(minLength: Space.l)
                 Stage(model: model)
                     .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
-                    // The 免责声明 composer shows the character above the keyboard instead.
+                    // The 请假条 composer shows the character above the keyboard instead.
                     .opacity(model.step == .disclaimer ? 0 : 1)
                 Spacer(minLength: Space.l)
-                // Holds the burst's place while the 免责声明 composer hides it.
+                // Holds the burst's place while the 请假条 composer hides it.
                 Color.clear.frame(height: Sizing.checkInHeight)
                     .padding(.bottom, Space.l)
             }

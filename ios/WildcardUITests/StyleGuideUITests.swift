@@ -29,7 +29,7 @@ final class StyleGuideUITests: XCTestCase {
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
-        let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "免责")]
+        let capsules = [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "请假")]
         for (meaning, label) in capsules {
             let capsule = app.buttons["styleguide.capsule.\(meaning)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: 2), "no \(label) capsule")

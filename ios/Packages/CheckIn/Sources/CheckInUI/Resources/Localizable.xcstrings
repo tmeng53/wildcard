@@ -1115,12 +1115,12 @@
         }
       }
     },
-    "今日免责声明": {
+    "今日请假条": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today's excuse"
+            "value": "Today's day-off note"
           }
         }
       }
@@ -1155,12 +1155,12 @@
         }
       }
     },
-    "发布免责声明": {
+    "发布请假条": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Post disclaimer"
+            "value": "Post day-off note"
           }
         }
       }

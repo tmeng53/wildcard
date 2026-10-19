@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class TodayUITests: XCTestCase {
     /// 练了 with three photos: pick a cover, write a caption, post, and land back on the scene
-    /// with the squad bar ticked up. Afterwards 免责 is greyed out for the day.
+    /// with the squad bar ticked up. Afterwards 请假 is greyed out for the day.
     func testTrainedCheckIn() {
         let app = launch(language: "zh-Hans", photos: 3)
         let card = topCard(in: app)
@@ -19,7 +19,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
-        for (meaning, label) in [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "免责")] {
+        for (meaning, label) in [("trained", "练了"), ("fresh", "健康餐"), ("indulgence", "放纵餐"), ("disclaimer", "请假")] {
             let capsule = app.buttons["today.capsule.\(meaning)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: 2), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
@@ -56,12 +56,12 @@ final class TodayUITests: XCTestCase {
         let disclaimer = app.buttons["today.capsule.disclaimer"]
         XCTAssertTrue(disclaimer.waitForExistence(timeout: 2))
         disclaimer.tap()
-        XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "免责 opened after training")
+        XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "请假 opened after training")
         settle()
         keepScreenshot(named: "17-today-disclaimer-unavailable")
     }
 
-    /// 免责: pick a line on offer, type a reason, pick a style for lines from it, take another
+    /// 请假: pick a line on offer, type a reason, pick a style for lines from it, take another
     /// line, bring the typed words back, post, and the line lands on the scene without moving
     /// the squad bar.
     func testDisclaimer() {
@@ -82,7 +82,7 @@ final class TodayUITests: XCTestCase {
         settle()
         // With the keyboard up, the excuse and 发布 stay in view.
         XCTAssertTrue(field.isHittable, "the excuse is hidden under the keyboard")
-        XCTAssertTrue(post.isHittable, "发布免责声明 is hidden under the keyboard")
+        XCTAssertTrue(post.isHittable, "发布请假条 is hidden under the keyboard")
         XCTAssertFalse(app.buttons["disclaimer.restore"].exists, "用回我写的 shows before anything replaced the words")
 
         // Picking a style only picks it; 编几句 writes lines from the typed words, and the first
@@ -119,9 +119,9 @@ final class TodayUITests: XCTestCase {
         post.tap()
 
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: 5), "no payoff bubble after the 免责声明")
+        XCTAssertTrue(bubble.waitForExistence(timeout: 5), "no payoff bubble after the 请假条")
         XCTAssertTrue(bubble.label.contains(line))
-        XCTAssertTrue(card.label.contains("14/22"), "a 免责声明 moved the squad bar")
+        XCTAssertTrue(card.label.contains("14/22"), "a 请假条 moved the squad bar")
         settle()
         keepScreenshot(named: "19-today-disclaimer-posted")
     }
@@ -192,14 +192,14 @@ final class TodayUITests: XCTestCase {
         return first
     }
 
-    /// Opens the 免责声明 page from the burst and returns its excuse field.
+    /// Opens the 请假条 page from the burst and returns its excuse field.
     private func openDisclaimer(in app: XCUIApplication) -> XCUIElement {
         app.buttons["today.checkin"].tap()
         let capsule = app.buttons["today.capsule.disclaimer"]
         XCTAssertTrue(capsule.waitForExistence(timeout: 2))
         capsule.tap()
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 page never opened")
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 请假条 page never opened")
         return field
     }
 

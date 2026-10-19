@@ -1,6 +1,6 @@
 /// 本周小队 x/y: how far the squad has come this week against everyone's own plan. The goal
 /// is the sum of every member's planned training days; done is the days each member trained,
-/// several workouts on one day counting once. 免责 days never count, days beyond someone's
+/// several workouts on one day counting once. 请假 days never count, days beyond someone's
 /// plan do, and the bar stops at full. Nobody's share is shown.
 public struct SquadWeekProgress: Hashable, Sendable {
     public let done: Int
@@ -31,6 +31,6 @@ public struct SquadWeekProgress: Hashable, Sendable {
 }
 
 extension TrainingStatus {
-    /// Whether a 今日免责声明 may still be posted today: not after a 练了, and one a day.
+    /// Whether a 今日请假条 may still be posted today: not after a 练了, and one a day.
     public var allowsDisclaimer: Bool { self == .notCheckedIn }
 }

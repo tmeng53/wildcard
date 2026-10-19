@@ -5,7 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 今日免责声明 (spec rev 186, section 1), laid out like an editorial page: the excuse itself is
+/// 今日请假条 (spec rev 186, section 1), laid out like an editorial page: the excuse itself is
 /// the hero, in large type in the middle of the page, and tapping it edits it. Above the button,
 /// the four styles as a row of text tabs, three lines on offer and 编几句, which asks the writer
 /// for lines from the member's own words in the picked style. Only that button asks the writer,
@@ -74,7 +74,7 @@ struct DisclaimerComposer: View {
                 Text(Date.now, format: .dateTime.month(.defaultDigits).day().weekday(.abbreviated))
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .textPrimary, in: theme))
-                Text("今日免责声明", bundle: .module)
+                Text("今日请假条", bundle: .module)
                     .typeStyle(TypeRamp.sectionLabel)
                     .foregroundStyle(Color(role: .textSecondary, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -350,7 +350,7 @@ private struct PostButton: View {
             Task { await model.post(.disclaimer(disclaimer)) }
         } label: {
             ZStack {
-                Text("发布免责声明", bundle: .module)
+                Text("发布请假条", bundle: .module)
                     .opacity(model.isSending ? 0 : 1)
                 if model.isSending { ProgressView().tint(Color(Palette.white)) }
             }

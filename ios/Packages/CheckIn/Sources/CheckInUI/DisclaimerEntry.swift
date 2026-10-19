@@ -1,6 +1,6 @@
 import Contracts
 
-/// What the 免责声明 bubble holds: the line being written, the member's own words, and whether
+/// What the 请假条 bubble holds: the line being written, the member's own words, and whether
 /// the writer refused to joke about them. A refused reason can't be posted, so teammates never
 /// see it; any edit or a new suggested line makes a line that can.
 struct DisclaimerEntry: Hashable, Sendable {

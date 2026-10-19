@@ -24,7 +24,7 @@ extension Meaning {
         case .trained: Text("练了", bundle: .module)
         case .fresh: Text("健康餐", bundle: .module)
         case .indulgence: Text("放纵餐", bundle: .module)
-        case .disclaimer: Text("免责", bundle: .module)
+        case .disclaimer: Text("请假", bundle: .module)
         }
     }
 
@@ -34,7 +34,7 @@ extension Meaning {
         case .trained: Text("练了", bundle: .module)
         case .fresh: Text("健康餐", bundle: .module)
         case .indulgence: Text("坦白放纵餐", bundle: .module)
-        case .disclaimer: Text("今日免责声明", bundle: .module)
+        case .disclaimer: Text("今日请假条", bundle: .module)
         }
     }
 

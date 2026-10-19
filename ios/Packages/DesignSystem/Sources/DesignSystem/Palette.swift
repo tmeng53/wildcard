@@ -67,7 +67,7 @@ public enum Palette {
     public static let honey = SRGBColor(red: 0xA0, green: 0x76, blue: 0x0E)
     public static let honeyWash = SRGBColor(red: 0xFB, green: 0xF1, blue: 0xDC)
     public static let honeyText = SRGBColor(red: 0x6E, green: 0x4F, blue: 0x07)
-    /// 今日免责声明.
+    /// 今日请假条.
     public static let lavender = SRGBColor(red: 0x90, green: 0x62, blue: 0xDE)
     public static let lavenderWash = SRGBColor(red: 0xF3, green: 0xEE, blue: 0xFC)
     public static let lavenderText = SRGBColor(red: 0x5B, green: 0x3A, blue: 0xA6)

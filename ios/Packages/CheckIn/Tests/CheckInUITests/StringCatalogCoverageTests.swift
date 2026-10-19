@@ -42,7 +42,7 @@ struct StringCatalogCoverageTests {
         #expect(try Self.english(for: "周三不练腿俱乐部") != nil)
     }
 
-    /// A dice line goes into the field as is, so in every language it must fit a 免责声明.
+    /// A dice line goes into the field as is, so in every language it must fit a 请假条.
     @Test func everyDiceLineFitsADisclaimer() throws {
         for line in DiceDisclaimerWriter.lines {
             #expect(line.count <= Disclaimer.maxLength, "\(line)")
