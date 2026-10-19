@@ -30,26 +30,18 @@ public struct EditorChoices: Hashable, Sendable {
 
     /// `{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hair": true}], "props": ["dumbbell"]}`
     public static func decode(_ data: Data) throws(AvatarError) -> EditorChoices {
-        let file: File
-        do {
-            let version = try JSONDecoder().decode(Versioned.self, from: data).version
-            guard version == currentVersion else { throw AvatarError.unsupportedVersion(version) }
-            file = try JSONDecoder().decode(File.self, from: data)
-        } catch let error as AvatarError {
-            throw error
-        } catch {
-            throw .malformedJSON("editor.json: \(error)")
-        }
+        let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
         return EditorChoices(
             species: file.species.map { Species(id: $0.id, bodies: $0.bodies, wearsHair: $0.hair ?? false) },
             props: file.props)
     }
 
-    private struct Versioned: Decodable {
-        let version: Int
-    }
-
     private struct File: Decodable {
+        static let shape = JSONShape.object([
+            "version": .value, "props": .value,
+            "species": .array(.object(["id": .value, "bodies": .value, "hair": .value])),
+        ])
+
         let species: [SpeciesFile]
         let props: [String]
     }

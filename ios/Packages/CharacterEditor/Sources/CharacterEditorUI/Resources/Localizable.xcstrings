@@ -521,16 +521,6 @@
         }
       }
     },
-    "篮球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Basketball"
-          }
-        }
-      }
-    },
     "紧身裤": {
       "localizations": {
         "en": {

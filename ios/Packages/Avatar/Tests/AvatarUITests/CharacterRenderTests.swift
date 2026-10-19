@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import AvatarArt
 import AvatarDomain
+import AvatarLooks
 import AvatarUI
 import CoreGraphics
 import Foundation
@@ -23,7 +24,7 @@ struct CharacterRenderTests {
         #expect(matches(image.color(atColumn: 10, row: 10), Self.white))
 
         // The bear has no prop: the same spot, past the hand, is empty.
-        let bear = try Frame(outfit: PlaceholderCharacter.bear)
+        let bear = try Frame(outfit: Looks.bear)
         #expect(matches(try bear.render(bear.figure.restPose).color(atColumn: 193, row: 255), Self.white))
     }
 

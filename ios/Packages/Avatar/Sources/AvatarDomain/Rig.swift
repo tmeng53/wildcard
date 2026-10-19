@@ -157,7 +157,7 @@ private struct Versioned: Decodable {
 /// The keys a JSON file may use. `Decodable` skips keys it doesn't know, so a misspelt
 /// optional key such as `"parnet"` would load as if it were absent; checking the keys
 /// first turns that into an error that names it.
-indirect enum JSONShape: Sendable {
+public indirect enum JSONShape: Sendable {
     case object([String: JSONShape])
     case array(JSONShape)
     /// A number, string or anything else `Decodable` checks on its own.
@@ -180,7 +180,7 @@ indirect enum JSONShape: Sendable {
 }
 
 /// Reads the version first, so a newer file says so instead of failing on a field it added.
-func decodeJSON<T: Decodable>(_ data: Data, version expected: Int, shape: JSONShape) throws(AvatarError) -> T {
+public func decodeJSON<T: Decodable>(_ data: Data, version expected: Int, shape: JSONShape) throws(AvatarError) -> T {
     do {
         let version = try JSONDecoder().decode(Versioned.self, from: data).version
         guard version == expected else { throw AvatarError.unsupportedVersion(version) }

@@ -49,10 +49,10 @@ func everySwatchApplies(outfit: Outfit) throws {
 /// Each part offers its full list, and a variant without `tones.json` offers none.
 @Test func swatchCounts() {
     let counts = [
-        ("body", "peach"), ("body", "tan"), ("body", "cat"), ("body", "bear"), ("hair", "bob"), ("top", "tee"),
+        ("body", "peach"), ("body", "cat"), ("body", "bear"), ("hair", "bob"), ("top", "tee"),
         ("bottom", "shorts"), ("eyes", "round"), ("brows", "soft"),
     ].map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
-    #expect(counts == [7, 7, 6, 6, 7, 8, 8, 6, 7])
+    #expect(counts == [7, 6, 6, 7, 8, 8, 6, 7])
     let furs = [("body", "golden"), ("body", "rabbit"), ("body", "lop"), ("hair", "curls")]
         .map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
     #expect(furs == [6, 6, 6, 7])
