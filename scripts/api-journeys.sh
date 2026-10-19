@@ -323,6 +323,15 @@ if want squad-today; then
     call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
     expect 200
   done
+  # The runner picks a catchphrase (口头禅); the napper's are refused, so theirs stays unset.
+  call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \"}"
+  expect 200
+  [ "$(jq -r .catchphrase <<<"$body")" = '冲就完了🔥' ] || fail "the catchphrase should be saved trimmed: $body"
+  call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"今天也是冲冲冲的一天!\"}"
+  expect 400 REQUEST_INVALID
+  call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"看abc.com\"}"
+  expect 400 REQUEST_INVALID
+  echo "squad-today: runner's catchphrase 冲就完了🔥 saved; napper's 11 characters and link refused (400)"
   squad_of "$runner_token" "$napper_token" "$rester_token"
   plan_of() { jq -cn --arg kind "$1" '{version: 1, days: [range(7) | {kind: $kind}]}'; }
   for token in "$runner_token" "$napper_token"; do
@@ -352,6 +361,9 @@ if want squad-today; then
     '[{"trained":1,"disclaimer":1,"resting":1,"everyoneTrained":false},0,7,0,{"trainedDays":1,"plannedDays":14}]' ] ||
     fail "counts should be 1 trained, 1 disclaimer, 1 resting; napper 0/7; squad 1/14: $body"
   echo "squad-today: napper sees self first, then runner, then rester; 1 trained, 1 disclaimer, 1 resting; 本周 0/7, squad 1/14"
+  [ "$(jq -c '[.members[] | .catchphrase]' <<<"$body")" = '[null,"冲就完了🔥",null]' ] ||
+    fail "squadmates should see the runner's catchphrase, and null for the others: $body"
+  echo "squad-today: napper sees runner's catchphrase 冲就完了🔥, null for self and rester"
 
   call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
@@ -445,7 +457,7 @@ if want account; then
   expect 200
   call GET /me "$leaver_token"
   expect 200
-  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto"}' ] || fail "the profile should be saved: $body"
+  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto","catchphrase":null}' ] || fail "the profile should be saved: $body"
   echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved"
 
   squad_of "$leaver_token" "$mate_token"

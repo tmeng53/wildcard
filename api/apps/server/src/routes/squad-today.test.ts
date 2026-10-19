@@ -97,12 +97,12 @@ const isoTime: unknown = expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\
 /** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
 const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
 
-async function member(timeZone = 'UTC') {
+async function member(timeZone = 'UTC', catchphrase: string | null = null) {
   const signedUp = await signUp();
   const saved = await call('PUT', {
     path: '/me/profile',
     token: signedUp.token,
-    body: { version: 1, timeZone },
+    body: { version: 1, timeZone, catchphrase },
   });
   expect(saved.status).toBe(200);
   return signedUp;
@@ -181,6 +181,22 @@ describe('GET /squads/{squadId}/today', () => {
     });
     expect(body).not.toHaveProperty('members.0.latestMeal');
     expect(body).not.toHaveProperty('members.2.firstCheckInAt');
+  });
+
+  it('shows squadmates each member’s catchphrase, and null for one who hasn’t picked one', async () => {
+    const [shouter, quiet] = [await member('UTC', '冲就完了🔥'), await member()];
+    const squad = await squadOf(shouter, quiet);
+    const { status, body } = await call('GET', {
+      path: `/squads/${squad}/today`,
+      token: quiet.token,
+    });
+    expect(status).toBe(200);
+    expect(body).toMatchObject({
+      members: [
+        { member: shouter.userId, catchphrase: '冲就完了🔥' },
+        { member: quiet.userId, catchphrase: null },
+      ],
+    });
   });
 
   it('answers only the squad’s members', async () => {

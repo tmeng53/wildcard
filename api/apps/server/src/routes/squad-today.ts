@@ -1,5 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { LocalDay, MemberId, SquadId, type CheckIns } from '@wildcard/check-ins';
+import type { Members } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -10,6 +11,14 @@ const count = (description: string) => z.int().min(0).meta({ description });
 
 const MemberToday = z.strictObject({
   member: z.uuid(),
+  catchphrase: z
+    .string()
+    .nullable()
+    .meta({
+      description:
+        'What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). ' +
+        'Null when they haven’t picked one: the app uses their persona’s own line.',
+    }),
   day: LocalDay.meta({
     description:
       'The member’s own today: their local date in their time zone, where anything before 3am ' +
@@ -84,6 +93,7 @@ export const SquadToday = z
 export function squadToday(deps: {
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
+  readonly members: Members;
 }) {
   const route = createRoute({
     method: 'get',
@@ -115,12 +125,17 @@ export function squadToday(deps: {
       viewer: MemberId.parse(c.var.caller.userId),
       squad,
     });
+    // Only after squadToday, which refuses a viewer outside the squad.
+    const catchphrases = await deps.members.catchphrasesOf(
+      today.members.map(({ member }) => member),
+    );
     return c.json(
       {
         version: 1 as const,
         squad,
         members: today.members.map(({ latestMeal, firstCheckInAt, ...member }) => ({
           ...member,
+          catchphrase: catchphrases.get(member.member) ?? null,
           ...(latestMeal === undefined ? {} : { latestMeal }),
           ...(firstCheckInAt === undefined ? {} : { firstCheckInAt: firstCheckInAt.toISOString() }),
         })),

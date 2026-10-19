@@ -824,7 +824,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid profile, or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
+            /// Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
             ///
             /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)/responses/400`.
             ///

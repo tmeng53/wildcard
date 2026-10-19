@@ -163,30 +163,83 @@ describe('GET /me', () => {
 describe('PUT /me/profile', () => {
   it('creates the profile on the first save, and GET /me returns it', async () => {
     const { token, userId } = await signUp();
-    const profile = { version: 1, timeZone: 'America/Los_Angeles' };
+    const profile = { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null };
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: 'America/Los_Angeles' } },
+      { version: 1, userId, profile: { timeZone: 'America/Los_Angeles', catchphrase: null } },
     ]);
   });
 
   it('replaces the profile on a later save, and a repeat changes nothing', async () => {
     const { token, userId } = await signUp();
-    await putProfile(token, { version: 1, timeZone: 'America/Los_Angeles' });
-    const moved = { version: 1, timeZone: 'America/Toronto' };
+    await putProfile(token, { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null });
+    const moved = { version: 1, timeZone: 'America/Toronto', catchphrase: null };
     expect(await putProfile(token, moved)).toStrictEqual([200, moved]);
     expect(await putProfile(token, moved)).toStrictEqual([200, moved]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: 'America/Toronto' } },
+      { version: 1, userId, profile: { timeZone: 'America/Toronto', catchphrase: null } },
+    ]);
+  });
+
+  it('saves a catchphrase trimmed, counting an emoji as one character, and clears it with null', async () => {
+    const { token, userId } = await signUp();
+    const zone = 'America/Los_Angeles';
+    // 10 characters: 9 Chinese characters and an emoji with a skin tone.
+    const shout = '今天也冲冲冲的一天👍🏽';
+    expect(
+      await putProfile(token, { version: 1, timeZone: zone, catchphrase: `  ${shout}\n` }),
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: shout }]);
+    expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
+      200,
+      { version: 1, userId, profile: { timeZone: zone, catchphrase: shout } },
+    ]);
+    // The body is the whole profile, so leaving the catchphrase out clears it too.
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: shout });
+    expect(await putProfile(token, { version: 1, timeZone: zone })).toStrictEqual([
+      200,
+      { version: 1, timeZone: zone, catchphrase: null },
+    ]);
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: shout });
+    expect(
+      await putProfile(token, { version: 1, timeZone: zone, catchphrase: null }),
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: null }]);
+    expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
+      200,
+      { version: 1, userId, profile: { timeZone: zone, catchphrase: null } },
+    ]);
+  });
+
+  it.each([
+    ['over 10 characters', '今天也是冲冲冲的一天!'],
+    ['on two lines', '冲\n冲'],
+    ['that is blank', ' \u3000 '],
+    ['that is empty', ''],
+    ['with a link', '看abc.com'],
+    ['with a link written with a full-width dot', 'abc。com'],
+    ['with a web address', 'https://a'],
+  ])('refuses a catchphrase %s', async (_case, catchphrase) => {
+    const { token } = await signUp();
+    const [status, problemBody] = await putProfile(token, {
+      version: 1,
+      timeZone: 'America/Los_Angeles',
+      catchphrase,
+    });
+    expect([status, z.object({ reason: z.string() }).parse(problemBody).reason]).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
     ]);
   });
 
   it('keeps each member’s profile to themselves', async () => {
     const tracy = await signUp();
     const friend = await signUp();
-    await putProfile(tracy.token, { version: 1, timeZone: 'America/Los_Angeles' });
+    await putProfile(tracy.token, {
+      version: 1,
+      timeZone: 'America/Los_Angeles',
+      catchphrase: null,
+    });
     expect(await getMe({ authorization: `Bearer ${friend.token}` })).toStrictEqual([
       200,
       { version: 1, userId: friend.userId, profile: null },
@@ -199,7 +252,7 @@ describe('PUT /me/profile', () => {
     ['with digits in its first part', 'EST5EDT'],
   ])('accepts a zone iOS may report %s', async (_case, timeZone) => {
     const { token } = await signUp();
-    const profile = { version: 1, timeZone };
+    const profile = { version: 1, timeZone, catchphrase: null };
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
   });
 
@@ -210,7 +263,7 @@ describe('PUT /me/profile', () => {
     ['that is a placeholder', 'Factory'],
   ])('refuses a zone %s', async (...[, timeZone]) => {
     const { token } = await signUp();
-    expect(await putProfile(token, { version: 1, timeZone })).toStrictEqual([
+    expect(await putProfile(token, { version: 1, timeZone, catchphrase: null })).toStrictEqual([
       400,
       {
         version: 1,
@@ -225,9 +278,12 @@ describe('PUT /me/profile', () => {
   });
 
   it.each([
-    ['an offset instead of a name', { version: 1, timeZone: '-08:00' }],
-    ['no version', { timeZone: 'America/Los_Angeles' }],
-    ['an unknown field', { version: 1, timeZone: 'America/Los_Angeles', weight: 60 }],
+    ['an offset instead of a name', { version: 1, timeZone: '-08:00', catchphrase: null }],
+    ['no version', { timeZone: 'America/Los_Angeles', catchphrase: null }],
+    [
+      'an unknown field',
+      { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null, weight: 60 },
+    ],
   ])('refuses %s', async (_case, body) => {
     const { token } = await signUp();
     const [status, problemBody] = await putProfile(token, body);
@@ -256,7 +312,7 @@ describe('PUT /me/profile', () => {
       await send('/me/profile', {
         method: 'PUT',
         headers: { authorization: `Bearer ${token}`, 'content-type': 'text/plain' },
-        body: JSON.stringify({ version: 1, timeZone: 'America/Los_Angeles' }),
+        body: JSON.stringify({ version: 1, timeZone: 'America/Los_Angeles', catchphrase: null }),
       }),
     ).toStrictEqual([
       415,
@@ -277,7 +333,7 @@ describe('PUT /me/profile', () => {
       await send('/me/profile', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ version: 1, timeZone: 'America/Los_Angeles' }),
+        body: JSON.stringify({ version: 1, timeZone: 'America/Los_Angeles', catchphrase: null }),
       }),
     ).toStrictEqual([401, problem('AUTH_TOKEN_MISSING', 'Sign in to do this.')]);
   });

@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { MemberId, TimeZone, type Members } from '@wildcard/members';
+import { Catchphrase, MemberId, TimeZone, type Members } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
 import { deleteAccount, type DeleteAccountDependencies } from '../flows/delete-account.js';
@@ -13,6 +13,15 @@ const profileFields = {
       'The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.',
     example: 'America/Los_Angeles',
   }),
+  catchphrase: Catchphrase.nullable()
+    .default(null)
+    .meta({
+      description:
+        'What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to ' +
+        '10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; ' +
+        'the app then uses their persona’s own line. Squadmates read it on the squad’s today.',
+      example: '冲就完了🔥',
+    }),
 };
 
 /** The member's profile, as `PUT /me/profile` takes it and returns it. */
@@ -92,7 +101,10 @@ export function me(
     },
     responses: {
       200: { description: 'Saved', content: { 'application/json': { schema: ProfileBody } } },
-      400: problem('Not a valid profile, or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)'),
+      400: problem(
+        'Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a ' +
+          'time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)',
+      ),
       ...jsonBodyFailures,
       ...unauthorized,
     },
@@ -142,10 +154,10 @@ export function me(
       return c.json({ version: 1, userId, profile: profile ?? null } as const, 200);
     })
     .openapi(putProfile, async (c) => {
-      const { timeZone } = c.req.valid('json');
+      const { timeZone, catchphrase } = c.req.valid('json');
       const saved = await deps.members.saveProfile({
         member: MemberId.parse(c.var.caller.userId),
-        profile: { timeZone },
+        profile: { timeZone, catchphrase },
       });
       return c.json({ version: 1, ...saved } as const, 200);
     })

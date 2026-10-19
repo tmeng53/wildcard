@@ -38,6 +38,14 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
     #expect(try Caption("  雨中五公里 ").text == "雨中五公里")
 }
 
+@Test func catchphraseIsOneLineOfUpToTenCharacters() throws {
+    #expect(try Catchphrase("今天也冲冲冲的一天👍🏽").text.count == 10)
+    #expect(throws: ContractsError.catchphraseLength(11)) { try Catchphrase(String(repeating: "冲", count: 11)) }
+    #expect(throws: ContractsError.catchphraseLength(0)) { try Catchphrase(" ") }
+    #expect(throws: ContractsError.multilineCatchphrase) { try Catchphrase("冲\n冲") }
+    #expect(try Catchphrase("  冲就完了🔥 ").text == "冲就完了🔥")
+}
+
 @Test func customSportNameMustFitOnOneLine() throws {
     #expect(throws: ContractsError.customSportLength(21)) { try CustomSport(String(repeating: "练", count: 21)) }
     #expect(throws: ContractsError.multilineCustomSport) { try CustomSport("飞盘\n高尔夫") }
