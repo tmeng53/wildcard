@@ -1,4 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "packages/errors" }, { "path": "apps/server" }]
+  "references": [
+    { "path": "packages/errors" },
+    { "path": "packages/check-ins" },
+    { "path": "apps/server" }
+  ]
 }

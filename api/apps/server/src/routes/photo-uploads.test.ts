@@ -1,3 +1,4 @@
+import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -22,6 +23,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       supabaseUrl: storageUrl,
       secretKey: config.supabaseSecretKey,
     }),
+    checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
     log: createLog(() => undefined),
   });
   try {

@@ -11,6 +11,7 @@
   "dependencies": {
     "@hono/node-server": "2.1.5",
     "@hono/zod-openapi": "1.6.3",
+    "@wildcard/check-ins": "workspace:*",
     "@wildcard/errors": "workspace:*",
     "hono": "4.13.13",
     "kysely": "0.29.7",

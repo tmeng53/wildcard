@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 
+import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
@@ -13,6 +14,12 @@ describe('openapi.json', () => {
     const app = createApp({
       db,
       verifyToken: () => Promise.reject(new Error('unused')),
+      checkIns: createCheckIns({
+        store: createPostgresCheckInStore(db),
+        clock: () => {
+          throw new Error('unused');
+        },
+      }),
       photos: {
         createUploadUrl: () => Promise.reject(new Error('unused')),
         exists: () => Promise.reject(new Error('unused')),

@@ -2,6 +2,8 @@
 // the committed file and the routes disagree.
 import { writeFileSync } from 'node:fs';
 
+import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+
 import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
 import { createLog } from '../src/log.js';
@@ -13,6 +15,12 @@ const unused = (): never => {
 // Never connected: the pool opens a connection only for a query.
 const db = createDatabase('postgres://localhost/unused');
 const photos = { createUploadUrl: unused, exists: unused, createViewUrl: unused };
-const app = createApp({ db, verifyToken: unused, photos, log: createLog(unused) });
+const app = createApp({
+  db,
+  verifyToken: unused,
+  photos,
+  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: unused }),
+  log: createLog(unused),
+});
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));
 await db.destroy();

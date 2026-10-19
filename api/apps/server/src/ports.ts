@@ -1,3 +1,4 @@
+import type { CheckInTables } from '@wildcard/check-ins';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -21,10 +22,10 @@ export interface Caller {
 export type VerifyToken = (token: string) => Promise<Caller>;
 
 /**
- * The tables the API reads and writes: none until the first endpoint that stores data. Their
- * types will be generated from the migrations then, not written by hand.
+ * The tables the API reads and writes, each module's generated from the migrations
+ * (`pnpm db-types`), never written by hand.
  */
-export type Tables = Record<string, never>;
+export type Tables = CheckInTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

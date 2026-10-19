@@ -5,6 +5,7 @@ import {
   AuthTokenInvalidError,
   AuthTokenMissingError,
   DatabaseUnavailableError,
+  RequestInvalidError,
   RouteNotFoundError,
 } from './errors.js';
 
@@ -17,6 +18,7 @@ describe('server errors', () => {
         new AuthTokenInvalidError(),
         new AuthKeysUnavailableError(),
         new DatabaseUnavailableError(),
+        new RequestInvalidError('bad'),
         new RouteNotFoundError('GET', '/nope'),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
@@ -24,6 +26,7 @@ describe('server errors', () => {
       ['AuthTokenInvalidError', 'AUTH_TOKEN_INVALID', 'UNAUTHENTICATED'],
       ['AuthKeysUnavailableError', 'AUTH_KEYS_UNAVAILABLE', 'UNAVAILABLE'],
       ['DatabaseUnavailableError', 'DATABASE_UNAVAILABLE', 'UNAVAILABLE'],
+      ['RequestInvalidError', 'REQUEST_INVALID', 'INVALID_ARGUMENT'],
       ['RouteNotFoundError', 'ROUTE_NOT_FOUND', 'NOT_FOUND'],
     ]);
   });

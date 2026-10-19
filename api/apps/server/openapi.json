@@ -109,6 +109,658 @@
         ],
         "additionalProperties": false
       },
+      "CheckIn": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "member": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The member who made it."
+              },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s local day it counts for."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the member made it, in UTC with milliseconds.",
+                "example": "2026-10-18T14:03:00.000Z"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "trained"
+                ]
+              },
+              "training": {
+                "type": "object",
+                "properties": {
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "run",
+                      "walk",
+                      "hike",
+                      "trailRun",
+                      "strength",
+                      "crossfit",
+                      "hyrox",
+                      "kettlebell",
+                      "spin",
+                      "elliptical",
+                      "rowing",
+                      "hiit",
+                      "jumpRope",
+                      "aerobics",
+                      "yoga",
+                      "matPilates",
+                      "reformerPilates",
+                      "barre",
+                      "stretching",
+                      "swim",
+                      "surf",
+                      "paddleboard",
+                      "kayak",
+                      "tennis",
+                      "badminton",
+                      "pickleball",
+                      "tableTennis",
+                      "squash",
+                      "basketball",
+                      "soccer",
+                      "volleyball",
+                      "golf",
+                      "baseballSoftball",
+                      "ultimate",
+                      "roadCycling",
+                      "mountainBiking",
+                      "climb",
+                      "ski",
+                      "snowboard",
+                      "skate",
+                      "boxing",
+                      "kickboxing",
+                      "jiuJitsu",
+                      "martialArts",
+                      "dance",
+                      "dogWalk",
+                      "walkCommute",
+                      "bikeCommute",
+                      "deepClean",
+                      "moving",
+                      "strollerWalk",
+                      "gardening",
+                      "custom"
+                    ]
+                  },
+                  "customSport": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
+                  },
+                  "caption": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  }
+                },
+                "required": [
+                  "sport"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "member",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "training"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "member": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The member who made it."
+              },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s local day it counts for."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the member made it, in UTC with milliseconds.",
+                "example": "2026-10-18T14:03:00.000Z"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "healthyMeal"
+                ]
+              },
+              "meal": {
+                "type": "object",
+                "properties": {
+                  "caption": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "member",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "meal"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "member": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The member who made it."
+              },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s local day it counts for."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the member made it, in UTC with milliseconds.",
+                "example": "2026-10-18T14:03:00.000Z"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cheatMeal"
+                ]
+              },
+              "meal": {
+                "type": "object",
+                "properties": {
+                  "caption": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "member",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "meal"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "member": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The member who made it."
+              },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s local day it counts for."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the member made it, in UTC with milliseconds.",
+                "example": "2026-10-18T14:03:00.000Z"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "disclaimer"
+                ]
+              },
+              "disclaimer": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 40 characters as people see them; may span lines."
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "member",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "disclaimer"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "CheckInDraft": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "day": {
+                "type": "string",
+                "format": "date"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "minItems": 1,
+                "maxItems": 3
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "trained"
+                ]
+              },
+              "training": {
+                "type": "object",
+                "properties": {
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "run",
+                      "walk",
+                      "hike",
+                      "trailRun",
+                      "strength",
+                      "crossfit",
+                      "hyrox",
+                      "kettlebell",
+                      "spin",
+                      "elliptical",
+                      "rowing",
+                      "hiit",
+                      "jumpRope",
+                      "aerobics",
+                      "yoga",
+                      "matPilates",
+                      "reformerPilates",
+                      "barre",
+                      "stretching",
+                      "swim",
+                      "surf",
+                      "paddleboard",
+                      "kayak",
+                      "tennis",
+                      "badminton",
+                      "pickleball",
+                      "tableTennis",
+                      "squash",
+                      "basketball",
+                      "soccer",
+                      "volleyball",
+                      "golf",
+                      "baseballSoftball",
+                      "ultimate",
+                      "roadCycling",
+                      "mountainBiking",
+                      "climb",
+                      "ski",
+                      "snowboard",
+                      "skate",
+                      "boxing",
+                      "kickboxing",
+                      "jiuJitsu",
+                      "martialArts",
+                      "dance",
+                      "dogWalk",
+                      "walkCommute",
+                      "bikeCommute",
+                      "deepClean",
+                      "moving",
+                      "strollerWalk",
+                      "gardening",
+                      "custom"
+                    ]
+                  },
+                  "customSport": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 20 characters as people see them, on one line."
+                  },
+                  "caption": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  }
+                },
+                "required": [
+                  "sport"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "training"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "day": {
+                "type": "string",
+                "format": "date"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "minItems": 1,
+                "maxItems": 3
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "healthyMeal"
+                ]
+              },
+              "meal": {
+                "type": "object",
+                "properties": {
+                  "caption": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "meal"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "day": {
+                "type": "string",
+                "format": "date"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "minItems": 1,
+                "maxItems": 3
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cheatMeal"
+                ]
+              },
+              "meal": {
+                "type": "object",
+                "properties": {
+                  "caption": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 60 characters as people see them, on one line."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "meal"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "day": {
+                "type": "string",
+                "format": "date"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "audience": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "minItems": 1,
+                "maxItems": 3
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "disclaimer"
+                ]
+              },
+              "disclaimer": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Trimmed, then 1 to 40 characters as people see them; may span lines."
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "day",
+              "createdAt",
+              "audience",
+              "kind",
+              "disclaimer"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "CheckInList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "checkIns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckIn"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "checkIns"
+        ],
+        "additionalProperties": false
+      },
       "PhotoUpload": {
         "type": "object",
         "properties": {
@@ -184,6 +836,278 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{id}": {
+      "put": {
+        "operationId": "saveCheckIn",
+        "summary": "Save a check-in",
+        "description": "The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already saved: this was a retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckIn"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, or counted for the wrong day",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sent to a squad the member isn’t in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The id holds a different check-in, or today’s disclaimer is already posted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/check-ins": {
+      "get": {
+        "operationId": "listSquadCheckIns",
+        "summary": "A squad’s check-ins for a range of days",
+        "description": "Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The check-ins",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid range of days (at most 31)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/check-ins": {
+      "get": {
+        "operationId": "listMyCheckIns",
+        "summary": "The signed-in member’s check-ins for a range of days",
+        "description": "Newest day first, each with its whole audience.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The check-ins",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid range of days (at most 31)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
