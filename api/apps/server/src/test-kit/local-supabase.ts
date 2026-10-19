@@ -25,6 +25,15 @@ export async function signUp() {
   return { token: body.access_token, userId: body.user.id };
 }
 
+/** Signs a member's session out through local Supabase Auth, as the app's sign-out does. */
+export async function signOut(token: string) {
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/logout`, {
+    method: 'POST',
+    headers: { apikey: publishableKey, authorization: `Bearer ${token}` },
+  });
+  if (response.status !== 204) throw new Error(`logout answered ${String(response.status)}`);
+}
+
 /** The admin MCP server's settings on local Supabase, with these tools. */
 export function adminOn(db: Database, tools: readonly AdminTool[] = []) {
   return {

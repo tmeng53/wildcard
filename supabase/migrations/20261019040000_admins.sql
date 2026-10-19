@@ -9,10 +9,10 @@ create table public.admins (
 
 -- One row per change an admin made: who, when, and what, as stored JSON with its shape's
 -- version at the top: {"version": 1, "tool": ..., "arguments": {...}}. Kept when the admin
--- leaves the list, so the history stays whole.
+-- leaves the list, and when they delete their account (every member can), with no one named.
 create table public.admin_actions (
   id bigint primary key generated always as identity,
-  admin_id uuid not null references auth.users (id) on delete restrict,
+  admin_id uuid references auth.users (id) on delete set null,
   at timestamptz not null,
   action jsonb not null check (coalesce(jsonb_typeof(action -> 'version') = 'number', false))
 );

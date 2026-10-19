@@ -8,6 +8,9 @@
       "path": "packages/admins"
     },
     {
+      "path": "packages/typed-text"
+    },
+    {
       "path": "packages/check-ins"
     },
     {
@@ -15,6 +18,9 @@
     },
     {
       "path": "packages/memes"
+    },
+    {
+      "path": "packages/squads"
     },
     {
       "path": "apps/server"

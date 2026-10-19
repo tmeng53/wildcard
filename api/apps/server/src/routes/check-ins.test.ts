@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { sql } from 'kysely';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
-import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
@@ -22,28 +27,28 @@ const photos = createSupabasePhotoStorage({
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  accounts: createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  revokeAppleSignIn: undefined,
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,
+    calendarOf: () => Promise.resolve(undefined),
+    clock: () => new Date(),
+  }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
+  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(() => undefined),
   admin: adminOn(db),
 });
-
-/** A squad with these members. Squads have no routes yet, so the test writes it directly. */
-async function squadOf(...members: readonly { readonly userId: string }[]) {
-  const id = randomUUID();
-  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
-  for (const member of members) {
-    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member.userId})`.execute(
-      db,
-    );
-  }
-  return id;
-}
 
 async function call({
   method,
@@ -68,6 +73,29 @@ async function call({
     type: response.headers.get('content-type'),
     body: await response.json(),
   };
+}
+
+/** A squad the first member creates and the others join by its invite code, as the app does. */
+async function squadOf(
+  creator: { readonly token: string },
+  ...others: readonly { readonly token: string }[]
+) {
+  const created = await call({
+    method: 'PUT',
+    path: `/squads/${randomUUID()}`,
+    token: creator.token,
+    body: { version: 1, name: 'squad' },
+  });
+  const { id, inviteCode } = z.object({ id: z.uuid(), inviteCode: z.string() }).parse(created.body);
+  for (const member of others) {
+    const joined = await call({
+      method: 'POST',
+      path: `/squad-invites/${inviteCode}/accept`,
+      token: member.token,
+    });
+    expect(joined.status).toBe(201);
+  }
+  return id;
 }
 
 /** A photo the member uploads through `POST /photo-uploads`, as the app does; its path. */

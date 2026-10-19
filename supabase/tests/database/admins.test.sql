@@ -21,9 +21,11 @@ select throws_ok(
   $$insert into public.admins (member_id) values ('c0000000-0000-0000-0000-000000000003')$$,
   '23503', null, 'an admin is a real member'
 );
-select throws_ok(
-  $$delete from auth.users where id = 'a0000000-0000-0000-0000-000000000001'$$,
-  '23503', null, 'an admin with logged changes can''t be deleted, so the history stays whole'
+delete from auth.users where id = 'a0000000-0000-0000-0000-000000000001';
+select results_eq(
+  $$select admin_id, action ->> 'tool' from public.admin_actions$$,
+  $$values (null::uuid, 'turn_off_meme')$$,
+  'an admin can delete their account; their changes stay logged with no one named'
 );
 insert into public.admins (member_id) values ('b0000000-0000-0000-0000-000000000002');
 delete from auth.users where id = 'b0000000-0000-0000-0000-000000000002';

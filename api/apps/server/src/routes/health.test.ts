@@ -1,5 +1,11 @@
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -11,18 +17,36 @@ import { adminOn } from '../test-kit/local-supabase.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
-const photos = { createUploadUrl: notCalled, exists: notCalled, createViewUrls: notCalled };
+const photos = {
+  createUploadUrl: notCalled,
+  exists: notCalled,
+  createViewUrls: notCalled,
+  deleteAllOf: notCalled,
+};
 const checkInsOn = (db: Database) =>
-  createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: () => new Date() });
+  createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: () => Promise.resolve(undefined),
+    clock: () => new Date(),
+  });
 
 async function getHealth(db: Database) {
   const lines: string[] = [];
   const app = createApp({
     db,
     verifyToken: notCalled,
+    accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
+    revokeAppleSignIn: undefined,
     checkIns: checkInsOn(db),
     photos,
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: () => Promise.resolve(undefined),
+      clock: () => new Date(),
+    }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog((line) => lines.push(line)),
     admin: adminOn(db),
   });
@@ -86,9 +110,17 @@ describe('an unknown route', () => {
     const app = createApp({
       db,
       verifyToken: notCalled,
+      accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
+      revokeAppleSignIn: undefined,
       checkIns: checkInsOn(db),
       photos,
+      weeklyPlans: createWeeklyPlans({
+        store: createPostgresWeeklyPlanStore(db),
+        calendarOf: () => Promise.resolve(undefined),
+        clock: () => new Date(),
+      }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
+      squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
       admin: adminOn(db),
     });

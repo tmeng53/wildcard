@@ -27,7 +27,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface AdminActions {
   action: Json;
-  admin_id: string;
+  admin_id: string | null;
   at: Timestamp;
   id: Generated<Int8>;
 }

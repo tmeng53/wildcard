@@ -12,6 +12,7 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface Profiles {
+  created_at: Generated<Timestamp>;
   member_id: string;
   time_zone: string;
   updated_at: Generated<Timestamp>;

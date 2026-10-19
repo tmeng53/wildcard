@@ -2,7 +2,7 @@
 
 **Status: Ready** since the check-in API (#25), driven over HTTP by `scripts/api-journeys.sh check-in`; CI's `supabase` job runs it. The app's screen for it is in #26 and isn't covered here.
 
-A member saves a 练了 check-in to their squad, a squad-mate posts today's 免责声明, and both read the squad back. The app makes each check-in's id, so a retry answers with the saved one. Stand-ins: members sign up with email and password (the app will use Sign in with Apple, #29), and the squad is written straight into the database because squads have no routes yet.
+A member saves a 练了 check-in to their squad, a squad-mate posts today's 免责声明, and both read the squad back. The app makes each check-in's id, so a retry answers with the saved one. Stand-in: members sign up with email and password (the app uses Sign in with Apple). The squad is made through the squad routes (`squad-api.md`).
 
 Code: `api/apps/server/src/routes/check-ins.ts`, `api/packages/check-ins`.
 
@@ -12,7 +12,7 @@ Code: `api/apps/server/src/routes/check-ins.ts`, `api/packages/check-ins`.
 scripts/api-journeys.sh check-in 2>&1 | tee /tmp/verify-wildcard/<short sha>/check-in-api.log
 ```
 
-It builds the API, starts the real server (`api/apps/server/dist/src/main.js`) on a free port against local Supabase, signs up three members (me, a squad-mate, an outsider) and makes one squad of me and the mate. It needs `supabase start`, pnpm, curl, jq and psql, and stops the server when it ends.
+It builds the API, starts the real server (`api/apps/server/dist/src/main.js`) on a free port against local Supabase, signs up three members (me, a squad-mate, an outsider); I create a squad and the mate joins it by its invite code. It needs `supabase start`, pnpm, curl, jq and psql, and stops the server when it ends.
 
 ## Expected output
 

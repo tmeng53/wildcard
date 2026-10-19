@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { PhotoPath } from '../ports.js';
+import { PhotoPath, UserId } from '../ports.js';
 import { config } from '../test-kit/local-supabase.js';
 import { createSupabasePhotoStorage } from './supabase-storage.js';
 
@@ -80,5 +80,37 @@ describe('createSupabasePhotoStorage', () => {
     });
     expect(await reasonOf(wrong.exists(newPath()))).toBe('PHOTO_STORAGE_UNAVAILABLE');
     expect(await reasonOf(wrong.createUploadUrl(newPath()))).toBe('PHOTO_STORAGE_UNAVAILABLE');
+  });
+
+  it('deletes every photo in one member’s folder and no one else’s, and a repeat is fine', async () => {
+    const member = randomUUID();
+    const other = randomUUID();
+    const upload = async (folder: string) => {
+      const path = PhotoPath.parse(`${folder}/${randomUUID()}`);
+      await fetch(await photos.createUploadUrl(path), {
+        method: 'PUT',
+        headers: { 'content-type': 'image/webp' },
+        body: 'RIFF',
+      });
+      return path;
+    };
+    const mine = [await upload(member), await upload(member), await upload(member)];
+    const theirs = await upload(other);
+    const exist = () => Promise.all([...mine, theirs].map((path) => photos.exists(path)));
+    expect(await exist()).toStrictEqual([true, true, true, true]);
+    await photos.deleteAllOf(UserId.parse(member));
+    expect(await exist()).toStrictEqual([false, false, false, true]);
+    await photos.deleteAllOf(UserId.parse(member));
+    await photos.deleteAllOf(UserId.parse(randomUUID()));
+  });
+
+  it('says Storage is unavailable when deleting with a wrong secret key', async () => {
+    const wrong = createSupabasePhotoStorage({
+      supabaseUrl: config.supabaseUrl,
+      secretKey: 'sb_secret_not-the-key',
+    });
+    expect(await reasonOf(wrong.deleteAllOf(UserId.parse(randomUUID())))).toBe(
+      'PHOTO_STORAGE_UNAVAILABLE',
+    );
   });
 });

@@ -10,15 +10,21 @@ import {
   type OAuthClientInformation,
   type StoredOAuthTokens,
 } from '@modelcontextprotocol/client';
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
-import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
@@ -52,16 +58,32 @@ beforeAll(async () => {
           createUploadUrl: unused,
           exists: unused,
           createViewUrls: unused,
+          deleteAllOf: unused,
         };
         app = createApp({
           db,
           verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+          accounts: createSupabaseAccounts({
+            supabaseUrl: config.supabaseUrl,
+            secretKey: config.supabaseSecretKey,
+          }),
+          revokeAppleSignIn: undefined,
           checkIns: createCheckIns({
             store: createPostgresCheckInStore(db),
             photos,
+            calendarOf: () => Promise.resolve(undefined),
+            clock: () => new Date(),
+          }),
+          weeklyPlans: createWeeklyPlans({
+            store: createPostgresWeeklyPlanStore(db),
+            calendarOf: () => Promise.resolve(undefined),
             clock: () => new Date(),
           }),
           members: createMembers({ store: createPostgresProfileStore(db) }),
+          squads: createSquads({
+            store: createPostgresSquadStore(db),
+            inviteCodes: randomInviteCodes,
+          }),
           photos,
           log: createLog(() => undefined),
           admin: {
@@ -342,21 +364,25 @@ describe('the admin MCP server', () => {
     const provider = clientSignedInAs(await member({ admin: true }));
     await (await connect(provider)).close();
     const tokens = await provider.tokens();
-    const response = await fetch(new URL('/me', mcpUrl), {
-      headers: { authorization: `Bearer ${tokens?.access_token ?? ''}` },
+    const authorization = `Bearer ${tokens?.access_token ?? ''}`;
+    const refused = {
+      version: 1,
+      type: 'about:blank',
+      title: 'Unauthorized',
+      status: 401,
+      detail: 'Sign in from the app to do this.',
+      reason: 'APP_SIGN_IN_REQUIRED',
+      errorStatus: 'UNAUTHENTICATED',
+    };
+    const read = await fetch(new URL('/me', mcpUrl), { headers: { authorization } });
+    expect([read.status, await read.json()]).toStrictEqual([401, refused]);
+    // Deleting the account checks the session with Auth too, which can't tell the client apart.
+    const deleted = await fetch(new URL('/me', mcpUrl), {
+      method: 'DELETE',
+      headers: { authorization, 'content-type': 'application/json' },
+      body: JSON.stringify({ version: 1 }),
     });
-    expect([response.status, await response.json()]).toStrictEqual([
-      401,
-      {
-        version: 1,
-        type: 'about:blank',
-        title: 'Unauthorized',
-        status: 401,
-        detail: 'Sign in from the app to do this.',
-        reason: 'APP_SIGN_IN_REQUIRED',
-        errorStatus: 'UNAUTHENTICATED',
-      },
-    ]);
+    expect([deleted.status, await deleted.json()]).toStrictEqual([401, refused]);
   });
 
   it('refuses our own app’s sign-in, even an admin’s, and says where to sign in', async () => {

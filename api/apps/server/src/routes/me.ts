@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { MemberId, TimeZone, type Members } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
+import { deleteAccount, type DeleteAccountDependencies } from '../flows/delete-account.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -30,13 +31,39 @@ export const Me = z
   })
   .openapi('Me');
 
+/** What `DELETE /me` takes. */
+export const AccountDeletion = z
+  .strictObject({
+    version: bodyVersion(1),
+    appleAuthorizationCode: z
+      .string()
+      .min(1)
+      .max(2000)
+      .optional()
+      .meta({
+        description:
+          'For a member who signed in with Apple: a fresh `authorizationCode` from Sign in with ' +
+          'Apple (codes last 5 minutes), so the API can revoke the app’s Apple tokens. ' +
+          'Required for an account that signs in with Apple once revocation is set up.',
+      }),
+  })
+  .openapi('AccountDeletion');
+
 const unauthorized = {
   401: problem('No bearer token, or not a valid one'),
   503: problem('Sign-in can’t be checked right now'),
 };
 
-/** `GET /me` and `PUT /me/profile`: the signed-in member and their own settings. */
-export function me(deps: { readonly verifyToken: VerifyToken; readonly members: Members }) {
+/**
+ * `GET /me`, `PUT /me/profile` and `DELETE /me`: the signed-in member, their own settings, and
+ * deleting their account.
+ */
+export function me(
+  deps: {
+    readonly verifyToken: VerifyToken;
+    readonly members: Members;
+  } & DeleteAccountDependencies,
+) {
   const getMe = createRoute({
     method: 'get',
     path: '/me',
@@ -71,6 +98,43 @@ export function me(deps: { readonly verifyToken: VerifyToken; readonly members: 
     },
   });
 
+  const deleteMe = createRoute({
+    method: 'delete',
+    path: '/me',
+    operationId: 'deleteMe',
+    summary: 'Delete the signed-in member’s account',
+    description:
+      'Deletes the account and everything that is the member’s: profile, check-ins, photos and ' +
+      'squad memberships (squads they made stay with the other members), and revokes Sign in ' +
+      'with Apple when given a code. Can’t be undone. The session is checked with the sign-in ' +
+      'provider, so a signed-out token is refused even before it expires. Safe to repeat after ' +
+      'a failure. Afterwards this route refuses the token; other routes accept it until it ' +
+      'expires, so the app signs out.',
+    security: [{ bearer: [] }],
+    middleware: [
+      requireCaller(async (token) => {
+        // The token first, which says whether it is the app's own sign-in; then its session.
+        const caller = await deps.verifyToken(token);
+        await deps.accounts.verifySession(token);
+        return caller;
+      }),
+    ] as const,
+    request: {
+      body: { required: true, content: { 'application/json': { schema: AccountDeletion } } },
+    },
+    responses: {
+      204: { description: 'Deleted' },
+      400: problem(
+        'Not a valid request, an Apple code Apple refused (`APPLE_AUTHORIZATION_CODE_INVALID`), ' +
+          'or no Apple code for an account that signs in with Apple ' +
+          '(`APPLE_AUTHORIZATION_CODE_REQUIRED`)',
+      ),
+      401: problem('No bearer token, or not a current sign-in'),
+      ...jsonBodyFailures,
+      503: problem('Sign-in, photo storage or Apple can’t be reached right now'),
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
     .openapi(getMe, async (c) => {
       const userId = c.var.caller.userId;
@@ -84,5 +148,10 @@ export function me(deps: { readonly verifyToken: VerifyToken; readonly members: 
         profile: { timeZone },
       });
       return c.json({ version: 1, ...saved } as const, 200);
+    })
+    .openapi(deleteMe, async (c) => {
+      const { appleAuthorizationCode } = c.req.valid('json');
+      await deleteAccount(deps, { member: c.var.caller.userId, appleAuthorizationCode });
+      return c.body(null, 204);
     });
 }
