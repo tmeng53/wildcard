@@ -1,5 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import type { CheckIns } from '@wildcard/check-ins';
+import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import { HTTPException } from 'hono/http-exception';
@@ -13,6 +13,8 @@ import { checkIns } from './routes/check-ins.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
+import { squadToday } from './routes/squad-today.js';
+import { weeklyPlans } from './routes/weekly-plans.js';
 
 export interface AppDependencies {
   readonly db: Database;
@@ -21,6 +23,7 @@ export interface AppDependencies {
   /** Undefined until the Sign in with Apple key is configured. */
   readonly revokeAppleSignIn: RevokeAppleSignIn | undefined;
   readonly checkIns: CheckIns;
+  readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly photos: PhotoStorage;
   readonly log: Log;
@@ -45,6 +48,8 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
+  app.route('/', squadToday(deps));
+  app.route('/', weeklyPlans(deps));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((thrown, c) => {

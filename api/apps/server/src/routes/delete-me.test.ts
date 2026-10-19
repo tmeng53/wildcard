@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -12,6 +17,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { AppleAuthorizationCodeInvalidError } from '../errors.js';
 import { createLog } from '../log.js';
+import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
 import { config, signOut, signUp } from '../test-kit/local-supabase.js';
 
@@ -26,6 +32,7 @@ const photos = createSupabasePhotoStorage({
 
 function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
   const logged: unknown[] = [];
+  const members = createMembers({ store: createPostgresProfileStore(db) });
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -38,9 +45,15 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,
+      calendarOf: memberCalendar(members),
       clock: () => new Date(),
     }),
-    members: createMembers({ store: createPostgresProfileStore(db) }),
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: memberCalendar(members),
+      clock: () => new Date(),
+    }),
+    members,
     log: createLog((line) => logged.push(JSON.parse(line))),
   });
   const call = async (
@@ -114,6 +127,10 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
     });
   expect((await checkIn(me, { sport: 'run', photos: [{ path: onCheckIn }] })).status).toBe(201);
   expect((await checkIn(friend, { sport: 'swim' })).status).toBe(201);
+  const nextMonday = new Date(now.getTime() + ((8 - now.getUTCDay()) % 7 || 7) * 86_400_000);
+  const plan = { version: 1, days: Array.from({ length: 7 }, () => ({ kind: 'rest' })) };
+  const weekStart = nextMonday.toISOString().slice(0, 10);
+  expect((await call('PUT', `/me/weekly-plans/${weekStart}`, me.token, plan)).status).toBe(200);
   return { me, friend, squad };
 }
 
@@ -154,6 +171,9 @@ async function whatIsLeftOf(member: string) {
     squadsMade: await count(
       sql`select count(*) as n from public.squads where created_by = ${member}`,
     ),
+    weeklyPlans: await count(
+      sql`select count(*) as n from public.weekly_plans where member_id = ${member}`,
+    ),
     files: z.array(z.unknown()).parse(await files.json()).length,
   };
 }
@@ -165,6 +185,7 @@ const nothing = {
   photoRecords: 0,
   squadMemberships: 0,
   squadsMade: 0,
+  weeklyPlans: 0,
   files: 0,
 };
 const everything = {
@@ -174,6 +195,7 @@ const everything = {
   photoRecords: 1,
   squadMemberships: 1,
   squadsMade: 1,
+  weeklyPlans: 1,
   files: 2,
 };
 

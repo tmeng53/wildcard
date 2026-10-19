@@ -2,7 +2,12 @@
 // the committed file and the routes disagree.
 import { writeFileSync } from 'node:fs';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from '../src/adapters/postgres.js';
@@ -27,7 +32,17 @@ const app = createApp({
   accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
   revokeAppleSignIn: undefined,
   photos,
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: unused,
+    clock: unused,
+  }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: unused,
+    clock: unused,
+  }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
   log: createLog(unused),
 });

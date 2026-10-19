@@ -9,4 +9,6 @@ export interface ProfileStore {
    * time zone.
    */
   save(member: MemberId, profile: Profile): Promise<boolean>;
+  /** When the member first saved their profile, right after signing up. */
+  joinedAt(member: MemberId): Promise<Date | undefined>;
 }

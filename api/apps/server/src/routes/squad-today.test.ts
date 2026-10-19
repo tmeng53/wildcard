@@ -1,0 +1,155 @@
+import { randomUUID } from 'node:crypto';
+
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { sql } from 'kysely';
+import { afterAll, describe, expect, it } from 'vitest';
+
+import { createDatabase } from '../adapters/postgres.js';
+import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
+import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
+import { createApp } from '../app.js';
+import { createLog } from '../log.js';
+import { memberCalendar } from '../member-calendar.js';
+import { config, signUp } from '../test-kit/local-supabase.js';
+
+const db = createDatabase(config.databaseUrl);
+afterAll(() => db.destroy());
+const photos = createSupabasePhotoStorage({
+  supabaseUrl: config.supabaseUrl,
+  secretKey: config.supabaseSecretKey,
+});
+const members = createMembers({ store: createPostgresProfileStore(db) });
+const app = createApp({
+  db,
+  verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  accounts: createSupabaseAccounts({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  revokeAppleSignIn: undefined,
+  photos,
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(),
+  }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(),
+  }),
+  members,
+  log: createLog(() => undefined),
+});
+
+/** A squad with these members. Squads have no routes yet, so the test writes it directly. */
+async function squadOf(...joined: readonly { readonly userId: string }[]) {
+  const id = randomUUID();
+  await sql`insert into public.squads (id, name) values (${id}, 'squad')`.execute(db);
+  for (const [index, member] of joined.entries()) {
+    const joinedAt = new Date(Date.UTC(2026, 9, 1, 0, index)).toISOString();
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+      values (${id}, ${member.userId}, ${joinedAt})`.execute(db);
+  }
+  return id;
+}
+
+async function call(
+  method: string,
+  {
+    path,
+    token,
+    body,
+  }: { readonly path: string; readonly token?: string; readonly body?: unknown },
+) {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (token !== undefined) headers.authorization = `Bearer ${token}`;
+  const response = await app.request(path, {
+    method,
+    headers,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const json: unknown = await response.json();
+  return { status: response.status, body: json };
+}
+
+const HOUR = 3_600_000;
+/** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
+const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
+
+async function member(timeZone = 'UTC') {
+  const signedUp = await signUp();
+  const saved = await call('PUT', {
+    path: '/me/profile',
+    token: signedUp.token,
+    body: { version: 1, timeZone },
+  });
+  expect(saved.status).toBe(200);
+  return signedUp;
+}
+
+async function checkIn(
+  token: string,
+  { squad, ...entry }: { readonly squad: string } & Record<string, unknown>,
+) {
+  const createdAt = new Date(Date.now() - 60_000).toISOString();
+  const body = { version: 1, day: today(), createdAt, audience: [squad], ...entry };
+  const saved = await call('PUT', { path: `/check-ins/${randomUUID()}`, token, body });
+  expect(saved.status).toBe(201);
+}
+
+describe('GET /squads/{squadId}/today', () => {
+  it('gives each member’s today and the week’s counts', async () => {
+    const [me, friend] = [await member(), await member()];
+    // 25 hours apart, so their todays are never the same date: each must be read in their own zone.
+    const [east, west] = [await member('Pacific/Kiritimati'), await member('Pacific/Pago_Pago')];
+    const squad = await squadOf(me, friend, east, west);
+    await checkIn(me.token, { squad, kind: 'disclaimer', disclaimer: { text: '加班' } });
+    await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
+    await checkIn(friend.token, { squad, kind: 'healthyMeal', meal: {} });
+
+    const { status, body } = await call('GET', {
+      path: `/squads/${squad}/today`,
+      token: friend.token,
+    });
+    expect(status).toBe(200);
+    expect(body).toMatchObject({
+      version: 1,
+      squad,
+      members: [
+        { member: me.userId, day: today(), training: 'trained' },
+        {
+          member: friend.userId,
+          day: today(),
+          training: 'notCheckedIn',
+          latestMeal: 'healthyMeal',
+        },
+        { member: east.userId, day: today(14), training: 'notCheckedIn' },
+        { member: west.userId, day: today(-11), training: 'notCheckedIn' },
+      ],
+      today: { trained: 1, disclaimer: 0, everyoneTrained: false },
+      me: { week: { trainedDays: 0 }, lifetimeTrainedDays: 0 },
+      squadWeek: { trainedDays: 1 },
+    });
+    expect(body).not.toHaveProperty('members.0.latestMeal');
+  });
+
+  it('answers only the squad’s members', async () => {
+    const [insider, outsider] = [await member(), await member()];
+    const squad = await squadOf(insider);
+    expect(
+      await call('GET', { path: `/squads/${squad}/today`, token: outsider.token }),
+    ).toMatchObject({
+      status: 403,
+      body: { reason: 'SQUAD_NOT_JOINED' },
+    });
+    expect(await call('GET', { path: `/squads/${squad}/today` })).toMatchObject({ status: 401 });
+  });
+});

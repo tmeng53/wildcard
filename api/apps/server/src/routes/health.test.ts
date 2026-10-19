@@ -1,4 +1,9 @@
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { describe, expect, it } from 'vitest';
 
@@ -17,7 +22,12 @@ const photos = {
   deleteAllOf: notCalled,
 };
 const checkInsOn = (db: Database) =>
-  createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: () => new Date() });
+  createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: () => Promise.resolve(undefined),
+    clock: () => new Date(),
+  });
 
 async function getHealth(db: Database) {
   const lines: string[] = [];
@@ -28,6 +38,11 @@ async function getHealth(db: Database) {
     revokeAppleSignIn: undefined,
     checkIns: checkInsOn(db),
     photos,
+    weeklyPlans: createWeeklyPlans({
+      store: createPostgresWeeklyPlanStore(db),
+      calendarOf: () => Promise.resolve(undefined),
+      clock: () => new Date(),
+    }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     log: createLog((line) => lines.push(line)),
   });
@@ -95,6 +110,11 @@ describe('an unknown route', () => {
       revokeAppleSignIn: undefined,
       checkIns: checkInsOn(db),
       photos,
+      weeklyPlans: createWeeklyPlans({
+        store: createPostgresWeeklyPlanStore(db),
+        calendarOf: () => Promise.resolve(undefined),
+        clock: () => new Date(),
+      }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
       log: createLog(() => undefined),
     });
