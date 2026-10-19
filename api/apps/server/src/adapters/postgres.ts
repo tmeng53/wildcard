@@ -16,5 +16,10 @@ export function createDatabase(
 ): Database {
   const pool = new pg.Pool({ connectionString: url, connectionTimeoutMillis: 5_000 });
   pool.on('error', onIdleError);
+  // A client checked out of the pool (a transaction between two queries) has none of the pool's
+  // listeners, so a drop then would crash the process too. Its next query fails ("not queryable"),
+  // and the request fails and is logged like any other, so this listener only keeps the process up.
+  // It stays silent: idle drops reach onIdleError through the pool, and would be logged twice.
+  pool.on('connect', (client) => client.on('error', () => undefined));
   return new Kysely<Tables>({ dialect: new PostgresDialect({ pool }) });
 }
