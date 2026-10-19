@@ -62,6 +62,10 @@ export type PlanDay = z.infer<typeof PlanDay>;
 export const PlanDays = z.array(PlanDay).min(7).max(7);
 export type PlanDays = z.infer<typeof PlanDays>;
 
+/** How many of a plan's days are training days. */
+export const plannedTrainingDays = (days: readonly PlanDay[]) =>
+  days.filter(({ kind }) => kind === 'train').length;
+
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
 export const StoredPlan = z.discriminatedUnion('version', [
   z.strictObject({ version: z.literal(1), days: PlanDays }),

@@ -1473,6 +1473,230 @@
         ],
         "additionalProperties": false
       },
+      "WeekSummary": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "squad": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "week": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "date"
+              },
+              "to": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          },
+          "final": {
+            "type": "boolean",
+            "description": "Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still move a little after that, from a check-in sent up to 48 hours late or a reaction left later. Before that the week is still being played."
+          },
+          "awards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeekAward"
+            },
+            "description": "The awards someone won this week; one nobody won is left out."
+          },
+          "squadTotals": {
+            "type": "object",
+            "properties": {
+              "stats": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WeekStat"
+                },
+                "description": "Each count added up over the members."
+              },
+              "reactions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "cheer",
+                        "highlight",
+                        "lol"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Reactions of this kind."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Teammates’ reactions on the week’s check-ins, one entry a kind."
+              }
+            },
+            "required": [
+              "stats",
+              "reactions"
+            ],
+            "additionalProperties": false
+          },
+          "me": {
+            "type": "object",
+            "properties": {
+              "stats": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WeekStat"
+                },
+                "description": "The signed-in member’s own counts."
+              },
+              "reactions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "cheer",
+                        "highlight",
+                        "lol"
+                      ]
+                    },
+                    "received": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Reactions of this kind on their check-ins."
+                    },
+                    "given": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Reactions of this kind they left on teammates’ check-ins."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "received",
+                    "given"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "One entry a reaction kind."
+              }
+            },
+            "required": [
+              "stats",
+              "reactions"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "version",
+          "squad",
+          "week",
+          "final",
+          "awards",
+          "squadTotals",
+          "me"
+        ],
+        "additionalProperties": false
+      },
+      "WeekAward": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "planCompleted",
+              "crown",
+              "bestDisclaimer"
+            ],
+            "description": "`planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change."
+          },
+          "winners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "What they won it by, in the award’s own unit."
+                },
+                "checkIn": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The check-in that won it, for an award a check-in wins."
+                }
+              },
+              "required": [
+                "member",
+                "value"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "Who won it, in the order members joined the squad."
+          }
+        },
+        "required": [
+          "kind",
+          "winners"
+        ],
+        "additionalProperties": false
+      },
+      "WeekStat": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trainedDays",
+              "plannedDays",
+              "checkIns",
+              "disclaimers",
+              "healthyMeals",
+              "cheatMeals",
+              "reactionsReceived"
+            ],
+            "description": "`trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change."
+          },
+          "value": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The count."
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "additionalProperties": false
+      },
       "DisclaimerDrafts": {
         "oneOf": [
           {
@@ -3196,6 +3420,93 @@
           },
           "400": {
             "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/summary": {
+      "get": {
+        "operationId": "getSquadWeekSummary",
+        "summary": "A squad’s week: its awards and counts (周日战报)",
+        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The week",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a Monday, or a week that hasn’t started yet (`WEEK_NOT_STARTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

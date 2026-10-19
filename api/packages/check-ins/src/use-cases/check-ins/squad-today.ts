@@ -7,13 +7,11 @@ import {
   type TrainingStatus,
   type Week,
 } from '../../domain/days.js';
-import { localDayAt, WeekStart, type PlanDays } from '../../domain/weekly-plan.js';
+import { localDayAt, plannedTrainingDays, WeekStart } from '../../domain/weekly-plan.js';
 import { SquadNotJoinedError } from '../../errors.js';
 import type { CheckInStore, Clock, MemberCalendar, WeeklyPlanStore } from '../../ports.js';
 import { findWeeklyPlan } from '../weekly-plans.js';
-
-/** The zone for a member who hasn't saved one, when the viewer hasn't either. */
-const FALLBACK_ZONE = 'UTC';
+import { zonesOf } from './member-zones.js';
 
 export interface SquadMemberToday {
   readonly member: MemberId;
@@ -50,8 +48,6 @@ export interface SquadToday {
    */
   readonly squadWeek: { readonly trainedDays: number; readonly plannedDays: number };
 }
-
-const plannedTraining = (days: PlanDays) => days.filter(({ kind }) => kind === 'train').length;
 
 function firstCheckInOn(checkIns: readonly CheckInRecord[], day: LocalDay): Date | undefined {
   let first: Date | undefined;
@@ -92,12 +88,11 @@ export async function squadToday(
   const now = clock();
   const memberIds = await store.membersOf(squad);
 
-  // A squad has at most 8 members, so one calendar and one plan read each is fine.
-  const calendars = await Promise.all(memberIds.map((member) => calendarOf(member)));
-  const viewerZone = calendars[memberIds.indexOf(viewer)]?.timeZone ?? FALLBACK_ZONE;
+  // A squad has at most 8 members, so one plan read each is fine.
+  const zones = await zonesOf(calendarOf, { members: memberIds, viewer });
   const members = await Promise.all(
-    memberIds.map(async (member, index) => {
-      const day = localDayAt(now, calendars[index]?.timeZone ?? viewerZone);
+    zones.map(async ({ member, zone }) => {
+      const day = localDayAt(now, zone);
       const week = weekOf(day);
       const plan = await findWeeklyPlan(
         { store: plans },
@@ -129,7 +124,7 @@ export async function squadToday(
       plannedRest: plan[week.days.indexOf(day)]?.kind === 'rest',
       firstCheckInAt: firstCheckInOn(theirs, day),
     };
-    return { today, trained: trainedDays(theirs, week.days), planned: plannedTraining(plan) };
+    return { today, trained: trainedDays(theirs, week.days), planned: plannedTrainingDays(plan) };
   });
   const todays = rows.map(({ today }) => today);
   const resting = ({ plannedRest, training }: SquadMemberToday) =>
@@ -147,7 +142,7 @@ export async function squadToday(
     myWeek: {
       ...me.week,
       trainedDays: trainedDays(mine, me.week.days),
-      plannedDays: plannedTraining(me.plan),
+      plannedDays: plannedTrainingDays(me.plan),
     },
     myLifetimeTrainedDays,
     squadWeek: {
