@@ -3,7 +3,7 @@ import { DeviceToken, MemberId, PushEnvironment, type Push } from '@wildcard/pus
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 // The token goes in the body, never the path, so it stays out of request logs.
@@ -54,6 +54,7 @@ export function devices(deps: { readonly verifyToken: VerifyToken; readonly push
     responses: {
       200: { description: 'Registered', content: { 'application/json': { schema: Device } } },
       400: problem('Not a device token, or not a valid body'),
+      ...jsonBodyFailures,
       ...unauthorized,
     },
   });
@@ -71,6 +72,7 @@ export function devices(deps: { readonly verifyToken: VerifyToken; readonly push
     responses: {
       204: { description: 'Stopped' },
       400: problem('Not a device token'),
+      ...jsonBodyFailures,
       ...unauthorized,
     },
   });
