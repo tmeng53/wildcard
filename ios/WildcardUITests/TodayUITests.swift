@@ -174,7 +174,7 @@ final class TodayUITests: XCTestCase {
 
         app.buttons["disclaimer.edit"].tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "好累")
-        XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a changed line can't be posted")
+        waitFor(app.buttons["disclaimer.post"], "isEnabled == true", "a changed line can't be posted")
         XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
     }
 
@@ -263,6 +263,12 @@ final class TodayUITests: XCTestCase {
         let changed = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: format, text), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [changed], timeout: timeout), .completed, message)
+    }
+
+    /// Typing updates the page on the next frames; wait for the state instead of checking at once.
+    private func waitFor(_ element: XCUIElement, _ predicate: String, _ message: String) {
+        let met = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: Self.wait), .completed, message)
     }
 
     private func keepScreenshot(named name: String) {
