@@ -17,6 +17,9 @@
       "path": "../../packages/members"
     },
     {
+      "path": "../../packages/push"
+    },
+    {
       "path": "../../packages/squads"
     }
   ]

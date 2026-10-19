@@ -5,10 +5,12 @@ import { writeFileSync } from 'node:fs';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from '../src/adapters/postgres.js';
@@ -35,6 +37,7 @@ const app = createApp({
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
     photos,
     calendarOf: unused,
     clock: unused,
@@ -45,6 +48,7 @@ const app = createApp({
     clock: unused,
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
+  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   log: createLog(unused),
 });
