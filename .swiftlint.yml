@@ -3,7 +3,8 @@ included:
   - ios
 excluded:
   - ios/**/.build
-  - ios/Packages/Contracts/Sources/APIContract/Generated  # scripts/swift-openapi.sh writes it
+  - ios/Packages/Contracts/Sources/APIContract/Generated  # scripts/swift-openapi.sh writes these
+  - ios/Packages/Backend/Sources/Backend/Generated
 opt_in_rules:
   - force_unwrapping
   - implicitly_unwrapped_optional

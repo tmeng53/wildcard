@@ -100,7 +100,7 @@ if want api && [ -f api/package.json ]; then
   ran=1
 fi
 
-# The app's provider adapters, against local Supabase's Auth (needs `supabase start`).
+# The app's adapters, against local Supabase's Auth and the built API (needs `supabase start`).
 if want backend && [ -f ios/Packages/Backend/Package.swift ] && ! type -P swift >/dev/null && [ "${CI:-}" != "true" ]; then
   echo "==> backend: Swift isn't installed here"
   inconclusive+=("backend")
@@ -112,7 +112,10 @@ elif want backend && [ -f ios/Packages/Backend/Package.swift ]; then
       exit 1
     }
     eval "$status"
-    SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
+    # The API client's tests call the built API, so it runs for as long as they do.
+    . scripts/lib/api-server.sh
+    start_api_server
+    SUPABASE_URL="$API_URL" SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" WILDCARD_API_URL="$api" DATABASE_URL="$DB_URL" \
       swift test --package-path ios/Packages/Backend
   )
   ran=1

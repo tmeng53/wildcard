@@ -13,37 +13,6 @@ import FoundationNetworking
 // sign, so these sign in a test member with a password; the id_token grant is checked as far as
 // a token we can make goes.
 
-private struct SignedUp: Decodable {
-    struct User: Decodable { let id: MemberID }
-    let user: User
-}
-
-private struct LocalSupabase {
-    let url: URL
-    let publishableKey: String
-
-    init() throws {
-        let environment = ProcessInfo.processInfo.environment
-        url = try #require(environment["SUPABASE_URL"].flatMap(URL.init(string:)), "run `supabase start`")
-        publishableKey = try #require(environment["SUPABASE_PUBLISHABLE_KEY"])
-    }
-
-    var auth: SupabaseAuth { SupabaseAuth(url: url, publishableKey: publishableKey) }
-
-    /// A new member with an email and password, signed up through Supabase Auth.
-    func signUp() async throws -> (email: String, password: String, id: MemberID) {
-        let email = "\(UUID().uuidString.lowercased())@example.com"
-        let password = UUID().uuidString
-        var request = URLRequest(url: url.appending(path: "auth/v1/signup"))
-        request.httpMethod = "POST"
-        request.setValue(publishableKey, forHTTPHeaderField: "apikey")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(["email": email, "password": password])
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return (email, password, try JSONDecoder().decode(SignedUp.self, from: data).user.id)
-    }
-}
-
 @Test func aMemberSignsInAndTheTokenLastsAnHour() async throws {
     let supabase = try LocalSupabase()
     let member = try await supabase.signUp()
