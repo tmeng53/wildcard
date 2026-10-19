@@ -18,6 +18,26 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(figure.layout(figure.restPose)[9].opacity == 0)
 }
 
+/// Every body and hair the editor can offer, by folder name.
+@Test func variantsListTheBundledArt() {
+    #expect(
+        PlaceholderCharacter.variants(for: "body") == [
+            "bear", "bichon", "calico", "cat", "collie", "corgi", "dutch", "golden", "husky", "lihua", "lop",
+            "orangewhite", "peach", "rabbit", "ragdoll", "shiba", "siamese", "tan", "tortie", "tuxedo",
+        ])
+    #expect(
+        PlaceholderCharacter.variants(for: "hair") == [
+            "bob", "bun", "buzz", "curls", "curtain", "long", "pigtails", "ponytail", "spacebuns", "wolf",
+        ])
+    #expect(PlaceholderCharacter.variants(for: "cape").isEmpty)
+}
+
+@Test(arguments: wardrobe)
+func everyLookBuilds(outfit: Outfit) throws {
+    let figure = try PlaceholderCharacter.figure(wearing: outfit)
+    #expect(figure.parts.count == 13)
+}
+
 @Test(arguments: Persona.allCases)
 func everyPersonaHasAnIdleAndACheer(persona: Persona) throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
@@ -61,7 +81,7 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
 
 /// Every look stays inside the canvas through every frame of every persona's clips, so a view sized to
 /// the art never cuts off an ear or a racket. The bottom edge is left out: the shadow sits on it.
-@Test(arguments: Persona.allCases, PlaceholderCharacter.squad)
+@Test(arguments: Persona.allCases, wardrobe)
 func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for name in ["idle", "cheer"] {
