@@ -247,6 +247,7 @@ describe('DELETE /me', () => {
   });
 
   it.each([
+    ['no body', undefined],
     ['no version', {}],
     ['an empty code', { version: 1, appleAuthorizationCode: '' }],
     ['an unknown field', { version: 1, reason: 'bye' }],
