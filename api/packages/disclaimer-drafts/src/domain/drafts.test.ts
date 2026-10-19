@@ -72,8 +72,11 @@ describe('DraftReason', () => {
 });
 
 describe('mentionsSelfHarm', () => {
-  it('catches plain words, in Chinese and English', () => {
-    expect(mentionsSelfHarm(DraftReason.parse('想自杀'))).toBe(true);
+  it.each(['想自杀', '不想活了', '活不下去', '想自残', '想轻生'])('catches 「%s」', (reason) => {
+    expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(true);
+  });
+
+  it('catches plain words in English, whatever the case', () => {
     expect(mentionsSelfHarm(DraftReason.parse('I want to KILL MYSELF'))).toBe(true);
   });
 

@@ -11,8 +11,11 @@ export const ANTHROPIC_MODEL = 'claude-haiku-5-5';
  */
 const TIMEOUT_MS = 8_000;
 
-/** Three drafts of up to 80 characters fit in a few hundred tokens. */
-const MAX_TOKENS = 1_024;
+/**
+ * Three drafts of up to 80 characters fit in a few hundred tokens; the rest is room for Haiku's
+ * adaptive thinking, so an answer is never cut off.
+ */
+const MAX_TOKENS = 4_096;
 
 /** The language model on Anthropic's Claude API, with structured output. */
 export function createAnthropicLanguageModel(options: {
