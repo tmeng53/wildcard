@@ -33,6 +33,9 @@
       { "t": 1.6, "v": 0.4 }, { "t": 1.8, "v": 0.62, "ease": "easeInOut" } ] },
     { "part": "tail", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.8, "v": -8, "ease": "easeInOut" },
-      { "t": 1.8, "v": 0, "ease": "easeInOut" } ] }
+      { "t": 1.8, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "brows", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1, "v": 0 }, { "t": 1.1, "v": -2.4, "ease": "easeOut" },
+      { "t": 1.6, "v": -2.4 }, { "t": 1.8, "v": 0, "ease": "easeInOut" } ] }
   ]
 }

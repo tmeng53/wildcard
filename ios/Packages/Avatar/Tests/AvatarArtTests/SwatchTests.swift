@@ -2,7 +2,7 @@ import AvatarArt
 import AvatarDomain
 import Testing
 
-private let recolorable: [Slot] = ["body", "hair", "top", "bottom"]
+private let recolorable: [Slot] = ["body", "hair", "eyes", "brows", "top", "bottom"]
 
 /// Every look can wear every swatch of every slot it can recolor, and the swatch shows up in
 /// its art, so a missing or mistyped `tones.json` fails here.
@@ -29,9 +29,13 @@ func everySwatchApplies(outfit: Outfit) throws {
     }
 }
 
-/// Hats and props keep their art's colors; so do the shoes, drawn with the body.
+/// Hats, props, mouths, cheeks and glasses keep their art's colors; so do the shoes, drawn
+/// with the body.
 @Test func hatsPropsAndShoesKeepTheirColors() throws {
     #expect(PlaceholderCharacter.swatches(for: "hat", wearing: "cap").isEmpty)
+    for (slot, variant) in [("mouth", "grin"), ("cheeks", "rosy"), ("glasses", "round")] {
+        #expect(PlaceholderCharacter.swatches(for: Slot(slot), wearing: variant).isEmpty)
+    }
     #expect(PlaceholderCharacter.swatches(for: "prop", wearing: "racket").isEmpty)
     var lifter = PlaceholderCharacter.lifter
     lifter.colors["body"] = RGBAColor(hex: "#5E3B27")
@@ -46,9 +50,9 @@ func everySwatchApplies(outfit: Outfit) throws {
 @Test func swatchCounts() {
     let counts = [
         ("body", "peach"), ("body", "tan"), ("body", "cat"), ("body", "bear"), ("hair", "bob"), ("top", "tee"),
-        ("bottom", "shorts"),
+        ("bottom", "shorts"), ("eyes", "round"), ("brows", "soft"),
     ].map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
-    #expect(counts == [7, 7, 6, 6, 7, 8, 8])
+    #expect(counts == [7, 7, 6, 6, 7, 8, 8, 6, 7])
     let furs = [("body", "golden"), ("body", "rabbit"), ("body", "lop"), ("hair", "curls")]
         .map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
     #expect(furs == [6, 6, 6, 7])
@@ -63,4 +67,8 @@ func everySwatchApplies(outfit: Outfit) throws {
         PlaceholderCharacter.swatches(for: "top", wearing: "tee").first == RGBAColor(hex: "#2D5BA0"))
     #expect(
         PlaceholderCharacter.swatches(for: "bottom", wearing: "shorts").first == RGBAColor(hex: "#1F2128"))
+    #expect(PlaceholderCharacter.swatches(for: "eyes", wearing: "happy")[3] == RGBAColor(hex: "#4A6FA5"))
+    #expect(
+        PlaceholderCharacter.swatches(for: "brows", wearing: "bold")
+            == PlaceholderCharacter.swatches(for: "hair", wearing: "bob"))
 }
