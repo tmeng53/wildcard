@@ -29,17 +29,14 @@ export interface CheckInStore {
 
 /** Where reactions on check-ins are kept. */
 export interface ReactionStore {
-  /**
-   * Saves the member's reaction on a check-in, in place of any they left before. `created` only
-   * the first time they react to it; a reaction put back after being taken off is `changed`.
-   */
+  /** Saves the member's reaction on a check-in, in place of any they left before. */
   save(
     checkIn: CheckInId,
     reaction: { readonly member: MemberId; readonly kind: ReactionKind; readonly reactedAt: Date },
   ): Promise<ReactOutcome>;
   /** Takes the member's reaction off a check-in, if there is one. */
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
-  /** A check-in's reactions that are on it now, oldest first. */
+  /** A check-in's reactions, oldest first. */
   list(checkIn: CheckInId): Promise<Reaction[]>;
 }
 

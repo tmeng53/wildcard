@@ -3,12 +3,11 @@ import { z } from 'zod';
 import type { CheckInRecord, MemberId, SquadId } from './check-in.js';
 
 /**
- * The reactions a teammate can leave on a check-in, from the feed or straight from its push
- * notification, as the product spec names them: 加油 (`cheer`, also a double tap), 名场面
- * (`highlight`), 稳 (`steady`) and 笑死 (`lol`). Like Strava's kudos, a member leaves at most one
- * per check-in and can change it. The app shows each with its own copy.
+ * The reactions a teammate can leave on a check-in in the app: 加油 (`cheer`, also a double tap),
+ * 名场面 (`highlight`) and 笑死 (`lol`), with more to come (Tracy, 2026-10-19). Like Strava's kudos,
+ * a member leaves at most one per check-in and can change it. The app shows each with its own copy.
  */
-export const ReactionKind = z.enum(['cheer', 'highlight', 'steady', 'lol']);
+export const ReactionKind = z.enum(['cheer', 'highlight', 'lol']);
 export type ReactionKind = z.infer<typeof ReactionKind>;
 
 /** A member's reaction on a check-in. */
@@ -18,10 +17,7 @@ export interface Reaction {
   readonly reactedAt: Date;
 }
 
-/**
- * What reacting did: the member's first reaction on the check-in, a different one (or one put
- * back) in place of their last, or nothing.
- */
+/** What reacting did: a new reaction, a different one in place of the member's last, or nothing. */
 export type ReactOutcome = 'created' | 'changed' | 'unchanged';
 
 /**

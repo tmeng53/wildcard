@@ -932,10 +932,9 @@
             "enum": [
               "cheer",
               "highlight",
-              "steady",
               "lol"
             ],
-            "description": "Which reaction. The app shows each with its own copy; the set is a first draft."
+            "description": "Which reaction. The app shows each with its own copy."
           },
           "reactedAt": {
             "type": "string",
@@ -966,10 +965,9 @@
             "enum": [
               "cheer",
               "highlight",
-              "steady",
               "lol"
             ],
-            "description": "Which reaction. The app shows each with its own copy; the set is a first draft."
+            "description": "Which reaction. The app shows each with its own copy."
           }
         },
         "required": [
@@ -1002,10 +1000,9 @@
                   "enum": [
                     "cheer",
                     "highlight",
-                    "steady",
                     "lol"
                   ],
-                  "description": "Which reaction. The app shows each with its own copy; the set is a first draft."
+                  "description": "Which reaction. The app shows each with its own copy."
                 },
                 "reactedAt": {
                   "type": "string",
@@ -1197,7 +1194,7 @@
       "put": {
         "operationId": "saveCheckIn",
         "summary": "Save a check-in",
-        "description": "The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path. A new check-in is pushed to the teammates who see it.",
+        "description": "The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.",
         "security": [
           {
             "bearer": []
@@ -1512,7 +1509,7 @@
       "put": {
         "operationId": "reactToCheckIn",
         "summary": "React to a teammate’s check-in",
-        "description": "Leaves the caller’s reaction, in place of any they left before, and tells the author when it is new. The same reaction again changes nothing, so it is safe to repeat (as a notification button may).",
+        "description": "Leaves the caller’s reaction, in place of any they left before. The same reaction again changes nothing, so it is safe to repeat.",
         "security": [
           {
             "bearer": []

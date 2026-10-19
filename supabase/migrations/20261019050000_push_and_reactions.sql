@@ -1,5 +1,5 @@
--- Reactions on check-ins (a teammate's kudos, sent from the feed or straight from a push
--- notification) and the phones each member gets push notifications on.
+-- Reactions on check-ins (a teammate's kudos, left in the app) and the phones each member
+-- gets push notifications on.
 -- As with every table, only our API reads and writes these; the database keeps what must
 -- stay true however they are written.
 
@@ -13,9 +13,6 @@ create table public.check_in_reactions (
   member_id uuid not null references auth.users (id) on delete cascade,
   kind text not null,
   reacted_at timestamptz not null,
-  -- Set when the member takes the reaction off. The row stays, so putting it back isn't
-  -- a new reaction and doesn't notify the author again.
-  removed_at timestamptz,
   primary key (check_in_id, member_id)
 );
 

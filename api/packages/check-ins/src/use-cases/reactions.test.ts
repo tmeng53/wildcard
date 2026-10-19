@@ -184,7 +184,7 @@ describe('who sees which reactions', () => {
     now = new Date('2026-10-18T20:05:00.000Z');
     await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
     now = new Date('2026-10-18T20:06:00.000Z');
-    await checkIns.react({ checkIn: run.id, member: bo, kind: 'steady' });
+    await checkIns.react({ checkIn: run.id, member: bo, kind: 'lol' });
 
     const annsReaction = {
       member: ann,
@@ -193,7 +193,7 @@ describe('who sees which reactions', () => {
     };
     const bosReaction = {
       member: bo,
-      kind: 'steady',
+      kind: 'lol',
       reactedAt: new Date('2026-10-18T20:06:00.000Z'),
     };
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: ann })).toStrictEqual([
@@ -212,37 +212,5 @@ describe('who sees which reactions', () => {
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
       annsReaction,
     ]);
-  });
-
-  it('counts a reaction put back after taking it off as changed, not new', async () => {
-    const [tracy, ann] = [await newMember(), await newMember()];
-    const run = await trained(tracy, await newSquad(tracy, ann));
-    const first = await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
-    await checkIns.removeReaction({ checkIn: run.id, member: ann });
-    const back = await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
-    expect([first.outcome, back.outcome]).toStrictEqual(['created', 'changed']);
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toHaveLength(1);
-  });
-});
-
-describe('a check-in’s teammates', () => {
-  it('are everyone in the squads it went to that its author is still in, but the author', async () => {
-    const [tracy, ann, bo, cy, dee] = [
-      await newMember(),
-      await newMember(),
-      await newMember(),
-      await newMember(),
-      await newMember(),
-    ];
-    const runners = await newSquad(tracy, ann, bo);
-    const climbers = await newSquad(tracy, bo, cy);
-    // Dee shares other squads with Tracy and Ann, not the ones this went to.
-    await newSquad(tracy, dee);
-    await newSquad(ann, dee);
-    const run = await trained(tracy, runners, climbers);
-
-    expect(await checkIns.listTeammatesOf(run)).toStrictEqual([ann, bo, cy].sort());
-    await leave(climbers, tracy);
-    expect(await checkIns.listTeammatesOf(run)).toStrictEqual([ann, bo].sort());
   });
 });

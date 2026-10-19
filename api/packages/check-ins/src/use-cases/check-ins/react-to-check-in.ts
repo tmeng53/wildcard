@@ -18,8 +18,7 @@ export interface Reacted {
 
 /**
  * Leaves the member's reaction on a teammate's check-in, in place of any they left before. The
- * same reaction again changes nothing (not even its time), so a retry is safe. Only a member's
- * first reaction on a check-in is `created`: putting one back after taking it off is `changed`. Throws
+ * same reaction again changes nothing (not even its time), so a retry is safe. Throws
  * `CheckInNotFoundError` for a check-in they can't see and `OwnCheckInReactionError` for their own.
  */
 export async function reactToCheckIn(

@@ -6,17 +6,14 @@ import {
   type CheckIns,
   type Reaction as ReactionRecord,
 } from '@wildcard/check-ins';
-import type { Push } from '@wildcard/push';
 
 import { bodyVersion } from '../body-version.js';
-import { notifyAuthorOfReaction } from '../flows/notifications.js';
-import type { Log } from '../log.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const kind = ReactionKind.meta({
-  description: 'Which reaction. The app shows each with its own copy; the set is a first draft.',
+  description: 'Which reaction. The app shows each with its own copy.',
 });
 
 const reactionFields = {
@@ -53,15 +50,12 @@ const failures = {
 };
 
 /**
- * Teammates' reactions on a check-in, like Strava's kudos: one per member, from the feed or the
- * check-in's push notification. `PUT` and `DELETE /check-ins/{checkInId}/reactions/mine`, and
+ * Teammates' reactions on a check-in, like Strava's kudos: one per member, left in the app. `PUT` and `DELETE /check-ins/{checkInId}/reactions/mine`, and
  * `GET /check-ins/{checkInId}/reactions`.
  */
 export function reactions(deps: {
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
-  readonly push: Push;
-  readonly log: Log;
 }) {
   const react = createRoute({
     method: 'put',
@@ -69,9 +63,8 @@ export function reactions(deps: {
     operationId: 'reactToCheckIn',
     summary: 'React to a teammate’s check-in',
     description:
-      'Leaves the caller’s reaction, in place of any they left before, and tells the author ' +
-      'when it is new. The same reaction again changes nothing, so it is safe to repeat (as a ' +
-      'notification button may).',
+      'Leaves the caller’s reaction, in place of any they left before. The same reaction ' +
+      'again changes nothing, so it is safe to repeat.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -129,7 +122,6 @@ export function reactions(deps: {
         member: MemberId.parse(c.var.caller.userId),
         kind: c.req.valid('json').kind,
       });
-      if (reacted.outcome === 'created') await notifyAuthorOfReaction(deps, reacted);
       const body = { version: 1 as const, ...wire(reacted.reaction) };
       return reacted.outcome === 'created' ? c.json(body, 201) : c.json(body, 200);
     })
