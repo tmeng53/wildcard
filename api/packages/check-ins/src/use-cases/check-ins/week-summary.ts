@@ -1,7 +1,7 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
 import { weekOf } from '../../domain/days.js';
 import { summarizeWeek, type WeekSummary } from '../../domain/week-summary.js';
-import { localDayAt, type WeekStart } from '../../domain/weekly-plan.js';
+import { localDayAt, plannedTrainingDays, type WeekStart } from '../../domain/weekly-plan.js';
 import { SquadNotJoinedError, WeekNotStartedError } from '../../errors.js';
 import type {
   CheckInStore,
@@ -11,9 +11,7 @@ import type {
   WeeklyPlanStore,
 } from '../../ports.js';
 import { findWeeklyPlan } from '../weekly-plans.js';
-
-/** The zone for a member who hasn't saved one, when the viewer hasn't either. */
-const FALLBACK_ZONE = 'UTC';
+import { zonesOf } from './member-zones.js';
 
 export interface SquadWeekSummary extends WeekSummary {
   readonly from: WeekStart;
@@ -47,19 +45,20 @@ export async function squadWeekSummary(
   const memberIds = await store.membersOf(squad);
   if (!memberIds.includes(viewer)) throw new SquadNotJoinedError(squad);
 
-  // A squad has at most 8 members, so one calendar and one plan read each is fine.
-  const calendars = await Promise.all(memberIds.map((member) => calendarOf(member)));
-  const viewerZone = calendars[memberIds.indexOf(viewer)]?.timeZone ?? FALLBACK_ZONE;
-  const todays = calendars.map((calendar) => localDayAt(now, calendar?.timeZone ?? viewerZone));
-  if (localDayAt(now, viewerZone) < week.from) throw new WeekNotStartedError(weekStart);
+  const zones = await zonesOf(calendarOf, { members: memberIds, viewer });
+  const todays = zones.map(({ member, zone }) => ({ member, today: localDayAt(now, zone) }));
+  if (todays.some(({ member, today }) => member === viewer && today < week.from)) {
+    throw new WeekNotStartedError(weekStart);
+  }
 
+  // A squad has at most 8 members, so one plan read each is fine.
   const [plansOf, checkIns] = await Promise.all([
     Promise.all(memberIds.map((member) => findWeeklyPlan({ store: plans }, { member, weekStart }))),
     store.listForSquad({ squad, from: week.from, to: week.to }),
   ]);
   const members = memberIds.map((member, index) => ({
     member,
-    plannedDays: plansOf[index]?.days.filter(({ kind }) => kind === 'train').length ?? 0,
+    plannedDays: plannedTrainingDays(plansOf[index]?.days ?? []),
     checkIns: checkIns
       .filter((each) => each.member === member)
       .toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
@@ -75,7 +74,7 @@ export async function squadWeekSummary(
   return {
     from: weekStart,
     to: week.to,
-    final: todays.every((today) => today > week.to),
+    final: todays.every(({ today }) => today > week.to),
     ...summarizeWeek({ week, members, reactions: fromSquad }, viewer),
   };
 }
