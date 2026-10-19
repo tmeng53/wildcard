@@ -4,7 +4,7 @@ import DesignSystemUI
 import SwiftUI
 
 /// The full-width card at the top of 今天 (spec rev 186): the week and scene, the squad's
-/// name, 本周小队 x/y with its bar, and how many trained today. No personal count, no goal
+/// name, 本周小队训练 x/y 次 with its bar (planned training days, not people), and how many trained today. No personal count, no goal
 /// wording, no buttons.
 struct TopCard: View {
     @Environment(\.sceneTheme) private var theme
@@ -28,7 +28,7 @@ struct TopCard: View {
                 .foregroundStyle(Color(role: .textPrimary, in: theme))
 
             HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-                Text("本周小队", bundle: .module)
+                Text("本周小队训练", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .textSecondary, in: theme))
                 Score(
@@ -36,6 +36,9 @@ struct TopCard: View {
                     goalStyle: TypeRamp.scoreLargeDenominator
                 )
                 .contentTransition(.numericText(value: Double(board.progress.done)))
+                Text("次", bundle: .module)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .textSecondary, in: theme))
             }
             ProgressBar(fraction: board.progress.fraction)
             Text("今天 \(board.trainedToday) 人练了", bundle: .module)

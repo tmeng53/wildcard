@@ -1275,12 +1275,22 @@
         }
       }
     },
-    "本周小队": {
+    "本周小队训练": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad this week"
+            "value": "Squad training this week"
+          }
+        }
+      }
+    },
+    "次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sessions"
           }
         }
       }
