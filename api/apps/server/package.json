@@ -14,6 +14,7 @@
     "@hono/zod-openapi": "1.6.3",
     "@wildcard/check-ins": "workspace:*",
     "@wildcard/disclaimer-drafts": "workspace:*",
+    "@wildcard/disclaimer-styles": "workspace:*",
     "@wildcard/errors": "workspace:*",
     "@wildcard/members": "workspace:*",
     "@wildcard/memes": "workspace:*",

@@ -8,6 +8,9 @@
       "path": "packages/typed-text"
     },
     {
+      "path": "packages/disclaimer-styles"
+    },
+    {
       "path": "packages/check-ins"
     },
     {

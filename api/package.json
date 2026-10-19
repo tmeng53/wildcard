@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json && tsc --noEmit -p packages/check-ins/tsconfig.test.json && tsc --noEmit -p packages/members/tsconfig.test.json && tsc --noEmit -p packages/disclaimer-drafts/tsconfig.test.json && tsc --noEmit -p packages/memes/tsconfig.test.json && tsc --noEmit -p packages/push/tsconfig.test.json && tsc --noEmit -p packages/squads/tsconfig.test.json && tsc --noEmit -p packages/typed-text/tsconfig.test.json",
+    "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json && tsc --noEmit -p packages/check-ins/tsconfig.test.json && tsc --noEmit -p packages/members/tsconfig.test.json && tsc --noEmit -p packages/disclaimer-drafts/tsconfig.test.json && tsc --noEmit -p packages/memes/tsconfig.test.json && tsc --noEmit -p packages/push/tsconfig.test.json && tsc --noEmit -p packages/squads/tsconfig.test.json && tsc --noEmit -p packages/typed-text/tsconfig.test.json && tsc --noEmit -p packages/disclaimer-styles/tsconfig.test.json",
     "lint": "tsc --build && eslint . && prettier --check .",
     "format": "prettier --write .",
     "boundaries": "depcruise apps packages",
