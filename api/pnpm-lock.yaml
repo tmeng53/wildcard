@@ -68,6 +68,9 @@ importers:
       '@wildcard/members':
         specifier: workspace:*
         version: link:../../packages/members
+      '@wildcard/memes':
+        specifier: workspace:*
+        version: link:../../packages/memes
       hono:
         specifier: 4.13.13
         version: 4.13.13

@@ -2,9 +2,11 @@ import { serve } from '@hono/node-server';
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 
 import { createDatabase } from './adapters/postgres.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabaseTokenVerifier, supabaseAuthIssuer } from './adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -20,6 +22,7 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const admins = createAdmins({ store: createPostgresAdminStore(db), clock: () => new Date() });
+const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -33,7 +36,7 @@ const app = createApp({
   log,
   admin: {
     admins,
-    tools: [listAdminLog({ admins })],
+    tools: [listAdminLog({ admins }), ...memeTools({ memes, clock: () => new Date() })],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
   },

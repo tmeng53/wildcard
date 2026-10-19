@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 
 import { serve, type ServerType } from '@hono/node-server';
@@ -10,6 +11,8 @@ import {
   type StoredOAuthTokens,
 } from '@modelcontextprotocol/client';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -21,6 +24,7 @@ import { createLog } from '../log.js';
 import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
+import { memeTools } from './tools/memes.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, registers itself with local
@@ -56,6 +60,7 @@ beforeAll(async () => {
             photos,
             clock: () => new Date(),
           }),
+          members: createMembers({ store: createPostgresProfileStore(db) }),
           photos,
           log: createLog(() => undefined),
           admin: {
@@ -63,6 +68,10 @@ beforeAll(async () => {
             publicUrl,
             tools: [
               listAdminLog(admin),
+              ...memeTools({
+                memes: createMemes({ store: createPostgresMemeStore(db), clock: () => now }),
+                clock: () => now,
+              }),
               // A tool that changes something, standing in for the meme tools.
               adminTool({
                 name: 'rename_thing',
@@ -86,6 +95,7 @@ afterAll(async () => {
   await db.destroy();
 });
 
+const now = new Date('2026-10-19T16:00:00.000Z');
 const unused = () => Promise.reject(new Error('the admin tools use no photos'));
 
 /** A member signed up through local Supabase Auth, on the admin list when asked. */
@@ -171,6 +181,10 @@ describe('the admin MCP server', () => {
     const { tools } = await client.listTools();
     expect(tools.map(({ name, annotations }) => [name, annotations?.readOnlyHint])).toStrictEqual([
       ['list_admin_log', true],
+      ['list_memes', true],
+      ['add_memes', false],
+      ['turn_off_meme', false],
+      ['turn_on_meme', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -204,6 +218,73 @@ describe('the admin MCP server', () => {
         },
       ],
     });
+    await client.close();
+  });
+
+  it('adds memes, turns one off and back on, and logs each change', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const meme = (name: string) => ({
+      phrase: `${name}${randomUUID().slice(0, 8)}`,
+      background: '2024 年一个外国博主在中国街头问路人「city不city啊」，口音魔性，迅速走红。',
+      meaning: '问某事洋不洋气、时髦不时髦。',
+      styles: ['funny'],
+      source: '抖音',
+    });
+    const city = meme('city不city');
+    const banwei = meme('班味');
+    const call = async (name: string, args: Record<string, unknown>) =>
+      z.json().parse(JSON.parse(textOf(await client.callTool({ name, arguments: args }))));
+    const inUse = async () => {
+      const { memes } = z
+        .object({ memes: z.array(z.object({ phrase: z.string() }).loose()) })
+        .parse(await call('list_memes', {}));
+      return memes.filter(({ phrase }) => [city.phrase, banwei.phrase].includes(phrase));
+    };
+
+    // An approved.json batch, with its approval time; a meme approved now needs none.
+    expect(
+      await call('add_memes', { memes: [city], approvedAt: '2026-10-18T17:00:00Z' }),
+    ).toStrictEqual({ version: 1, added: [city.phrase], alreadyThere: [] });
+    expect(await call('add_memes', { memes: [city, banwei] })).toStrictEqual({
+      version: 1,
+      added: [banwei.phrase],
+      alreadyThere: [city.phrase],
+    });
+    expect(await inUse()).toStrictEqual([
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z' },
+      { ...city, approvedAt: '2026-10-18T17:00:00.000Z' },
+    ]);
+
+    expect(await call('turn_off_meme', { phrase: city.phrase })).toStrictEqual({
+      version: 1,
+      turnedOff: city.phrase,
+    });
+    expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase]);
+    expect(await call('turn_on_meme', { phrase: city.phrase })).toStrictEqual({
+      version: 1,
+      turnedOn: city.phrase,
+    });
+    expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase, city.phrase]);
+
+    const missing = await client.callTool({
+      name: 'turn_off_meme',
+      arguments: { phrase: '没这个梗' },
+    });
+    expect([missing.isError, textOf(missing)]).toStrictEqual([
+      true,
+      'MEME_NOT_FOUND: The meme library has no 「没这个梗」.',
+    ]);
+
+    const rows = await sql<{ action: { tool: string } }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by id
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action.tool)).toStrictEqual([
+      'add_memes',
+      'add_memes',
+      'turn_off_meme',
+      'turn_on_meme',
+    ]);
     await client.close();
   });
 

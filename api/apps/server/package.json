@@ -16,6 +16,7 @@
     "@wildcard/check-ins": "workspace:*",
     "@wildcard/errors": "workspace:*",
     "@wildcard/members": "workspace:*",
+    "@wildcard/memes": "workspace:*",
     "hono": "4.13.13",
     "kysely": "0.29.7",
     "pg": "8.23.1",
