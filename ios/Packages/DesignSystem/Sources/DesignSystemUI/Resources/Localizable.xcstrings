@@ -1,12 +1,12 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "1 人免责声明": {
+    "1 人请假": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "1 disclaimer"
+            "value": "1 day off"
           }
         }
       }
@@ -41,12 +41,12 @@
         }
       }
     },
-    "今日免责声明": {
+    "今日请假条": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today's disclaimer"
+            "value": "Today's day-off note"
           }
         }
       }
@@ -81,12 +81,12 @@
         }
       }
     },
-    "免责": {
+    "请假": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Disclaimer"
+            "value": "Day off"
           }
         }
       }

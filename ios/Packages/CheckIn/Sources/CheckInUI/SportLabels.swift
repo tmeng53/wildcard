@@ -1,0 +1,98 @@
+#if os(iOS)
+import Contracts
+import DesignSystem
+import Foundation
+import SwiftUI
+
+extension Sport {
+    /// String Catalog key for the name people see.
+    var nameKey: String { "sport.\(rawValue)" }
+
+    var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
+
+    /// The localized name as a string, for search.
+    var localizedName: String { Bundle.module.localizedString(forKey: nameKey, value: nil, table: nil) }
+
+    var symbol: String {
+        switch self {
+        case .run, .trailRun: "figure.run"
+        case .walk, .walkCommute: "figure.walk"
+        case .hike: "figure.hiking"
+        case .strength, .kettlebell: "figure.strengthtraining.traditional"
+        case .crossfit: "figure.cross.training"
+        case .hyrox, .hiit: "figure.highintensity.intervaltraining"
+        case .spin: "figure.indoor.cycle"
+        case .elliptical: "figure.elliptical"
+        case .rowing, .kayak: "figure.rower"
+        case .jumpRope: "figure.jumprope"
+        case .aerobics: "figure.step.training"
+        case .yoga: "figure.yoga"
+        case .matPilates, .reformerPilates: "figure.pilates"
+        case .barre: "figure.barre"
+        case .stretching: "figure.flexibility"
+        case .swim: "figure.pool.swim"
+        case .surf, .paddleboard: "figure.surfing"
+        case .tennis: "figure.tennis"
+        case .badminton: "figure.badminton"
+        case .pickleball: "figure.pickleball"
+        case .tableTennis: "figure.table.tennis"
+        case .squash: "figure.squash"
+        case .basketball: "figure.basketball"
+        case .soccer: "figure.indoor.soccer"
+        case .volleyball: "figure.volleyball"
+        case .golf: "figure.golf"
+        case .baseballSoftball: "figure.baseball"
+        case .ultimate: "figure.disc.sports"
+        case .roadCycling, .bikeCommute: "figure.outdoor.cycle"
+        case .mountainBiking: "bicycle"
+        case .climb: "figure.climbing"
+        case .ski: "figure.skiing.downhill"
+        case .snowboard: "figure.snowboarding"
+        case .skate: "figure.skating"
+        case .boxing: "figure.boxing"
+        case .kickboxing: "figure.kickboxing"
+        case .jiuJitsu: "figure.wrestling"
+        case .martialArts: "figure.martial.arts"
+        case .dance: "figure.dance"
+        case .dogWalk: "dog.fill"
+        case .deepClean: "bubbles.and.sparkles.fill"
+        case .moving: "shippingbox.fill"
+        case .strollerWalk: "stroller.fill"
+        case .gardening: "leaf.fill"
+        }
+    }
+
+    /// The sports a 练了 offers before the full list, most common first.
+    static let quickPicks: [Sport] = [.run, .strength, .yoga, .swim, .spin, .hike, .tennis]
+}
+
+extension SportCategory {
+    var nameKey: String { "sportCategory.\(rawValue)" }
+
+    var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
+}
+
+extension Activity {
+    var name: Text {
+        switch self {
+        case .sport(let sport): sport.name
+        case .custom(let custom): Text(verbatim: custom.name)
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .sport(let sport): sport.symbol
+        case .custom: "figure.mixed.cardio"
+        }
+    }
+
+    /// A stable key for identifiers and `ForEach`.
+    var key: String {
+        switch self {
+        case .sport(let sport): sport.rawValue
+        case .custom(let custom): "custom.\(custom.name)"
+        }
+    }
+}
+#endif

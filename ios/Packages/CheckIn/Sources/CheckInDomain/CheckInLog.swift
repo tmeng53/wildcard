@@ -3,9 +3,9 @@ import Contracts
 /// Where a member's day stands for training. There is no "missed" state: a day
 /// without a check-in is simply not checked in.
 public enum TrainingStatus: Hashable, Sendable {
-    /// At least one 练了. Wins over a 免责声明 posted earlier the same day.
+    /// At least one 练了. Wins over a 请假条 posted earlier the same day.
     case trained
-    /// A 今日免责声明 and no 练了.
+    /// A 今日请假条 and no 练了.
     case disclaimer
     case notCheckedIn
 }
@@ -59,7 +59,7 @@ public struct CheckInLog: Hashable, Sendable {
     }
 
     /// Checks that `checkIn` may be posted now. Any number of 练了 and meals a day is
-    /// fine; a 免责声明 is at most one a day, and never after a 练了 the same day.
+    /// fine; a 请假条 is at most one a day, and never after a 练了 the same day.
     public func checkPost(_ checkIn: CheckIn, today: LocalDay, memberSquads: Set<SquadID>) throws(CheckInError) {
         guard checkIn.member == member else { throw .otherMember(checkIn.member) }
         guard checkIn.day == today else { throw .notToday(checkIn.day) }
