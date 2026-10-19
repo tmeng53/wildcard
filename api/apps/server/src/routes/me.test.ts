@@ -225,6 +225,28 @@ describe('PUT /me/profile', () => {
     ]);
   });
 
+  it("refuses a body that isn't sent as JSON", async () => {
+    const { token } = await signUp();
+    expect(
+      await send('/me/profile', {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'text/plain' },
+        body: JSON.stringify({ version: 1, timeZone: 'America/Los_Angeles' }),
+      }),
+    ).toStrictEqual([
+      415,
+      {
+        version: 1,
+        type: 'about:blank',
+        title: 'Unsupported Media Type',
+        status: 415,
+        detail: 'Send the body as application/json.',
+        reason: 'MEDIA_TYPE_UNSUPPORTED',
+        errorStatus: 'INVALID_ARGUMENT',
+      },
+    ]);
+  });
+
   it('asks a caller with no token to sign in', async () => {
     expect(
       await send('/me/profile', {

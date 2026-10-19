@@ -3,24 +3,28 @@ import DesignSystem
 
 extension PlaceholderCharacter {
     /// The preset colors a look can give a slot while it wears `variant`, for the character
-    /// editor's swatches: skin or fur for `body`, then `hair`, `top` and `bottom`. Empty for
-    /// slots that keep their art's colors (hats, props) and for a variant without
-    /// `tones.json`. Every color comes from the design system's palette: its scene and
-    /// meaning colors for clothes, its character tones for skin, fur and hair.
+    /// editor's swatches: skin or fur for `body`, then `hair`, `eyes`, `brows`, `top` and
+    /// `bottom`. Empty for slots that keep their art's colors (hats, props, mouths, cheeks,
+    /// glasses) and for a variant without `tones.json`. Every color comes from the design
+    /// system's palette: its scene and meaning colors for clothes, its character tones for
+    /// skin, fur, hair, brows and eyes.
     public static func swatches(for slot: Slot, wearing variant: String) -> [RGBAColor] {
         guard BundledArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
-        return switch (slot.description, variant) {
-        case ("body", "peach"), ("body", "tan"): skin
-        case ("body", "cat"): catFur
-        case ("body", "bear"): bearFur
-        case ("body", "golden"): dogFur
-        case ("body", "rabbit"), ("body", "lop"): rabbitFur
-        case ("hair", _): hair
-        case ("top", _): tops
-        case ("bottom", _): bottoms
+        return switch slot.description {
+        case "body": coats[variant] ?? []
+        case "hair", "brows": hair
+        case "eyes": eyes
+        case "top": tops
+        case "bottom": bottoms
         default: []
         }
     }
+
+    /// Skin for people, fur for the plain coats.
+    static let coats = [
+        "peach": skin, "tan": skin, "cat": catFur, "bear": bearFur, "golden": dogFur, "rabbit": rabbitFur,
+        "lop": rabbitFur,
+    ]
 
     static let skin = colors(Palette.skinTones)
     static let catFur = colors(Palette.catFur)
@@ -28,6 +32,7 @@ extension PlaceholderCharacter {
     static let dogFur = colors(Palette.dogFur)
     static let rabbitFur = colors(Palette.rabbitFur)
     static let hair = colors(Palette.hairColors)
+    static let eyes = colors(Palette.eyeColors)
     static let tops = colors([
         Palette.cobalt, Palette.mint, Palette.trackSignature, Palette.lavender, Palette.honey,
         Palette.poolSignature, Palette.climbingSignature, Palette.graphite,

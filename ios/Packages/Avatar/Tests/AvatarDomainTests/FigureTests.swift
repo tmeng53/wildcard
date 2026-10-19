@@ -32,6 +32,25 @@ import Testing
     #expect(dressed.parts[1].art[1].shapes[0].stroke?.width == 6)
 }
 
+/// A slot the outfit leaves out wears the rig's default; picking another variant, or
+/// coloring the default, works as for any slot.
+@Test func outfitsFallBackToTheRigsDefaults() throws {
+    var dressed = rig
+    dressed.defaults = ["top": "tee"]
+    let files = Files(files: art.files.merging(["top/vest/arm.svg": sleeve, "top/tee/tones.json": teeTones]) { $1 })
+    #expect(try Figure(rig: dressed, outfit: Outfit([:]), art: files).parts[1].art.count == 2)
+    let vest = try Figure(rig: dressed, outfit: Outfit(["top": "vest"]), art: files)
+    #expect(vest.parts[1].art.count == 2)
+    let red = try #require(RGBAColor(hex: "#E65345"))
+    let colored = try Figure(rig: dressed, outfit: Outfit([:], colors: ["top": red]), art: files)
+    #expect(colored.parts[1].art[1].shapes[0].stroke?.color == red)
+    #expect(throws: AvatarError.unknownVariant(slot: "top", variant: "cape")) {
+        try Figure(rig: dressed, outfit: Outfit(["top": "cape"]), art: files)
+    }
+}
+
+private let teeTones = ##"{ "version": 1, "base": "#2D5BA0", "shades": [] }"##
+
 @Test func posesFromAClipLoopOrHold() throws {
     let figure = try figure()
     let wave = try figure.bind(clip("wave", duration: 2, loops: true, [track("arm", .rotation, [(0, 0), (2, 40)])]))
@@ -77,11 +96,12 @@ import Testing
     let rig = try Rig.decode(
         Data(
             #"""
-            { "version": 1, "canvas": { "width": 100, "height": 100 }, "parts": [
+            { "version": 1, "canvas": { "width": 100, "height": 100 }, "defaults": { "top": "tee" }, "parts": [
               { "id": "body", "pivot": [50, 80], "layers": [{ "art": "body" }] },
               { "id": "mouth", "parent": "body", "pivot": [50, 50], "opacity": 0 } ] }
             """#.utf8))
     #expect(rig.parts.map(\.id) == ["body", "mouth"])
+    #expect(rig.defaults == ["top": "tee"])
     #expect(rig.parts[1] == Rig.Part(id: "mouth", parent: "body", pivot: Point(x: 50, y: 50), opacity: 0))
     #expect(throws: AvatarError.malformedJSON(".parts[0].pivot[2]: expected [x, y]")) {
         try Rig.decode(
