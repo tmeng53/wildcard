@@ -20,6 +20,9 @@
       "path": "packages/memes"
     },
     {
+      "path": "packages/push"
+    },
+    {
       "path": "packages/squads"
     },
     {

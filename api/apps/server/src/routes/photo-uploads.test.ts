@@ -1,10 +1,12 @@
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -38,6 +40,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     photos,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
+      reactions: createPostgresReactionStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
@@ -48,6 +51,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog(() => undefined),
     admin: adminOn(db),

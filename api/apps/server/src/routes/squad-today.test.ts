@@ -3,10 +3,12 @@ import { randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -37,6 +39,7 @@ const app = createApp({
   photos,
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
     photos,
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -48,6 +51,7 @@ const app = createApp({
   }),
   members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   log: createLog(() => undefined),
   admin: adminOn(db),
 });

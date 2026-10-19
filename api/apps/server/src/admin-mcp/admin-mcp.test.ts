@@ -13,11 +13,13 @@ import {
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -70,6 +72,7 @@ beforeAll(async () => {
           revokeAppleSignIn: undefined,
           checkIns: createCheckIns({
             store: createPostgresCheckInStore(db),
+            reactions: createPostgresReactionStore(db),
             photos,
             calendarOf: () => Promise.resolve(undefined),
             clock: () => new Date(),
@@ -84,6 +87,7 @@ beforeAll(async () => {
             store: createPostgresSquadStore(db),
             inviteCodes: randomInviteCodes,
           }),
+          push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
           photos,
           log: createLog(() => undefined),
           admin: {

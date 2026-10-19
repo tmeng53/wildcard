@@ -4,8 +4,10 @@ import {
   CheckInDayMismatchError,
   CheckInIdConflictError,
   CheckInInTheFutureError,
+  CheckInNotFoundError,
   CheckInTooOldError,
   DisclaimerAlreadyPostedError,
+  OwnCheckInReactionError,
   PlanDayStartedError,
   RestDaysFixedError,
   SquadNotJoinedError,
@@ -30,6 +32,8 @@ describe('check-in errors', () => {
         new PlanDayStartedError('2026-10-19'),
         new RestDaysFixedError(2),
         new TimeZoneNotSetError(),
+        new CheckInNotFoundError('c1'),
+        new OwnCheckInReactionError(),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['CheckInIdConflictError', 'CHECK_IN_ID_CONFLICT', 'ALREADY_EXISTS'],
@@ -43,6 +47,8 @@ describe('check-in errors', () => {
       ['PlanDayStartedError', 'PLAN_DAY_STARTED', 'FAILED_PRECONDITION'],
       ['RestDaysFixedError', 'REST_DAYS_FIXED', 'FAILED_PRECONDITION'],
       ['TimeZoneNotSetError', 'TIME_ZONE_NOT_SET', 'FAILED_PRECONDITION'],
+      ['CheckInNotFoundError', 'CHECK_IN_NOT_FOUND', 'NOT_FOUND'],
+      ['OwnCheckInReactionError', 'OWN_CHECK_IN_REACTION', 'FAILED_PRECONDITION'],
     ]);
   });
 });
