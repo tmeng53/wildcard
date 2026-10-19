@@ -65,6 +65,20 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
     #expect(throws: ContractsError.repeatedPhoto) { try Photos([saved, again]) }
 }
 
+@Test func aPhotoIsTheSameWhateverURLItWasListedWith() throws {
+    let listed = try PhotoRef(path: "m/a.jpg", viewURL: URL(string: "https://example.com/a?token=1"))
+    let relisted = try PhotoRef(path: "m/a.jpg", viewURL: URL(string: "https://example.com/a?token=2"))
+    let sent = try PhotoRef(path: "m/a.jpg")
+    #expect(listed == relisted)
+    #expect(listed == sent)
+    #expect(Set([listed, relisted, sent]).count == 1)
+    #expect(try PhotoRef(path: "m/b.jpg", viewURL: listed.viewURL) != listed)
+
+    // The cover can be picked from a fresh list of the same check-in.
+    let photos = try Photos([try PhotoRef(path: "m/b.jpg"), listed])
+    #expect(photos.withCover(relisted)?.all.map(\.path) == ["m/a.jpg", "m/b.jpg"])
+}
+
 @Test func everySportHasOneCategoryAndEveryCategoryHasSports() {
     #expect(Sport.allCases.count == 52)
     #expect(SportCategory.allCases.allSatisfy { !$0.sports.isEmpty })

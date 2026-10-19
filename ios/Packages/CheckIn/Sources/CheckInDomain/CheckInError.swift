@@ -7,9 +7,9 @@ public enum CheckInError: Error, Equatable, Sendable {
     case notToday(LocalDay)
     /// The check-in names a squad the member isn't in.
     case notInSquad(SquadID)
-    /// A 免责声明 on a day that already has a 练了. The two are opposites; the day is trained.
+    /// A 请假条 on a day that already has a 练了. The two are opposites; the day is trained.
     case alreadyTrained
-    /// A second 免责声明 on the same day. One a day is enough; there is no weekly limit.
+    /// A second 请假条 on the same day. One a day is enough; there is no weekly limit.
     case disclaimerAlreadyPosted
     /// The check-in or plan belongs to someone else.
     case otherMember(MemberID)
@@ -17,4 +17,8 @@ public enum CheckInError: Error, Equatable, Sendable {
     case notFound(CheckInID)
     /// Date arithmetic left the years `LocalDay` supports.
     case dayOutOfRange
+    /// The check-in didn't reach the server, so nothing was saved; trying again is safe.
+    case notSent
+    /// A picked photo couldn't be read as an image.
+    case unreadablePhoto
 }

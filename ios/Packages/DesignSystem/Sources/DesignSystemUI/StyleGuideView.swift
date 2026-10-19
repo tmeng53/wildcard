@@ -44,87 +44,6 @@ public struct StyleGuideView: View {
     }
 }
 
-// MARK: - Names and roles the style guide shows
-
-extension SceneTheme {
-    var name: Text {
-        switch self {
-        case .pool: Text("游泳池", bundle: .module)
-        case .track: Text("跑道", bundle: .module)
-        case .gym: Text("健身房", bundle: .module)
-        case .tennis: Text("网球场", bundle: .module)
-        case .climbing: Text("攀岩馆", bundle: .module)
-        }
-    }
-}
-
-extension Meaning {
-    /// The short label on a check-in capsule.
-    var capsuleLabel: Text {
-        switch self {
-        case .trained: Text("练了", bundle: .module)
-        case .fresh: Text("健康餐", bundle: .module)
-        case .indulgence: Text("放纵餐", bundle: .module)
-        case .disclaimer: Text("免责", bundle: .module)
-        }
-    }
-
-    /// The full name, for tags.
-    var fullName: Text {
-        switch self {
-        case .trained: Text("练了", bundle: .module)
-        case .fresh: Text("健康餐", bundle: .module)
-        case .indulgence: Text("坦白放纵餐", bundle: .module)
-        case .disclaimer: Text("今日免责声明", bundle: .module)
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .trained: "dumbbell.fill"
-        case .fresh: "leaf.fill"
-        case .indulgence: "birthday.cake.fill"
-        case .disclaimer: "moon.stars.fill"
-        }
-    }
-
-    var tint: ColorRole {
-        switch self {
-        case .trained: .meaningTrained
-        case .fresh: .meaningFresh
-        case .indulgence: .meaningIndulgence
-        case .disclaimer: .meaningDisclaimer
-        }
-    }
-
-    var ink: ColorRole {
-        switch self {
-        case .trained: .meaningTrainedInk
-        case .fresh: .meaningFreshInk
-        case .indulgence: .meaningIndulgenceInk
-        case .disclaimer: .meaningDisclaimerInk
-        }
-    }
-
-    var wash: ColorRole {
-        switch self {
-        case .trained: .meaningTrainedWash
-        case .fresh: .meaningFreshWash
-        case .indulgence: .meaningIndulgenceWash
-        case .disclaimer: .meaningDisclaimerWash
-        }
-    }
-
-    var text: ColorRole {
-        switch self {
-        case .trained: .meaningTrainedText
-        case .fresh: .meaningFreshText
-        case .indulgence: .meaningIndulgenceText
-        case .disclaimer: .meaningDisclaimerText
-        }
-    }
-}
-
 // MARK: - Shared
 
 struct SectionTitle: View {
@@ -143,29 +62,6 @@ struct SectionTitle: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
-    }
-}
-
-/// A score like `18/25`: the count in signature text, the goal smaller in tertiary ink.
-struct Score: View {
-    @Environment(\.sceneTheme) private var theme
-    let count: Int
-    let goal: Int
-    let countStyle: TypeStyle
-    let goalStyle: TypeStyle
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 0) {
-            Text(verbatim: "\(count)")
-                .typeStyle(countStyle)
-                .foregroundStyle(Color(role: .signatureText, in: theme))
-            Text(verbatim: "/\(goal)")
-                .typeStyle(goalStyle)
-                .foregroundStyle(Color(role: .textTertiary, in: theme))
-        }
-        .monospacedDigit()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(count)/\(goal)"))
     }
 }
 

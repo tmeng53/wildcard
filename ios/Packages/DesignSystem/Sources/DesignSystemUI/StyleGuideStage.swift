@@ -26,11 +26,11 @@ struct SceneStage: View {
                 .blur(radius: isOpen ? Scrim.blurRadius : 0)
                 .animation(.easeOut(duration: isOpen ? Scrim.fadeIn : Scrim.fadeOut), value: isOpen)
 
-            SceneBand(isOpen: isOpen)
+            SceneFloor(isBlurred: isOpen)
                 .frame(height: 340)
                 .overlay(alignment: .bottom) {
                     VStack(spacing: Space.l) {
-                        CheckInControl(isOpen: $isOpen)
+                        CheckInBurst(isOpen: $isOpen, identifierPrefix: "styleguide") { _ in }
                         TabBarSample()
                     }
                     .padding(.horizontal, Space.gutter)
@@ -42,34 +42,6 @@ struct SceneStage: View {
             // Taller than the stage, so pulling the page down shows more wash, not a gap.
             Color(role: .signatureWash, in: theme).frame(height: 2000)
         }
-    }
-}
-
-/// The scene's floor: a quiet wash with faint signature lane lines, so the solid 打卡 button is
-/// the only strong color. Blurred lightly while a check-in is open.
-private struct SceneBand: View {
-    @Environment(\.sceneTheme) private var theme
-    let isOpen: Bool
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .topLeading) {
-                Color(role: .signatureWash, in: theme)
-                Rectangle()
-                    .fill(Color(role: .signature, in: theme).opacity(0.35))
-                    .frame(height: Space.xxs)
-                ForEach(1..<4, id: \.self) { lane in
-                    Rectangle()
-                        .fill(Color(role: .signature, in: theme).opacity(0.22))
-                        .frame(width: 2)
-                        .offset(x: proxy.size.width * Double(lane) / 4 - 1)
-                }
-            }
-            .blur(radius: isOpen ? Scrim.blurRadius : 0)
-            .overlay(Color(Scrim.tint).opacity(isOpen ? Scrim.tintOpacity : 0))
-            .animation(.easeOut(duration: isOpen ? Scrim.fadeIn : Scrim.fadeOut), value: isOpen)
-        }
-        .accessibilityHidden(true)
     }
 }
 
@@ -104,14 +76,14 @@ private struct SquadBanner: View {
                 Score(
                     count: 18, goal: 25, countStyle: TypeRamp.scoreLarge, goalStyle: TypeRamp.scoreLargeDenominator)
             }
-            ProgressTrack(fraction: 18.0 / 25.0)
+            ProgressBar(fraction: 18.0 / 25.0)
             HStack(spacing: Space.s) {
                 AvatarRow()
                 VStack(alignment: .leading, spacing: 2) {
                     Text("今天 3 人练了", bundle: .module)
                         .typeStyle(TypeRamp.callout)
                         .foregroundStyle(Color(role: .textPrimary, in: theme))
-                    Text("1 人免责声明", bundle: .module)
+                    Text("1 人请假", bundle: .module)
                         .typeStyle(TypeRamp.caption)
                         .foregroundStyle(Color(role: .textSecondary, in: theme))
                 }
@@ -136,30 +108,6 @@ private struct SquadBanner: View {
     }
 }
 
-private struct ProgressTrack: View {
-    @Environment(\.sceneTheme) private var theme
-    let fraction: Double
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color(role: .divider, in: theme))
-                Capsule()
-                    .fill(Color(role: .progressFill, in: theme))
-                    .overlay {
-                        // A fill too faint to hold its shape on white (gym's volt) gets a signature edge.
-                        if theme.colors.progressFill.contrastRatio(with: Palette.white) < 3 {
-                            Capsule().strokeBorder(Color(role: .signature, in: theme), lineWidth: 1)
-                        }
-                    }
-                    .frame(width: proxy.size.width * fraction)
-            }
-        }
-        .frame(height: Space.xs)
-        .accessibilityHidden(true)
-    }
-}
-
 /// Placeholder avatars ringed by today's status: trained, disclaimer, not yet. Me last.
 private struct AvatarRow: View {
     @Environment(\.sceneTheme) private var theme
@@ -180,105 +128,6 @@ private struct AvatarRow: View {
             }
         }
         .accessibilityHidden(true)
-    }
-}
-
-// MARK: - 打卡 and its capsules
-
-private struct CheckInControl: View {
-    @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Binding var isOpen: Bool
-    @State private var picked: Meaning?
-
-    var body: some View {
-        ZStack {
-            if isOpen {
-                ForEach(Array(Meaning.allCases.enumerated()), id: \.element) { index, meaning in
-                    CheckInCapsule(meaning: meaning) {
-                        picked = meaning
-                        withAnimation(.wildcard(Motion.burst, reduceMotion: reduceMotion)) { isOpen = false }
-                    }
-                    .offset(x: BurstLayout.offset(for: meaning).x, y: BurstLayout.offset(for: meaning).y)
-                    .transition(burst(for: meaning, index: index))
-                }
-            }
-            CheckInButton(isOpen: $isOpen)
-        }
-        .frame(height: Sizing.checkInHeight)
-        // Haptics only where the spec puts them: the burst opening and picking a type.
-        .sensoryFeedback(.impact(weight: .light), trigger: isOpen) { _, opened in opened }
-        .sensoryFeedback(.selection, trigger: picked)
-    }
-
-    /// Out of the button along the arc, staggered; back in faster, in reverse order.
-    private func burst(for meaning: Meaning, index: Int) -> AnyTransition {
-        if reduceMotion {
-            return .opacity.animation(.easeOut(duration: Motion.reducedDuration))
-        }
-        let offset = BurstLayout.offset(for: meaning)
-        let shape = AnyTransition.offset(x: -offset.x, y: -offset.y)
-            .combined(with: .scale(scale: 0.4))
-            .combined(with: .opacity)
-        let count = Meaning.allCases.count
-        return .asymmetric(
-            insertion: shape.animation(.wildcard(Motion.burst).delay(Motion.burstStagger * Double(index))),
-            removal: shape.animation(
-                .easeIn(duration: Motion.collapseDuration)
-                    .delay(Motion.collapseStagger * Double(count - 1 - index)))
-        )
-    }
-}
-
-/// The primary action: a solid signature capsule. Its plus turns into a cross and it keeps a
-/// word (收起) when open, so it is never an icon alone.
-private struct CheckInButton: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Binding var isOpen: Bool
-
-    var body: some View {
-        Button {
-            withAnimation(.wildcard(Motion.burst, reduceMotion: reduceMotion)) { isOpen.toggle() }
-        } label: {
-            HStack(spacing: Space.xs) {
-                Image(systemName: "plus")
-                    .fontWeight(.bold)
-                    .rotationEffect(.degrees(isOpen ? 135 : 0))
-                    .accessibilityHidden(true)
-                (isOpen ? Text("收起", bundle: .module) : Text("打卡", bundle: .module))
-                    .typeStyle(TypeRamp.action)
-            }
-            .padding(.horizontal, Space.l)
-        }
-        .buttonStyle(PrimaryButtonStyle())
-        .accessibilityIdentifier("styleguide.checkin")
-    }
-}
-
-private struct CheckInCapsule: View {
-    @Environment(\.sceneTheme) private var theme
-    let meaning: Meaning
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: Space.xs) {
-                Image(systemName: meaning.symbol)
-                    .font(.system(size: Sizing.capsuleGlyph, weight: .semibold))
-                    .frame(width: Sizing.capsuleIcon, height: Sizing.capsuleIcon)
-                    .foregroundStyle(Color(role: meaning.ink, in: theme))
-                    .accessibilityHidden(true)
-                meaning.capsuleLabel
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .textPrimary, in: theme))
-                    .fixedSize()
-            }
-            .padding(.horizontal, Space.m)
-            .frame(height: Sizing.capsuleHeight)
-            .frosted(white: Frost.capsuleFill, in: Capsule())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityIdentifier("styleguide.capsule.\(meaning.rawValue)")
     }
 }
 
