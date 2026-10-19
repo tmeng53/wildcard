@@ -99,11 +99,12 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
-        nickname.tap()
-        nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5))
-        XCTAssertFalse(done.isEnabled, "就这样 is on with no nickname")
+        // Tap past the centered text so the cursor lands at the end, then delete it all.
+        nickname.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
+        waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
         nickname.typeText("小汤")
-        XCTAssertTrue(done.isEnabled, "就这样 stays off with a nickname")
+        waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
         keepScreenshot(named: "27-editor-nickname")
     }
 
@@ -139,6 +140,11 @@ final class CharacterEditorUITests: XCTestCase {
     ) {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: timeout), .completed, message)
+    }
+
+    private func waitFor(_ element: XCUIElement, _ predicate: String, _ message: String) {
+        let met = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: Self.wait), .completed, message)
     }
 
     /// Lets thumbnails build and the character's one move finish before a screenshot.
