@@ -95,6 +95,21 @@ export class RouteNotFoundError extends AppError {
  * token issued to the MCP client through the OAuth sign-in, so a token from a phone can't reach
  * them. Sign in from the MCP client.
  */
+/**
+ * Thrown when a token issued to an OAuth client (an MCP client signing an admin in) calls the
+ * app's routes: those take only the app's own sign-in, so a third-party client a member
+ * approved can't act as them.
+ */
+export class AppSignInRequiredError extends AppError {
+  override readonly name = 'AppSignInRequiredError';
+  readonly reason = 'APP_SIGN_IN_REQUIRED';
+  readonly status = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Sign in from the app to do this.');
+  }
+}
+
 export class AdminSignInRequiredError extends AppError {
   override readonly name = 'AdminSignInRequiredError';
   readonly reason = 'ADMIN_SIGN_IN_REQUIRED';

@@ -314,6 +314,27 @@ describe('the admin MCP server', () => {
     ]);
   });
 
+  it('keeps an MCP sign-in, even an admin’s, out of the app’s routes', async () => {
+    const provider = clientSignedInAs(await member({ admin: true }));
+    await (await connect(provider)).close();
+    const tokens = await provider.tokens();
+    const response = await fetch(new URL('/me', mcpUrl), {
+      headers: { authorization: `Bearer ${tokens?.access_token ?? ''}` },
+    });
+    expect([response.status, await response.json()]).toStrictEqual([
+      401,
+      {
+        version: 1,
+        type: 'about:blank',
+        title: 'Unauthorized',
+        status: 401,
+        detail: 'Sign in from the app to do this.',
+        reason: 'APP_SIGN_IN_REQUIRED',
+        errorStatus: 'UNAUTHENTICATED',
+      },
+    ]);
+  });
+
   it('refuses our own app’s sign-in, even an admin’s, and says where to sign in', async () => {
     const { token } = await member({ admin: true });
     const response = await fetch(mcpUrl, {

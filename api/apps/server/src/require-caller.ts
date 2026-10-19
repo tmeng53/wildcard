@@ -1,16 +1,21 @@
 import { createMiddleware } from 'hono/factory';
 
-import { AuthTokenInvalidError, AuthTokenMissingError } from './errors.js';
+import { AppSignInRequiredError, AuthTokenInvalidError, AuthTokenMissingError } from './errors.js';
 import type { Caller, VerifyToken } from './ports.js';
 
 export interface SignedIn {
   Variables: { caller: Caller };
 }
 
-/** Lets the request through only with a valid `Authorization: Bearer <token>`; sets `caller`. */
+/**
+ * Lets the request through only with a valid `Authorization: Bearer <token>` from the app's own
+ * sign-in; sets `caller`. A token issued to an OAuth client is for `/mcp` only.
+ */
 export function requireCaller(verifyToken: VerifyToken) {
   return createMiddleware<SignedIn>(async (c, next) => {
-    c.set('caller', await verifyToken(bearerToken(c.req.header('authorization'))));
+    const caller = await verifyToken(bearerToken(c.req.header('authorization')));
+    if (caller.oauthClient !== undefined) throw new AppSignInRequiredError();
+    c.set('caller', caller);
     await next();
   });
 }

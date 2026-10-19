@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AdminSignInRequiredError,
+  AppSignInRequiredError,
   AuthKeysUnavailableError,
   AuthTokenInvalidError,
   AuthTokenMissingError,
@@ -22,6 +23,7 @@ describe('server errors', () => {
         new RequestInvalidError('bad'),
         new RouteNotFoundError('GET', '/nope'),
         new AdminSignInRequiredError(),
+        new AppSignInRequiredError(),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['AuthTokenMissingError', 'AUTH_TOKEN_MISSING', 'UNAUTHENTICATED'],
@@ -31,6 +33,7 @@ describe('server errors', () => {
       ['RequestInvalidError', 'REQUEST_INVALID', 'INVALID_ARGUMENT'],
       ['RouteNotFoundError', 'ROUTE_NOT_FOUND', 'NOT_FOUND'],
       ['AdminSignInRequiredError', 'ADMIN_SIGN_IN_REQUIRED', 'UNAUTHENTICATED'],
+      ['AppSignInRequiredError', 'APP_SIGN_IN_REQUIRED', 'UNAUTHENTICATED'],
     ]);
   });
 });
