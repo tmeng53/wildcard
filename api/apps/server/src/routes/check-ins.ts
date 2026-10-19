@@ -17,7 +17,7 @@ import {
 
 import { bodyVersion } from '../body-version.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const checkInFields = {
@@ -156,6 +156,7 @@ export function checkIns(deps: {
         'The id holds a different check-in, today’s disclaimer is already posted, or another ' +
           'check-in uses one of the photos',
       ),
+      ...jsonBodyFailures,
       ...signedInFailures,
     },
   });
