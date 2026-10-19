@@ -1,10 +1,12 @@
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 
@@ -25,6 +27,7 @@ const photos = {
 const checkInsOn = (db: Database) =>
   createCheckIns({
     store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -39,12 +42,14 @@ async function getHealth(db: Database) {
     revokeAppleSignIn: undefined,
     checkIns: checkInsOn(db),
     photos,
+    disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     log: createLog((line) => lines.push(line)),
   });
@@ -112,12 +117,14 @@ describe('an unknown route', () => {
       revokeAppleSignIn: undefined,
       checkIns: checkInsOn(db),
       photos,
+      disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       weeklyPlans: createWeeklyPlans({
         store: createPostgresWeeklyPlanStore(db),
         calendarOf: () => Promise.resolve(undefined),
         clock: () => new Date(),
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
+      push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
       log: createLog(() => undefined),
     });

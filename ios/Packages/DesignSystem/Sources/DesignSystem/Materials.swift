@@ -26,6 +26,8 @@ public enum Scrim {
 public enum Tint {
     /// The pill behind a selected tab or segment.
     public static let selected: Double = 0.14
+    /// The floor a character stands on, over the scene's wash.
+    public static let floor: Double = 0.09
 }
 
 /// The one shadow in the system: barely there, under a solid pill that sits on a light surface

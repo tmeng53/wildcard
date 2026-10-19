@@ -48,16 +48,18 @@ describe('createSupabasePhotoStorage', () => {
         body,
       });
     }
-    const urls = await photos.createViewUrls([second, first], 1);
+    // The token's exp is in whole seconds, so a 1-second URL can already be expired by the
+    // second fetch. Sign for 5 seconds and wait past that.
+    const urls = await photos.createViewUrls([second, first], 5);
     expect([...urls.keys()]).toStrictEqual([second, first]);
     const url = z.instanceof(URL).parse(urls.get(first));
     expect(await (await fetch(url)).text()).toBe('RIFF');
     expect(await (await fetch(z.instanceof(URL).parse(urls.get(second)))).text()).toBe('RIFF2');
-    await new Promise((resolve) => setTimeout(resolve, 2_100));
+    await new Promise((resolve) => setTimeout(resolve, 6_100));
     const expired = await fetch(url);
     expect(expired.ok).toBe(false);
     expect(await expired.json()).toMatchObject({ code: 'InvalidJWT' });
-  });
+  }, 15_000);
 
   it('refuses to sign view URLs when a photo was never uploaded', async () => {
     const path = newPath();

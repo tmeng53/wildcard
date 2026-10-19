@@ -9,6 +9,7 @@ import {
   createPostgresCheckInStore,
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
+import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
 import { MemberId, SquadId, type CheckInRecord } from '../domain/check-in.js';
 import { createCheckIns } from './check-ins.js';
 
@@ -26,6 +27,7 @@ const now = new Date('2026-10-21T20:00:00.000Z');
 const zones = new Map<MemberId, string>();
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
+  reactions: createPostgresReactionStore(db),
   photos: { exists: () => Promise.reject(new Error('unused')) },
   calendarOf: (member) => {
     const timeZone = zones.get(member);

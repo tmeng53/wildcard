@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A1C0DE00000000000000001D /* DesignSystemUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001C /* DesignSystemUI */; };
 		A1C0DE000000000000000020 /* CheckInUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001F /* CheckInUI */; };
+		A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000031 /* CharacterEditorUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 			files = (
 				A1C0DE00000000000000001D /* DesignSystemUI in Frameworks */,
 				A1C0DE000000000000000020 /* CheckInUI in Frameworks */,
+				A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +101,7 @@
 			packageProductDependencies = (
 				A1C0DE00000000000000001C /* DesignSystemUI */,
 				A1C0DE00000000000000001F /* CheckInUI */,
+				A1C0DE000000000000000031 /* CharacterEditorUI */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -157,6 +160,7 @@
 			packageReferences = (
 				A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */,
 				A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */,
+				A1C0DE000000000000000030 /* XCLocalSwiftPackageReference "Packages/CharacterEditor" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -387,6 +391,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/CheckIn;
 		};
+		A1C0DE000000000000000030 /* XCLocalSwiftPackageReference "Packages/CharacterEditor" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CharacterEditor;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -399,6 +407,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */;
 			productName = CheckInUI;
+		};
+		A1C0DE000000000000000031 /* CharacterEditorUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000030 /* XCLocalSwiftPackageReference "Packages/CharacterEditor" */;
+			productName = CharacterEditorUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,19 +1,24 @@
+import CharacterEditorUI
 import CheckInUI
 import DesignSystemUI
 import SwiftUI
 
 /// The app target only wires packages together. It opens on 今天, backed by an in-memory squad
-/// until the Backend adapter lands; `-styleguide` opens the design system's style guide instead.
+/// until the Backend adapter lands; `-styleguide` opens the design system's style guide and
+/// `-character-editor` the character editor instead.
 @main
 struct WildcardApp: App {
     @State private var today = TodayModel(
         service: InMemoryCheckInService.sampleSquad(now: .now),
         writer: LaunchOptions.disclaimerWriter,
         photoSource: LaunchOptions.photoSource)
+    @State private var editor = CharacterEditorDemo.model()
 
     var body: some Scene {
         WindowGroup {
-            if LaunchOptions.showsStyleGuide {
+            if let editor {
+                CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
+            } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
             } else {
                 TodayView(model: today)
