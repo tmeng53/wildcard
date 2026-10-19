@@ -163,15 +163,18 @@ describe('joining by invite code', () => {
     expect([again.status, again.body]).toStrictEqual([200, joined.body]);
   });
 
-  it.each(['ZZZZZZZZ', 'not-a-code!', '0O1IL0O1'])('answers 404 for %j', async (code) => {
-    const me = await signUp();
-    for (const response of [
-      await call({ method: 'GET', path: `/squad-invites/${code}`, token: me.token }),
-      await call({ method: 'POST', path: `/squad-invites/${code}/accept`, token: me.token }),
-    ]) {
-      expect([response.status, reason(response)]).toStrictEqual([404, 'INVITE_CODE_UNKNOWN']);
-    }
-  });
+  it.each(['ZZZZZZZZ', 'not-a-code!', '0O1IL0O1', 'K'.repeat(100)])(
+    'answers 404 for %j',
+    async (code) => {
+      const me = await signUp();
+      for (const response of [
+        await call({ method: 'GET', path: `/squad-invites/${code}`, token: me.token }),
+        await call({ method: 'POST', path: `/squad-invites/${code}/accept`, token: me.token }),
+      ]) {
+        expect([response.status, reason(response)]).toStrictEqual([404, 'INVITE_CODE_UNKNOWN']);
+      }
+    },
+  );
 
   it('refuses a ninth member', async () => {
     const creator = await signUp();
@@ -222,6 +225,13 @@ describe('reading and leaving squads', () => {
       token: friend.token,
     });
     expect([missing.status, reason(missing)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
+    for (const [method, path] of [
+      ['GET', '/squads/not-a-uuid'],
+      ['DELETE', '/squads/not-a-uuid/members/me'],
+    ] as const) {
+      const malformed = await call({ method, path, token: friend.token });
+      expect([malformed.status, reason(malformed)]).toStrictEqual([400, 'REQUEST_INVALID']);
+    }
     expect(
       (await call({ method: 'GET', path: `/squads/${theirs.id}`, token: me.token })).status,
     ).toBe(200);

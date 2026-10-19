@@ -100,9 +100,8 @@ const limitReached = `the member is in ${String(SQUADS_PER_MEMBER)} squads alrea
  */
 export function squads(deps: { readonly verifyToken: VerifyToken; readonly squads: Squads }) {
   const squadParams = z.strictObject({ squadId: SquadId });
-  const inviteParams = z.strictObject({
-    inviteCode: z.string().max(64).meta({ example: 'K7M2QX9P' }),
-  });
+  // Any text: one that can't be a code answers 404 like an unknown one, so the app has one case.
+  const inviteParams = z.strictObject({ inviteCode: z.string().meta({ example: 'K7M2QX9P' }) });
   const squadResponse = (description: string) => ({
     description,
     content: { 'application/json': { schema: Squad } },
@@ -155,6 +154,7 @@ export function squads(deps: { readonly verifyToken: VerifyToken; readonly squad
     request: { params: squadParams },
     responses: {
       200: squadResponse('The squad'),
+      400: problem('Not a valid squad id'),
       403: problem('The member isn’t in this squad (`SQUAD_NOT_JOINED`)'),
       ...signedInFailures,
     },
@@ -171,7 +171,11 @@ export function squads(deps: { readonly verifyToken: VerifyToken; readonly squad
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: squadParams },
-    responses: { 204: { description: 'Not in the squad any more' }, ...signedInFailures },
+    responses: {
+      204: { description: 'Not in the squad any more' },
+      400: problem('Not a valid squad id'),
+      ...signedInFailures,
+    },
   });
 
   const preview = createRoute({

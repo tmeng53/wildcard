@@ -1678,6 +1678,16 @@
               }
             }
           },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "No bearer token, or not a valid one",
             "content": {
@@ -1736,6 +1746,16 @@
           "204": {
             "description": "Not in the squad any more"
           },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "No bearer token, or not a valid one",
             "content": {
@@ -1773,7 +1793,6 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 64,
               "example": "K7M2QX9P"
             },
             "required": true,
@@ -1839,7 +1858,6 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 64,
               "example": "K7M2QX9P"
             },
             "required": true,
