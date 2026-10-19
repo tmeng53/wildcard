@@ -137,7 +137,8 @@ final class TodayUITests: XCTestCase {
         settle()
         XCTAssertEqual(field.value as? String, String(repeating: "a", count: 30), "Return went into the excuse")
         XCTAssertEqual(app.keyboards.count, 0, "Return didn't finish editing")
-        field.tap()
+        // 编辑 puts the cursor after the line (a tap on the text could land anywhere in it).
+        app.buttons["disclaimer.edit"].tap()
         field.typeText(String(repeating: "b", count: 20))
         settle()
         XCTAssertEqual(field.value as? String, String(repeating: "a", count: 30) + String(repeating: "b", count: 10))
@@ -163,7 +164,7 @@ final class TodayUITests: XCTestCase {
         settle()
         keepScreenshot(named: "21-disclaimer-care")
 
-        field.tap()
+        app.buttons["disclaimer.edit"].tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "好累")
         XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a changed line can't be posted")
         XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
