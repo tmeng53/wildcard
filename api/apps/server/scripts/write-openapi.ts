@@ -21,6 +21,12 @@ const app = createApp({
   photos,
   checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
   log: createLog(unused),
+  admin: {
+    admins: { requireAdmin: unused, logChange: unused, listLog: unused },
+    tools: [],
+    publicUrl: new URL('http://localhost:8080'),
+    authorizationServer: new URL('http://localhost:54321/auth/v1'),
+  },
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));
 await db.destroy();

@@ -10,7 +10,7 @@ import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -28,6 +28,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   log: createLog(() => undefined),
+  admin: adminOn(db),
 });
 
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */

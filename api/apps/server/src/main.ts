@@ -1,8 +1,10 @@
 import { serve } from '@hono/node-server';
+import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 
 import { createDatabase } from './adapters/postgres.js';
-import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
+import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { createSupabaseTokenVerifier, supabaseAuthIssuer } from './adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
@@ -16,6 +18,7 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+const admins = createAdmins({ store: createPostgresAdminStore(db), clock: () => new Date() });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -26,6 +29,12 @@ const app = createApp({
   }),
   photos,
   log,
+  admin: {
+    admins,
+    tools: [listAdminLog({ admins })],
+    publicUrl: config.publicUrl,
+    authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
+  },
 });
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {

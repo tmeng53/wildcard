@@ -6,6 +6,7 @@ import { createApp } from '../app.js';
 import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
+import { adminOn } from '../test-kit/local-supabase.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
@@ -21,6 +22,7 @@ async function getHealth(db: Database) {
     checkIns: checkInsOn(db),
     photos,
     log: createLog((line) => lines.push(line)),
+    admin: adminOn(db),
   });
   try {
     const response = await app.request('/health');
@@ -85,6 +87,7 @@ describe('an unknown route', () => {
       checkIns: checkInsOn(db),
       photos,
       log: createLog(() => undefined),
+      admin: adminOn(db),
     });
     const response = await app.request('/nope', { method: 'POST' });
     expect([response.status, await response.json()]).toStrictEqual([

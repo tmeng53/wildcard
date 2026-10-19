@@ -89,3 +89,18 @@ export class RouteNotFoundError extends AppError {
     super(`There is no ${method} ${path}.`);
   }
 }
+
+/**
+ * Thrown when the admin tools get a token from our own app's sign-in. Admin tools take only a
+ * token issued to the MCP client through the OAuth sign-in, so a token from a phone can't reach
+ * them. Sign in from the MCP client.
+ */
+export class AdminSignInRequiredError extends AppError {
+  override readonly name = 'AdminSignInRequiredError';
+  readonly reason = 'ADMIN_SIGN_IN_REQUIRED';
+  readonly status = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Sign in from your MCP client to use the admin tools.');
+  }
+}

@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/errors" },
+    { "path": "packages/admins" },
     { "path": "packages/check-ins" },
     { "path": "apps/server" }
   ]

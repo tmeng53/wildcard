@@ -10,7 +10,7 @@ import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 
 async function getMe(headers: Record<string, string>, supabaseUrl = config.supabaseUrl) {
   const db = createDatabase(config.databaseUrl);
@@ -25,6 +25,7 @@ async function getMe(headers: Record<string, string>, supabaseUrl = config.supab
     }),
     photos,
     log: createLog(() => undefined),
+    admin: adminOn(db),
   });
   try {
     const response = await app.request('/me', { headers });

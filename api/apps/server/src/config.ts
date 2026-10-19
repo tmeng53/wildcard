@@ -7,6 +7,9 @@ const Environment = z.object({
   SUPABASE_URL: z.url({ protocol: /^https?$/ }),
   // A Supabase secret key (`sb_secret_…`), for Storage. Never the app's publishable key.
   SUPABASE_SECRET_KEY: z.string().startsWith('sb_secret_'),
+  // Where clients reach this API, such as `https://api.example.com`. The admin MCP server names
+  // itself by it, so MCP clients know which sign-in it takes. Defaults to localhost and PORT.
+  PUBLIC_URL: z.url({ protocol: /^https?$/ }).optional(),
 });
 
 export interface Config {
@@ -14,6 +17,7 @@ export interface Config {
   readonly databaseUrl: string;
   readonly supabaseUrl: string;
   readonly supabaseSecretKey: string;
+  readonly publicUrl: URL;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -27,5 +31,6 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     databaseUrl: result.data.DATABASE_URL,
     supabaseUrl: result.data.SUPABASE_URL.replace(/\/+$/, ''),
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
+    publicUrl: new URL(result.data.PUBLIC_URL ?? `http://localhost:${String(result.data.PORT)}`),
   };
 }

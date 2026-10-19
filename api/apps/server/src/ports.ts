@@ -1,3 +1,4 @@
+import type { AdminTables } from '@wildcard/admins';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -13,6 +14,11 @@ export type UserId = z.infer<typeof UserId>;
 /** Who is calling: the signed-in member a bearer token was issued to. */
 export interface Caller {
   readonly userId: UserId;
+  /**
+   * The OAuth client the token was issued to, when the member signed in through another app
+   * (an MCP client such as Claude) rather than ours. Undefined for our own app's sign-ins.
+   */
+  readonly oauthClient: string | undefined;
 }
 
 /**
@@ -25,7 +31,7 @@ export type VerifyToken = (token: string) => Promise<Caller>;
  * The tables the API reads and writes, each module's generated from the migrations
  * (`pnpm db-types`), never written by hand.
  */
-export type Tables = CheckInTables;
+export type Tables = CheckInTables & AdminTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

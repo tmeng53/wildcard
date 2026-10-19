@@ -1,8 +1,11 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import type { Admins } from '@wildcard/admins';
 import type { CheckIns } from '@wildcard/check-ins';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import { z } from 'zod';
 
+import { adminMcp } from './admin-mcp/admin-mcp.js';
+import type { AdminTool } from './admin-mcp/admin-tool.js';
 import { RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { Log } from './log.js';
 import type { Database, PhotoStorage, VerifyToken } from './ports.js';
@@ -18,6 +21,16 @@ export interface AppDependencies {
   readonly checkIns: CheckIns;
   readonly photos: PhotoStorage;
   readonly log: Log;
+  /** The admin MCP server at `/mcp`. */
+  readonly admin: {
+    readonly admins: Admins;
+    /** Its tools; `main.ts` lists them. */
+    readonly tools: readonly AdminTool[];
+    /** Where clients reach this API. */
+    readonly publicUrl: URL;
+    /** The OAuth 2.1 authorization server that signs admins in. */
+    readonly authorizationServer: URL;
+  };
 }
 
 /** The HTTP API. The only way into the data; `main.ts` serves it, tests call it directly. */
@@ -39,6 +52,8 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
+  // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
+  app.route('/', adminMcp({ ...deps.admin, verifyToken: deps.verifyToken, log: deps.log }));
 
   app.notFound((c) => problemResponse(new RouteNotFoundError(c.req.method, c.req.path)));
   app.onError((error, c) => {

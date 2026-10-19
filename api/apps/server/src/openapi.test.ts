@@ -28,6 +28,16 @@ describe('openapi.json', () => {
       }),
       photos,
       log: createLog(() => undefined),
+      admin: {
+        admins: {
+          requireAdmin: () => Promise.reject(new Error('unused')),
+          logChange: () => Promise.reject(new Error('unused')),
+          listLog: () => Promise.reject(new Error('unused')),
+        },
+        tools: [],
+        publicUrl: new URL('http://localhost:8080'),
+        authorizationServer: new URL('http://localhost:54321/auth/v1'),
+      },
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');
     expect(committed).toBe(openApiJson(app));

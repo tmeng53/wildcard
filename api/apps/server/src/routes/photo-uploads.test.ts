@@ -8,7 +8,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { PhotoPath } from '../ports.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
@@ -30,6 +30,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       clock: () => new Date(),
     }),
     log: createLog(() => undefined),
+    admin: adminOn(db),
   });
   try {
     const response = await app.request('/photo-uploads', { method: 'POST', headers });
