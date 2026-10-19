@@ -69,8 +69,8 @@ export function squadToday(deps: {
     summary: 'Where a squad’s day and week stand',
     description:
       'Each member’s today and this week’s counts, as the home screen shows them. Every member’s ' +
-      'day and week are their own, in their time zone; weeks start on Monday. Only for members ' +
-      'of the squad.',
+      'day and week are their own, in their time zone; weeks start on Monday. A member who hasn’t ' +
+      'saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: z.strictObject({ squadId: SquadId }) },
