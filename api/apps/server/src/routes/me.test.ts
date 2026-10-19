@@ -14,11 +14,16 @@ import { config, signUp } from '../test-kit/local-supabase.js';
 
 async function getMe(headers: Record<string, string>, supabaseUrl = config.supabaseUrl) {
   const db = createDatabase(config.databaseUrl);
+  const photos = createSupabasePhotoStorage({ supabaseUrl, secretKey: config.supabaseSecretKey });
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
-    checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
-    photos: createSupabasePhotoStorage({ supabaseUrl, secretKey: config.supabaseSecretKey }),
+    checkIns: createCheckIns({
+      store: createPostgresCheckInStore(db),
+      photos,
+      clock: () => new Date(),
+    }),
+    photos,
     log: createLog(() => undefined),
   });
   try {

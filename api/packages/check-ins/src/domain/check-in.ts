@@ -2,12 +2,13 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { z } from 'zod';
 
+import { Photos, type PhotoRef } from './photos.js';
 import { SportKey } from './sports.js';
 import { Caption, CustomSportName, DisclaimerText } from './text.js';
 
 // A check-in as the app's contract has it (`CheckIn` in ios/Packages/Contracts): 练了, 健康餐,
 // 坦白放纵餐 or 今日免责声明, with the kind's own fields under one key named for the kind.
-// Photos come with the Storage port, in a later change; until then a `photos` key is refused.
+// A 练了 or a meal may have photos; they live in their own table, not in the stored payload.
 
 export const CheckInId = z.uuid().brand<'CheckInId'>();
 export type CheckInId = z.infer<typeof CheckInId>;
@@ -36,11 +37,13 @@ export const Audience = z
     message: 'Must not list a squad twice',
   });
 
-const trainingFields = {
+// The fields kept in `check_ins.payload`, and with photos, the fields the app sends.
+export const storedTrainingFields = {
   sport: SportKey,
   customSport: CustomSportName.optional(),
   caption: Caption.optional(),
 };
+const trainingFields = { ...storedTrainingFields, photos: Photos.optional() };
 
 /** `sport: "custom"` needs `customSport`, and a listed sport never has one. */
 function customSportMatches(
@@ -59,14 +62,15 @@ function customSportMatches(
   }
 }
 
-const mealFields = { caption: Caption.optional() };
+export const storedMealFields = { caption: Caption.optional() };
+const mealFields = { ...storedMealFields, photos: Photos.optional() };
 const disclaimerFields = { text: DisclaimerText };
 
-/** 练了: what was trained, with an optional line. */
+/** 练了: what was trained, with optional photos and a line. */
 export const Training = z.strictObject(trainingFields).superRefine(customSportMatches);
 export type Training = z.infer<typeof Training>;
 
-/** A 健康餐 or 坦白放纵餐, with an optional line. No meal type and no calories in v1. */
+/** A 健康餐 or 坦白放纵餐, with optional photos and a line. No meal type and no calories in v1. */
 export const Meal = z.strictObject(mealFields);
 export type Meal = z.infer<typeof Meal>;
 
@@ -139,54 +143,77 @@ function contents(record: CheckInRecord) {
   return { ...record, createdAt: record.createdAt.getTime(), audience: [...record.audience] };
 }
 
-// Stored JSON: `check_ins.payload` holds the kind's fields with their shape's version on top.
-// One version so far, so each kind's union has one member.
+/** A check-in's photos, the cover first; none for a disclaimer. */
+export function photosOf(entry: Entry): readonly PhotoRef[] {
+  switch (entry.kind) {
+    case 'trained':
+      return entry.training.photos ?? [];
+    case 'healthyMeal':
+    case 'cheatMeal':
+      return entry.meal.photos ?? [];
+    case 'disclaimer':
+      return [];
+  }
+}
+
+// Stored JSON: `check_ins.payload` holds the kind's fields, without photos, with their shape's
+// version on top. One version so far, so each kind's union has one member.
 
 const StoredTraining = z.discriminatedUnion('version', [
-  z.strictObject({ version: z.literal(1), ...trainingFields }).superRefine(customSportMatches),
+  z
+    .strictObject({ version: z.literal(1), ...storedTrainingFields })
+    .superRefine(customSportMatches),
 ]);
 const StoredMeal = z.discriminatedUnion('version', [
-  z.strictObject({ version: z.literal(1), ...mealFields }),
+  z.strictObject({ version: z.literal(1), ...storedMealFields }),
 ]);
 const StoredDisclaimer = z.discriminatedUnion('version', [
   z.strictObject({ version: z.literal(1), ...disclaimerFields }),
 ]);
 
-/** The `payload` column for an entry. */
+// Plain `z.object`, which drops other keys: `version` when reading a payload its Stored schema
+// checked first, and `photos` when writing one.
+const TrainingOfStored = z.object(storedTrainingFields).superRefine(customSportMatches);
+const MealOfStored = z.object(storedMealFields);
+const DisclaimerOfStored = z.object(disclaimerFields);
+
+/** The `payload` column for an entry: its fields without photos, which have their own table. */
 export function storedPayload(entry: Entry) {
   switch (entry.kind) {
     case 'trained':
-      return { version: 1, ...entry.training } as const;
+      return { version: 1, ...TrainingOfStored.parse(entry.training) } as const;
     case 'healthyMeal':
     case 'cheatMeal':
-      return { version: 1, ...entry.meal } as const;
+      return { version: 1, ...MealOfStored.parse(entry.meal) } as const;
     case 'disclaimer':
       return { version: 1, ...entry.disclaimer } as const;
   }
 }
 
-// Plain `z.object`, which drops `version`: each reads a payload its Stored schema checked first.
-const TrainingOfStored = z.object(trainingFields).superRefine(customSportMatches);
-const MealOfStored = z.object(mealFields);
-const DisclaimerOfStored = z.object(disclaimerFields);
-
-/** The entry a stored row holds. Throws if the row breaks the shape: our own data is broken. */
+/**
+ * The entry a stored row and its photo rows hold. Throws if they break the shape: our own data
+ * is broken.
+ */
 export function entryFromStored({
   kind,
   payload,
+  photos,
 }: {
   readonly kind: Entry['kind'];
   readonly payload: unknown;
+  readonly photos: readonly PhotoRef[];
 }): Entry {
+  const withPhotos = photos.length === 0 ? {} : { photos: Photos.parse(photos) };
   switch (kind) {
     case 'trained':
       StoredTraining.parse(payload);
-      return { kind, training: TrainingOfStored.parse(payload) };
+      return { kind, training: { ...TrainingOfStored.parse(payload), ...withPhotos } };
     case 'healthyMeal':
     case 'cheatMeal':
       StoredMeal.parse(payload);
-      return { kind, meal: MealOfStored.parse(payload) };
+      return { kind, meal: { ...MealOfStored.parse(payload), ...withPhotos } };
     case 'disclaimer':
+      if (photos.length > 0) throw new Error('A stored disclaimer has photos.');
       StoredDisclaimer.parse(payload);
       return { kind, disclaimer: DisclaimerOfStored.parse(payload) };
   }

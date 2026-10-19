@@ -1,18 +1,23 @@
 import { checkCheckInTime } from '../../domain/check-in-time.js';
 import {
   isSameCheckIn,
+  photosOf,
   recordFromDraft,
   type CheckInDraft,
   type CheckInId,
   type CheckInRecord,
   type MemberId,
 } from '../../domain/check-in.js';
+import { isOwnPhoto } from '../../domain/photos.js';
 import {
   CheckInIdConflictError,
   DisclaimerAlreadyPostedError,
+  PhotoInUseError,
+  PhotoNotUploadedError,
+  PhotoNotYoursError,
   SquadNotJoinedError,
 } from '../../errors.js';
-import type { CheckInStore, Clock } from '../../ports.js';
+import type { CheckInStore, Clock, PhotoFiles } from '../../ports.js';
 
 export interface SaveCheckInInput {
   readonly id: CheckInId;
@@ -32,7 +37,11 @@ export interface SavedCheckIn {
  * before the time checks, so a late retry of a saved check-in still succeeds.
  */
 export async function saveCheckIn(
-  { store, clock }: { readonly store: CheckInStore; readonly clock: Clock },
+  {
+    store,
+    photos,
+    clock,
+  }: { readonly store: CheckInStore; readonly photos: PhotoFiles; readonly clock: Clock },
   { id, member, draft }: SaveCheckInInput,
 ): Promise<SavedCheckIn> {
   const checkIn = recordFromDraft(draft, { id, member });
@@ -43,6 +52,7 @@ export async function saveCheckIn(
   const joined = await store.squadsOf(member);
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
+  await checkPhotos(photos, checkIn);
 
   const outcome = await store.insert(checkIn);
   if (outcome.saved) return { checkIn, created: true };
@@ -50,7 +60,18 @@ export async function saveCheckIn(
   const overlapping = await asRetry(store, checkIn);
   if (overlapping !== undefined) return overlapping;
   if (outcome.taken === 'dailyDisclaimer') throw new DisclaimerAlreadyPostedError(checkIn.day);
+  if (outcome.taken === 'photo') throw new PhotoInUseError();
   throw new CheckInIdConflictError(id);
+}
+
+/** Each photo is the member's own and already uploaded. */
+async function checkPhotos(files: PhotoFiles, checkIn: CheckInRecord): Promise<void> {
+  const paths = photosOf(checkIn).map(({ path }) => path);
+  const notYours = paths.find((path) => !isOwnPhoto(path, checkIn.member));
+  if (notYours !== undefined) throw new PhotoNotYoursError(notYours);
+  const uploaded = await Promise.all(paths.map((path) => files.exists(path)));
+  const missing = paths.find((_path, index) => uploaded[index] !== true);
+  if (missing !== undefined) throw new PhotoNotUploadedError(missing);
 }
 
 /** The saved check-in when `checkIn` repeats it; undefined when its id is free. */

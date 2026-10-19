@@ -11,20 +11,22 @@ import { openApiJson } from './openapi.js';
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
     const db = createDatabase('postgres://localhost/unused');
+    const photos = {
+      createUploadUrl: () => Promise.reject(new Error('unused')),
+      exists: () => Promise.reject(new Error('unused')),
+      createViewUrls: () => Promise.reject(new Error('unused')),
+    };
     const app = createApp({
       db,
       verifyToken: () => Promise.reject(new Error('unused')),
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
+        photos,
         clock: () => {
           throw new Error('unused');
         },
       }),
-      photos: {
-        createUploadUrl: () => Promise.reject(new Error('unused')),
-        exists: () => Promise.reject(new Error('unused')),
-        createViewUrl: () => Promise.reject(new Error('unused')),
-      },
+      photos,
       log: createLog(() => undefined),
     });
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');
