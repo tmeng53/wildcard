@@ -9,7 +9,7 @@ import {
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const days = PlanDays.meta({
@@ -98,6 +98,7 @@ export function weeklyPlans(deps: {
           'to this week’s number of rest days (`REST_DAYS_FIXED`); or no profile yet ' +
           '(`TIME_ZONE_NOT_SET`)',
       ),
+      ...jsonBodyFailures,
       ...signedInFailures,
     },
   });

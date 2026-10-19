@@ -10,6 +10,7 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
@@ -70,5 +71,30 @@ describe('openapi.json', () => {
     const committed = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');
     expect(committed).toBe(openApiJson(app));
     await db.destroy();
+  });
+
+  it('declares 415 on every route that takes a body', () => {
+    const document = z
+      .object({
+        paths: z.record(
+          z.string(),
+          z.record(
+            z.string(),
+            z.object({
+              requestBody: z.unknown().optional(),
+              responses: z.record(z.string(), z.unknown()),
+            }),
+          ),
+        ),
+      })
+      .parse(JSON.parse(readFileSync(new URL('../openapi.json', import.meta.url), 'utf8')));
+    const missing = Object.entries(document.paths).flatMap(([path, operations]) =>
+      Object.entries(operations)
+        .filter(
+          ([, operation]) => operation.requestBody !== undefined && !('415' in operation.responses),
+        )
+        .map(([method]) => `${method} ${path}`),
+    );
+    expect(missing).toEqual([]);
   });
 });

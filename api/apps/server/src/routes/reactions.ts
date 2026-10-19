@@ -9,7 +9,7 @@ import {
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const kind = ReactionKind.meta({
@@ -78,6 +78,7 @@ export function reactions(deps: {
       },
       201: { description: 'Reacted', content: { 'application/json': { schema: Reaction } } },
       400: problem('Not a valid reaction, or the caller’s own check-in (`OWN_CHECK_IN_REACTION`)'),
+      ...jsonBodyFailures,
       ...failures,
     },
   });
