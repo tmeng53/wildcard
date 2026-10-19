@@ -12,7 +12,8 @@ public struct DiceDisclaimerWriter: DisclaimerWriter {
 
     public init() {}
 
-    public func suggestions(for reason: String) async -> DisclaimerSuggestions {
+    /// The dice have no styles: every style rolls the same lines.
+    public func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
         .drafts(Self.rollDefault(3))
     }
 

@@ -53,7 +53,7 @@ struct StringCatalogCoverageTests {
         #expect(try Self.english(for: "发短信给 988") == "Text 988")
         #expect(try Self.english(for: "有紧急危险请直接打 911。") == "If you're in immediate danger, call 911.")
         let source = try String(
-            contentsOf: Self.sources.appendingPathComponent("DisclaimerCard.swift"), encoding: .utf8)
+            contentsOf: Self.sources.appendingPathComponent("DisclaimerComposer.swift"), encoding: .utf8)
         #expect(source.contains("\"tel:988\""))
         #expect(source.contains("\"sms:988\""))
     }

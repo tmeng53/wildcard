@@ -44,5 +44,7 @@ enum LaunchOptions {
 
 /// Blocks every reason (`-uitest-care`).
 private struct CareWriter: DisclaimerWriter {
-    func suggestions(for reason: String) async -> DisclaimerSuggestions { .blocked }
+    func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
+        .blocked
+    }
 }

@@ -34,3 +34,32 @@ import Testing
         #expect(entry.disclaimer == nil)
     }
 }
+
+@Suite struct DisclaimerEntrySuggestionTests {
+    @Test func aSuggestedLineKeepsTheMembersWords() {
+        var entry = DisclaimerEntry()
+        entry.write("deadline")
+        entry.suggest("今天是战略性休息")
+        #expect(entry.text == "今天是战略性休息")
+        #expect(entry.mine == "deadline")
+        #expect(entry.canRestore)
+        entry.restore()
+        #expect(entry.text == "deadline")
+        #expect(!entry.canRestore)
+    }
+
+    @Test func nothingToRestoreWhenNothingWasTyped() {
+        var entry = DisclaimerEntry()
+        entry.suggest("今天是战略性休息")
+        #expect(!entry.canRestore)
+        #expect(entry.disclaimer?.text == "今天是战略性休息")
+    }
+
+    @Test func aSuggestedLineCanBePostedAfterABlock() {
+        var entry = DisclaimerEntry()
+        entry.write("今天不想动")
+        entry.block()
+        entry.suggest("下雨，场地条件不允许")
+        #expect(entry.disclaimer?.text == "下雨，场地条件不允许")
+    }
+}

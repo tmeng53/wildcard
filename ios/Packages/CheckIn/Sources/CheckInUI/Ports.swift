@@ -46,8 +46,20 @@ public enum DisclaimerSuggestions: Hashable, Sendable {
     case blocked
 }
 
-/// Turns the member's reason into 免责声明 lines. The AI writer is an adapter behind this; a
-/// writer that fails returns dice lines instead, so the member never sees an error.
+/// The voice the writer takes (spec section 10 A): the 免责声明 bubble's style tabs.
+public enum DisclaimerStyle: String, CaseIterable, Hashable, Sendable {
+    /// 搞笑: deadpan exaggeration, like a news bulletin or match commentary.
+    case funny
+    /// 发疯: an excited meltdown ramble, never insulting.
+    case unhinged
+    /// 文艺: a quiet image or metaphor.
+    case poetic
+    /// 嘴硬: never admits to slacking off.
+    case stubborn
+}
+
+/// Turns the member's reason into 免责声明 lines in a style. The AI writer is an adapter behind
+/// this; a writer that fails returns dice lines instead, so the member never sees an error.
 public protocol DisclaimerWriter: Sendable {
-    func suggestions(for reason: String) async -> DisclaimerSuggestions
+    func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions
 }

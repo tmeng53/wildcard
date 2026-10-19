@@ -67,8 +67,9 @@ public final class TodayModel {
         (board?.myStatus.allowsDisclaimer ?? true) ? [] : [.disclaimer]
     }
 
-    /// The scene blurs behind an open burst or the 免责声明 card.
-    var isSceneDimmed: Bool { isBurstOpen || step == .disclaimer }
+    /// The scene blurs behind an open burst. The 免责声明 bubble keeps it sharp: the member
+    /// writes on the scene itself.
+    var isSceneDimmed: Bool { isBurstOpen }
 
     func load() async {
         board = try? await service.board()
@@ -111,8 +112,8 @@ public final class TodayModel {
         sendFailed = false
     }
 
-    func suggestions(for reason: String) async -> DisclaimerSuggestions {
-        await writer.suggestions(for: reason)
+    func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
+        await writer.suggestions(for: reason, style: style)
     }
 
     func post(_ draft: CheckInDraft) async {

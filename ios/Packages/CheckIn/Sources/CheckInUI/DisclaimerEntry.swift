@@ -1,21 +1,40 @@
 import Contracts
 
-/// What the 免责声明 card holds: the line being written, and whether the writer refused to joke
-/// about it. A refused reason can't be posted, so teammates never see it; any edit or a picked
-/// draft makes a new line that can.
+/// What the 免责声明 bubble holds: the line being written, the member's own words, and whether
+/// the writer refused to joke about them. A refused reason can't be posted, so teammates never
+/// see it; any edit or a new suggested line makes a line that can.
 struct DisclaimerEntry: Hashable, Sendable {
     private(set) var text = ""
+    /// What the member typed themselves: the reason the writer riffs on, and what
+    /// 用回我写的 brings back after a suggested line replaced it.
+    private(set) var mine = ""
     private(set) var isBlocked = false
 
-    /// Sets the line, fitted to one line of at most `Disclaimer.maxLength` characters.
+    /// The member typed: the line, fitted to one line of at most `Disclaimer.maxLength`
+    /// characters, becomes their own words.
     mutating func write(_ typed: String) {
         let fitted = Self.fit(typed)
         guard fitted != text else { return }
         text = fitted
+        mine = fitted
         isBlocked = false
     }
 
-    /// The writer read the current line as self-harm.
+    /// The writer offered `line`: it replaces the line and keeps the member's own words.
+    mutating func suggest(_ line: String) {
+        text = Self.fit(line)
+        isBlocked = false
+    }
+
+    /// Whether a suggested line replaced words the member typed.
+    var canRestore: Bool { !mine.isEmpty && text != mine }
+
+    /// Puts the member's own words back.
+    mutating func restore() {
+        text = mine
+    }
+
+    /// The writer read the member's words as self-harm.
     mutating func block() {
         isBlocked = true
     }

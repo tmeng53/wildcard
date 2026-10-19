@@ -61,8 +61,8 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "17-today-disclaimer-unavailable")
     }
 
-    /// 免责: write a reason, ask for drafts, roll the dice, post, and the line lands on the scene
-    /// without moving the squad bar.
+    /// 免责: type a reason into the bubble, pick a style, take another line, bring the typed
+    /// words back, post, and the line lands on the scene without moving the squad bar.
     func testDisclaimer() {
         let app = launch(language: "zh-Hans", photos: 0)
         let card = topCard(in: app)
@@ -72,30 +72,46 @@ final class TodayUITests: XCTestCase {
         capsule.tap()
 
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 bubble never opened")
         field.tap()
+        field.typeText("deadline")
         settle()
         let close = app.buttons["disclaimer.close"]
-        XCTAssertGreaterThanOrEqual(close.frame.minY, 44, "the card slid under the status bar: \(close.frame)")
+        let post = app.buttons["disclaimer.post"]
+        XCTAssertGreaterThanOrEqual(close.frame.minY, 44, "the bar slid under the status bar: \(close.frame)")
+        // With the keyboard up, the bubble and the whole tray stay in view.
+        XCTAssertTrue(field.isHittable, "the bubble is hidden under the keyboard")
+        XCTAssertTrue(post.isHittable, "打卡 is hidden under the keyboard")
+        XCTAssertFalse(app.buttons["disclaimer.restore"].exists, "用回我写的 shows before anything replaced the words")
 
-        // Nothing typed yet: ✨ offers three lines at random.
-        app.buttons["disclaimer.write"].tap()
-        let first = app.buttons["disclaimer.draft.1"]
-        XCTAssertTrue(first.waitForExistence(timeout: 3), "帮我写 gave no drafts")
-        XCTAssertTrue(app.buttons["disclaimer.draft.3"].exists, "帮我写 gave fewer than 3 drafts")
-        let picked = first.label
-        first.tap()
+        // Picking a style writes a line in it at once.
+        let funny = app.segmentedControls["disclaimer.style"].buttons["搞笑"]
+        funny.tap()
+        XCTAssertTrue(funny.isSelected, "the picked style isn't marked")
+        let restore = app.buttons["disclaimer.restore"]
+        XCTAssertTrue(restore.waitForExistence(timeout: 3), "picking a style wrote no line")
+        let styled = field.value as? String ?? ""
+        XCTAssertNotEqual(styled, "deadline", "picking a style left the typed words")
+        XCTAssertFalse(styled.isEmpty, "picking a style emptied the bubble")
+
+        // 换一句 gives a different line.
+        app.buttons["disclaimer.another"].tap()
         settle()
-        XCTAssertEqual(field.value as? String, picked, "a picked draft didn't fill the field")
-        XCTAssertTrue(first.isSelected, "the picked draft isn't marked")
-        keepScreenshot(named: "18-disclaimer-drafts")
+        let another = field.value as? String ?? ""
+        XCTAssertNotEqual(another, styled, "换一句 kept the same line")
+        keepScreenshot(named: "18-disclaimer-styled")
 
-        // With a line in the field, ✨ writes from it.
-        app.buttons["disclaimer.write"].tap()
-        XCTAssertTrue(app.buttons["disclaimer.draft.3"].waitForExistence(timeout: 3), "帮我写 gave no new drafts")
+        // 用回我写的 brings the typed words back; 换一句 then writes from them again.
+        restore.tap()
+        settle()
+        XCTAssertEqual(field.value as? String, "deadline")
+        app.buttons["disclaimer.another"].tap()
+        settle()
         let line = field.value as? String ?? ""
-        XCTAssertFalse(line.isEmpty, "the field lost its line")
-        app.buttons["disclaimer.post"].tap()
+        XCTAssertNotEqual(line, "deadline", "换一句 left the typed words")
+        XCTAssertEqual(
+            app.staticTexts["disclaimer.count"].label, "\(line.count)/40", "the count doesn't match the line")
+        post.tap()
 
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
         XCTAssertTrue(bubble.waitForExistence(timeout: 5), "no payoff bubble after the 免责声明")
@@ -116,7 +132,7 @@ final class TodayUITests: XCTestCase {
         capsule.tap()
 
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 bubble never opened")
         field.tap()
         field.typeText(String(repeating: "a", count: 30) + "\n" + String(repeating: "b", count: 20))
         settle()
@@ -134,16 +150,18 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(capsule.waitForExistence(timeout: 2))
         capsule.tap()
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 card never opened")
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the 免责声明 bubble never opened")
         field.tap()
         field.typeText("不想活了")
-        app.buttons["disclaimer.write"].tap()
+        app.buttons["disclaimer.another"].tap()
 
         XCTAssertTrue(app.buttons["disclaimer.care.call"].waitForExistence(timeout: 3), "no care line")
         XCTAssertEqual(app.buttons["disclaimer.care.call"].label, "打给 988")
         XCTAssertEqual(app.buttons["disclaimer.care.text"].label, "发短信给 988")
         XCTAssertTrue(app.staticTexts["有紧急危险请直接打 911。"].exists)
-        XCTAssertFalse(app.buttons["disclaimer.draft.1"].exists, "the writer offered jokes anyway")
+        XCTAssertEqual(field.value as? String, "不想活了", "the writer put a joke in anyway")
+        XCTAssertFalse(app.segmentedControls["disclaimer.style"].exists, "the styles still show beside the care line")
+        XCTAssertFalse(app.buttons["disclaimer.another"].isEnabled, "换一句 still offers jokes")
         XCTAssertFalse(app.buttons["disclaimer.post"].isEnabled, "a blocked reason can be posted")
         settle()
         keepScreenshot(named: "21-disclaimer-care")
