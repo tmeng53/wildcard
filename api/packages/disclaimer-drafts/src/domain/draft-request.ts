@@ -62,7 +62,6 @@ const SELF_HARM_WORDS = [
   '轻生',
   '自残',
   '割腕',
-  '不想活',
   '活不下去',
   '结束生命',
   'suicide',
@@ -72,8 +71,11 @@ const SELF_HARM_WORDS = [
   'self-harm',
 ];
 
+/** 「不想活」, but not 「不想活动」 (don't feel like moving), 「活跃」 or 「活泼」. */
+const NOT_WANTING_TO_LIVE = /不想活(?![动跃泼])/u;
+
 /** True when the reason plainly speaks of self-harm. */
 export function mentionsSelfHarm(reason: DraftReason): boolean {
   const lower = reason.toLowerCase();
-  return SELF_HARM_WORDS.some((word) => lower.includes(word));
+  return NOT_WANTING_TO_LIVE.test(lower) || SELF_HARM_WORDS.some((word) => lower.includes(word));
 }

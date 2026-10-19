@@ -7,6 +7,7 @@ import {
   type LanguageModel,
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 
@@ -31,6 +32,7 @@ const model: LanguageModel =
     ? { answer: () => Promise.reject(new DisclaimerWriterUnavailableError()) }
     : createAnthropicLanguageModel({ apiKey: config.anthropicApiKey });
 if (config.anthropicApiKey === undefined) log.info('no ANTHROPIC_API_KEY: AI drafts are off');
+const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -43,8 +45,14 @@ const app = createApp({
   photos,
   disclaimerDrafts: createDisclaimerDrafts({
     model,
-    // The meme library (api/packages/memes) plugs in here once it lands.
-    memes: () => Promise.resolve([]),
+    // Only what the prompt needs: a meme's source and approval stay out of it.
+    memes: async () =>
+      (await memes.listInUse()).map(({ phrase, meaning, background, styles }) => ({
+        phrase,
+        meaning,
+        background,
+        styles,
+      })),
     allowance: createPostgresDraftAllowance(db),
     clock: () => new Date(),
   }),

@@ -1,6 +1,7 @@
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
+import type { MemeTables } from '@wildcard/memes';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -27,7 +28,7 @@ export type VerifyToken = (token: string) => Promise<Caller>;
  * The tables the API reads and writes, each module's generated from the migrations
  * (`pnpm db-types`), never written by hand.
  */
-export type Tables = CheckInTables & DisclaimerDraftTables & MemberTables;
+export type Tables = CheckInTables & DisclaimerDraftTables & MemberTables & MemeTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

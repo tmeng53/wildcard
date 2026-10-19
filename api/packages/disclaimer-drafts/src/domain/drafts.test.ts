@@ -72,9 +72,12 @@ describe('DraftReason', () => {
 });
 
 describe('mentionsSelfHarm', () => {
-  it.each(['想自杀', '不想活了', '活不下去', '想自残', '想轻生'])('catches 「%s」', (reason) => {
-    expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(true);
-  });
+  it.each(['想自杀', '不想活了', '我不想活', '活不下去', '想自残', '想轻生'])(
+    'catches 「%s」',
+    (reason) => {
+      expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(true);
+    },
+  );
 
   it('catches plain words in English, whatever the case', () => {
     expect(mentionsSelfHarm(DraftReason.parse('I want to KILL MYSELF'))).toBe(true);
@@ -83,6 +86,13 @@ describe('mentionsSelfHarm', () => {
   it('leaves everyday exaggeration to the model', () => {
     expect(mentionsSelfHarm(DraftReason.parse('加班累得想死'))).toBe(false);
   });
+
+  it.each(['今天不想活动', '不想活动筋骨'])(
+    'leaves 「%s」 alone: it means not wanting to move',
+    (reason) => {
+      expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(false);
+    },
+  );
 });
 
 describe('promptFor', () => {
