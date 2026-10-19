@@ -21,9 +21,27 @@ const Environment = z.object({
     .optional(),
   APPLE_PRIVATE_KEY: z.string().includes('-----BEGIN PRIVATE KEY-----').optional(),
   APPLE_CLIENT_ID: z.string().min(1).optional(),
+  // Sending push notifications through APNs with a token-based `.p8` key. All four, or none:
+  // without them the server sends no pushes.
+  APNS_KEY_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  APNS_TEAM_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  // The `.p8` file's contents. A secret store may hand it over with its line breaks as `\n`.
+  APNS_PRIVATE_KEY: z
+    .string()
+    .transform((key) => key.replaceAll('\\n', '\n'))
+    .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
+    .optional(),
+  APNS_TOPIC: z.string().min(1).optional(),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
+const APNS = ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_PRIVATE_KEY', 'APNS_TOPIC'] as const;
 
 export interface Config {
   readonly port: number;
@@ -38,6 +56,15 @@ export interface Config {
         readonly keyId: string;
         readonly privateKey: string;
         readonly clientId: string;
+      }
+    | undefined;
+  /** Undefined until there is an APNs key: then no pushes are sent. */
+  readonly apns:
+    | {
+        readonly keyId: string;
+        readonly teamId: string;
+        readonly privateKey: string;
+        readonly topic: string;
       }
     | undefined;
 }
@@ -65,6 +92,14 @@ export function readConfig(environment: Record<string, string | undefined>): Con
   if (appleSignInKey === undefined && APPLE_VARIABLES.some((name) => name in environment)) {
     throw new Error(`Bad server environment: set all of ${APPLE_VARIABLES.join(', ')}, or none.`);
   }
+  const { APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY, APNS_TOPIC } = result.data;
+  const apnsSet = APNS.filter((name) => result.data[name] !== undefined);
+  if (apnsSet.length > 0 && apnsSet.length < APNS.length) {
+    const missing = APNS.filter((name) => !apnsSet.includes(name));
+    throw new Error(
+      `Bad server environment: set all of ${APNS.join(', ')} or none (missing ${missing.join(', ')})`,
+    );
+  }
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -72,5 +107,17 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
     anthropicApiKey: result.data.ANTHROPIC_API_KEY,
     appleSignInKey,
+    apns:
+      APNS_KEY_ID === undefined ||
+      APNS_TEAM_ID === undefined ||
+      APNS_PRIVATE_KEY === undefined ||
+      APNS_TOPIC === undefined
+        ? undefined
+        : {
+            keyId: APNS_KEY_ID,
+            teamId: APNS_TEAM_ID,
+            privateKey: APNS_PRIVATE_KEY,
+            topic: APNS_TOPIC,
+          },
   };
 }

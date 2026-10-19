@@ -2,6 +2,7 @@ import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
+import type { PushTables } from '@wildcard/push';
 import type { SquadTables } from '@wildcard/squads';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -63,6 +64,7 @@ export type Tables = CheckInTables &
   DisclaimerDraftTables &
   MemberTables &
   MemeTables &
+  PushTables &
   SquadTables;
 
 /** The database: any Postgres, through Kysely. */

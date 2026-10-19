@@ -17,6 +17,7 @@
     "@wildcard/errors": "workspace:*",
     "@wildcard/members": "workspace:*",
     "@wildcard/memes": "workspace:*",
+    "@wildcard/push": "workspace:*",
     "@wildcard/squads": "workspace:*",
     "hono": "4.13.13",
     "kysely": "0.29.7",

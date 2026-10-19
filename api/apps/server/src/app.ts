@@ -3,6 +3,7 @@ import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
 import type { DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
@@ -13,9 +14,11 @@ import type { Accounts, Database, PhotoStorage, RevokeAppleSignIn, VerifyToken }
 import { problemResponse } from './problem.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
+import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
+import { reactions } from './routes/reactions.js';
 import { squads } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
@@ -32,6 +35,7 @@ export interface AppDependencies {
   readonly squads: Squads;
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
+  readonly push: Push;
   readonly log: Log;
 }
 
@@ -54,6 +58,8 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
+  app.route('/', reactions(deps));
+  app.route('/', devices(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
   app.route('/', disclaimerDrafts(deps));

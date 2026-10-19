@@ -105,6 +105,31 @@ export class PhotoInUseError extends AppError {
   }
 }
 
+/**
+ * Thrown for a check-in the caller can't see: it doesn't exist, or it went to no squad they share
+ * with its author. The same answer either way, so it reveals nothing.
+ */
+export class CheckInNotFoundError extends AppError {
+  override readonly name = 'CheckInNotFoundError';
+  readonly reason = 'CHECK_IN_NOT_FOUND';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly checkInId: string) {
+    super(`There is no check-in ${checkInId} you can see.`);
+  }
+}
+
+/** Thrown when a member reacts to their own check-in: reactions are for teammates. */
+export class OwnCheckInReactionError extends AppError {
+  override readonly name = 'OwnCheckInReactionError';
+  readonly reason = 'OWN_CHECK_IN_REACTION';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('You can’t react to your own check-in.');
+  }
+}
+
 /** Thrown for a change to a past week's plan: past weeks are kept as they were. */
 export class WeekOverError extends AppError {
   override readonly name = 'WeekOverError';

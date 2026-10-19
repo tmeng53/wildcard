@@ -1,11 +1,13 @@
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -40,6 +42,7 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
     revokeAppleSignIn: undefined,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
+      reactions: createPostgresReactionStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
@@ -62,6 +65,7 @@ function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
       clock: () => new Date(),
     }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     log: createLog(() => undefined),
   });
   return { app, requests: recorded.requests };
