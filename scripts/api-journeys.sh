@@ -2,7 +2,8 @@
 # Drives the API the way the app does, over HTTP, against local Supabase: the built server
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
-#   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts]   (no arguments: all)
+#   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
+#     [squad-today] [reactions] [devices] [account]   (no arguments: all)
 # Needs `supabase start`, pnpm, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -10,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today reactions devices account}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | reactions | devices | account) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, reactions, devices, account)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -82,6 +83,21 @@ new_id() { node -p 'crypto.randomUUID()'; }
 # A minute ago, in UTC: always inside the API's 48-hour window, and its UTC day.
 now="$(node -p 'new Date(Date.now() - 60_000).toISOString()')"
 day="${now:0:10}"
+
+# A time zone where it is about noon now, as "<zone> <its today> <its week's Monday>": a member
+# there is well inside their day (which lasts until 3am), whenever the run happens.
+noon_zone() {
+  node -e '
+    const offset = ((12 - new Date().getUTCHours() + 36) % 24) - 12;
+    const local = new Date(Date.now() + offset * 3_600_000);
+    const monday = new Date(local.getTime() - ((local.getUTCDay() + 6) % 7) * 86_400_000);
+    const zone = offset === 0 ? "Etc/GMT" : `Etc/GMT${offset > 0 ? "-" : "+"}${Math.abs(offset)}`;
+    console.log(zone, local.toISOString().slice(0, 10), monday.toISOString().slice(0, 10));'
+}
+# days_after DAY N: the date N days after DAY.
+days_after() { node -p "new Date(Date.parse('$1') + $2 * 86_400_000).toISOString().slice(0, 10)"; }
+# A check-in to a squad on a member's day: check_in_of SQUAD DAY KIND FIELDS.
+check_in_of() { echo "{\"version\":1,\"day\":\"$2\",\"createdAt\":\"$now\",\"audience\":[\"$1\"],\"kind\":\"$3\",$4}"; }
 
 read -r me me_token <<<"$(sign_up)"
 read -r mate mate_token <<<"$(sign_up)"
@@ -246,6 +262,200 @@ if want disclaimer-drafts; then
   used="$(psql "$DB_URL" -tAc "select count(*) from public.disclaimer_draft_requests where member_id = '$me'")"
   [ "$used" = 0 ] || fail "nothing was shown, so no batch should count: $used"
   echo "disclaimer-drafts: no batch counted"
+fi
+
+if want weekly-plan; then
+  read -r planner planner_token <<<"$(sign_up)"
+  read -r zone today monday <<<"$(noon_zone)"
+  next="$(days_after "$monday" 7)"
+  call GET "/me/weekly-plans/$next" "$planner_token"
+  expect 200
+  call PUT "/me/weekly-plans/$next" "$planner_token" '{"version":1,"days":[{"kind":"rest"},{"kind":"rest"},{"kind":"rest"},{"kind":"rest"},{"kind":"rest"},{"kind":"rest"},{"kind":"rest"}]}'
+  expect 400 TIME_ZONE_NOT_SET
+  echo "weekly-plan: no profile yet, so saving is refused (400 TIME_ZONE_NOT_SET)"
+
+  call PUT /me/profile "$planner_token" "{\"version\":1,\"timeZone\":\"$zone\"}"
+  expect 200
+  call GET "/me/weekly-plans/$monday" "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, (.days | map(.kind))]' <<<"$body")" = '["default",["train","train","rest","train","train","train","rest"]]' ] ||
+    fail "this week should be the default, rest on Wednesday and Sunday: $body"
+  echo "weekly-plan: this week ($monday, $zone) is the default, rest on Wednesday and Sunday"
+
+  plan='{"version":1,"days":[{"kind":"train","sport":"run"},{"kind":"rest"},{"kind":"train","sport":"custom","customSport":" 飞盘 "},{"kind":"rest"},{"kind":"train"},{"kind":"rest"},{"kind":"train","sport":"run"}]}'
+  call PUT "/me/weekly-plans/$next" "$planner_token" "$plan"
+  expect 200
+  saved="$(jq -c .days <<<"$body")"
+  [ "$(jq -c '[.source, .days[2].customSport]' <<<"$body")" = '["saved","飞盘"]' ] || fail "next week should be saved, sport trimmed: $body"
+  call PUT "/me/weekly-plans/$next" "$planner_token" "$plan"
+  expect 200
+  [ "$(jq -c .days <<<"$body")" = "$saved" ] || fail "saving again changed the plan: $body"
+  echo "weekly-plan: next week ($next) saved, custom sport trimmed; saving again changes nothing"
+
+  later="$(days_after "$monday" 14)"
+  call GET "/me/weekly-plans/$later" "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"carriedOver\",$saved]" ] || fail "the week after should carry next week's plan over: $body"
+  echo "weekly-plan: the week after ($later) carries it over"
+
+  call PUT "/me/weekly-plans/$(days_after "$monday" -7)" "$planner_token" "$plan"
+  expect 400 WEEK_OVER
+  call PUT "/me/weekly-plans/$(days_after "$monday" 35)" "$planner_token" "$plan"
+  expect 400 WEEK_TOO_FAR_AHEAD
+  call GET "/me/weekly-plans/$(days_after "$monday" 1)" "$planner_token"
+  expect 400 REQUEST_INVALID
+  echo "weekly-plan: last week refused (400 WEEK_OVER), 5 weeks ahead refused (400 WEEK_TOO_FAR_AHEAD), a Tuesday refused (400)"
+
+  rows="$(psql "$DB_URL" -tAc "select count(*) from public.weekly_plans where member_id = '$planner'")"
+  [ "$rows" = 1 ] || fail "only next week should be stored: $rows rows"
+  echo "weekly-plan: one row stored, for $next"
+fi
+
+if want squad-today; then
+  # A squad of its own, so the other journeys' check-ins don't count here.
+  read -r runner runner_token <<<"$(sign_up)"
+  read -r napper napper_token <<<"$(sign_up)"
+  read -r zone today monday <<<"$(noon_zone)"
+  for token in "$runner_token" "$napper_token"; do
+    call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
+    expect 200
+  done
+  squad_of "$runner_token" "$napper_token"
+  call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
+  expect 201
+  call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" healthyMeal '"meal":{"caption":"沙拉"}')"
+  expect 201
+  call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}')"
+  expect 201
+  echo "squad-today: in $zone ($today) runner trained and ate a healthy meal, napper posted a disclaimer"
+
+  call GET "/squads/$squad/today" "$napper_token"
+  expect 200
+  [ "$(jq -c '[.members[] | [.member, .day, .training, .latestMeal]]' <<<"$body")" = \
+    "$(jq -cn --arg a "$runner" --arg b "$napper" --arg d "$today" '[[$a,$d,"trained","healthyMeal"],[$b,$d,"disclaimer",null]]')" ] ||
+    fail "members should be runner (trained, healthy meal) then napper (disclaimer): $body"
+  [ "$(jq -c '[.today, .me.week.trainedDays, .me.lifetimeTrainedDays, .squadWeek.trainedDays]' <<<"$body")" = \
+    '[{"trained":1,"disclaimer":1,"everyoneTrained":false},0,0,1]' ] || fail "counts should be 1 trained, 1 disclaimer; napper 0; squad 1: $body"
+  echo "squad-today: napper sees runner trained, self on a disclaimer; 1 trained, 1 disclaimer, squad week 1"
+
+  call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
+  expect 201
+  call GET "/squads/$squad/today" "$napper_token"
+  expect 200
+  [ "$(jq -c '[.members[1].training, .today, .me.week.trainedDays, .squadWeek.trainedDays]' <<<"$body")" = \
+    '["trained",{"trained":2,"disclaimer":0,"everyoneTrained":true},1,2]' ] || fail "napper's 练了 should win over the disclaimer: $body"
+  echo "squad-today: napper trained after all, so 练了 wins over the disclaimer and everyone trained"
+
+  call GET "/squads/$squad/today" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "squad-today: outsider refused (403 SQUAD_NOT_JOINED)"
+fi
+
+if want reactions; then
+  squad_of "$me_token" "$mate_token"
+  post="$(new_id)"
+  call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
+  expect 201
+  reaction() { echo "{\"version\":1,\"kind\":\"$1\"}"; }
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction cheer)"
+  expect 201
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction cheer)"
+  expect 200
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction lol)"
+  expect 200
+  echo "reactions: mate cheered (201), again (200), then changed it to lol (200)"
+
+  call GET "/check-ins/$post/reactions" "$me_token"
+  expect 200
+  [ "$(jq -c '[.reactions[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"lol"]]')" ] ||
+    fail "the author should see one reaction, mate's lol: $body"
+  echo "reactions: the author sees one reaction, mate's lol"
+
+  call PUT "/check-ins/$post/reactions/mine" "$me_token" "$(reaction cheer)"
+  expect 400 OWN_CHECK_IN_REACTION
+  call PUT "/check-ins/$post/reactions/mine" "$outsider_token" "$(reaction cheer)"
+  expect 404 CHECK_IN_NOT_FOUND
+  call GET "/check-ins/$post/reactions" "$outsider_token"
+  expect 404 CHECK_IN_NOT_FOUND
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction 稳)"
+  expect 400 REQUEST_INVALID
+  echo "reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), unknown kind refused (400)"
+
+  call DELETE "/check-ins/$post/reactions/mine" "$mate_token"
+  expect 204
+  call DELETE "/check-ins/$post/reactions/mine" "$mate_token"
+  expect 204
+  rows="$(psql "$DB_URL" -tAc "select count(*) from public.check_in_reactions where check_in_id = '$post'")"
+  [ "$rows" = 0 ] || fail "the reaction should be gone: $rows rows"
+  echo "reactions: mate took it off (204, again 204), no row left"
+fi
+
+if want devices; then
+  phone="$(node -p 'crypto.randomBytes(32).toString("hex")')"
+  owner_of() { psql "$DB_URL" -tAc "select member_id || ' ' || environment from public.push_devices where token = '$phone'"; }
+  call PUT /me/devices "$me_token" "{\"version\":1,\"token\":\"$phone\",\"environment\":\"sandbox\"}"
+  expect 200
+  call PUT /me/devices "$me_token" "{\"version\":1,\"token\":\"$phone\",\"environment\":\"sandbox\"}"
+  expect 200
+  [ "$(owner_of)" = "$me sandbox" ] || fail "the phone should be me's, sandbox: $(owner_of)"
+  echo "devices: me registered a phone (200, again 200)"
+
+  call PUT /me/devices "$mate_token" "{\"version\":1,\"token\":\"$phone\",\"environment\":\"production\"}"
+  expect 200
+  [ "$(owner_of)" = "$mate production" ] || fail "the phone should move to mate: $(owner_of)"
+  echo "devices: mate signed in on the same phone, so it moved to mate"
+
+  call POST /me/devices/remove "$me_token" "{\"version\":1,\"token\":\"$phone\"}"
+  expect 204
+  [ "$(owner_of)" = "$mate production" ] || fail "me removing mate's phone changed it: $(owner_of)"
+  call POST /me/devices/remove "$mate_token" "{\"version\":1,\"token\":\"$phone\"}"
+  expect 204
+  [ -z "$(owner_of)" ] || fail "the phone should be gone: $(owner_of)"
+  echo "devices: me removing it did nothing (204); mate signing out removed it (204)"
+
+  call PUT /me/devices "$me_token" '{"version":1,"token":"not-hex","environment":"sandbox"}'
+  expect 400 REQUEST_INVALID
+  echo "devices: a token that isn't hex refused (400)"
+fi
+
+if want account; then
+  read -r leaver leaver_token <<<"$(sign_up)"
+  call GET /me "$leaver_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = "$(jq -cn --arg m "$leaver" '{version:1,userId:$m,profile:null}')" ] || fail "a new member has no profile: $body"
+  call PUT /me/profile "$leaver_token" '{"version":1,"timeZone":"Mars/Olympus_Mons"}'
+  expect 400 TIME_ZONE_UNKNOWN
+  call PUT /me/profile "$leaver_token" '{"version":1,"timeZone":"America/Toronto"}'
+  expect 200
+  call GET /me "$leaver_token"
+  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto"}' ] || fail "the profile should be saved: $body"
+  echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved"
+
+  squad_of "$leaver_token" "$mate_token"
+  call POST /photo-uploads "$leaver_token"
+  expect 201
+  path="$(jq -r .path <<<"$body")"
+  curl -sf -X PUT "$(jq -r .uploadUrl <<<"$body")" -H 'content-type: image/jpeg' --data-binary 'not really a jpeg' >/dev/null ||
+    fail "upload to storage failed"
+  call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
+  expect 201
+  echo "account: leaver made a squad with mate and posted a meal with a photo"
+
+  call DELETE /me "$leaver_token" '{"version":1}'
+  expect 204
+  left="$(psql "$DB_URL" -tAc "select
+      (select count(*) from auth.users where id = '$leaver') || ' ' ||
+      (select count(*) from public.profiles where member_id = '$leaver') || ' ' ||
+      (select count(*) from public.check_ins where member_id = '$leaver') || ' ' ||
+      (select count(*) from public.squad_members where member_id = '$leaver') || ' ' ||
+      (select count(*) from storage.objects where name like '$leaver/%') || ' ' ||
+      (select count(*) from public.squad_members where squad_id = '$squad')")"
+  [ "$left" = "0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, photos should be gone and the squad left to mate: $left"
+  echo "account: deleted (204): no user, profile, check-in, membership or photo left; the squad stays with mate"
+
+  call DELETE /me "$leaver_token" '{"version":1}'
+  expect 401
+  echo "account: deleting again with the old token refused (401)"
 fi
 
 echo "api-journeys: ok ($journeys)"
