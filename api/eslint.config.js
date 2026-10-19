@@ -10,7 +10,8 @@ import tseslint from 'typescript-eslint';
 import vitest from '@vitest/eslint-plugin';
 
 export default defineConfig(
-  globalIgnores(['**/dist/', '**/coverage/']),
+  // tables.ts files are written by `pnpm db-types` from the migrations.
+  globalIgnores(['**/dist/', '**/coverage/', '**/src/adapters/tables.ts']),
 
   { linterOptions: { reportUnusedDisableDirectives: 'error' } },
 

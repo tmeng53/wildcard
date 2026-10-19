@@ -47,6 +47,13 @@ export class DatabaseUnavailableError extends AppError {
   }
 }
 
+/** Thrown when a request's path, query or body isn't what the route takes. Fix the request. */
+export class RequestInvalidError extends AppError {
+  override readonly name = 'RequestInvalidError';
+  readonly reason = 'REQUEST_INVALID';
+  readonly status = 'INVALID_ARGUMENT';
+}
+
 /** Thrown when photo storage doesn't answer. Retry later. */
 export class PhotoStorageUnavailableError extends AppError {
   override readonly name = 'PhotoStorageUnavailableError';

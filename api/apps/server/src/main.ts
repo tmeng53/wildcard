@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server';
+import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
 
 import { createDatabase } from './adapters/postgres.js';
 import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
@@ -14,6 +15,7 @@ const db = createDatabase(config.databaseUrl);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
+  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), clock: () => new Date() }),
   photos: createSupabasePhotoStorage({
     supabaseUrl: config.supabaseUrl,
     secretKey: config.supabaseSecretKey,
