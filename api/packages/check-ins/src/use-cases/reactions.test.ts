@@ -3,6 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
+import {
+  createPostgresSquadStore,
+  createSquads,
+  randomInviteCodes,
+  type SquadTables,
+} from '@wildcard/squads';
 import { z } from 'zod';
 
 import {
@@ -16,16 +22,22 @@ import { CheckInNotFoundError, OwnCheckInReactionError } from '../errors.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables>({
+const db = new Kysely<CheckInTables & SquadTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
 });
 afterAll(() => db.destroy());
+// Who is in which squad, from the squads module as main.ts wires it.
+const membership = createSquads({
+  store: createPostgresSquadStore(db),
+  inviteCodes: randomInviteCodes,
+});
 
 let now = new Date('2026-10-18T20:00:00.000Z');
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
+  membership,
   reactions: createPostgresReactionStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos: { exists: () => Promise.resolve(true) },

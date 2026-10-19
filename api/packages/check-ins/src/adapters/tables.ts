@@ -53,12 +53,6 @@ export interface CheckInSquads {
   squad_id: string;
 }
 
-export interface SquadMembers {
-  joined_at: Generated<Timestamp>;
-  member_id: string;
-  squad_id: string;
-}
-
 export interface WeeklyPlans {
   member_id: string;
   payload: Json;
@@ -71,6 +65,5 @@ export interface DB {
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
-  squad_members: SquadMembers;
   weekly_plans: WeeklyPlans;
 }

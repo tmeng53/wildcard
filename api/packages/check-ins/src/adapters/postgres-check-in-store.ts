@@ -144,26 +144,6 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       }
     },
 
-    async squadsOf(member) {
-      const rows = await db
-        .selectFrom('squad_members')
-        .select('squad_id')
-        .where('member_id', '=', member)
-        .execute();
-      return new Set(rows.map((row) => SquadId.parse(row.squad_id)));
-    },
-
-    async membersOf(squad) {
-      const rows = await db
-        .selectFrom('squad_members')
-        .select('member_id')
-        .where('squad_id', '=', squad)
-        .orderBy('joined_at')
-        .orderBy('member_id')
-        .execute();
-      return rows.map((row) => MemberId.parse(row.member_id));
-    },
-
     async countTrainedDays(member) {
       const { days } = await db
         .selectFrom('check_ins')
@@ -174,7 +154,8 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return Number(days);
     },
 
-    async listForSquad({ squad, from, to }) {
+    async listForSquad({ squad, members, from, to }) {
+      if (members.length === 0) return [];
       const rows = await db
         .selectFrom('check_ins')
         .innerJoin('check_in_squads', (join) =>
@@ -182,13 +163,8 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
             .onRef('check_in_squads.check_in_id', '=', 'check_ins.id')
             .on('check_in_squads.squad_id', '=', squad),
         )
-        // Only members still in the squad: leaving takes your check-ins out of it.
-        .innerJoin('squad_members', (join) =>
-          join
-            .onRef('squad_members.member_id', '=', 'check_ins.member_id')
-            .on('squad_members.squad_id', '=', squad),
-        )
         .select(checkInColumns)
+        .where('check_ins.member_id', 'in', members)
         .where('check_ins.day', '>=', from)
         .where('check_ins.day', '<=', to)
         .orderBy('check_ins.day', 'desc')
@@ -196,17 +172,6 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .orderBy('check_ins.id')
         .execute();
       return withAudiences(rows);
-    },
-
-    async membersOfAny(squads) {
-      if (squads.length === 0) return new Set();
-      const rows = await db
-        .selectFrom('squad_members')
-        .select('member_id')
-        .distinct()
-        .where('squad_id', 'in', squads)
-        .execute();
-      return new Set(rows.map((row) => MemberId.parse(row.member_id)));
     },
 
     async listForMember({ member, from, to }) {

@@ -49,6 +49,10 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     photos,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
+      membership: createSquads({
+        store: createPostgresSquadStore(db),
+        inviteCodes: randomInviteCodes,
+      }),
       reactions: createPostgresReactionStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
