@@ -38,12 +38,20 @@ const Claims = z.object({
   sub: UserId,
   role: z.literal('authenticated'),
   exp: z.int(),
+  // Set only on tokens Supabase Auth's OAuth 2.1 server issued to another app.
+  // https://supabase.com/docs/guides/auth/oauth-server/token-security
+  client_id: z.string().min(1).max(200).optional(),
 });
 
 /** Keys are kept this long, then fetched again so a revoked key stops working. */
 const KEYS_MAX_AGE_MS = 10 * 60 * 1000;
 /** A token naming a key we don't have fetches the keys again, at most this often. */
 const REFETCH_COOLDOWN_MS = 30 * 1000;
+
+/** Supabase Auth's issuer: the authorization server for its tokens and its OAuth 2.1 server. */
+export function supabaseAuthIssuer(supabaseUrl: string): URL {
+  return new URL(`${supabaseUrl}/auth/v1`);
+}
 
 /**
  * The sign-in port on Supabase Auth: verifies its access tokens against the project's published signing keys: the
@@ -53,7 +61,7 @@ export function createSupabaseTokenVerifier(options: {
   readonly supabaseUrl: string;
   readonly now?: () => number;
 }): VerifyToken {
-  const issuer = `${options.supabaseUrl}/auth/v1`;
+  const issuer = supabaseAuthIssuer(options.supabaseUrl).href;
   const keysUrl = `${issuer}/.well-known/jwks.json`;
   const now = options.now ?? Date.now;
 
@@ -106,7 +114,7 @@ export function createSupabaseTokenVerifier(options: {
     }
     const claims = Claims.safeParse(payload);
     if (!claims.success) throw new AuthTokenInvalidError({ cause: claims.error });
-    return { userId: claims.data.sub };
+    return { userId: claims.data.sub, oauthClient: claims.data.client_id };
   };
 }
 

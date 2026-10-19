@@ -1564,6 +1564,8 @@
                 }
               ]
             },
+            "minItems": 7,
+            "maxItems": 7,
             "description": "Seven days, Monday first: `{\"kind\": \"train\"}`, optionally with a `sport` (and `customSport` for `\"custom\"`), or `{\"kind\": \"rest\"}`."
           },
           "source": {
@@ -1639,6 +1641,8 @@
                 }
               ]
             },
+            "minItems": 7,
+            "maxItems": 7,
             "description": "Seven days, Monday first: `{\"kind\": \"train\"}`, optionally with a `sport` (and `customSport` for `\"custom\"`), or `{\"kind\": \"rest\"}`."
           }
         },

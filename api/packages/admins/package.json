@@ -1,0 +1,25 @@
+{
+  "name": "@wildcard/admins",
+  "private": true,
+  "type": "module",
+  "wildcard": {
+    "kind": "module"
+  },
+  "exports": {
+    ".": {
+      "@wildcard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@wildcard/errors": "workspace:*",
+    "kysely": "0.29.7",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "pg": "8.23.1",
+    "vitest": "5.0.5"
+  }
+}

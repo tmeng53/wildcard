@@ -1,7 +1,7 @@
 -- Only our API reaches the data: the app's tokens (anon, authenticated) can't read or
 -- write any table or reach the photo files, even through Supabase's own REST API.
 begin;
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email) values ('a0000000-0000-0000-0000-000000000001', 'ann@example.com');
 insert into storage.objects (bucket_id, name, owner_id) values
@@ -10,7 +10,7 @@ insert into storage.objects (bucket_id, name, owner_id) values
 -- Every table the migrations create, so a new one without the lock fails here.
 select is(
   (select array_agg(tablename::text order by tablename) from pg_tables where schemaname = 'public'),
-  array['check_in_photos', 'check_in_reactions', 'check_in_squads', 'check_ins', 'disclaimer_draft_requests', 'memes', 'profiles', 'push_devices', 'squad_members', 'squads', 'weekly_plans'],
+  array['admin_actions', 'admins', 'check_in_photos', 'check_in_reactions', 'check_in_squads', 'check_ins', 'disclaimer_draft_requests', 'memes', 'profiles', 'push_devices', 'squad_members', 'squads', 'weekly_plans'],
   'these are all the tables'
 );
 select is(
@@ -77,6 +77,10 @@ select throws_ok(
 select throws_ok(
   $$insert into public.squads (name, created_by) values ('早八跑团', 'a0000000-0000-0000-0000-000000000001')$$,
   '42501', null, 'a signed-in token can''t create a squad'
+);
+select throws_ok(
+  $$insert into public.admins (member_id) values ('a0000000-0000-0000-0000-000000000001')$$,
+  '42501', null, 'a signed-in token can''t make itself an admin'
 );
 select is_empty(
   $$select 1 from storage.objects where bucket_id = 'check-in-photos'$$,
