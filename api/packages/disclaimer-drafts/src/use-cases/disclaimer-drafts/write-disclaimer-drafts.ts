@@ -1,4 +1,6 @@
-import type { DraftReason, DraftStyle, MemberId } from '../../domain/draft-request.js';
+import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+
+import type { DraftReason, MemberId } from '../../domain/draft-request.js';
 import { mentionsSelfHarm } from '../../domain/draft-request.js';
 import { ModelReply, outcomeOf, type DraftsOutcome } from '../../domain/drafts.js';
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
@@ -15,7 +17,7 @@ const MEMES_MAX = 8;
 export interface WriteDisclaimerDraftsInput {
   readonly member: MemberId;
   readonly reason: DraftReason;
-  readonly style: DraftStyle;
+  readonly style: DisclaimerStyle;
 }
 
 /**
