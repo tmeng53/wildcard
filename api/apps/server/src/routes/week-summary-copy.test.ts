@@ -10,6 +10,10 @@ describe('languageOf', () => {
     expect(languageOf('zh-Hant-TW,en')).toBe('zh-Hans');
     expect(languageOf('EN-gb')).toBe('en');
     expect(languageOf('ja, fr')).toBe('zh-Hans');
+    expect(languageOf('en;q=0, zh')).toBe('zh-Hans');
+    expect(languageOf('en;q=0.000, fr')).toBe('zh-Hans');
+    expect(languageOf('en;q=0.5')).toBe('en');
+    expect(languageOf('zha, enm, en')).toBe('en');
   });
 });
 

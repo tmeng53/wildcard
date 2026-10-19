@@ -68,7 +68,10 @@ const reaction = {
 export const WeekSummaryBody = z
   .strictObject({
     version: bodyVersion(1),
-    language: z.enum(['zh-Hans', 'en']).meta({ description: 'The language the words are in.' }),
+    language: z.string().min(1).meta({
+      description:
+        'The language the words are in: today `zh-Hans` or `en`. More may come without an app release.',
+    }),
     squad: z.uuid(),
     week: z.strictObject({ from: WeekStart, to: LocalDay }),
     final: z.boolean().meta({

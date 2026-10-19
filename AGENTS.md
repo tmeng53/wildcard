@@ -75,7 +75,7 @@ Planned (update as packages land): packages by capability, each `Domain` (pure S
 ## Domain rules
 
 - Never use "奥运", the rings or "Olympic" in code-visible copy, assets or bundle names.
-- All user-facing strings go through the String Catalog, Chinese (`zh-Hans`) first, English second. One exception: the Sunday 战报's award, count and reaction words come from the API (`apps/server/src/routes/week-summary-copy.ts`, in the language the app asks for), so a new award ships without an app release; the app shows any kind from the words it is sent.
+- All user-facing strings go through the String Catalog, Chinese (`zh-Hans`) first, English second. One exception: the Sunday 战报's award, count and reaction words come from the API (`apps/server/src/routes/week-summary-copy.ts`, in the language the app asks for), so a new award or count ships without an app release; the app shows any kind from the words it is sent.
 - No body metrics, calories or macros anywhere in v1.
 
 ## Language practices

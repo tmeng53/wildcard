@@ -1,18 +1,26 @@
 import type { AwardKind, ReactionKind, StatKind } from '@wildcard/check-ins';
 
-// The words of the Sunday summary (周日战报). The app shows what the API sends, so a new award,
-// count or reaction reaches every installed app with no release: add its kind and its copy here,
-// and the compiler asks for both languages.
+// The words of the Sunday summary (周日战报). The app shows what the API sends, so a new award or
+// count reaches every installed app with no release: add its kind and its copy here, and the
+// compiler asks for both languages. A new reaction kind shows up here the same way, but the
+// reaction routes still send a closed enum, so adding one is still an app release.
 
 /** The languages the summary is written in; Chinese first. */
 export type Language = 'zh-Hans' | 'en';
 
-/** The first language in `Accept-Language` the summary is written in; Chinese when none is. */
+const isLanguage = (tag: string, language: string) =>
+  tag === language || tag.startsWith(`${language}-`);
+
+/**
+ * The first language in `Accept-Language`, in the order listed (as iOS sends them), that the
+ * summary is written in; Chinese when none is. A range marked `q=0` (not acceptable) is skipped.
+ */
 export function languageOf(acceptLanguage: string | undefined): Language {
   for (const range of (acceptLanguage ?? '').split(',')) {
-    const tag = range.split(';')[0]?.trim().toLowerCase() ?? '';
-    if (tag.startsWith('zh')) return 'zh-Hans';
-    if (tag.startsWith('en')) return 'en';
+    const [tag = '', ...parameters] = range.split(';').map((part) => part.trim().toLowerCase());
+    if (parameters.some((parameter) => /^q=0(\.0{0,3})?$/.test(parameter))) continue;
+    if (isLanguage(tag, 'zh')) return 'zh-Hans';
+    if (isLanguage(tag, 'en')) return 'en';
   }
   return 'zh-Hans';
 }

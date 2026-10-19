@@ -1484,11 +1484,8 @@
           },
           "language": {
             "type": "string",
-            "enum": [
-              "zh-Hans",
-              "en"
-            ],
-            "description": "The language the words are in."
+            "minLength": 1,
+            "description": "The language the words are in: today `zh-Hans` or `en`. More may come without an app release."
           },
           "squad": {
             "type": "string",

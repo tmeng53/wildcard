@@ -2988,17 +2988,10 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/version`.
             public var version: Components.Schemas.WeekSummary.VersionPayload
-            /// The language the words are in.
+            /// The language the words are in: today `zh-Hans` or `en`. More may come without an app release.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekSummary/language`.
-            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case zhHans = "zh-Hans"
-                case en = "en"
-            }
-            /// The language the words are in.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WeekSummary/language`.
-            public var language: Components.Schemas.WeekSummary.LanguagePayload
+            public var language: Swift.String
             /// - Remark: Generated from `#/components/schemas/WeekSummary/squad`.
             public var squad: Swift.String
             /// - Remark: Generated from `#/components/schemas/WeekSummary/week`.
@@ -3272,7 +3265,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - language: The language the words are in.
+            ///   - language: The language the words are in: today `zh-Hans` or `en`. More may come without an app release.
             ///   - squad:
             ///   - week:
             ///   - final: Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still change after that: a check-in sent up to 48 hours late, a reaction left, changed or taken off later, or a member joining or leaving, since the week is read for the squad as it is now. Before that the week is still being played.
@@ -3281,7 +3274,7 @@ extension Components {
             ///   - me:
             public init(
                 version: Components.Schemas.WeekSummary.VersionPayload,
-                language: Components.Schemas.WeekSummary.LanguagePayload,
+                language: Swift.String,
                 squad: Swift.String,
                 week: Components.Schemas.WeekSummary.WeekPayload,
                 final: Swift.Bool,
@@ -3315,7 +3308,7 @@ extension Components {
                     forKey: .version
                 )
                 self.language = try container.decode(
-                    Components.Schemas.WeekSummary.LanguagePayload.self,
+                    Swift.String.self,
                     forKey: .language
                 )
                 self.squad = try container.decode(
