@@ -25,7 +25,12 @@ const app = createApp({
   db,
   verifyToken: unused,
   photos,
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    photos,
+    calendarOf: unused,
+    clock: unused,
+  }),
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: unused,
