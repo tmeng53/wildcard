@@ -35,7 +35,8 @@ struct CharacterRenderTests {
         let image = try lifter.render(peak)
         // The plate's rest spot is empty, and the plate is where the arm and prop transforms take it.
         #expect(matches(image.color(atColumn: 193, row: 255), Self.white))
-        let moved = lifter.figure.layout(peak)[10].transform.apply(to: Point(x: 193, y: 255))
+        let prop = try #require(lifter.figure.parts.firstIndex { $0.id == "propR" })
+        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Point(x: 193, y: 255))
         #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
     }
 }
