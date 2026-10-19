@@ -23,6 +23,14 @@ public enum PlaceholderCharacter {
     /// can play any persona's clips.
     public static let squad = [lifter, cat, bear, baller]
 
+    /// Every variant a look can pick for `slot`, by name, sorted: what the character editor
+    /// offers. Adding art is adding a folder, so this reads the bundle instead of a list.
+    public static func variants(for slot: Slot) -> [String] {
+        let slotFolder = folder.appendingPathComponent("art").appendingPathComponent(slot.description)
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: slotFolder.path)) ?? []
+        return names.filter { !$0.hasPrefix(".") }.sorted()
+    }
+
     public static func rig() throws(AvatarError) -> Rig {
         try Rig.decode(file("rig.json"))
     }

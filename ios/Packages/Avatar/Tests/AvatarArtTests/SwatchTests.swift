@@ -6,11 +6,15 @@ private let recolorable: [Slot] = ["body", "hair", "top", "bottom"]
 
 /// Every look can wear every swatch of every slot it can recolor, and the swatch shows up in
 /// its art, so a missing or mistyped `tones.json` fails here.
-@Test(arguments: PlaceholderCharacter.squad)
+@Test(arguments: wardrobe)
 func everySwatchApplies(outfit: Outfit) throws {
     for slot in recolorable {
         guard let variant = outfit.variants[slot] else { continue }
         let swatches = PlaceholderCharacter.swatches(for: slot, wearing: variant)
+        if slot == "body" && fixedCoats.contains(variant) {
+            #expect(swatches.isEmpty, "\(variant) keeps its coat's colors")
+            continue
+        }
         #expect((6...8).contains(swatches.count), "\(slot) \(variant) has \(swatches.count) swatches")
         for swatch in swatches {
             var colored = outfit
@@ -45,6 +49,9 @@ func everySwatchApplies(outfit: Outfit) throws {
         ("bottom", "shorts"),
     ].map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
     #expect(counts == [7, 7, 6, 6, 7, 8, 8])
+    let furs = [("body", "golden"), ("body", "rabbit"), ("body", "lop"), ("hair", "curls")]
+        .map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
+    #expect(furs == [6, 6, 6, 7])
     #expect(PlaceholderCharacter.swatches(for: "top", wearing: "cape").isEmpty)
 }
 

@@ -100,6 +100,24 @@ public enum Palette {
         SRGBColor(red: 0x3F, green: 0x39, blue: 0x3B),
         SRGBColor(red: 0xA8, green: 0x92, blue: 0x7E),
     ]
+    /// Dog fur: golden, cream, apricot, chocolate, black, white.
+    public static let dogFur = [
+        SRGBColor(red: 0xE2, green: 0xB2, blue: 0x6C),
+        SRGBColor(red: 0xF1, green: 0xDD, blue: 0xB8),
+        SRGBColor(red: 0xD9, green: 0x8B, blue: 0x4A),
+        SRGBColor(red: 0x7A, green: 0x4E, blue: 0x36),
+        SRGBColor(red: 0x2F, green: 0x2B, blue: 0x34),
+        SRGBColor(red: 0xFB, green: 0xFA, blue: 0xF6),
+    ]
+    /// Rabbit fur: white, cream, brown, gray, dark gray, black.
+    public static let rabbitFur = [
+        SRGBColor(red: 0xFB, green: 0xFA, blue: 0xF6),
+        SRGBColor(red: 0xE9, green: 0xD2, blue: 0xB4),
+        SRGBColor(red: 0xB9, green: 0x8A, blue: 0x64),
+        SRGBColor(red: 0x9C, green: 0x9A, blue: 0xA3),
+        SRGBColor(red: 0x5C, green: 0x58, blue: 0x62),
+        SRGBColor(red: 0x3D, green: 0x38, blue: 0x42),
+    ]
     /// Hair: black, dark brown, brown, light brown, blonde, auburn, silver.
     public static let hairColors = [
         SRGBColor(red: 0x2A, green: 0x23, blue: 0x33),
