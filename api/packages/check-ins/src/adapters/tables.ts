@@ -31,6 +31,13 @@ export interface CheckInPhotos {
   position: number;
 }
 
+export interface CheckInReactions {
+  check_in_id: string;
+  kind: string;
+  member_id: string;
+  reacted_at: Generated<Timestamp>;
+}
+
 export interface CheckIns {
   created_at: Timestamp;
   day: string;
@@ -55,6 +62,7 @@ export interface SquadMembers {
 
 export interface DB {
   check_in_photos: CheckInPhotos;
+  check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
   squad_members: SquadMembers;

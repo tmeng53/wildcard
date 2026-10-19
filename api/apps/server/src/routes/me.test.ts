@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresReactionStore,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { sign } from 'hono/jwt';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -24,11 +29,13 @@ async function send(
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
+      reactions: createPostgresReactionStore(db),
       photos,
       clock: () => new Date(),
     }),
     photos,
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     log: createLog(() => undefined),
   });
   try {

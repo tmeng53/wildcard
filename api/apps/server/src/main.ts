@@ -1,6 +1,16 @@
 import { serve } from '@hono/node-server';
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresReactionStore,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import {
+  createApnsSender,
+  createOffSender,
+  createPostgresDeviceStore,
+  createPush,
+} from '@wildcard/push';
 
 import { createDatabase } from './adapters/postgres.js';
 import { createSupabaseTokenVerifier } from './adapters/supabase-auth.js';
@@ -17,16 +27,23 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+const push = createPush({
+  store: createPostgresDeviceStore(db),
+  sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
+});
+if (config.apns === undefined) log.info('push notifications are off: no APNs key');
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
     photos,
     clock: () => new Date(),
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
   photos,
+  push,
   log,
 });
 

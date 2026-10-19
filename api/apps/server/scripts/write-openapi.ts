@@ -2,8 +2,13 @@
 // the committed file and the routes disagree.
 import { writeFileSync } from 'node:fs';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresReactionStore,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 
 import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
@@ -20,8 +25,14 @@ const app = createApp({
   db,
   verifyToken: unused,
   photos,
-  checkIns: createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: unused }),
+  checkIns: createCheckIns({
+    store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
+    photos,
+    clock: unused,
+  }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
+  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));

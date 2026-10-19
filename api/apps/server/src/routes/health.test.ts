@@ -1,5 +1,10 @@
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresReactionStore,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -12,7 +17,12 @@ const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
 const photos = { createUploadUrl: notCalled, exists: notCalled, createViewUrls: notCalled };
 const checkInsOn = (db: Database) =>
-  createCheckIns({ store: createPostgresCheckInStore(db), photos, clock: () => new Date() });
+  createCheckIns({
+    store: createPostgresCheckInStore(db),
+    reactions: createPostgresReactionStore(db),
+    photos,
+    clock: () => new Date(),
+  });
 
 async function getHealth(db: Database) {
   const lines: string[] = [];
@@ -22,6 +32,7 @@ async function getHealth(db: Database) {
     checkIns: checkInsOn(db),
     photos,
     members: createMembers({ store: createPostgresProfileStore(db) }),
+    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     log: createLog((line) => lines.push(line)),
   });
   try {
@@ -87,6 +98,7 @@ describe('an unknown route', () => {
       checkIns: checkInsOn(db),
       photos,
       members: createMembers({ store: createPostgresProfileStore(db) }),
+      push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
       log: createLog(() => undefined),
     });
     const response = await app.request('/nope', { method: 'POST' });

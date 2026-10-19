@@ -15,7 +15,11 @@ import {
   type PhotoRef,
 } from '@wildcard/check-ins';
 
+import type { Push } from '@wildcard/push';
+
 import { bodyVersion } from '../body-version.js';
+import { notifyTeammatesOfCheckIn } from '../flows/notifications.js';
+import type { Log } from '../log.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -122,6 +126,8 @@ export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
   readonly photos: PhotoStorage;
+  readonly push: Push;
+  readonly log: Log;
 }) {
   const save = createRoute({
     method: 'put',
@@ -131,7 +137,8 @@ export function checkIns(deps: {
     description:
       'The app makes the id, so a save can be retried: the same check-in again answers 200 ' +
       'with the saved one, different contents under a saved id answer 409. Photos are ' +
-      'uploaded first, through `POST /photo-uploads`, and listed by path.',
+      'uploaded first, through `POST /photo-uploads`, and listed by path. A new check-in is ' +
+      'pushed to the teammates who see it.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -208,6 +215,7 @@ export function checkIns(deps: {
         member: MemberId.parse(c.var.caller.userId),
         draft: c.req.valid('json'),
       });
+      if (created) await notifyTeammatesOfCheckIn(deps, checkIn);
       const body = wire(checkIn, await viewUrls(deps.photos, [checkIn]));
       return created ? c.json(body, 201) : c.json(body, 200);
     })

@@ -177,6 +177,17 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return withAudiences(rows);
     },
 
+    async membersOf(squads) {
+      if (squads.length === 0) return new Set();
+      const rows = await db
+        .selectFrom('squad_members')
+        .select('member_id')
+        .distinct()
+        .where('squad_id', 'in', squads)
+        .execute();
+      return new Set(rows.map((row) => MemberId.parse(row.member_id)));
+    },
+
     async listForMember({ member, from, to }) {
       const rows = await db
         .selectFrom('check_ins')
