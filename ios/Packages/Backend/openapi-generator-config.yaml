@@ -1,0 +1,12 @@
+# How scripts/swift-openapi.sh turns api/apps/server/openapi.json into the API client. The
+# types it uses are generated into Contracts' APIContract target, so this pass makes only the
+# client, internal to Backend: callers use `WildcardAPI`, which speaks `Contracts` types.
+generate:
+  - client
+accessModifier: internal
+namingStrategy: idiomatic
+additionalImports:
+  - APIContract
+# Generated code keeps the generator's style, not ours; .swiftlint.yml excludes it too.
+additionalFileComments:
+  - swift-format-ignore-file

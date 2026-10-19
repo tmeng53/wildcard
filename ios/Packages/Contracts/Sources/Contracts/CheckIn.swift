@@ -131,7 +131,7 @@ public struct Photos: Hashable, Sendable {
 
     /// The same photos with `photo` moved to the front as the cover; nil if it isn't one of them.
     public func withCover(_ photo: PhotoRef) -> Photos? {
-        guard let index = all.firstIndex(of: photo) else { return nil }
+        guard let index = all.firstIndex(where: { $0.path == photo.path }) else { return nil }
         var reordered = all
         reordered.insert(reordered.remove(at: index), at: 0)
         return Photos(reordering: reordered)
@@ -139,7 +139,8 @@ public struct Photos: Hashable, Sendable {
 }
 
 /// A check-in photo: its name in storage, as `POST /photo-uploads` gave it, and on a saved
-/// check-in the URL to view it.
+/// check-in the URL to view it. Two are the same photo when their paths are: the view URL is
+/// signed afresh on every list.
 public struct PhotoRef: Hashable, Sendable {
     public let path: String
     /// Where to `GET` the photo, on check-ins the API sent. It stops working after a while;
@@ -151,4 +152,8 @@ public struct PhotoRef: Hashable, Sendable {
         self.path = path
         self.viewURL = viewURL
     }
+
+    public static func == (lhs: PhotoRef, rhs: PhotoRef) -> Bool { lhs.path == rhs.path }
+
+    public func hash(into hasher: inout Hasher) { hasher.combine(path) }
 }
