@@ -1,19 +1,16 @@
 import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import {
   latestMealOn,
-  localDayAt,
   trainedDays,
   trainingOn,
-  weekContaining,
+  weekOf,
   type TrainingStatus,
   type Week,
-  type Weekday,
 } from '../../domain/days.js';
+import { localDayAt } from '../../domain/weekly-plan.js';
 import { SquadNotJoinedError } from '../../errors.js';
-import type { CheckInStore, Clock, MemberZones } from '../../ports.js';
+import type { CheckInStore, Clock, MemberCalendar } from '../../ports.js';
 
-/** Where weeks start until members pick their own with their weekly plan. */
-const WEEK_START: Weekday = 1;
 /** The zone for a member who hasn't saved one, when the viewer hasn't either. */
 const FALLBACK_ZONE = 'UTC';
 
@@ -51,20 +48,21 @@ export interface SquadToday {
 export async function squadToday(
   deps: {
     readonly store: CheckInStore;
-    readonly zones: MemberZones;
+    readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
   { viewer, squad }: { readonly viewer: MemberId; readonly squad: SquadId },
 ): Promise<SquadToday> {
-  const { store, zones, clock } = deps;
+  const { store, calendarOf, clock } = deps;
   const now = clock();
   const memberIds = await store.membersOf(squad);
 
-  const zoneOf = await zones.timeZonesOf(memberIds);
-  const viewerZone = zoneOf.get(viewer) ?? FALLBACK_ZONE;
-  const members = memberIds.map((member) => {
-    const day = localDayAt(now, zoneOf.get(member) ?? viewerZone);
-    return { member, day, week: weekContaining(day, WEEK_START) };
+  // A squad has at most 8 members, so one calendar read each is fine.
+  const calendars = await Promise.all(memberIds.map((member) => calendarOf(member)));
+  const viewerZone = calendars[memberIds.indexOf(viewer)]?.timeZone ?? FALLBACK_ZONE;
+  const members = memberIds.map((member, index) => {
+    const day = localDayAt(now, calendars[index]?.timeZone ?? viewerZone);
+    return { member, day, week: weekOf(day) };
   });
   const me = members.find(({ member }) => member === viewer);
   if (me === undefined) throw new SquadNotJoinedError(squad);

@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CheckInId, Disclaimer, Meal, MemberId, Training, type CheckInRecord } from './check-in.js';
-import {
-  addDays,
-  latestMealOn,
-  localDayAt,
-  trainedDays,
-  trainingOn,
-  weekContaining,
-  weekdayOf,
-} from './days.js';
+import { latestMealOn, trainedDays, trainingOn, weekOf } from './days.js';
 
 const at = (iso: string) => new Date(iso);
 const member = MemberId.parse('00000000-0000-4000-8000-000000000001');
@@ -42,52 +34,25 @@ function checkIn(
   }
 }
 
-describe('localDayAt', () => {
-  const toronto = 'America/Toronto';
-
-  it('counts anything before 3am for the day before', () => {
-    // 02:59 and 03:00 on the 19th in Toronto (EDT, UTC-4).
-    expect(localDayAt(at('2026-10-19T06:59:59.999Z'), toronto)).toBe('2026-10-18');
-    expect(localDayAt(at('2026-10-19T07:00:00.000Z'), toronto)).toBe('2026-10-19');
-  });
-
-  it('reads the member’s own zone', () => {
-    const moment = at('2026-10-19T12:00:00.000Z');
-    expect(localDayAt(moment, 'Asia/Tokyo')).toBe('2026-10-19');
-    expect(localDayAt(at('2026-10-19T09:00:00.000Z'), 'America/Los_Angeles')).toBe('2026-10-18');
-  });
-
-  it('follows daylight saving', () => {
-    // 2026-03-08: Toronto jumps from 02:00 to 03:00 EDT. 03:30 EDT is 07:30Z, 01:30 EST is 06:30Z.
-    expect(localDayAt(at('2026-03-08T07:30:00.000Z'), toronto)).toBe('2026-03-08');
-    expect(localDayAt(at('2026-03-08T06:30:00.000Z'), toronto)).toBe('2026-03-07');
-  });
-});
-
 describe('weeks', () => {
-  it('numbers weekdays from Monday', () => {
-    expect(weekdayOf('2026-10-19')).toBe(1);
-    expect(weekdayOf('2026-10-25')).toBe(7);
-  });
-
-  it('adds days across months and years', () => {
-    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
-    expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
-  });
-
-  it('gives the seven days of the week a day is in', () => {
-    expect(weekContaining('2026-10-22', 1).days).toEqual([
-      '2026-10-19',
-      '2026-10-20',
-      '2026-10-21',
-      '2026-10-22',
-      '2026-10-23',
-      '2026-10-24',
-      '2026-10-25',
-    ]);
-    // A week that starts on Sunday: Thursday the 22nd is in the week from Sunday the 18th.
-    expect(weekContaining('2026-10-22', 7)).toMatchObject({ from: '2026-10-18', to: '2026-10-24' });
-    expect(weekContaining('2026-10-18', 7).from).toBe('2026-10-18');
+  it('gives the seven days of the Monday-to-Sunday week a day is in', () => {
+    expect(weekOf('2026-10-22')).toStrictEqual({
+      from: '2026-10-19',
+      to: '2026-10-25',
+      days: [
+        '2026-10-19',
+        '2026-10-20',
+        '2026-10-21',
+        '2026-10-22',
+        '2026-10-23',
+        '2026-10-24',
+        '2026-10-25',
+      ],
+    });
+    expect(weekOf('2026-10-19').from).toBe('2026-10-19');
+    expect(weekOf('2026-10-25').from).toBe('2026-10-19');
+    // Across a year end.
+    expect(weekOf('2027-01-01')).toMatchObject({ from: '2026-12-28', to: '2027-01-03' });
   });
 });
 
@@ -112,7 +77,7 @@ describe('a day’s check-ins', () => {
   });
 
   it('counts several 练了 on one day once', () => {
-    const week = weekContaining('2026-10-19', 1).days;
+    const week = weekOf('2026-10-19').days;
     const checkIns = [
       checkIn('trained', { day: '2026-10-19' }),
       checkIn('trained', { day: '2026-10-19' }),

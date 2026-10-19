@@ -2102,5 +2102,386 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/WeeklyPlan`.
+        public struct WeeklyPlan: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/version`.
+            public var version: Components.Schemas.WeeklyPlan.VersionPayload
+            /// The member whose plan it is.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/member`.
+            public var member: Swift.String
+            /// The week’s Monday.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/weekStart`.
+            public var weekStart: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload`.
+            @frozen public enum DaysPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
+                public struct Case1Payload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/kind`.
+                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                        case train = "train"
+                    }
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/kind`.
+                    public var kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/sport`.
+                    public var sport: Components.Schemas.Sport?
+                    /// Trimmed, then 1 to 20 characters as people see them, on one line.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/customSport`.
+                    public var customSport: Swift.String?
+                    /// Creates a new `Case1Payload`.
+                    ///
+                    /// - Parameters:
+                    ///   - kind:
+                    ///   - sport:
+                    ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
+                    public init(
+                        kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload,
+                        sport: Components.Schemas.Sport? = nil,
+                        customSport: Swift.String? = nil
+                    ) {
+                        self.kind = kind
+                        self.sport = sport
+                        self.customSport = customSport
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case kind
+                        case sport
+                        case customSport
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.kind = try container.decode(
+                            Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload.self,
+                            forKey: .kind
+                        )
+                        self.sport = try container.decodeIfPresent(
+                            Components.Schemas.Sport.self,
+                            forKey: .sport
+                        )
+                        self.customSport = try container.decodeIfPresent(
+                            Swift.String.self,
+                            forKey: .customSport
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "kind",
+                            "sport",
+                            "customSport"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
+                case case1(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload)
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
+                public struct Case2Payload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2/kind`.
+                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                        case rest = "rest"
+                    }
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2/kind`.
+                    public var kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload
+                    /// Creates a new `Case2Payload`.
+                    ///
+                    /// - Parameters:
+                    ///   - kind:
+                    public init(kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload) {
+                        self.kind = kind
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case kind
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.kind = try container.decode(
+                            Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload.self,
+                            forKey: .kind
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "kind"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
+                case case2(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .case1(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .case2(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .case1(value):
+                        try value.encode(to: encoder)
+                    case let .case2(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
+            public typealias DaysPayload = [Components.Schemas.WeeklyPlan.DaysPayloadPayload]
+            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
+            public var days: Components.Schemas.WeeklyPlan.DaysPayload
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
+            @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case saved = "saved"
+                case carriedOver = "carriedOver"
+                case _default = "default"
+            }
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
+            public var source: Components.Schemas.WeeklyPlan.SourcePayload
+            /// Creates a new `WeeklyPlan`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - member: The member whose plan it is.
+            ///   - weekStart: The week’s Monday.
+            ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            public init(
+                version: Components.Schemas.WeeklyPlan.VersionPayload,
+                member: Swift.String,
+                weekStart: Swift.String,
+                days: Components.Schemas.WeeklyPlan.DaysPayload,
+                source: Components.Schemas.WeeklyPlan.SourcePayload
+            ) {
+                self.version = version
+                self.member = member
+                self.weekStart = weekStart
+                self.days = days
+                self.source = source
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case member
+                case weekStart
+                case days
+                case source
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.WeeklyPlan.VersionPayload.self,
+                    forKey: .version
+                )
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.weekStart = try container.decode(
+                    Swift.String.self,
+                    forKey: .weekStart
+                )
+                self.days = try container.decode(
+                    Components.Schemas.WeeklyPlan.DaysPayload.self,
+                    forKey: .days
+                )
+                self.source = try container.decode(
+                    Components.Schemas.WeeklyPlan.SourcePayload.self,
+                    forKey: .source
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "member",
+                    "weekStart",
+                    "days",
+                    "source"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft`.
+        public struct WeeklyPlanDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/version`.
+            public var version: Components.Schemas.WeeklyPlanDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload`.
+            @frozen public enum DaysPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
+                public struct Case1Payload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/kind`.
+                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                        case train = "train"
+                    }
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/kind`.
+                    public var kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/sport`.
+                    public var sport: Components.Schemas.Sport?
+                    /// Trimmed, then 1 to 20 characters as people see them, on one line.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/customSport`.
+                    public var customSport: Swift.String?
+                    /// Creates a new `Case1Payload`.
+                    ///
+                    /// - Parameters:
+                    ///   - kind:
+                    ///   - sport:
+                    ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
+                    public init(
+                        kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload,
+                        sport: Components.Schemas.Sport? = nil,
+                        customSport: Swift.String? = nil
+                    ) {
+                        self.kind = kind
+                        self.sport = sport
+                        self.customSport = customSport
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case kind
+                        case sport
+                        case customSport
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.kind = try container.decode(
+                            Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload.self,
+                            forKey: .kind
+                        )
+                        self.sport = try container.decodeIfPresent(
+                            Components.Schemas.Sport.self,
+                            forKey: .sport
+                        )
+                        self.customSport = try container.decodeIfPresent(
+                            Swift.String.self,
+                            forKey: .customSport
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "kind",
+                            "sport",
+                            "customSport"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
+                case case1(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload)
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
+                public struct Case2Payload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2/kind`.
+                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                        case rest = "rest"
+                    }
+                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2/kind`.
+                    public var kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload
+                    /// Creates a new `Case2Payload`.
+                    ///
+                    /// - Parameters:
+                    ///   - kind:
+                    public init(kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload) {
+                        self.kind = kind
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case kind
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.kind = try container.decode(
+                            Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload.self,
+                            forKey: .kind
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "kind"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
+                case case2(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .case1(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .case2(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .case1(value):
+                        try value.encode(to: encoder)
+                    case let .case2(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/days`.
+            public typealias DaysPayload = [Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload]
+            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/days`.
+            public var days: Components.Schemas.WeeklyPlanDraft.DaysPayload
+            /// Creates a new `WeeklyPlanDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            public init(
+                version: Components.Schemas.WeeklyPlanDraft.VersionPayload,
+                days: Components.Schemas.WeeklyPlanDraft.DaysPayload
+            ) {
+                self.version = version
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case days
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.WeeklyPlanDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.days = try container.decode(
+                    Components.Schemas.WeeklyPlanDraft.DaysPayload.self,
+                    forKey: .days
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "days"
+                ])
+            }
+        }
     }
 }

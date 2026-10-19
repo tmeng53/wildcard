@@ -27,9 +27,9 @@ const zones = new Map<MemberId, string>();
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   photos: { exists: () => Promise.reject(new Error('unused')) },
-  zones: {
-    timeZonesOf: (members) =>
-      Promise.resolve(new Map([...zones].filter(([member]) => members.includes(member)))),
+  calendarOf: (member) => {
+    const timeZone = zones.get(member);
+    return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: now });
   },
   clock: () => now,
 });

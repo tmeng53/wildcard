@@ -1,46 +1,7 @@
 import type { CheckInRecord, LocalDay } from './check-in.js';
+import { addDays, weekStartOf } from './weekly-plan.js';
 
-const DAY = 86_400_000;
-
-/** Hours after midnight that still count for the day before, as on the phone (`DayBoundary`). */
-export const GRACE_HOURS = 3;
-
-/** Monday to Sunday, numbered as in ISO 8601. */
-export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-/** The day `count` days after `day` (before it when negative). */
-export function addDays(day: LocalDay, count: number): LocalDay {
-  return new Date(Date.parse(day) + count * DAY).toISOString().slice(0, 10);
-}
-
-/**
- * A member's day at `moment` on the wall clock of `timeZone`: midnight ends a day, but anything
- * before 3am still counts for the day before, so a late workout lands on the day it was done.
- */
-export function localDayAt(moment: Date, timeZone: string): LocalDay {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(moment);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((each) => each.type === type)?.value ?? '';
-  const calendarDay = `${part('year')}-${part('month')}-${part('day')}`;
-  return Number(part('hour')) < GRACE_HOURS ? addDays(calendarDay, -1) : calendarDay;
-}
-
-/** ISO weekdays by `getUTCDay`, which counts Sunday as 0. */
-const WEEKDAYS: readonly Weekday[] = [7, 1, 2, 3, 4, 5, 6];
-
-/** The weekday of a day. */
-export function weekdayOf(day: LocalDay): Weekday {
-  return WEEKDAYS[new Date(Date.parse(day)).getUTCDay()] ?? 1;
-}
-
-/** Seven days in a row, from a member's own week-start day. */
+/** A Monday-to-Sunday week (ISO 8601), as weekly plans have it. */
 export interface Week {
   readonly from: LocalDay;
   readonly to: LocalDay;
@@ -48,9 +9,9 @@ export interface Week {
   readonly days: readonly LocalDay[];
 }
 
-/** The week `day` is in, for a member whose week starts on `weekStart`. */
-export function weekContaining(day: LocalDay, weekStart: Weekday): Week {
-  const from = addDays(day, -((weekdayOf(day) - weekStart + 7) % 7));
+/** The week `day` is in. */
+export function weekOf(day: LocalDay): Week {
+  const from = weekStartOf(day);
   const days = Array.from({ length: 7 }, (_, offset) => addDays(from, offset));
   return { from, to: addDays(from, 6), days };
 }

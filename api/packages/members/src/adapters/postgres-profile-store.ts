@@ -1,7 +1,7 @@
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, Profile, TimeZone } from '../domain/profile.js';
+import { Profile, type MemberId } from '../domain/profile.js';
 import type { ProfileStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -20,16 +20,13 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
       return row === undefined ? undefined : Profile.parse({ timeZone: row.time_zone });
     },
 
-    async timeZonesOf(members) {
-      if (members.length === 0) return new Map();
-      const rows = await db
+    async joinedAt(member) {
+      const row = await db
         .selectFrom('profiles')
-        .select(['member_id', 'time_zone'])
-        .where('member_id', 'in', members)
-        .execute();
-      return new Map(
-        rows.map((row) => [MemberId.parse(row.member_id), TimeZone.parse(row.time_zone)]),
-      );
+        .select('created_at')
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return row === undefined ? undefined : new Date(row.created_at);
     },
 
     async save(member: MemberId, profile) {

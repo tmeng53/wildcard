@@ -1,5 +1,10 @@
 import { serve } from '@hono/node-server';
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from './adapters/postgres.js';
@@ -8,6 +13,7 @@ import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
+import { memberCalendar } from './member-calendar.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
@@ -24,7 +30,12 @@ const app = createApp({
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,
-    zones: members,
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(),
+  }),
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   members,

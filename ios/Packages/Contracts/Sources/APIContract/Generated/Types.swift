@@ -58,6 +58,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
+    /// The signed-in member’s plan for a week
+    ///
+    /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
+    ///
+    /// - Remark: HTTP `GET /me/weekly-plans/{weekStart}`.
+    /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/get(getMyWeeklyPlan)`.
+    func getMyWeeklyPlan(_ input: Operations.GetMyWeeklyPlan.Input) async throws -> Operations.GetMyWeeklyPlan.Output
+    /// Save the signed-in member’s plan for a week
+    ///
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    ///
+    /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
+    /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
+    func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -162,6 +176,38 @@ extension APIProtocol {
         try await getSquadToday(Operations.GetSquadToday.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// The signed-in member’s plan for a week
+    ///
+    /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
+    ///
+    /// - Remark: HTTP `GET /me/weekly-plans/{weekStart}`.
+    /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/get(getMyWeeklyPlan)`.
+    public func getMyWeeklyPlan(
+        path: Operations.GetMyWeeklyPlan.Input.Path,
+        headers: Operations.GetMyWeeklyPlan.Input.Headers = .init()
+    ) async throws -> Operations.GetMyWeeklyPlan.Output {
+        try await getMyWeeklyPlan(Operations.GetMyWeeklyPlan.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Save the signed-in member’s plan for a week
+    ///
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    ///
+    /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
+    /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
+    public func saveMyWeeklyPlan(
+        path: Operations.SaveMyWeeklyPlan.Input.Path,
+        headers: Operations.SaveMyWeeklyPlan.Input.Headers = .init(),
+        body: Operations.SaveMyWeeklyPlan.Input.Body
+    ) async throws -> Operations.SaveMyWeeklyPlan.Output {
+        try await saveMyWeeklyPlan(Operations.SaveMyWeeklyPlan.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
 }

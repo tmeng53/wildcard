@@ -2,7 +2,12 @@
 // the committed file and the routes disagree.
 import { writeFileSync } from 'node:fs';
 
-import { createCheckIns, createPostgresCheckInStore } from '@wildcard/check-ins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresWeeklyPlanStore,
+  createWeeklyPlans,
+} from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 
 import { createDatabase } from '../src/adapters/postgres.js';
@@ -16,7 +21,6 @@ const unused = (): never => {
 // Never connected: the pool opens a connection only for a query.
 const db = createDatabase('postgres://localhost/unused');
 const photos = { createUploadUrl: unused, exists: unused, createViewUrls: unused };
-const members = createMembers({ store: createPostgresProfileStore(db) });
 const app = createApp({
   db,
   verifyToken: unused,
@@ -24,10 +28,15 @@ const app = createApp({
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,
-    zones: members,
+    calendarOf: unused,
     clock: unused,
   }),
-  members,
+  weeklyPlans: createWeeklyPlans({
+    store: createPostgresWeeklyPlanStore(db),
+    calendarOf: unused,
+    clock: unused,
+  }),
+  members: createMembers({ store: createPostgresProfileStore(db) }),
   log: createLog(unused),
 });
 writeFileSync(new URL('../../openapi.json', import.meta.url), openApiJson(app));
