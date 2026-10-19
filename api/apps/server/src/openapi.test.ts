@@ -23,6 +23,7 @@ describe('openapi.json', () => {
       checkIns: createCheckIns({
         store: createPostgresCheckInStore(db),
         photos,
+        zones: createMembers({ store: createPostgresProfileStore(db) }),
         clock: () => {
           throw new Error('unused');
         },

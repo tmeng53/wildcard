@@ -17,15 +17,17 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+const members = createMembers({ store: createPostgresProfileStore(db) });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
     photos,
+    zones: members,
     clock: () => new Date(),
   }),
-  members: createMembers({ store: createPostgresProfileStore(db) }),
+  members,
   photos,
   log,
 });

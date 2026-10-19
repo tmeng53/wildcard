@@ -31,9 +31,12 @@ const now = new Date('2026-10-18T20:00:00.000Z');
 // Photo files: the paths uploaded so far. Storage itself is the server's adapter, tested there.
 const uploaded = new Set<string>();
 const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) };
+// Nobody here has a time zone: these tests don't read members' days.
+const zones = { timeZonesOf: () => Promise.resolve(new Map()) };
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   photos,
+  zones,
   clock: () => now,
 });
 
@@ -185,6 +188,7 @@ describe('saving a check-in', () => {
     const late = createCheckIns({
       store: createPostgresCheckInStore(db),
       photos,
+      zones,
       clock: () => new Date('2026-10-25T00:00:00.000Z'),
     });
     const retry = await late.save({
@@ -249,6 +253,7 @@ describe('saving a check-in', () => {
           },
         },
         photos,
+        zones,
         clock: () => now,
       });
     };

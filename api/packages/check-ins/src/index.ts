@@ -36,5 +36,7 @@ export {
   PhotoNotYoursError,
   SquadNotJoinedError,
 } from './errors.js';
-export type { CheckInStore, Clock, InsertOutcome, PhotoFiles } from './ports.js';
+export type { TrainingStatus, Week } from './domain/days.js';
+export type { CheckInStore, Clock, InsertOutcome, MemberZones, PhotoFiles } from './ports.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
+export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
