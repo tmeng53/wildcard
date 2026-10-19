@@ -171,18 +171,26 @@ public struct Figure: Hashable, Sendable {
 
     /// Checks that a clip only moves parts this figure has, and links its tracks to them.
     public func bind(_ clip: Clip) throws(AvatarError) -> BoundClip {
-        var tracks: [(part: Int, track: Clip.Track)] = []
-        for track in clip.tracks {
-            guard let part = parts.firstIndex(where: { $0.id == track.part }) else {
-                throw .unknownPart(clip: clip.name, part: track.part)
-            }
-            tracks.append((part, track))
+        var accents: [(accent: Clip.Accent, tracks: [BoundClip.Track])] = []
+        for accent in clip.accents {
+            accents.append((accent, try bind(accent.clip.tracks, of: accent.clip.name)))
         }
-        return BoundClip(clip: clip, tracks: tracks)
+        return BoundClip(clip: clip, tracks: try bind(clip.tracks, of: clip.name), accents: accents)
+    }
+
+    private func bind(_ tracks: [Clip.Track], of clip: String) throws(AvatarError) -> [BoundClip.Track] {
+        var bound: [BoundClip.Track] = []
+        for track in tracks {
+            guard let part = parts.firstIndex(where: { $0.id == track.part }) else {
+                throw .unknownPart(clip: clip, part: track.part)
+            }
+            bound.append((part, track))
+        }
+        return bound
     }
 
     /// The pose a clip gives at a time, counted from the clip's start. A looping clip wraps
-    /// around; a one-shot clip holds its last frame.
+    /// around; a one-shot clip holds its last frame. Its accents move on top.
     public func pose(_ bound: BoundClip, at time: Double) -> Pose {
         let clip = bound.clip
         let local: Double
@@ -195,6 +203,19 @@ public struct Figure: Hashable, Sendable {
         var pose = restPose
         for (part, track) in bound.tracks {
             pose.parts[part][track.channel] = track.value(at: local)
+        }
+        for (accent, tracks) in bound.accents {
+            let length = accent.clip.duration
+            let moment: Double
+            if clip.loops {
+                let wrapped = (time * accent.tempo).truncatingRemainder(dividingBy: length)
+                moment = wrapped < 0 ? wrapped + length : wrapped
+            } else {
+                moment = local / clip.duration * length
+            }
+            for (part, track) in tracks {
+                pose.parts[part].add(track.value(at: moment), to: track.channel, strength: accent.strength)
+            }
         }
         return pose
     }
@@ -224,8 +245,11 @@ public struct Figure: Hashable, Sendable {
 
 /// A clip linked to a figure's parts.
 public struct BoundClip: Sendable {
+    typealias Track = (part: Int, track: Clip.Track)
+
     public let clip: Clip
-    let tracks: [(part: Int, track: Clip.Track)]
+    let tracks: [Track]
+    let accents: [(accent: Clip.Accent, tracks: [Track])]
 }
 
 /// One part's channel values. Unlike a clip, a pose has every channel of every part.
@@ -240,6 +264,15 @@ public struct PartPose: Hashable, Sendable {
 
     public init(opacity: Double = 1) {
         self.opacity = opacity
+    }
+
+    /// Applies an accent's value: offsets add, scales multiply, opacity stays within 0...1.
+    mutating func add(_ value: Double, to channel: Channel, strength: Double) {
+        switch channel {
+        case .rotation, .x, .y: self[channel] += value * strength
+        case .scaleX, .scaleY: self[channel] *= max(0, 1 + (value - 1) * strength)
+        case .opacity: opacity = min(max(opacity + value, 0), 1)
+        }
     }
 
     public subscript(channel: Channel) -> Double {

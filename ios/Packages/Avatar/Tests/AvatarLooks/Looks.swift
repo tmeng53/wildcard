@@ -19,4 +19,10 @@ public enum Looks {
     /// Four looks from the same rig: different species, faces, hair, hats, clothes and props.
     /// Any look can play any persona's clips.
     public static let squad = [PlaceholderCharacter.lifter, cat, bear, athlete]
+
+    /// The species `editor.json` groups a look's body under, whose moves its clips play with.
+    public static func species(of look: Outfit) -> String? {
+        let body = look.variants["body"]
+        return (try? PlaceholderCharacter.editorChoices())?.species.first { $0.bodies.contains(body ?? "") }?.id
+    }
 }
