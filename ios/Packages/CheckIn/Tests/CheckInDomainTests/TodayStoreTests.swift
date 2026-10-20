@@ -262,3 +262,30 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     }
     #expect(await backend.saves.isEmpty)
 }
+
+@MainActor @Test func aNewPostSendsTheOnesWaitingAheadOfItFirst() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+    try await today.post(.disclaimer(try Disclaimer("加班到十点")))
+
+    await backend.set(failure: nil)
+    #expect(try await today.post(run) != .queued)
+    #expect(await backend.saves.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
+    #expect(today.pending.isEmpty)
+    #expect(today.refused.isEmpty)
+}
+
+@MainActor @Test func aNewPostWaitsBehindOneThatStillCantGoOut() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(uploadsBeforeFailing: 0)
+    try await today.post(.healthyMeal(PostBody(photos: [photo(1)], caption: "")))
+
+    #expect(try await today.post(run) == .queued)
+    #expect(await backend.saves.isEmpty)
+    #expect(today.pending.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
+    #expect(today.myStatus == .trained)
+}

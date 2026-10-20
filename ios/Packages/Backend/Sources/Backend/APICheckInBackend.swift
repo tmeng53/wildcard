@@ -43,7 +43,7 @@ public struct APICheckInBackend: CheckInBackend {
             let squadID = try api.read { () throws(ContractsError) in try Squad(squad).id }
             async let today = api.todayWire(of: squadID)
             async let plan = api.weeklyPlanWire(weekStart: day.weekStart)
-            async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -1), through: day.adding(days: 1))
+            async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -2), through: day.adding(days: 2))
             async let week = api.myCheckInsWire(from: day.weekStart, through: day)
             let copy = SavedHome(
                 version: 1, member: signedIn, squad: squad, today: try await today, plan: try await plan,
@@ -91,7 +91,7 @@ struct SavedHome: Codable {
     let squad: Components.Schemas.Squad
     let today: Components.Schemas.SquadToday
     let plan: Components.Schemas.WeeklyPlan
-    /// The squad's, from yesterday to tomorrow.
+    /// The squad's, from two days before the member's day to two days after.
     let checkIns: Components.Schemas.CheckInList
     /// The member's own, since Monday.
     let week: Components.Schemas.CheckInList

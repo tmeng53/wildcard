@@ -140,22 +140,8 @@ public final class TodayStore {
     /// today, or a refusal from the server.
     @discardableResult
     public func post(_ draft: CheckInDraft) async throws(CheckInError) -> PostOutcome {
-        // Another phone may have posted since the last load: a 请假条 must know about a 练了 the
-        // server has, and a copy from an earlier day can't say what today holds. Ask the server
-        // first; offline, the home shown decides.
-        if case .disclaimer = draft {
-            await refresh()
-        } else if let saved = savedHome, let day, saved.mine.map({ $0.day < day }) ?? false {
-            await refresh()
-        }
+        try await check(draft)
         guard let home, let day else { throw .notSent }
-        if case .disclaimer = draft {
-            switch myStatus {
-            case .trained: throw .alreadyTrained
-            case .disclaimer: throw .disclaimerAlreadyPosted
-            case .notCheckedIn: break
-            }
-        }
         let audience: Audience
         do { audience = try Audience([home.squad.id]) } catch { throw .refused }
         let post = PendingCheckIn(
@@ -163,6 +149,8 @@ public final class TodayStore {
             draft: draft)
         pending.append(post)
         await outbox.save(pending)
+        // Posts still waiting go first, so the server sees them in the order they were made.
+        guard await sendPending(before: post.id) else { return .queued }
         do {
             guard let saved = try await send(post.id) else { return .queued }
             return .posted(saved)
@@ -171,18 +159,42 @@ public final class TodayStore {
         }
     }
 
+    /// Throws when the day already rules the draft out. Another phone may have posted since the
+    /// last load: a 请假条 must know about a 练了 the server has, and a copy from an earlier day
+    /// can't say what today holds, so the server is asked first; offline, the home shown decides.
+    private func check(_ draft: CheckInDraft) async throws(CheckInError) {
+        guard case .disclaimer = draft else {
+            if let saved = savedHome, let day, saved.mine.map({ $0.day < day }) ?? false { await refresh() }
+            return
+        }
+        await refresh()
+        switch myStatus {
+        case .trained: throw .alreadyTrained
+        case .disclaimer: throw .disclaimerAlreadyPosted
+        case .notCheckedIn: break
+        }
+    }
+
     /// Sends every post still waiting, oldest first, and stops at the first that can't go out
     /// yet. One the server refuses is dropped and listed in `refused`.
     public func sendPending() async {
+        await sendPending(before: nil)
+    }
+
+    /// Sends the posts waiting ahead of `last`, or all of them. False when one couldn't go out.
+    @discardableResult
+    private func sendPending(before last: CheckInID?) async -> Bool {
         for post in pending {
+            if post.id == last { break }
             do {
                 _ = try await send(post.id)
             } catch .notSent, .signedOut {
-                return
+                return false
             } catch {
                 refused.append(Refused(pending: post, reason: error))
             }
         }
+        return true
     }
 
     /// The member has seen why these posts were dropped.

@@ -13,8 +13,9 @@ public struct Home: Hashable, Sendable {
     public var today: SquadToday
     /// The member's plan for this week.
     public let plan: WeeklyPlan
-    /// The squad's check-ins from yesterday to tomorrow, so every member's own today is in it
-    /// whatever their time zone, and the member's own since Monday, for their week; oldest first.
+    /// The squad's check-ins from two days before the member's day to two days after, so every
+    /// member's own today is in it whatever their time zone (UTC+14 and UTC−12, with the 3am
+    /// grace, are up to two days apart), and the member's own since Monday; oldest first.
     public var checkIns: [CheckIn]
 
     public init(
