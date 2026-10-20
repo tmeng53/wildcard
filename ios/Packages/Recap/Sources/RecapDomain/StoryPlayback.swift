@@ -7,6 +7,9 @@ public struct StoryPlayback: Hashable, Sendable {
     /// Each page's running time, in seconds.
     public let durations: [Double]
     public private(set) var index: Int
+    /// False while VoiceOver reads the page, or a UI test drives it: pages still play, but only
+    /// a tap moves on.
+    public var autoAdvances = true
     /// When the current page began, moved on by however long it was paused.
     private var start: Double
     private var pausedAt: Double?
@@ -29,7 +32,7 @@ public struct StoryPlayback: Hashable, Sendable {
     /// Moves on past every page whose time has run by `time`. True when the page changed.
     @discardableResult
     public mutating func advance(to time: Double) -> Bool {
-        guard pausedAt == nil else { return false }
+        guard pausedAt == nil, autoAdvances else { return false }
         var changed = false
         while !isLast, time - start >= durations[index] {
             start += durations[index]

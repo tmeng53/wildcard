@@ -10,6 +10,27 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
 
+    /// `-recap`: open the 战报's entry tile and sample story instead of 今天.
+    static var showsRecap: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap")
+    }
+
+    /// `-recap-pending`: the sample story with its titles still waiting on the AI run.
+    static var recapPending: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-pending")
+    }
+
+    /// `-recap-missed`: the sample story where the squad fell short of its plans.
+    static var recapMissed: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-missed")
+    }
+
+    /// `-uitest-recap-manual`: the story's pages move on only when tapped, so UI tests can
+    /// screenshot each one on a slow simulator.
+    static var recapManual: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-recap-manual")
+    }
+
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
     /// tests check after a post. Only the notification UI test leaves it out.
     static var asksForNotifications: Bool {

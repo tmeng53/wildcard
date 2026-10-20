@@ -6,9 +6,10 @@ import Foundation
 import SwiftUI
 
 /// The app target only wires packages together. It opens on 今天, backed by an in-memory squad
-/// until sign-in and the squad step land; `-styleguide` opens the design system's style guide and
-/// `-character-editor` the character editor instead. After the first check-in it asks for
-/// notifications; a tapped one brings the member back to 今天 with the board read again.
+/// until sign-in and the squad step land; `-styleguide` opens the design system's style guide,
+/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
+/// instead. After the first check-in it asks for notifications; a tapped one brings the member
+/// back to 今天 with the board read again.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
@@ -43,6 +44,8 @@ struct WildcardApp: App {
                 CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
+            } else if LaunchOptions.showsRecap {
+                RecapDemo()
             } else {
                 TodayView(model: today)
                     .onAppear { delegate.opened = { [today] in Task { await today.load() } } }

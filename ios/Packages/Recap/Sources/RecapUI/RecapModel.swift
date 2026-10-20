@@ -72,6 +72,12 @@ public final class RecapModel {
         playback.previous(at: seconds(date))
     }
 
+    /// Pages move on by themselves unless VoiceOver is reading them, or a UI test drives them.
+    func autoAdvance(_ isOn: Bool, _ date: Date = .now) {
+        tick(date)
+        playback.autoAdvances = isOn
+    }
+
     func hold(_ isHeld: Bool, _ date: Date = .now) {
         tick(date)
         if isHeld { playback.pause(at: seconds(date)) } else { playback.resume(at: seconds(date)) }

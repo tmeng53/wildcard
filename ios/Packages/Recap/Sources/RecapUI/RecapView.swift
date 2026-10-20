@@ -15,8 +15,12 @@ public struct RecapView: View {
     @State private var dragDown = 0.0
     @State private var touchedAt: Date?
 
-    public init(model: RecapModel) {
+    private let autoAdvances: Bool
+
+    /// - Parameter autoAdvances: false for UI tests, which move on by tapping.
+    public init(model: RecapModel, autoAdvances: Bool = true) {
         self.model = model
+        self.autoAdvances = autoAdvances
     }
 
     public var body: some View {
@@ -37,7 +41,7 @@ public struct RecapView: View {
         .offset(y: max(dragDown, 0))
         .contentShape(Rectangle())
         .gesture(touch)
-        .onChange(of: voiceOver, initial: true) { _, isOn in model.hold(isOn) }
+        .onChange(of: voiceOver, initial: true) { _, isOn in model.autoAdvance(!isOn && autoAdvances) }
         .accessibilityAction(named: Text("下一页", bundle: .module)) { model.next() }
         .accessibilityAction(named: Text("上一页", bundle: .module)) { model.previous() }
         .environment(\.sceneTheme, model.cast.scene)
@@ -59,7 +63,7 @@ public struct RecapView: View {
             .onEnded { drag in
                 let held = drag.time.timeIntervalSince(touchedAt ?? drag.time)
                 touchedAt = nil
-                model.hold(voiceOver)
+                model.hold(false)
                 withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { dragDown = 0 }
                 if drag.translation.height > Self.closeDistance {
                     model.dismiss()

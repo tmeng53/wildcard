@@ -86,3 +86,14 @@ import Testing
     let empty = MyWeek(plan: 5, days: [], healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(StoryPage.myWeek(empty).duration == 1.5)
 }
+
+@Test func withoutAutoAdvanceAPageStaysUntilATap() {
+    var playback = StoryPlayback(durations: [5, 4], startingAt: 0)
+    playback.autoAdvances = false
+    let moved = playback.advance(to: 30)
+    #expect(moved == false)
+    #expect(playback.elapsed(at: 30) == 5)
+    let tapped = playback.next(at: 30)
+    #expect(tapped)
+    #expect(playback.index == 1)
+}
