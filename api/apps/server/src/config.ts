@@ -21,7 +21,11 @@ const Environment = z.object({
   // server: 1 for Cloud Run on its own, more behind a load balancer. Public routes rate-limit by
   // the client address found this many entries from the end.
   PROXY_HOPS: z.coerce.number().pipe(z.int().min(1).max(5)).default(1),
-  // For AI 请假条 drafts. Without it the server still runs and the app shows its dice.
+  // Which provider writes AI 请假条 drafts, and with which of its models (each adapter has a
+  // default). Without that provider's key the server still runs and the app shows its dice.
+  LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
+  LLM_MODEL: z.string().min(1).optional(),
+  OPENAI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
   // until the key exists (deletions then skip Apple and log a warning).
@@ -69,7 +73,15 @@ export interface Config {
   readonly adminPasswordSignIn: boolean;
   /** How many of our proxies add to `X-Forwarded-For`; see `clientAddress`. */
   readonly proxyHops: number;
-  readonly anthropicApiKey: string | undefined;
+  /** The model that writes AI 请假条 drafts; undefined while its provider has no key. */
+  readonly languageModel:
+    | {
+        readonly provider: 'openai' | 'anthropic';
+        readonly apiKey: string;
+        /** Undefined for the adapter's default. */
+        readonly model: string | undefined;
+      }
+    | undefined;
   /** Sign in with Apple's key; undefined until it is set up. */
   readonly appleSignInKey:
     | {
@@ -121,6 +133,10 @@ export function readConfig(environment: Record<string, string | undefined>): Con
       `Bad server environment: set all of ${APNS.join(', ')} or none (missing ${missing.join(', ')})`,
     );
   }
+  const { LLM_PROVIDER, LLM_MODEL } = result.data;
+  const llmKey = { openai: result.data.OPENAI_API_KEY, anthropic: result.data.ANTHROPIC_API_KEY }[
+    LLM_PROVIDER
+  ];
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -130,7 +146,10 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     publicUrl: new URL(result.data.PUBLIC_URL ?? `http://localhost:${String(result.data.PORT)}`),
     adminPasswordSignIn: result.data.ADMIN_PASSWORD_SIGN_IN === 'on',
     proxyHops: result.data.PROXY_HOPS,
-    anthropicApiKey: result.data.ANTHROPIC_API_KEY,
+    languageModel:
+      llmKey === undefined
+        ? undefined
+        : { provider: LLM_PROVIDER, apiKey: llmKey, model: LLM_MODEL },
     appleSignInKey,
     apns:
       APNS_KEY_ID === undefined ||
