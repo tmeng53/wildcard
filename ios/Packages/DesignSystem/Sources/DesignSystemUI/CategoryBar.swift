@@ -20,7 +20,7 @@ public struct CategoryBarItem<ID: Hashable>: Identifiable {
 /// padding; the selected one sits on a solid ink capsule that slides between items, never an
 /// underline or a grey block. The edges fade only where
 /// there is more to scroll. Pass `isPinned` while the bar is stuck over scrolled content, so it
-/// gets a Liquid Glass band behind it; otherwise it has no background.
+/// gets a solid page band behind it, up under the status bar; otherwise it has no background.
 public struct CategoryBar<ID: Hashable>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -58,7 +58,7 @@ public struct CategoryBar<ID: Hashable>: View {
         }
         .background {
             if isPinned {
-                Color.clear.glassEffect(.regular, in: Rectangle())
+                Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .top)
             }
         }
     }
