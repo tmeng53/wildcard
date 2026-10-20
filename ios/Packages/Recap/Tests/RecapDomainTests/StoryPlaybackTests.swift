@@ -79,7 +79,7 @@ import Testing
     // Tenths of a second; the sums carry floating-point dust.
     let tenths = { (time: Double) in (time * 10).rounded() / 10 }
     #expect(beats.beats.map { tenths($0.land) } == [0.2, 1.6, 2.9, 3.6])
-    #expect(beats.beats.map(\.clip) == [.sport(.runWalk), .award(.doze), nil, .award(.flat)])
+    #expect(beats.beats.map(\.clip) == [.sport(.run), .award(.doze), nil, .award(.flat)])
     #expect(tenths(beats.end) == 4.6)
     #expect(beats.beat(at: 0.1) == nil)
     #expect(beats.beat(at: 1.7)?.day == 1)

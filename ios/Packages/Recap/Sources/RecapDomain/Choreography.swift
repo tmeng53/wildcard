@@ -19,8 +19,9 @@ public enum AwardMove: String, CaseIterable, Hashable, Sendable {
 /// the facts: a day's sport, a meal, the podium toss.
 public enum StoryClip: Hashable, Sendable {
     case award(AwardMove)
-    /// A trained day: its sport category's move.
-    case sport(SportCategory)
+    /// A trained day: its sport's kit and move, as the character editor and 上场 play them; nil
+    /// for a sport the member named themselves.
+    case sport(Sport?)
     /// Eating what they logged more of.
     case eat(Meals.Meal)
     /// 抛高高 on the podium: the champion goes up, the sides throw.
@@ -28,11 +29,12 @@ public enum StoryClip: Hashable, Sendable {
     /// 叠罗汉 at the ending: one carries, one sits on top.
     case stackBottom, stackTop
 
-    /// The clip's file name in the character's art, without the persona folder.
+    /// A shared clip's name in the character's art (`moves/<name>.json`); a sport's comes from
+    /// its kit instead.
     public var name: String {
         switch self {
         case .award(let move): move.rawValue
-        case .sport(let category): category.clipName
+        case .sport: "sport"
         case .eat(.healthy): "eat-healthy"
         case .eat(.cheat): "eat-treat"
         case .tossFlyer: "toss-flyer"
@@ -41,44 +43,14 @@ public enum StoryClip: Hashable, Sendable {
         case .stackTop: "stack-top"
         }
     }
-
-    /// A prop the character holds while the clip plays, by the art's prop variant name.
-    public var prop: String? {
-        switch self {
-        case .sport(.strength): "dumbbell"
-        case .sport(.racket): "racket"
-        default: nil
-        }
-    }
-}
-
-extension SportCategory {
-    /// Each sport category's move in 你的一周.
-    var clipName: String {
-        switch self {
-        case .runWalk: "sport-run"
-        case .strength: "sport-lift"
-        case .cardio: "sport-hop"
-        case .mindBody: "stretch"
-        case .water: "sport-swim"
-        case .racket: "sport-swing"
-        case .ball: "sport-shoot"
-        case .cycling: "sport-pedal"
-        case .outdoorWinter: "sport-climb"
-        case .combat: "sport-punch"
-        case .dance: "sport-dance"
-        case .everyday: "sport-walk"
-        }
-    }
 }
 
 extension DayKind {
     /// What the character does on this day in 你的一周: the sport's move, a doze on a rest day,
-    /// lying flat (躺平) on a 请假条 day; nothing on a day with no check-in. A sport the member
-    /// named themselves (其他) walks.
+    /// lying flat (躺平) on a 请假条 day; nothing on a day with no check-in.
     public var clip: StoryClip? {
         switch self {
-        case .trained(let sport): .sport(sport?.category ?? .everyday)
+        case .trained(let sport): .sport(sport)
         case .rest: .award(.doze)
         case .disclaimer: .award(.flat)
         case .none: nil

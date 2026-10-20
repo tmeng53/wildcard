@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarArt
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -38,9 +39,9 @@ struct PageContext {
     }
 
     func character(
-        _ member: MemberID, act: Act = Act(), regalia: Regalia = .none, prop: String? = nil
+        _ member: MemberID, act: Act = Act(), regalia: Regalia = .none, kit: SportKit? = nil
     ) -> StoryCharacter {
-        StoryCharacter(wardrobe: wardrobe, member: member, act: act, regalia: regalia, prop: prop, time: time)
+        StoryCharacter(wardrobe: wardrobe, member: member, act: act, regalia: regalia, kit: kit, time: time)
     }
 }
 

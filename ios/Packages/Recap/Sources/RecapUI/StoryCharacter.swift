@@ -32,7 +32,7 @@ struct Regalia: Hashable {
 final class StoryWardrobe {
     private struct Key: Hashable {
         let member: MemberID
-        let prop: String?
+        let kit: String?
         let regalia: Bool
     }
 
@@ -45,16 +45,23 @@ final class StoryWardrobe {
     private var dressed: [Key: Dressed] = [:]
     private var clips: [String: BoundClip] = [:]
     private let cast: StoryCast
+    private let kits = try? PlaceholderCharacter.sportKits()
 
     init(cast: StoryCast) {
         self.cast = cast
     }
 
+    /// What a trained day's sport puts on, as the editor and 上场 dress it.
+    func kit(for clip: StoryClip?) -> SportKit? {
+        guard case .sport(let sport) = clip else { return nil }
+        return kits?.kit(for: sport)
+    }
+
     /// Where every part of `member` lands at `time` on the page, and the drawing to fill in.
-    func frame(of member: MemberID, act: Act, regalia: Regalia, prop: String?, at time: Double)
+    func frame(of member: MemberID, act: Act, regalia: Regalia, kit: SportKit?, at time: Double)
         -> (drawing: FigureDrawing, placements: [Placement])?
     {
-        guard let look = cast[member], let dressed = dress(look, prop: prop, regalia: regalia != .none) else {
+        guard let look = cast[member], let dressed = dress(look, kit: kit, regalia: regalia != .none) else {
             return nil
         }
         var pose = pose(of: look, dressed, act: act, at: time)
@@ -75,11 +82,10 @@ final class StoryWardrobe {
         return performance.pose(at: time)
     }
 
-    private func dress(_ member: StoryMember, prop: String?, regalia: Bool) -> Dressed? {
-        let key = Key(member: member.id, prop: prop, regalia: regalia)
+    private func dress(_ member: StoryMember, kit: SportKit?, regalia: Bool) -> Dressed? {
+        let key = Key(member: member.id, kit: kit?.id, regalia: regalia)
         if let ready = dressed[key] { return ready }
-        var look = member.look
-        if let prop { look.variants["prop"] = prop }
+        var look = kit?.dress(member.look) ?? member.look
         if regalia {
             look.variants[PlaceholderCharacter.medalSlot] = PlaceholderCharacter.gold
             look.variants[PlaceholderCharacter.crownSlot] = PlaceholderCharacter.gold
@@ -95,13 +101,15 @@ final class StoryWardrobe {
 
     /// The clip bound to this figure; a move the art doesn't have yet plays the persona's cheer.
     private func bound(_ clip: StoryClip, for member: StoryMember, on figure: Figure) -> BoundClip? {
-        let key = "\(member.id)/\(member.persona.rawValue)/\(clip.name)"
+        let kit = kit(for: clip)
+        let key = "\(member.id)/\(clip.name)/\(kit?.id ?? "")"
         if let ready = clips[key] { return ready }
         let persona = member.persona
         let cheer = { try? PlaceholderCharacter.clip("cheer", persona: persona, species: member.species) }
         let loaded: Clip? =
             switch clip {
             case .award(.cheer): cheer()
+            case .sport: kit.flatMap { try? PlaceholderCharacter.move(for: $0, persona: persona) } ?? cheer()
             // Each persona eats its own way, with its own food; a full belly until those land.
             case .eat:
                 (try? PlaceholderCharacter.move("\(clip.name)-\(persona.rawValue)"))
@@ -151,13 +159,14 @@ struct StoryCharacter: View {
     let member: MemberID
     var act = Act()
     var regalia = Regalia.none
-    var prop: String?
+    /// A trained day's kit, worn while its move plays.
+    var kit: SportKit?
     let time: Double
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if let frame = wardrobe.frame(
-            of: member, act: reduceMotion ? Act() : act, regalia: reduceMotion ? settled : regalia, prop: prop,
+            of: member, act: reduceMotion ? Act() : act, regalia: reduceMotion ? settled : regalia, kit: kit,
             at: reduceMotion ? 0 : time)
         {
             CharacterCanvas(drawing: frame.drawing, placements: frame.placements)

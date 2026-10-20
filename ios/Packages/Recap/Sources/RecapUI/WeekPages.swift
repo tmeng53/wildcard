@@ -107,7 +107,7 @@ struct MyWeekPage: View {
             ZStack {
                 page.character(
                     page.cast.viewer, act: Act(clip: beat.clip, start: beat.land, hold: beat.end - beat.land),
-                    prop: playing ? beat.clip?.prop : nil
+                    kit: playing ? page.wardrobe.kit(for: beat.clip) : nil
                 )
                 .standing(feetAt: CGPoint(x: across, y: y), scale: 0.56)
                 if playing, beat.clip != nil {

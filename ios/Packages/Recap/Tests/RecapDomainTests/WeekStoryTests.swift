@@ -86,16 +86,13 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 }
 
 @Test func eachDayPlaysItsSportRestOrDisclaimerMove() throws {
-    #expect(DayKind.trained(.tennis).clip == .sport(.racket))
-    #expect(DayKind.trained(.tennis).clip?.name == "sport-swing")
-    #expect(DayKind.trained(.tennis).clip?.prop == "racket")
-    #expect(DayKind.trained(.kettlebell).clip?.prop == "dumbbell")
-    #expect(DayKind.trained(.yoga).clip?.name == "stretch")
-    #expect(DayKind.trained(nil).clip?.name == "sport-walk")
+    #expect(DayKind.trained(.tennis).clip == .sport(.tennis))
+    #expect(DayKind.trained(nil).clip == .sport(nil))
     #expect(DayKind.rest.clip?.name == "doze")
     #expect(DayKind.disclaimer.clip?.name == "flat")
     #expect(DayKind.none.clip == nil)
     #expect(StoryClip.eat(.cheat).name == "eat-treat")
+    #expect(StoryClip.tossFlyer.name == "toss-flyer")
 }
 
 @Test func theFinaleFollowsTheResultAndNeedsTwoToStack() throws {
