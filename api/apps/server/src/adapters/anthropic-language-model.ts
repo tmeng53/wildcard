@@ -20,6 +20,8 @@ const MAX_TOKENS = 4_096;
 /** The language model on Anthropic's Claude API, with structured output. */
 export function createAnthropicLanguageModel(options: {
   readonly apiKey: string;
+  /** Which Claude model answers; `ANTHROPIC_MODEL` unless the config names another. */
+  readonly model?: string;
   /** Tests only: where requests go, instead of Anthropic. */
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
@@ -39,7 +41,7 @@ export function createAnthropicLanguageModel(options: {
       let message;
       try {
         message = await client.messages.parse({
-          model: ANTHROPIC_MODEL,
+          model: options.model ?? ANTHROPIC_MODEL,
           max_tokens: MAX_TOKENS,
           system: instructions,
           messages: [{ role: 'user', content: prompt }],

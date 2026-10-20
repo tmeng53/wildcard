@@ -2,7 +2,7 @@ import { DisclaimerWriterUnavailableError } from '@wildcard/disclaimer-drafts';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { recordedAnthropic, type Fixture } from '../test-kit/recorded-anthropic.js';
+import { recordedModel, type Fixture } from '../test-kit/recorded-model.js';
 import { ANTHROPIC_MODEL, createAnthropicLanguageModel } from './anthropic-language-model.js';
 
 const Reply = z.strictObject({
@@ -12,7 +12,7 @@ const Reply = z.strictObject({
 });
 
 function modelAnswering(...fixtures: [Fixture, ...Fixture[]]) {
-  const recorded = recordedAnthropic(...fixtures);
+  const recorded = recordedModel('anthropic', ...fixtures);
   const model = createAnthropicLanguageModel({
     apiKey: 'sk-ant-test',
     baseURL: 'http://anthropic.test',
