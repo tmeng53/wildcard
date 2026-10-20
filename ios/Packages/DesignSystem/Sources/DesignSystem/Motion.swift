@@ -52,6 +52,11 @@ public enum Motion {
     /// it stays, in seconds.
     public static let plusOneRise: Double = 44
     public static let plusOneDuration: Double = 1.1
+    /// A speech bubble stays this long, in seconds, then fades out over `speechFade`; when the
+    /// squad celebrates, each bubble starts `speechStagger` after the last.
+    public static let speechHold: Double = 1.6
+    public static let speechFade: Double = 0.2
+    public static let speechStagger: Double = 0.06
     /// With Reduce Motion on, motion becomes a fade of this length, in seconds.
     public static let reducedDuration: Double = 0.2
 

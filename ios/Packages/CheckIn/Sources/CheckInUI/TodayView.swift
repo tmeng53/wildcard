@@ -221,17 +221,12 @@ private struct Head: View {
 
 /// The caption in the character's speech bubble. Nothing until the first post with a line.
 private struct PayoffBubble: View {
-    /// The widest a bubble grows before its line wraps.
-    private static let maxWidth: Double = 230
-
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let line: String?
 
     var body: some View {
         if let line {
-            SpeechBubble(Text(verbatim: line))
-                // A fixed-width frame centres the bubble; the text inside takes only the width it needs.
-                .frame(width: Self.maxWidth)
+            SpeechBubble(Text(verbatim: line), kind: .info(title: nil))
                 .transition(.speech(reduceMotion: reduceMotion))
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("today.bubble")

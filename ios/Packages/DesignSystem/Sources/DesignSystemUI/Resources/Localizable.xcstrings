@@ -401,6 +401,16 @@
         }
       }
     },
+    "可以": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sure"
+          }
+        }
+      }
+    },
     "周三不练腿俱乐部": {
       "localizations": {
         "en": {
@@ -497,6 +507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The character's stage and speech bubble"
+          }
+        }
+      }
+    },
+    "小美 · 请假条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mei · Excuse"
           }
         }
       }
@@ -1021,6 +1041,16 @@
         }
       }
     },
+    "点人看状态：最多三行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a person: up to three lines"
+          }
+        }
+      }
+    },
     "状态圈": {
       "localizations": {
         "en": {
@@ -1147,6 +1177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Badminton"
+          }
+        }
+      }
+    },
+    "腿还在酸，今天先躺平，明天一定练。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legs still sore, lying flat today, training tomorrow for sure."
           }
         }
       }

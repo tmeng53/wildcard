@@ -372,6 +372,14 @@ struct StageSection: View {
                 }
             }
             .frame(height: 300)
+            GuideGroup(Text("点人看状态：最多三行", bundle: .module)) {
+                HStack(alignment: .bottom, spacing: Space.s) {
+                    SpeechBubble(
+                        Text("腿还在酸，今天先躺平，明天一定练。", bundle: .module),
+                        kind: .info(title: Text("小美 · 请假条", bundle: .module)), on: .page)
+                    SpeechBubble(Text("可以", bundle: .module), on: .page)
+                }
+            }
         }
     }
 }

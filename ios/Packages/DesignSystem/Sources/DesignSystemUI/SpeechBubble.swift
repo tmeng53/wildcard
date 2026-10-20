@@ -2,52 +2,104 @@
 import DesignSystem
 import SwiftUI
 
-/// What the character says (口头禅, a cheer, a check-in's caption): a white bubble with a small
-/// tail under it. A long line wraps, centered, within whatever width the caller gives it. It
-/// pops in with `.speech(reduceMotion:)`.
+/// What a character says, in a small bubble with a tail pointing down at them: no border, no
+/// shadow. `.line` is a 口头禅 or a cheer, one line of 13/600 up to 160 wide; `.info` is what a tap
+/// on a person shows (their status, a 请假条's words, a caption), up to three lines of 13/400 up to
+/// 200 wide, with an optional title line (name · kind). White on the scene, light grey on a page.
+/// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
 public struct SpeechBubble: View {
+    public enum Kind {
+        case line
+        case info(title: Text?)
+    }
+
     @Environment(\.sceneTheme) private var theme
     private let text: Text
+    private let kind: Kind
+    private let surface: CardSurface
 
-    /// The tail's size, as a square rotated 45 degrees.
-    private static let tail: Double = 10
-    private static let tailRounding: Double = 2
+    private static let lineWidth: Double = 160
+    private static let infoWidth: Double = 200
+    private static let infoLines = 3
+    private static let tail = CGSize(width: 12, height: 6)
+    private static let verticalPadding: Double = 6
+    private static let horizontalPadding: Double = 10
 
-    public init(_ text: Text) {
+    public init(_ text: Text, kind: Kind = .line, on surface: CardSurface = .scene) {
         self.text = text
+        self.kind = kind
+        self.surface = surface
     }
 
     public var body: some View {
-        text
-            .typeStyle(TypeRamp.calloutEmphasis)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, Space.s)
-            .padding(.vertical, Space.xs - 1)
-            .background {
-                let fill = Color(role: .bgCanvas, in: theme)
-                RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+        content
+            .padding(.vertical, Self.verticalPadding)
+            .padding(.horizontal, Self.horizontalPadding)
+            .background(fill, in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
+            .padding(.bottom, Self.tail.height)
+            .background(alignment: .bottom) {
+                Tail()
                     .fill(fill)
-                    .overlay(alignment: .bottom) {
-                        RoundedRectangle(cornerRadius: Self.tailRounding, style: .continuous)
-                            .fill(fill)
-                            .frame(width: Self.tail, height: Self.tail)
-                            .rotationEffect(.degrees(45))
-                            .offset(y: Self.tail / 2)
-                    }
+                    .frame(width: Self.tail.width, height: Self.tail.height)
             }
-            .padding(.bottom, Self.tail / 2)
+    }
+
+    @ViewBuilder private var content: some View {
+        switch kind {
+        case .line:
+            text
+                .typeStyle(TypeRamp.footnoteEmphasis)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .lineLimit(1)
+                .frame(maxWidth: Self.lineWidth - 2 * Self.horizontalPadding)
+        case .info(let title):
+            VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                if let title {
+                    title
+                        .typeStyle(TypeRamp.label)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .lineLimit(1)
+                }
+                text
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(Self.infoLines)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding, alignment: .leading)
+        }
+    }
+
+    private var fill: Color {
+        Color(role: surface == .scene ? .bgCanvas : .bgSubtle, in: theme)
+    }
+}
+
+/// A triangle pointing down from the middle of the bubble's bottom edge.
+private struct Tail: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+            path.closeSubpath()
+        }
     }
 }
 
 extension AnyTransition {
-    /// A speech bubble popping out of the character, or fading with Reduce Motion on.
+    /// A speech bubble popping out of its tail on `celebrate` (0.6 to full size) and fading out
+    /// over `Motion.speechFade`; with Reduce Motion on, a fade both ways.
     public static func speech(reduceMotion: Bool) -> AnyTransition {
+        let fadeOut = AnyTransition.opacity.animation(.easeOut(duration: Motion.speechFade))
         if reduceMotion {
-            return .opacity
+            return .asymmetric(
+                insertion: .opacity.animation(.easeOut(duration: Motion.reducedDuration)), removal: fadeOut)
         }
-        return .scale(scale: 0.6, anchor: .bottom).combined(with: .opacity)
+        return .asymmetric(
+            insertion: AnyTransition.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity)
+                .animation(.wildcard(Motion.celebrate)),
+            removal: fadeOut)
     }
 }
 #endif
