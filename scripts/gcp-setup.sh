@@ -4,7 +4,8 @@
 # pasting the `database-url` and `supabase-secret-key` secrets into Secret Manager:
 #   bash <(curl -fsSL https://raw.githubusercontent.com/tmeng53/wildcard/main/scripts/gcp-setup.sh) PROJECT_ID [REGION]
 # REGION is the Cloud Run region nearest the Supabase project (us-east4 for Supabase's us-east-1).
-# Running it again is safe: it only adds what is missing.
+# Running it again is safe: it only adds what is missing. A new service account can take a minute
+# to be usable, so if a grant fails with "does not exist", wait a minute and run it again.
 #
 # It makes:
 # - `wildcard`, the Artifact Registry repository the server's images go to;
@@ -32,6 +33,11 @@ done
 
 gcloud config set project "$project"
 number="$(gcloud projects describe "$project" --format 'value(projectNumber)')"
+# Cloud Run needs billing on (its free tier still applies).
+[ "$(gcloud billing projects describe "$project" --format 'value(billingEnabled)')" = True ] || {
+  echo "gcp-setup: turn on billing for $project first (gcloud billing projects link)" >&2
+  exit 1
+}
 runtime="wildcard-api@$project.iam.gserviceaccount.com"
 deployer="github-deploy@$project.iam.gserviceaccount.com"
 
