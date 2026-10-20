@@ -4,8 +4,8 @@ import SwiftUI
 
 /// A 52-point row that turns a setting on or off (每日提醒): an icon, the title and a switch, in
 /// the same list as `ListRow`. The whole row is the tap target. On, the switch fills with the
-/// scene's accent; off, the hairline grey; the knob is white with no shadow. VoiceOver reads it
-/// as a switch.
+/// scene's accent; off, the hairline grey (muted ink with Increase Contrast on, so it stands out
+/// on a white card); the knob is white with no shadow. VoiceOver reads it as a switch.
 public struct SwitchRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let title: Text
@@ -42,11 +42,12 @@ public struct SwitchRow: View {
 /// The switch itself: a 51×31 capsule and its knob.
 private struct SwitchTrack: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.colorSchemeContrast) private var contrast
     let isOn: Bool
 
     var body: some View {
         Capsule()
-            .fill(Color(role: isOn ? .bgAccent : .borderDefault, in: theme))
+            .fill(Color(role: isOn ? .bgAccent : offTrack, in: theme))
             .frame(width: Sizing.switchWidth, height: Sizing.switchHeight)
             .overlay(alignment: isOn ? .trailing : .leading) {
                 Circle()
@@ -55,5 +56,7 @@ private struct SwitchTrack: View {
                     .frame(width: Sizing.switchHeight, height: Sizing.switchHeight)
             }
     }
+
+    private var offTrack: ColorRole { contrast == .increased ? .fgMuted : .borderDefault }
 }
 #endif
