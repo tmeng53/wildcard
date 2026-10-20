@@ -66,7 +66,7 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
 
 /// Picking a sport: the arm goes out to 30° in the old clothes, the tee goes on at the end of
 /// that, the way back plays from 30° to 0°, then the sport's move loops in the tee.
-@Test func aChangeOfClothesSwapsTheFigureMidTurn() throws {
+@Test func aChangeOfClothesSwapsTheFigureMidHop() throws {
     let (figure, idle, _) = try setUp()
     let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
     let out = try figure.bind(
@@ -89,6 +89,33 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(performance.figure == figure)
     performance.play(idle, at: 3)
     #expect(performance.figure == dressed)
+}
+
+/// With a blend longer than the squash, the pop up carries on from the pose on screen at the
+/// swap instead of snapping to its own first frame.
+@Test func theHopBlendsAcrossTheSwap() throws {
+    let (figure, idle, cheer) = try setUp()
+    let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
+    let out = try figure.bind(
+        clip("hopOut", duration: 0.1, loops: false, [track("arm", .rotation, [(0, 0), (0.1, 0)])]))
+    let back = try dressed.bind(
+        clip("hopIn", duration: 0.4, loops: false, [track("arm", .rotation, [(0, 0), (0.4, 0)])]))
+    var performance = Performance(figure: figure, idle: idle, blendDuration: 0.2)
+    performance.play(cheer, at: 0)
+    // Mid-cheer at 50°, the squash starts blending down to 0° but has 0.1 s of a 0.2 s blend.
+    performance.change(into: dressed, idle: idle, leaving: out, arriving: back, at: 0.5)
+    let before = performance.pose(at: 0.6 - 1e-6).parts[1].rotation
+    #expect(abs(before - 25) < 1e-3)
+    #expect(abs(performance.pose(at: 0.6).parts[1].rotation - 25) < 1e-9)
+    #expect(performance.pose(at: 0.8).parts[1].rotation == 0)
+}
+
+/// Blends take the short way round: an arm at 340° swings on 20° to 360°, the same as 0°.
+@Test func rotationsBlendTheShortWay() {
+    var start = Pose(parts: [PartPose()])
+    start.parts[0].rotation = 340
+    let halfway = start.blended(to: Pose(parts: [PartPose()]), amount: 0.5)
+    #expect(abs(halfway.parts[0].rotation - -10) < 1e-9)
 }
 
 /// A clip played mid-hop stops the change: the character stays in the clothes on screen.

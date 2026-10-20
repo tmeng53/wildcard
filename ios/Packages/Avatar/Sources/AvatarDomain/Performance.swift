@@ -65,14 +65,19 @@ public struct Performance: Sendable {
 
     /// Changes clothes with a hop: `leaving` plays in the clothes on screen (a squash down),
     /// `figure` takes over on its last frame and plays `arriving` (the pop back up), then `idle`
-    /// (a sport's move). Both figures come from the same rig.
+    /// (a sport's move). `arriving` blends on from the pose on screen at the swap, so nothing
+    /// snaps when `leaving` is shorter than a blend. Both figures come from the same rig.
     public mutating func change(
         into figure: Figure, idle: BoundClip, leaving: BoundClip, arriving: BoundClip, at time: Double
     ) {
         play(leaving, at: time)
         let swap = time + leaving.clip.duration
         var next = Performance(figure: figure, idle: idle, startingAt: swap, blendDuration: blendDuration)
-        next.current = Playing(clip: arriving, start: swap, from: nil)
+        // Where `leaving` ends up on screen, its blend in included.
+        let end = self.figure.pose(leaving, at: leaving.clip.duration)
+        let handOver = current.from.map { blend(from: $0, to: end, since: leaving.clip.duration) } ?? end
+        next.current = Playing(
+            clip: arriving, start: swap, from: handOver.parts.count == figure.parts.count ? handOver : nil)
         change = Change(swap: swap, performance: next)
     }
 

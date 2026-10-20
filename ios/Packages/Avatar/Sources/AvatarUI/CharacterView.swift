@@ -27,6 +27,8 @@ public final class CharacterPlayer {
     public func wear(_ figure: Figure, idle: Clip, now: Date = .now) throws(AvatarError) {
         let bound = try figure.bind(idle)
         settle(at: now)
+        // A kit still on its way in stays off: this outfit replaces it.
+        nextDrawing = nil
         performance = Performance(
             continuing: performance, figure: figure, idle: bound, at: now.timeIntervalSince(epoch))
         drawing = FigureDrawing(figure)

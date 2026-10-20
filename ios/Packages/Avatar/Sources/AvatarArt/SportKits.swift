@@ -93,28 +93,15 @@ public struct SportKits: Hashable, Sendable {
     }
 }
 
-extension Persona {
-    /// How fast this persona plays the moves every persona shares (a sport's move): a deadpan
-    /// character swims slowly, an energetic one quickly.
-    public var tempo: Double {
-        switch self {
-        case .deadpan: 0.8
-        case .energetic: 1.25
-        case .showoff: 1.1
-        case .drama: 1
-        case .shy: 0.9
-        }
-    }
-}
-
 extension PlaceholderCharacter {
     public static func sportKits() throws(AvatarError) -> SportKits {
         try SportKits.decode(file("kits.json"))
     }
 
-    /// A kit's move, looping, at `persona`'s tempo.
+    /// A kit's move, looping, at `persona`'s tempo (`accentTempo`, the pace it plays its
+    /// species' moves at): a deadpan character swims slowly, an energetic one quickly.
     public static func move(for kit: SportKit, persona: Persona) throws(AvatarError) -> Clip {
-        try Clip.decode(file("moves/sports/\(kit.id).json")).atTempo(persona.tempo)
+        try Clip.decode(file("moves/sports/\(kit.id).json")).atTempo(persona.accentTempo)
     }
 
     /// The hop a character changes into a kit in: `out` squashes it down, where the kit goes on,

@@ -200,7 +200,7 @@ public struct Clip: Hashable, Sendable {
     }
 
     /// This clip played `tempo` times as fast, as a calm character jogs slower than a lively
-    /// one. Only the timing changes; every pose it passes through is the same.
+    /// one. Only the timing changes, accents' included; every pose it passes through is the same.
     public func atTempo(_ tempo: Double) throws(AvatarError) -> Clip {
         guard tempo > 0, tempo.isFinite else { throw .invalidTempo(clip: name) }
         let paced = tracks.map { track in
@@ -209,7 +209,7 @@ public struct Clip: Hashable, Sendable {
                 keys: track.keys.map { Keyframe(time: $0.time / tempo, value: $0.value, easing: $0.easing) })
         }
         var clip = try Clip(name: name, duration: duration / tempo, loops: loops, tracks: paced)
-        clip.accents = accents
+        clip.accents = accents.map { Accent(clip: $0.clip, tempo: $0.tempo * tempo, strength: $0.strength) }
         return clip
     }
 

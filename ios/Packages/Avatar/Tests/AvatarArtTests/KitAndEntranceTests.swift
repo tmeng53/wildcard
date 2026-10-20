@@ -117,8 +117,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
     let deadpan = try PlaceholderCharacter.move(for: swim, persona: .deadpan)
     let energetic = try PlaceholderCharacter.move(for: swim, persona: .energetic)
-    #expect(abs(deadpan.duration - 1.625) < 1e-9)
-    #expect(abs(energetic.duration - 1.04) < 1e-9)
+    #expect(abs(deadpan.duration - 1.3 / 0.7) < 1e-9)
+    #expect(abs(energetic.duration - 1.3 / 1.4) < 1e-9)
 }
 
 /// 上场: the root carries the figure in from the right and up into the jump while the shadow
