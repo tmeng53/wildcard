@@ -10,6 +10,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
 
+    /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
+    /// tests check after a post. Only the notification UI test leaves it out.
+    static var asksForNotifications: Bool {
+        !ProcessInfo.processInfo.arguments.contains("-uitest-no-push")
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {

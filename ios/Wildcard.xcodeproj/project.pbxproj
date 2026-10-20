@@ -11,6 +11,8 @@
 		A1C0DE000000000000000020 /* CheckInUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001F /* CheckInUI */; };
 		A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000031 /* CharacterEditorUI */; };
 		A1C0DE000000000000000034 /* CheckInDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000033 /* CheckInDomain */; };
+		A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000041 /* NotificationsDomain */; };
+		A1C0DE000000000000000044 /* NotificationsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000043 /* NotificationsUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +52,8 @@
 				A1C0DE000000000000000020 /* CheckInUI in Frameworks */,
 				A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */,
 				A1C0DE000000000000000034 /* CheckInDomain in Frameworks */,
+				A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */,
+				A1C0DE000000000000000044 /* NotificationsUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +109,8 @@
 				A1C0DE00000000000000001F /* CheckInUI */,
 				A1C0DE000000000000000031 /* CharacterEditorUI */,
 				A1C0DE000000000000000033 /* CheckInDomain */,
+				A1C0DE000000000000000041 /* NotificationsDomain */,
+				A1C0DE000000000000000043 /* NotificationsUI */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -164,6 +170,7 @@
 				A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */,
 				A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */,
 				A1C0DE000000000000000030 /* XCLocalSwiftPackageReference "Packages/CharacterEditor" */,
+				A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -275,6 +282,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/Wildcard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -302,6 +310,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/Wildcard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -398,6 +407,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/CharacterEditor;
 		};
+		A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Notifications;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -420,6 +433,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */;
 			productName = CheckInDomain;
+		};
+		A1C0DE000000000000000041 /* NotificationsDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */;
+			productName = NotificationsDomain;
+		};
+		A1C0DE000000000000000043 /* NotificationsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */;
+			productName = NotificationsUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

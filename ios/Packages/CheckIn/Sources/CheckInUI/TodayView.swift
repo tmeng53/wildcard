@@ -228,6 +228,6 @@ struct BubbleShape: Shape {
             store: TodayStore(
                 backend: InMemoryCheckInBackend.sampleSquad(now: .now), outbox: InMemoryOutbox(), now: { Date() },
                 newID: { UUID() }),
-            writer: DiceDisclaimerWriter()))
+            writer: DiceDisclaimerWriter(), posted: {}))
 }
 #endif

@@ -174,7 +174,7 @@ final class TodayUITests: XCTestCase {
 
         app.buttons["disclaimer.edit"].tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "好累")
-        XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a changed line can't be posted")
+        waitFor(app.buttons["disclaimer.post"], "isEnabled == true", "a changed line can't be posted")
         XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
     }
 
@@ -238,6 +238,7 @@ final class TodayUITests: XCTestCase {
         app.launchArguments +=
             [
                 "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
+                "-uitest-no-push",
             ] + extra
         app.launch()
         return app
