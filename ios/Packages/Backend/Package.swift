@@ -8,6 +8,7 @@ import PackageDescription
 //   knows Supabase Auth's HTTP API, so changing provider means replacing it.
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
+//   `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -15,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Account"),
         .package(path: "../Contracts"),
+        .package(path: "../Notifications"),
         .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.2.0"),
@@ -25,12 +27,16 @@ let package = Package(
             dependencies: [
                 .product(name: "AccountDomain", package: "Account"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
+                .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
             ]),
         .testTarget(
             name: "BackendTests",
-            dependencies: ["Backend", .product(name: "AccountDomain", package: "Account"), "Contracts"]),
+            dependencies: [
+                "Backend", .product(name: "AccountDomain", package: "Account"), "Contracts",
+                .product(name: "NotificationsDomain", package: "Notifications"),
+            ]),
     ]
 )

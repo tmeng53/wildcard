@@ -23,6 +23,11 @@ else
   echo "$want isn't available; using $sim"
 fi
 
+# Start from a fresh install: iOS remembers the notification prompt's answer for as long as the
+# app stays installed, and NotificationPromptUITests needs an app that was never asked.
+xcrun simctl boot "$sim" 2>/dev/null || true
+xcrun simctl uninstall "$sim" app.wildcard.ios 2>/dev/null || true
+
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
