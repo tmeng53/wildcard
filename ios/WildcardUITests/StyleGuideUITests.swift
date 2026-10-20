@@ -155,13 +155,6 @@ final class StyleGuideUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.6)
     }
 
-    /// Taps update the UI on the next frames, so a check right after `tap()` can run before
-    /// it changes on a slow simulator. Wait for it instead.
-    private func waitFor(_ element: XCUIElement, _ format: String, _ message: String) {
-        let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: format), object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [changed], timeout: Self.wait), .completed, message)
-    }
-
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<16 where !element.isHittable {
             app.swipeUp()
