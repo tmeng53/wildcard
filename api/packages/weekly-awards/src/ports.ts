@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import type { AwardsState, MemberId, SquadId, StoredAwards } from './domain/awards.js';
+import type { Awards, AwardsState, Failures, SquadId } from './domain/awards.js';
 import type { WeekStart } from './domain/schedule.js';
 
 /**
@@ -29,7 +29,7 @@ export interface AwardsStore {
   save(awards: {
     readonly squad: SquadId;
     readonly weekStart: WeekStart;
-    readonly awards: StoredAwards;
+    readonly awards: Awards;
   }): Promise<boolean>;
   /**
    * Marks a squad's awards for a week as told to its winners; true only for the one call that
@@ -43,10 +43,8 @@ export interface AwardsStore {
     readonly error: string;
   }): Promise<void>;
   /**
-   * Marks a squad's awards for a week as nudged about; true only for the one call that marks
-   * them, and never once they are written.
+   * Claims a nudge about a squad's awards for a week that aren't given: the failed tries so far
+   * when none was claimed since the last failed try, else `undefined`, as it is once given.
    */
-  markNudged(squad: SquadId, weekStart: WeekStart): Promise<boolean>;
-  /** Takes a member out of every squad's awards, for an account being deleted. */
-  forget(member: MemberId): Promise<void>;
+  claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
 }

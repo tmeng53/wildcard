@@ -55,8 +55,8 @@ function timeOfDay(moment: Date, timeZone: string): string {
 }
 
 /**
- * What the model is told of a member's own words: never words about self-harm, which no award
- * may joke about or quote.
+ * What the model is told of a member's own words (a sport they named included): never words
+ * about self-harm, which no award may joke about or quote.
  */
 const told = (text: string) => (mentionsSelfHarm(text) ? '（略）' : text);
 
@@ -77,7 +77,7 @@ export function promptFor(week: {
         day: `${each.day} ${WEEKDAYS[new Date(Date.parse(each.day)).getUTCDay()] ?? ''}`,
         time: timeOfDay(each.createdAt, timeZone),
         kind: KIND_NAMES[each.kind],
-        ...(each.sport === undefined ? {} : { sport: each.sport }),
+        ...(each.sport === undefined ? {} : { sport: told(each.sport) }),
         ...(each.text === undefined ? {} : { reason: told(each.text) }),
         ...(each.caption === undefined ? {} : { caption: told(each.caption) }),
         ...(each.photos.length === 0 ? {} : { photos: each.photos.length }),

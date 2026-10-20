@@ -1,4 +1,4 @@
-import { graphemeCount, mentionsBodyMetrics } from '@wildcard/typed-text';
+import { graphemeCount, mentionsBodyMetrics, mentionsSelfHarm } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 import { AwardMove } from './moves.js';
@@ -100,30 +100,39 @@ const TopCheckIn = z.strictObject({
 export type TopCheckIn = z.infer<typeof TopCheckIn>;
 
 /**
- * Stored JSON (`weekly_awards.awards`): every member who checked in before the awards, in the
- * order they joined, with their titles and their most-reacted check-in, as it stood then.
+ * Stored JSON (`weekly_award_winners.award`): one member's titles and their most-reacted
+ * check-in, as it stood at the awards.
  */
-export const StoredAwards = z.discriminatedUnion('version', [
+export const StoredAward = z.discriminatedUnion('version', [
   z.strictObject({
     version: z.literal(1),
-    members: z.array(
-      z.strictObject({
-        member: MemberId,
-        titles: z.array(Title).min(1).max(TITLES_MAX),
-        topCheckIn: TopCheckIn.optional(),
-      }),
-    ),
+    titles: z.array(Title).min(1).max(TITLES_MAX),
+    topCheckIn: TopCheckIn.optional(),
   }),
 ]);
-export type StoredAwards = z.infer<typeof StoredAwards>;
-export type MemberAwards = StoredAwards['members'][number];
+export type StoredAward = z.infer<typeof StoredAward>;
+
+/** One member's awards for a squad's week. */
+export interface MemberAwards {
+  readonly member: MemberId;
+  readonly titles: readonly Title[];
+  readonly topCheckIn?: TopCheckIn;
+}
+
+/**
+ * A squad's awards for a week: every member who checked in before them, in the order they
+ * joined (less any account deleted since).
+ */
+export interface Awards {
+  readonly members: readonly MemberAwards[];
+}
 
 /**
  * Where a squad's awards for a week stand once anything has happened to them: written, or not
  * yet, with the tries that failed (none when a member nudged before the first try).
  */
 export type AwardsState =
-  | { readonly status: 'given'; readonly awards: StoredAwards }
+  | { readonly status: 'given'; readonly awards: Awards }
   | { readonly status: 'failing'; readonly failures: Failures };
 
 /** The tries at a squad's awards that failed, and why the last one did. */
@@ -135,7 +144,10 @@ export interface Failures {
 /** The key a member goes by in the prompt: A, B, C…, so no id or name reaches the model. */
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
-/** True when a title or line may be shown: one line, no emoji, nothing about bodies or ranks. */
+/**
+ * True when a title or line may be shown: one line, no emoji, nothing about bodies, ranks or
+ * self-harm.
+ */
 function isShowable(text: string, max: number): boolean {
   const length = graphemeCount(text);
   return (
@@ -144,6 +156,7 @@ function isShowable(text: string, max: number): boolean {
     !/[\r\n\u2028\u2029]/u.test(text) &&
     !/\p{Extended_Pictographic}/u.test(text) &&
     !mentionsBodyMetrics(text) &&
+    !mentionsSelfHarm(text) &&
     !RANKING_WORDS.some((word) => text.includes(word))
   );
 }

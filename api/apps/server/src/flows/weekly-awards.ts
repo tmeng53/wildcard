@@ -21,7 +21,7 @@ import {
   type SquadId,
   type TopCheckIn,
   type WeekCheckIn,
-  type WeekStart,
+  WeekStart,
   type WeeklyAwards,
   WeekStoryNotReadyError,
 } from '@wildcard/weekly-awards';
@@ -45,8 +45,8 @@ export interface WeeklyAwardsDependencies {
 
 /** What a run did, squad by squad. */
 export interface WeeklyAwardsRun {
-  /** The week whose awards it gave. */
-  readonly week: WeekStart;
+  /** The weeks whose awards it gave: the latest, and the one before for squads still failing. */
+  readonly weeks: readonly WeekStart[];
   /** Squads with a check-in for the week made before the awards. */
   readonly squads: number;
   /** Squads whose awards this run wrote. */
@@ -105,11 +105,32 @@ const AT_ONCE = 4;
 /**
  * Gives the latest week's awards (Sunday 8pm Eastern) to every squad that checked in before
  * then, and tells each winner once. Meant to run every hour: a squad whose awards couldn't be
- * written is tried again on the next run, and a squad already done is only checked. Check-ins
- * made after the awards' moment still count for the week, only not for its awards.
+ * written is tried again on the next run, through the following week too, and a squad already
+ * done is only checked. Check-ins made after the awards' moment still count for the week, only
+ * not for its awards.
  */
 export async function giveWeeklyAwards(deps: WeeklyAwardsDependencies): Promise<WeeklyAwardsRun> {
-  const week = latestAwardedWeek(deps.clock());
+  const latest = latestAwardedWeek(deps.clock());
+  const previous = WeekStart.parse(
+    new Date(Date.parse(latest) - 7 * 86_400_000).toISOString().slice(0, 10),
+  );
+  const runs = [await giveWeek(deps, previous), await giveWeek(deps, latest)];
+  const total = (key: 'squads' | 'given' | 'failed' | 'told') =>
+    runs.reduce((sum, run) => sum + run[key], 0);
+  return {
+    weeks: [previous, latest],
+    squads: total('squads'),
+    given: total('given'),
+    failed: total('failed'),
+    told: total('told'),
+  };
+}
+
+/** One week's awards for every squad that checked in before them, as `giveWeeklyAwards`. */
+async function giveWeek(
+  deps: WeeklyAwardsDependencies,
+  week: WeekStart,
+): Promise<Omit<WeeklyAwardsRun, 'weeks'>> {
   const before = awardsTimeOf(week);
   const squads = await deps.checkIns.squadsCheckedInto({
     weekStart: CheckInWeek.parse(week),
@@ -152,7 +173,7 @@ export async function giveWeeklyAwards(deps: WeeklyAwardsDependencies): Promise<
       }),
     );
   }
-  return { week, squads: squads.length, given, failed, told };
+  return { squads: squads.length, given, failed, told };
 }
 
 /** A squad's week story as one of its members reads it: the awards, once they are due. */
@@ -192,11 +213,7 @@ export async function squadStory(
     return { ...header, status: 'ready', members, ...(hottest === undefined ? {} : { hottest }) };
   }
   // Not written yet: the hottest check-in as the awards will see it, from the week so far.
-  const week = await deps.checkIns.squadWeekCheckIns({
-    squad: CheckInSquad.parse(squad),
-    weekStart: CheckInWeek.parse(weekStart),
-    before: awardsTimeOf(weekStart),
-  });
+  const week = await weekBeforeAwards(deps, { squad, weekStart });
   const anyone = week.members.some(({ checkIns }) => checkIns.length > 0);
   const mine = week.members.find(({ member }) => member === viewer)?.checkIns ?? [];
   const hottest = topCheckInOf(mine.map((record) => weekCheckIn(record, week.reactions)));
@@ -210,11 +227,16 @@ export async function squadStory(
 
 /**
  * A member nudging the organisers (催一下主办方) about a story whose titles haven't come: the
- * first nudge for a squad's week tells every admin, with the failed tries and why; later ones,
- * and nudges once the titles are written, do nothing. Throws as `squadStory` does.
+ * first nudge since the squad-week's last failed try (or before its first) tells every admin,
+ * with the failed tries and why; other nudges, nudges once the titles are written, and nudges
+ * for a squad where nobody checked in (no titles to wait for) do nothing. Throws as
+ * `squadStory` does.
  */
 export async function nudgeOrganisers(
-  deps: Pick<WeeklyAwardsDependencies, 'squads' | 'awards' | 'push' | 'admins' | 'clock' | 'log'>,
+  deps: Pick<
+    WeeklyAwardsDependencies,
+    'checkIns' | 'squads' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
+  >,
   {
     viewer,
     squad,
@@ -222,6 +244,7 @@ export async function nudgeOrganisers(
   }: { readonly viewer: string; readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<void> {
   const found = await dueSquad(deps, { viewer, squad, weekStart });
+  if (!(await anyoneCheckedIn(deps, { squad, weekStart }))) return;
   const failures = await deps.awards.claimNudge({ squad, weekStart });
   if (failures === undefined) return;
   const admins = await deps.admins.list();
@@ -241,6 +264,27 @@ export async function nudgeOrganisers(
     admins: admins.length,
     refused: outcome.failures.length,
   });
+}
+
+/** The squad's week as its awards read it: the check-ins made before them. */
+function weekBeforeAwards(
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns'>,
+  { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
+) {
+  return deps.checkIns.squadWeekCheckIns({
+    squad: CheckInSquad.parse(squad),
+    weekStart: CheckInWeek.parse(weekStart),
+    before: awardsTimeOf(weekStart),
+  });
+}
+
+/** Whether anyone in the squad checked in before the week's awards, so it has any to wait for. */
+async function anyoneCheckedIn(
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns'>,
+  week: { readonly squad: SquadId; readonly weekStart: WeekStart },
+): Promise<boolean> {
+  const { members } = await weekBeforeAwards(deps, week);
+  return members.some(({ checkIns }) => checkIns.length > 0);
 }
 
 /** The squad, for one of its members, once its week's awards are due. */

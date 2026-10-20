@@ -309,7 +309,7 @@ describe('weekly awards', () => {
     });
 
     const result = await run();
-    expect(result.week).toBe(WEEK);
+    expect(result.weeks).toStrictEqual(['2026-10-12', WEEK]);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     const mine = sent.filter(({ token }) =>
       [ana.device, bo.device, cy.device].includes(DeviceToken.parse(token)),
@@ -398,7 +398,7 @@ describe('weekly awards', () => {
     expect(await nudge({ token: bo.token, squad })).toBe(204);
     expect(toAdmin().map(({ notification }) => notification)).toStrictEqual([
       {
-        alert: { key: 'push.weeklyAwards.stuck', args: ['squad', '1', 'Error: down'] },
+        alert: { key: 'push.weeklyAwards.stuck', args: ['squad', '1', 'Error'] },
         category: 'weeklyAwardsStuck',
         thread: 'weekly-awards-stuck',
         collapseId: `weekly-awards-stuck-${squad}-${WEEK}`,
@@ -445,6 +445,14 @@ describe('weekly awards', () => {
     expect([refused.status, refused.body.reason]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
     expect((await read({ token: ana.token, squad, week: '2026-10-20' })).status).toBe(400);
     expect(await nudge({ token: stranger.token, squad })).toBe(403);
+    // Nothing to wait for, so nobody to tell.
+    expect(await nudge({ token: ana.token, squad })).toBe(204);
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.weekly_awards
+        where squad_id = ${squad}`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(0);
   });
 
   it('leaves out a member who left the squad', async () => {
@@ -460,5 +468,22 @@ describe('weekly awards', () => {
     );
     const left = Story.parse((await read({ token: ana.token, squad })).body);
     expect(left.titles?.map((each) => each.member)).toStrictEqual([ana.userId]);
+  });
+
+  it('keeps trying a squad still failing into the next week', async () => {
+    let down = true;
+    const { run, read, at } = setup({
+      answer: (prompt) =>
+        down ? Promise.reject(new Error('down')) : Promise.resolve(titlesFor(lettersIn(prompt))),
+    });
+    const ana = await member();
+    const squad = await squadOf(ana);
+    await trained(ana, { squad });
+    await run();
+    expect(Story.parse((await read({ token: ana.token, squad })).body).status).toBe('pending');
+    down = false;
+    at(new Date(AWARDS_AT.getTime() + 7 * 24 * HOUR + HOUR));
+    await run();
+    expect(Story.parse((await read({ token: ana.token, squad })).body).status).toBe('ready');
   });
 });

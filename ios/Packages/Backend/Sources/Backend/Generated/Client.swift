@@ -3724,7 +3724,7 @@ internal struct Client: APIProtocol {
     }
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
-    /// For the button on a `pending` story’s titles page. The first nudge for a squad’s week tells the admins, with the failed tries and why; later ones, and nudges once the titles are written, change nothing. Answers 204 either way.
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
     ///
     /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.

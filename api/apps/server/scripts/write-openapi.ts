@@ -63,7 +63,6 @@ const app = createApp({
       find: unused,
       claimNudge: unused,
       claimWinners: unused,
-      forget: unused,
     },
     clock: unused,
   },

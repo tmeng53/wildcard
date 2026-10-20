@@ -3,11 +3,12 @@
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export type Json = JsonValue;
 
@@ -24,16 +25,25 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface WeeklyAwards {
-  awards: Json | null;
   created_at: Generated<Timestamp>;
   failed_attempts: Generated<number>;
+  given_at: Timestamp | null;
   last_error: string | null;
   notified_at: Timestamp | null;
-  nudged_at: Timestamp | null;
+  nudged_failures: number | null;
+  squad_id: string;
+  week_start: string;
+}
+
+export interface WeeklyAwardWinners {
+  award: Json;
+  member_id: string;
+  position: number;
   squad_id: string;
   week_start: string;
 }
 
 export interface DB {
+  weekly_award_winners: WeeklyAwardWinners;
   weekly_awards: WeeklyAwards;
 }

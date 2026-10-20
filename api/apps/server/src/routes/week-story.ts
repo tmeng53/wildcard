@@ -184,9 +184,9 @@ export function weekStory(
     operationId: 'nudgeSquadWeekStory',
     summary: 'Nudges the organisers about a story whose titles haven’t come (催一下主办方)',
     description:
-      'For the button on a `pending` story’s titles page. The first nudge for a squad’s week ' +
-      'tells the admins, with the failed tries and why; later ones, and nudges once the titles ' +
-      'are written, change nothing. Answers 204 either way.',
+      'For the button on a `pending` story’s titles page. The first nudge since the last failed ' +
+      'try tells the admins, with the failed tries and why; other nudges, and nudges once the ' +
+      'titles are written, change nothing. Answers 204 either way.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params },
@@ -246,7 +246,10 @@ export function weekStory(
           week: { from: weekStart, to },
           ...(story.status === 'ready'
             ? {
-                titles: story.members.map(({ member, titles }) => ({ member, titles })),
+                titles: story.members.map(({ member, titles }) => ({
+                  member,
+                  titles: [...titles],
+                })),
               }
             : {}),
           ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),

@@ -1,11 +1,11 @@
 import {
   ModelReply,
+  type Awards,
   titlesOf,
   topCheckInOf,
   type MemberId,
   type MemberWeek,
   type SquadId,
-  type StoredAwards,
   type Title,
 } from '../../domain/awards.js';
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
@@ -32,7 +32,7 @@ export interface GiveAwardsInput {
 export async function giveAwards(
   deps: { readonly model: LanguageModel; readonly store: AwardsStore },
   { squad, weekStart, members }: GiveAwardsInput,
-): Promise<StoredAwards> {
+): Promise<Awards> {
   const saved = await deps.store.find(squad, weekStart);
   if (saved?.status === 'given') return saved.awards;
 
@@ -46,8 +46,7 @@ export async function giveAwards(
       throw error;
     }
   }
-  const awards: StoredAwards = {
-    version: 1,
+  const awards: Awards = {
     members: winners.map(({ member, checkIns }) => {
       const topCheckIn = topCheckInOf(checkIns);
       return {
@@ -64,19 +63,31 @@ export async function giveAwards(
   return theirs.awards;
 }
 
-/** The longest reason kept for a failed try. */
-const REASON_MAX = 300;
+/** The cause kept when every reply came back in shape but failed the checks. */
+const FAILED_CHECKS = 'FailedChecks';
+
+/** An error's string property, when it has one. */
+const fieldOf = (error: object, key: string): unknown =>
+  key in error ? Reflect.get(error, key) : undefined;
 
 /**
- * Why a try failed, for the admin a nudge tells: the innermost cause's message (a provider's
- * "429 insufficient_quota", a timeout), which never holds members' words.
+ * Why a try failed, for the admins a nudge tells: the innermost cause's name, with the HTTP
+ * status and the provider's error code when there are any (`RateLimitError 429
+ * insufficient_quota`, `APIConnectionTimeoutError`, `SyntaxError`, `FailedChecks`). Never an
+ * error's message, which can quote the model's answer and so members' words.
  */
 export function reasonOf(error: unknown): string {
   let innermost = error;
   while (innermost instanceof Error && innermost.cause !== undefined) innermost = innermost.cause;
-  const reason =
-    innermost instanceof Error ? `${innermost.name}: ${innermost.message}` : String(innermost);
-  return reason.slice(0, REASON_MAX);
+  if (innermost === FAILED_CHECKS) return FAILED_CHECKS;
+  if (!(innermost instanceof Error)) return 'Unknown';
+  const status = fieldOf(innermost, 'status');
+  const code = fieldOf(innermost, 'code');
+  return [
+    innermost.name,
+    ...(typeof status === 'number' ? [String(status)] : []),
+    ...(typeof code === 'string' && /^[a-z_]{1,40}$/u.test(code) ? [code] : []),
+  ].join(' ');
 }
 
 type Titles = NonNullable<ReturnType<typeof titlesOf>>;
@@ -90,7 +101,7 @@ async function writeTitles(
   }: { readonly weekStart: WeekStart; readonly winners: readonly MemberWeek[] },
 ): Promise<Titles> {
   const prompt = promptFor({ weekStart, members: winners });
-  let cause: unknown = new Error('The awards failed the checks');
+  let cause: unknown = FAILED_CHECKS;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {
       const reply = await model.answer({ instructions: INSTRUCTIONS, prompt, reply: ModelReply });

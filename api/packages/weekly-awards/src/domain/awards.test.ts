@@ -108,8 +108,14 @@ describe('titlesOf', () => {
     ).toBeUndefined();
   });
 
-  it('refuses body words, ranking words, emoji and line breaks', () => {
-    for (const speech of ['这周体重稳住了。', '本周垫底选手。', '周三去跑了🔥', '周三\n去跑了']) {
+  it('refuses body words, ranking words, self-harm words, emoji and line breaks', () => {
+    for (const speech of [
+      '这周体重稳住了。',
+      '本周垫底选手。',
+      '周三去跑了🔥',
+      '周三\n去跑了',
+      '不想活了也要去跑',
+    ]) {
       expect(
         titlesOf(
           { ...good, awards: [{ member: 'A', titles: [{ title: '狠人', speech, move: 'pump' }] }] },
@@ -222,5 +228,29 @@ describe('promptFor', () => {
     ]);
     expect(prompt.moves.map(({ id }) => id)).toContain('flat');
     expect(JSON.stringify(prompt)).not.toContain(ana);
+  });
+});
+
+describe('promptFor, a sport the member named', () => {
+  it('is left out when it is about self-harm, like their other words', () => {
+    const prompt = z
+      .object({
+        members: z.array(z.object({ checkIns: z.array(z.object({ sport: z.string() })) })),
+      })
+      .parse(
+        JSON.parse(
+          promptFor({
+            weekStart: WeekStart.parse('2026-10-19'),
+            members: [
+              {
+                member: ana,
+                timeZone: 'UTC',
+                checkIns: [checkIn({ sport: '不想活了' }), checkIn({})],
+              },
+            ],
+          }),
+        ),
+      );
+    expect(prompt.members[0]?.checkIns.map(({ sport }) => sport)).toStrictEqual(['（略）', 'run']);
   });
 });

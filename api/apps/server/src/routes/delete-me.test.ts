@@ -10,7 +10,6 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
-import { createPostgresAwardsStore, createWeeklyAwards } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -25,6 +24,7 @@ import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
 import { adminOn, config, signOut, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
 // its servers can't be called without a real key and a real sign-in.
@@ -69,13 +69,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
-    weeklyAwards: {
-      awards: createWeeklyAwards({
-        model: { answer: () => Promise.reject(new Error('unused')) },
-        store: createPostgresAwardsStore(db),
-      }),
-      clock: () => new Date(),
-    },
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
     admin: adminOn(),
   });
@@ -172,12 +166,13 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
   expect((await call('PUT', `/me/weekly-plans/${weekStart}`, me.token, plan)).status).toBe(200);
   // Last week's awards, with a title each.
   const title = { title: '早八战神', speech: '周一早上七点就去跑了。', move: 'pump' };
-  const awards = {
-    version: 1,
-    members: [me, friend].map(({ userId }) => ({ member: userId, titles: [title] })),
-  };
-  await sql`insert into public.weekly_awards (squad_id, week_start, awards)
-    values (${squad}, '2026-10-12', ${JSON.stringify(awards)}::jsonb)`.execute(db);
+  await sql`insert into public.weekly_awards (squad_id, week_start, given_at)
+    values (${squad}, '2026-10-12', now())`.execute(db);
+  for (const [position, { userId }] of [me, friend].entries()) {
+    const award = JSON.stringify({ version: 1, titles: [title] });
+    await sql`insert into public.weekly_award_winners (squad_id, week_start, member_id, position, award)
+      values (${squad}, '2026-10-12', ${userId}, ${position}, ${award}::jsonb)`.execute(db);
+  }
   return { me, friend, squad };
 }
 
@@ -222,8 +217,7 @@ async function whatIsLeftOf(member: string) {
       sql`select count(*) as n from public.weekly_plans where member_id = ${member}`,
     ),
     awards: await count(
-      sql`select count(*) as n from public.weekly_awards
-          where awards @> ${JSON.stringify({ members: [{ member }] })}::jsonb`,
+      sql`select count(*) as n from public.weekly_award_winners where member_id = ${member}`,
     ),
     files: z.array(z.unknown()).parse(await files.json()).length,
   };
