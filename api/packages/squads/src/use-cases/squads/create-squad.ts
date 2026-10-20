@@ -7,8 +7,12 @@ import {
   type SquadId,
   type SquadName,
 } from '../../domain/squad.js';
-import { SquadIdConflictError, SquadLimitReachedError } from '../../errors.js';
-import type { SquadStore } from '../../ports.js';
+import {
+  AiConsentRequiredError,
+  SquadIdConflictError,
+  SquadLimitReachedError,
+} from '../../errors.js';
+import type { AiConsentCheck, SquadStore } from '../../ports.js';
 
 export interface CreateSquadInput {
   readonly id: SquadId;
@@ -30,13 +34,22 @@ const INVITE_CODE_ATTEMPTS = 5;
 
 /**
  * Creates a squad under the id the app made, with only a name (a venue comes later, from squad
- * settings), and the creator as its first member. A retry is safe: the same squad again is a
+ * settings), and the creator as its first member, who needs a current AI consent. A retry is safe: the same squad again is a
  * success, a different name or another member's squad under that id is refused.
  */
 export async function createSquad(
-  { store, inviteCodes }: { readonly store: SquadStore; readonly inviteCodes: InviteCodes },
+  {
+    store,
+    inviteCodes,
+    aiConsent,
+  }: {
+    readonly store: SquadStore;
+    readonly inviteCodes: InviteCodes;
+    readonly aiConsent: AiConsentCheck;
+  },
   { id, creator, name }: CreateSquadInput,
 ): Promise<CreatedSquad> {
+  if (!(await aiConsent(creator))) throw new AiConsentRequiredError();
   for (let attempt = 0; attempt < INVITE_CODE_ATTEMPTS; attempt += 1) {
     const outcome = await store.create({ id, name, creator, inviteCode: inviteCodes() });
     if (outcome.created) return { squad: await found(store, id), created: true };

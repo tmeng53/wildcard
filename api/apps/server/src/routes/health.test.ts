@@ -15,7 +15,7 @@ import { createApp } from '../app.js';
 import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
-import { adminOn } from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 const config = readConfig(process.env);
@@ -32,6 +32,7 @@ const checkInsOn = (db: Database) =>
     membership: createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
     plans: createPostgresWeeklyPlanStore(db),
@@ -58,7 +59,12 @@ async function getHealth(db: Database) {
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
+    aiConsent: aiConsentOn(db),
     log: createLog((line) => lines.push(line)),
     admin: adminOn(),
   });
@@ -135,7 +141,12 @@ describe('an unknown route', () => {
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
       push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
-      squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+      squads: createSquads({
+        store: createPostgresSquadStore(db),
+        inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
+      }),
+      aiConsent: aiConsentOn(db),
       log: createLog(() => undefined),
       admin: adminOn(),
     });

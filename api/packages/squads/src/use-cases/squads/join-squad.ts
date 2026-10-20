@@ -5,8 +5,13 @@ import {
   type MemberId,
   type Squad,
 } from '../../domain/squad.js';
-import { InviteCodeUnknownError, SquadFullError, SquadLimitReachedError } from '../../errors.js';
-import type { SquadStore } from '../../ports.js';
+import {
+  AiConsentRequiredError,
+  InviteCodeUnknownError,
+  SquadFullError,
+  SquadLimitReachedError,
+} from '../../errors.js';
+import type { AiConsentCheck, SquadStore } from '../../ports.js';
 
 export interface JoinSquadInput {
   readonly inviteCode: InviteCode;
@@ -19,11 +24,12 @@ export interface JoinedSquad {
   readonly joined: boolean;
 }
 
-/** Joins the squad an invite code belongs to. */
+/** Joins the squad an invite code belongs to. The member needs a current AI consent. */
 export async function joinSquad(
-  { store }: { readonly store: SquadStore },
+  { store, aiConsent }: { readonly store: SquadStore; readonly aiConsent: AiConsentCheck },
   { inviteCode, member }: JoinSquadInput,
 ): Promise<JoinedSquad> {
+  if (!(await aiConsent(member))) throw new AiConsentRequiredError();
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
   const outcome = await store.join(squad.id, member);

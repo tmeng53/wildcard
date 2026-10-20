@@ -19,14 +19,20 @@ const db = new Kysely<SquadTables>({
 });
 afterAll(() => db.destroy());
 
+// Who has a current AI consent, as the AI consent module would answer: every new member,
+// unless a test makes one without.
+const consented = new Set<MemberId>();
+const aiConsent = (member: MemberId) => Promise.resolve(consented.has(member));
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent,
 });
 
-async function newMember() {
+async function newMember({ consentsToAi = true } = {}) {
   const id = MemberId.parse(randomUUID());
   await sql`insert into auth.users (id) values (${id})`.execute(db);
+  if (consentsToAi) consented.add(id);
   return id;
 }
 
@@ -80,6 +86,7 @@ describe('creating a squad', () => {
     const retrying = createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: () => codes.shift() ?? fresh,
+      aiConsent,
     });
     const { squad } = await retrying.create({
       id: SquadId.parse(randomUUID()),
@@ -87,6 +94,12 @@ describe('creating a squad', () => {
       name: name('夜跑团'),
     });
     expect([squad.inviteCode, codes]).toStrictEqual([fresh, []]);
+  });
+
+  it('refuses a member without a current AI consent', async () => {
+    const member = await newMember({ consentsToAi: false });
+    await expect(newSquad(member)).rejects.toMatchObject({ reason: 'AI_CONSENT_REQUIRED' });
+    expect(await squads.listMine(member)).toStrictEqual([]);
   });
 
   it('refuses a fourth squad, and allows one again after leaving', async () => {
@@ -117,6 +130,15 @@ describe('joining by invite code', () => {
     expect([isNew, joined.members.map(({ member }) => member)]).toStrictEqual([true, [ann, bo]]);
     const again = await squads.join({ inviteCode: squad.inviteCode, member: bo });
     expect([again.joined, again.squad]).toStrictEqual([false, joined]);
+  });
+
+  it('refuses a member without a current AI consent', async () => {
+    const squad = await newSquad(await newMember());
+    const member = await newMember({ consentsToAi: false });
+    await expect(squads.join({ inviteCode: squad.inviteCode, member })).rejects.toMatchObject({
+      reason: 'AI_CONSENT_REQUIRED',
+    });
+    expect((await squads.membersOf(squad.id)).includes(member)).toBe(false);
   });
 
   it('refuses a code no squad has', async () => {

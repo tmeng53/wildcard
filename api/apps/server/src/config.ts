@@ -67,6 +67,11 @@ export interface Config {
   readonly adminPasswordSignIn: boolean;
   /** How many of our proxies add to `X-Forwarded-For`; see `clientAddress`. */
   readonly proxyHops: number;
+  /**
+   * The AI provider members' words go to (LLM_PROVIDER), with or without its key: the AI consent
+   * names it, so switching provider asks every member again.
+   */
+  readonly llmProvider: 'openai' | 'anthropic';
   /** The model that writes AI 请假条 drafts; undefined while its provider has no key. */
   readonly languageModel:
     | {
@@ -139,6 +144,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     publicUrl: new URL(result.data.PUBLIC_URL ?? `http://localhost:${String(result.data.PORT)}`),
     adminPasswordSignIn: result.data.ADMIN_PASSWORD_SIGN_IN === 'on',
     proxyHops: result.data.PROXY_HOPS,
+    llmProvider: LLM_PROVIDER,
     languageModel:
       llmKey === undefined
         ? undefined

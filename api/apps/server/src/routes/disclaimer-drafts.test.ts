@@ -24,7 +24,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp, aiConsentOn } from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
@@ -64,6 +64,7 @@ function appWith(model: LanguageModel) {
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
       plans: createPostgresWeeklyPlanStore(db),
@@ -76,6 +77,7 @@ function appWith(model: LanguageModel) {
       model,
       memes: () => Promise.resolve([]),
       allowance: createPostgresDraftAllowance(db),
+      aiConsent: () => Promise.resolve(true),
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
@@ -84,8 +86,13 @@ function appWith(model: LanguageModel) {
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+    aiConsent: aiConsentOn(db),
     log: createLog((line) => logged.push(JSON.parse(line))),
     admin: adminOn(),
   });

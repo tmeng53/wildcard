@@ -1,6 +1,12 @@
 import type { InviteCode } from './domain/invite-code.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
 
+/**
+ * Whether the member has consented to the current AI terms. Being in a squad needs it: the
+ * weekly awards send the squad's captions and 请假条 to the AI provider.
+ */
+export type AiConsentCheck = (member: MemberId) => Promise<boolean>;
+
 export interface NewSquad {
   readonly id: SquadId;
   readonly name: SquadName;

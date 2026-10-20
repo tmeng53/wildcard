@@ -17,6 +17,7 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
+import { aiConsentOn } from './test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
 
 describe('openapi.json', () => {
@@ -43,6 +44,7 @@ describe('openapi.json', () => {
         membership: createSquads({
           store: createPostgresSquadStore(db),
           inviteCodes: randomInviteCodes,
+          aiConsent: () => Promise.resolve(true),
         }),
         reactions: createPostgresReactionStore(db),
         plans: createPostgresWeeklyPlanStore(db),
@@ -61,7 +63,12 @@ describe('openapi.json', () => {
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
       push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
-      squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+      squads: createSquads({
+        store: createPostgresSquadStore(db),
+        inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
+      }),
+      aiConsent: aiConsentOn(db),
       log: createLog(() => undefined),
       admin: {
         admins: () => ({

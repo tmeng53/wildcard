@@ -22,7 +22,7 @@ import { AppleAuthorizationCodeInvalidError } from '../errors.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
-import { adminOn, config, signOut, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signOut, signUp, aiConsentOn } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
@@ -52,6 +52,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
       plans: createPostgresWeeklyPlanStore(db),
@@ -65,9 +66,14 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       clock: () => new Date(),
     }),
     members,
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+    aiConsent: aiConsentOn(db),
     log: createLog((line) => logged.push(JSON.parse(line))),
     admin: adminOn(),
   });

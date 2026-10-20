@@ -35,6 +35,7 @@ describe('readConfig', () => {
       publicUrl: new URL('http://localhost:8080'),
       adminPasswordSignIn: false,
       proxyHops: 1,
+      llmProvider: 'openai',
       languageModel: undefined,
       appleSignInKey: undefined,
       apns: undefined,
@@ -56,6 +57,7 @@ describe('readConfig', () => {
 
   it('turns drafts off while the chosen provider has no key, and refuses an unknown one', () => {
     expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModel).toBeUndefined();
+    expect(readConfig({ ...base, LLM_PROVIDER: 'anthropic' }).llmProvider).toBe('anthropic');
     expect(() => readConfig({ ...base, LLM_PROVIDER: 'gemini' })).toThrow('LLM_PROVIDER');
   });
 

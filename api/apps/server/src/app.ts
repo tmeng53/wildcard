@@ -1,5 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
+import type { AiConsent } from '@wildcard/ai-consent';
 import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
@@ -23,6 +24,7 @@ import type {
   VerifyToken,
 } from './ports.js';
 import { problemResponse } from './problem.js';
+import { aiConsent } from './routes/ai-consent.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
 import { devices } from './routes/devices.js';
@@ -45,6 +47,8 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
+  /** Members' consent to the AI terms, which squads and drafts ask for themselves. */
+  readonly aiConsent: AiConsent;
   /** Rate limits for the routes anyone can call without signing in. */
   readonly publicRoutes: PublicRoutes;
   readonly photos: PhotoStorage;
@@ -85,6 +89,7 @@ export function createApp(deps: AppDependencies) {
 
   app.route('/', health(deps));
   app.route('/', me(deps));
+  app.route('/', aiConsent(deps));
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));

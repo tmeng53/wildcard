@@ -4,8 +4,18 @@ import type { DraftReason, MemberId } from '../../domain/draft-request.js';
 import { mentionsSelfHarm } from '../../domain/draft-request.js';
 import { ModelReply, outcomeOf, type DraftsOutcome } from '../../domain/drafts.js';
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
-import { DisclaimerDraftsUsedUpError, DisclaimerWriterUnavailableError } from '../../errors.js';
-import type { Clock, DraftAllowance, LanguageModel, MemesInUse } from '../../ports.js';
+import {
+  AiConsentRequiredError,
+  DisclaimerDraftsUsedUpError,
+  DisclaimerWriterUnavailableError,
+} from '../../errors.js';
+import type {
+  AiConsentCheck,
+  Clock,
+  DraftAllowance,
+  LanguageModel,
+  MemesInUse,
+} from '../../ports.js';
 
 /** Batches a member may ask for in a day: the first and 5 换一批 (spec A4). */
 export const BATCHES_PER_DAY = 6;
@@ -22,18 +32,21 @@ export interface WriteDisclaimerDraftsInput {
 
 /**
  * Three drafts for a member's 请假条, written by the model from their reason, or the care
- * line, or a decline. Only asked for when the member taps the button, never as they type.
+ * line, or a decline. Only asked for when the member taps the button, never as they type, and
+ * only for a member with a current AI consent: the care line needs none, since no AI sees it.
  */
 export async function writeDisclaimerDrafts(
   deps: {
     readonly model: LanguageModel;
     readonly memes: MemesInUse;
     readonly allowance: DraftAllowance;
+    readonly aiConsent: AiConsentCheck;
     readonly clock: Clock;
   },
   input: WriteDisclaimerDraftsInput,
 ): Promise<DraftsOutcome> {
   if (mentionsSelfHarm(input.reason)) return { kind: 'care' };
+  if (!(await deps.aiConsent(input.member))) throw new AiConsentRequiredError();
 
   const now = deps.clock();
   const reservation = await deps.allowance.reserve({

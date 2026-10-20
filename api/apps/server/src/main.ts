@@ -1,6 +1,12 @@
 import { serve } from '@hono/node-server';
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
+  AI_CONSENT_COPY_VERSION,
+  MemberId as ConsentMember,
+  createAiConsent,
+  createPostgresConsentStore,
+} from '@wildcard/ai-consent';
+import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
@@ -78,9 +84,18 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
+// What members agree to before their words go to the AI: the app's copy, naming the provider
+// LLM_PROVIDER picks. Squads and drafts ask it; withdrawing it leaves every squad.
+const aiConsent = createAiConsent({
+  store: createPostgresConsentStore(db),
+  terms: { copyVersion: AI_CONSENT_COPY_VERSION, provider: config.llmProvider },
+  clock: () => new Date(),
+});
+const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: hasAiConsent,
 });
 const app = createApp({
   db,
@@ -110,6 +125,7 @@ const app = createApp({
   }),
   members,
   squads,
+  aiConsent,
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes
@@ -132,6 +148,7 @@ const app = createApp({
         styles,
       })),
     allowance: createPostgresDraftAllowance(db),
+    aiConsent: hasAiConsent,
     clock: () => new Date(),
   }),
   push,

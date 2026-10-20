@@ -41,5 +41,11 @@ export interface DraftAllowance {
   release(reservation: Reservation): Promise<void>;
 }
 
+/**
+ * Whether the member has consented to the current AI terms. Drafts need it: their reason goes
+ * to the AI provider.
+ */
+export type AiConsentCheck = (member: MemberId) => Promise<boolean>;
+
 /** The current time. */
 export type Clock = () => Date;

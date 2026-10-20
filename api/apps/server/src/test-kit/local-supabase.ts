@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
+import {
+  AI_CONSENT_COPY_VERSION,
+  createAiConsent,
+  createPostgresConsentStore,
+} from '@wildcard/ai-consent';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
@@ -61,4 +66,13 @@ export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []
     },
     passwordSignIn: true,
   };
+}
+
+/** Members' AI consent on local Supabase, to the terms the server runs by default. */
+export function aiConsentOn(db: Database) {
+  return createAiConsent({
+    store: createPostgresConsentStore(db),
+    terms: { copyVersion: AI_CONSENT_COPY_VERSION, provider: config.llmProvider },
+    clock: () => new Date(),
+  });
 }

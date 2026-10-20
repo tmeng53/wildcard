@@ -8,9 +8,17 @@ export {
 export { DraftReason, MemberId, type PromptMeme } from './domain/draft-request.js';
 export type { DraftsOutcome } from './domain/drafts.js';
 export {
+  AiConsentRequiredError,
   DisclaimerDraftsUsedUpError,
   DisclaimerWriterOffError,
   DisclaimerWriterUnavailableError,
 } from './errors.js';
-export type { Clock, DraftAllowance, LanguageModel, MemesInUse, Reservation } from './ports.js';
+export type {
+  AiConsentCheck,
+  Clock,
+  DraftAllowance,
+  LanguageModel,
+  MemesInUse,
+  Reservation,
+} from './ports.js';
 export { createDisclaimerDrafts, type DisclaimerDrafts } from './use-cases/disclaimer-drafts.js';

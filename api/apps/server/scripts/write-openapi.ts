@@ -41,6 +41,7 @@ const app = createApp({
     membership: createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: randomInviteCodes,
+      aiConsent: unused,
     }),
     reactions: createPostgresReactionStore(db),
     plans: createPostgresWeeklyPlanStore(db),
@@ -56,7 +57,18 @@ const app = createApp({
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
-  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  squads: createSquads({
+    store: createPostgresSquadStore(db),
+    inviteCodes: randomInviteCodes,
+    aiConsent: unused,
+  }),
+  aiConsent: {
+    find: unused,
+    give: unused,
+    withdraw: unused,
+    hasCurrent: unused,
+    currentAmong: unused,
+  },
   log: createLog(unused),
   admin: {
     admins: () => ({ requireAdmin: unused, logChange: unused, listLog: unused }),

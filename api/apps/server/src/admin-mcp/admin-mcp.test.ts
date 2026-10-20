@@ -30,7 +30,7 @@ import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.j
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, signUp, aiConsentOn } from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
@@ -79,6 +79,7 @@ beforeAll(async () => {
             membership: createSquads({
               store: createPostgresSquadStore(db),
               inviteCodes: randomInviteCodes,
+              aiConsent: () => Promise.resolve(true),
             }),
             reactions: createPostgresReactionStore(db),
             photos,
@@ -95,10 +96,12 @@ beforeAll(async () => {
           squads: createSquads({
             store: createPostgresSquadStore(db),
             inviteCodes: randomInviteCodes,
+            aiConsent: () => Promise.resolve(true),
           }),
           disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
           push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
           photos,
+          aiConsent: aiConsentOn(db),
           log: createLog(() => undefined),
           admin: {
             ...admin,
