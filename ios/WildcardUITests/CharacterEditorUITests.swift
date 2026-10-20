@@ -67,12 +67,16 @@ final class CharacterEditorUITests: XCTestCase {
         settle()
         keepScreenshot(named: "29-editor-face")
 
-        sparkle.swipeUp()
+        swipeUpInChoices(app)
         let smirk = app.buttons["editor.tile.mouth.smirk"]
         XCTAssertTrue(smirk.waitForExistence(timeout: Self.wait), "no 坏笑 tile")
         smirk.tap()
         waitUntilSelected(smirk, "picking 坏笑 didn't select it")
+        // The grid only makes the tiles in view, so swipe until 眼镜 comes up.
         let glasses = app.buttons["editor.tile.glasses.round"]
+        for _ in 0..<4 where !glasses.isHittable {
+            swipeUpInChoices(app)
+        }
         XCTAssertTrue(glasses.waitForExistence(timeout: Self.wait), "no 圆框 tile")
         XCTAssertTrue(app.buttons["editor.tile.glasses.none"].isSelected, "the sample wears glasses")
         glasses.tap()
@@ -171,6 +175,12 @@ final class CharacterEditorUITests: XCTestCase {
     ) {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: timeout), .completed, message)
+    }
+
+    /// Scrolls the choices under the tabs, low on the screen and clear of the stage above.
+    private func swipeUpInChoices(_ app: XCUIApplication) {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.82))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
     }
 
     /// Lets thumbnails build and the character's one move finish before a screenshot.
