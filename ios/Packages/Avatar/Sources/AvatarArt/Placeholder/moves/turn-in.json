@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "turnIn",
+  "duration": 0.3,
+  "loops": false,
+  "tracks": [
+    { "part": "root", "channel": "scaleX", "keys": [ {"t": 0, "v": 0.05}, {"t": 0.14, "v": 1.06, "ease": "easeOut"}, {"t": 0.3, "v": 1, "ease": "easeInOut"} ] },
+    { "part": "root", "channel": "y", "keys": [ {"t": 0, "v": -22}, {"t": 0.08, "v": -22}, {"t": 0.2, "v": 0, "ease": "easeIn"}, {"t": 0.3, "v": 0} ] },
+    { "part": "root", "channel": "scaleY", "keys": [ {"t": 0, "v": 1}, {"t": 0.2, "v": 1}, {"t": 0.24, "v": 0.94, "ease": "easeOut"}, {"t": 0.3, "v": 1, "ease": "easeInOut"} ] }
+  ]
+}
