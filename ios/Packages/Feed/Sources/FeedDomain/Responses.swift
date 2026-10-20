@@ -1,0 +1,76 @@
+import Contracts
+
+/// Who responded to a post and how, with one response a member: the reactions on a check-in, or
+/// the replies on a 请假条. A member's response is in place of any they left before.
+public struct Responses<Kind: Hashable & CaseIterable & Sendable>: Hashable, Sendable {
+    /// One member's response.
+    public struct Response: Hashable, Sendable {
+        public let member: MemberID
+        public let kind: Kind
+        public let moment: Timestamp
+
+        public init(member: MemberID, kind: Kind, moment: Timestamp) {
+            self.member = member
+            self.kind = kind
+            self.moment = moment
+        }
+    }
+
+    /// The members who left one kind, oldest first.
+    public struct Group: Hashable, Sendable {
+        public let kind: Kind
+        public let members: [MemberID]
+    }
+
+    /// Oldest first, one a member.
+    public private(set) var all: [Response]
+
+    /// Keeps each member's latest response.
+    public init(_ responses: [Response] = []) {
+        var latest: [MemberID: Response] = [:]
+        for response in responses where latest[response.member].map({ $0.moment <= response.moment }) ?? true {
+            latest[response.member] = response
+        }
+        all = latest.values.sorted { ($0.moment, $0.member.description) < ($1.moment, $1.member.description) }
+    }
+
+    public var isEmpty: Bool { all.isEmpty }
+
+    public func count(of kind: Kind) -> Int { all.count { $0.kind == kind } }
+
+    /// What `member` left, if anything.
+    public func kind(of member: MemberID) -> Kind? { all.first { $0.member == member }?.kind }
+
+    /// The kinds anyone left, in the order the app shows them.
+    public var groups: [Group] {
+        Kind.allCases.compactMap { kind in
+            let members = all.filter { $0.kind == kind }.map(\.member)
+            return members.isEmpty ? nil : Group(kind: kind, members: members)
+        }
+    }
+
+    /// The faces at the end of the row: the latest members to respond, newest first.
+    public func latestMembers(_ limit: Int) -> [MemberID] {
+        Array(all.reversed().prefix(limit).map(\.member))
+    }
+
+    /// The same responses with `member`'s set to `kind`, or taken back when nil.
+    public func setting(_ kind: Kind?, for member: MemberID, at moment: Timestamp) -> Self {
+        var next = self
+        next.all.removeAll { $0.member == member }
+        if let kind { next.all.append(Response(member: member, kind: kind, moment: moment)) }
+        return next
+    }
+}
+
+extension Responses where Kind == ReactionKind {
+    public init(_ reactions: [Reaction]) {
+        self.init(reactions.map { Response(member: $0.member, kind: $0.kind, moment: $0.reactedAt) })
+    }
+}
+
+extension Responses where Kind == ReplyKind {
+    public init(_ replies: [Reply]) {
+        self.init(replies.map { Response(member: $0.member, kind: $0.kind, moment: $0.repliedAt) })
+    }
+}
