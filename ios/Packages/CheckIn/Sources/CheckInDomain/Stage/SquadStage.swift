@@ -62,34 +62,58 @@ public struct SquadStage: Hashable, Sendable {
         func isFree(_ spot: StagePoint) -> Bool { !taken.contains { StageLayout.crowds($0, spot) } }
         let rest = ordered.filter { next[$0.id] == nil }
         // Old spots are kept first, so nobody is pushed off theirs by someone newer.
+        var startedOnFloor: [StageMember] = []
         for member in rest {
             let mayTakeField = equipmentIdle && isTraining(member)
-            let justStarted = mayTakeField && !training.contains(member.id)
             switch placements[member.id] {
             case .field(let spot)? where mayTakeField && isFree(spot):
                 taken.append(spot)
                 next[member.id] = .field(spot)
-            case .floor(let spot)? where !justStarted && isFree(spot):
+            case .floor(let spot)? where isFree(spot):
+                // Held even for someone who just started training, so nobody takes it while
+                // they wait for a spot on the playing area.
                 taken.append(spot)
                 next[member.id] = .floor(spot)
+                if mayTakeField && !training.contains(member.id) { startedOnFloor.append(member) }
             default:
                 continue
             }
         }
-        for member in rest where next[member.id] == nil {
+        // Someone who just started training moves onto the playing area if a spot is free there.
+        for member in startedOnFloor {
+            guard case .floor(let old)? = next[member.id] else { continue }
+            taken.removeAll { $0 == old }
+            if let spot = layout.field.first(where: isFree) {
+                taken.append(spot)
+                next[member.id] = .field(spot)
+            } else {
+                taken.append(old)
+            }
+        }
+        placeNew(rest.filter { next[$0.id] == nil }, equipmentIdle: equipmentIdle, in: &next, taken: &taken)
+        placements = next
+        training = Set(teammates.filter(isTraining).map(\.id))
+    }
+
+    /// Places those without a spot yet, in order: a trainer onto the playing area while the
+    /// equipment is idle and it has room, everyone else on the best free floor spot (社恐 the last).
+    private func placeNew(
+        _ members: [StageMember], equipmentIdle: Bool, in next: inout [MemberID: StagePlacement],
+        taken: inout [StagePoint]
+    ) {
+        for member in members {
+            let spots = taken
+            let isFree = { (spot: StagePoint) in !spots.contains { StageLayout.crowds($0, spot) } }
             if equipmentIdle && isTraining(member), let spot = layout.field.first(where: isFree) {
                 taken.append(spot)
                 next[member.id] = .field(spot)
                 continue
             }
             let free = layout.floor.filter(isFree)
-            let old: StagePoint? = if case .floor(let spot)? = placements[member.id], isFree(spot) { spot } else { nil }
-            guard let spot = old ?? (member.keepsToTheBack ? free.last : free.first) else { continue }
+            guard let spot = member.keepsToTheBack ? free.last : free.first else { continue }
             taken.append(spot)
             next[member.id] = .floor(spot)
         }
-        placements = next
-        training = Set(teammates.filter(isTraining).map(\.id))
     }
 
     /// The equipment slots for `ordered`: everyone keeps the slot they had if their sport still
