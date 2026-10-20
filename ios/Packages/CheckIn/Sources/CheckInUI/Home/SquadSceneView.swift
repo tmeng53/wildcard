@@ -97,7 +97,7 @@ struct SquadSceneView: View {
             figures.append(
                 Placed(
                     id: .mine, player: myPlayer,
-                    position: StagePosition(point: StageLayout.mySpot, facing: 1, scale: StageLayout.myScale),
+                    position: .mine,
                     ring: myRing, pose: .standing, sign: nil, isTapped: false))
         }
         return figures
