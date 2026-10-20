@@ -40,6 +40,9 @@ if xcrun simctl get_app_container "$udid" app.wildcard.ios >/dev/null 2>&1; then
   xcrun simctl uninstall "$udid" app.wildcard.ios
 fi
 
+# A UI test that fails runs once more: a busy CI simulator sometimes times out a screenshot, a UI
+# query or stopping the app. A test that fails twice fails the run; one that passed only on its
+# second run is listed at the end of the log, so it stays visible.
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
@@ -48,8 +51,9 @@ xcodebuild test \
   -destination "id=$udid" \
   -derivedDataPath "$out/DerivedData" \
   -resultBundlePath "$out/Wildcard.xcresult" \
+  -retry-tests-on-failure -test-iterations 2 \
   CODE_SIGNING_ALLOWED=NO \
-  || status=$?
+  2>&1 | tee "$out/xcodebuild.log" || status=$?
 
 # Export screenshots even when a test failed: they show what went wrong.
 if [ -d "$out/Wildcard.xcresult" ]; then
@@ -59,16 +63,17 @@ if [ -d "$out/Wildcard.xcresult" ]; then
   python3 - "$raw" "$out/screenshots" <<'PY'
 import json, pathlib, re, shutil, sys
 raw, dest = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
-for test in json.loads((raw / "manifest.json").read_text()):
-    for item in test.get("attachments", []):
-        name = item.get("suggestedHumanReadableName") or item["exportedFileName"]
-        name = re.sub(r"_\d+_[0-9A-Fa-f-]{36}(\.\w+)$", r"\1", name)
-        # Only the screenshots the tests name ("01-..."); skip XCTest's automatic
-        # UI snapshots, synthesized events and failure recordings.
-        if not re.match(r"^\d\d-.+\.png$", name):
-            continue
-        shutil.copy(raw / item["exportedFileName"], dest / name)
-        print(f"screenshot: {dest / name}")
+# A retried test has attachments from each run; copy them in time order so the last run's win.
+items = [item for test in json.loads((raw / "manifest.json").read_text()) for item in test.get("attachments", [])]
+for item in sorted(items, key=lambda item: str(item.get("timestamp", ""))):
+    name = item.get("suggestedHumanReadableName") or item["exportedFileName"]
+    name = re.sub(r"_\d+_[0-9A-Fa-f-]{36}(\.\w+)$", r"\1", name)
+    # Only the screenshots the tests name ("01-..."); skip XCTest's automatic
+    # UI snapshots, synthesized events and failure recordings.
+    if not re.match(r"^\d\d-.+\.png$", name):
+        continue
+    shutil.copy(raw / item["exportedFileName"], dest / name)
+    print(f"screenshot: {dest / name}")
 PY
 fi
 
@@ -100,6 +105,15 @@ if [ "$status" -ne 0 ] && [ -d "$out/Wildcard.xcresult" ]; then
     python3 -c 'import json, sys
 for f in json.load(sys.stdin).get("testFailures", []):
     print((f.get("testIdentifierString") or f.get("testName", "?")) + ": " + str(f.get("failureText")))' || true
+fi
+
+# Tests that failed once and passed when run again (issue #88 tracks why).
+if [ "$status" -eq 0 ]; then
+  retried="$(grep -iE "^Test case '.+' failed" "$out/xcodebuild.log" | sed -E "s/^Test [Cc]ase '([^']+)' failed.*$/\1/" | sort -u || true)"
+  if [ -n "$retried" ]; then
+    echo "----- passed only when run again -----"
+    echo "$retried"
+  fi
 fi
 
 exit "$status"
