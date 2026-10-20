@@ -48,10 +48,10 @@ public enum StationPath: Hashable, Sendable {
     /// Round and round along lanes, each lap at its own speed, evenly spaced within a lap; they
     /// leave one side of the screen and come back on the other. The laps fill one after another.
     case loop(from: Double, to: Double, lanes: [Lap])
-    /// One lane each, back and forth.
-    case lanes([Lane])
-    /// Up and down a column of the wall.
-    case climb([Column])
+    /// One lane each, back and forth, at `speed` points per second.
+    case lanes([Lane], speed: Double)
+    /// Up and down a column of the wall, at `speed` points per second.
+    case climb([Column], speed: Double)
     /// In place on a spot of their own.
     case spots([StagePoint])
 
@@ -82,8 +82,6 @@ public struct Station: Hashable, Sendable {
     public let kind: StationKind
     public let capacity: Int
     public let path: StationPath
-    /// Points per second along lanes and columns; a loop's laps each have their own.
-    public let speed: Double
     public let scale: Double?
 }
 
@@ -103,7 +101,7 @@ public struct StageLayout: Hashable, Sendable {
     /// few sit close to playing-area spots; `SquadStage` never fills both at once.
     public let floor: [StagePoint]
 
-    /// The stage's width; anyone outside 0 to this is off screen.
+    /// The stage's width, the screen's in the design.
     public static let width = 390.0
 
     /// Me: always front and centre, just above the 打卡 button.

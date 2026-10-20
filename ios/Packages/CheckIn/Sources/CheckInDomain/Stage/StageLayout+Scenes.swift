@@ -25,8 +25,7 @@ extension StageLayout {
                         StationPath.Lap(y: 354, direction: 1, speed: 56),
                         StationPath.Lap(y: 405, direction: 1, speed: 48),
                         StationPath.Lap(y: 456, direction: -1, speed: 48),
-                    ]),
-                speed: 0, scale: nil)
+                    ]), scale: nil)
         ],
         stationsBySport: [.run: [.jogging]],
         field: [StageRect(x: 55...335, y: 380...500)],
@@ -40,7 +39,7 @@ extension StageLayout {
     // No playing area: the deck in front of the water is the open floor.
     static let pool = StageLayout(
         stations: [
-            Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes), speed: 34, scale: nil)
+            Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes, speed: 34), scale: nil)
         ],
         stationsBySport: [.swim: [.swimming]],
         field: [],
@@ -51,16 +50,16 @@ extension StageLayout {
         stations: [
             Station(
                 kind: .treadmill, capacity: 2, path: .spots([StagePoint(x: 66, y: 385), StagePoint(x: 142, y: 385)]),
-                speed: 0, scale: nil),
+                scale: nil),
             Station(
                 kind: .squatRack, capacity: 2, path: .spots([StagePoint(x: 246, y: 388), StagePoint(x: 322, y: 388)]),
-                speed: 0, scale: nil),
+                scale: nil),
             Station(
                 kind: .dumbbells, capacity: 2, path: .spots([StagePoint(x: 80, y: 506), StagePoint(x: 150, y: 506)]),
-                speed: 0, scale: nil),
+                scale: nil),
             Station(
                 kind: .yogaMat, capacity: 2, path: .spots([StagePoint(x: 250, y: 502), StagePoint(x: 326, y: 502)]),
-                speed: 0, scale: nil),
+                scale: nil),
         ],
         stationsBySport: [.run: [.treadmill], .strength: [.squatRack, .dumbbells], .yoga: [.yogaMat]],
         field: [StageRect(x: 75...315, y: 420...500)],
@@ -74,10 +73,10 @@ extension StageLayout {
                 path: .spots([
                     StagePoint(x: 130, y: 346), StagePoint(x: 130, y: 462), StagePoint(x: 262, y: 346),
                     StagePoint(x: 262, y: 462),
-                ]), speed: 0, scale: nil),
+                ]), scale: nil),
             Station(
                 kind: .serve, capacity: 2, path: .spots([StagePoint(x: 40, y: 322), StagePoint(x: 350, y: 466)]),
-                speed: 0, scale: nil),
+                scale: nil),
         ],
         stationsBySport: [.tennis: [.rally, .serve]],
         field: [StageRect(x: 70...330, y: 346...470)],
@@ -90,15 +89,16 @@ extension StageLayout {
         stations: [
             Station(
                 kind: .topRope, capacity: 4,
-                path: .climb([132.0, 177, 222, 267].map { StationPath.Column(x: $0, top: 290, bottom: 422) }),
-                speed: 9, scale: 0.19),
+                path: .climb(
+                    [132.0, 177, 222, 267].map { StationPath.Column(x: $0, top: 290, bottom: 422) }, speed: 9),
+                scale: 0.19),
             Station(
                 kind: .bouldering, capacity: 2,
-                path: .climb([322.0, 362].map { StationPath.Column(x: $0, top: 370, bottom: 426) }),
-                speed: 7, scale: 0.19),
+                path: .climb([322.0, 362].map { StationPath.Column(x: $0, top: 370, bottom: 426) }, speed: 7),
+                scale: 0.19),
             Station(
                 kind: .chalk, capacity: 2, path: .spots([StagePoint(x: 150, y: 530), StagePoint(x: 240, y: 530)]),
-                speed: 0, scale: nil),
+                scale: nil),
         ],
         stationsBySport: [.climb: [.topRope, .bouldering, .chalk]],
         // The foot of the wall.

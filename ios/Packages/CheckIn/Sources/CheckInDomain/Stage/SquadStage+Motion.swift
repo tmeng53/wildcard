@@ -50,7 +50,7 @@ extension SquadStage {
     }
 
     /// Where `member` is `seconds` into the day's loop: people on a track, lane or wall move
-    /// along it at the station's speed, evenly spaced; everyone else stays on their spot,
+    /// along it at its speed, evenly spaced; everyone else stays on their spot,
     /// facing the middle.
     public func position(of member: MemberID, at seconds: Double) -> StagePosition? {
         switch placements[member] {
@@ -77,17 +77,17 @@ extension SquadStage {
             let offset = Double(slot % perLane) / Double(perLane) * width
             point = StagePoint(x: start + wrap(offset + seconds * lap.speed * lap.direction, width), y: lap.y)
             facing = lap.direction
-        case .lanes(let lanes):
+        case .lanes(let lanes, let speed):
             let lane = lanes[slot % lanes.count]
             let width = lane.to - lane.from
-            let along = wrap(Double(slot) * 0.37 * 2 * width + seconds * station.speed, 2 * width)
+            let along = wrap(Double(slot) * 0.37 * 2 * width + seconds * speed, 2 * width)
             let out = along < width
             point = StagePoint(x: out ? lane.from + along : lane.to - (along - width), y: lane.y)
             facing = out ? 1 : -1
-        case .climb(let columns):
+        case .climb(let columns, let speed):
             let column = columns[slot % columns.count]
             let height = column.bottom - column.top
-            let along = wrap(Double(slot) * 0.29 * 2 * height + seconds * station.speed, 2 * height)
+            let along = wrap(Double(slot) * 0.29 * 2 * height + seconds * speed, 2 * height)
             point = StagePoint(
                 x: column.x, y: along < height ? column.bottom - along : column.top + (along - height))
             facing = 1
@@ -103,27 +103,13 @@ extension SquadStage {
         return rest < 0 ? rest + length : rest
     }
 
-    /// Who joins in when I check in `seconds` into the day's loop, nearest to me first (ties in
-    /// the order given): everyone awake and on screen except swimmers in the water, so at night
-    /// only those still training.
-    public func cheerers(_ teammates: [StageMember], at phase: DayPhase, seconds: Double) -> [MemberID] {
-        let mine = StageLayout.mySpot
-        return
-            teammates
-            .filter { member in
-                if case .station(.swimming, _)? = placements[member.id] { return false }
-                return pose(of: member, at: phase) != .asleep
-            }
-            .compactMap { member -> (MemberID, Double)? in
-                guard let point = position(of: member.id, at: seconds)?.point,
-                    (0...StageLayout.width).contains(point.x)
-                else { return nil }
-                let across = point.x - mine.x
-                let deep = point.y - mine.y
-                return (member.id, (across * across + deep * deep).squareRoot())
-            }
-            .enumerated()
-            .sorted { ($0.element.1, $0.offset) < ($1.element.1, $1.offset) }
-            .map(\.element.0)
+    /// Who joins in when I check in, in the order given: everyone awake who isn't training
+    /// (they keep going), so nobody at night. The screen times each cheer by persona.
+    public func cheerers(_ teammates: [StageMember], at phase: DayPhase) -> [MemberID] {
+        teammates.filter { member in
+            if case .trained = member.status { return false }
+            return pose(of: member, at: phase) != .asleep
+        }
+        .map(\.id)
     }
 }
