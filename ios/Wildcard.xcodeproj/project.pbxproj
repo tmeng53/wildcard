@@ -13,6 +13,7 @@
 		A1C0DE000000000000000034 /* CheckInDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000033 /* CheckInDomain */; };
 		A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000041 /* NotificationsDomain */; };
 		A1C0DE000000000000000044 /* NotificationsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000043 /* NotificationsUI */; };
+		A1C0DE000000000000000056 /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000055 /* DesignSystem */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,7 @@
 				A1C0DE000000000000000034 /* CheckInDomain in Frameworks */,
 				A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */,
 				A1C0DE000000000000000044 /* NotificationsUI in Frameworks */,
+				A1C0DE000000000000000056 /* DesignSystem in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,6 +113,7 @@
 				A1C0DE000000000000000033 /* CheckInDomain */,
 				A1C0DE000000000000000041 /* NotificationsDomain */,
 				A1C0DE000000000000000043 /* NotificationsUI */,
+				A1C0DE000000000000000055 /* DesignSystem */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -443,6 +446,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */;
 			productName = NotificationsUI;
+		};
+		A1C0DE000000000000000055 /* DesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystem;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
