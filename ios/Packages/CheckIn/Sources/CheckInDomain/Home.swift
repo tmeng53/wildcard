@@ -53,6 +53,45 @@ public struct Home: Hashable, Sendable {
         .first
     }
 
+    /// The home with the member's own row moved on to `day` when the copy is from an earlier
+    /// one: after 3am, or opened offline on a new day. Their old status leaves today's counts,
+    /// and in a new week their week and the squad's start from no trained days. Teammates'
+    /// rows wait for the next load.
+    public func rolled(to day: LocalDay) -> Home {
+        guard let index = today.members.firstIndex(where: { $0.member == member }), today.members[index].day < day
+        else { return self }
+        var home = self
+        let old = today.members[index]
+        switch old.training {
+        case .trained: home.today.today.trained -= 1
+        case .disclaimer: home.today.today.disclaimer -= 1
+        case .notCheckedIn: if old.plannedRest { home.today.today.resting -= 1 }
+        }
+        let plannedRest = isRestDay(day)
+        if plannedRest { home.today.today.resting += 1 }
+        home.today.members.remove(at: index)
+        home.today.members.append(
+            SquadmateToday(
+                member: member, catchphrase: old.catchphrase, day: day, training: .notCheckedIn, latestMeal: nil,
+                plannedRest: plannedRest, firstCheckInAt: nil))
+        if day > today.myWeek.lastDay {
+            home.today.myWeek = MyWeek(
+                firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
+                week: WeekCount(trainedDays: 0, plannedDays: today.myWeek.week.plannedDays),
+                lifetimeTrainedDays: today.myWeek.lifetimeTrainedDays)
+            home.today.squadWeek.trainedDays = 0
+        }
+        home.today.today.everyoneTrained =
+            home.today.today.trained > 0 && home.today.members.allSatisfy { $0.training == .trained || $0.plannedRest }
+        return home
+    }
+
+    /// Whether this week's plan rests on `day`; false for a day outside it.
+    private func isRestDay(_ day: LocalDay) -> Bool {
+        let offset = day.weekday - 1
+        return day.weekStart == plan.weekStart && plan.days.indices.contains(offset) && plan.days[offset] == .rest
+    }
+
     /// The sport a new 练了 starts with: today's in the plan, else the member's latest 练了.
     public func suggestedActivity(on day: LocalDay) -> Activity? {
         let offset = day.weekday - 1

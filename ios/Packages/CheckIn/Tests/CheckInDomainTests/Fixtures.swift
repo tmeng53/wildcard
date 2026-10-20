@@ -66,6 +66,7 @@ actor ScriptedBackend: CheckInBackend {
 
     func set(failure: CheckInError?) { self.failure = failure }
     func set(uploadsBeforeFailing count: Int) { uploadsBeforeFailing = count }
+    func set(server home: Home?) { server = home }
 
     func savedHome() async -> Home? { saved }
 

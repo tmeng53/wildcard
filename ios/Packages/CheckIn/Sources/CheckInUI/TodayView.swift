@@ -11,6 +11,7 @@ import SwiftUI
 /// and after posting you stay on the scene for the payoff (the approved home, version 15).
 public struct TodayView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayModel
 
     public init(model: TodayModel) {
@@ -50,6 +51,10 @@ public struct TodayView: View {
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         .task { await model.load() }
+        // Back in the app, possibly on a new day or after posts went out from another phone.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await model.load() } }
+        }
     }
 
     /// The squad on its scene, the week's card, my payoff and the 打卡 burst.

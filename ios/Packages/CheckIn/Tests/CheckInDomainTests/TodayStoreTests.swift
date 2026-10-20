@@ -206,3 +206,41 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     try await today.loadReactions(to: checkIn)
     #expect(today.reactions[checkIn] == [])
 }
+
+@MainActor @Test func onANewDayTheHomeKeptFromYesterdayStartsTheMemberAfresh() async throws {
+    // Tuesday's copy, opened offline on Wednesday at 10:00.
+    var yesterday = sampleToday()
+    yesterday.members[1] = entry(myID, .trained, since: 1_792_512_000_000)
+    yesterday.today.trained = 2
+    let backend = ScriptedBackend(saved: sampleHome(today: yesterday))
+    await backend.set(failure: .notSent)
+    let today = store(backend, now: tuesdayMorning.addingTimeInterval(24 * 3600))
+    await today.load()
+
+    #expect(today.day?.description == "2026-10-21")
+    #expect(today.myStatus == .notCheckedIn)
+    #expect(today.home?.mine?.day.description == "2026-10-21")
+    #expect(today.home?.today.today.trained == 1)
+
+    #expect(try await today.post(run) == .queued)
+    #expect(today.myStatus == .trained)
+    #expect(today.home?.today.today.trained == 2)
+    #expect(today.home?.today.squadWeek.trainedDays == 15)
+    await #expect(throws: CheckInError.alreadyTrained) {
+        try await today.post(.disclaimer(try Disclaimer("加班")))
+    }
+}
+
+@MainActor @Test func aPostSavedWhileTheHomeLoadedIsStillCounted() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    try await today.post(run)
+
+    // A load that read the server before the post was saved.
+    await backend.set(server: sampleHome())
+    await today.refresh()
+    #expect(today.myStatus == .trained)
+    #expect(today.home?.today.squadWeek.trainedDays == 15)
+    #expect(today.home?.todaysSport(of: myID) == .sport(.run))
+}
