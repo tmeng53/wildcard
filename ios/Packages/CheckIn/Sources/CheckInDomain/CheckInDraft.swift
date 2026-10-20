@@ -2,13 +2,14 @@ import Contracts
 import Foundation
 
 /// A photo ready to post: resized and compressed on the phone (`PhotoPreparation`), so upload
-/// and storage stay small. Its id only tells photos apart on screen.
+/// and storage stay small. Its id tells photos apart, on screen and in the outbox, which
+/// records the ones already uploaded.
 public struct PreparedPhoto: Hashable, Sendable, Identifiable {
     public let id: UUID
     /// JPEG, at most `PhotoPreparation.maxPixelSize` on the long edge.
     public let jpeg: Data
 
-    public init(id: UUID = UUID(), jpeg: Data) {
+    public init(id: UUID, jpeg: Data) {
         self.id = id
         self.jpeg = jpeg
     }

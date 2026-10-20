@@ -244,3 +244,70 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     #expect(today.home?.today.squadWeek.trainedDays == 15)
     #expect(today.home?.todaysSport(of: myID) == .sport(.run))
 }
+
+@MainActor @Test func aDisclaimerAsksTheServerFirstForATrainingFromAnotherPhone() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+
+    // The member trains on another phone after this one loaded.
+    var trained = sampleToday()
+    trained.members[1] = entry(myID, .trained, since: 1_792_515_000_000)
+    trained.today.trained = 2
+    await backend.set(server: sampleHome(today: trained))
+    #expect(today.myStatus == .notCheckedIn)
+
+    await #expect(throws: CheckInError.alreadyTrained) {
+        try await today.post(.disclaimer(try Disclaimer("加班")))
+    }
+    #expect(await backend.saves.isEmpty)
+}
+
+@MainActor @Test func aNewPostSendsTheOnesWaitingAheadOfItFirst() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+    try await today.post(.disclaimer(try Disclaimer("加班到十点")))
+
+    await backend.set(failure: nil)
+    #expect(try await today.post(run) != .queued)
+    #expect(await backend.saves.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
+    #expect(today.pending.isEmpty)
+    #expect(today.refused.isEmpty)
+}
+
+@MainActor @Test func aNewPostWaitsBehindOneThatStillCantGoOut() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(uploadsBeforeFailing: 0)
+    try await today.post(.healthyMeal(PostBody(photos: [photo(1)], caption: "")))
+
+    #expect(try await today.post(run) == .queued)
+    #expect(await backend.saves.isEmpty)
+    #expect(today.pending.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
+    #expect(today.myStatus == .trained)
+}
+
+@MainActor @Test func aPostMadeWhileTheOutboxIsGoingOutFollowsIt() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+    try await today.post(.disclaimer(try Disclaimer("加班到十点")))
+
+    await backend.set(failure: nil)
+    await backend.holdSaves()
+    let sending = Task { await today.sendPending() }
+    while await backend.savesWaiting == 0 { await Task.yield() }
+    // Never sent ahead of the 请假条 already on its way.
+    #expect(try await today.post(run) == .queued)
+    #expect(await backend.saves.isEmpty)
+
+    await backend.releaseSaves()
+    await sending.value
+    #expect(await backend.saves.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
+    #expect(today.pending.isEmpty)
+    #expect(today.refused.isEmpty)
+}

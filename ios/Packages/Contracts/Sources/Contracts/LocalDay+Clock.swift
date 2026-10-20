@@ -20,15 +20,16 @@ extension LocalDay {
     /// The day `count` days later, or earlier when negative.
     public func adding(days count: Int) -> LocalDay {
         let calendar = Self.utc
-        let date = calendar.date(from: DateComponents(year: year, month: month, day: day + count)) ?? Date()
+        guard let date = calendar.date(byAdding: .day, value: count, to: midnight) else {
+            fatalError("a day \(count) days from \(self) is always a real day")
+        }
         let parts = calendar.dateComponents([.year, .month, .day], from: date)
         return Self.unchecked(year: parts.year ?? year, month: parts.month ?? month, day: parts.day ?? day)
     }
 
     /// Monday is 1, Sunday 7, as weeks run Monday to Sunday.
     public var weekday: Int {
-        let date = Self.utc.date(from: DateComponents(year: year, month: month, day: day)) ?? Date()
-        let sundayFirst = Self.utc.component(.weekday, from: date)
+        let sundayFirst = Self.utc.component(.weekday, from: midnight)
         return sundayFirst == 1 ? 7 : sundayFirst - 1
     }
 
@@ -39,8 +40,15 @@ extension LocalDay {
     public var weekOfYear: Int {
         var calendar = Calendar(identifier: .iso8601)
         calendar.timeZone = Self.utc.timeZone
-        let date = calendar.date(from: DateComponents(year: year, month: month, day: day)) ?? Date()
-        return calendar.component(.weekOfYear, from: date)
+        return calendar.component(.weekOfYear, from: midnight)
+    }
+
+    /// The day's start in UTC, where the calendar arithmetic above runs.
+    private var midnight: Date {
+        guard let date = Self.utc.date(from: DateComponents(year: year, month: month, day: day)) else {
+            fatalError("\(self) is a real day, so it has a date")
+        }
+        return date
     }
 
     private static var utc: Calendar {

@@ -43,10 +43,11 @@ public struct APICheckInBackend: CheckInBackend {
             let squadID = try api.read { () throws(ContractsError) in try Squad(squad).id }
             async let today = api.todayWire(of: squadID)
             async let plan = api.weeklyPlanWire(weekStart: day.weekStart)
-            async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -1), through: day.adding(days: 1))
+            async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -2), through: day.adding(days: 2))
+            async let week = api.myCheckInsWire(from: day.weekStart, through: day)
             let copy = SavedHome(
                 version: 1, member: signedIn, squad: squad, today: try await today, plan: try await plan,
-                checkIns: try await checkIns)
+                checkIns: try await checkIns, week: try await week)
             let home = try copy.home(api: api)
             try? DeviceJSON.write(try DeviceJSON.encoder.encode(copy), to: saved)
             return home
@@ -90,7 +91,10 @@ struct SavedHome: Codable {
     let squad: Components.Schemas.Squad
     let today: Components.Schemas.SquadToday
     let plan: Components.Schemas.WeeklyPlan
+    /// The squad's, from two days before the member's day to two days after.
     let checkIns: Components.Schemas.CheckInList
+    /// The member's own, since Monday.
+    let week: Components.Schemas.CheckInList
 
     func home(api: WildcardAPI) throws(APIError) -> Home {
         guard version == 1, let id = UUID(uuidString: member.userId) else { throw .unreadableResponse }
@@ -98,8 +102,20 @@ struct SavedHome: Codable {
         return try api.read { () throws(ContractsError) in
             Home(
                 member: MemberID(id), timeZone: zone, squad: try Squad(squad), today: try SquadToday(today),
-                plan: try WeeklyPlan(plan), checkIns: try checkIns.checkIns.map(CheckIn.init))
+                plan: try WeeklyPlan(plan), checkIns: try Self.merged(checkIns, week))
         }
+    }
+
+    /// Both lists as one, each check-in once, oldest first.
+    private static func merged(_ squad: Components.Schemas.CheckInList, _ mine: Components.Schemas.CheckInList)
+        throws(ContractsError) -> [CheckIn]
+    {
+        var byID: [CheckInID: CheckIn] = [:]
+        for wire in squad.checkIns + mine.checkIns {
+            let checkIn = try CheckIn(wire)
+            byID[checkIn.id] = checkIn
+        }
+        return byID.values.sorted { ($0.createdAt, $0.id.description) < ($1.createdAt, $1.id.description) }
     }
 }
 

@@ -68,6 +68,16 @@ actor ScriptedBackend: CheckInBackend {
     func set(uploadsBeforeFailing count: Int) { uploadsBeforeFailing = count }
     func set(server home: Home?) { server = home }
 
+    /// Holds saves until `releaseSaves()`, so a test can act while one is on its way.
+    private var heldSaves: [CheckedContinuation<Void, Never>]?
+    private(set) var savesWaiting = 0
+    func holdSaves() { heldSaves = [] }
+    func releaseSaves() {
+        let held = heldSaves ?? []
+        heldSaves = nil
+        for save in held { save.resume() }
+    }
+
     func savedHome() async -> Home? { saved }
 
     func home() async throws(CheckInError) -> Home? {
@@ -85,6 +95,10 @@ actor ScriptedBackend: CheckInBackend {
     }
 
     func save(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
+        if heldSaves != nil {
+            savesWaiting += 1
+            await withCheckedContinuation { heldSaves?.append($0) }
+        }
         if let failure { throw failure }
         saves.append(checkIn)
         if var home = server, !home.checkIns.contains(where: { $0.id == checkIn.id }) {

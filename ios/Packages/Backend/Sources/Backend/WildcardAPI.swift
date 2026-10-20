@@ -90,10 +90,7 @@ public struct WildcardAPI: Sendable {
 
     /// The member's own check-ins counted for these days (at most 31).
     public func myCheckIns(from: LocalDay, through last: LocalDay) async throws(APIError) -> [CheckIn] {
-        let list = try await call {
-            try await client.listMyCheckIns(query: .init(from: from.description, to: last.description)).ok.body.json
-        }
-        return try read(list)
+        try read(try await myCheckInsWire(from: from, through: last))
     }
 
     // MARK: - Squads and their today
@@ -187,6 +184,13 @@ public struct WildcardAPI: Sendable {
     func weeklyPlanWire(weekStart: LocalDay) async throws(APIError) -> Components.Schemas.WeeklyPlan {
         try await call {
             try await client.getMyWeeklyPlan(path: .init(weekStart: weekStart.description)).ok.body.json
+        }
+    }
+
+    func myCheckInsWire(from: LocalDay, through last: LocalDay) async throws(APIError) -> Components.Schemas.CheckInList
+    {
+        try await call {
+            try await client.listMyCheckIns(query: .init(from: from.description, to: last.description)).ok.body.json
         }
     }
 

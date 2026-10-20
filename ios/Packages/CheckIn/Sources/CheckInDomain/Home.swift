@@ -13,8 +13,10 @@ public struct Home: Hashable, Sendable {
     public var today: SquadToday
     /// The member's plan for this week.
     public let plan: WeeklyPlan
-    /// The squad's check-ins from yesterday to tomorrow, so every member's own today is in it
-    /// whatever their time zone, oldest first.
+    /// The squad's check-ins from two days before the member's day to two days after, so every
+    /// member's own today is in it whatever their time zone (UTC+14 and UTC−12, with the 3am
+    /// grace, are up to two days apart), and the member's own since Monday, whichever squads
+    /// they went to; oldest first.
     public var checkIns: [CheckIn]
 
     public init(
@@ -33,10 +35,11 @@ public struct Home: Hashable, Sendable {
         today.members.first { $0.member == member }
     }
 
-    /// `member`'s check-ins on their own today, oldest first: what tapping their character shows.
+    /// `member`'s check-ins to this squad on their own today, oldest first: what tapping their
+    /// character shows. One sent only to another squad doesn't show here, as on the server.
     public func todaysCheckIns(of member: MemberID) -> [CheckIn] {
         guard let day = today.members.first(where: { $0.member == member })?.day else { return [] }
-        return checkIns.filter { $0.member == member && $0.day == day }
+        return checkIns.filter { $0.member == member && $0.day == day && $0.audience.squads.contains(squad.id) }
     }
 
     /// The sport `member` trained today, from their latest 练了: what their character plays.

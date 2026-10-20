@@ -89,3 +89,13 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     let onLeave = sampleHome(checkIns: [try checkIn(1, by: myID, .disclaimer(try Disclaimer("加班")))])
     #expect(onLeave.week(on: tuesday).days[1] == .disclaimer)
 }
+
+@Test func aCheckInSentOnlyToAnotherSquadDoesntShowOnThisOne() throws {
+    let elsewhere = CheckIn(
+        id: CheckInID(id(60)), member: myID, day: tuesday,
+        createdAt: Timestamp(millisecondsSince1970: 1_792_512_000_000),
+        audience: try Audience([SquadID(id(11))]), entry: .trained(Training(activity: .sport(.swim))))
+    let home = sampleHome(checkIns: [elsewhere])
+    #expect(home.todaysCheckIns(of: myID).isEmpty)
+    #expect(home.todaysSport(of: myID) == nil)
+}
