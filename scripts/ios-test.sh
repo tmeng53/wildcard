@@ -57,16 +57,17 @@ if [ -d "$out/Wildcard.xcresult" ]; then
   python3 - "$raw" "$out/screenshots" <<'PY'
 import json, pathlib, re, shutil, sys
 raw, dest = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
-for test in json.loads((raw / "manifest.json").read_text()):
-    for item in test.get("attachments", []):
-        name = item.get("suggestedHumanReadableName") or item["exportedFileName"]
-        name = re.sub(r"_\d+_[0-9A-Fa-f-]{36}(\.\w+)$", r"\1", name)
-        # Only the screenshots the tests name ("01-..."); skip XCTest's automatic
-        # UI snapshots, synthesized events and failure recordings.
-        if not re.match(r"^\d\d-.+\.png$", name):
-            continue
-        shutil.copy(raw / item["exportedFileName"], dest / name)
-        print(f"screenshot: {dest / name}")
+# A retried test has attachments from each run; copy them in time order so the last run's win.
+items = [item for test in json.loads((raw / "manifest.json").read_text()) for item in test.get("attachments", [])]
+for item in sorted(items, key=lambda item: str(item.get("timestamp", ""))):
+    name = item.get("suggestedHumanReadableName") or item["exportedFileName"]
+    name = re.sub(r"_\d+_[0-9A-Fa-f-]{36}(\.\w+)$", r"\1", name)
+    # Only the screenshots the tests name ("01-..."); skip XCTest's automatic
+    # UI snapshots, synthesized events and failure recordings.
+    if not re.match(r"^\d\d-.+\.png$", name):
+        continue
+    shutil.copy(raw / item["exportedFileName"], dest / name)
+    print(f"screenshot: {dest / name}")
 PY
 fi
 
@@ -102,7 +103,7 @@ fi
 
 # Tests that failed once and passed when run again (issue #88 tracks why).
 if [ "$status" -eq 0 ]; then
-  retried="$(grep -E "^Test Case '.+' failed \(" "$out/xcodebuild.log" | sed -E "s/^Test Case '(.+)' failed.*$/\1/" | sort -u || true)"
+  retried="$(grep -iE "^Test case '.+' failed" "$out/xcodebuild.log" | sed -E "s/^Test [Cc]ase '([^']+)' failed.*$/\1/" | sort -u || true)"
   if [ -n "$retried" ]; then
     echo "----- passed only when run again -----"
     echo "$retried"

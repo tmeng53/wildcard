@@ -141,11 +141,6 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: timeout), .completed, message)
     }
 
-    private func waitFor(_ element: XCUIElement, _ predicate: String, _ message: String) {
-        let met = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: Self.wait), .completed, message)
-    }
-
     /// Lets thumbnails build and the character's one move finish before a screenshot.
     private func settle() {
         Thread.sleep(forTimeInterval: 2)

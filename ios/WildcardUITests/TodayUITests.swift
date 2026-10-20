@@ -265,12 +265,6 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [changed], timeout: timeout), .completed, message)
     }
 
-    /// Typing updates the page on the next frames; wait for the state instead of checking at once.
-    private func waitFor(_ element: XCUIElement, _ predicate: String, _ message: String) {
-        let met = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: Self.wait), .completed, message)
-    }
-
     private func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
