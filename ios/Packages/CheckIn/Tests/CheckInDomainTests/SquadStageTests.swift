@@ -253,3 +253,14 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
         Issue.record("expected the playing area, got \(String(describing: stage.placements[id(6)]))")
     }
 }
+
+@Test func someoneWhoStartsTrainingKeepsTheirFloorSpotWhileThePlayingAreaIsFull() {
+    var stage = SquadStage(layout: .of(.climbing))
+    let yogis = (1...4).map { member($0, .trained(.sport(.yoga)), Int64(10 + $0)) }
+    stage.arrange(yogis + [member(5, .notYet)])
+    #expect(stage.placements[id(5)] == .floor(point(103, 626)))
+    // A newcomer who checked in earlier arrives as 5 starts training; 5 keeps their spot.
+    stage.arrange([member(0, .disclaimer, 1)] + yogis + [member(5, .trained(nil), 20)])
+    #expect(stage.placements[id(5)] == .floor(point(103, 626)))
+    #expect(stage.placements[id(0)] == .floor(point(287, 626)))
+}

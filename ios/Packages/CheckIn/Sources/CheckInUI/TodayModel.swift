@@ -65,17 +65,21 @@ public final class TodayModel {
     let player: CharacterPlayer?
     private let store: TodayStore
     private let writer: any DisclaimerWriter
+    private let posted: @MainActor () -> Void
 
     private let now: () -> Date
 
+    /// - Parameter posted: called each time a check-in lands, after the payoff starts; the app
+    ///   asks for notifications after the first.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        now: @escaping () -> Date = Date.init
+        now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
     ) {
         self.store = store
         self.now = now
         self.writer = writer
         self.photoSource = photoSource
+        self.posted = posted
         player = try? CharacterPlayer(
             figure: PlaceholderCharacter.figure(wearing: Self.look),
             idle: PlaceholderCharacter.clip("idle", persona: Self.persona, species: Self.species))
@@ -145,7 +149,9 @@ public final class TodayModel {
     /// writes on the scene itself.
     var isSceneDimmed: Bool { isBurstOpen }
 
-    func load() async {
+    /// Loads the home, on opening 今天 and again when a tapped notification brings the member
+    /// back to it.
+    public func load() async {
         await store.load()
         placeSquad()
     }
@@ -204,6 +210,7 @@ public final class TodayModel {
             step = .scene
             photos = []
             land(draft, weekBefore: before)
+            posted()
         } catch {
             sendFailed = true
         }

@@ -1,0 +1,53 @@
+#if os(iOS)
+import NotificationsDomain
+import UIKit
+import UserNotifications
+
+/// iOS's notification permission and APNs registration. The token comes back to the app
+/// delegate's `didRegisterForRemoteNotificationsWithDeviceToken`.
+public struct SystemPush: PushSystem {
+    public init() {}
+
+    public func authorization() async -> PushAuthorization {
+        switch await UNUserNotificationCenter.current().notificationSettings().authorizationStatus {
+        case .notDetermined: .notDetermined
+        case .authorized, .provisional, .ephemeral: .allowed
+        case .denied: .denied
+        @unknown default: .denied
+        }
+    }
+
+    public func requestAuthorization() async -> Bool {
+        // Banners and sound, no badge: a number on the icon reads as a to-do list.
+        (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
+    }
+
+    public func registerForRemoteNotifications() async {
+        await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
+    }
+}
+
+/// Shows a notification that arrives while the app is open, and tells the app when the member
+/// taps one. iOS keeps its delegate weakly, so the app delegate holds this.
+public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate, Sendable {
+    private let opened: @MainActor @Sendable () -> Void
+
+    /// - Parameter opened: the member tapped a notification, which opened the app.
+    public init(opened: @escaping @MainActor @Sendable () -> Void) {
+        self.opened = opened
+    }
+
+    public func userNotificationCenter(
+        _ center: UNUserNotificationCenter, willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .list, .sound]
+    }
+
+    public func userNotificationCenter(
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
+    ) async {
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+        await opened()
+    }
+}
+#endif
