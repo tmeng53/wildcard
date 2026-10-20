@@ -6,15 +6,15 @@ import SwiftUI
 public enum RingStatus: Sendable, Hashable {
     /// Nothing yet today.
     case open
-    /// Checked in.
+    /// Checked in: 练了 or a 请假条.
     case done
-    /// Excused today (请假条).
-    case excused
+    /// A rest day in the week's plan.
+    case restDay
 }
 
 /// An avatar's ring for today, like Apple Fitness: a grey track, drawn closed in the scene's ring
-/// color from 12 o'clock once the person checks in; a 请假条 keeps the grey ring and gets a small
-/// moon. When the ring turns `done` while on screen it draws itself in, fast then slow, and the
+/// color from 12 o'clock once the person checks in (练了 or a 请假条); a rest day keeps the grey
+/// ring and gets a small moon. When the ring turns `done` while on screen it draws itself in, fast then slow, and the
 /// avatar pops once: light ticks while it draws, one heavy hit as it closes. With Reduce Motion
 /// on, the closed ring just appears, with the hit.
 public struct StatusRing<Avatar: View>: View {
@@ -69,7 +69,7 @@ public struct StatusRing<Avatar: View>: View {
         .padding(Sizing.ringWidth / 2)
         .frame(width: diameter, height: diameter)
         .overlay(alignment: .bottomTrailing) {
-            if status == .excused {
+            if status == .restDay {
                 Moon(size: diameter * 0.42)
                     .offset(x: Sizing.ringWidth, y: Sizing.ringWidth)
                     .transition(.scale.combined(with: .opacity))
@@ -111,12 +111,12 @@ public struct StatusRing<Avatar: View>: View {
         switch status {
         case .open: Text("还没打卡", bundle: .module)
         case .done: Text("打卡了", bundle: .module)
-        case .excused: Text("请假了", bundle: .module)
+        case .restDay: Text("休息日", bundle: .module)
         }
     }
 }
 
-/// The small moon on an excused ring: white disc, muted moon.
+/// The small moon on a rest day's ring: white disc, muted moon.
 private struct Moon: View {
     @Environment(\.sceneTheme) private var theme
     let size: Double

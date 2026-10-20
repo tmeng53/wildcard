@@ -282,8 +282,11 @@ struct TypographyTests {
         #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func numbersAreBarlowAtThreeSizes() {
-        #expect([TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map(\.size) == [60, 32, 22])
+    @Test func numbersAreBarlowAtFourSizes() {
+        #expect(
+            [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall].map(\.size) == [
+                60, 32, 22, 18,
+            ])
         #expect(
             [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map {
                 TypeRamp.denominator(of: $0).size
@@ -293,7 +296,7 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline"])
+        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
     }
 }
 

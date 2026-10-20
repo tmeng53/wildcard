@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "一": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "M"
+          }
+        }
+      }
+    },
+    "三": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "W"
+          }
+        }
+      }
+    },
     "下一步": {
       "localizations": {
         "en": {
@@ -57,6 +77,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Text"
+          }
+        }
+      }
+    },
+    "二": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T"
+          }
+        }
+      }
+    },
+    "五": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "F"
           }
         }
       }
@@ -121,6 +161,26 @@
         }
       }
     },
+    "休息日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest day"
+          }
+        }
+      }
+    },
+    "假": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
     "健康餐": {
       "localizations": {
         "en": {
@@ -157,6 +217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "All"
+          }
+        }
+      }
+    },
+    "六": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S"
           }
         }
       }
@@ -337,6 +407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skip Leg Day Club"
+          }
+        }
+      }
+    },
+    "四": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T"
           }
         }
       }
@@ -531,16 +611,6 @@
         }
       }
     },
-    "我 %lld/%lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Me %1$lld/%2$lld"
-          }
-        }
-      }
-    },
     "我在哪：墨色胶囊": {
       "localizations": {
         "en": {
@@ -557,6 +627,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I checked in"
+          }
+        }
+      }
+    },
+    "我这周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My week"
           }
         }
       }
@@ -771,6 +851,16 @@
         }
       }
     },
+    "日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S"
+          }
+        }
+      }
+    },
     "普拉提": {
       "localizations": {
         "en": {
@@ -807,6 +897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Squad this week"
+          }
+        }
+      }
+    },
+    "本周我的训练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My training this week"
           }
         }
       }
@@ -901,6 +1001,16 @@
         }
       }
     },
+    "游泳 1 · 跑步 1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swim 1 · Run 1"
+          }
+        }
+      }
+    },
     "游泳池": {
       "localizations": {
         "en": {
@@ -967,6 +1077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Basketball"
+          }
+        }
+      }
+    },
+    "累计练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained in all"
           }
         }
       }
@@ -1051,16 +1171,6 @@
         }
       }
     },
-    "请假了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Excused"
-          }
-        }
-      }
-    },
     "跑步": {
       "localizations": {
         "en": {
@@ -1107,6 +1217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not checked in yet"
+          }
+        }
+      }
+    },
+    "还没练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not yet"
           }
         }
       }

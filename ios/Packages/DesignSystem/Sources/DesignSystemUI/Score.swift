@@ -9,12 +9,15 @@ public struct Score: View {
         case hero
         case card
         case inline
+        /// A count beside its label, with no goal.
+        case small
 
         var style: TypeStyle {
             switch self {
             case .hero: TypeRamp.scoreHero
             case .card: TypeRamp.scoreCard
             case .inline: TypeRamp.scoreInline
+            case .small: TypeRamp.scoreSmall
             }
         }
     }
