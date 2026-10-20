@@ -63,11 +63,19 @@ jobs:
             exit 1
           fi
 
+      # `database-url` is the transaction pooler (port 6543), which the server shares across
+      # instances. Migrations run through the session pooler on 5432 of the same host, which keeps
+      # one connection for the whole run as the CLI needs.
+      # https://supabase.com/docs/guides/database/connecting-to-postgres
       - name: Apply new migrations
         run: |
           database_url="$(gcloud secrets versions access latest --secret database-url)"
           echo "::add-mask::$database_url"
-          npx --yes supabase@2.121.0 db push --yes --db-url "$database_url"
+          case "$database_url" in
+            *:6543/*) ;;
+            *) echo "::error::database-url should be Supabase's transaction pooler (port 6543)" && exit 1 ;;
+          esac
+          npx --yes supabase@2.121.0 db push --yes --db-url "${database_url/:6543\//:5432/}"
 
       - name: Build and push the image
         run: |
@@ -81,12 +89,16 @@ jobs:
         run: |
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
           # Optional keys: the server runs without them, with that feature off.
-          if gcloud secrets describe anthropic-api-key >/dev/null 2>&1; then
-            secrets="$secrets,ANTHROPIC_API_KEY=anthropic-api-key:latest"
-          fi
+          for key in openai-api-key anthropic-api-key; do
+            if gcloud secrets describe "$key" >/dev/null 2>&1; then
+              variable="$(tr 'a-z-' 'A-Z_' <<<"$key")"
+              secrets="$secrets,$variable=$key:latest"
+            fi
+          done
           gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$GCP_REGION" \
             --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
             --allow-unauthenticated \
+            --max-instances 3 \
             --set-secrets "$secrets" \
             --set-env-vars "SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt" \
             --update-labels "commit=$GITHUB_SHA"
