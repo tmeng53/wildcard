@@ -16,14 +16,19 @@ public final class RecapModel {
     private let epoch: Date
     private let close: @MainActor () -> Void
     let planNextWeek: @MainActor () -> Void
+    private let service: (any WeekStoryService)?
+    /// The reader nudged the organizers about the late titles.
+    private(set) var nudged = false
 
     /// - Parameters:
     ///   - close: the reader is done: the ✕, a swipe down, or a tap past the last page.
     ///   - planNextWeek: 排下周 on the last page.
+    ///   - service: where 催一下主办方 goes; nil for the sample, whose nudge only shows.
     public init(
-        story: WeekStory, cast: StoryCast, now: Date = .now, close: @escaping @MainActor () -> Void,
-        planNextWeek: @escaping @MainActor () -> Void
+        story: WeekStory, cast: StoryCast, service: (any WeekStoryService)?, now: Date = .now,
+        close: @escaping @MainActor () -> Void, planNextWeek: @escaping @MainActor () -> Void
     ) {
+        self.service = service
         self.story = story
         self.cast = cast
         self.close = close
@@ -73,5 +78,15 @@ public final class RecapModel {
     }
 
     public func dismiss() { close() }
+
+    /// 催一下主办方. It always lands as far as the reader can tell: a nudge that doesn't reach the
+    /// API changes nothing they could act on, and the hourly retry runs anyway.
+    func nudge() {
+        nudged = true
+        guard let service else { return }
+        let squad = story.squad
+        let monday = story.week.monday
+        Task { try? await service.nudge(squad: squad, week: monday) }
+    }
 }
 #endif

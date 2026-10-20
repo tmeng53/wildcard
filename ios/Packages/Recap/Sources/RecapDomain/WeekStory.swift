@@ -9,8 +9,8 @@ public struct WeekStory: Hashable, Sendable {
     public enum Status: Hashable, Sendable {
         /// The awards are in.
         case ready
-        /// The week is over but the AI run hasn't succeeded yet: the podium stays under its
-        /// cloth and only the data pages play.
+        /// The week is over but the AI run hasn't written the titles yet: their page says the
+        /// organizers ran out of money, with a button to nudge them; every other page plays.
         case pending
     }
 
@@ -48,18 +48,16 @@ public struct WeekStory: Hashable, Sendable {
         self.ending = ending
     }
 
-    /// The pages to play, in order. A page whose data is missing is left out. A pending story
-    /// opens on the pending page and plays only the data pages: no podium, no titles. The ending
-    /// always closes the story.
+    /// The pages to play, in order. A page whose data is missing is left out, and the ending
+    /// always closes the story. While the titles are pending, the pending page takes their place
+    /// and every other page plays as usual.
     public var pages: [StoryPage] {
         var ids = (order ?? PageID.defaultOrder).filter { $0 != .ending }
         ids = ids.reduce(into: []) { kept, id in if !kept.contains(id) { kept.append(id) } }
         ids.append(.ending)
-        if status == .pending {
-            ids.removeAll { $0 == .podium || $0 == .titles }
+        return ids.compactMap { id in
+            id == .titles && status == .pending ? .pending : page(id)
         }
-        let pages = ids.compactMap(page)
-        return status == .pending ? [.pending] + pages : pages
     }
 
     private func page(_ id: PageID) -> StoryPage? {
@@ -113,7 +111,7 @@ public enum PageID: String, CaseIterable, Hashable, Sendable {
 
 /// One full-screen page of the story.
 public enum StoryPage: Hashable, Sendable {
-    /// The podium under a cloth while the AI run is late: 「主办方在加班」.
+    /// The titles while the AI run is late: the organizers are out of money, nudge them.
     case pending
     case podium(Podium)
     case titles([MemberTitles])

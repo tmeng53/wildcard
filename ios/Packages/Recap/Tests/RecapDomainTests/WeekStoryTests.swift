@@ -65,9 +65,11 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(ids(try story(titles: false).pages).contains("titles") == false)
 }
 
-@Test func aPendingStoryOpensOnThePendingPageWithOnlyTheDataPages() throws {
+@Test func aPendingStoryWaitsOnlyOnItsTitles() throws {
     #expect(
-        ids(try story(.pending).pages) == ["pending", "myWeek", "hottest", "meals", "bestDisclaimer", "ending"])
+        ids(try story(.pending).pages) == [
+            "podium", "pending", "myWeek", "hottest", "meals", "bestDisclaimer", "ending",
+        ])
 }
 
 @Test func thePodiumHasAtMostTwoSidesAndTheCastStartsWithIt() throws {

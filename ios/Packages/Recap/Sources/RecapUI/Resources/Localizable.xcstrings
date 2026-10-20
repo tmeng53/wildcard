@@ -61,12 +61,12 @@
         }
       }
     },
-    "主办方在加班，过段时间再来颁奖": {
+    "主办方没经费了，正在拉赞助，一会儿再来颁奖": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The organizers are working late. Awards coming soon"
+            "value": "The organizers ran out of money. Finding sponsors, awards soon"
           }
         }
       }
@@ -131,6 +131,16 @@
         }
       }
     },
+    "催一下主办方": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nudge the organizers"
+          }
+        }
+      }
+    },
     "全队": {
       "localizations": {
         "en": {
@@ -167,6 +177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close"
+          }
+        }
+      }
+    },
+    "叫主办方充钱去了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Told the organizers to top up"
           }
         }
       }

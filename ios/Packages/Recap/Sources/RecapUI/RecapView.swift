@@ -93,7 +93,9 @@ public struct RecapView: View {
     @ViewBuilder
     private func page(_ page: StoryPage, context: PageContext) -> some View {
         switch page {
-        case .pending: PendingPage(page: context).accessibilityIdentifier("recap.page.pending")
+        case .pending:
+            PendingPage(page: context, nudged: model.nudged, nudge: model.nudge)
+                .accessibilityIdentifier("recap.page.pending")
         case .podium(let podium): PodiumPage(podium: podium, page: context).accessibilityIdentifier("recap.page.podium")
         case .titles(let rows): TitlesPage(rows: rows, page: context).accessibilityIdentifier("recap.page.titles")
         case .myWeek(let week): MyWeekPage(week: week, page: context).accessibilityIdentifier("recap.page.myWeek")

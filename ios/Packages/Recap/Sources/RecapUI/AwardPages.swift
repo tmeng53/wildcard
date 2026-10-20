@@ -169,9 +169,12 @@ struct TitlesPage: View {
     }
 }
 
-/// The awards are late: the podium stays under its cloth and the squad dozes in front of it.
+/// The titles are late: the organizers ran out of money. The squad dozes while the reader can
+/// nudge them, once; the rest of the story plays as usual.
 struct PendingPage: View {
     let page: PageContext
+    let nudged: Bool
+    let nudge: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -182,32 +185,38 @@ struct PendingPage: View {
             let spacing = (width - 2 * Space.l) / Double(max(lineup.count, 1))
             ZStack(alignment: .topLeading) {
                 Ground(height: StoryLayout.groundLow)
-                CoveredPodium()
-                    .frame(width: width - 2 * Space.s)
-                    .position(x: width / 2, y: floor - (width - 2 * Space.s) * 150 / 360 / 2 + Space.l)
                 ForEach(Array(lineup.enumerated()), id: \.element) { index, member in
                     page.character(
                         member,
                         act: Act(clip: .award(.doze), start: 0.4 + Double(index) * 0.25, seed: Double(index) * 0.4)
                     )
-                    .standing(
-                        feetAt: CGPoint(
-                            x: Space.l + spacing * (Double(index) + 0.5), y: floor + StoryLayout.groundLow / 2.2),
-                        scale: 0.36)
+                    .standing(feetAt: CGPoint(x: Space.l + spacing * (Double(index) + 0.5), y: floor), scale: 0.36)
                 }
             }
         }
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(
-                    label: Text("本周", bundle: .module), systemImage: "checkmark.seal.fill",
-                    title: Text("领奖台", bundle: .module))
-                Text("主办方在加班，过段时间再来颁奖", bundle: .module)
-                    .typeStyle(TypeRamp.title)
-                    .foregroundStyle(Color(role: .fgOnScene, in: theme))
-                    .padding(.horizontal, Space.l)
+                PageTitle(label: Text("本周", bundle: .module), title: Text("头衔", bundle: .module))
+                VStack(alignment: .leading, spacing: Space.m) {
+                    Text("主办方没经费了，正在拉赞助，一会儿再来颁奖", bundle: .module)
+                        .typeStyle(TypeRamp.title)
+                        .foregroundStyle(Color(role: .fgOnScene, in: theme))
+                    if nudged {
+                        Text("叫主办方充钱去了", bundle: .module)
+                            .typeStyle(TypeRamp.calloutEmphasis)
+                            .foregroundStyle(Color(role: .fgOnScene, in: theme))
+                            .transition(.opacity)
+                    } else {
+                        Button(action: nudge) { Text("催一下主办方", bundle: .module) }
+                            .buttonStyle(PrimaryButtonStyle(.regular))
+                            .accessibilityIdentifier("recap.nudge")
+                    }
+                }
+                .animation(.wildcard(Motion.change, reduceMotion: !page.moves), value: nudged)
+                .padding(.horizontal, Space.l)
             }
         }
+        .haptic(.pick, trigger: nudged)
     }
 }
 #endif

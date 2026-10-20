@@ -11,7 +11,7 @@ import RecapDomain
 /// for the API's, which arrive already in the reader's language.
 public enum RecapSample {
     /// - Parameters:
-    ///   - pending: the AI run hasn't succeeded yet: 「主办方在加班」 and the data pages only.
+    ///   - pending: the AI run hasn't succeeded yet: the titles wait and no page has AI words.
     ///   - missed: the squad fell short of its plans, for the other ending.
     public static func story(pending: Bool = false, missed: Bool = false) -> WeekStory {
         let ready = !pending
