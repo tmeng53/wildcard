@@ -6,12 +6,15 @@ import SwiftUI
 public struct SquadMember: Identifiable, Sendable, Hashable {
     public let id: String
     public let status: RingStatus
+    /// The person holding the phone: only their ring plays haptics as it closes.
+    public let isMe: Bool
     /// Names the member's ring for UI tests.
     public let accessibilityIdentifier: String?
 
-    public init(id: String, status: RingStatus, accessibilityIdentifier: String? = nil) {
+    public init(id: String, status: RingStatus, isMe: Bool = false, accessibilityIdentifier: String? = nil) {
         self.id = id
         self.status = status
+        self.isMe = isMe
         self.accessibilityIdentifier = accessibilityIdentifier
     }
 }
@@ -155,6 +158,9 @@ private enum SquadCardMetrics {
     static let pageContent: Double = 186 - 2 * Space.cardPadding
     /// Between rings: eight 38-point rings fit a 358-point card.
     static let ringSpacing: Double = 3
+    /// On a narrower phone (375 points), eight rings shrink to fit: 32-point rings, 1 apart.
+    static let compactAvatar: Double = Sizing.characterHead - 6
+    static let compactRingSpacing: Double = 1
     /// The second page's day circles.
     static let day: Double = 30
     static let dayGlyph: Double = 14
@@ -197,14 +203,21 @@ private struct SquadPage<Avatar: View>: View {
             Spacer(minLength: Space.s)
             ProgressBar(fraction: squad.goal > 0 ? Double(squad.done) / Double(squad.goal) : 0)
             Spacer(minLength: Space.s)
-            HStack(spacing: SquadCardMetrics.ringSpacing) {
-                ForEach(squad.members) { member in
-                    StatusRing(status: member.status) { avatar(member) }
-                        .accessibilityIdentifier(ifPresent: member.accessibilityIdentifier)
-                }
+            ViewThatFits(in: .horizontal) {
+                rings(avatarSize: Sizing.characterHead, spacing: SquadCardMetrics.ringSpacing)
+                rings(avatarSize: SquadCardMetrics.compactAvatar, spacing: SquadCardMetrics.compactRingSpacing)
             }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    private func rings(avatarSize: Double, spacing: Double) -> some View {
+        HStack(spacing: spacing) {
+            ForEach(squad.members) { member in
+                StatusRing(status: member.status, avatarSize: avatarSize, playsHaptics: member.isMe) { avatar(member) }
+                    .accessibilityIdentifier(ifPresent: member.accessibilityIdentifier)
+            }
+        }
     }
 }
 

@@ -4,8 +4,9 @@ import SwiftUI
 
 /// What a character says, in a small bubble with a tail pointing down at them: no border, no
 /// shadow. `.line` is a 口头禅 or a cheer, one line of 13/600 up to 160 wide; `.info` is what a tap
-/// on a person shows (their status, a 请假条's words, a caption), up to three lines of 13/400 up to
-/// 200 wide, with an optional title line (name · kind). White on the scene, light grey on a page.
+/// on a person shows (their status, a 请假条's words, a caption), 13/400 up to 200 wide, with an
+/// optional title line (name · kind); it wraps to show all of it, since those are words people
+/// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest. White on the scene, light grey on a page.
 /// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
 public struct SpeechBubble: View {
     public enum Kind {
@@ -20,7 +21,6 @@ public struct SpeechBubble: View {
 
     private static let lineWidth: Double = 160
     private static let infoWidth: Double = 200
-    private static let infoLines = 3
     private static let tail = CGSize(width: 12, height: 6)
     private static let verticalPadding: Double = 6
     private static let horizontalPadding: Double = 10
@@ -63,7 +63,6 @@ public struct SpeechBubble: View {
                 text
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(Self.infoLines)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding, alignment: .leading)

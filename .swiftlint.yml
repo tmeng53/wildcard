@@ -52,7 +52,7 @@ custom_rules:
     name: "Raw color"
     message: "AGENTS.md: take colors from ColorRole, never Palette, a system color or RGB numbers."
     excluded: '.*/(Packages/DesignSystem|Packages/Avatar|Tests)/.*'
-    regex: '(\bPalette\.|\bColor\.(red|orange|yellow|green|mint|teal|cyan|blue|indigo|purple|pink|brown|white|gray|black|primary|secondary)\b|\bColor\((red|white|hue):|\.sRGB\b)'
+    regex: '(\bPalette\.|\bColor\.(red|orange|yellow|green|mint|teal|cyan|blue|indigo|purple|pink|brown|white|gray|black|primary|secondary)\b|\.(foregroundStyle|foregroundColor|fill|stroke|tint|background)\(\s*\.(red|orange|yellow|green|mint|teal|cyan|blue|indigo|purple|pink|brown|white|gray|black|primary|secondary|tertiary)\b|\bColor\((red|white|hue|uiColor):|\.sRGB\b)'
     severity: error
   raw_corner_radius:
     name: "Raw corner radius"
@@ -63,11 +63,11 @@ custom_rules:
     name: "Raw spacing"
     message: "AGENTS.md: take spacing from Space, never a number (0 is fine)."
     excluded: '.*/(Packages/DesignSystem|Packages/Avatar|Tests)/.*'
-    regex: '(spacing:\s*[1-9]|\.padding\((\.[A-Za-z]+,\s*)?[1-9])'
+    regex: '(spacing:\s*-?[1-9]|\.padding\((\.[A-Za-z]+,\s*|\[[^\]]*\],\s*)?-?[1-9]|\bEdgeInsets\()'
     severity: error
   raw_text_style:
     name: "Raw text style"
-    message: "AGENTS.md: set type with .typeStyle(TypeRamp...), never a system text style or a font size."
+    message: "AGENTS.md: set text with .typeStyle(TypeRamp...), never a system text style (an SF Symbol may take .system(size:))."
     excluded: '.*/(Packages/DesignSystem|Tests)/.*'
     regex: '\.font\(\.(largeTitle|title|title2|title3|headline|subheadline|body|callout|footnote|caption|caption2)\b'
     severity: error

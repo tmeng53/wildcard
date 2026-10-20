@@ -40,7 +40,7 @@ One meaningful tap per moment, never a buzz (Apple HIG, Playing haptics). Screen
 | `pick` | Picking an option, swatch, tab or style |
 | `appear` | The check-in capsules opening, drafts landing |
 | `refuse` | Tapping a kind that can't be used today |
-| `tick`, `checkIn` | A status ring drawing (ticks), then closing (one heavy hit) |
+| `tick`, `checkIn` | My own status ring drawing (ticks), then closing (one heavy hit, the check-in's only one) |
 | `score` | The score turning over |
 | `land` | The character landing after 上场 |
 | `reaction` | A teammate's reaction arriving |

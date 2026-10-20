@@ -347,7 +347,7 @@ private struct PostButton: View {
 
     var body: some View {
         Button {
-            guard let disclaimer else { return }
+            guard let disclaimer, !model.isSending else { return }
             Task { await model.post(.disclaimer(disclaimer)) }
         } label: {
             ZStack {
@@ -358,7 +358,9 @@ private struct PostButton: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
-        .disabled(model.isSending || disclaimer == nil)
+        // Still enabled while sending, so it stays the accent color under its spinner; the action
+        // ignores taps until the post is done.
+        .disabled(disclaimer == nil)
         .accessibilityIdentifier("disclaimer.post")
     }
 }

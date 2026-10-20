@@ -72,7 +72,7 @@ struct PersonaCarousel: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: isSelected)
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isSelected)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("editor.persona.\(persona.rawValue)")
     }

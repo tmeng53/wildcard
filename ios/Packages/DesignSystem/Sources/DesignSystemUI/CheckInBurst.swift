@@ -14,7 +14,7 @@ public struct CheckInBurst: View {
     private let unavailable: Set<CheckInKind>
     private let identifierPrefix: String
     private let onPick: (CheckInKind) -> Void
-    @State private var picked: CheckInKind?
+    @State private var picks = 0
 
     /// `identifierPrefix` names the button `<prefix>.checkin` and each capsule
     /// `<prefix>.capsule.<kind>` for UI tests.
@@ -34,7 +34,7 @@ public struct CheckInBurst: View {
                 if isOpen {
                     ForEach(Array(CheckInKind.allCases.enumerated()), id: \.element) { index, kind in
                         BurstCapsule(kind: kind, isAvailable: !unavailable.contains(kind)) {
-                            picked = kind
+                            picks += 1
                             withAnimation(.wildcard(Motion.sheet.exit, reduceMotion: reduceMotion)) { isOpen = false }
                             onPick(kind)
                         }
@@ -50,7 +50,7 @@ public struct CheckInBurst: View {
         .frame(height: Sizing.primaryControl)
         // Haptics only where the spec puts them: the burst opening and picking a type.
         .haptic(.appear, trigger: isOpen) { _, opened in opened }
-        .haptic(.pick, trigger: picked)
+        .haptic(.pick, trigger: picks)
     }
 
     /// Out of the button along the arc, staggered; back in faster, in reverse order.

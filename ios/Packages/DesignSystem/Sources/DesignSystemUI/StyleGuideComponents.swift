@@ -11,8 +11,8 @@ struct ButtonSection: View {
     private var tabs: [TabBarItem<Int>] {
         [
             TabBarItem(id: 0, title: Text("今天", bundle: .module), systemImage: "sun.max"),
-            TabBarItem(id: 1, title: Text("小队", bundle: .module), systemImage: "person.3"),
-            TabBarItem(id: 2, title: Text("战报", bundle: .module), systemImage: "trophy"),
+            TabBarItem(id: 1, title: Text("动态", bundle: .module), systemImage: "bubble.left.and.bubble.right"),
+            TabBarItem(id: 2, title: Text("出赛表", bundle: .module), systemImage: "calendar"),
             TabBarItem(id: 3, title: Text("我", bundle: .module), systemImage: "person.crop.circle"),
         ]
     }
@@ -264,7 +264,7 @@ struct StatusSection: View {
     }
 
     private var members: [SquadMember] {
-        [SquadMember(id: "me", status: mine, accessibilityIdentifier: "styleguide.ring.mine")]
+        [SquadMember(id: "me", status: mine, isMe: true, accessibilityIdentifier: "styleguide.ring.mine")]
             + squad.enumerated().map { SquadMember(id: "mate\($0.offset)", status: $0.element) }
     }
 
@@ -372,7 +372,7 @@ struct StageSection: View {
                 }
             }
             .frame(height: 300)
-            GuideGroup(Text("点人看状态：最多三行", bundle: .module)) {
+            GuideGroup(Text("点人看状态：整段显示", bundle: .module)) {
                 HStack(alignment: .bottom, spacing: Space.s) {
                     SpeechBubble(
                         Text("腿还在酸，今天先躺平，明天一定练。", bundle: .module),

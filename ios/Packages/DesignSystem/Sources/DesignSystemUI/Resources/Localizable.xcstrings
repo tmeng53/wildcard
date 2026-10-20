@@ -271,6 +271,16 @@
         }
       }
     },
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup"
+          }
+        }
+      }
+    },
     "分隔线、未完成": {
       "localizations": {
         "en": {
@@ -317,6 +327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Strength"
+          }
+        }
+      }
+    },
+    "动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feed"
           }
         }
       }
@@ -667,16 +687,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "What I picked: hairline, then an accent border and a check"
-          }
-        }
-      }
-    },
-    "战报": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recap"
           }
         }
       }
@@ -1041,12 +1051,12 @@
         }
       }
     },
-    "点人看状态：最多三行": {
+    "点人看状态：整段显示": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a person: up to three lines"
+            "value": "Tap a person: their status, all of it"
           }
         }
       }

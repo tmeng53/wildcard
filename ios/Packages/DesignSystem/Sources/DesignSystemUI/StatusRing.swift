@@ -14,23 +14,32 @@ public enum RingStatus: Sendable, Hashable {
 
 /// An avatar's ring for today, like Apple Fitness: a grey track, drawn closed in the scene's ring
 /// color from 12 o'clock once the person checks in (练了 or a 请假条); a rest day keeps the grey
-/// ring and gets a small moon. When the ring turns `done` while on screen it draws itself in, fast then slow, and the
-/// avatar pops once: light ticks while it draws, one heavy hit as it closes. With Reduce Motion
-/// on, the closed ring just appears, with the hit.
+/// ring and gets a small moon. When the ring turns `done` while on screen it draws itself in, fast
+/// then slow, and the avatar pops once. Only the ring of the person holding the phone plays
+/// haptics (`playsHaptics`): light ticks while it draws, one heavy hit as it closes, which is the
+/// check-in's hit, so a screen showing it plays no other. With Reduce Motion on, the closed ring
+/// just appears, with the hit.
 public struct StatusRing<Avatar: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let status: RingStatus
     private let avatarSize: Double
+    private let playsHaptics: Bool
     private let avatar: Avatar
     @State private var drawn: Double
     @State private var pops = 0
+    /// Times the ring has turned `done` while on screen; its haptics play for each.
+    @State private var draws = 0
     @State private var ticks = 0
     @State private var closes = 0
 
-    public init(status: RingStatus, avatarSize: Double = Sizing.characterHead, @ViewBuilder avatar: () -> Avatar) {
+    public init(
+        status: RingStatus, avatarSize: Double = Sizing.characterHead, playsHaptics: Bool = false,
+        @ViewBuilder avatar: () -> Avatar
+    ) {
         self.status = status
         self.avatarSize = avatarSize
+        self.playsHaptics = playsHaptics
         self.avatar = avatar()
         _drawn = State(initialValue: status == .done ? 1 : 0)
     }
@@ -57,7 +66,10 @@ public struct StatusRing<Avatar: View>: View {
                 } keyframes: { _ in
                     KeyframeTrack {
                         CubicKeyframe(1, duration: Motion.ringFill)
-                        SpringKeyframe(Motion.ringPopScale, duration: 0.12, spring: .snappy)
+                        SpringKeyframe(
+                            Motion.ringPopScale, duration: 0.12,
+                            spring: Spring(
+                                response: Motion.press.response, dampingRatio: Motion.press.dampingFraction))
                         SpringKeyframe(
                             1, duration: Motion.celebrate.response,
                             spring: Spring(
@@ -80,14 +92,18 @@ public struct StatusRing<Avatar: View>: View {
                 drawn = 0
                 return
             }
+            draws += 1
             if reduceMotion {
                 drawn = 1
-                closes += 1
             } else {
                 withAnimation(.timingCurve(0.2, 0.8, 0.3, 1, duration: Motion.ringFill)) { drawn = 1 }
                 pops += 1
-                Task { await playDrawing() }
             }
+        }
+        // Keyed by the status too, so a ring that opens again mid-draw cancels its haptics.
+        .task(id: [AnyHashable(status), AnyHashable(draws)]) {
+            guard playsHaptics, status == .done, draws > 0 else { return }
+            await playHaptics()
         }
         .haptic(.tick, trigger: ticks)
         .haptic(.checkIn, trigger: closes)
@@ -95,15 +111,18 @@ public struct StatusRing<Avatar: View>: View {
         .accessibilityValue(statusLabel)
     }
 
-    /// The ticks spread across the drawing, then the hit as the ring closes.
+    /// The ticks spread across the drawing, then the hit as the ring closes; with Reduce Motion,
+    /// just the hit. Stops when the task is cancelled.
     @MainActor
-    private func playDrawing() async {
+    private func playHaptics() async {
         let step = Motion.ringFill / Double(Haptic.ringTicks + 1)
-        for _ in 0..<Haptic.ringTicks {
-            try? await Task.sleep(for: .seconds(step))
+        for _ in 0..<(reduceMotion ? 0 : Haptic.ringTicks) {
+            guard (try? await Task.sleep(for: .seconds(step))) != nil else { return }
             ticks += 1
         }
-        try? await Task.sleep(for: .seconds(step))
+        if !reduceMotion {
+            guard (try? await Task.sleep(for: .seconds(step))) != nil else { return }
+        }
         closes += 1
     }
 
