@@ -9,12 +9,26 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface Profiles {
   catchphrase: string | null;
   created_at: Generated<Timestamp>;
+  look: Json | null;
   member_id: string;
+  nickname: string | null;
   time_zone: string;
   updated_at: Generated<Timestamp>;
 }
