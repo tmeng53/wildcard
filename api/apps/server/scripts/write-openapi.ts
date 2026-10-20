@@ -57,6 +57,10 @@ const app = createApp({
   members: createMembers({ store: createPostgresProfileStore(db) }),
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  weeklyAwards: {
+    awards: { give: unused, find: unused, claimWinners: unused, forget: unused },
+    clock: unused,
+  },
   log: createLog(unused),
   admin: {
     admins: () => ({ requireAdmin: unused, logChange: unused, listLog: unused }),

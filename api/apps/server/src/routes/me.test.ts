@@ -21,6 +21,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 async function send(
   path: string,
@@ -56,6 +57,7 @@ async function send(
     members: createMembers({ store: createPostgresProfileStore(db) }),
     push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog(() => undefined),
     admin: adminOn(),
   });

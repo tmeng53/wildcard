@@ -175,6 +175,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
     func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    func getSquadWeekStory(_ input: Operations.GetSquadWeekStory.Input) async throws -> Operations.GetSquadWeekStory.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -532,6 +539,21 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    public func getSquadWeekStory(
+        path: Operations.GetSquadWeekStory.Input.Path,
+        headers: Operations.GetSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeekStory.Output {
+        try await getSquadWeekStory(Operations.GetSquadWeekStory.Input(
+            path: path,
+            headers: headers
         ))
     }
 }

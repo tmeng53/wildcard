@@ -35,6 +35,7 @@ import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
@@ -99,6 +100,7 @@ beforeAll(async () => {
           disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
           push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
           photos,
+          weeklyAwards: unusedWeeklyAwards,
           log: createLog(() => undefined),
           admin: {
             ...admin,

@@ -1,3 +1,5 @@
+import { MemberId, type WeeklyAwards } from '@wildcard/weekly-awards';
+
 import { AppleAuthorizationCodeRequiredError } from '../errors.js';
 import type { Log } from '../log.js';
 import type { Accounts, PhotoStorage, RevokeAppleSignIn, UserId } from '../ports.js';
@@ -7,6 +9,8 @@ export interface DeleteAccountDependencies {
   readonly photos: PhotoStorage;
   /** Undefined until the Sign in with Apple key is configured; then Apple isn't told. */
   readonly revokeAppleSignIn: RevokeAppleSignIn | undefined;
+  /** The weekly awards, which keep members by id inside each squad's stored awards. */
+  readonly weeklyAwards: { readonly awards: Pick<WeeklyAwards, 'forget'> };
   readonly log: Log;
 }
 
@@ -14,7 +18,8 @@ export interface DeleteAccountDependencies {
  * Deletes a member's account and everything that is theirs, as the App Store requires: their
  * Sign in with Apple grant, their photo files, then their user, which takes their profile,
  * check-ins (with their photos' records and audiences) and squad memberships with it in the
- * database. Squads they made stay with the other members. Each step is safe to repeat, so a
+ * database. Their titles come out of every squad's weekly awards first, since those keep them by
+ * id inside stored JSON. Squads they made stay with the other members. Each step is safe to repeat, so a
  * failed deletion is retried from the start; Apple goes first because it needs a fresh code
  * the app can only get while the member is still signed in.
  */
@@ -34,6 +39,7 @@ export async function deleteAccount(
     throw new AppleAuthorizationCodeRequiredError();
   }
   await deps.photos.deleteAllOf(member);
+  await deps.weeklyAwards.awards.forget(MemberId.parse(member));
   await deps.accounts.deleteUser(member);
   deps.log.info('account deleted', { member });
 }

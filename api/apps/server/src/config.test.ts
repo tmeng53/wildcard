@@ -36,6 +36,7 @@ describe('readConfig', () => {
       adminPasswordSignIn: false,
       proxyHops: 1,
       languageModel: undefined,
+      awardsModel: undefined,
       appleSignInKey: undefined,
       apns: undefined,
     });
@@ -57,6 +58,20 @@ describe('readConfig', () => {
   it('turns drafts off while the chosen provider has no key, and refuses an unknown one', () => {
     expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModel).toBeUndefined();
     expect(() => readConfig({ ...base, LLM_PROVIDER: 'gemini' })).toThrow('LLM_PROVIDER');
+  });
+
+  it('writes the weekly awards with Claude Sonnet 5.5 unless told otherwise, apart from drafts', () => {
+    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
+    expect(readConfig({ ...base, ...keys }).awardsModel).toStrictEqual({
+      provider: 'anthropic',
+      apiKey: 'sk-ant',
+      model: 'claude-sonnet-5-5',
+    });
+    expect(
+      readConfig({ ...base, ...keys, AWARDS_LLM_PROVIDER: 'openai', AWARDS_LLM_MODEL: 'gpt-5.4' })
+        .awardsModel,
+    ).toStrictEqual({ provider: 'openai', apiKey: 'sk-openai', model: 'gpt-5.4' });
+    expect(readConfig({ ...base, OPENAI_API_KEY: 'sk-openai' }).awardsModel).toBeUndefined();
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {

@@ -33,6 +33,9 @@
     },
     {
       "path": "../../packages/squads"
+    },
+    {
+      "path": "../../packages/weekly-awards"
     }
   ]
 }

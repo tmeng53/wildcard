@@ -18,6 +18,7 @@ import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
 import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
+import { unusedWeeklyAwards } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -62,6 +63,7 @@ describe('openapi.json', () => {
       members: createMembers({ store: createPostgresProfileStore(db) }),
       push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+      weeklyAwards: unusedWeeklyAwards,
       log: createLog(() => undefined),
       admin: {
         admins: () => ({

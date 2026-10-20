@@ -6,6 +6,7 @@ import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
+import type { WeeklyAwards } from '@wildcard/weekly-awards';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
@@ -32,6 +33,7 @@ import { photoUploads } from './routes/photo-uploads.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
+import { weekStory } from './routes/week-story.js';
 import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
@@ -50,6 +52,8 @@ export interface AppDependencies {
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
+  /** Each squad's weekly awards, and the clock that says when they are due. */
+  readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   readonly log: Log;
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
@@ -94,6 +98,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', weekSummary(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
+  app.route('/', weekStory({ ...deps, ...deps.weeklyAwards }));
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
   app.route(
     '/',
