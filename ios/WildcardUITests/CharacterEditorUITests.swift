@@ -67,17 +67,12 @@ final class CharacterEditorUITests: XCTestCase {
         settle()
         keepScreenshot(named: "29-editor-face")
 
-        swipeUpInChoices(app)
         let smirk = app.buttons["editor.tile.mouth.smirk"]
-        XCTAssertTrue(smirk.waitForExistence(timeout: Self.wait), "no 坏笑 tile")
+        scrollUntilHittable(smirk, in: app)
         smirk.tap()
         waitUntilSelected(smirk, "picking 坏笑 didn't select it")
-        // The grid only makes the tiles in view, so swipe until 眼镜 comes up.
         let glasses = app.buttons["editor.tile.glasses.round"]
-        for _ in 0..<4 where !glasses.isHittable {
-            swipeUpInChoices(app)
-        }
-        XCTAssertTrue(glasses.waitForExistence(timeout: Self.wait), "no 圆框 tile")
+        scrollUntilHittable(glasses, in: app)
         XCTAssertTrue(app.buttons["editor.tile.glasses.none"].isSelected, "the sample wears glasses")
         glasses.tap()
         waitUntilSelected(glasses, "picking 圆框 didn't select it")
@@ -177,10 +172,16 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: timeout), .completed, message)
     }
 
-    /// Scrolls the choices under the tabs, low on the screen and clear of the stage above.
-    private func swipeUpInChoices(_ app: XCUIApplication) {
-        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.82))
-        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+    /// Scrolls the choices a little at a time until `element` can be tapped: the grid only
+    /// makes the tiles in view, and one under the done bar can't be tapped. The drag starts
+    /// low on the screen, in the choices and clear of the stage above.
+    private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
+        for _ in 0..<8 where !(element.exists && element.isHittable) {
+            start.press(forDuration: 0.05, thenDragTo: end)
+        }
+        XCTAssertTrue(element.exists && element.isHittable, "\(element.identifier) never scrolled into view")
     }
 
     /// Lets thumbnails build and the character's one move finish before a screenshot.
