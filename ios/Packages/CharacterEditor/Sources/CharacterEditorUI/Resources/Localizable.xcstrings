@@ -51,6 +51,16 @@
         }
       }
     },
+    "不戴眼镜": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No glasses"
+          }
+        }
+      }
+    },
     "不拿": {
       "localizations": {
         "en": {
@@ -81,6 +91,16 @@
         }
       }
     },
+    "丹凤眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Almond eyes"
+          }
+        }
+      }
+    },
     "人": {
       "localizations": {
         "en": {
@@ -107,6 +127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rabbit"
+          }
+        }
+      }
+    },
+    "八字眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worried"
           }
         }
       }
@@ -191,6 +221,16 @@
         }
       }
     },
+    "咧嘴笑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grin"
+          }
+        }
+      }
+    },
     "哈士奇": {
       "localizations": {
         "en": {
@@ -207,6 +247,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dumbbell"
+          }
+        }
+      }
+    },
+    "哦": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oh"
+          }
+        }
+      }
+    },
+    "嘴巴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouth"
+          }
+        }
+      }
+    },
+    "困困眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleepy eyes"
+          }
+        }
+      }
+    },
+    "圆框": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round frames"
+          }
+        }
+      }
+    },
+    "圆眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round eyes"
+          }
+        }
+      }
+    },
+    "坏笑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smirk"
           }
         }
       }
@@ -271,6 +371,16 @@
         }
       }
     },
+    "微笑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smile"
+          }
+        }
+      }
+    },
     "性格": {
       "localizations": {
         "en": {
@@ -291,12 +401,42 @@
         }
       }
     },
+    "挑眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arched"
+          }
+        }
+      }
+    },
     "撤销": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Undo"
+          }
+        }
+      }
+    },
+    "方框": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Square frames"
+          }
+        }
+      }
+    },
+    "星星眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starry eyes"
           }
         }
       }
@@ -391,6 +531,16 @@
         }
       }
     },
+    "没有眉毛": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No brows"
+          }
+        }
+      }
+    },
     "波波头": {
       "localizations": {
         "en": {
@@ -401,12 +551,32 @@
         }
       }
     },
+    "浓眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bold"
+          }
+        }
+      }
+    },
     "淡人": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Deadpan"
+          }
+        }
+      }
+    },
+    "淡眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soft"
           }
         }
       }
@@ -461,6 +631,16 @@
         }
       }
     },
+    "猫猫嘴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cat mouth"
+          }
+        }
+      }
+    },
     "玳瑁": {
       "localizations": {
         "en": {
@@ -477,6 +657,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jersey"
+          }
+        }
+      }
+    },
+    "眉毛": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brows"
+          }
+        }
+      }
+    },
+    "眼睛": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eyes"
+          }
+        }
+      }
+    },
+    "眼镜": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glasses"
           }
         }
       }
@@ -511,6 +721,16 @@
         }
       }
     },
+    "笑眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smiling eyes"
+          }
+        }
+      }
+    },
     "第 %lld 步，共 %lld 步": {
       "localizations": {
         "en": {
@@ -527,6 +747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Leggings"
+          }
+        }
+      }
+    },
+    "红脸蛋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flushed"
           }
         }
       }
@@ -551,12 +781,62 @@
         }
       }
     },
+    "脸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face"
+          }
+        }
+      }
+    },
+    "脸蛋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheeks"
+          }
+        }
+      }
+    },
+    "脸蛋什么都不加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing on the cheeks"
+          }
+        }
+      }
+    },
+    "腮红": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blush"
+          }
+        }
+      }
+    },
     "荷兰兔": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Dutch rabbit"
+          }
+        }
+      }
+    },
+    "豆豆眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dot eyes"
           }
         }
       }
@@ -627,6 +907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "雀斑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Freckles"
           }
         }
       }

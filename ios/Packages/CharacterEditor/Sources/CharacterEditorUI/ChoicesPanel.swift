@@ -35,6 +35,26 @@ struct ChoicesPanel: View {
                     TileGrid(model: model, slot: "hair", variants: variants("hair"), offersNothing: false)
                 }
             }
+        case .face:
+            scroll {
+                ChoiceSection(label: Text("眼睛", bundle: .module)) {
+                    SwatchRow(model: model, slot: "eyes")
+                    TileGrid(model: model, slot: "eyes", variants: variants("eyes"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("眉毛", bundle: .module)) {
+                    SwatchRow(model: model, slot: "brows")
+                    TileGrid(model: model, slot: "brows", variants: variants("brows"), offersNothing: true)
+                }
+                ChoiceSection(label: Text("嘴巴", bundle: .module)) {
+                    TileGrid(model: model, slot: "mouth", variants: variants("mouth"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("脸蛋", bundle: .module)) {
+                    TileGrid(model: model, slot: "cheeks", variants: variants("cheeks"), offersNothing: true)
+                }
+                ChoiceSection(label: Text("眼镜", bundle: .module)) {
+                    TileGrid(model: model, slot: "glasses", variants: variants("glasses"), offersNothing: true)
+                }
+            }
         case .outfit:
             scroll {
                 ChoiceSection(label: Text("帽子", bundle: .module)) {
@@ -89,8 +109,8 @@ private struct ChoiceSection<Content: View>: View {
     }
 }
 
-/// Four picture tiles a row: the character in each choice, and first a 不戴 or 不拿 tile when
-/// the slot can be left empty.
+/// Four picture tiles a row: the character in each choice, and first a tile that takes the
+/// piece off when the slot can be left empty.
 private struct TileGrid: View {
     let model: CharacterEditorModel
     let slot: Slot
@@ -104,7 +124,7 @@ private struct TileGrid: View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.s), count: 4), spacing: Space.s) {
             ForEach(choices, id: \.self) { variant in
                 PictureTile(
-                    variant.map(EditorNames.variant) ?? EditorNames.nothing(in: slot),
+                    variant.map { EditorNames.variant($0, in: slot) } ?? EditorNames.nothing(in: slot),
                     isSelected: model.draft.picks.variants[slot] == variant,
                     action: { model.pick(variant, for: slot) },
                     picture: { picture(variant) }

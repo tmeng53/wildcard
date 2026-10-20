@@ -20,9 +20,15 @@ public struct CharacterDraft: Hashable, Sendable {
     /// The most characters a nickname may have.
     public static let nicknameLimit = 12
 
+    /// A slot the look leaves out starts on what the rig draws there, so the screen shows it
+    /// picked.
     public init(catalog: Catalog, look: Outfit, persona: Persona, nickname: String) {
         self.catalog = catalog
-        picks = look
+        var picks = look
+        for (slot, variant) in catalog.defaults where picks.variants[slot] == nil {
+            picks.variants[slot] = variant
+        }
+        self.picks = picks
         self.persona = persona
         self.nickname = String(nickname.prefix(Self.nicknameLimit))
     }
@@ -111,9 +117,10 @@ public struct CharacterDraft: Hashable, Sendable {
         commit(Self.randomLook(from: catalog, using: &generator))
     }
 
-    /// A random look: a person a bit less than half the time, else any animal; hair, top and
-    /// bottom always; a hat about a third of the time, a prop most of the time; and most
-    /// recolorable pieces in one of their swatches.
+    /// A random look: a person a bit less than half the time, else any animal; hair, a face,
+    /// top and bottom always; brows nearly always, cheeks half the time and glasses now and
+    /// then; a hat about a third of the time, a prop most of the time; and most recolorable
+    /// pieces in one of their swatches, with the brows in the hair's color.
     public static func randomLook(from catalog: Catalog, using generator: inout some RandomNumberGenerator) -> Outfit {
         let people = catalog.species.filter(\.wearsHair).flatMap(\.bodies)
         let animals = catalog.species.filter { !$0.wearsHair }.flatMap(\.bodies)
@@ -125,6 +132,12 @@ public struct CharacterDraft: Hashable, Sendable {
         look.variants["hair"] = catalog.variants["hair"]?.randomElement(using: &generator)
         look.variants["top"] = catalog.variants["top"]?.randomElement(using: &generator)
         look.variants["bottom"] = catalog.variants["bottom"]?.randomElement(using: &generator)
+        look.variants["eyes"] = catalog.variants["eyes"]?.randomElement(using: &generator)
+        look.variants["mouth"] = catalog.variants["mouth"]?.randomElement(using: &generator)
+        for (slot, chance): (Slot, Double) in [("brows", 0.9), ("cheeks", 0.5), ("glasses", 0.15)]
+        where Double.random(in: 0..<1, using: &generator) < chance {
+            look.variants[slot] = catalog.variants[slot]?.randomElement(using: &generator)
+        }
         if Double.random(in: 0..<1, using: &generator) < 0.35 {
             look.variants["hat"] = catalog.variants["hat"]?.randomElement(using: &generator)
         }
@@ -134,6 +147,11 @@ public struct CharacterDraft: Hashable, Sendable {
         for slot: Slot in ["body", "hair", "top", "bottom"] {
             guard let variant = look.variants[slot], Double.random(in: 0..<1, using: &generator) < 0.8 else { continue }
             look.colors[slot] = catalog.swatches(for: slot, wearing: variant).randomElement(using: &generator)
+        }
+        if let brows = look.variants["brows"], let hair = look.colors["hair"],
+            catalog.swatches(for: "brows", wearing: brows).contains(hair)
+        {
+            look.colors["brows"] = hair
         }
         return look
     }
