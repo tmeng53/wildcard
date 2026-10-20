@@ -99,3 +99,8 @@ let doudou = member(5)
     let post = FeedPost(checkIn: checkIn(1, by: author, on: "2026-10-20"), replies: replies)
     #expect(post.replies.isEmpty)
 }
+
+@Test func eachBarEmojiPlaysItsMoveAndAnyOtherHops() {
+    let moves = ["❤️", "💪", "😂", "🤤", "😮", "😡", "🦖", "💪🏽"].map { MoveID(emoji($0)).id }
+    #expect(moves == ["happy-hop", "pump", "laugh-bend", "drool", "shocked", "pout", "happy-hop", "pump"])
+}

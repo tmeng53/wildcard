@@ -30,17 +30,29 @@ extension CheckIn {
 }
 
 /// A move from the character's move library, by id, which the author's character plays when a
-/// teammate responds. The server picks the move for an emoji; the ids are data, so a new move
-/// needs no change here, and a player that doesn't know one plays `happyHop`.
+/// teammate responds. A player that doesn't know an id plays `happyHop`.
 public struct MoveID: Hashable, Sendable, CustomStringConvertible {
-    /// The small hop, arms up, played when the server's pick is late or unknown.
+    /// A small hop, arms up: ❤️, and any emoji without a move of its own.
     public static let happyHop = MoveID("happy-hop")
     /// Waving the slip in thanks, for any reply on a 请假条.
     public static let wave = MoveID("wave")
 
+    /// The emoji that have a move of their own. The rest hop.
+    static let byEmoji: [String: MoveID] = [
+        "💪": MoveID("pump"), "😂": MoveID("laugh-bend"), "🤤": MoveID("drool"), "😮": MoveID("shocked"),
+        "😡": MoveID("pout"),
+    ]
+
     public let id: String
 
     public init(_ id: String) { self.id = id }
+
+    /// The move an emoji makes the author's character play, whatever its skin tone.
+    public init(_ emoji: Emoji) {
+        var plain = String.UnicodeScalarView()
+        plain.append(contentsOf: emoji.text.unicodeScalars.filter { !(0x1F3FB...0x1F3FF).contains($0.value) })
+        self = Self.byEmoji[String(plain)] ?? .happyHop
+    }
 
     public var description: String { id }
 }

@@ -53,8 +53,6 @@ actor FakeSource: FeedSource {
     private(set) var calls: [Call] = []
     var posts: [FeedPost]
     var failure: FeedError?
-    /// The move the server picks for every emoji.
-    var move: MoveID? = MoveID("pose")
     private var holding = false
     private var held: [CheckedContinuation<Void, Never>] = []
 
@@ -64,7 +62,6 @@ actor FakeSource: FeedSource {
     }
 
     func fail(with error: FeedError?) { failure = error }
-    func pick(_ move: MoveID?) { self.move = move }
     func hold() { holding = true }
     func release() {
         holding = false
@@ -79,11 +76,10 @@ actor FakeSource: FeedSource {
         return posts.filter { (first...last).contains($0.checkIn.day) }
     }
 
-    func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(FeedError) -> MoveID? {
+    func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(FeedError) {
         calls.append(.reaction(emoji, checkIn))
         await wait()
         if let failure { throw failure }
-        return emoji == nil ? nil : move
     }
 
     func setReply(_ kind: ReplyKind?, on checkIn: CheckInID) async throws(FeedError) {

@@ -29,21 +29,12 @@ public final class FeedStore {
     public private(set) var failure: FeedError?
     /// Whether scrolling further back can still find posts.
     public private(set) var hasEarlier = true
-    /// The move each post's author plays next. A new cue, told apart by its serial, plays once.
-    public private(set) var cues: [CheckInID: MoveCue] = [:]
-
-    /// How long the screen waits for the server's move before calling `moveIsLate(for:on:)`.
-    public static let moveWait: Double = 2
 
     /// The posts as the server last sent them, with the responses the server took since.
     private var loaded: [CheckInID: FeedPost] = [:]
     /// The member's responses not yet taken by the server, latest wish per post.
     private var wishes: [Wish.Key: Wish] = [:]
     private var sending: Set<Wish.Key> = []
-    /// Counts taps and cues, so each gets its own serial.
-    private var serial = 0
-    /// Taps whose move has played or will never come, so a late answer plays nothing.
-    private var answered: Set<Int> = []
     /// The days loaded so far, from the earliest.
     private var range: FeedRange?
     /// Weeks in a row that came back empty while going further back.
@@ -118,41 +109,24 @@ public final class FeedStore {
 
     // MARK: - Responding
 
-    /// The member reacts to a teammate's post: shown at once, sent by `sendResponses()`. The
-    /// screen pops the tap's emoji straight away; the author's move follows in `cues` once the
-    /// server picks it, or, if it hasn't after `moveWait` seconds, when the screen calls
-    /// `moveIsLate(for:on:)`.
-    public func react(_ gesture: ReactionGesture, on id: CheckInID) throws(FeedError) -> ReactionTap {
+    /// The member reacts to a teammate's post: shown at once, sent by `sendResponses()`. Returns
+    /// the move the author's character plays, nil when the member took their emoji back.
+    @discardableResult
+    public func react(_ gesture: ReactionGesture, on id: CheckInID) throws(FeedError) -> MoveID? {
         guard let post = post(id) else { throw .postGone }
         let change = try post.reacting(gesture, by: viewer, at: now())
-        serial += 1
-        let tap = ReactionTap(emoji: change.now, serial: serial)
-        if change.changed {
-            wishes[.init(post: id, channel: .reaction)] = .reaction(change.now, since: now(), serial: serial)
-        }
-        // Nothing new to send, or taken back: no move to wait for.
-        if !change.changed || change.now == nil { answered.insert(serial) }
-        return tap
-    }
-
-    /// The server hasn't picked the move for `tap` in time: the author's character plays
-    /// `MoveID.happyHop`, and the server's pick is ignored when it comes.
-    public func moveIsLate(for tap: ReactionTap, on id: CheckInID) {
-        guard !answered.contains(tap.serial) else { return }
-        cue(.happyHop, on: id, serial: tap.serial)
+        if change.changed { wishes[.init(post: id, channel: .reaction)] = .reaction(change.now, since: now()) }
+        return change.now.map(MoveID.init)
     }
 
     /// The member taps a reply on a teammate's 请假条: shown at once, sent by `sendResponses()`.
-    /// A new reply waves the slip in thanks at once.
-    public func reply(_ kind: ReplyKind, on id: CheckInID) throws(FeedError) {
+    /// Returns the move the author's character plays, nil when the member took their reply back.
+    @discardableResult
+    public func reply(_ kind: ReplyKind, on id: CheckInID) throws(FeedError) -> MoveID? {
         guard let post = post(id) else { throw .postGone }
         let change = try post.replying(kind, by: viewer, at: now())
-        guard change.changed else { return }
-        wishes[.init(post: id, channel: .reply)] = .reply(change.now, since: now())
-        if change.now != nil {
-            serial += 1
-            cue(.wave, on: id, serial: serial)
-        }
+        if change.changed { wishes[.init(post: id, channel: .reply)] = .reply(change.now, since: now()) }
+        return change.now.map { _ in .wave }
     }
 
     /// Sends every response not yet sent, each post's latest wish last. Safe to call any time:
@@ -172,30 +146,18 @@ public final class FeedStore {
         while let wish = wishes[key] {
             do {
                 switch wish {
-                case .reaction(let emoji, _, let serial):
-                    let move = try await source.setReaction(emoji, on: key.post)
-                    // A newer tap already on its way plays its own move instead.
-                    if emoji != nil, !answered.contains(serial), wishes[key] == wish {
-                        cue(move ?? .happyHop, on: key.post, serial: serial)
-                    }
-                    answered.insert(serial)
+                case .reaction(let emoji, _): try await source.setReaction(emoji, on: key.post)
                 case .reply(let kind, _): try await source.setReply(kind, on: key.post)
                 }
                 if let post = loaded[key.post] { loaded[key.post] = wish.applied(to: post, by: viewer) }
                 if wishes[key] == wish { wishes[key] = nil }
             } catch {
-                // What the server has stays; the post shows it again, and no move plays for it.
-                if case .reaction(_, _, let serial) = wish { answered.insert(serial) }
+                // What the server has stays; the post shows it again.
                 wishes[key] = nil
                 if error == .postGone { loaded[key.post] = nil }
                 failure = error
             }
         }
-    }
-
-    private func cue(_ move: MoveID, on id: CheckInID, serial: Int) {
-        answered.insert(serial)
-        cues[id] = MoveCue(move: move, serial: serial)
     }
 
     private func showing(_ post: FeedPost) -> FeedPost {
@@ -207,19 +169,6 @@ public final class FeedStore {
     }
 }
 
-/// A reaction the member just made: the emoji to pop (nil when they took theirs back), and the
-/// serial its move will carry in `FeedStore.cues`.
-public struct ReactionTap: Hashable, Sendable {
-    public let emoji: Emoji?
-    public let serial: Int
-}
-
-/// A move for a post's author to play.
-public struct MoveCue: Hashable, Sendable {
-    public let move: MoveID
-    public let serial: Int
-}
-
 /// A response the member wants on a post: their reaction or reply, or none.
 private enum Wish: Hashable, Sendable {
     enum Channel: CaseIterable { case reaction, reply }
@@ -229,14 +178,13 @@ private enum Wish: Hashable, Sendable {
         let channel: Channel
     }
 
-    /// `serial` is the tap's, to match the server's move to it.
-    case reaction(Emoji?, since: Timestamp, serial: Int)
+    case reaction(Emoji?, since: Timestamp)
     case reply(ReplyKind?, since: Timestamp)
 
     func applied(to post: FeedPost, by member: MemberID) -> FeedPost {
         var post = post
         switch self {
-        case .reaction(let kind, let moment, _): post.reactions = post.reactions.setting(kind, for: member, at: moment)
+        case .reaction(let kind, let moment): post.reactions = post.reactions.setting(kind, for: member, at: moment)
         case .reply(let kind, let moment): post.replies = post.replies.setting(kind, for: member, at: moment)
         }
         return post

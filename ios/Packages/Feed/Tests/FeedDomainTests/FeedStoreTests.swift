@@ -20,89 +20,53 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     #expect(await source.calls == [.posts(day("2026-10-16"), day("2026-10-23"))])
 }
 
-@MainActor @Test func anEmojiShowsAtOnceAndTheServersMoveFollows() async throws {
+@MainActor @Test func anEmojiShowsAtOnceWithItsMoveAndGoesOut() async throws {
     let source = FakeSource([jaysRun])
     let feed = store(source)
     await feed.load()
-    let tap = try feed.react(.pick(emoji("😂")), on: jaysRun.id)
-    #expect(tap.emoji == emoji("😂"))
+    #expect(try feed.react(.pick(emoji("😂")), on: jaysRun.id) == MoveID("laugh-bend"))
     #expect(feed.post(jaysRun.id)?.reactions.kind(of: coco) == emoji("😂"))
-    #expect(feed.cues[jaysRun.id] == nil)
     await feed.sendResponses()
     #expect(await source.calls.last == .reaction(emoji("😂"), jaysRun.id))
-    #expect(feed.cues[jaysRun.id] == MoveCue(move: MoveID("pose"), serial: tap.serial))
     #expect(feed.post(jaysRun.id)?.reactions.kind(of: coco) == emoji("😂"))
-}
-
-@MainActor @Test func aLateMoveHopsAndTheServersPickIsThenIgnored() async throws {
-    let source = FakeSource([jaysRun])
-    let feed = store(source)
-    await feed.load()
-    await source.hold()
-    let tap = try feed.react(.doubleTap, on: jaysRun.id)
-    let sending = Task { await feed.sendResponses() }
-    while await source.waiting == 0 { await Task.yield() }
-    feed.moveIsLate(for: tap, on: jaysRun.id)
-    #expect(feed.cues[jaysRun.id] == MoveCue(move: .happyHop, serial: tap.serial))
-    await source.release()
-    await sending.value
-    #expect(feed.cues[jaysRun.id] == MoveCue(move: .happyHop, serial: tap.serial))
-}
-
-@MainActor @Test func noPickFromTheServerHops() async throws {
-    let source = FakeSource([jaysRun])
-    await source.pick(nil)
-    let feed = store(source)
-    await feed.load()
-    let tap = try feed.react(.pick(emoji("🤤")), on: jaysRun.id)
-    await feed.sendResponses()
-    #expect(feed.cues[jaysRun.id] == MoveCue(move: .happyHop, serial: tap.serial))
 }
 
 @MainActor @Test func takingAnEmojiBackPlaysNothing() async throws {
     let source = FakeSource([jaysRun])
     let feed = store(source, viewer: mia)
     await feed.load()
-    let tap = try feed.react(.pick(.heart), on: jaysRun.id)
-    #expect(tap.emoji == nil)
+    #expect(try feed.react(.pick(.heart), on: jaysRun.id) == nil)
     await feed.sendResponses()
-    feed.moveIsLate(for: tap, on: jaysRun.id)
     #expect(await source.calls.last == .reaction(nil, jaysRun.id))
-    #expect(feed.cues.isEmpty)
     #expect(feed.post(jaysRun.id)?.reactions.isEmpty == true)
 }
 
-@MainActor @Test func quickTapsEndOnTheLastOneAndPlayOnlyItsMove() async throws {
+@MainActor @Test func quickTapsEndOnTheLastOneOnTheServerToo() async throws {
     let source = FakeSource([jaysRun])
     let feed = store(source)
     await feed.load()
     await source.hold()
-    let first = try feed.react(.pick(.heart), on: jaysRun.id)
+    try feed.react(.pick(.heart), on: jaysRun.id)
     let sending = Task { await feed.sendResponses() }
     while await source.waiting == 0 { await Task.yield() }
     try feed.react(.pick(emoji("😂")), on: jaysRun.id)
-    let last = try feed.react(.pick(emoji("💪")), on: jaysRun.id)
+    try feed.react(.pick(emoji("💪")), on: jaysRun.id)
     await feed.sendResponses()  // already going out: picks the newest wish up after
     await source.release()
     await sending.value
     let sent = await source.calls.dropFirst()
     #expect(Array(sent) == [.reaction(.heart, jaysRun.id), .reaction(emoji("💪"), jaysRun.id)])
     #expect(feed.post(jaysRun.id)?.reactions.kind(of: coco) == emoji("💪"))
-    #expect(feed.cues[jaysRun.id]?.serial == last.serial)
-    feed.moveIsLate(for: first, on: jaysRun.id)
-    #expect(feed.cues[jaysRun.id]?.serial == last.serial)
 }
 
-@MainActor @Test func anEmojiThatCannotGoOutFallsBackToTheServersWithNoMove() async throws {
+@MainActor @Test func anEmojiThatCannotGoOutFallsBackToTheServers() async throws {
     let source = FakeSource([jaysRun])
     let feed = store(source, viewer: mia)
     await feed.load()
-    let tap = try feed.react(.pick(emoji("😂")), on: jaysRun.id)
+    try feed.react(.pick(emoji("😂")), on: jaysRun.id)
     await source.fail(with: .notSent)
     await feed.sendResponses()
-    feed.moveIsLate(for: tap, on: jaysRun.id)
     #expect(feed.post(jaysRun.id)?.reactions.kind(of: mia) == .heart)
-    #expect(feed.cues.isEmpty)
     #expect(feed.failure == .notSent)
     feed.dismissFailure()
     #expect(feed.failure == nil)
@@ -112,8 +76,7 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     let source = FakeSource([miasSlip])
     let feed = store(source)
     await feed.load()
-    try feed.reply(.hug, on: miasSlip.id)
-    #expect(feed.cues[miasSlip.id]?.move == .wave)
+    #expect(try feed.reply(.hug, on: miasSlip.id) == .wave)
     await feed.sendResponses()
     #expect(await source.calls.last == .reply(.hug, miasSlip.id))
     #expect(feed.post(miasSlip.id)?.replies.kind(of: coco) == .hug)
@@ -139,16 +102,13 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     #expect(feed.post(miasSlip.id)?.replies.kind(of: coco) == .approved)
 }
 
-@MainActor @Test func doubleTappingAHeartAlreadyThereSendsNothing() async throws {
+@MainActor @Test func doubleTappingAHeartAlreadyThereHopsAndSendsNothing() async throws {
     let source = FakeSource([jaysRun])
     let feed = store(source, viewer: mia)
     await feed.load()
-    let tap = try feed.react(.doubleTap, on: jaysRun.id)
-    #expect(tap.emoji == .heart)
+    #expect(try feed.react(.doubleTap, on: jaysRun.id) == .happyHop)
     await feed.sendResponses()
-    feed.moveIsLate(for: tap, on: jaysRun.id)
     #expect(await source.calls.count == 1)
-    #expect(feed.cues.isEmpty)
 }
 
 @MainActor @Test func goingBackStopsAfterAMonthOfNothing() async {
