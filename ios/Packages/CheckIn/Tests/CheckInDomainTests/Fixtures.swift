@@ -118,8 +118,7 @@ actor MemoryOutbox: Outbox {
 }
 
 /// Ids handed out in order: 100, 101, …
-final class Counter: @unchecked Sendable {
-    // Only the main actor's store calls it, one call at a time.
+final class Counter: @unchecked Sendable {  // Only the main actor's store calls it, one call at a time.
     private var next = 100
     func callAsFunction() -> UUID {
         defer { next += 1 }

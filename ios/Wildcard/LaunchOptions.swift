@@ -1,3 +1,4 @@
+import CheckInDomain
 import CheckInUI
 import Foundation
 import UIKit
