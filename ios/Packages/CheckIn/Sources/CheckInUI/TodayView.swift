@@ -72,7 +72,7 @@ public struct TodayView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if let home = model.home, let week = model.cardWeek, let day = model.day {
+                if let home = model.home, let week = model.cardWeek, let day = home.mine?.day {
                     SquadCard(
                         squad: SquadWeek(
                             name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
