@@ -18,8 +18,8 @@ export interface SquadWeekSummary extends WeekSummary {
   readonly from: WeekStart;
   readonly to: string;
   /**
-   * Every member's own Sunday is over. A check-in sent up to 48 hours late or a reaction left
-   * later can still change the numbers.
+   * Every member's own Sunday is over. A check-in sent up to 48 hours late, a reaction left,
+   * changed or taken off later, or a member joining or leaving can still change the numbers.
    */
   readonly final: boolean;
 }

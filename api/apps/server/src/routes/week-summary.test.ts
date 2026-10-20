@@ -84,10 +84,17 @@ async function call(
     path,
     token,
     body,
-  }: { readonly path: string; readonly token?: string; readonly body?: unknown },
+    language,
+  }: {
+    readonly path: string;
+    readonly token?: string;
+    readonly body?: unknown;
+    readonly language?: string;
+  },
 ) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (token !== undefined) headers.authorization = `Bearer ${token}`;
+  if (language !== undefined) headers['accept-language'] = language;
   const response = await app.request(path, {
     method,
     headers,
@@ -168,32 +175,45 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
     expect(status).toBe(200);
     expect(body).toMatchObject({
       version: 1,
+      language: 'zh-Hans',
       squad,
       week: { from: monday },
       final: false,
       awards: [
-        { kind: 'planCompleted', winners: [{ member: me.userId, value: 1 }] },
-        { kind: 'crown', winners: [{ member: me.userId, value: 1 }] },
+        {
+          kind: 'planCompleted',
+          title: '领奖台',
+          symbol: 'checkmark.seal.fill',
+          winners: [{ member: me.userId, value: 1, text: '练了 1 天' }],
+        },
+        {
+          kind: 'crown',
+          title: '皇冠',
+          symbol: 'crown.fill',
+          winners: [{ member: me.userId, value: 1, text: '练了 1 天' }],
+        },
         {
           kind: 'bestDisclaimer',
-          winners: [{ member: friend.userId, value: 1, checkIn: excuse }],
+          title: '本周最佳请假条',
+          symbol: 'text.bubble.fill',
+          winners: [{ member: friend.userId, value: 1, text: '1 个回应', checkIn: excuse }],
         },
       ],
       squadTotals: {
         stats: [
-          { kind: 'trainedDays', value: 1 },
+          { kind: 'trainedDays', label: '训练天数', value: 1 },
           // Me plans none; friend keeps the default 5.
-          { kind: 'plannedDays', value: 5 },
-          { kind: 'checkIns', value: 2 },
-          { kind: 'disclaimers', value: 1 },
-          { kind: 'healthyMeals', value: 0 },
-          { kind: 'cheatMeals', value: 0 },
-          { kind: 'reactionsReceived', value: 1 },
+          { kind: 'plannedDays', label: '计划天数', value: 5 },
+          { kind: 'checkIns', label: '打卡', value: 2 },
+          { kind: 'disclaimers', label: '请假条', value: 1 },
+          { kind: 'healthyMeals', label: '健康餐', value: 0 },
+          { kind: 'cheatMeals', label: '放纵餐', value: 0 },
+          { kind: 'reactionsReceived', label: '收到的回应', value: 1 },
         ],
         reactions: [
-          { kind: 'cheer', count: 0 },
-          { kind: 'highlight', count: 0 },
-          { kind: 'lol', count: 1 },
+          { kind: 'cheer', label: '加油', count: 0 },
+          { kind: 'highlight', label: '名场面', count: 0 },
+          { kind: 'lol', label: '笑死', count: 1 },
         ],
       },
       me: {
@@ -207,13 +227,29 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
           { kind: 'reactionsReceived', value: 0 },
         ],
         reactions: [
-          { kind: 'cheer', received: 0, given: 0 },
-          { kind: 'highlight', received: 0, given: 0 },
-          { kind: 'lol', received: 0, given: 1 },
+          { kind: 'cheer', label: '加油', received: 0, given: 0 },
+          { kind: 'highlight', label: '名场面', received: 0, given: 0 },
+          { kind: 'lol', label: '笑死', received: 0, given: 1 },
         ],
       },
     });
     expect(body).not.toHaveProperty('awards.0.winners.0.checkIn');
+
+    const english = await call('GET', {
+      path: summaryOf(squad, monday),
+      token: me.token,
+      language: 'en-US,en;q=0.9,zh-Hans;q=0.8',
+    });
+    expect(english.body).toMatchObject({
+      language: 'en',
+      awards: [
+        { title: 'Podium', winners: [{ text: 'Trained 1 day' }] },
+        { title: 'Crown', winners: [{ text: 'Trained 1 day' }] },
+        { title: 'Day-off note of the week', winners: [{ text: '1 reaction' }] },
+      ],
+    });
+    expect(english.body).toHaveProperty('squadTotals.stats.0.label', 'Days trained');
+    expect(english.body).toHaveProperty('me.reactions.2.label', 'LOL');
   });
 
   it('refuses a day that isn’t a Monday, a week not started, and non-members', async () => {

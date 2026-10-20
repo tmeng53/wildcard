@@ -75,7 +75,7 @@ Planned (update as packages land): packages by capability, each `Domain` (pure S
 ## Domain rules
 
 - Never use "奥运", the rings or "Olympic" in code-visible copy, assets or bundle names.
-- All user-facing strings go through the String Catalog, Chinese (`zh-Hans`) first, English second.
+- All user-facing strings go through the String Catalog, Chinese (`zh-Hans`) first, English second. One exception: the Sunday 战报's award, count and reaction words come from the API (`apps/server/src/routes/week-summary-copy.ts`, in the language the app asks for), so a new award or count ships without an app release; the app shows any kind from the words it is sent.
 - No body metrics, calories or macros anywhere in v1.
 
 ## Language practices
@@ -132,7 +132,7 @@ Flag only real problems: bugs, broken rules, missing evidence. Formatting and an
 - Domain code that does I/O, reads the clock, or generates ids itself.
 - Stored or wire JSON without a top-level `version`.
 - A force unwrap or `try!` in shipped code, or `@unchecked Sendable` without a reason.
-- A hard-coded user-facing string outside the String Catalog.
+- A hard-coded user-facing string outside the String Catalog (other than the 战报 words the API sends).
 - A UI change without screenshots, a test that can't fail, or a mocked database.
 - A PR based on another open PR, or one that mixes unrelated changes.
 - Code the change leaves dead or duplicated (an old rule kept after it moved, a second type for the same thing), or an old name after a rename.
