@@ -53,13 +53,26 @@ export const TITLES_MAX = 3;
 /** Words no award holds, besides body metrics: none ranks anyone last. */
 const RANKING_WORDS = ['垫底', '最懒', '倒数'];
 
-/** The model's reply, held to this shape by structured output. Members are named by key. */
+/**
+ * The model's reply, held to this shape by structured output. Members are named by key. The
+ * limits go to the model in the schema and are checked again on the answer, so a reply over
+ * them is retried like any other that fails a check.
+ */
 export const ModelReply = z.strictObject({
   version: z.literal(1),
   awards: z.array(
     z.strictObject({
       member: z.string(),
-      titles: z.array(z.strictObject({ title: z.string(), speech: z.string(), move: AwardMove })),
+      titles: z
+        .array(
+          z.strictObject({
+            title: z.string().min(1).max(TITLE_MAX),
+            speech: z.string().min(1).max(SPEECH_MAX),
+            move: AwardMove,
+          }),
+        )
+        .min(1)
+        .max(TITLES_MAX),
     }),
   ),
 });

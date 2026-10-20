@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { MemberId, titlesOf, topCheckInOf, type ModelReply, type WeekCheckIn } from './awards.js';
+import { MemberId, ModelReply, titlesOf, topCheckInOf, type WeekCheckIn } from './awards.js';
 import { promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
@@ -24,6 +24,22 @@ const good: ModelReply = {
     },
   ],
 };
+
+describe('ModelReply', () => {
+  it('tells the model the limits and refuses an answer over them', () => {
+    const schema = JSON.stringify(z.toJSONSchema(ModelReply));
+    expect(schema).toContain('"maxLength":6');
+    expect(schema).toContain('"maxLength":24');
+    expect(schema).toContain('"maxItems":3');
+    const titled = (title: string, speech = '周三下着雨还去跑了。') => ({
+      version: 1,
+      awards: [{ member: 'A', titles: [{ title, speech, move: 'pump' }] }],
+    });
+    expect(ModelReply.safeParse(titled('雨中狠人')).success).toBe(true);
+    expect(ModelReply.safeParse(titled('雨中最狠的人啊')).success).toBe(false);
+    expect(ModelReply.safeParse(titled('雨中狠人', '周'.repeat(25))).success).toBe(false);
+  });
+});
 
 describe('titlesOf', () => {
   it('maps each letter back to its member, trimmed', () => {
