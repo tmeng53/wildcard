@@ -101,6 +101,12 @@ let doudou = member(5)
 }
 
 @Test func eachBarEmojiPlaysItsMoveAndAnyOtherHops() {
-    let moves = ["❤️", "💪", "😂", "🤤", "😮", "😡", "🦖", "💪🏽"].map { MoveID(emoji($0)).id }
-    #expect(moves == ["happy-hop", "pump", "laugh-bend", "drool", "shocked", "pout", "happy-hop", "pump"])
+    let moves = ["❤️", "💪", "🤣", "😋", "😱", "💩", "🎉", "👑", "😭", "🤔", "☺️", "👋", "🦖", "💪🏽", "👋🏿"].map {
+        MoveID(emoji($0)).id
+    }
+    #expect(
+        moves == [
+            "happy-hop", "pump", "laugh-bend", "drool", "shocked", "pout", "clap", "chin-up", "touched", "confused",
+            "shy", "wave", "happy-hop", "pump", "wave",
+        ])
 }

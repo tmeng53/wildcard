@@ -38,9 +38,20 @@ public struct MoveID: Hashable, Sendable, CustomStringConvertible {
     public static let wave = MoveID("wave")
 
     /// The emoji that have a move of their own. The rest hop.
+    /// The emoji that have a move of their own; the rest hop. 第一期's fixed table, from the feed
+    /// design; 第二期's coach picks moves and falls back to it.
     static let byEmoji: [String: MoveID] = [
-        "💪": MoveID("pump"), "😂": MoveID("laugh-bend"), "🤤": MoveID("drool"), "😮": MoveID("shocked"),
-        "😡": MoveID("pout"),
+        "😂": MoveID("laugh-bend"), "🤣": MoveID("laugh-bend"),
+        "💪": MoveID("pump"),
+        "🤤": MoveID("drool"), "😋": MoveID("drool"),
+        "😮": MoveID("shocked"), "😱": MoveID("shocked"), "😳": MoveID("shocked"),
+        "😡": MoveID("pout"), "😤": MoveID("pout"), "💩": MoveID("pout"),
+        "🔥": MoveID("clap"), "👏": MoveID("clap"), "🎉": MoveID("clap"),
+        "😎": MoveID("chin-up"), "🏆": MoveID("chin-up"), "👑": MoveID("chin-up"),
+        "🥹": MoveID("touched"), "🥲": MoveID("touched"), "😭": MoveID("touched"),
+        "🤔": MoveID("confused"),
+        "🙈": MoveID("shy"), "☺️": MoveID("shy"),
+        "👋": MoveID("wave"),
     ]
 
     public let id: String
