@@ -33,8 +33,12 @@ func checkIn(_ number: Int, by author: MemberID, on onDay: String, at moment: In
     } catch { fatalError("bad test check-in") }
 }
 
-func reactions(_ pairs: [(MemberID, ReactionKind, Int64)]) -> Responses<ReactionKind> {
-    Responses(pairs.map { Reaction(member: $0.0, kind: $0.1, reactedAt: at($0.2)) })
+func emoji(_ text: String) -> Emoji {
+    do { return try Emoji(text) } catch { fatalError("not an emoji: \(text)") }
+}
+
+func reactions(_ pairs: [(MemberID, String, Int64)]) -> Responses<Emoji> {
+    Responses(pairs.map { .init(member: $0.0, kind: emoji($0.1), moment: at($0.2)) })
 }
 
 /// The squad's posts in memory, recording every response sent. A call can be held until
@@ -42,13 +46,15 @@ func reactions(_ pairs: [(MemberID, ReactionKind, Int64)]) -> Responses<Reaction
 actor FakeSource: FeedSource {
     enum Call: Equatable {
         case posts(LocalDay, LocalDay)
-        case reaction(ReactionKind?, CheckInID)
+        case reaction(Emoji?, CheckInID)
         case reply(ReplyKind?, CheckInID)
     }
 
     private(set) var calls: [Call] = []
     var posts: [FeedPost]
     var failure: FeedError?
+    /// The move the server picks for every emoji.
+    var move: MoveID? = MoveID("pose")
     private var holding = false
     private var held: [CheckedContinuation<Void, Never>] = []
 
@@ -58,6 +64,7 @@ actor FakeSource: FeedSource {
     }
 
     func fail(with error: FeedError?) { failure = error }
+    func pick(_ move: MoveID?) { self.move = move }
     func hold() { holding = true }
     func release() {
         holding = false
@@ -72,10 +79,11 @@ actor FakeSource: FeedSource {
         return posts.filter { (first...last).contains($0.checkIn.day) }
     }
 
-    func setReaction(_ kind: ReactionKind?, on checkIn: CheckInID) async throws(FeedError) {
-        calls.append(.reaction(kind, checkIn))
+    func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(FeedError) -> MoveID? {
+        calls.append(.reaction(emoji, checkIn))
         await wait()
         if let failure { throw failure }
+        return emoji == nil ? nil : move
     }
 
     func setReply(_ kind: ReplyKind?, on checkIn: CheckInID) async throws(FeedError) {

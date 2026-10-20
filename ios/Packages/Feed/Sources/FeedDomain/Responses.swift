@@ -2,7 +2,7 @@ import Contracts
 
 /// Who responded to a post and how, with one response a member: the reactions on a check-in, or
 /// the replies on a 请假条. A member's response is in place of any they left before.
-public struct Responses<Kind: Hashable & CaseIterable & Sendable>: Hashable, Sendable {
+public struct Responses<Kind: Hashable & Sendable>: Hashable, Sendable {
     /// One member's response.
     public struct Response: Hashable, Sendable {
         public let member: MemberID
@@ -41,13 +41,25 @@ public struct Responses<Kind: Hashable & CaseIterable & Sendable>: Hashable, Sen
     /// What `member` left, if anything.
     public func kind(of member: MemberID) -> Kind? { all.first { $0.member == member }?.kind }
 
-    /// The kinds anyone left, in the order the app shows them.
+    /// The kinds anyone left, the most left first; on a tie, the one left first.
     public var groups: [Group] {
-        Kind.allCases.compactMap { kind in
-            let members = all.filter { $0.kind == kind }.map(\.member)
-            return members.isEmpty ? nil : Group(kind: kind, members: members)
+        var groups: [Group] = []
+        for response in all {
+            if let index = groups.firstIndex(where: { $0.kind == response.kind }) {
+                groups[index] = Group(kind: response.kind, members: groups[index].members + [response.member])
+            } else {
+                groups.append(Group(kind: response.kind, members: [response.member]))
+            }
         }
+        // Stable: ties keep the order they were first left in.
+        return groups.enumerated().sorted {
+            ($1.element.members.count, $0.offset) < ($0.element.members.count, $1.offset)
+        }
+        .map(\.element)
     }
+
+    /// The kinds shown at the start of the row: the most left, at most `limit`.
+    public func topKinds(_ limit: Int) -> [Kind] { Array(groups.prefix(limit).map(\.kind)) }
 
     /// The faces at the end of the row: the latest members to respond, newest first.
     public func latestMembers(_ limit: Int) -> [MemberID] {
@@ -60,12 +72,6 @@ public struct Responses<Kind: Hashable & CaseIterable & Sendable>: Hashable, Sen
         next.all.removeAll { $0.member == member }
         if let kind { next.all.append(Response(member: member, kind: kind, moment: moment)) }
         return next
-    }
-}
-
-extension Responses where Kind == ReactionKind {
-    public init(_ reactions: [Reaction]) {
-        self.init(reactions.map { Response(member: $0.member, kind: $0.kind, moment: $0.reactedAt) })
     }
 }
 

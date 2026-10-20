@@ -1,14 +1,13 @@
 import Contracts
 
-/// One check-in in the feed, with teammates' reactions and, on a 请假条, their replies.
+/// One check-in in the feed, with teammates' emoji and, on a 请假条, their replies.
 public struct FeedPost: Hashable, Sendable, Identifiable {
     public let checkIn: CheckIn
-    public internal(set) var reactions: Responses<ReactionKind>
+    public internal(set) var reactions: Responses<Emoji>
     /// Always empty on anything but a 请假条.
     public internal(set) var replies: Responses<ReplyKind>
 
-    public init(checkIn: CheckIn, reactions: Responses<ReactionKind> = .init(), replies: Responses<ReplyKind> = .init())
-    {
+    public init(checkIn: CheckIn, reactions: Responses<Emoji> = .init(), replies: Responses<ReplyKind> = .init()) {
         self.checkIn = checkIn
         self.reactions = reactions
         self.replies = checkIn.takesReplies ? replies : .init()
@@ -30,48 +29,36 @@ extension CheckIn {
     }
 }
 
-/// What the author's character does when a teammate responds: the move lands where everyone
-/// sees it, on the post.
-public enum CharacterMove: Hashable, Sendable, CaseIterable {
-    /// 加油: two fist pumps, a hop on the second.
-    case pump
-    /// 名场面: crouch, spring, land in a V.
-    case pose
-    /// 笑死: shakes with laughter, holding its belly.
-    case laugh
-    /// Any reply on a 请假条: waves the slip in thanks.
-    case wave
+/// A move from the character's move library, by id, which the author's character plays when a
+/// teammate responds. The server picks the move for an emoji; the ids are data, so a new move
+/// needs no change here, and a player that doesn't know one plays `happyHop`.
+public struct MoveID: Hashable, Sendable, CustomStringConvertible {
+    /// The small hop, arms up, played when the server's pick is late or unknown.
+    public static let happyHop = MoveID("happy-hop")
+    /// Waving the slip in thanks, for any reply on a 请假条.
+    public static let wave = MoveID("wave")
 
-    public init(_ reaction: ReactionKind) {
-        switch reaction {
-        case .cheer: self = .pump
-        case .highlight: self = .pose
-        case .lol: self = .laugh
-        }
-    }
+    public let id: String
 
-    public init(_ reply: ReplyKind) {
-        self = .wave
-    }
+    public init(_ id: String) { self.id = id }
+
+    public var description: String { id }
 }
 
 /// How a member reacted.
 public enum ReactionGesture: Hashable, Sendable {
-    /// Tapped a reaction, or picked one from the picker: the same one again takes it back.
-    case pick(ReactionKind)
-    /// Double-tapped the photo: 加油, which a double tap never takes back.
+    /// Picked an emoji from the bar or the keyboard: the same one again takes it back.
+    case pick(Emoji)
+    /// Double-tapped the photo: ❤️, which a double tap never takes back.
     case doubleTap
 }
 
-/// A member's response changed on a post: the post as it now reads, what to send, and the move
-/// the author's character plays (none when the member took their response back).
+/// A member's response changed on a post: the post as it now reads, and what they left before
+/// and now (nil when none).
 public struct ResponseChange<Kind: Hashable & Sendable>: Hashable, Sendable {
     public let post: FeedPost
-    /// The member's response now; nil when taken back.
     public let now: Kind?
-    /// Their response before.
     public let before: Kind?
-    public let move: CharacterMove?
 
     /// Whether there is anything to send.
     public var changed: Bool { now != before }
@@ -81,17 +68,17 @@ extension FeedPost {
     /// The post after `viewer` reacts.
     public func reacting(
         _ gesture: ReactionGesture, by viewer: MemberID, at moment: Timestamp
-    ) throws(FeedError) -> ResponseChange<ReactionKind> {
+    ) throws(FeedError) -> ResponseChange<Emoji> {
         guard canRespond(viewer) else { throw .ownPost }
         let before = reactions.kind(of: viewer)
-        let now: ReactionKind? =
+        let now: Emoji? =
             switch gesture {
-            case .pick(let kind): kind == before ? nil : kind
-            case .doubleTap: .cheer
+            case .pick(let emoji): emoji == before ? nil : emoji
+            case .doubleTap: .heart
             }
         var post = self
         if now != before { post.reactions = reactions.setting(now, for: viewer, at: moment) }
-        return ResponseChange(post: post, now: now, before: before, move: now.map(CharacterMove.init))
+        return ResponseChange(post: post, now: now, before: before)
     }
 
     /// The post after `viewer` taps a reply: the same reply again takes it back.
@@ -104,6 +91,6 @@ extension FeedPost {
         let now: ReplyKind? = kind == before ? nil : kind
         var post = self
         post.replies = replies.setting(now, for: viewer, at: moment)
-        return ResponseChange(post: post, now: now, before: before, move: now.map(CharacterMove.init))
+        return ResponseChange(post: post, now: now, before: before)
     }
 }
