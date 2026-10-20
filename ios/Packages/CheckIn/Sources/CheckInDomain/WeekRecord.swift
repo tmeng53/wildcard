@@ -50,7 +50,9 @@ extension Home {
             daysOf[training.activity, default: []].insert(checkIn.day)
         }
         let trained = activities.enumerated()
-            .map { (order: $0.offset, item: WeekRecord.Trained(activity: $0.element, days: daysOf[$0.element]?.count ?? 0)) }
+            .map {
+                (order: $0.offset, item: WeekRecord.Trained(activity: $0.element, days: daysOf[$0.element]?.count ?? 0))
+            }
             .sorted { ($1.item.days, $0.order) < ($0.item.days, $1.order) }
             .map(\.item)
 

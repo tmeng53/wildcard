@@ -132,14 +132,15 @@ public struct TodayView: View {
     /// The app's tabs, as the approved home draws them. Only 今天 is built so far, so the bar
     /// stays on it.
     private enum Tab: Hashable {
-        case today, moments, schedule, me
+        case today, moments, schedule, profile
     }
 
     private static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(id: .today, title: Text("今天", bundle: .module), systemImage: "house", accessibilityIdentifier: "tab.today"),
+        TabBarItem(
+            id: .today, title: Text("今天", bundle: .module), systemImage: "house", accessibilityIdentifier: "tab.today"),
         TabBarItem(id: .moments, title: Text("名场面", bundle: .module), systemImage: "star"),
         TabBarItem(id: .schedule, title: Text("出赛表", bundle: .module), systemImage: "list.bullet.rectangle"),
-        TabBarItem(id: .me, title: Text("我", bundle: .module), systemImage: "person"),
+        TabBarItem(id: .profile, title: Text("我", bundle: .module), systemImage: "person"),
     ]
 
     /// My week for the card's second page: this week's days, what I trained and my meals, with
@@ -147,8 +148,10 @@ public struct TodayView: View {
     private func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
-            summary: record.trained.map { String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module) }
-                .joined(separator: " · "),
+            summary: record.trained.map {
+                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module)
+            }
+            .joined(separator: " · "),
             done: week.trainedDays, planned: week.plannedDays,
             days: record.days.map {
                 switch $0 {

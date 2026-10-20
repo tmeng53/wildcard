@@ -5,8 +5,8 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// When the squad cheers me, each teammate who joins in shouts their line over their head, nearest
-/// first, for about two seconds.
+/// When the squad cheers me, each teammate who joins in shouts their line over their head at
+/// their persona's beat, for about two seconds.
 struct CheerBubbles: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let cast: SquadCast
@@ -40,11 +40,16 @@ struct CheerBubbles: View {
         .task(id: cast.cheer) { await play(cast.cheer.order) }
     }
 
+    /// `order` is already by beat.
     private func play(_ order: [MemberID]) async {
         guard !order.isEmpty else { return }
+        var elapsed = 0.0
         for id in order {
+            guard let mate = cast.mates.first(where: { $0.id == id }) else { continue }
+            let beat = SquadCast.cheerDelay(mate.persona)
+            try? await Task.sleep(for: .seconds(beat - elapsed))
+            elapsed = beat
             withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { _ = shown.insert(id) }
-            try? await Task.sleep(for: .seconds(SquadCast.cheerStagger))
         }
         try? await Task.sleep(for: .seconds(Self.hold))
         withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { shown = [] }

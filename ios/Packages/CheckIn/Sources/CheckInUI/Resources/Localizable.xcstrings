@@ -1564,6 +1564,53 @@
           }
         }
       }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup"
+          }
+        }
+      }
+    },
+    "我": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me"
+          }
+        }
+      }
+    },
+    "%@ %lld": {
+      "comment": "An activity trained this week and on how many days, on my week's card: 游泳 2",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

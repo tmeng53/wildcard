@@ -62,25 +62,33 @@ final class SquadCast {
         }
     }
 
-    /// The squad turns to me and cheers, nearest first; the one strong moment of a 练了.
-    /// `seconds` is the scene's clock, so runners cheer from where they are on the track.
-    func cheerMe(at phase: DayPhase, seconds: Double) {
-        let order = stage.cheerers(mates.map(\.member), at: phase, seconds: seconds)
-        for (index, id) in order.enumerated() {
-            guard let mate = mates.first(where: { $0.id == id }),
-                let clip = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: Self.species)
+    /// The squad turns to me and cheers, each persona at its own beat (the 高能量 first, the 淡人
+    /// last); anyone training keeps going. The one strong moment of a 练了.
+    func cheerMe(at phase: DayPhase) {
+        let cheering = stage.cheerers(mates.map(\.member), at: phase)
+            .compactMap { id in mates.first { $0.id == id } }
+            .sorted { Self.cheerDelay($0.persona) < Self.cheerDelay($1.persona) }
+        for mate in cheering {
+            guard let clip = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: Self.species)
             else { continue }
-            // Nearest first, one after another.
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(Double(index) * Self.cheerStagger))
+                try? await Task.sleep(for: .seconds(Self.cheerDelay(mate.persona)))
                 try? mate.player.play(clip)
             }
         }
-        cheer = Cheer(count: cheer.count + 1, order: order)
+        cheer = Cheer(count: cheer.count + 1, order: cheering.map(\.id))
     }
 
-    /// How long after the teammate before them each one starts cheering.
-    static let cheerStagger = 0.12
+    /// How long after my ring closes each persona starts cheering, from the approved home.
+    static func cheerDelay(_ persona: Persona) -> Double {
+        switch persona {
+        case .energetic: 0.05
+        case .showoff: 0.15
+        case .drama: 0.2
+        case .shy: 0.55
+        case .deadpan: 0.9
+        }
+    }
 
     private func player(for member: StageMember, persona: Persona, phase: DayPhase) -> CharacterPlayer? {
         let pose = stage.pose(of: member, at: phase)
