@@ -1,4 +1,5 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
+import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
 import type { Reaction, ReactionKind, ReactOutcome } from './domain/reaction.js';
@@ -15,8 +16,8 @@ export interface CheckInStore {
   find(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** Saves a new check-in with its audience and photos, or says which uniqueness rule stopped it. */
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
-  /** Days ever with a 练了 from `member`. Several 练了 on one day count once. */
-  countTrainedDays(member: MemberId): Promise<number>;
+  /** Everything `member` ever checked in, counted by kind. */
+  totals(member: MemberId): Promise<CheckInTotals>;
   /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
   listForSquad(
     query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },

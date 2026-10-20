@@ -383,6 +383,17 @@ if want squad-today; then
     fail "napper's 练了 should win over the disclaimer, and the rester's rest day count toward everyone: $body"
   echo "squad-today: napper trained after all, so 练了 wins over the disclaimer; with rester resting, everyone trained"
 
+  # 我's lifetime counts: every check-in the member ever made, by kind.
+  call GET /me/check-in-totals "$runner_token"
+  expect 200
+  [ "$(jq -c '[.trainedDays, .healthyMeals, .cheatMeals, .disclaimers]' <<<"$body")" = '[1,1,0,0]' ] ||
+    fail "runner's totals should be 1 trained day and 1 healthy meal: $body"
+  call GET /me/check-in-totals "$napper_token"
+  expect 200
+  [ "$(jq -c '[.trainedDays, .healthyMeals, .cheatMeals, .disclaimers]' <<<"$body")" = '[1,0,0,1]' ] ||
+    fail "napper's totals should be 1 trained day and 1 disclaimer: $body"
+  echo "check-in-totals: runner 1 练了 day + 1 健康餐, napper 1 练了 day + 1 请假条"
+
   call GET "/squads/$squad/today" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
   echo "squad-today: outsider refused (403 SQUAD_NOT_JOINED)"

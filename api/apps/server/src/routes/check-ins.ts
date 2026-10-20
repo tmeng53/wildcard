@@ -87,6 +87,18 @@ const CheckInList = z
   .strictObject({ version: bodyVersion(1), checkIns: z.array(CheckIn) })
   .openapi('CheckInList');
 
+const count = (description: string) => z.int().nonnegative().meta({ description });
+
+const CheckInTotals = z
+  .strictObject({
+    version: bodyVersion(1),
+    trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
+    healthyMeals: count('健康餐 check-ins.'),
+    cheatMeals: count('坦白放纵餐 check-ins.'),
+    disclaimers: count('今日请假条 check-ins, at most one a day.'),
+  })
+  .openapi('CheckInTotals');
+
 /** Signs a view URL for every photo of these check-ins, in one call to storage. */
 async function viewUrls(photos: PhotoStorage, records: readonly CheckInRecord[]) {
   const paths = records.flatMap((record) => photosOf(record).map(({ path }) => path));
@@ -135,7 +147,8 @@ const signedInFailures = {
 
 /**
  * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` and
- * `GET /me/check-ins` read them back for a range of days.
+ * `GET /me/check-ins` read them back for a range of days, and `GET /me/check-in-totals` counts
+ * all of the member's own.
  */
 export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
@@ -221,6 +234,23 @@ export function checkIns(deps: {
     },
   });
 
+  const totals = createRoute({
+    method: 'get',
+    path: '/me/check-in-totals',
+    operationId: 'getMyCheckInTotals',
+    summary: 'Everything the signed-in member ever checked in, counted by kind',
+    description: 'All of their check-ins, wherever they went; 我 shows them. Counts only go up.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    responses: {
+      200: {
+        description: 'The counts',
+        content: { 'application/json': { schema: CheckInTotals } },
+      },
+      ...signedInFailures,
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
     .openapi(save, async (c) => {
       const { checkIn, created } = await deps.checkIns.save({
@@ -253,5 +283,9 @@ export function checkIns(deps: {
         { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
         200,
       );
+    })
+    .openapi(totals, async (c) => {
+      const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
+      return c.json({ version: 1 as const, ...counts }, 200);
     });
 }

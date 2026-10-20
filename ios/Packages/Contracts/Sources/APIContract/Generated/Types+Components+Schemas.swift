@@ -1771,6 +1771,89 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
+        public struct CheckInTotals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
+            public var version: Components.Schemas.CheckInTotals.VersionPayload
+            /// Days with a 练了; several 练了 on one day count once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// 健康餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// 坦白放纵餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// 今日请假条 check-ins, at most one a day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
+            public var disclaimers: Swift.Int
+            /// Creates a new `CheckInTotals`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
+            ///   - healthyMeals: 健康餐 check-ins.
+            ///   - cheatMeals: 坦白放纵餐 check-ins.
+            ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            public init(
+                version: Components.Schemas.CheckInTotals.VersionPayload,
+                trainedDays: Swift.Int,
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                disclaimers: Swift.Int
+            ) {
+                self.version = version
+                self.trainedDays = trainedDays
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.disclaimers = disclaimers
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case trainedDays
+                case healthyMeals
+                case cheatMeals
+                case disclaimers
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.CheckInTotals.VersionPayload.self,
+                    forKey: .version
+                )
+                self.trainedDays = try container.decode(
+                    Swift.Int.self,
+                    forKey: .trainedDays
+                )
+                self.healthyMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .healthyMeals
+                )
+                self.cheatMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .cheatMeals
+                )
+                self.disclaimers = try container.decode(
+                    Swift.Int.self,
+                    forKey: .disclaimers
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "trainedDays",
+                    "healthyMeals",
+                    "cheatMeals",
+                    "disclaimers"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
         public struct PhotoUpload: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PhotoUpload/version`.

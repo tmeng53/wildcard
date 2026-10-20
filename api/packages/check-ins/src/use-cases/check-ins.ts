@@ -1,5 +1,6 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
+import type { CheckInTotals } from '../domain/totals.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
 import type { Reaction } from '../domain/reaction.js';
 import type {
@@ -36,6 +37,8 @@ export interface CheckIns {
   save(input: SaveCheckInInput): Promise<SavedCheckIn>;
   listForSquad(input: ListSquadCheckInsInput): Promise<CheckInRecord[]>;
   listMine(input: { readonly member: MemberId; readonly days: DayRange }): Promise<CheckInRecord[]>;
+  /** Everything the member ever checked in, counted by kind, wherever it went. */
+  totals(member: MemberId): Promise<CheckInTotals>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
   listReactions(input: {
@@ -65,6 +68,7 @@ export function createCheckIns(deps: {
     save: (input) => saveCheckIn(deps, input),
     listForSquad: (input) => listSquadCheckIns(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),
+    totals: (member) => deps.store.totals(member),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) => removeReaction(deps, input),
     listReactions: (input) => listReactions(deps, input),
