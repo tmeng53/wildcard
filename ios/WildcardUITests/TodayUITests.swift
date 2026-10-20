@@ -238,6 +238,7 @@ final class TodayUITests: XCTestCase {
         app.launchArguments +=
             [
                 "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
+                "-uitest-no-push",
             ] + extra
         app.launch()
         return app

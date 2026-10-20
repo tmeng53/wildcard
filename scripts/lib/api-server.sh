@@ -13,7 +13,7 @@ start_api_server() {
   api="http://127.0.0.1:$port"
   api_log="$(mktemp)"
   jobs_token="$(node -p 'crypto.randomBytes(32).toString("hex")')"
-  env -u ANTHROPIC_API_KEY PORT="$port" PUBLIC_URL="$api" ADMIN_PASSWORD_SIGN_IN=on JOBS_TOKEN="$jobs_token" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
+  env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY PORT="$port" PUBLIC_URL="$api" ADMIN_PASSWORD_SIGN_IN=on JOBS_TOKEN="$jobs_token" DATABASE_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY" \
     node api/apps/server/dist/src/main.js >"$api_log" 2>&1 &
   server=$!
   trap 'kill "$server" 2>/dev/null || true; rm -f "$api_log"' EXIT

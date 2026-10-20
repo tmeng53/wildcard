@@ -26,6 +26,7 @@ import {
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
+import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
@@ -57,12 +58,16 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
-// Without a key every request for drafts fails, so the app shows its dice.
+// The provider LLM_PROVIDER names writes drafts. Without its key every request for drafts
+// fails, so the app shows its dice.
+const llm = config.languageModel;
 const model: LanguageModel =
-  config.anthropicApiKey === undefined
+  llm === undefined
     ? { answer: () => Promise.reject(new DisclaimerWriterOffError()) }
-    : createAnthropicLanguageModel({ apiKey: config.anthropicApiKey });
-if (config.anthropicApiKey === undefined) log.info('no ANTHROPIC_API_KEY: AI drafts are off');
+    : llm.provider === 'openai'
+      ? createOpenAILanguageModel({ apiKey: llm.apiKey, model: llm.model })
+      : createAnthropicLanguageModel({ apiKey: llm.apiKey, model: llm.model });
+if (llm === undefined) log.info('no key for LLM_PROVIDER: AI drafts are off');
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 if (config.appleSignInKey === undefined) {
   log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');

@@ -2,6 +2,7 @@ import APIContract
 import AccountDomain
 import Contracts
 import Foundation
+import NotificationsDomain
 import OpenAPIRuntime
 import OpenAPIURLSession
 
@@ -124,6 +125,30 @@ public struct WildcardAPI: Sendable {
         // upload token, a path already taken) passes with a fresh upload URL, which a retry gets.
         case 400..<500 where StorageRefusal.isAboutThePhoto(answer): throw .refused(.photoRejected)
         default: throw .unavailable
+        }
+    }
+
+    // MARK: - Push
+
+    /// This phone gets the member's pushes from now on. Safe to repeat; a phone someone else
+    /// signed in on before moves to this member.
+    public func register(_ device: PushDevice) async throws(APIError) {
+        let environment: Components.Schemas.Device.EnvironmentPayload =
+            switch device.environment {
+            case .sandbox: .sandbox
+            case .production: .production
+            }
+        _ = try await call {
+            try await client.registerMyDevice(
+                body: .json(.init(version: ._1, token: device.token.description, environment: environment))
+            ).ok
+        }
+    }
+
+    /// This phone stops getting the member's pushes, for signing out. Safe to repeat.
+    public func removeDevice(_ token: DeviceToken) async throws(APIError) {
+        _ = try await call {
+            try await client.removeMyDevice(body: .json(.init(version: ._1, token: token.description))).noContent
         }
     }
 

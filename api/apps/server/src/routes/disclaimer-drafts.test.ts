@@ -17,27 +17,28 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createAnthropicLanguageModel } from '../adapters/anthropic-language-model.js';
+import { createOpenAILanguageModel } from '../adapters/openai-language-model.js';
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
-import { recordedAnthropic, type Fixture } from '../test-kit/recorded-anthropic.js';
+import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
-// The whole server as main.ts wires it: local Supabase's Auth and database, and the Claude
-// adapter answering from recorded responses instead of Anthropic.
+// The whole server as main.ts wires it: local Supabase's Auth and database, and each provider's
+// adapter answering from recorded responses instead of the provider.
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
 
-function appAnswering(...fixtures: [Fixture, ...Fixture[]]) {
-  const recorded = recordedAnthropic(...fixtures);
-  const model = createAnthropicLanguageModel({
-    apiKey: 'sk-ant-test',
-    baseURL: 'http://anthropic.test',
-    fetch: recorded.fetch,
-  });
+function appAnswering(provider: Provider, ...fixtures: [Fixture, ...Fixture[]]) {
+  const recorded = recordedModel(provider, ...fixtures);
+  const options = { baseURL: `http://${provider}.test`, fetch: recorded.fetch };
+  const model =
+    provider === 'openai'
+      ? createOpenAILanguageModel({ apiKey: 'sk-openai-test', ...options })
+      : createAnthropicLanguageModel({ apiKey: 'sk-ant-test', ...options });
   return { ...appWith(model), requests: recorded.requests };
 }
 
@@ -96,7 +97,7 @@ const Body = z.record(z.string(), z.unknown());
 const DEFAULT_REQUEST = { version: 1, reason: '早上没起来', style: 'funny' };
 
 async function ask(
-  app: ReturnType<typeof appAnswering>['app'],
+  app: ReturnType<typeof appWith>['app'],
   { token, body = DEFAULT_REQUEST }: { token?: string; body?: unknown },
 ) {
   const response = await app.request('/disclaimer-drafts', {
@@ -114,9 +115,9 @@ async function ask(
   };
 }
 
-describe('POST /disclaimer-drafts', () => {
+describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s', (provider) => {
   it('answers three drafts for a signed-in member', async () => {
-    const { app, requests } = appAnswering('drafts');
+    const { app, requests } = appAnswering(provider, 'drafts');
     const { token } = await signUp();
     const answer = await ask(app, { token });
     expect(answer.status).toBe(200);
@@ -137,7 +138,7 @@ describe('POST /disclaimer-drafts', () => {
     ['self-harm', 'care'],
     ['unsafe', 'declined'],
   ])('answers %s as %s', async (fixture, kind) => {
-    const { app } = appAnswering(fixture);
+    const { app } = appAnswering(provider, fixture);
     const { token } = await signUp();
     expect((await ask(app, { token })).body).toEqual({ version: 1, kind });
   });
@@ -145,7 +146,7 @@ describe('POST /disclaimer-drafts', () => {
   it.each<Fixture>(['body-talk', 'refusal', 'overloaded'])(
     'answers 503 when %s leaves nothing to show',
     async (fixture) => {
-      const { app } = appAnswering(fixture);
+      const { app } = appAnswering(provider, fixture);
       const { token } = await signUp();
       const answer = await ask(app, { token });
       expect(answer.status).toBe(503);
@@ -169,7 +170,7 @@ describe('POST /disclaimer-drafts', () => {
   });
 
   it('logs an error when the model fails', async () => {
-    const { app, logged } = appAnswering('refusal');
+    const { app, logged } = appAnswering(provider, 'refusal');
     const { token } = await signUp();
     expect((await ask(app, { token })).status).toBe(503);
     expect(logged).toMatchObject([
@@ -178,7 +179,7 @@ describe('POST /disclaimer-drafts', () => {
   });
 
   it('answers 429 after the day’s 6 batches', async () => {
-    const { app } = appAnswering('drafts');
+    const { app } = appAnswering(provider, 'drafts');
     const { token } = await signUp();
     for (let batch = 0; batch < 6; batch += 1) expect((await ask(app, { token })).status).toBe(200);
     const answer = await ask(app, { token });
@@ -187,7 +188,7 @@ describe('POST /disclaimer-drafts', () => {
   });
 
   it('refuses an unknown style or an empty reason, and a caller who isn’t signed in', async () => {
-    const { app, requests } = appAnswering('drafts');
+    const { app, requests } = appAnswering(provider, 'drafts');
     const { token } = await signUp();
     const style = await ask(app, {
       token,

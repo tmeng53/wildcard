@@ -35,11 +35,29 @@ describe('readConfig', () => {
       publicUrl: new URL('http://localhost:8080'),
       adminPasswordSignIn: false,
       proxyHops: 1,
-      anthropicApiKey: undefined,
+      languageModel: undefined,
       appleSignInKey: undefined,
       jobsToken: undefined,
       apns: undefined,
     });
+  });
+
+  it('picks OpenAI for drafts unless told otherwise, with the adapter’s default model', () => {
+    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
+    expect(readConfig({ ...base, ...keys }).languageModel).toStrictEqual({
+      provider: 'openai',
+      apiKey: 'sk-openai',
+      model: undefined,
+    });
+    expect(
+      readConfig({ ...base, ...keys, LLM_PROVIDER: 'anthropic', LLM_MODEL: 'claude-sonnet-5-5' })
+        .languageModel,
+    ).toStrictEqual({ provider: 'anthropic', apiKey: 'sk-ant', model: 'claude-sonnet-5-5' });
+  });
+
+  it('turns drafts off while the chosen provider has no key, and refuses an unknown one', () => {
+    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModel).toBeUndefined();
+    expect(() => readConfig({ ...base, LLM_PROVIDER: 'gemini' })).toThrow('LLM_PROVIDER');
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {
