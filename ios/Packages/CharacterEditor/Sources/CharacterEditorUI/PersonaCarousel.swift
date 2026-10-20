@@ -54,25 +54,25 @@ struct PersonaCarousel: View {
         .onChange(of: model.draft.persona) { _, persona in
             // A swipe on the stage picks too; bring its name to the middle.
             guard centered != persona else { return }
-            withAnimation(.wildcard(Motion.smooth, reduceMotion: reduceMotion)) { centered = persona }
+            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { centered = persona }
         }
-        .sensoryFeedback(.selection, trigger: model.draft.persona)
+        .haptic(.pick, trigger: model.draft.persona)
     }
 
     private func item(_ persona: Persona) -> some View {
         let isSelected = persona == model.draft.persona
         return Button {
-            withAnimation(.wildcard(Motion.smooth, reduceMotion: reduceMotion)) { centered = persona }
+            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { centered = persona }
         } label: {
             EditorNames.persona(persona)
                 .typeStyle(TypeRamp.action)
-                .foregroundStyle(Color(role: isSelected ? .textPrimary : .textTertiary, in: theme))
+                .foregroundStyle(Color(role: isSelected ? .fgDefault : .fgSubtle, in: theme))
                 .scaleEffect(isSelected && !reduceMotion ? selectedScale : 1)
                 .frame(width: itemWidth, height: itemHeight)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.wildcard(Motion.bouncy, reduceMotion: reduceMotion), value: isSelected)
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isSelected)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("editor.persona.\(persona.rawValue)")
     }
@@ -82,11 +82,11 @@ struct PersonaCarousel: View {
             ForEach(Persona.allCases, id: \.self) { persona in
                 let isSelected = persona == model.draft.persona
                 Capsule()
-                    .fill(Color(role: isSelected ? .textPrimary : .divider, in: theme))
+                    .fill(Color(role: isSelected ? .fgDefault : .borderDefault, in: theme))
                     .frame(width: isSelected ? selectedDot : dot, height: dot)
             }
         }
-        .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: model.draft.persona)
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: model.draft.persona)
         .accessibilityHidden(true)
     }
 }

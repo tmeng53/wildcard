@@ -122,7 +122,8 @@ extension CGAffineTransform {
 }
 
 extension Color {
-    init(_ color: RGBAColor) {
+    /// A color of the character's art, such as a swatch to dress it in.
+    public init(_ color: RGBAColor) {
         self.init(
             .sRGB, red: Double(color.red) / 255, green: Double(color.green) / 255, blue: Double(color.blue) / 255,
             opacity: color.opacity)
