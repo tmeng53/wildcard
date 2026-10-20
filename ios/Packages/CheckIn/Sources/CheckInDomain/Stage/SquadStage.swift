@@ -18,7 +18,7 @@ public struct StageMember: Hashable, Sendable {
 }
 
 /// Where a teammate is.
-public enum Placement: Hashable, Sendable {
+public enum StagePlacement: Hashable, Sendable {
     /// Using a slot of the scene's equipment.
     case station(StationKind, slot: Int)
     /// Training in place on the playing area, while nobody uses the scene's equipment.
@@ -27,11 +27,13 @@ public enum Placement: Hashable, Sendable {
     case floor(StagePoint)
 }
 
-/// Who stands where on the home scene. People keep their spot when their status changes; only
-/// going to or from equipment moves them. Pass the last arrangement back in to keep it.
+/// Who stands where on the home scene. People keep their spot when their status changes, except
+/// for three moves: to or from the equipment, from the floor onto the playing area when they
+/// start training while the equipment is idle, and from the playing area back to the floor once
+/// someone takes the equipment. Pass the last arrangement back in to keep it.
 public struct SquadStage: Hashable, Sendable {
     public let layout: StageLayout
-    public private(set) var placements: [MemberID: Placement]
+    public private(set) var placements: [MemberID: StagePlacement]
 
     public init(layout: StageLayout) {
         self.layout = layout
@@ -47,14 +49,48 @@ public struct SquadStage: Hashable, Sendable {
     ///    the best free one (earliest check-ins first, those not checked in after); 社恐 take the
     ///    last free spot.
     public mutating func arrange(_ teammates: [StageMember]) {
-        let previous = placements
-        var next: [MemberID: Placement] = [:]
         let ordered = Self.byCheckIn(teammates)
+        var next = stations(for: ordered)
+        let equipmentIdle = next.isEmpty
+        var taken: [StagePoint] = []
+        // A spot is free while nobody stands on it or close enough to be drawn over them.
+        func isFree(_ spot: StagePoint) -> Bool { !taken.contains { StageLayout.crowds($0, spot) } }
+        let rest = ordered.filter { next[$0.id] == nil }
+        // Old spots are kept first, so nobody is pushed off theirs by someone newer.
+        for member in rest {
+            let wantsField = equipmentIdle && isTraining(member)
+            switch placements[member.id] {
+            case .field(let spot)? where wantsField && isFree(spot):
+                taken.append(spot)
+                next[member.id] = .field(spot)
+            case .floor(let spot)? where !wantsField && isFree(spot):
+                taken.append(spot)
+                next[member.id] = .floor(spot)
+            default:
+                continue
+            }
+        }
+        for member in rest where next[member.id] == nil {
+            if equipmentIdle && isTraining(member), let spot = layout.field.first(where: isFree) {
+                taken.append(spot)
+                next[member.id] = .field(spot)
+                continue
+            }
+            let free = layout.floor.filter(isFree)
+            guard let spot = member.keepsToTheBack ? free.last : free.first else { continue }
+            taken.append(spot)
+            next[member.id] = .floor(spot)
+        }
+        placements = next
+    }
 
+    /// The equipment slots for `ordered`: everyone keeps the slot they had if their sport still
+    /// uses it, then the rest take free slots in order.
+    private func stations(for ordered: [StageMember]) -> [MemberID: StagePlacement] {
+        var next: [MemberID: StagePlacement] = [:]
         var used: [StationKind: Set<Int>] = [:]
-        // Everyone keeps the slot they had if their sport still uses it.
         for member in ordered {
-            guard case .station(let kind, let slot) = previous[member.id],
+            guard case .station(let kind, let slot) = placements[member.id],
                 sport(of: member).map({ uses($0, kind) }) == true,
                 used[kind, default: []].contains(slot) == false
             else { continue }
@@ -66,34 +102,7 @@ public struct SquadStage: Hashable, Sendable {
             used[slot.kind, default: []].insert(slot.slot)
             next[member.id] = .station(slot.kind, slot: slot.slot)
         }
-
-        let equipmentIdle = used.isEmpty
-        var takenField = Set<StagePoint>()
-        var takenFloor = Set<StagePoint>()
-        let rest = ordered.filter { next[$0.id] == nil }
-        // Old floor spots are kept first, so nobody is pushed off theirs by someone newer.
-        for member in rest {
-            let wantsField = equipmentIdle && isTraining(member)
-            if wantsField, case .field(let spot) = previous[member.id], !takenField.contains(spot) {
-                takenField.insert(spot)
-                next[member.id] = .field(spot)
-            } else if !wantsField, case .floor(let spot) = previous[member.id], !takenFloor.contains(spot) {
-                takenFloor.insert(spot)
-                next[member.id] = .floor(spot)
-            }
-        }
-        for member in rest where next[member.id] == nil {
-            if equipmentIdle && isTraining(member), let spot = layout.field.first(where: { !takenField.contains($0) }) {
-                takenField.insert(spot)
-                next[member.id] = .field(spot)
-                continue
-            }
-            let free = layout.floor.filter { !takenFloor.contains($0) }
-            guard let spot = member.keepsToTheBack ? free.last : free.first else { continue }
-            takenFloor.insert(spot)
-            next[member.id] = .floor(spot)
-        }
-        placements = next
+        return next
     }
 
     private func isTraining(_ member: StageMember) -> Bool {

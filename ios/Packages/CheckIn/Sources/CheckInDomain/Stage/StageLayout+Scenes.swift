@@ -1,9 +1,9 @@
 import Contracts
 import DesignSystem
 
-// The five scenes' stations and floors, from the approved home design (version 15, 2026-10-19).
-// Coordinates are after each scene's art is lifted (track and pool 70, tennis 60, climbing 40,
-// gym 24) to make room for the 打卡 button.
+// The five scenes' stations and floors, from the approved simple home design (2026-10-20).
+// Station coordinates are after each scene's art is lifted (track and pool 36, tennis 30, gym 24,
+// climbing 10) to make room for the 打卡 button; the floors are drawn in screen coordinates.
 extension StageLayout {
     public static func of(_ scene: SceneTheme) -> StageLayout {
         switch scene {
@@ -18,35 +18,34 @@ extension StageLayout {
     static let track = StageLayout(
         stations: [
             Station(
-                kind: .jogging, capacity: 4,
+                kind: .jogging, capacity: 6,
                 path: .loop(
                     from: -30, to: 420,
-                    lanes: [StationPath.Lap(y: 371, direction: 1), StationPath.Lap(y: 422, direction: -1)]),
-                speed: 48, scale: nil),
-            Station(
-                kind: .hurdles, capacity: 2,
-                path: .loop(from: -30, to: 420, lanes: [StationPath.Lap(y: 320, direction: 1)]), speed: 62,
-                scale: nil),
+                    lanes: [
+                        StationPath.Lap(y: 354, direction: 1, speed: 56),
+                        StationPath.Lap(y: 405, direction: 1, speed: 48),
+                        StationPath.Lap(y: 456, direction: -1, speed: 48),
+                    ]),
+                speed: 0, scale: nil)
         ],
-        stationsBySport: [.run: [.jogging, .hurdles]],
-        field: [StageRect(x: 55...335, y: 350...470)],
-        open: [StageRect(x: 0...390, y: 448...478), StageRect(x: 0...390, y: 506...650)],
+        stationsBySport: [.run: [.jogging]],
+        field: [StageRect(x: 55...335, y: 380...500)],
+        open: [StageRect(x: 0...390, y: 480...650)],
         props: [])
 
-    private static let poolLanes: [StationPath.Lane] = [294.0, 327, 360, 393].map {
+    private static let poolLanes: [StationPath.Lane] = [328.0, 361, 394, 427].map {
         StationPath.Lane(from: 36, to: 354, y: $0)
     }
 
+    // No playing area: the deck in front of the water is the open floor.
     static let pool = StageLayout(
         stations: [
             Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes), speed: 34, scale: nil)
         ],
         stationsBySport: [.swim: [.swimming]],
-        // The far deck across the water.
-        field: [StageRect(x: 75...315, y: 250...250)],
-        open: [StageRect(x: 0...390, y: 232...262), StageRect(x: 0...390, y: 440...650)],
-        props: [StageRect(x: 330...373, y: 490...522), StageRect(x: 80...92, y: 450...520)],
-        water: 272...406)
+        field: [],
+        open: [StageRect(x: 0...390, y: 474...650)],
+        props: [])
 
     static let gym = StageLayout(
         stations: [
@@ -65,48 +64,45 @@ extension StageLayout {
         ],
         stationsBySport: [.run: [.treadmill], .strength: [.squatRack, .dumbbells], .yoga: [.yogaMat]],
         field: [StageRect(x: 75...315, y: 420...500)],
-        open: [StageRect(x: 0...390, y: 300...650)],
-        props: [
-            StageRect(x: 236...370, y: 516...560), StageRect(x: 6...168, y: 542...564),
-            StageRect(x: 40...350, y: 350...392), StageRect(x: 40...178, y: 440...456),
-        ])
+        open: [StageRect(x: 0...390, y: 440...650)],
+        props: [StageRect(x: 40...350, y: 350...392), StageRect(x: 40...178, y: 440...456)])
 
     static let tennis = StageLayout(
         stations: [
             Station(
                 kind: .rally, capacity: 4,
                 path: .spots([
-                    StagePoint(x: 130, y: 316), StagePoint(x: 130, y: 432), StagePoint(x: 262, y: 316),
-                    StagePoint(x: 262, y: 432),
+                    StagePoint(x: 130, y: 346), StagePoint(x: 130, y: 462), StagePoint(x: 262, y: 346),
+                    StagePoint(x: 262, y: 462),
                 ]), speed: 0, scale: nil),
             Station(
-                kind: .serve, capacity: 2, path: .spots([StagePoint(x: 40, y: 292), StagePoint(x: 350, y: 436)]),
+                kind: .serve, capacity: 2, path: .spots([StagePoint(x: 40, y: 322), StagePoint(x: 350, y: 466)]),
                 speed: 0, scale: nil),
         ],
         stationsBySport: [.tennis: [.rally, .serve]],
-        field: [StageRect(x: 70...330, y: 316...440)],
+        field: [StageRect(x: 70...330, y: 346...470)],
         // The net.
-        fieldGaps: [StageRect(x: 0...390, y: 345...372)],
-        open: [StageRect(x: 0...390, y: 462...650)],
-        props: [StageRect(x: 328...376, y: 492...530), StageRect(x: 34...46, y: 462...532)])
+        fieldGaps: [StageRect(x: 0...390, y: 375...402)],
+        open: [StageRect(x: 0...390, y: 480...650)],
+        props: [])
 
     static let climbing = StageLayout(
         stations: [
             Station(
                 kind: .topRope, capacity: 4,
-                path: .climb([132.0, 177, 222, 267].map { StationPath.Column(x: $0, top: 260, bottom: 392) }),
+                path: .climb([132.0, 177, 222, 267].map { StationPath.Column(x: $0, top: 290, bottom: 422) }),
                 speed: 9, scale: 0.19),
             Station(
                 kind: .bouldering, capacity: 2,
-                path: .climb([322.0, 362].map { StationPath.Column(x: $0, top: 340, bottom: 396) }),
+                path: .climb([322.0, 362].map { StationPath.Column(x: $0, top: 370, bottom: 426) }),
                 speed: 7, scale: 0.19),
             Station(
-                kind: .chalk, capacity: 2, path: .spots([StagePoint(x: 150, y: 500), StagePoint(x: 240, y: 500)]),
+                kind: .chalk, capacity: 2, path: .spots([StagePoint(x: 150, y: 530), StagePoint(x: 240, y: 530)]),
                 speed: 0, scale: nil),
         ],
         stationsBySport: [.climb: [.topRope, .bouldering, .chalk]],
         // The foot of the wall.
-        field: [StageRect(x: 75...315, y: 452...452)],
-        open: [StageRect(x: 0...390, y: 432...650)],
-        props: [StageRect(x: 336...380, y: 528...560)])
+        field: [StageRect(x: 75...315, y: 482...482)],
+        open: [StageRect(x: 0...390, y: 470...650)],
+        props: [])
 }

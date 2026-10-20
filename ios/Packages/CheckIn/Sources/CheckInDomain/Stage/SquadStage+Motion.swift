@@ -13,7 +13,7 @@ public enum DayPhase: Hashable, Sendable {
 }
 
 /// What a teammate is doing where they are.
-public enum Pose: Hashable, Sendable {
+public enum StagePose: Hashable, Sendable {
     /// On the scene's equipment.
     case station(StationKind)
     /// Training in place in their sport's kit. Swimmers and climbers away from water and wall
@@ -36,7 +36,7 @@ public struct StagePosition: Hashable, Sendable {
 }
 
 extension SquadStage {
-    public func pose(of member: StageMember, at phase: DayPhase) -> Pose {
+    public func pose(of member: StageMember, at phase: DayPhase) -> StagePose {
         if case .trained(let activity) = member.status {
             if case .station(let kind, _) = placements[member.id] { return .station(kind) }
             return .inPlace(activity)
@@ -71,12 +71,11 @@ extension SquadStage {
         let facing: Double
         switch station.path {
         case .loop(let start, let end, let lanes):
-            let lap = lanes[slot % lanes.count]
             let perLane = (station.capacity + lanes.count - 1) / lanes.count
+            let lap = lanes[min(slot / perLane, lanes.count - 1)]
             let width = end - start
-            let offset = Double(slot / lanes.count) / Double(perLane) * width
-            point = StagePoint(
-                x: start + wrap(offset + seconds * station.speed * lap.direction, width), y: lap.y)
+            let offset = Double(slot % perLane) / Double(perLane) * width
+            point = StagePoint(x: start + wrap(offset + seconds * lap.speed * lap.direction, width), y: lap.y)
             facing = lap.direction
         case .lanes(let lanes):
             let lane = lanes[slot % lanes.count]
@@ -104,9 +103,10 @@ extension SquadStage {
         return rest < 0 ? rest + length : rest
     }
 
-    /// Who joins in when I check in, nearest to me first (ties in the order given): everyone
-    /// awake except swimmers in the water, so at night only those still training.
-    public func cheerers(_ teammates: [StageMember], at phase: DayPhase) -> [MemberID] {
+    /// Who joins in when I check in `seconds` into the day's loop, nearest to me first (ties in
+    /// the order given): everyone awake and on screen except swimmers in the water, so at night
+    /// only those still training.
+    public func cheerers(_ teammates: [StageMember], at phase: DayPhase, seconds: Double) -> [MemberID] {
         let mine = StageLayout.mySpot
         return
             teammates
@@ -115,7 +115,9 @@ extension SquadStage {
                 return pose(of: member, at: phase) != .asleep
             }
             .compactMap { member -> (MemberID, Double)? in
-                guard let point = position(of: member.id, at: 0)?.point else { return nil }
+                guard let point = position(of: member.id, at: seconds)?.point,
+                    (0...StageLayout.width).contains(point.x)
+                else { return nil }
                 let across = point.x - mine.x
                 let deep = point.y - mine.y
                 return (member.id, (across * across + deep * deep).squareRoot())

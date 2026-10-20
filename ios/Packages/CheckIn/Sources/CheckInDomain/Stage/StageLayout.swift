@@ -36,7 +36,7 @@ public struct StageRect: Hashable, Sendable {
 
 /// A piece of the scene's equipment that people whose sport matches use.
 public enum StationKind: String, CaseIterable, Hashable, Sendable {
-    case hurdles, jogging
+    case jogging
     case swimming
     case treadmill, squatRack, dumbbells, yogaMat
     case rally, serve
@@ -45,8 +45,8 @@ public enum StationKind: String, CaseIterable, Hashable, Sendable {
 
 /// How the people at a station move.
 public enum StationPath: Hashable, Sendable {
-    /// Round and round along lanes, all at one speed and evenly spaced; they leave one side of
-    /// the screen and come back on the other. Slot `i` runs in lane `i % lanes.count`.
+    /// Round and round along lanes, each lap at its own speed, evenly spaced within a lap; they
+    /// leave one side of the screen and come back on the other. The laps fill one after another.
     case loop(from: Double, to: Double, lanes: [Lap])
     /// One lane each, back and forth.
     case lanes([Lane])
@@ -59,6 +59,8 @@ public enum StationPath: Hashable, Sendable {
         public let y: Double
         /// 1 runs rightwards, -1 leftwards.
         public let direction: Double
+        /// Points per second.
+        public let speed: Double
     }
 
     public struct Lane: Hashable, Sendable {
@@ -80,7 +82,7 @@ public struct Station: Hashable, Sendable {
     public let kind: StationKind
     public let capacity: Int
     public let path: StationPath
-    /// Points per second along the path.
+    /// Points per second along lanes and columns; a loop's laps each have their own.
     public let speed: Double
     public let scale: Double?
 }
@@ -97,34 +99,42 @@ public struct StageLayout: Hashable, Sendable {
     /// or in the water.
     public let field: [StagePoint]
     /// Spots on the open floor, best first: front row first, then from the middle out, like a
-    /// team photo. Never on equipment, walls, water or the court, and never right around me.
+    /// team photo. Never on equipment, walls, water or the court, and never right around me. A
+    /// few sit close to playing-area spots; `SquadStage` never fills both at once.
     public let floor: [StagePoint]
-    /// Where the water is, if the scene has any; nobody in it cheers.
-    public let water: ClosedRange<Double>?
+
+    /// The stage's width; anyone outside 0 to this is off screen.
+    public static let width = 390.0
 
     /// Me: always front and centre, just above the 打卡 button.
     public static let mySpot = StagePoint(x: 195, y: 676)
     /// How much bigger I am than the nearest teammate.
-    public static let myScale = 0.28
+    public static let myScale = 0.34
 
-    /// A teammate's size at a depth: nearer is bigger, from 0.17 at the back to 0.25 at the front.
+    /// A teammate's size at a depth: nearer is bigger, from 0.21 at the back to 0.29 at the front.
     public static func scale(atDepth y: Double) -> Double {
         let near = min(1, max(0, (y - 280) / (640 - 280)))
-        return 0.17 + (0.25 - 0.17) * near
+        return 0.21 + (0.29 - 0.21) * near
     }
 
     init(
         stations: [Station], stationsBySport: [Sport: [StationKind]], field: [StageRect], fieldGaps: [StageRect] = [],
-        open: [StageRect], props: [StageRect], water: ClosedRange<Double>? = nil
+        open: [StageRect], props: [StageRect]
     ) {
         self.stations = stations
         self.stationsBySport = stationsBySport
-        self.water = water
         self.field = Self.fieldSpots(in: field, avoiding: props + fieldGaps)
         let busy = stations.flatMap { station -> [StagePoint] in
             if case .spots(let spots) = station.path { spots } else { [] }
         }
         floor = Self.floorSpots(in: open, avoiding: props, busy: busy)
+    }
+
+    /// Whether two people standing at `one` and `other` would be drawn over each other.
+    static func crowds(_ one: StagePoint, _ other: StagePoint) -> Bool {
+        let across = one.x - other.x
+        let deep = (one.y - other.y) * 1.4
+        return (across * across + deep * deep).squareRoot() < 46
     }
 
     func station(_ kind: StationKind) -> Station? {
@@ -157,31 +167,27 @@ public struct StageLayout: Hashable, Sendable {
         return spots.enumerated().sorted { ($0.element.1, $0.offset) < ($1.element.1, $1.offset) }.map(\.element.0)
     }
 
-    /// The open floor on a team-photo grid: rows 60 apart from the front, five across 80 apart
-    /// centred on the screen, every other row offset half a step.
+    /// The open floor on a team-photo grid: rows 70 apart from the front, 92 apart across and
+    /// centred on the screen, every other row offset half a step, clear of the `busy` spots.
     private static func floorSpots(in areas: [StageRect], avoiding: [StageRect], busy: [StagePoint]) -> [StagePoint] {
         var spots: [StagePoint] = []
         for area in areas {
             var row = 0
             var y = area.maxY - 24
             while y >= area.minY {
-                var x = mySpot.x + (row.isMultiple(of: 2) ? 0 : 40) - 160
-                while x <= area.maxX - 18 {
+                var x = mySpot.x - (row.isMultiple(of: 2) ? 0 : 46) - 92
+                while x <= area.maxX - 30 {
                     let point = StagePoint(x: x, y: y)
-                    let besideMe = abs(x - mySpot.x) < 52 && y > 600
-                    let offScreen = x < 26 || x > 364
+                    let besideMe = abs(x - mySpot.x) < 60 && y > 590
+                    let offScreen = x < 26 || x > width - 26
                     let onProp = avoiding.contains { $0.blocks(point) }
-                    let onStation = busy.contains { spot in
-                        let across = spot.x - x
-                        let deep = (spot.y - y) * 1.4
-                        return (across * across + deep * deep).squareRoot() < 46
-                    }
-                    if !besideMe && !offScreen && !onProp && !onStation {
+                    let taken = busy.contains { crowds($0, point) }
+                    if !besideMe && !offScreen && !onProp && !taken {
                         spots.append(point)
                     }
-                    x += 80
+                    x += 92
                 }
-                y -= 60
+                y -= 70
                 row += 1
             }
         }
