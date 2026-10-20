@@ -14,17 +14,11 @@ public struct PlusOne<Trigger: Equatable>: View {
         self.trigger = trigger
     }
 
-    private struct Frame {
-        var scale = 0.4
-        var rise = 0.0
-        var opacity = 0.0
-    }
-
     public var body: some View {
         Text(verbatim: "+1")
             .typeStyle(TypeRamp.scoreHero)
             .foregroundStyle(Color(role: .ring, in: theme))
-            .keyframeAnimator(initialValue: Frame(), trigger: trigger) { content, frame in
+            .keyframeAnimator(initialValue: PlusOneFrame(), trigger: trigger) { content, frame in
                 content
                     .scaleEffect(reduceMotion ? 1 : frame.scale, anchor: .bottom)
                     .offset(y: reduceMotion ? 0 : -frame.rise)
@@ -50,5 +44,12 @@ public struct PlusOne<Trigger: Equatable>: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
+}
+/// One frame of the pop. Outside `PlusOne`, so the animator's closures don't capture the generic
+/// trigger's type.
+private struct PlusOneFrame {
+    var scale = 0.4
+    var rise = 0.0
+    var opacity = 0.0
 }
 #endif

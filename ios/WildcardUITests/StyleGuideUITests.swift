@@ -26,7 +26,9 @@ final class StyleGuideUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         _ = section(1, in: app)
 
+        // The type ramp starts just below the fold at launch: bring it up before the shot.
         scrollUntilHittable(section(2, in: app), in: app)
+        app.swipeUp()
         keepScreenshot(named: "10-type")
         scrollUntilHittable(section(3, in: app), in: app)
         keepScreenshot(named: "11-layout")
@@ -86,13 +88,17 @@ final class StyleGuideUITests: XCTestCase {
         keepScreenshot(named: "17-status-my-week")
     }
 
-    /// The list, the character's stage and the motion springs.
+    /// The list and its switch, the character's stage and the motion springs.
     func testListStageAndMotionInPool() {
         let app = launch(language: "zh-Hans")
         _ = section(1, in: app)
 
-        scrollUntilHittable(section(8, in: app), in: app)
+        let reminder = app.switches["styleguide.switch"]
+        scrollUntilHittable(reminder, in: app)
+        XCTAssertEqual(reminder.value as? String, "1", "每日提醒 isn't on to start")
         keepScreenshot(named: "18-list")
+        reminder.tap()
+        waitFor(reminder, "value == '0'", "tapping 每日提醒 didn't turn it off")
         scrollUntilHittable(section(9, in: app), in: app)
         app.swipeUp()
         keepScreenshot(named: "19-stage")
