@@ -118,6 +118,20 @@ export const StoredAwards = z.discriminatedUnion('version', [
 export type StoredAwards = z.infer<typeof StoredAwards>;
 export type MemberAwards = StoredAwards['members'][number];
 
+/**
+ * Where a squad's awards for a week stand once anything has happened to them: written, or not
+ * yet, with the tries that failed (none when a member nudged before the first try).
+ */
+export type AwardsState =
+  | { readonly status: 'given'; readonly awards: StoredAwards }
+  | { readonly status: 'failing'; readonly failures: Failures };
+
+/** The tries at a squad's awards that failed, and why the last one did. */
+export interface Failures {
+  readonly count: number;
+  readonly lastError?: string;
+}
+
 /** The key a member goes by in the prompt: A, B, C…, so no id or name reaches the model. */
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 

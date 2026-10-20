@@ -11,6 +11,7 @@ import {
   createWeeklyPlans,
   type CheckInRecord,
 } from '@wildcard/check-ins';
+import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
   MemberId as MembersMember,
   createMembers,
@@ -120,6 +121,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     squads,
     awards,
     push,
+    admins: createAdmins({ store: createPostgresAdminStore(db), clock }),
     clock,
     log: createLog(() => undefined),
   };
@@ -164,9 +166,17 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
       body: z.record(z.string(), z.unknown()).parse(await response.json()),
     };
   };
+  const nudge = async ({ token, squad }: { readonly token: string; readonly squad: string }) => {
+    const response = await app.request(`/squads/${squad}/weeks/${WEEK}/story/nudge`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    return response.status;
+  };
   return {
     run: () => giveWeeklyAwards(deps),
     read,
+    nudge,
     prompts,
     sent,
     at: (moment: Date) => {
@@ -347,41 +357,86 @@ describe('weekly awards', () => {
     expect(before.sent).toBe(2);
   });
 
-  it('is not there before Sunday 8pm Eastern, pending while the model fails, then ready', async () => {
+  it('is not there before Sunday 8pm Eastern, waits only for its titles while the model fails, then is ready', async () => {
     let down = true;
-    const { run, read, at, sent } = setup({
+    const { run, read, nudge, at, sent } = setup({
       answer: (prompt) => {
         if (down) return Promise.reject(new Error('down'));
         return Promise.resolve(titlesFor(lettersIn(prompt)));
       },
     });
-    const ana = await member();
-    const squad = await squadOf(ana);
-    await trained(ana, { squad });
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    const top = await trained(ana, { squad });
+    await reactions.save(top, {
+      member: CheckInMember.parse(bo.userId),
+      kind: 'lol',
+      reactedAt: new Date(),
+    });
 
     at(new Date(AWARDS_AT.getTime() - 60_000));
     const early = await read({ token: ana.token, squad });
     expect([early.status, early.body.reason]).toStrictEqual([404, 'WEEK_STORY_NOT_READY']);
+    expect(await nudge({ token: ana.token, squad })).toBe(404);
 
     at(new Date(AWARDS_AT.getTime() + HOUR));
     expect((await run()).failed).toBeGreaterThanOrEqual(1);
     const pending = Story.parse((await read({ token: ana.token, squad })).body);
-    expect([pending.status, pending.titles, pending.hottest]).toStrictEqual([
+    expect([pending.status, pending.titles, pending.hottest?.checkIn]).toStrictEqual([
       'pending',
       undefined,
-      undefined,
+      top,
     ]);
+    expect(pending.hottest?.reactions).toStrictEqual([{ kind: 'lol', label: '笑死', count: 1 }]);
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(0);
+
+    // 催一下主办方: the first nudge tells each admin which squad, how many tries failed and why.
+    const admin = await member();
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const toAdmin = () => sent.filter(({ token }) => token === admin.device);
+    expect(await nudge({ token: ana.token, squad })).toBe(204);
+    expect(await nudge({ token: bo.token, squad })).toBe(204);
+    expect(toAdmin().map(({ notification }) => notification)).toStrictEqual([
+      {
+        alert: { key: 'push.weeklyAwards.stuck', args: ['squad', '1', 'Error: down'] },
+        category: 'weeklyAwardsStuck',
+        thread: 'weekly-awards-stuck',
+        collapseId: `weekly-awards-stuck-${squad}-${WEEK}`,
+        interruption: 'active',
+        event: { squad, weekStart: WEEK },
+      },
+    ]);
 
     down = false;
     at(new Date(AWARDS_AT.getTime() + 2 * HOUR));
     await run();
-    expect(Story.parse((await read({ token: ana.token, squad })).body).status).toBe('ready');
+    const ready = Story.parse((await read({ token: ana.token, squad })).body);
+    expect([ready.status, ready.titles?.length, ready.hottest?.checkIn]).toStrictEqual([
+      'ready',
+      1,
+      top,
+    ]);
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
+    expect(await nudge({ token: ana.token, squad })).toBe(204);
+    expect(toAdmin()).toHaveLength(1);
+  });
+
+  it('tells the admins of a nudge before the run has tried the squad', async () => {
+    const { nudge, sent } = setup();
+    const [ana, admin] = [await member(), await member()];
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const squad = await squadOf(ana);
+    await trained(ana, { squad });
+    expect(await nudge({ token: ana.token, squad })).toBe(204);
+    expect(
+      sent
+        .filter(({ token }) => token === admin.device)
+        .map(({ notification }) => notification.alert),
+    ).toStrictEqual([{ key: 'push.weeklyAwards.stuck', args: ['squad', '0', '-'] }]);
   });
 
   it('is ready with nobody on it when the squad didn’t check in, and only for its members', async () => {
-    const { read } = setup();
+    const { read, nudge } = setup();
     const [ana, stranger] = [await member(), await member()];
     const squad = await squadOf(ana);
     const empty = Story.parse((await read({ token: ana.token, squad })).body);
@@ -389,6 +444,7 @@ describe('weekly awards', () => {
     const refused = await read({ token: stranger.token, squad });
     expect([refused.status, refused.body.reason]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
     expect((await read({ token: ana.token, squad, week: '2026-10-20' })).status).toBe(400);
+    expect(await nudge({ token: stranger.token, squad })).toBe(403);
   });
 
   it('leaves out a member who left the squad', async () => {

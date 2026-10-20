@@ -77,7 +77,14 @@ const awardsLlm = config.awardsModel;
 const awardsOptions = { timeoutMs: 120_000, maxOutputTokens: 16_384 };
 const awardsModel: AwardsModel =
   awardsLlm === undefined
-    ? { answer: () => Promise.reject(new AwardsWriterUnavailableError()) }
+    ? {
+        answer: () =>
+          Promise.reject(
+            new AwardsWriterUnavailableError({
+              cause: new Error('No API key is set for AWARDS_LLM_PROVIDER'),
+            }),
+          ),
+      }
     : awardsLlm.provider === 'openai'
       ? createOpenAILanguageModel({ ...awardsLlm, ...awardsOptions })
       : createAnthropicLanguageModel({ ...awardsLlm, ...awardsOptions });

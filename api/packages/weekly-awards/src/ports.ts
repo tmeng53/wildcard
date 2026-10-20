@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import type { MemberId, SquadId, StoredAwards } from './domain/awards.js';
+import type { AwardsState, MemberId, SquadId, StoredAwards } from './domain/awards.js';
 import type { WeekStart } from './domain/schedule.js';
 
 /**
@@ -18,9 +18,10 @@ export interface LanguageModel {
   }): Promise<Reply>;
 }
 
-/** Where each squad's awards are kept: once a week, never rewritten. */
+/** Where each squad's awards are kept: once a week, never rewritten, and the tries before. */
 export interface AwardsStore {
-  find(squad: SquadId, weekStart: WeekStart): Promise<StoredAwards | undefined>;
+  /** Where a squad's awards for a week stand; `undefined` before anything happened to them. */
+  find(squad: SquadId, weekStart: WeekStart): Promise<AwardsState | undefined>;
   /**
    * Saves a squad's awards for a week unless it has some already; says whether these were
    * saved, so two runs at once keep one.
@@ -35,6 +36,17 @@ export interface AwardsStore {
    * marks them, false when they were told already or there are none.
    */
   markNotified(squad: SquadId, weekStart: WeekStart): Promise<boolean>;
+  /** Counts a failed try at a squad's awards for a week, keeping why it failed. */
+  recordFailure(failure: {
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+    readonly error: string;
+  }): Promise<void>;
+  /**
+   * Marks a squad's awards for a week as nudged about; true only for the one call that marks
+   * them, and never once they are written.
+   */
+  markNudged(squad: SquadId, weekStart: WeekStart): Promise<boolean>;
   /** Takes a member out of every squad's awards, for an account being deleted. */
   forget(member: MemberId): Promise<void>;
 }

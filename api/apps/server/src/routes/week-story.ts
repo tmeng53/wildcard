@@ -3,7 +3,6 @@ import { LocalDay, ReactionKind, SquadId, WeekStart } from '@wildcard/check-ins'
 import {
   AWARD_MOVES,
   CheckInKind,
-  MemberId,
   SPEECH_MAX,
   TITLE_MAX,
   TITLES_MAX,
@@ -13,7 +12,11 @@ import {
 } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
-import { squadStory, type WeeklyAwardsDependencies } from '../flows/weekly-awards.js';
+import {
+  nudgeOrganisers,
+  squadStory,
+  type WeeklyAwardsDependencies,
+} from '../flows/weekly-awards.js';
 import { PhotoPath, type PhotoStorage, type VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -104,8 +107,10 @@ export const WeekStoryBody = z
       }),
     status: z.enum(['ready', 'pending']).meta({
       description:
-        '`ready` once the week’s awards are written. `pending` when they are due but not ' +
-        'written yet: the organisers are working late, so show that and read again later.',
+        '`ready` once the week’s titles are written. `pending` when they are due but not ' +
+        'written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, ' +
+        'showing that the organisers are out of funds with a button that nudges them ' +
+        '(`POST …/story/nudge`); every other page shows as usual. Read again later.',
     }),
     squad: z.strictObject({ id: z.uuid(), name: z.string() }),
     week: z.strictObject({ from: WeekStart, to: LocalDay }),
@@ -125,19 +130,27 @@ export const WeekStoryBody = z
       }),
     hottest: Hottest.optional().meta({
       description:
-        'Once `ready`: the signed-in member’s check-in with the most reactions at the awards, the ' +
-        'latest on a tie. Missing when none of theirs had any.',
+        'The signed-in member’s check-in with the most reactions at the awards, the latest on a ' +
+        'tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs ' +
+        'had any.',
     }),
   })
   .openapi('WeekStory');
 
 /** `GET /squads/{squadId}/weeks/{weekStart}/story`: a squad's Sunday 战报 story. */
 export function weekStory(
-  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'awards' | 'clock'> & {
+  deps: Pick<
+    WeeklyAwardsDependencies,
+    'checkIns' | 'squads' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
+  > & {
     readonly verifyToken: VerifyToken;
     readonly photos: PhotoStorage;
   },
 ) {
+  const params = z.strictObject({
+    squadId: SquadId,
+    weekStart: WeekStart.meta({ description: 'The week’s Monday.', example: '2026-10-19' }),
+  });
   const route = createRoute({
     method: 'get',
     path: '/squads/{squadId}/weeks/{weekStart}/story',
@@ -151,12 +164,7 @@ export function weekStory(
       'request’s `Accept-Language`, as the week summary’s do.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
-    request: {
-      params: z.strictObject({
-        squadId: SquadId,
-        weekStart: WeekStart.meta({ description: 'The week’s Monday.', example: '2026-10-19' }),
-      }),
-    },
+    request: { params },
     responses: {
       200: {
         description: 'The story, or `pending` while it is being written',
@@ -170,49 +178,80 @@ export function weekStory(
     },
   });
 
-  return new OpenAPIHono<SignedIn>().openapi(route, async (c) => {
-    const { squadId, weekStart } = c.req.valid('param');
-    const language = languageOf(c.req.header('accept-language'));
-    const viewer = c.var.caller.userId;
-    const story = await squadStory(deps, {
-      viewer,
-      squad: AwardsSquad.parse(squadId),
-      weekStart: AwardsWeek.parse(weekStart),
-    });
-    const mine = story.members.find(({ member }) => member === MemberId.parse(viewer));
-    const hottest = mine?.topCheckIn;
-    const urls = await deps.photos.createViewUrls(
-      (hottest?.photos ?? []).map((path) => PhotoPath.parse(path)),
-      PHOTO_VIEW_SECONDS,
-    );
-    const hottestView = (top: TopCheckIn) => ({
-      ...top,
-      photos: top.photos.map((path) => {
-        const url = urls.get(PhotoPath.parse(path));
-        if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
-        return { path, url: url.href };
-      }),
-      reactions: Object.entries(top.reactions).map(([kind, count]) => {
-        const known = ReactionKind.safeParse(kind);
-        return { kind, label: known.success ? REACTION_COPY[known.data][language] : kind, count };
-      }),
-    });
-    const to = new Date(Date.parse(weekStart) + 6 * DAY).toISOString().slice(0, 10);
-    return c.json(
-      {
-        version: 1 as const,
-        language,
-        status: story.status,
-        squad: story.squad,
-        week: { from: weekStart, to },
-        ...(story.status === 'ready'
-          ? {
-              titles: story.members.map(({ member, titles }) => ({ member, titles })),
-            }
-          : {}),
-        ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),
-      },
-      200,
-    );
+  const nudge = createRoute({
+    method: 'post',
+    path: '/squads/{squadId}/weeks/{weekStart}/story/nudge',
+    operationId: 'nudgeSquadWeekStory',
+    summary: 'Nudges the organisers about a story whose titles haven’t come (催一下主办方)',
+    description:
+      'For the button on a `pending` story’s titles page. The first nudge for a squad’s week ' +
+      'tells the admins, with the failed tries and why; later ones, and nudges once the titles ' +
+      'are written, change nothing. Answers 204 either way.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params },
+    responses: {
+      204: { description: 'Nudged, or nothing to nudge about' },
+      400: problem('Not a Monday'),
+      401: problem('No bearer token, or not a valid one'),
+      403: problem('The member isn’t in this squad'),
+      404: problem('Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
   });
+
+  return new OpenAPIHono<SignedIn>()
+    .openapi(nudge, async (c) => {
+      const { squadId, weekStart } = c.req.valid('param');
+      await nudgeOrganisers(deps, {
+        viewer: c.var.caller.userId,
+        squad: AwardsSquad.parse(squadId),
+        weekStart: AwardsWeek.parse(weekStart),
+      });
+      return c.body(null, 204);
+    })
+    .openapi(route, async (c) => {
+      const { squadId, weekStart } = c.req.valid('param');
+      const language = languageOf(c.req.header('accept-language'));
+      const viewer = c.var.caller.userId;
+      const story = await squadStory(deps, {
+        viewer,
+        squad: AwardsSquad.parse(squadId),
+        weekStart: AwardsWeek.parse(weekStart),
+      });
+      const { hottest } = story;
+      const urls = await deps.photos.createViewUrls(
+        (hottest?.photos ?? []).map((path) => PhotoPath.parse(path)),
+        PHOTO_VIEW_SECONDS,
+      );
+      const hottestView = (top: TopCheckIn) => ({
+        ...top,
+        photos: top.photos.map((path) => {
+          const url = urls.get(PhotoPath.parse(path));
+          if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
+          return { path, url: url.href };
+        }),
+        reactions: Object.entries(top.reactions).map(([kind, count]) => {
+          const known = ReactionKind.safeParse(kind);
+          return { kind, label: known.success ? REACTION_COPY[known.data][language] : kind, count };
+        }),
+      });
+      const to = new Date(Date.parse(weekStart) + 6 * DAY).toISOString().slice(0, 10);
+      return c.json(
+        {
+          version: 1 as const,
+          language,
+          status: story.status,
+          squad: story.squad,
+          week: { from: weekStart, to },
+          ...(story.status === 'ready'
+            ? {
+                titles: story.members.map(({ member, titles }) => ({ member, titles })),
+              }
+            : {}),
+          ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),
+        },
+        200,
+      );
+    });
 }

@@ -24,9 +24,12 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface WeeklyAwards {
-  awards: Json;
+  awards: Json | null;
   created_at: Generated<Timestamp>;
+  failed_attempts: Generated<number>;
+  last_error: string | null;
   notified_at: Timestamp | null;
+  nudged_at: Timestamp | null;
   squad_id: string;
   week_start: string;
 }

@@ -26,21 +26,26 @@ export interface GiveAwardsInput {
 /**
  * A squad's awards for the week: the ones saved already, or new ones the model writes for every
  * member who checked in, saved once. A squad where nobody checked in gets none, without asking
- * the model. Throws `AwardsWriterUnavailableError`, saving nothing, when no answer passes the
- * checks.
+ * the model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
+ * the failed try and why.
  */
 export async function giveAwards(
   deps: { readonly model: LanguageModel; readonly store: AwardsStore },
   { squad, weekStart, members }: GiveAwardsInput,
 ): Promise<StoredAwards> {
   const saved = await deps.store.find(squad, weekStart);
-  if (saved !== undefined) return saved;
+  if (saved?.status === 'given') return saved.awards;
 
   const winners = members.filter(({ checkIns }) => checkIns.length > 0);
-  const titles: Titles =
-    winners.length === 0
-      ? new Map<MemberId, Title[]>()
-      : await writeTitles(deps.model, { weekStart, winners });
+  let titles: Titles = new Map<MemberId, Title[]>();
+  if (winners.length > 0) {
+    try {
+      titles = await writeTitles(deps.model, { weekStart, winners });
+    } catch (error) {
+      await deps.store.recordFailure({ squad, weekStart, error: reasonOf(error) });
+      throw error;
+    }
+  }
   const awards: StoredAwards = {
     version: 1,
     members: winners.map(({ member, checkIns }) => {
@@ -55,8 +60,23 @@ export async function giveAwards(
   if (await deps.store.save({ squad, weekStart, awards })) return awards;
   // Another run saved first: theirs stand.
   const theirs = await deps.store.find(squad, weekStart);
-  if (theirs === undefined) throw new Error('Awards were saved but can’t be read back');
-  return theirs;
+  if (theirs?.status !== 'given') throw new Error('Awards were saved but can’t be read back');
+  return theirs.awards;
+}
+
+/** The longest reason kept for a failed try. */
+const REASON_MAX = 300;
+
+/**
+ * Why a try failed, for the admin a nudge tells: the innermost cause's message (a provider's
+ * "429 insufficient_quota", a timeout), which never holds members' words.
+ */
+export function reasonOf(error: unknown): string {
+  let innermost = error;
+  while (innermost instanceof Error && innermost.cause !== undefined) innermost = innermost.cause;
+  const reason =
+    innermost instanceof Error ? `${innermost.name}: ${innermost.message}` : String(innermost);
+  return reason.slice(0, REASON_MAX);
 }
 
 type Titles = NonNullable<ReturnType<typeof titlesOf>>;

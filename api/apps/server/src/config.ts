@@ -22,9 +22,9 @@ const Environment = z.object({
   LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
   LLM_MODEL: z.string().min(1).optional(),
   // Which provider writes each squad's weekly awards (the Sunday 战报), and with which model.
-  // Claude Sonnet 5.5 won Tracy's blind test for it (2026-10-20). Without that provider's key
-  // the awards stay pending.
-  AWARDS_LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('anthropic'),
+  // Tracy picked OpenAI's GPT-6 Luna for it (2026-10-20): close to Claude Sonnet 5.5 in her
+  // blind test, for far less. Without that provider's key the awards stay pending.
+  AWARDS_LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
   AWARDS_LLM_MODEL: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
@@ -59,8 +59,8 @@ const Environment = z.object({
   APNS_TOPIC: z.string().min(1).optional(),
 });
 
-/** The Claude model that writes the weekly awards unless AWARDS_LLM_MODEL names another. */
-const AWARDS_ANTHROPIC_MODEL = 'claude-sonnet-5-5';
+/** Each provider's model for the weekly awards, unless AWARDS_LLM_MODEL names another. */
+const AWARDS_MODELS = { openai: 'gpt-6-luna', anthropic: 'claude-sonnet-5-5' } as const;
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
 const APNS = ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_PRIVATE_KEY', 'APNS_TOPIC'] as const;
@@ -167,9 +167,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
         : {
             provider: AWARDS_LLM_PROVIDER,
             apiKey: awardsKey,
-            model:
-              AWARDS_LLM_MODEL ??
-              (AWARDS_LLM_PROVIDER === 'anthropic' ? AWARDS_ANTHROPIC_MODEL : undefined),
+            model: AWARDS_LLM_MODEL ?? AWARDS_MODELS[AWARDS_LLM_PROVIDER],
           },
     appleSignInKey,
     apns:

@@ -98,7 +98,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', weekSummary(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
-  app.route('/', weekStory({ ...deps, ...deps.weeklyAwards }));
+  app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
   app.route(
     '/',

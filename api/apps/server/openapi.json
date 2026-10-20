@@ -2009,7 +2009,7 @@
               "ready",
               "pending"
             ],
-            "description": "`ready` once the week’s awards are written. `pending` when they are due but not written yet: the organisers are working late, so show that and read again later."
+            "description": "`ready` once the week’s titles are written. `pending` when they are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
           },
           "squad": {
             "type": "object",
@@ -2191,7 +2191,7 @@
           "reactions"
         ],
         "additionalProperties": false,
-        "description": "Once `ready`: the signed-in member’s check-in with the most reactions at the awards, the latest on a tie. Missing when none of theirs had any."
+        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any."
       },
       "StoryPhoto": {
         "type": "object",
@@ -4012,6 +4012,96 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/story/nudge": {
+      "post": {
+        "operationId": "nudgeSquadWeekStory",
+        "summary": "Nudges the organisers about a story whose titles haven’t come (催一下主办方)",
+        "description": "For the button on a `pending` story’s titles page. The first nudge for a squad’s week tells the admins, with the failed tries and why; later ones, and nudges once the titles are written, change nothing. Answers 204 either way.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Nudged, or nothing to nudge about"
+          },
+          "400": {
+            "description": "Not a Monday",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
             "content": {
               "application/problem+json": {
                 "schema": {

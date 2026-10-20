@@ -13,21 +13,65 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
     async find(squad, weekStart) {
       const row = await db
         .selectFrom('weekly_awards')
-        .select('awards')
+        .select(['awards', 'failed_attempts', 'last_error'])
         .where('squad_id', '=', squad)
         .where('week_start', '=', weekStart)
         .executeTakeFirst();
-      return row === undefined ? undefined : StoredAwards.parse(row.awards);
+      if (row === undefined) return undefined;
+      if (row.awards !== null) return { status: 'given', awards: StoredAwards.parse(row.awards) };
+      return {
+        status: 'failing',
+        failures: {
+          count: row.failed_attempts,
+          ...(row.last_error === null ? {} : { lastError: row.last_error }),
+        },
+      };
     },
 
     async save({ squad, weekStart, awards }) {
       const saved = await db
         .insertInto('weekly_awards')
         .values({ squad_id: squad, week_start: weekStart, awards: JSON.stringify(awards) })
-        .onConflict((conflict) => conflict.columns(['squad_id', 'week_start']).doNothing())
+        .onConflict((conflict) =>
+          conflict
+            .columns(['squad_id', 'week_start'])
+            .doUpdateSet({ awards: (eb) => eb.ref('excluded.awards') })
+            .where('weekly_awards.awards', 'is', null),
+        )
         .returning('squad_id')
         .executeTakeFirst();
       return saved !== undefined;
+    },
+
+    async recordFailure({ squad, weekStart, error }) {
+      await db
+        .insertInto('weekly_awards')
+        .values({ squad_id: squad, week_start: weekStart, failed_attempts: 1, last_error: error })
+        .onConflict((conflict) =>
+          conflict.columns(['squad_id', 'week_start']).doUpdateSet({
+            failed_attempts: sql`weekly_awards.failed_attempts + 1`,
+            last_error: (eb) => eb.ref('excluded.last_error'),
+          }),
+        )
+        .execute();
+    },
+
+    async markNudged(squad, weekStart) {
+      // A nudge can come before the first try, when the run hasn't reached the squad (or isn't
+      // running at all), so it may start the row.
+      const marked = await db
+        .insertInto('weekly_awards')
+        .values({ squad_id: squad, week_start: weekStart, nudged_at: sql`now()` })
+        .onConflict((conflict) =>
+          conflict
+            .columns(['squad_id', 'week_start'])
+            .doUpdateSet({ nudged_at: sql`now()` })
+            .where('weekly_awards.nudged_at', 'is', null)
+            .where('weekly_awards.awards', 'is', null),
+        )
+        .returning('squad_id')
+        .executeTakeFirst();
+      return marked !== undefined;
     },
 
     async markNotified(squad, weekStart) {
@@ -37,6 +81,7 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
         .where('squad_id', '=', squad)
         .where('week_start', '=', weekStart)
         .where('notified_at', 'is', null)
+        .where('awards', 'is not', null)
         .returning('squad_id')
         .executeTakeFirst();
       return marked !== undefined;

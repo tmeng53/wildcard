@@ -1,6 +1,6 @@
 -- What the database keeps true about weekly awards however the API writes them.
 begin;
-select plan(4);
+select plan(6);
 
 insert into public.squads (id, name, invite_code)
 values ('c0000000-0000-0000-0000-000000000001', 'squad', 'AWARDS01');
@@ -27,6 +27,18 @@ select throws_ok(
     values ('c0000000-0000-0000-0000-000000000001', '2026-10-26', '{}')$$,
   '23514', null,
   'stored awards carry their version'
+);
+
+select lives_ok(
+  $$insert into public.weekly_awards (squad_id, week_start, failed_attempts, last_error)
+    values ('c0000000-0000-0000-0000-000000000001', '2026-11-02', 1, 'timeout')$$,
+  'a squad''s week is kept before its awards are written, with its failed tries'
+);
+select throws_ok(
+  $$insert into public.weekly_awards (squad_id, week_start, failed_attempts)
+    values ('c0000000-0000-0000-0000-000000000001', '2026-11-09', -1)$$,
+  '23514', null,
+  'failed tries never go below none'
 );
 
 select * from finish();

@@ -116,7 +116,10 @@ describe('createWeeklyAwards', () => {
     expect(asked[0]).not.toContain(cy);
     // Asked again, the same awards, without asking the model.
     expect(await awards.give({ squad, weekStart: week, members })).toStrictEqual(given);
-    expect(await awards.find({ squad, weekStart: week })).toStrictEqual(given);
+    expect(await awards.find({ squad, weekStart: week })).toStrictEqual({
+      status: 'given',
+      awards: given,
+    });
     expect(asked).toHaveLength(1);
   });
 
@@ -130,7 +133,7 @@ describe('createWeeklyAwards', () => {
     expect(asked).toHaveLength(2);
   });
 
-  it('saves nothing when no answer passes, so the next run tries again', async () => {
+  it('saves only the failed try and why when no answer passes, so the next run tries again', async () => {
     const down = setup([() => Promise.reject(new Error('down'))]);
     const [squad, ana, bo, cy] = [await newSquad(), member(), member(), member()];
     const members = weekOf([ana, bo, cy]);
@@ -138,7 +141,10 @@ describe('createWeeklyAwards', () => {
       'AWARDS_WRITER_UNAVAILABLE',
     );
     expect(down.asked).toHaveLength(2);
-    expect(await down.awards.find({ squad, weekStart: week })).toBeUndefined();
+    expect(await down.awards.find({ squad, weekStart: week })).toStrictEqual({
+      status: 'failing',
+      failures: { count: 1, lastError: 'Error: down' },
+    });
     expect(await down.awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
     const { awards } = setup();
     expect((await awards.give({ squad, weekStart: week, members })).members).toHaveLength(2);
@@ -173,7 +179,10 @@ describe('createWeeklyAwards', () => {
       second.awards.give({ squad, weekStart: week, members }),
     ]);
     expect(a).toStrictEqual(b);
-    expect(await first.awards.find({ squad, weekStart: week })).toStrictEqual(a);
+    expect(await first.awards.find({ squad, weekStart: week })).toStrictEqual({
+      status: 'given',
+      awards: a,
+    });
   });
 
   it('hands out the winners to tell once', async () => {
@@ -197,7 +206,38 @@ describe('createWeeklyAwards', () => {
     await awards.forget(ana);
     for (const squad of squads) {
       const kept = await awards.find({ squad, weekStart: week });
-      expect(kept?.members.map((each) => each.member)).toStrictEqual([bo]);
+      expect(
+        kept?.status === 'given' ? kept.awards.members.map((each) => each.member) : kept,
+      ).toStrictEqual([bo]);
     }
+  });
+
+  it('hands out a squad’s week to nudge about once, with its failed tries, never once given', async () => {
+    const quota = Object.assign(new Error('429 You exceeded your current quota'), {
+      name: 'RateLimitError',
+    });
+    const down = setup([() => Promise.reject(new Error('unavailable', { cause: quota }))]);
+    const [early, failing, given] = [await newSquad(), await newSquad(), await newSquad()];
+    const members = weekOf([member(), member(), member()]);
+    expect(await down.awards.claimNudge({ squad: early, weekStart: week })).toStrictEqual({
+      count: 0,
+    });
+    expect(await down.awards.claimNudge({ squad: early, weekStart: week })).toBeUndefined();
+
+    await reasonOf(down.awards.give({ squad: failing, weekStart: week, members }));
+    await reasonOf(down.awards.give({ squad: failing, weekStart: week, members }));
+    const nudges = await Promise.all(
+      [1, 2, 3].map(() => down.awards.claimNudge({ squad: failing, weekStart: week })),
+    );
+    expect(nudges.filter((nudge) => nudge !== undefined)).toStrictEqual([
+      { count: 2, lastError: 'RateLimitError: 429 You exceeded your current quota' },
+    ]);
+
+    const { awards } = setup();
+    await awards.give({ squad: given, weekStart: week, members });
+    expect(await awards.claimNudge({ squad: given, weekStart: week })).toBeUndefined();
+    // A nudged week still takes its awards when a try passes.
+    await awards.give({ squad: early, weekStart: week, members });
+    expect((await awards.find({ squad: early, weekStart: week }))?.status).toBe('given');
   });
 });

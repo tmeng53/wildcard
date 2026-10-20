@@ -4207,14 +4207,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/language`.
             public var language: Swift.String
-            /// `ready` once the week’s awards are written. `pending` when they are due but not written yet: the organisers are working late, so show that and read again later.
+            /// `ready` once the week’s titles are written. `pending` when they are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/status`.
             @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case ready = "ready"
                 case pending = "pending"
             }
-            /// `ready` once the week’s awards are written. `pending` when they are due but not written yet: the organisers are working late, so show that and read again later.
+            /// `ready` once the week’s titles are written. `pending` when they are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/status`.
             public var status: Components.Schemas.WeekStory.StatusPayload
@@ -4353,7 +4353,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - language: The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese.
-            ///   - status: `ready` once the week’s awards are written. `pending` when they are due but not written yet: the organisers are working late, so show that and read again later.
+            ///   - status: `ready` once the week’s titles are written. `pending` when they are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
             ///   - squad:
             ///   - week:
             ///   - titles: Once `ready`: every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in; missing while `pending`. The weekly poster’s stickers read these too.
@@ -4480,7 +4480,7 @@ extension Components {
                 ])
             }
         }
-        /// Once `ready`: the signed-in member’s check-in with the most reactions at the awards, the latest on a tie. Missing when none of theirs had any.
+        /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryHottest`.
         public struct StoryHottest: Codable, Hashable, Sendable {

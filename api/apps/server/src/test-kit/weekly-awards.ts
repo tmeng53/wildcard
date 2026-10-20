@@ -2,6 +2,6 @@
 const unused = () => Promise.reject(new Error('unused'));
 
 export const unusedWeeklyAwards = {
-  awards: { give: unused, find: unused, claimWinners: unused, forget: unused },
+  awards: { give: unused, find: unused, claimNudge: unused, claimWinners: unused, forget: unused },
   clock: () => new Date(),
 };
