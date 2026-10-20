@@ -197,11 +197,3 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.cheerers(people, at: .day) == [id(3), id(4), id(2)])
     #expect(stage.cheerers(people, at: .night) == [id(4)])
 }
-
-@Test func theCardListsCheckInsInOrderThenRestDaysThenTheRest() {
-    let people = [
-        member(1, .notYet), member(2, .restDay), member(3, .trained(nil), 20), member(4, .disclaimer, 5),
-        member(5, .restDay),
-    ]
-    #expect(SquadStage.cardOrder(people).map(\.id) == [id(4), id(3), id(2), id(5), id(1)])
-}

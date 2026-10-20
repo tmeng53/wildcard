@@ -130,20 +130,3 @@ public struct SquadStage: Hashable, Sendable {
         }.map(\.element)
     }
 }
-
-extension SquadStage {
-    /// The heads in the squad card, left to right: checked in, in the order they did; then rest
-    /// days; then everyone not checked in yet, each group keeping the squad's order.
-    public static func cardOrder(_ members: [StageMember]) -> [StageMember] {
-        func group(_ member: StageMember) -> Int {
-            switch member.status.ring {
-            case .checkedIn: 0
-            case .restDay: 1
-            case .none: 2
-            }
-        }
-        return byCheckIn(members).enumerated().sorted { lhs, rhs in
-            (group(lhs.element), lhs.offset) < (group(rhs.element), rhs.offset)
-        }.map(\.element)
-    }
-}
