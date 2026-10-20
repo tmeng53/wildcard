@@ -300,6 +300,12 @@ struct TypographyTests {
     }
 }
 
+struct SpeechTimingTests {
+    @Test func bubblesHoldThenFade() {
+        #expect([Motion.speechHold, Motion.speechFade, Motion.speechStagger] == [1.6, 0.2, 0.06])
+    }
+}
+
 struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(

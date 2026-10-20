@@ -287,7 +287,8 @@ private struct DayCircle: View {
         case .trained: Text("练了", bundle: .module)
         case .excused: Text("请假", bundle: .module)
         case .restDay: Text("休息日", bundle: .module)
-        case .open: isToday ? Text("今天", bundle: .module) : Text("还没练", bundle: .module)
+        case .open where isToday: Text("今天", bundle: .module)
+        case .open: Text("还没练", bundle: .module)
         }
     }
 
