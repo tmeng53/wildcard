@@ -59,12 +59,23 @@ enum ThumbnailCrop {
     static let bottom = CGRect(x: 45, y: 195, width: 150, height: 150)
     /// The hand and what it holds.
     static let prop = CGRect(x: 50, y: 110, width: 190, height: 190)
+    /// The face, close: eyes, cheeks and glasses.
+    static let face = CGRect(x: 62, y: 112, width: 116, height: 116)
+    /// The face a little higher, for brows, and lower, for the mouth.
+    static let brows = CGRect(x: 62, y: 100, width: 116, height: 116)
+    static let mouth = CGRect(x: 62, y: 130, width: 116, height: 116)
+    /// The feet.
+    static let shoes = CGRect(x: 76, y: 258, width: 88, height: 88)
 
     static func of(_ slot: Slot) -> CGRect {
         switch slot.rawValue {
         case "top": top
         case "bottom": bottom
         case "prop": prop
+        case "eyes", "cheeks", "glasses": face
+        case "brows": brows
+        case "mouth": mouth
+        case "shoes": shoes
         default: head
         }
     }

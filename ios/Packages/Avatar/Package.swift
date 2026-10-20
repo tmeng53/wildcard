@@ -5,9 +5,10 @@ import PackageDescription
 // pure Swift (parsing, sampling, posing), so it builds and tests on Linux. `AvatarArt`
 // bundles the placeholder character's files: its preset colors, taken from the design
 // system's palette, what it wears and does for each sport, and its 上场 entrance. `AvatarUI`
-// draws and plays a character.
+// draws and plays a character, and holds the words of its personas.
 let package = Package(
     name: "Avatar",
+    defaultLocalization: "zh-Hans",
     platforms: [.iOS("26.0"), .macOS("26.0")],
     products: [
         .library(name: "AvatarDomain", targets: ["AvatarDomain"]),
@@ -24,7 +25,9 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
             ],
             resources: [.copy("Placeholder")]),
-        .target(name: "AvatarUI", dependencies: ["AvatarDomain", "AvatarArt"]),
+        .target(
+            name: "AvatarUI", dependencies: ["AvatarDomain", "AvatarArt"],
+            resources: [.process("Resources/Localizable.xcstrings")]),
         // The looks the tests and previews share; no product, so only this package's tests see it.
         .target(name: "AvatarLooks", dependencies: ["AvatarArt", "AvatarDomain"], path: "Tests/AvatarLooks"),
         .testTarget(name: "AvatarDomainTests", dependencies: ["AvatarDomain"]),

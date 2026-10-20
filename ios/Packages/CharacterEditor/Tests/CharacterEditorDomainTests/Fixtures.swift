@@ -7,23 +7,29 @@ let fur = [RGBAColor(red: 0xF2, green: 0xA6, blue: 0x5A)]
 let hairColors = [RGBAColor(red: 0x22, green: 0x25, blue: 0x2E), RGBAColor(red: 0xC9, green: 0xA0, blue: 0x6A)]
 let blue = RGBAColor(red: 0x2D, green: 0x5B, blue: 0xA0)
 
-/// People (one body) and cats (a plain coat and a calico); hair, a hat, tops, bottoms and two props.
+/// People (one body) and cats (a plain coat and a calico); hair, two eyes, brows, a hat, tops,
+/// bottoms, two pairs of shoes and two props. Round eyes and sneakers are what a look leaves
+/// empty wears.
 let catalog = Catalog(
     species: [
         EditorChoices.Species(id: "person", bodies: ["peach"], wearsHair: true),
         EditorChoices.Species(id: "cat", bodies: ["cat", "calico"]),
     ],
-    variants: ["hair": ["bob", "buzz"], "hat": ["cap"], "top": ["tee"], "bottom": ["shorts"]],
+    variants: [
+        "hair": ["bob", "buzz"], "eyes": ["round", "sleepy"], "brows": ["soft"], "hat": ["cap"], "top": ["tee"],
+        "bottom": ["shorts"], "shoes": ["sneaker", "runner"],
+    ],
     props: ["dumbbell", "racket"],
     swatches: [
-        "body": ["peach": skin, "cat": fur], "hair": ["bob": hairColors, "buzz": hairColors], "top": ["tee": [blue]],
+        "body": ["peach": skin, "cat": fur], "hair": ["bob": hairColors, "buzz": hairColors],
+        "brows": ["soft": hairColors], "top": ["tee": [blue]],
     ],
-    originals: [:])
+    originals: [:], defaults: ["eyes": "round", "shoes": "sneaker"])
 
 let lifter = Outfit(["body": "peach", "hair": "bob", "top": "tee", "bottom": "shorts", "prop": "dumbbell"])
 
-func draft(_ look: Outfit = lifter, nickname: String = "Tracy") -> CharacterDraft {
-    CharacterDraft(catalog: catalog, look: look, persona: .energetic, nickname: nickname)
+func draft(_ look: Outfit = lifter, nickname: String = "Tracy", catchphrase: String = "") -> CharacterDraft {
+    CharacterDraft(catalog: catalog, look: look, persona: .energetic, nickname: nickname, catchphrase: catchphrase)
 }
 
 /// The same numbers on every run, so a random look is a literal expectation.

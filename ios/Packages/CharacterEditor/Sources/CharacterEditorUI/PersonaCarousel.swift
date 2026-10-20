@@ -1,5 +1,6 @@
 #if canImport(SwiftUI)
 import AvatarArt
+import AvatarUI
 import DesignSystem
 import DesignSystemUI
 import SwiftUI
@@ -46,7 +47,6 @@ struct PersonaCarousel: View {
             .frame(height: itemHeight)
             dots
         }
-        .padding(.top, Space.xxl)
         .onAppear { centered = model.draft.persona }
         .onChange(of: centered) { _, persona in
             if let persona { model.choose(persona) }
@@ -64,7 +64,7 @@ struct PersonaCarousel: View {
         return Button {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { centered = persona }
         } label: {
-            EditorNames.persona(persona)
+            persona.name
                 .typeStyle(TypeRamp.action)
                 .foregroundStyle(Color(role: isSelected ? .fgDefault : .fgSubtle, in: theme))
                 .scaleEffect(isSelected && !reduceMotion ? selectedScale : 1)

@@ -11,19 +11,10 @@ enum EditorNames {
         switch tab {
         case .look: Text("样子", bundle: .module)
         case .hair: Text("发型", bundle: .module)
+        case .face: Text("脸", bundle: .module)
         case .outfit: Text("穿搭", bundle: .module)
         case .prop: Text("道具", bundle: .module)
         case .persona: Text("性格", bundle: .module)
-        }
-    }
-
-    static func persona(_ persona: Persona) -> Text {
-        switch persona {
-        case .deadpan: Text("淡人", bundle: .module)
-        case .energetic: Text("高能量", bundle: .module)
-        case .showoff: Text("显眼包", bundle: .module)
-        case .drama: Text("戏精", bundle: .module)
-        case .shy: Text("社恐", bundle: .module)
         }
     }
 
@@ -32,14 +23,25 @@ enum EditorNames {
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
-    static func variant(_ variant: String) -> Text {
-        guard let key = variants[variant] else { return Text(verbatim: variant) }
+    /// A variant's name. Face parts share folder names across slots (`round` eyes and `round`
+    /// glasses), so they are looked up as `slot/variant` first.
+    static func variant(_ variant: String, in slot: Slot) -> Text {
+        guard let key = variants["\(slot.rawValue)/\(variant)"] ?? variants[variant] else {
+            return Text(verbatim: variant)
+        }
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
-    /// The tile that takes a piece off: 不戴 for a hat, 不拿 for a prop.
+    /// The tile that takes a piece off: 不戴 for a hat or glasses, 没有 for brows or cheeks,
+    /// 不拿 for a prop.
     static func nothing(in slot: Slot) -> Text {
-        slot == "prop" ? Text("不拿", bundle: .module) : Text("不戴", bundle: .module)
+        switch slot.rawValue {
+        case "prop": Text("nothing.prop", bundle: .module)
+        case "glasses": Text("nothing.glasses", bundle: .module)
+        case "brows": Text("nothing.brows", bundle: .module)
+        case "cheeks": Text("nothing.cheeks", bundle: .module)
+        default: Text("nothing.hat", bundle: .module)
+        }
     }
 
     private static let species = ["person": "人", "cat": "猫", "dog": "狗", "rabbit": "兔子", "bear": "熊"]
@@ -56,6 +58,14 @@ enum EditorNames {
         // Hats, clothes and props
         "cap": "棒球帽", "headband": "发带", "hoodie": "卫衣", "jersey": "球衣", "tank": "背心", "tee": "T恤",
         "greenshorts": "运动短裤", "leggings": "紧身裤", "shorts": "短裤", "dumbbell": "哑铃", "racket": "网球拍",
+        // Shoes
+        "sneaker": "小白鞋", "runner": "跑鞋", "climbing": "攀岩鞋",
+        // Faces
+        "eyes/dot": "豆豆眼", "eyes/happy": "笑眼", "eyes/round": "圆眼", "eyes/sharp": "丹凤眼",
+        "eyes/sleepy": "困困眼", "eyes/sparkle": "星星眼", "brows/arched": "挑眉", "brows/bold": "浓眉",
+        "brows/soft": "淡眉", "brows/worried": "八字眉", "mouth/cat": "猫猫嘴", "mouth/grin": "咧嘴笑",
+        "mouth/oh": "哦", "mouth/smile": "微笑", "mouth/smirk": "坏笑", "cheeks/flushed": "红脸蛋",
+        "cheeks/freckles": "雀斑", "cheeks/rosy": "腮红", "glasses/round": "圆框", "glasses/square": "方框",
     ]
 }
 #endif

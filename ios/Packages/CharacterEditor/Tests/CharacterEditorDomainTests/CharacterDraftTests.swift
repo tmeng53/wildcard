@@ -148,6 +148,54 @@ func aNicknameNeedsOneToTwelveCharacters(typed: String) {
     #expect(draft(nickname: "Alexandrina-Victoria").nickname == "Alexandrina-")
 }
 
+/// An empty slot shows the rig's default, so picking the default is no change, and its tile is
+/// the one picked.
+@Test func pickingWhatTheRigPutsThereChangesNothing() {
+    var editing = draft()
+    #expect(editing.wearing("shoes") == "sneaker")
+    #expect(editing.wearing("hat") == nil)
+    #expect(!changed(&editing) { $0.pick("sneaker", for: "shoes") })
+    #expect(!editing.canUndo)
+    #expect(changed(&editing) { $0.pick("runner", for: "shoes") })
+    #expect(editing.outfit.variants["shoes"] == "runner")
+    #expect(changed(&editing) { $0.pick("sneaker", for: "shoes") })
+    #expect(editing.wearing("shoes") == "sneaker")
+}
+
+@Test(arguments: [("冲就完了🔥", "冲就完了🔥"), ("  今天也冲冲冲的一天👍🏽 ", "今天也冲冲冲的一天👍🏽")])
+func aCatchphraseIsTrimmed(typed: String, saved: String) {
+    var editing = draft()
+    editing.catchphrase = typed
+    #expect(editing.shout?.text == saved)
+    #expect(editing.catchphraseIsValid)
+}
+
+/// Left empty, the persona's own line is shouted: nothing to save, and nothing wrong.
+@Test(arguments: ["", "   "])
+func anEmptyCatchphraseLeavesThePersonasLine(typed: String) {
+    var editing = draft()
+    editing.catchphrase = typed
+    #expect(editing.shout == nil)
+    #expect(editing.catchphraseIsValid)
+}
+
+/// Typed past ten characters, it can't be saved until it's shortened.
+@Test func aCatchphraseHasTenCharactersAtMost() {
+    var editing = draft()
+    editing.catchphrase = "今天也是冲冲冲的一天!"
+    #expect(editing.shout == nil)
+    #expect(!editing.catchphraseIsValid)
+    #expect(draft(catchphrase: "今天也是冲冲冲的一天!").catchphrase == "今天也是冲冲冲的一天")
+}
+
+@Test func theCatchphraseIsNotUndone() {
+    var editing = draft()
+    editing.pick("racket", for: "prop")
+    editing.catchphrase = "冲"
+    editing.undo()
+    #expect(editing.catchphrase == "冲")
+}
+
 @Test func shuffleCanBeUndone() {
     var editing = draft()
     var generator = SplitMix64(state: 7)
@@ -167,6 +215,10 @@ func aNicknameNeedsOneToTwelveCharacters(typed: String) {
         bodies.insert(body)
         #expect(["peach", "cat", "calico"].contains(body))
         #expect(look.variants["top"] == "tee" && look.variants["bottom"] == "shorts")
+        #expect(["sneaker", "runner"].contains(look.variants["shoes"] ?? ""))
+        #expect(["round", "sleepy"].contains(look.variants["eyes"] ?? ""))
+        // Brows wear the hair's color, or their own art's when the hair has none.
+        #expect(look.colors["brows"] == look.colors["hair"] || look.variants["brows"] == nil)
         #expect(look.variants["prop"].map(catalog.props.contains) ?? true)
         for (slot, color) in look.colors {
             #expect(catalog.swatches(for: slot, wearing: look.variants[slot] ?? "").contains(color))

@@ -1,0 +1,106 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "冲冲冲！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let's gooo!"
+          }
+        }
+      }
+    },
+    "可以": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sure."
+          }
+        }
+      }
+    },
+    "名场面": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iconic."
+          }
+        }
+      }
+    },
+    "戏精": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drama"
+          }
+        }
+      }
+    },
+    "显眼包": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show-off"
+          }
+        }
+      }
+    },
+    "泪目了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm in tears"
+          }
+        }
+      }
+    },
+    "淡人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deadpan"
+          }
+        }
+      }
+    },
+    "社恐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shy"
+          }
+        }
+      }
+    },
+    "高能量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "High energy"
+          }
+        }
+      }
+    },
+    "（小声）加油": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(quietly) go team"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

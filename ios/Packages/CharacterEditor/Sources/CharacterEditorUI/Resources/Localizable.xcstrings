@@ -11,6 +11,86 @@
         }
       }
     },
+    "nothing.brows": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No brows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有"
+          }
+        }
+      }
+    },
+    "nothing.cheeks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有"
+          }
+        }
+      }
+    },
+    "nothing.glasses": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No glasses"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不戴"
+          }
+        }
+      }
+    },
+    "nothing.hat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hat"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不戴"
+          }
+        }
+      }
+    },
+    "nothing.prop": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不拿"
+          }
+        }
+      }
+    },
     "三花": {
       "localizations": {
         "en": {
@@ -41,26 +121,6 @@
         }
       }
     },
-    "不戴": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hat"
-          }
-        }
-      }
-    },
-    "不拿": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing"
-          }
-        }
-      }
-    },
     "中分": {
       "localizations": {
         "en": {
@@ -77,6 +137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bun"
+          }
+        }
+      }
+    },
+    "丹凤眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Almond"
           }
         }
       }
@@ -107,6 +177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rabbit"
+          }
+        }
+      }
+    },
+    "八字眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worried"
           }
         }
       }
@@ -191,6 +271,26 @@
         }
       }
     },
+    "口头禅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catchphrase"
+          }
+        }
+      }
+    },
+    "咧嘴笑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grin"
+          }
+        }
+      }
+    },
     "哈士奇": {
       "localizations": {
         "en": {
@@ -207,6 +307,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dumbbell"
+          }
+        }
+      }
+    },
+    "哦": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oh"
+          }
+        }
+      }
+    },
+    "嘴巴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouth"
+          }
+        }
+      }
+    },
+    "困困眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleepy"
+          }
+        }
+      }
+    },
+    "圆框": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round frames"
+          }
+        }
+      }
+    },
+    "圆眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round"
+          }
+        }
+      }
+    },
+    "坏笑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smirk"
           }
         }
       }
@@ -241,6 +401,16 @@
         }
       }
     },
+    "小白鞋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White sneakers"
+          }
+        }
+      }
+    },
     "就这样": {
       "localizations": {
         "en": {
@@ -271,6 +441,16 @@
         }
       }
     },
+    "微笑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smile"
+          }
+        }
+      }
+    },
     "性格": {
       "localizations": {
         "en": {
@@ -281,12 +461,22 @@
         }
       }
     },
-    "戏精": {
+    "我的角色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drama"
+            "value": "My character"
+          }
+        }
+      }
+    },
+    "挑眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arched"
           }
         }
       }
@@ -301,22 +491,42 @@
         }
       }
     },
+    "攀岩鞋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Climbing shoes"
+          }
+        }
+      }
+    },
+    "方框": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Square frames"
+          }
+        }
+      }
+    },
+    "星星眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sparkly"
+          }
+        }
+      }
+    },
     "昵称": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Nickname"
-          }
-        }
-      }
-    },
-    "显眼包": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show-off"
           }
         }
       }
@@ -401,12 +611,22 @@
         }
       }
     },
-    "淡人": {
+    "浓眉": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deadpan"
+            "value": "Bold"
+          }
+        }
+      }
+    },
+    "淡眉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soft"
           }
         }
       }
@@ -461,6 +681,16 @@
         }
       }
     },
+    "猫猫嘴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cat"
+          }
+        }
+      }
+    },
     "玳瑁": {
       "localizations": {
         "en": {
@@ -481,22 +711,42 @@
         }
       }
     },
+    "眉毛": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brows"
+          }
+        }
+      }
+    },
+    "眼睛": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eyes"
+          }
+        }
+      }
+    },
+    "眼镜": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glasses"
+          }
+        }
+      }
+    },
     "短裤": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Shorts"
-          }
-        }
-      }
-    },
-    "社恐": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shy"
           }
         }
       }
@@ -511,12 +761,32 @@
         }
       }
     },
+    "笑眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smiling"
+          }
+        }
+      }
+    },
     "紧身裤": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Leggings"
+          }
+        }
+      }
+    },
+    "红脸蛋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flushed"
           }
         }
       }
@@ -541,12 +811,62 @@
         }
       }
     },
+    "脸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face"
+          }
+        }
+      }
+    },
+    "脸蛋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheeks"
+          }
+        }
+      }
+    },
+    "腮红": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rosy"
+          }
+        }
+      }
+    },
     "荷兰兔": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Dutch rabbit"
+          }
+        }
+      }
+    },
+    "豆豆眼": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dot"
+          }
+        }
+      }
+    },
+    "跑鞋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runners"
           }
         }
       }
@@ -621,6 +941,26 @@
         }
       }
     },
+    "雀斑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Freckles"
+          }
+        }
+      }
+    },
+    "鞋子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoes"
+          }
+        }
+      }
+    },
     "颜色 %lld": {
       "localizations": {
         "en": {
@@ -637,16 +977,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ponytail"
-          }
-        }
-      }
-    },
-    "高能量": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "High energy"
           }
         }
       }

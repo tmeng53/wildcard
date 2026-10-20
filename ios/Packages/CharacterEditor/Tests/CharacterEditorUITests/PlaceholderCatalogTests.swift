@@ -4,13 +4,23 @@ import CharacterEditorDomain
 import CharacterEditorUI
 import Testing
 
-/// The bundled art gives the editor what the design shows: five species, two props, and swatches
-/// with a 原色 for exactly the pieces that recolor.
+/// The bundled art gives the editor what the design shows: five species, two props, three pairs
+/// of shoes, a face's parts, and swatches with a 原色 for exactly the pieces that recolor.
 @Test func thePlaceholderCatalogComesFromTheArt() throws {
     let catalog = try Catalog.placeholder()
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
     #expect(catalog.props == ["dumbbell", "racket"])
     #expect(catalog.variants["hat"] == ["cap", "headband"])
+    #expect(catalog.variants["shoes"] == ["sneaker", "runner", "climbing"])
+    #expect(catalog.variants["eyes"] == ["dot", "happy", "round", "sharp", "sleepy", "sparkle"])
+    #expect(catalog.variants["brows"]?.count == 4)
+    #expect(catalog.variants["mouth"]?.count == 5)
+    #expect(catalog.variants["cheeks"]?.count == 3)
+    #expect(catalog.variants["glasses"]?.count == 2)
+    #expect(catalog.defaults == ["eyes": "round", "mouth": "smile", "shoes": "sneaker"])
+    #expect(!catalog.swatches(for: "eyes", wearing: "round").isEmpty)
+    #expect(catalog.swatches(for: "brows", wearing: "soft") == catalog.swatches(for: "hair", wearing: "bob"))
+    #expect(catalog.swatches["shoes"] == nil && catalog.swatches["mouth"] == nil)
     #expect(catalog.swatches(for: "body", wearing: "peach").count == 7)
     #expect(catalog.swatches(for: "body", wearing: "calico").isEmpty)
     #expect(catalog.originals["top"]?["tee"] == RGBAColor(hex: "#2D5BA0"))

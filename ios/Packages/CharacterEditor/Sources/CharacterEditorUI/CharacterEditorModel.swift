@@ -3,12 +3,16 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import CharacterEditorDomain
+import Contracts
 import Foundation
 import Observation
 
-/// The editor's tabs, in order. 发型 shows only while the character is a person.
+/// The editor's tabs, in order. 发型 and 脸 show only while the character is a person.
 public enum EditorTab: String, CaseIterable, Hashable, Sendable {
-    case look, hair, outfit, prop, persona
+    case look, hair, face, outfit, prop, persona
+
+    /// Whether only a person, who wears hair and a face of their own, gets this tab.
+    var isPeopleOnly: Bool { self == .hair || self == .face }
 }
 
 /// Where the editor is open: as a step of sign-up, or from 我 to change the character.
@@ -22,6 +26,8 @@ public struct EditedCharacter: Hashable, Sendable {
     public let outfit: Outfit
     public let persona: Persona
     public let nickname: String
+    /// Nil leaves the persona's own line.
+    public let catchphrase: Catchphrase?
 }
 
 /// The editor's state on screen: the draft, the open tab and the character playing on the
@@ -50,13 +56,16 @@ public final class CharacterEditorModel {
     /// The placeholder character's catalog and a look to start from: the one given, or a random
     /// one until sign-up hands over the last look its first screen showed.
     public static func placeholder(
-        look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look
+        look: Outfit? = nil, persona: Persona = .energetic, nickname: String, catchphrase: String = "",
+        tab: EditorTab = .look
     ) throws(AvatarError) -> CharacterEditorModel {
         let catalog = try Catalog.placeholder()
         var generator = SystemRandomNumberGenerator()
         let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
         return CharacterEditorModel(
-            draft: CharacterDraft(catalog: catalog, look: start, persona: persona, nickname: nickname), tab: tab)
+            draft: CharacterDraft(
+                catalog: catalog, look: start, persona: persona, nickname: nickname, catchphrase: catchphrase),
+            tab: tab)
     }
 
     /// A fixed look for screenshots and UI tests: a person with a bob, a tee, shorts and a
@@ -64,7 +73,7 @@ public final class CharacterEditorModel {
     public static let sampleLook = PlaceholderCharacter.lifter
 
     public var tabs: [EditorTab] {
-        EditorTab.allCases.filter { $0 != .hair || draft.wearsHair }
+        EditorTab.allCases.filter { !$0.isPeopleOnly || draft.wearsHair }
     }
 
     /// The field keeps what is typed, so pinyin still being composed is never cut; a name
@@ -74,9 +83,16 @@ public final class CharacterEditorModel {
         set { draft.nickname = newValue }
     }
 
-    /// What to save, once the nickname is a valid one.
+    /// The 口头禅 field, kept as typed like the nickname.
+    public var catchphrase: String {
+        get { draft.catchphrase }
+        set { draft.catchphrase = newValue }
+    }
+
+    /// What to save, once the nickname is a valid one and the 口头禅 is empty or valid.
     public var result: EditedCharacter? {
-        draft.name.map { EditedCharacter(outfit: draft.outfit, persona: draft.persona, nickname: $0) }
+        guard let name = draft.name, draft.catchphraseIsValid else { return nil }
+        return EditedCharacter(outfit: draft.outfit, persona: draft.persona, nickname: name, catchphrase: draft.shout)
     }
 
     /// Builds the first figure. The stage stays empty for the moment this takes.
@@ -87,7 +103,7 @@ public final class CharacterEditorModel {
 
     func pick(_ variant: String?, for slot: Slot) {
         guard draft.pick(variant, for: slot) else { return }
-        if tab == .hair && !draft.wearsHair { tab = .look }
+        leavePeopleOnlyTab()
         restyle(move: true)
     }
 
@@ -103,15 +119,25 @@ public final class CharacterEditorModel {
 
     func undo() {
         guard draft.undo() else { return }
-        if tab == .hair && !draft.wearsHair { tab = .look }
+        leavePeopleOnlyTab()
         restyle(move: true)
     }
 
     func shuffle() {
         var generator = SystemRandomNumberGenerator()
         draft.shuffle(using: &generator)
-        if tab == .hair && !draft.wearsHair { tab = .look }
+        leavePeopleOnlyTab()
         restyle(move: true)
+    }
+
+    /// A new 口头禅 is a change too: the character shouts it once when the field is left.
+    func finishCatchphrase() {
+        cheer()
+    }
+
+    /// A tab only people get closes when the character stops being one.
+    private func leavePeopleOnlyTab() {
+        if tab.isPeopleOnly && !draft.wearsHair { tab = .look }
     }
 
     /// The persona's cheer, for a tap on the character.

@@ -3,8 +3,8 @@ import AvatarDomain
 import Contracts
 import Foundation
 
-/// The character being made: what each slot wears and its color, the persona, the nickname,
-/// and the looks before, for undo. Every change returns whether anything changed, so the
+/// The character being made: what each slot wears and its color, the persona and its 口头禅,
+/// the nickname, and the looks before, for undo. Every change returns whether anything changed, so the
 /// screen only plays a move when the look really moved.
 public struct CharacterDraft: Hashable, Sendable {
     public let catalog: Catalog
@@ -14,6 +14,8 @@ public struct CharacterDraft: Hashable, Sendable {
     public private(set) var persona: Persona
     /// As typed; `name` is what gets saved.
     public var nickname: String
+    /// The 口头禅 as typed; empty leaves the persona's own line. `shout` is what gets saved.
+    public var catchphrase: String
     private var history: [Outfit] = []
 
     /// How many looks undo goes back.
@@ -21,11 +23,15 @@ public struct CharacterDraft: Hashable, Sendable {
     /// The most characters a nickname may have: the API's.
     public static let nicknameLimit = Nickname.maxLength
 
-    public init(catalog: Catalog, look: Outfit, persona: Persona, nickname: String) {
+    /// The most characters a 口头禅 may have: the API's.
+    public static let catchphraseLimit = Catchphrase.maxLength
+
+    public init(catalog: Catalog, look: Outfit, persona: Persona, nickname: String, catchphrase: String = "") {
         self.catalog = catalog
         picks = look
         self.persona = persona
         self.nickname = String(nickname.prefix(Self.nicknameLimit))
+        self.catchphrase = String(catchphrase.prefix(Self.catchphraseLimit))
     }
 
     /// What the character wears: the picks, minus hair and a person's face on an animal, whose
@@ -48,17 +54,33 @@ public struct CharacterDraft: Hashable, Sendable {
 
     public var canUndo: Bool { !history.isEmpty }
 
+    /// What `slot` shows: its pick, or what the rig puts there when it's left empty.
+    public func wearing(_ slot: Slot) -> String? {
+        picks.variants[slot] ?? catalog.defaults[slot]
+    }
+
     /// The nickname to save, by the API's rule; nil while it isn't one.
     public var name: String? {
         try? Nickname(nickname).text
     }
 
-    /// Wears `variant` in `slot`, or nothing there when nil. A color stays when the new
+    /// The 口头禅 to save: nil when left empty, for the persona's own line.
+    public var shout: Catchphrase? {
+        try? Catchphrase(catchphrase)
+    }
+
+    /// Whether the 口头禅 can be saved as typed: empty, or one by the API's rule.
+    public var catchphraseIsValid: Bool {
+        catchphrase.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || shout != nil
+    }
+
+    /// Wears `variant` in `slot`, or nothing there when nil; picking what the slot already shows
+    /// changes nothing, even when that is the rig's default. A color stays when the new
     /// variant can wear it too: hair keeps its color across styles, skin across people. An
     /// animal's coat starts from its own colors. Brows put on without a color take the hair's.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
-        guard picks.variants[slot] != variant else { return false }
+        guard wearing(slot) != variant else { return false }
         var next = picks
         next.variants[slot] = variant
         let keepsColor: Bool
@@ -97,7 +119,7 @@ public struct CharacterDraft: Hashable, Sendable {
         return true
     }
 
-    /// Back to the look before the last change. The persona and nickname aren't part of it.
+    /// Back to the look before the last change. The persona, 口头禅 and nickname aren't part of it.
     @discardableResult
     public mutating func undo() -> Bool {
         guard let previous = history.popLast() else { return false }
@@ -110,9 +132,10 @@ public struct CharacterDraft: Hashable, Sendable {
         commit(Self.randomLook(from: catalog, using: &generator))
     }
 
-    /// A random look: a person a bit less than half the time, else any animal; hair, top and
-    /// bottom always; a hat about a third of the time, a prop most of the time; and most
-    /// recolorable pieces in one of their swatches.
+    /// A random look: a person a bit less than half the time, else any animal; hair, a face,
+    /// top, bottom and shoes always; brows most of the time, cheeks half, glasses a fifth; a hat
+    /// about a third of the time, a prop most of the time; and most recolorable pieces in one of
+    /// their swatches, brows in the hair's.
     public static func randomLook(from catalog: Catalog, using generator: inout some RandomNumberGenerator) -> Outfit {
         let people = catalog.species.filter(\.wearsHair).flatMap(\.bodies)
         let animals = catalog.species.filter { !$0.wearsHair }.flatMap(\.bodies)
@@ -124,15 +147,25 @@ public struct CharacterDraft: Hashable, Sendable {
         look.variants["hair"] = catalog.variants["hair"]?.randomElement(using: &generator)
         look.variants["top"] = catalog.variants["top"]?.randomElement(using: &generator)
         look.variants["bottom"] = catalog.variants["bottom"]?.randomElement(using: &generator)
+        look.variants["shoes"] = catalog.variants["shoes"]?.randomElement(using: &generator)
+        let face: [(Slot, Double)] = [("eyes", 1), ("brows", 0.9), ("mouth", 1), ("cheeks", 0.5), ("glasses", 0.2)]
+        for (slot, chance) in face where Double.random(in: 0..<1, using: &generator) < chance {
+            look.variants[slot] = catalog.variants[slot]?.randomElement(using: &generator)
+        }
         if Double.random(in: 0..<1, using: &generator) < 0.35 {
             look.variants["hat"] = catalog.variants["hat"]?.randomElement(using: &generator)
         }
         if Double.random(in: 0..<1, using: &generator) < 0.7 {
             look.variants["prop"] = catalog.props.randomElement(using: &generator)
         }
-        for slot: Slot in ["body", "hair", "top", "bottom"] {
+        for slot: Slot in ["body", "hair", "eyes", "top", "bottom"] {
             guard let variant = look.variants[slot], Double.random(in: 0..<1, using: &generator) < 0.8 else { continue }
             look.colors[slot] = catalog.swatches(for: slot, wearing: variant).randomElement(using: &generator)
+        }
+        if let brows = look.variants["brows"], let hair = look.colors["hair"],
+            catalog.swatches(for: "brows", wearing: brows).contains(hair)
+        {
+            look.colors["brows"] = hair
         }
         return look
     }

@@ -26,7 +26,7 @@ let package = Package(
             dependencies: [
                 "CharacterEditorDomain",
                 .product(name: "AvatarDomain", package: "Avatar"), .product(name: "AvatarArt", package: "Avatar"),
-                .product(name: "AvatarUI", package: "Avatar"),
+                .product(name: "AvatarUI", package: "Avatar"), .product(name: "Contracts", package: "Contracts"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
             ],

@@ -8,15 +8,33 @@ import DesignSystemUI
 import SwiftUI
 
 /// The open tab's choices: color swatches over a grid of picture tiles, or the persona
-/// carousel. On 样子 the skin or coat swatches stay put above the species while they scroll.
+/// carousel and the 口头禅. On 样子 the skin or coat swatches stay put above the species while
+/// they scroll.
 struct ChoicesPanel: View {
-    let model: CharacterEditorModel
+    @Bindable var model: CharacterEditorModel
 
     var body: some View {
         switch model.tab {
         case .persona:
-            PersonaCarousel(model: model)
-                .frame(maxHeight: .infinity, alignment: .top)
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.l) {
+                    PersonaCarousel(model: model)
+                    VStack(alignment: .leading, spacing: Space.labelGap) {
+                        SectionLabel(Text("口头禅", bundle: .module))
+                        InputField(
+                            text: $model.catchphrase, label: Text("口头禅", bundle: .module),
+                            prompt: model.draft.persona.defaultCatchphrase, limit: CharacterDraft.catchphraseLimit
+                        )
+                        .submitLabel(.done)
+                        .onSubmit { model.finishCatchphrase() }
+                        .accessibilityIdentifier("editor.catchphrase")
+                    }
+                    .padding(.horizontal, Space.pageMargin)
+                }
+                .padding(.vertical, Space.s)
+            }
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
         case .look:
             VStack(alignment: .leading, spacing: 0) {
                 SwatchRow(model: model, slot: "body")
@@ -36,6 +54,26 @@ struct ChoicesPanel: View {
                     TileGrid(model: model, slot: "hair", variants: variants("hair"), offersNothing: false)
                 }
             }
+        case .face:
+            scroll {
+                ChoiceSection(label: Text("眼睛", bundle: .module)) {
+                    SwatchRow(model: model, slot: "eyes")
+                    TileGrid(model: model, slot: "eyes", variants: variants("eyes"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("眉毛", bundle: .module)) {
+                    SwatchRow(model: model, slot: "brows")
+                    TileGrid(model: model, slot: "brows", variants: variants("brows"), offersNothing: true)
+                }
+                ChoiceSection(label: Text("嘴巴", bundle: .module)) {
+                    TileGrid(model: model, slot: "mouth", variants: variants("mouth"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("脸蛋", bundle: .module)) {
+                    TileGrid(model: model, slot: "cheeks", variants: variants("cheeks"), offersNothing: true)
+                }
+                ChoiceSection(label: Text("眼镜", bundle: .module)) {
+                    TileGrid(model: model, slot: "glasses", variants: variants("glasses"), offersNothing: true)
+                }
+            }
         case .outfit:
             scroll {
                 ChoiceSection(label: Text("帽子", bundle: .module)) {
@@ -48,6 +86,9 @@ struct ChoicesPanel: View {
                 ChoiceSection(label: Text("下装", bundle: .module)) {
                     SwatchRow(model: model, slot: "bottom")
                     TileGrid(model: model, slot: "bottom", variants: variants("bottom"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("鞋子", bundle: .module)) {
+                    TileGrid(model: model, slot: "shoes", variants: variants("shoes"), offersNothing: false)
                 }
             }
         case .prop:
@@ -81,7 +122,7 @@ private struct ChoiceSection<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.s) {
+        VStack(alignment: .leading, spacing: Space.labelGap) {
             if let label {
                 SectionLabel(label)
             }
@@ -102,11 +143,11 @@ private struct TileGrid: View {
 
     var body: some View {
         let choices: [String?] = (offersNothing ? [nil] : []) + variants.map { $0 }
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.s), count: 4), spacing: Space.s) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 4), spacing: Space.xs) {
             ForEach(choices, id: \.self) { variant in
                 PickTile(
-                    variant.map(EditorNames.variant) ?? EditorNames.nothing(in: slot),
-                    isSelected: model.draft.picks.variants[slot] == variant,
+                    variant.map { EditorNames.variant($0, in: slot) } ?? EditorNames.nothing(in: slot),
+                    isSelected: model.draft.wearing(slot) == variant,
                     action: { model.pick(variant, for: slot) },
                     picture: { picture(variant) }
                 )
