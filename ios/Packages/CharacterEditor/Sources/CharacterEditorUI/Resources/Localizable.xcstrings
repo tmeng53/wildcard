@@ -511,16 +511,6 @@
         }
       }
     },
-    "第 %lld 步，共 %lld 步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Step %lld of %lld"
-          }
-        }
-      }
-    },
     "紧身裤": {
       "localizations": {
         "en": {

@@ -46,7 +46,10 @@ struct StringCatalogCoverageTests {
             let range = NSRange(text.startIndex..., in: text)
             for match in pattern.matches(in: text, range: range) {
                 if let keyRange = Range(match.range(at: 1), in: text) {
-                    keys.insert(String(text[keyRange]))
+                    // An interpolated Int becomes `%lld` in the catalog's key.
+                    keys.insert(
+                        String(text[keyRange]).replacingOccurrences(
+                            of: #"\\\([^)]*\)"#, with: "%lld", options: .regularExpression))
                 }
             }
         }
