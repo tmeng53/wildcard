@@ -15,25 +15,25 @@ struct CareLine: View {
         VStack(alignment: .leading, spacing: Space.s) {
             Text("这条先不写段子了。最近要是真的很难，找个人聊聊吧。", bundle: .module)
                 .typeStyle(TypeRamp.callout)
-                .foregroundStyle(Color(role: .textPrimary, in: theme))
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: Sizing.pillGap) {
-                ChoicePill(Text("打给 988", bundle: .module), systemImage: "phone", isSelected: false) {
+            HStack(spacing: Space.xs) {
+                PickPill(Text("打给 988", bundle: .module), systemImage: "phone", isSelected: false) {
                     open("tel:988")
                 }
                 .accessibilityIdentifier("disclaimer.care.call")
-                ChoicePill(Text("发短信给 988", bundle: .module), systemImage: "message", isSelected: false) {
+                PickPill(Text("发短信给 988", bundle: .module), systemImage: "message", isSelected: false) {
                     open("sms:988")
                 }
                 .accessibilityIdentifier("disclaimer.care.text")
             }
             Text("美国和加拿大都能拨 988，24 小时，免费。美国的线路可以要中文翻译。", bundle: .module)
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .textSecondary, in: theme))
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
             Text("有紧急危险请直接打 911。", bundle: .module)
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .textSecondary, in: theme))
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .contain)

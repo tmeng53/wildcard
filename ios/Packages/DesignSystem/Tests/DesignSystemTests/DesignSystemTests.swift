@@ -9,63 +9,64 @@ struct SRGBColorTests {
     }
 
     @Test func contrastRatioMatchesWCAGEndpoints() {
-        #expect(Palette.black.contrastRatio(with: Palette.white) == 21)
+        #expect(SRGBColor(red: 0, green: 0, blue: 0).contrastRatio(with: Palette.white) == 21)
         #expect(Palette.white.contrastRatio(with: Palette.white) == 1)
     }
 
     @Test func contrastRatioIsSymmetric() {
-        #expect(Palette.ink.contrastRatio(with: Palette.honey) == Palette.honey.contrastRatio(with: Palette.ink))
+        #expect(Palette.ink.contrastRatio(with: Palette.volt) == Palette.volt.contrastRatio(with: Palette.ink))
     }
 }
 
 struct NeutralTests {
     @Test func neutralsMatchTheApprovedSpec() {
-        let neutrals: [ColorRole] = [.canvas, .surface, .divider, .textPrimary, .textSecondary, .textTertiary]
+        let neutrals: [ColorRole] = [.bgCanvas, .bgSubtle, .borderDefault, .fgDefault, .fgMuted, .fgSubtle]
         #expect(
             neutrals.map { $0.color(in: .pool).hex } == [
                 "#FFFFFF", "#F3F5F8", "#E8EBF0", "#22252E", "#6B7080", "#AEB2BC",
             ])
     }
 
-    /// A theme swaps only the signature group; neutrals and the meaning accents never change.
-    @Test func onlyTheSignatureGroupFollowsTheScene() {
+    /// A theme swaps only the accent group; neutrals never change.
+    @Test func onlyTheAccentGroupFollowsTheScene() {
         let themed = ColorRole.allCases.filter { role in
             Set(SceneTheme.allCases.map { role.color(in: $0) }).count > 1
         }
         #expect(
             themed.map(\.rawValue) == [
-                "signature", "signatureShade", "signatureWash", "onSignature", "signatureText", "progressFill",
+                "bgAccent", "bgAccentSubtle", "fgOnAccent", "fgAccent", "bgScene", "fgOnScene", "ring", "bgKind",
+                "bgKindOnScene", "fgKind",
             ])
     }
 
     @Test func noNeutralIsAWarmOffWhite() {
-        // Cream backgrounds are off-brand, so every neutral background leans cool (blue >= red)
-        // in every scene. The warm washes are deliberate and pinned here: the track, tennis and climbing
-        // scenes' own washes (scene colors, never neutrals) and the 坦白放纵餐 tag's honey wash.
+        // Cream backgrounds are off-brand, so every neutral background leans cool (blue >= red).
+        // The warm washes and floors are the track, tennis and climbing scenes' own colors.
         func isWarm(_ color: SRGBColor) -> Bool { color.blue < color.red }
         for theme in SceneTheme.allCases {
-            for role in [ColorRole.canvas, .surface, .divider] {
+            for role in [ColorRole.bgCanvas, .bgSubtle, .borderDefault] {
                 #expect(!isWarm(role.color(in: theme)), "\(role) leans warm in \(theme)")
             }
         }
-        #expect(SceneTheme.allCases.filter { isWarm($0.colors.wash) } == [.track, .tennis, .climbing])
-        #expect(Meaning.allCases.filter { isWarm($0.accent(in: .pool).wash) } == [.cheatMeal])
+        #expect(SceneTheme.allCases.filter { isWarm($0.colors.accentSubtle) } == [.track, .tennis, .climbing])
+        #expect(SceneTheme.allCases.filter { isWarm($0.colors.floor) } == [.track, .tennis, .climbing])
     }
 
     /// Body-size text needs 4.5:1 (WCAG 2.2, 1.4.3).
     @Test(arguments: [
-        (ColorRole.textPrimary, ColorRole.canvas),
-        (.textPrimary, .surface),
-        (.textSecondary, .canvas),
-        (.textSecondary, .surface),
+        (ColorRole.fgDefault, ColorRole.bgCanvas),
+        (.fgDefault, .bgSubtle),
+        (.fgMuted, .bgCanvas),
+        (.fgMuted, .bgSubtle),
     ])
     func neutralTextIsReadable(text: ColorRole, background: ColorRole) {
         #expect(text.color(in: .pool).contrastRatio(with: background.color(in: .pool)) >= 4.5)
     }
 
-    /// Tertiary ink is for denominators and decoration only; this pins that it is too faint for text.
-    @Test func tertiaryIsDecorationOnly() {
-        #expect(ColorRole.textTertiary.color(in: .pool).contrastRatio(with: Palette.white) < 3)
+    /// Subtle ink is for denominators, placeholders and decoration; this pins that it is too faint
+    /// for text.
+    @Test func subtleIsDecorationOnly() {
+        #expect(ColorRole.fgSubtle.color(in: .pool).contrastRatio(with: Palette.white) < 3)
     }
 }
 
@@ -91,142 +92,159 @@ struct CharacterToneTests {
 }
 
 struct SceneThemeTests {
+    private func roles(_ theme: SceneTheme) -> [String] {
+        let colors = theme.colors
+        return [
+            colors.accent, colors.accentSubtle, colors.onAccent, colors.accentText, colors.floor, colors.onFloor,
+            colors.ring, colors.kindFill, colors.kindFillOnFloor, colors.kindInk,
+        ].map(\.hex)
+    }
+
     @Test func poolColors() {
-        let pool = SceneTheme.pool.colors
         #expect(
-            [pool.signature, pool.shade, pool.wash, pool.onSignature, pool.signatureText, pool.progressFill].map(\.hex)
-                == ["#079BB8", "#067C93", "#E2F5F9", "#FFFFFF", "#066E83", "#079BB8"])
+            roles(.pool) == [
+                "#079BB8", "#E2F5F9", "#FFFFFF", "#066E83", "#CDEBF1", "#22252E", "#079BB8", "#E2F5F9", "#FFFFFF",
+                "#066E83",
+            ])
     }
 
     @Test func trackColors() {
-        let track = SceneTheme.track.colors
         #expect(
-            [track.signature, track.shade, track.wash, track.onSignature, track.signatureText, track.progressFill]
-                .map(\.hex) == ["#E65345", "#C23B2E", "#FCEDEB", "#FFFFFF", "#B83325", "#E65345"])
+            roles(.track) == [
+                "#E65345", "#FCEDEB", "#FFFFFF", "#B83325", "#F8DDD9", "#22252E", "#E65345", "#FCEDEB", "#FFFFFF",
+                "#B83325",
+            ])
     }
 
     @Test func gymIsGraphiteWithVoltOnIt() {
-        let gym = SceneTheme.gym.colors
         #expect(
-            [gym.signature, gym.shade, gym.wash, gym.onSignature, gym.signatureText, gym.progressFill].map(\.hex)
-                == ["#1F2128", "#000000", "#EEF0F2", "#C6F432", "#1F2128", "#C6F432"])
-    }
-
-    /// Small signature-colored text (第 42 周, selected tabs, the score) sits on white or the wash.
-    @Test(arguments: SceneTheme.allCases)
-    func signatureTextIsReadable(theme: SceneTheme) {
-        let text = ColorRole.signatureText.color(in: theme)
-        #expect(text.contrastRatio(with: ColorRole.canvas.color(in: theme)) >= 4.5)
-        #expect(text.contrastRatio(with: ColorRole.signatureWash.color(in: theme)) >= 4.5)
-        #expect(
-            ColorRole.textPrimary.color(in: theme).contrastRatio(with: ColorRole.signatureWash.color(in: theme)) >= 4.5)
-    }
-
-    /// The 打卡 label is `TypeRamp.action` (19 pt Semibold, large text under WCAG 1.4.3). Large text
-    /// and icons need 3:1; white on the pool signature is 3.3:1 and on the track signature 3.7:1.
-    @Test(arguments: SceneTheme.allCases)
-    func labelsOnTheSignatureMeetBoldTextContrast(theme: SceneTheme) {
-        let ratio = ColorRole.onSignature.color(in: theme).contrastRatio(with: ColorRole.signature.color(in: theme))
-        #expect(ratio >= 3)
+            roles(.gym) == [
+                "#1F2128", "#EEF0F2", "#C6F432", "#1F2128", "#1F2128", "#FFFFFF", "#C6F432", "#2E3324", "#2E3324",
+                "#C6F432",
+            ])
     }
 
     @Test func tennisAndClimbingColors() {
         #expect(
-            [SceneTheme.tennis, .climbing].map { theme in
-                let colors = theme.colors
-                return [colors.signature, colors.shade, colors.wash, colors.onSignature, colors.signatureText]
-                    .map(\.hex)
-            } == [
-                ["#4F6B22", "#3B5119", "#EEF2E4", "#FFFFFF", "#41591B"],
-                ["#8E4A2C", "#6F3820", "#F6EDE8", "#FFFFFF", "#7A3E24"],
+            roles(.tennis) == [
+                "#4F6B22", "#EEF2E4", "#FFFFFF", "#41591B", "#DDE6CC", "#22252E", "#4F6B22", "#EEF2E4", "#FFFFFF",
+                "#41591B",
+            ])
+        #expect(
+            roles(.climbing) == [
+                "#8E4A2C", "#F6EDE8", "#FFFFFF", "#7A3E24", "#EBDDD5", "#22252E", "#8E4A2C", "#F6EDE8", "#FFFFFF",
+                "#7A3E24",
             ])
     }
 
-    @Test func dimSignaturesAreBoldOnly() {
+    /// Small accent text (a tag, a selected word) sits on white or the wash.
+    @Test(arguments: SceneTheme.allCases)
+    func accentTextIsReadable(theme: SceneTheme) {
+        let text = ColorRole.fgAccent.color(in: theme)
+        #expect(text.contrastRatio(with: ColorRole.bgCanvas.color(in: theme)) >= 4.5)
+        #expect(text.contrastRatio(with: ColorRole.bgAccentSubtle.color(in: theme)) >= 4.5)
+        #expect(
+            ColorRole.fgDefault.color(in: theme).contrastRatio(with: ColorRole.bgAccentSubtle.color(in: theme)) >= 4.5)
+    }
+
+    /// The primary button's label is `TypeRamp.action` (19 pt Semibold, large text under WCAG
+    /// 1.4.3). Large text and icons need 3:1; white on the pool accent is 3.3:1.
+    @Test(arguments: SceneTheme.allCases)
+    func labelsOnTheAccentMeetBoldTextContrast(theme: SceneTheme) {
+        let ratio = ColorRole.fgOnAccent.color(in: theme).contrastRatio(with: ColorRole.bgAccent.color(in: theme))
+        #expect(ratio >= 3)
+    }
+
+    @Test func dimAccentsAreBoldOnly() {
         // Pins the limit above: these pairs must never carry regular-weight small text.
         let pool = SceneTheme.pool.colors
         let track = SceneTheme.track.colors
-        #expect(pool.onSignature.contrastRatio(with: pool.signature) < 4.5)
-        #expect(track.onSignature.contrastRatio(with: track.signature) < 4.5)
+        #expect(pool.onAccent.contrastRatio(with: pool.accent) < 4.5)
+        #expect(track.onAccent.contrastRatio(with: track.accent) < 4.5)
+    }
+
+    /// A kind's icon needs 3:1 (WCAG 2.2, 1.4.11) on its button, on white and on the floor.
+    @Test(arguments: SceneTheme.allCases)
+    func kindIconsAreVisible(theme: SceneTheme) {
+        let ink = ColorRole.fgKind.color(in: theme)
+        #expect(ink.contrastRatio(with: ColorRole.bgKind.color(in: theme)) >= 3)
+        #expect(ink.contrastRatio(with: ColorRole.bgKindOnScene.color(in: theme)) >= 3)
+    }
+
+    /// Kind labels and anything else written straight on the floor are body text: 4.5:1.
+    @Test(arguments: SceneTheme.allCases)
+    func textOnTheFloorIsReadable(theme: SceneTheme) {
+        let floor = ColorRole.bgScene.color(in: theme)
+        #expect(ColorRole.fgOnScene.color(in: theme).contrastRatio(with: floor) >= 4.5)
+    }
+
+    /// A light scene's kind buttons step out of the floor: white on the floor, the wash on white.
+    @Test(arguments: [SceneTheme.pool, .track, .tennis, .climbing])
+    func lightKindsUseTheWashOrWhite(theme: SceneTheme) {
+        #expect(ColorRole.bgKind.color(in: theme) == ColorRole.bgAccentSubtle.color(in: theme))
+        #expect(ColorRole.bgKindOnScene.color(in: theme) == Palette.white)
+        #expect(ColorRole.ring.color(in: theme) == ColorRole.bgAccent.color(in: theme))
     }
 }
 
-struct MeaningTests {
-    @Test func accentsMatchTheApprovedSpec() {
+struct ClothesTests {
+    /// The old check-in colors live on only as outfit swatches.
+    @Test func clothesKeepTheirColors() {
         #expect(
-            Meaning.allCases.map { [$0.accent.ink.hex, $0.accent.wash.hex, $0.accent.text.hex] } == [
-                ["#2D5BA0", "#EAF0F8", "#224780"],
-                ["#278C5E", "#E5F3EB", "#1B6545"],
-                ["#A0760E", "#FBF1DC", "#6E4F07"],
-                ["#9062DE", "#F3EEFC", "#5B3AA6"],
+            [Palette.cobalt, Palette.mint, Palette.honey, Palette.lavender].map(\.hex) == [
+                "#2D5BA0", "#278C5E", "#A0760E", "#9062DE",
             ])
-    }
-
-    @Test(arguments: SceneTheme.allCases)
-    func accentsAreTheSameInEveryScene(theme: SceneTheme) {
-        #expect(Meaning.allCases.map { $0.accent(in: theme) } == Meaning.allCases.map(\.accent))
-    }
-
-    /// A tag is dark text on the accent's wash: 4.5:1.
-    @Test(arguments: Meaning.allCases, SceneTheme.allCases)
-    func tagTextIsReadable(meaning: Meaning, theme: SceneTheme) {
-        let accent = meaning.accent(in: theme)
-        #expect(accent.text.contrastRatio(with: accent.wash) >= 4.5)
-    }
-
-    /// Icons need 3:1 (WCAG 2.2, 1.4.11) on every light surface they sit on, glass included.
-    @Test(arguments: Meaning.allCases, SceneTheme.allCases)
-    func iconInkIsVisible(meaning: Meaning, theme: SceneTheme) {
-        let ink = meaning.accent(in: theme).ink
-        for background in [ColorRole.canvas, .surface, .signatureWash] {
-            #expect(ink.contrastRatio(with: background.color(in: theme)) >= 3, "\(meaning) on \(background)")
-        }
     }
 }
 
 struct LayoutTests {
-    @Test func spacingAndRadiiMatchTheSpec() {
-        #expect([Space.xxs, Space.xs, Space.s, Space.m, Space.l, Space.xl, Space.xxl] == [4, 8, 12, 16, 24, 32, 48])
-        #expect(Space.gutter == 16)
-        #expect([Radius.s, Radius.m, Radius.button, Radius.l, Radius.xl] == [14, 16, 18, 24, 26])
-        #expect(Radius.capsule(height: Sizing.capsuleHeight) == 22)
+    @Test func spacingIsSevenStepsOnAFourPointGrid() {
+        let steps = [Space.xxs, Space.xs, Space.s, Space.m, Space.l, Space.xl, Space.xxl]
+        #expect(steps == [4, 8, 12, 16, 24, 32, 48])
+        #expect(steps.allSatisfy { $0.truncatingRemainder(dividingBy: 4) == 0 })
     }
 
+    @Test func spacingAliasesMatchTheSpec() {
+        #expect([Space.pageMargin, Space.cardPadding, Space.cardGap, Space.labelGap] == [16, 16, 12, 8])
+        #expect([Space.sectionGap, Space.headerGap] == [32, 24])
+    }
+
+    @Test func radiiAreSixTenTwelveAndCapsules() {
+        #expect([Radius.thumbnail, Radius.pick, Radius.card] == [6, 10, 12])
+        #expect(Radius.capsule(height: Sizing.primaryControl) == 26)
+        #expect(Radius.concentric(outer: Radius.card, inset: 6) == 6)
+        #expect(Radius.concentric(outer: Radius.thumbnail, inset: 8) == 0)
+    }
+
+    @Test func controlsComeInThreeHeights() {
+        #expect([Sizing.primaryControl, Sizing.control, Sizing.compactControl] == [52, 44, 36])
+        #expect(Sizing.pickRow == 52)
+        #expect([Sizing.checkBadge, Sizing.selectionStroke, Sizing.hairline, Sizing.swatch] == [20, 1.5, 1, 32])
+    }
+
+    /// Compact controls draw smaller than a finger; their views pad out to the tap target.
     @Test func tapTargetsAreAtLeast44Points() {
-        #expect(Sizing.capsuleHeight >= Sizing.minimumTapTarget)
-        #expect(Sizing.checkInHeight >= Sizing.minimumTapTarget)
-        #expect(Sizing.capsuleGlyph < Sizing.capsuleIcon)
+        #expect(Sizing.minimumTapTarget == 44)
+        #expect(Sizing.compactControl < Sizing.minimumTapTarget)
+        #expect(Sizing.swatch < Sizing.minimumTapTarget)
+        for size in [Sizing.primaryControl, Sizing.control, Sizing.pickRow, Sizing.kindButton] {
+            #expect(size >= Sizing.minimumTapTarget)
+        }
     }
 
-    @Test func pickerControlsMatchTheSpec() {
-        #expect(Radius.tile == 13)
-        #expect([Sizing.searchFieldHeight, Sizing.pillHeight, Sizing.tileHeight] == [44, 36, 86])
-        #expect([Sizing.pillGlyph, Sizing.tileGlyph, Sizing.checkBadge] == [15, 28, 18])
-        #expect([Sizing.categoryPillHeight, Sizing.categoryItemInset] == [34, 14])
-        #expect(Sizing.selectionStroke == 1.75)
-        #expect([Lift.opacity, Lift.radius, Lift.y] == [0.12, 1, 1])
-    }
-
-    /// Pills and category pills draw smaller than a finger, so they pad out to the tap target;
-    /// the search field and tiles are already big enough.
-    /// The pill and the category pill draw smaller than a tap target; their views pad out to it.
-    @Test func pickerTokenSizesRelateAsDrawn() {
-        #expect(Sizing.pillHeight < Sizing.minimumTapTarget)
-        #expect(Sizing.categoryPillHeight < Sizing.minimumTapTarget)
-        #expect(Sizing.searchFieldHeight >= Sizing.minimumTapTarget)
-        #expect(Sizing.tileHeight >= Sizing.minimumTapTarget)
-        #expect([Sizing.pillGap, Sizing.pillInset, Sizing.fieldInset] == [6, 10, 14])
-    }
-
-    @Test func frostGetsWhiterFromNavigationToCards() {
-        #expect([Frost.bannerFill, Frost.cardFill] == [0.62, 0.76])
-        #expect(Tint.selected == 0.14)
+    @Test func statusAndCharacterSizesMatchTheSpec() {
+        #expect([Sizing.progress, Sizing.ringWidth, Sizing.ringGap] == [4, 3, 2])
+        #expect([Sizing.characterHead, Sizing.characterBust, Sizing.characterFull] == [28, 84, 132])
+        #expect([Sizing.kindButton, Sizing.kindIcon, Sizing.tag] == [52, 22, 28])
+        #expect([Sizing.icon, Sizing.smallIcon] == [20, 15])
+        #expect([Sizing.tabBar, Sizing.tabItemWidth, Sizing.tabItemHeight, Sizing.tabBarBottom] == [62, 76, 54, 26])
     }
 
     @Test func scrimIsALightBlurNotADim() {
         #expect(Scrim.blurRadius == 3)
         #expect(Scrim.tint.hex == "#E8F6FA")
         #expect(Scrim.tintOpacity == 0.1)
+        #expect(abs(Scrim.fadeOut - Scrim.fadeIn * Motion.exitFactor) < 0.001)
     }
 }
 
@@ -238,67 +256,80 @@ struct TypographyTests {
         #expect(Face.scoreboard(.semibold).postScriptName == "BarlowCondensed-SemiBold")
     }
 
-    @Test func textRampGetsSmallerFromHeroToFootnote() {
-        let sizes = [
-            TypeRamp.hero, TypeRamp.title, TypeRamp.headline, TypeRamp.body, TypeRamp.callout, TypeRamp.caption,
-            TypeRamp.footnote,
-        ].map(\.size)
-        #expect(sizes == [30, 24, 17, 16, 15, 13, 12])
-        #expect(TypeRamp.action.size == 19)
+    /// Six text levels, as the design system v4 canvas sets them.
+    @Test func sixTextLevels() {
+        let levels = [
+            TypeRamp.largeTitle, TypeRamp.title, TypeRamp.headline, TypeRamp.body, TypeRamp.footnote, TypeRamp.label,
+        ]
+        #expect(levels.map(\.size) == [32, 22, 17, 16, 13, 12])
+        #expect(
+            levels.map(\.face) == [
+                .text(.semibold), .text(.semibold), .text(.semibold), .text(.regular), .text(.regular),
+                .text(.semibold),
+            ])
+        #expect(TypeRamp.label.tracking == 0.48)
+        #expect(TypeRamp.taskTitle.size == 26)
     }
 
-    @Test func pickerRungsMatchTheSpec() {
-        let rungs = [TypeRamp.calloutEmphasis, TypeRamp.tileLabel, TypeRamp.field, TypeRamp.sectionLabel]
-        #expect(rungs.map(\.size) == [15, 14, 17, 13])
-        #expect(rungs.map(\.face) == [.text(.semibold), .text(.medium), .text(.medium), .text(.semibold)])
-        #expect(TypeRamp.sectionLabel.tracking == 0.26)
+    @Test func controlRungsMatchTheSpec() {
+        let rungs = [TypeRamp.action, TypeRamp.callout, TypeRamp.calloutEmphasis, TypeRamp.pick, TypeRamp.field]
+        #expect(rungs.map(\.size) == [19, 15, 15, 16, 16])
+        #expect(
+            rungs.map(\.face) == [.text(.semibold), .text(.medium), .text(.semibold), .text(.medium), .text(.regular)])
         #expect(TypeRamp.calloutEmphasis.anchor == TypeRamp.callout.anchor)
+        #expect(TypeRamp.footnoteEmphasis.size == TypeRamp.footnote.size)
+        #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.face) == [.text(.medium), .text(.semibold)])
+        #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func scoreboardRampMatchesTheSpec() {
-        let sizes = [
-            TypeRamp.scoreHero, TypeRamp.scoreLarge, TypeRamp.scoreLargeDenominator, TypeRamp.scoreMedium,
-            TypeRamp.scoreSmall, TypeRamp.scoreSmallDenominator, TypeRamp.scoreLabel,
-        ].map(\.size)
-        #expect(sizes == [92, 52, 28, 30, 20, 14, 14])
-        #expect(TypeRamp.scoreHero.tracking == -1.84)
-        #expect(TypeRamp.scoreMedium.face == .scoreboard(.extraBold))
-    }
-
-    @Test func everyRungUsesTheRightFamily() {
+    @Test func numbersAreBarlowAtThreeSizes() {
+        #expect([TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map(\.size) == [60, 32, 22])
+        #expect(
+            [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map {
+                TypeRamp.denominator(of: $0).size
+            } == [33, 18, 12])
+        #expect(TypeRamp.denominator(of: TypeRamp.scoreHero).face == .scoreboard(.semibold))
         let scoreboard = TypeRamp.all.filter {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
+        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline"])
+    }
+}
+
+struct HapticTests {
+    @Test func everyMomentHasOneName() {
         #expect(
-            scoreboard.map(\.name) == [
-                "scoreHero", "scoreLarge", "scoreLargeDenominator", "scoreMedium", "scoreSmall",
-                "scoreSmallDenominator", "scoreLabel",
+            Haptic.allCases.map(\.rawValue) == [
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
             ])
+        #expect(Haptic.ringTicks == 3)
     }
 }
 
 struct MotionTests {
     @Test func springsMatchTheSpec() {
-        #expect(Motion.all.map(\.name) == ["snappy", "burst", "panel", "bouncy", "smooth"])
-        #expect(Motion.all.map(\.spring.response) == [0.3, 0.24, 0.37, 0.5, 0.45])
-        #expect(Motion.all.map(\.spring.dampingFraction) == [0.86, 0.6, 0.52, 0.6, 1])
-        #expect(Motion.burstStagger == 0.028)
-        #expect([Motion.collapseDuration, Motion.collapseStagger] == [0.19, 0.016])
+        #expect(Motion.all.map(\.name) == ["press", "change", "sheet", "page", "celebrate"])
+        #expect(Motion.all.map(\.spring.response) == [0.17, 0.10, 0.24, 0.36, 0.5])
+        #expect(Motion.all.map(\.spring.dampingFraction) == [0.9, 1, 0.9, 0.9, 0.6])
+        #expect([Motion.ringFill, Motion.ringPopScale] == [0.5, 1.08])
+        #expect([Motion.collapseDuration, Motion.collapseStagger, Motion.burstStagger] == [0.19, 0.016, 0.028])
     }
 
-    /// Bounce is reserved for the expressive moments (the check-in burst, glass panels springing
-    /// in, celebrations). Taps and ordinary transitions never overshoot visibly.
-    @Test func onlyExpressiveSpringsBounce() {
+    /// Bounce is kept for the moment a check-in lands; everyday motion never overshoots visibly.
+    @Test func onlyTheCelebrationBounces() {
         let bouncing = Motion.all.filter { $0.spring.dampingFraction < 0.8 }.map(\.name)
-        #expect(bouncing == ["burst", "panel", "bouncy"])
-        #expect(Motion.snappy.dampingFraction >= 0.8)
-        #expect(Motion.smooth.dampingFraction == 1)
+        #expect(bouncing == ["celebrate"])
+    }
+
+    @Test func exitsAreAFifthFaster() {
+        #expect(abs(Motion.page.exit.response - 0.288) < 0.001)
+        #expect(Motion.page.exit.dampingFraction == Motion.page.dampingFraction)
     }
 
     @Test func capsulesLandOnTheArcAboveTheButton() {
-        let rounded = Meaning.allCases.map { meaning in
-            let offset = BurstLayout.offset(for: meaning)
+        let rounded = CheckInKind.allCases.map { kind in
+            let offset = BurstLayout.offset(for: kind)
             return [(offset.x * 10).rounded() / 10, (offset.y * 10).rounded() / 10]
         }
         #expect(rounded == [[-121.7, -39.6], [-60.1, -113.0], [60.1, -113.0], [121.7, -39.6]])

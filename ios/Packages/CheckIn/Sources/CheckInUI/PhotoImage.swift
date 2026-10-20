@@ -13,7 +13,7 @@ struct PhotoImage: View {
     @State private var image: CGImage?
 
     var body: some View {
-        Color(role: .divider, in: theme)
+        Color(role: .borderDefault, in: theme)
             .overlay {
                 if let image {
                     Image(decorative: image, scale: 1).resizable().scaledToFill()
