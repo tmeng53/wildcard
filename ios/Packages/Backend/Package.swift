@@ -8,12 +8,16 @@ import PackageDescription
 //   knows Supabase Auth's HTTP API, so changing provider means replacing it.
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
+// - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
+//   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the
+//   posts still to go out kept on the device.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],
     products: [.library(name: "Backend", targets: ["Backend"])],
     dependencies: [
         .package(path: "../Account"),
+        .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
         .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
@@ -23,7 +27,8 @@ let package = Package(
         .target(
             name: "Backend",
             dependencies: [
-                .product(name: "AccountDomain", package: "Account"), "Contracts",
+                .product(name: "AccountDomain", package: "Account"),
+                .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
@@ -31,6 +36,9 @@ let package = Package(
             ]),
         .testTarget(
             name: "BackendTests",
-            dependencies: ["Backend", .product(name: "AccountDomain", package: "Account"), "Contracts"]),
+            dependencies: [
+                "Backend", .product(name: "AccountDomain", package: "Account"),
+                .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
+            ]),
     ]
 )

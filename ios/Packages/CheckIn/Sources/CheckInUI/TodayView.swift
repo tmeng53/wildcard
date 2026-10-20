@@ -219,6 +219,10 @@ struct BubbleShape: Shape {
 
 #Preview {
     TodayView(
-        model: TodayModel(service: InMemoryCheckInService.sampleSquad(now: .now), writer: DiceDisclaimerWriter()))
+        model: TodayModel(
+            store: TodayStore(
+                backend: InMemoryCheckInBackend.sampleSquad(now: .now), outbox: InMemoryOutbox(), now: { Date() },
+                newID: { UUID() }),
+            writer: DiceDisclaimerWriter()))
 }
 #endif

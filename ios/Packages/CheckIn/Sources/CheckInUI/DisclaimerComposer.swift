@@ -1,5 +1,6 @@
 #if os(iOS)
 import AvatarUI
+import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI

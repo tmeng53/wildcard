@@ -8,6 +8,17 @@ import Foundation
 import Observation
 import SwiftUI
 
+extension CheckInDraft {
+    var meaning: Meaning {
+        switch self {
+        case .trained: .trained
+        case .healthyMeal: .healthyMeal
+        case .cheatMeal: .cheatMeal
+        case .disclaimer: .disclaimer
+        }
+    }
+}
+
 /// Where photos for a 练了 or a meal come from.
 public enum PhotoSource: Sendable {
     /// The system photo picker.
@@ -34,7 +45,6 @@ public final class TodayModel {
         let cover: PreparedPhoto?
     }
 
-    private(set) var board: TodayBoard?
     var isBurstOpen = false
     private(set) var step = Step.scene
     /// The photos picked for the open compose step, the cover first.
@@ -48,11 +58,11 @@ public final class TodayModel {
 
     let photoSource: PhotoSource
     let player: CharacterPlayer?
-    private let service: any CheckInService
+    private let store: TodayStore
     private let writer: any DisclaimerWriter
 
-    public init(service: any CheckInService, writer: any DisclaimerWriter, photoSource: PhotoSource = .library) {
-        self.service = service
+    public init(store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library) {
+        self.store = store
         self.writer = writer
         self.photoSource = photoSource
         player = try? CharacterPlayer(
@@ -66,8 +76,22 @@ public final class TodayModel {
     /// The lifter's species, whose moves play on top of the persona's.
     private static let species = "person"
 
+    /// Each squad picks its scene once squad settings land; 跑道 until then.
+    private static let scene = SceneTheme.track
+
+    /// The card's numbers, from the store's home with the member's own posts counted.
+    var board: TodayBoard? {
+        guard let home = store.home, let day = store.day else { return nil }
+        return TodayBoard(
+            squadName: home.squad.name, scene: Self.scene, weekNumber: day.weekOfYear,
+            progress: SquadWeekProgress(
+                done: home.today.squadWeek.trainedDays, goal: home.today.squadWeek.plannedDays),
+            trainedToday: home.today.today.trained, myStatus: store.myStatus,
+            lastActivity: store.suggestedActivity ?? .sport(.run))
+    }
+
     var unavailable: Set<Meaning> {
-        (board?.myStatus.allowsDisclaimer ?? true) ? [] : [.disclaimer]
+        store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
@@ -75,7 +99,7 @@ public final class TodayModel {
     var isSceneDimmed: Bool { isBurstOpen }
 
     func load() async {
-        board = try? await service.board()
+        await store.load()
     }
 
     func pick(_ meaning: Meaning) {
@@ -125,11 +149,11 @@ public final class TodayModel {
         sendFailed = false
         defer { isSending = false }
         do {
-            let updated = try await service.post(draft)
+            // Posted or waiting to go out, it counts on the scene now.
+            try await store.post(draft)
             step = .scene
             photos = []
             land(draft)
-            board = updated
         } catch {
             sendFailed = true
         }

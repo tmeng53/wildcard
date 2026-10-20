@@ -15,6 +15,13 @@ public struct LocalDay: Hashable, Comparable, Sendable, Codable, CustomStringCon
         self.day = day
     }
 
+    /// For the parts a Gregorian calendar just produced, which are always a real day.
+    init(calendarYear year: Int, month: Int, day: Int) {
+        self.year = year
+        self.month = month
+        self.day = day
+    }
+
     public init(_ text: String) throws(ContractsError) {
         let parts = text.split(separator: "-", omittingEmptySubsequences: false)
         guard parts.count == 3, parts[0].count == 4, parts[1].count == 2, parts[2].count == 2,
