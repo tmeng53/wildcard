@@ -237,7 +237,7 @@ public final class TodayModel {
         let phase = phase
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(Motion.ringFill))
-            cast.cheerMe(at: phase)
+            cast.cheerMe(at: phase, seconds: now().timeIntervalSinceReferenceDate)
             try? await Task.sleep(for: .seconds(Self.scoreDelay - Motion.ringFill))
             heldWeek = nil
         }

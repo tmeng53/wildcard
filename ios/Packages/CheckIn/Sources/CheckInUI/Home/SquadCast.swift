@@ -35,7 +35,7 @@ final class SquadCast {
     }
 
     /// The pose each character is playing, so a new pose is set only when it changes.
-    private var playing: [MemberID: Pose] = [:]
+    private var playing: [MemberID: StagePose] = [:]
     private var players: [MemberID: CharacterPlayer] = [:]
 
     /// Places the squad from the store's home: everyone but `me`.
@@ -63,8 +63,9 @@ final class SquadCast {
     }
 
     /// The squad turns to me and cheers, nearest first; the one strong moment of a 练了.
-    func cheerMe(at phase: DayPhase) {
-        let order = stage.cheerers(mates.map(\.member), at: phase)
+    /// `seconds` is the scene's clock, so runners cheer from where they are on the track.
+    func cheerMe(at phase: DayPhase, seconds: Double) {
+        let order = stage.cheerers(mates.map(\.member), at: phase, seconds: seconds)
         for (index, id) in order.enumerated() {
             guard let mate = mates.first(where: { $0.id == id }),
                 let clip = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: Self.species)
@@ -102,7 +103,7 @@ final class SquadCast {
     /// The loop a pose plays. The sport, sitting, sign and sleeping moves are still being drawn;
     /// until they land everyone plays their persona's idle, and the scene adds the sign and the
     /// sleep.
-    private static func clip(for pose: Pose, persona: Persona) -> Clip? {
+    private static func clip(for pose: StagePose, persona: Persona) -> Clip? {
         try? PlaceholderCharacter.clip("idle", persona: persona, species: species)
     }
 

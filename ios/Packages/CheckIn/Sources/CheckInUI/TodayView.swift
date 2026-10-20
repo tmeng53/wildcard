@@ -13,6 +13,8 @@ public struct TodayView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayModel
+    /// The card's page, kept so the card reopens where it was left.
+    @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
 
     public init(model: TodayModel) {
         _model = State(initialValue: model)
@@ -70,22 +72,23 @@ public struct TodayView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if let home = model.home, let week = model.cardWeek {
+                if let home = model.home, let week = model.cardWeek, let day = model.day {
                     SquadCard(
-                        squadName: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
-                        members: home.today.members.map { mate in
-                            SquadMember(
-                                id: mate.member.description,
-                                status: StageStatus(
-                                    training: mate.training, activity: nil, plannedRest: mate.plannedRest
-                                ).ring,
-                                accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
-                        },
-                        myDone: week.mine.trainedDays, myGoal: week.mine.plannedDays
+                        squad: SquadWeek(
+                            name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
+                            members: home.today.members.map { mate in
+                                SquadMember(
+                                    id: mate.member.description,
+                                    status: StageStatus(
+                                        training: mate.training, activity: nil, plannedRest: mate.plannedRest
+                                    ).ring,
+                                    accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
+                            }),
+                        mine: myWeek(home: home, day: day, week: week.mine),
+                        page: $cardPage
                     ) { member in
                         Head(player: model.head(of: member.id))
                     }
-                    .padding(.horizontal, Space.pageMargin)
                     .padding(.top, Space.xs)
                     .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
                     // Out of the way while the 请假条 composer is up.
@@ -116,10 +119,47 @@ public struct TodayView: View {
                         model.pick(kind)
                     }
                     .padding(.bottom, Space.l)
+                    TabBar(Self.tabs, selection: .constant(Tab.today))
+                        .padding(.horizontal, Space.pageMargin)
+                        .padding(.bottom, Sizing.tabBarBottom)
+                        .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
                 }
                 .transition(.opacity)
             }
         }
+    }
+
+    /// The app's tabs, as the approved home draws them. Only 今天 is built so far, so the bar
+    /// stays on it.
+    private enum Tab: Hashable {
+        case today, moments, schedule, me
+    }
+
+    private static let tabs: [TabBarItem<Tab>] = [
+        TabBarItem(id: .today, title: Text("今天", bundle: .module), systemImage: "house", accessibilityIdentifier: "tab.today"),
+        TabBarItem(id: .moments, title: Text("名场面", bundle: .module), systemImage: "star"),
+        TabBarItem(id: .schedule, title: Text("出赛表", bundle: .module), systemImage: "list.bullet.rectangle"),
+        TabBarItem(id: .me, title: Text("我", bundle: .module), systemImage: "person"),
+    ]
+
+    /// My week for the card's second page: this week's days, what I trained and my meals, with
+    /// the counts the squad's today carries.
+    private func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
+        let record = home.week(on: day)
+        return DesignSystemUI.MyWeek(
+            summary: record.trained.map { String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module) }
+                .joined(separator: " · "),
+            done: week.trainedDays, planned: week.plannedDays,
+            days: record.days.map {
+                switch $0 {
+                case .trained: .trained
+                case .disclaimer: .excused
+                case .restDay: .restDay
+                case .open: .open
+                }
+            },
+            today: record.today, healthyMeals: record.healthyMeals, cheatMeals: record.cheatMeals,
+            lifetimeTrained: home.today.myWeek.lifetimeTrainedDays)
     }
 
     private var isPickingPhotos: Binding<Bool> {
@@ -139,7 +179,7 @@ private struct MyPayoff: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let unit = proxy.size.width / Stage.width
+            let unit = proxy.size.width / StageLayout.width
             let head = CGPoint(
                 x: StageLayout.mySpot.x * unit,
                 y: (StageLayout.mySpot.y - Self.headHeight * StageLayout.myScale) * unit)

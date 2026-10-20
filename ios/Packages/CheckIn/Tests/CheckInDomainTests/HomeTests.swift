@@ -61,3 +61,31 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(rolled.today.today.resting == 2)
     #expect(rolled.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
 }
+
+@Test func myWeekShowsEachDaysOneStatusWhatITrainedAndMyMeals() throws {
+    let monday = tuesday.adding(days: -1)
+    let home = sampleHome(checkIns: [
+        try checkIn(1, by: myID, on: monday, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(2, by: myID, on: monday, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(3, by: myID, on: monday, .healthyMeal(Meal())),
+        try checkIn(4, by: myID, .disclaimer(try Disclaimer("腿还没回来"))),
+        try checkIn(5, by: myID, .trained(Training(activity: .sport(.run)))),
+        try checkIn(6, by: myID, .cheatMeal(Meal())),
+        try checkIn(9, by: myID, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(7, by: mate, .trained(Training(activity: .sport(.yoga)))),
+        // Last week's doesn't count.
+        try checkIn(8, by: myID, on: monday.adding(days: -1), .trained(Training(activity: .sport(.run)))),
+    ])
+    let week = home.week(on: tuesday)
+    // Wednesday and Sunday are rest days in the plan; a 练了 beats the 请假条 on Tuesday.
+    #expect(week.days == [.trained, .trained, .restDay, .open, .open, .open, .restDay])
+    #expect(week.today == 1)
+    // Two swims on Monday are one day of swimming.
+    #expect(week.trained.map(\.activity) == [.sport(.swim), .sport(.run)])
+    #expect(week.trained.map(\.days) == [2, 1])
+    #expect(week.healthyMeals == 1)
+    #expect(week.cheatMeals == 1)
+
+    let onLeave = sampleHome(checkIns: [try checkIn(1, by: myID, .disclaimer(try Disclaimer("加班")))])
+    #expect(onLeave.week(on: tuesday).days[1] == .disclaimer)
+}

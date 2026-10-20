@@ -25,7 +25,7 @@ struct SquadSceneView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let unit = proxy.size.width / Stage.width
+            let unit = proxy.size.width / StageLayout.width
             ZStack(alignment: .topLeading) {
                 SceneArt(scene: theme, layer: .day)
                     .frame(width: proxy.size.width, height: Stage.height * unit)
@@ -71,7 +71,7 @@ struct SquadSceneView: View {
                 }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in
                     SceneArt(scene: theme, layer: .front(index))
-                        .frame(width: Stage.width * unit, height: Stage.height * unit)
+                        .frame(width: StageLayout.width * unit, height: Stage.height * unit)
                         .allowsHitTesting(false)
                         .zIndex(depth)
                 }
@@ -104,14 +104,13 @@ struct SquadSceneView: View {
     }
 }
 
-/// The design's stage: 390 by 844 points, the screen it was drawn for.
+/// The design's stage: 390 (`StageLayout.width`) by 844 points, the screen it was drawn for.
 enum Stage {
-    static let width = 390.0
     static let height = 844.0
 
     /// The venue's parts people stand behind, by depth: the tennis net.
     static func fronts(of scene: SceneTheme) -> [Double] {
-        scene == .tennis ? [358.5] : []
+        scene == .tennis ? [388.5] : []
     }
 }
 
@@ -126,7 +125,7 @@ private struct Placed: Identifiable {
     let player: CharacterPlayer
     let position: StagePosition
     let ring: RingStatus
-    let pose: Pose
+    let pose: StagePose
     let sign: String?
     let isTapped: Bool
 
@@ -149,8 +148,8 @@ private struct StageFigure: View {
         let scale = figure.position.scale * unit
         let point = figure.position.point
         ZStack {
-            GroundRing(ring: figure.ring, scale: scale)
-                .position(x: Self.feet.x * scale, y: Self.feet.y * scale)
+            GroundRing(ring: figure.ring, scale: scale, unit: unit)
+                .position(x: Self.feet.x * scale, y: Self.feet.y * scale - 2 * unit)
             CharacterCanvas(
                 drawing: figure.player.drawing,
                 placements: reduceMotion ? figure.player.restPlacements : figure.player.placements(at: date)
@@ -176,13 +175,15 @@ private struct StageFigure: View {
 }
 
 /// The status ring on the ground under a character's feet, the same rule as the head rings in
-/// the card: thick in the scene's ring colour once checked in, thin and grey on a rest day.
-/// When it turns checked in on screen it draws itself clockwise, like the card's ring.
+/// the card: in the scene's ring colour once checked in, thin and grey on a rest day. When it
+/// turns checked in on screen it draws itself clockwise, like the card's ring. Its size follows
+/// the character (`scale`); its line stays the same on everyone (`unit`, one stage point).
 private struct GroundRing: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let ring: RingStatus
     let scale: Double
+    let unit: Double
     @State private var drawn: Double?
 
     var body: some View {
@@ -191,15 +192,16 @@ private struct GroundRing: View {
             switch ring {
             case .done:
                 shape.trim(from: 0, to: drawn ?? 1)
-                    .stroke(Color(role: .ring, in: theme), style: StrokeStyle(lineWidth: 14 * scale, lineCap: .round))
+                    .stroke(Color(role: .ring, in: theme), style: StrokeStyle(lineWidth: 3 * unit, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-            case .excused:
-                shape.stroke(Color(role: .borderDefault, in: theme), lineWidth: 6 * scale)
+            case .restDay:
+                shape.stroke(Color(role: .borderDefault, in: theme), lineWidth: 1.6 * unit)
             case .open:
                 EmptyView()
             }
         }
-        .frame(width: 170 * scale, height: 46 * scale)
+        // The design's ellipse: 105 by 36 rig points around the feet.
+        .frame(width: 210 * scale, height: 71.4 * scale)
         .onChange(of: ring) { _, new in
             guard new == .done, !reduceMotion else { return }
             drawn = 0
@@ -265,7 +267,7 @@ extension StageStatus {
     var ring: RingStatus {
         switch self {
         case .trained, .disclaimer: .done
-        case .restDay: .excused
+        case .restDay: .restDay
         case .notYet: .open
         }
     }

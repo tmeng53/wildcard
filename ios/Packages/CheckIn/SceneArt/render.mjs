@@ -1,5 +1,5 @@
-// Renders the home scenes' art from the approved home design's source (scenes.js, version 15,
-// 2026-10-19) into the PNGs CheckInUI draws: per scene the day art, the night overlay (dark
+// Renders the home scenes' art from the approved simple home design's source (scenes.js,
+// 2026-10-20) into the PNGs CheckInUI draws: per scene the day art, the night overlay (dark
 // tint and lamps) and, where the venue has one, the front layer people stand behind (the
 // tennis net). Run: node ios/Packages/CheckIn/SceneArt/render.mjs (needs Playwright's Chromium).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -18,7 +18,7 @@ const scenes = new Function(`${source}; return { SCENES, liftScene };`)();
 const fonts = join(here, '../../DesignSystem/Sources/DesignSystemUI/Resources/Fonts');
 const face = (file, weight) =>
   `@font-face{font-family:'Barlow Condensed';font-weight:${weight};src:url(data:font/ttf;base64,${readFileSync(join(fonts, file)).toString('base64')})}`;
-const css = face('BarlowCondensed-SemiBold.ttf', 600) + face('BarlowCondensed-Bold.ttf', 700) + face('BarlowCondensed-ExtraBold.ttf', 800);
+const css = face('BarlowCondensed-SemiBold.ttf', 600) + face('BarlowCondensed-ExtraBold.ttf', 800);
 const svg = body => `<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844"><style>${css}</style>${body}</svg>`;
 // The night tint from the design.
 const night = '<rect width="390" height="844" fill="#0E1424" opacity=".58"/>';
