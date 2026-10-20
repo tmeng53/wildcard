@@ -136,6 +136,7 @@ const app = createApp({
       })),
     allowance: createPostgresDraftAllowance(db),
     clock: () => new Date(),
+    random: Math.random,
   }),
   push,
   log,

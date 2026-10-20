@@ -12,5 +12,12 @@ export {
   DisclaimerWriterOffError,
   DisclaimerWriterUnavailableError,
 } from './errors.js';
-export type { Clock, DraftAllowance, LanguageModel, MemesInUse, Reservation } from './ports.js';
+export type {
+  Clock,
+  DraftAllowance,
+  LanguageModel,
+  MemesInUse,
+  Random,
+  Reservation,
+} from './ports.js';
 export { createDisclaimerDrafts, type DisclaimerDrafts } from './use-cases/disclaimer-drafts.js';
