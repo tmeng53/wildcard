@@ -36,8 +36,16 @@ const good: ModelReply = {
 };
 
 function setup(
-  options: { answer?: () => Promise<unknown>; memes?: PromptMeme[]; now?: Date } = {},
+  options: {
+    answer?: () => Promise<unknown>;
+    memes?: PromptMeme[];
+    /** The random numbers the use case draws, in order; the last one repeats. */
+    rolls?: number[];
+    now?: Date;
+  } = {},
 ) {
+  const rolls = options.rolls ?? [0.99];
+  let drawn = 0;
   const prompts: string[] = [];
   const model: LanguageModel = {
     answer: async ({ prompt, reply }) => {
@@ -51,6 +59,7 @@ function setup(
     memes: () => Promise.resolve(options.memes ?? []),
     allowance: createPostgresDraftAllowance(db),
     clock: () => now,
+    random: () => rolls[Math.min(drawn++, rolls.length - 1)] ?? 0,
   });
   return {
     drafts,
@@ -156,23 +165,35 @@ describe('createDisclaimerDrafts', () => {
     expect(await unsafe.drafts.write(request(member))).toEqual({ kind: 'declined' });
   });
 
-  it('lists only this week’s memes that suit the style, at most 8', async () => {
-    const meme = (phrase: string, styles: PromptMeme['styles']): PromptMeme => ({
-      phrase,
-      meaning: '意思',
-      background: '背景',
-      styles,
-    });
-    const memes = [
-      meme('只适合嘴硬', ['stubborn']),
-      ...Array.from({ length: 9 }, (_, index) => meme(`梗${String(index)}`, ['funny'])),
-    ];
-    const { drafts, prompts } = setup({ memes });
+  const meme = (phrase: string, styles: PromptMeme['styles']): PromptMeme => ({
+    phrase,
+    meaning: `${phrase}的意思`,
+    background: `${phrase}的背景`,
+    styles,
+  });
+  const memes = [
+    meme('只适合嘴硬', ['stubborn']),
+    meme('班味', ['funny']),
+    meme('松弛感', ['funny']),
+  ];
+
+  it('sends one meme that suits the style on a roll under 0.3, picked by the next roll', async () => {
+    const { drafts, prompts } = setup({ memes, rolls: [0.29, 0.6] });
     await drafts.write(request(await newMember()));
-    const prompt = prompts[0] ?? '';
-    expect(prompt).not.toContain('只适合嘴硬');
-    expect(prompt.match(/- 梗：/gu)).toHaveLength(8);
-    expect(prompt).toContain('- 梗：梗7');
-    expect(prompt).not.toContain('- 梗：梗8');
+    expect(prompts[0]).toBe(
+      '原因：早上没起来\n风格：搞笑\n本周梗：松弛感\n  意思：松弛感的意思\n  背景：松弛感的背景',
+    );
+  });
+
+  it.each([0.3, 0.99])('sends no meme on a roll of %s', async (roll) => {
+    const { drafts, prompts } = setup({ memes, rolls: [roll, 0] });
+    await drafts.write(request(await newMember()));
+    expect(prompts[0]).toBe('原因：早上没起来\n风格：搞笑');
+  });
+
+  it('sends no meme when none suits the style', async () => {
+    const { drafts, prompts } = setup({ memes: [memes[0] ?? meme('', [])], rolls: [0] });
+    await drafts.write(request(await newMember()));
+    expect(prompts[0]).toBe('原因：早上没起来\n风格：搞笑');
   });
 });
