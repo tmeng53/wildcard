@@ -87,6 +87,8 @@ public enum TypeRamp {
     /// Secondary and text buttons, and the selected switch or pill: `callout`, one weight heavier.
     public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
 
+    /// The 战报's full-screen numbers (你的一周 2/5, the squad's 23/22): one per story page.
+    public static let scoreStory = TypeStyle(face: .scoreboard(.extraBold), size: 132, anchor: .largeTitle)
     /// The one hero number on a screen (the squad's 14/22).
     public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 60, anchor: .largeTitle)
     /// A number on a card.
@@ -105,7 +107,8 @@ public enum TypeRamp {
         ("largeTitle", largeTitle), ("taskTitle", taskTitle), ("title", title), ("headline", headline),
         ("body", body), ("field", field), ("pick", pick), ("footnote", footnote),
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
-        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreHero", scoreHero),
+        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreStory", scoreStory),
+        ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall),
     ]

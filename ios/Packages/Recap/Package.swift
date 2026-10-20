@@ -18,9 +18,12 @@ let package = Package(
         .package(path: "../Contracts"),
         .package(path: "../DesignSystem"),
         .package(path: "../Avatar"),
+        .package(path: "../CheckIn"),
     ],
     targets: [
-        .target(name: "RecapDomain", dependencies: ["Contracts"]),
+        .target(
+            name: "RecapDomain",
+            dependencies: ["Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
         .target(
             name: "RecapUI",
             dependencies: [
@@ -30,10 +33,14 @@ let package = Package(
                 .product(name: "AvatarArt", package: "Avatar"),
                 .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "AvatarUI", package: "Avatar"),
+                // Sport names, as 今天 shows them.
+                .product(name: "CheckInUI", package: "CheckIn"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
-        .testTarget(name: "RecapDomainTests", dependencies: ["RecapDomain", "Contracts"]),
+        .testTarget(
+            name: "RecapDomainTests",
+            dependencies: ["RecapDomain", "Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
         // The String Catalog read as a file; runs on Linux too.
         .testTarget(name: "RecapUITests", dependencies: ["RecapUI"]),
     ]

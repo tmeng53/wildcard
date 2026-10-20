@@ -8,7 +8,8 @@ extension Sport {
     /// String Catalog key for the name people see.
     var nameKey: String { "sport.\(rawValue)" }
 
-    var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
+    /// The name people see. Public, so the 战报 names a day's sport the way 今天 does.
+    public var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
 
     /// The localized name as a string, for search.
     var localizedName: String { Bundle.module.localizedString(forKey: nameKey, value: nil, table: nil) }

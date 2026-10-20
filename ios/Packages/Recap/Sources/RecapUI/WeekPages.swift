@@ -2,6 +2,7 @@
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import CheckInUI
 import RecapDomain
 import SwiftUI
 

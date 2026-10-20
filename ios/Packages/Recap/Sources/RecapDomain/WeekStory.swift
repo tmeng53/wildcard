@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystem
 import Foundation
 
 /// One squad's week as the Sunday 战报 tells it, for the member reading it. The weekly AI run
@@ -244,11 +245,6 @@ public struct Hottest: Hashable, Sendable {
         self.line = line
         self.move = move
     }
-}
-
-/// The four check-in kinds, as the story names them.
-public enum CheckInKind: Hashable, Sendable {
-    case trained, healthyMeal, cheatMeal, disclaimer
 }
 
 /// Reactions of one kind. The API sends the words, so a new kind needs no app release.

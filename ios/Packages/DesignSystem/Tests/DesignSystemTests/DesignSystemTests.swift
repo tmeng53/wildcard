@@ -300,11 +300,11 @@ struct TypographyTests {
         #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func numbersAreBarlowAtFourSizes() {
+    @Test func numbersAreBarlowAtFiveSizes() {
         #expect(
-            [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall].map(\.size) == [
-                60, 32, 22, 18,
-            ])
+            [TypeRamp.scoreStory, TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall]
+                .map(\.size) == [132, 60, 32, 22, 18])
+        #expect(TypeRamp.denominator(of: TypeRamp.scoreStory).size == 73)
         #expect(
             [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map {
                 TypeRamp.denominator(of: $0).size
@@ -314,7 +314,7 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
+        #expect(scoreboard.map(\.name) == ["scoreStory", "scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
     }
 }
 
@@ -328,7 +328,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown",
             ])
         #expect(Haptic.ringTicks == 3)
     }

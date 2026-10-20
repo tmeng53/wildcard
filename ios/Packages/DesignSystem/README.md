@@ -43,6 +43,7 @@ One meaningful tap per moment, never a buzz (Apple HIG, Playing haptics). Screen
 | `tick`, `checkIn` | My own status ring drawing (ticks), then closing (one heavy hit, the check-in's only one) |
 | `score` | The score turning over |
 | `land` | The character landing after 上场 |
+| `crown` | The crown landing on the 战报 champion |
 | `reaction` | A teammate's reaction arriving |
 
 ## Adding to it
