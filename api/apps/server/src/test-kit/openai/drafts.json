@@ -1,0 +1,61 @@
+{
+  "id": "resp_DraftsFixture0000000001",
+  "object": "response",
+  "created_at": 1792468800,
+  "status": "completed",
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "system",
+  "max_output_tokens": 4096,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "output": [
+    {
+      "id": "rs_DraftsFixture0000000001",
+      "type": "reasoning",
+      "summary": []
+    },
+    {
+      "id": "msg_DraftsFixture0000000001",
+      "type": "message",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"version\": 1, \"outcome\": \"drafts\", \"drafts\": [\"闹钟响了三次，我和被子的谈判进入加时赛，目前被子领先。\", \"本人身体已到岗，灵魂仍在床上办理延期手续，预计明早恢复营业。\", \"经核实，早上那句「再眯五分钟」实际时长为两小时，特此通报。\"]}",
+          "annotations": [],
+          "logprobs": []
+        }
+      ]
+    }
+  ],
+  "parallel_tool_calls": true,
+  "reasoning": {
+    "effort": "low",
+    "summary": null
+  },
+  "store": false,
+  "temperature": 1.0,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "name": "reply",
+      "strict": true
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_p": 1.0,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 812,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 96,
+    "output_tokens_details": {
+      "reasoning_tokens": 40
+    },
+    "total_tokens": 908
+  }
+}
