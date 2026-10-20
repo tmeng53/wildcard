@@ -27,17 +27,21 @@ public enum StagePlacement: Hashable, Sendable {
     case floor(StagePoint)
 }
 
-/// Who stands where on the home scene. People keep their spot when their status changes, except
-/// for three moves: to or from the equipment, from the floor onto the playing area when they
-/// start training while the equipment is idle, and from the playing area back to the floor once
-/// someone takes the equipment. Pass the last arrangement back in to keep it.
+/// Who stands where on the home scene. People keep their spot, except for these moves: to or
+/// from the equipment, from the floor onto the playing area when they start training while the
+/// equipment is idle and a spot there is free, and from the playing area back to the floor once
+/// someone takes the equipment. Arrange the same stage again to keep it.
 public struct SquadStage: Hashable, Sendable {
     public let layout: StageLayout
     public private(set) var placements: [MemberID: StagePlacement]
+    /// Who was training at the last arrangement, so only starting to train moves someone onto
+    /// the playing area.
+    private var training: Set<MemberID>
 
     public init(layout: StageLayout) {
         self.layout = layout
         placements = [:]
+        training = []
     }
 
     /// Places `teammates` (everyone but me, who is always front and centre).
@@ -45,7 +49,8 @@ public struct SquadStage: Hashable, Sendable {
     /// 1. Teammates whose sport the scene has equipment for take a free slot, in the order they
     ///    checked in.
     /// 2. While nobody uses the equipment, anyone else training takes the playing area, middle out.
-    /// 3. Everyone else stands on the open floor: on their old spot if it is still free, else on
+    /// 3. Everyone else stands on the open floor: on their old spot if it is still free (someone
+    ///    already training stays on the floor rather than hopping onto the playing area), else on
     ///    the best free one (earliest check-ins first, those not checked in after); 社恐 take the
     ///    last free spot.
     public mutating func arrange(_ teammates: [StageMember]) {
@@ -58,12 +63,13 @@ public struct SquadStage: Hashable, Sendable {
         let rest = ordered.filter { next[$0.id] == nil }
         // Old spots are kept first, so nobody is pushed off theirs by someone newer.
         for member in rest {
-            let wantsField = equipmentIdle && isTraining(member)
+            let mayTakeField = equipmentIdle && isTraining(member)
+            let justStarted = mayTakeField && !training.contains(member.id)
             switch placements[member.id] {
-            case .field(let spot)? where wantsField && isFree(spot):
+            case .field(let spot)? where mayTakeField && isFree(spot):
                 taken.append(spot)
                 next[member.id] = .field(spot)
-            case .floor(let spot)? where !wantsField && isFree(spot):
+            case .floor(let spot)? where !justStarted && isFree(spot):
                 taken.append(spot)
                 next[member.id] = .floor(spot)
             default:
@@ -77,11 +83,13 @@ public struct SquadStage: Hashable, Sendable {
                 continue
             }
             let free = layout.floor.filter(isFree)
-            guard let spot = member.keepsToTheBack ? free.last : free.first else { continue }
+            let old: StagePoint? = if case .floor(let spot)? = placements[member.id], isFree(spot) { spot } else { nil }
+            guard let spot = old ?? (member.keepsToTheBack ? free.last : free.first) else { continue }
             taken.append(spot)
             next[member.id] = .floor(spot)
         }
         placements = next
+        training = Set(teammates.filter(isTraining).map(\.id))
     }
 
     /// The equipment slots for `ordered`: everyone keeps the slot they had if their sport still

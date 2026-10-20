@@ -210,24 +210,46 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.position(of: id(1), at: 0) == StagePosition(point: point(132, 422), facing: 1, scale: 0.19))
 }
 
-@Test func cheersGoNearestFirstAndSkipSwimmersAndSleepers() {
+@Test func everyoneAwakeWhoIsNotTrainingCheersAndNobodyAtNight() {
     var stage = SquadStage(layout: .of(.pool))
     let people = [
         member(1, .trained(.sport(.swim)), 1), member(2, .notYet), member(3, .disclaimer, 2),
-        member(4, .trained(.sport(.run)), 3),
+        member(4, .trained(.sport(.run)), 3), member(5, .restDay),
     ]
     stage.arrange(people)
-    // The pool is in use, so the runner trains on the floor: 3 (checked in first) at (103, 626)
-    // and 4 at (287, 626) are equally near me and keep check-in order; 2 is at (149, 556).
-    #expect(stage.cheerers(people, at: .day, seconds: 0) == [id(3), id(4), id(2)])
-    #expect(stage.cheerers(people, at: .night, seconds: 0) == [id(4)])
+    // Swimmers and the runner keep going.
+    #expect(stage.cheerers(people, at: .day) == [id(2), id(3), id(5)])
+    #expect(stage.cheerers(people, at: .night) == [])
 }
 
-@Test func runnersOffScreenDoNotCheerUntilTheyComeBackOn() {
-    var stage = SquadStage(layout: .of(.track))
-    let people = [member(1, .trained(.sport(.run)), 1)]
-    stage.arrange(people)
-    // The first jogger starts just off the left edge, at (-30, 354), and is on screen a second later.
-    #expect(stage.cheerers(people, at: .day, seconds: 0) == [])
-    #expect(stage.cheerers(people, at: .day, seconds: 1) == [id(1)])
+@Test func someoneTrainingOnTheFloorKeepsTheirSpotWhenOthersCheckIn() {
+    var stage = SquadStage(layout: .of(.pool))
+    stage.arrange([member(1, .notYet), member(2, .notYet), member(3, .trained(.sport(.run)), 5)])
+    #expect(stage.placements[id(3)] == .floor(point(103, 626)))
+    // The pool has no playing area, so starting to train or a teammate arriving moves nobody.
+    stage.arrange([
+        member(1, .trained(.sport(.yoga)), 2), member(2, .disclaimer, 3), member(3, .trained(.sport(.run)), 5),
+    ])
+    #expect(stage.placements[id(1)] == .floor(point(287, 626)))
+    #expect(stage.placements[id(2)] == .floor(point(149, 556)))
+    #expect(stage.placements[id(3)] == .floor(point(103, 626)))
+}
+
+@Test func onlyStartingToTrainMovesSomeoneOntoThePlayingArea() {
+    var stage = SquadStage(layout: .of(.climbing))
+    let trainers = (1...5).map { member($0, .trained(.sport(.yoga)), Int64($0)) }
+    stage.arrange(trainers)
+    // Four spots at the foot of the wall; the fifth trains on the floor.
+    #expect(stage.placements[id(5)] == .floor(point(103, 626)))
+
+    // A spot on the playing area frees up; the one already training on the floor stays put.
+    stage.arrange([member(1, .disclaimer, 1)] + trainers.dropFirst())
+    #expect(stage.placements[id(5)] == .floor(point(103, 626)))
+
+    // Someone who starts training now takes it.
+    stage.arrange([member(1, .disclaimer, 1)] + trainers.dropFirst() + [member(6, .trained(nil), 6)])
+    if case .field = stage.placements[id(6)] {
+    } else {
+        Issue.record("expected the playing area, got \(String(describing: stage.placements[id(6)]))")
+    }
 }
