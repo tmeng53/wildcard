@@ -34,5 +34,7 @@ let package = Package(
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .testTarget(name: "RecapDomainTests", dependencies: ["RecapDomain", "Contracts"]),
+        // The String Catalog read as a file; runs on Linux too.
+        .testTarget(name: "RecapUITests", dependencies: ["RecapUI"]),
     ]
 )
