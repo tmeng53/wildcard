@@ -108,6 +108,15 @@ export function readConfig(environment: Record<string, string | undefined>): Con
   if (!result.success) {
     throw new Error(`Bad server environment:\n${z.prettifyError(result.error)}`);
   }
+  // node-postgres lets the URL's own TLS settings replace the CA's, which could turn the check off.
+  const urlTls = ['sslmode', 'sslrootcert', 'sslcert', 'sslkey'].filter((name) =>
+    new URL(result.data.DATABASE_URL).searchParams.has(name),
+  );
+  if (result.data.DATABASE_CA_FILE !== undefined && urlTls.length > 0) {
+    throw new Error(
+      `Bad server environment: DATABASE_URL sets ${urlTls.join(', ')}, which would override DATABASE_CA_FILE`,
+    );
+  }
   const { APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY, APPLE_CLIENT_ID } = result.data;
   const appleSignInKey =
     APPLE_TEAM_ID !== undefined &&

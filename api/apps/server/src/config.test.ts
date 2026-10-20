@@ -69,6 +69,19 @@ describe('readConfig', () => {
     });
   });
 
+  it('refuses TLS settings in the database URL once a CA file is given', () => {
+    expect(() =>
+      readConfig({
+        ...base,
+        DATABASE_URL: `${base.DATABASE_URL}?sslmode=no-verify`,
+        DATABASE_CA_FILE: '/certs/ca.crt',
+      }),
+    ).toThrow('DATABASE_URL sets sslmode, which would override DATABASE_CA_FILE');
+    expect(readConfig({ ...base, DATABASE_CA_FILE: '/certs/ca.crt' }).databaseCaFile).toBe(
+      '/certs/ca.crt',
+    );
+  });
+
   it('refuses part of the key', () => {
     expect(() => readConfig({ ...base, ...apple, APPLE_CLIENT_ID: undefined })).toThrow(
       'set all of APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY, APPLE_CLIENT_ID, or none',

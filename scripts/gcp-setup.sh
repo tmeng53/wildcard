@@ -11,7 +11,7 @@
 # - `wildcard-api`, the service account Cloud Run runs the server as, which may read the secrets;
 # - `github-deploy`, the account the deploy workflow acts as: it may push images, deploy the
 #   service, see which secrets exist and read `database-url` to run migrations;
-# - a Workload Identity pool that lets only this repository's `main` branch act as
+# - a Workload Identity pool that lets only this repository's deploy workflow on `main` act as
 #   `github-deploy`, so GitHub holds no Google key at all.
 # Secret values never pass through here: they are pasted into Secret Manager by hand.
 set -euo pipefail
@@ -64,12 +64,18 @@ gcloud secrets add-iam-policy-binding database-url \
 
 exists gcloud iam workload-identity-pools describe github --location global ||
   gcloud iam workload-identity-pools create github --location global --display-name "GitHub Actions"
-exists gcloud iam workload-identity-pools providers describe wildcard --location global \
-  --workload-identity-pool github ||
+# Only the deploy workflow, run from main in the `beta` environment, may act as the deployer.
+condition="assertion.repository_id == '$repo_id' && assertion.ref == 'refs/heads/main' && assertion.job_workflow_ref == 'tmeng53/wildcard/.github/workflows/deploy.yml@refs/heads/main' && assertion.environment == 'beta'"
+if exists gcloud iam workload-identity-pools providers describe wildcard --location global \
+  --workload-identity-pool github; then
+  gcloud iam workload-identity-pools providers update-oidc wildcard --location global \
+    --workload-identity-pool github --attribute-condition "$condition"
+else
   gcloud iam workload-identity-pools providers create-oidc wildcard --location global \
     --workload-identity-pool github --issuer-uri https://token.actions.githubusercontent.com \
-    --attribute-mapping 'google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref' \
-    --attribute-condition "assertion.repository_id == '$repo_id' && assertion.ref == 'refs/heads/main'"
+    --attribute-mapping 'google.subject=assertion.sub,attribute.repository_id=assertion.repository_id' \
+    --attribute-condition "$condition"
+fi
 gcloud iam service-accounts add-iam-policy-binding "$deployer" --role roles/iam.workloadIdentityUser \
   --member "principalSet://iam.googleapis.com/projects/$number/locations/global/workloadIdentityPools/github/attribute.repository_id/$repo_id" \
   >/dev/null
