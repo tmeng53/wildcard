@@ -34,6 +34,12 @@ udid="$(awk -v name="$sim" '/^-- iOS/ { ios = 1; next } /^-- / { ios = 0 }
 echo "==> booting $sim ($udid)"
 xcrun simctl bootstatus "$udid" -b
 
+# Start from a fresh install: iOS remembers the notification prompt's answer for as long as the
+# app stays installed, and NotificationPromptUITests needs an app that was never asked.
+if xcrun simctl get_app_container "$udid" app.wildcard.ios >/dev/null 2>&1; then
+  xcrun simctl uninstall "$udid" app.wildcard.ios
+fi
+
 # A UI test that fails runs once more: a busy CI simulator sometimes times out a screenshot, a UI
 # query or stopping the app. A test that fails twice fails the run; one that passed only on its
 # second run is listed at the end of the log, so it stays visible.
