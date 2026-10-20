@@ -3049,6 +3049,10 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/version`.
             public var version: Components.Schemas.WeekSummary.VersionPayload
+            /// The language the words are in: today `zh-Hans` or `en`. More may come without an app release.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekSummary/language`.
+            public var language: Swift.String
             /// - Remark: Generated from `#/components/schemas/WeekSummary/squad`.
             public var squad: Swift.String
             /// - Remark: Generated from `#/components/schemas/WeekSummary/week`.
@@ -3091,7 +3095,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/week`.
             public var week: Components.Schemas.WeekSummary.WeekPayload
-            /// Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still move a little after that, from a check-in sent up to 48 hours late or a reaction left later. Before that the week is still being played.
+            /// Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still change after that: a check-in sent up to 48 hours late, a reaction left, changed or taken off later, or a member joining or leaving, since the week is read for the squad as it is now. Before that the week is still being played.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekSummary/final`.
             public var final: Swift.Bool
@@ -3107,14 +3111,14 @@ extension Components {
                 public var stats: [Components.Schemas.WeekStat]
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload`.
                 public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
+                    /// Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case cheer = "cheer"
-                        case highlight = "highlight"
-                        case lol = "lol"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/kind`.
-                    public var kind: Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayloadPayload.KindPayload
+                    public var kind: Swift.String
+                    /// Its name, in the language asked for.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/label`.
+                    public var label: Swift.String
                     /// Reactions of this kind.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/count`.
@@ -3122,24 +3126,32 @@ extension Components {
                     /// Creates a new `ReactionsPayloadPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind:
+                    ///   - kind: Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    ///   - label: Its name, in the language asked for.
                     ///   - count: Reactions of this kind.
                     public init(
-                        kind: Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayloadPayload.KindPayload,
+                        kind: Swift.String,
+                        label: Swift.String,
                         count: Swift.Int
                     ) {
                         self.kind = kind
+                        self.label = label
                         self.count = count
                     }
                     public enum CodingKeys: String, CodingKey {
                         case kind
+                        case label
                         case count
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
                         self.kind = try container.decode(
-                            Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayloadPayload.KindPayload.self,
+                            Swift.String.self,
                             forKey: .kind
+                        )
+                        self.label = try container.decode(
+                            Swift.String.self,
+                            forKey: .label
                         )
                         self.count = try container.decode(
                             Swift.Int.self,
@@ -3147,6 +3159,7 @@ extension Components {
                         )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
                             "kind",
+                            "label",
                             "count"
                         ])
                     }
@@ -3201,14 +3214,14 @@ extension Components {
                 public var stats: [Components.Schemas.WeekStat]
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload`.
                 public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
+                    /// Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case cheer = "cheer"
-                        case highlight = "highlight"
-                        case lol = "lol"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/kind`.
-                    public var kind: Components.Schemas.WeekSummary.MePayload.ReactionsPayloadPayload.KindPayload
+                    public var kind: Swift.String
+                    /// Its name, in the language asked for.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/label`.
+                    public var label: Swift.String
                     /// Reactions of this kind on their check-ins.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/received`.
@@ -3220,28 +3233,36 @@ extension Components {
                     /// Creates a new `ReactionsPayloadPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind:
+                    ///   - kind: Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    ///   - label: Its name, in the language asked for.
                     ///   - received: Reactions of this kind on their check-ins.
                     ///   - given: Reactions of this kind they left on teammates’ check-ins.
                     public init(
-                        kind: Components.Schemas.WeekSummary.MePayload.ReactionsPayloadPayload.KindPayload,
+                        kind: Swift.String,
+                        label: Swift.String,
                         received: Swift.Int,
                         given: Swift.Int
                     ) {
                         self.kind = kind
+                        self.label = label
                         self.received = received
                         self.given = given
                     }
                     public enum CodingKeys: String, CodingKey {
                         case kind
+                        case label
                         case received
                         case given
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
                         self.kind = try container.decode(
-                            Components.Schemas.WeekSummary.MePayload.ReactionsPayloadPayload.KindPayload.self,
+                            Swift.String.self,
                             forKey: .kind
+                        )
+                        self.label = try container.decode(
+                            Swift.String.self,
+                            forKey: .label
                         )
                         self.received = try container.decode(
                             Swift.Int.self,
@@ -3253,6 +3274,7 @@ extension Components {
                         )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
                             "kind",
+                            "label",
                             "received",
                             "given"
                         ])
@@ -3304,14 +3326,16 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
+            ///   - language: The language the words are in: today `zh-Hans` or `en`. More may come without an app release.
             ///   - squad:
             ///   - week:
-            ///   - final: Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still move a little after that, from a check-in sent up to 48 hours late or a reaction left later. Before that the week is still being played.
+            ///   - final: Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still change after that: a check-in sent up to 48 hours late, a reaction left, changed or taken off later, or a member joining or leaving, since the week is read for the squad as it is now. Before that the week is still being played.
             ///   - awards: The awards someone won this week; one nobody won is left out.
             ///   - squadTotals:
             ///   - me:
             public init(
                 version: Components.Schemas.WeekSummary.VersionPayload,
+                language: Swift.String,
                 squad: Swift.String,
                 week: Components.Schemas.WeekSummary.WeekPayload,
                 final: Swift.Bool,
@@ -3320,6 +3344,7 @@ extension Components {
                 me: Components.Schemas.WeekSummary.MePayload
             ) {
                 self.version = version
+                self.language = language
                 self.squad = squad
                 self.week = week
                 self.final = final
@@ -3329,6 +3354,7 @@ extension Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case version
+                case language
                 case squad
                 case week
                 case final
@@ -3341,6 +3367,10 @@ extension Components {
                 self.version = try container.decode(
                     Components.Schemas.WeekSummary.VersionPayload.self,
                     forKey: .version
+                )
+                self.language = try container.decode(
+                    Swift.String.self,
+                    forKey: .language
                 )
                 self.squad = try container.decode(
                     Swift.String.self,
@@ -3368,6 +3398,7 @@ extension Components {
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
+                    "language",
                     "squad",
                     "week",
                     "final",
@@ -3379,18 +3410,18 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/WeekAward`.
         public struct WeekAward: Codable, Hashable, Sendable {
-            /// `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change.
+            /// Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekAward/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case planCompleted = "planCompleted"
-                case crown = "crown"
-                case bestDisclaimer = "bestDisclaimer"
-            }
-            /// `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change.
+            public var kind: Swift.String
+            /// Its name, in the language asked for.
             ///
-            /// - Remark: Generated from `#/components/schemas/WeekAward/kind`.
-            public var kind: Components.Schemas.WeekAward.KindPayload
+            /// - Remark: Generated from `#/components/schemas/WeekAward/title`.
+            public var title: Swift.String
+            /// An SF Symbol name to show with it; fall back to a plain one if it is unknown.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekAward/symbol`.
+            public var symbol: Swift.String
             /// - Remark: Generated from `#/components/schemas/WeekAward/WinnersPayload`.
             public struct WinnersPayloadPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/WeekAward/WinnersPayload/member`.
@@ -3399,6 +3430,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekAward/WinnersPayload/value`.
                 public var value: Swift.Int
+                /// What they won it by, in words, in the language asked for.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekAward/WinnersPayload/text`.
+                public var text: Swift.String
                 /// The check-in that won it, for an award a check-in wins.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekAward/WinnersPayload/checkIn`.
@@ -3408,19 +3443,23 @@ extension Components {
                 /// - Parameters:
                 ///   - member:
                 ///   - value: What they won it by, in the award’s own unit.
+                ///   - text: What they won it by, in words, in the language asked for.
                 ///   - checkIn: The check-in that won it, for an award a check-in wins.
                 public init(
                     member: Swift.String,
                     value: Swift.Int,
+                    text: Swift.String,
                     checkIn: Swift.String? = nil
                 ) {
                     self.member = member
                     self.value = value
+                    self.text = text
                     self.checkIn = checkIn
                 }
                 public enum CodingKeys: String, CodingKey {
                     case member
                     case value
+                    case text
                     case checkIn
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -3433,6 +3472,10 @@ extension Components {
                         Swift.Int.self,
                         forKey: .value
                     )
+                    self.text = try container.decode(
+                        Swift.String.self,
+                        forKey: .text
+                    )
                     self.checkIn = try container.decodeIfPresent(
                         Swift.String.self,
                         forKey: .checkIn
@@ -3440,6 +3483,7 @@ extension Components {
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "member",
                         "value",
+                        "text",
                         "checkIn"
                     ])
                 }
@@ -3455,24 +3499,40 @@ extension Components {
             /// Creates a new `WeekAward`.
             ///
             /// - Parameters:
-            ///   - kind: `planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change.
+            ///   - kind: Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
+            ///   - title: Its name, in the language asked for.
+            ///   - symbol: An SF Symbol name to show with it; fall back to a plain one if it is unknown.
             ///   - winners: Who won it, in the order members joined the squad.
             public init(
-                kind: Components.Schemas.WeekAward.KindPayload,
+                kind: Swift.String,
+                title: Swift.String,
+                symbol: Swift.String,
                 winners: Components.Schemas.WeekAward.WinnersPayload
             ) {
                 self.kind = kind
+                self.title = title
+                self.symbol = symbol
                 self.winners = winners
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
+                case title
+                case symbol
                 case winners
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self.kind = try container.decode(
-                    Components.Schemas.WeekAward.KindPayload.self,
+                    Swift.String.self,
                     forKey: .kind
+                )
+                self.title = try container.decode(
+                    Swift.String.self,
+                    forKey: .title
+                )
+                self.symbol = try container.decode(
+                    Swift.String.self,
+                    forKey: .symbol
                 )
                 self.winners = try container.decode(
                     Components.Schemas.WeekAward.WinnersPayload.self,
@@ -3480,28 +3540,22 @@ extension Components {
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "kind",
+                    "title",
+                    "symbol",
                     "winners"
                 ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/WeekStat`.
         public struct WeekStat: Codable, Hashable, Sendable {
-            /// `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.
+            /// Today `trainedDays`, `plannedDays`, `checkIns`, `disclaimers`, `healthyMeals`, `cheatMeals` and `reactionsReceived`. New kinds come without an app release, so show any kind from its words.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStat/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case trainedDays = "trainedDays"
-                case plannedDays = "plannedDays"
-                case checkIns = "checkIns"
-                case disclaimers = "disclaimers"
-                case healthyMeals = "healthyMeals"
-                case cheatMeals = "cheatMeals"
-                case reactionsReceived = "reactionsReceived"
-            }
-            /// `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.
+            public var kind: Swift.String
+            /// Its name, in the language asked for.
             ///
-            /// - Remark: Generated from `#/components/schemas/WeekStat/kind`.
-            public var kind: Components.Schemas.WeekStat.KindPayload
+            /// - Remark: Generated from `#/components/schemas/WeekStat/label`.
+            public var label: Swift.String
             /// The count.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStat/value`.
@@ -3509,24 +3563,32 @@ extension Components {
             /// Creates a new `WeekStat`.
             ///
             /// - Parameters:
-            ///   - kind: `trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change.
+            ///   - kind: Today `trainedDays`, `plannedDays`, `checkIns`, `disclaimers`, `healthyMeals`, `cheatMeals` and `reactionsReceived`. New kinds come without an app release, so show any kind from its words.
+            ///   - label: Its name, in the language asked for.
             ///   - value: The count.
             public init(
-                kind: Components.Schemas.WeekStat.KindPayload,
+                kind: Swift.String,
+                label: Swift.String,
                 value: Swift.Int
             ) {
                 self.kind = kind
+                self.label = label
                 self.value = value
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
+                case label
                 case value
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self.kind = try container.decode(
-                    Components.Schemas.WeekStat.KindPayload.self,
+                    Swift.String.self,
                     forKey: .kind
+                )
+                self.label = try container.decode(
+                    Swift.String.self,
+                    forKey: .label
                 )
                 self.value = try container.decode(
                     Swift.Int.self,
@@ -3534,6 +3596,7 @@ extension Components {
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "kind",
+                    "label",
                     "value"
                 ])
             }

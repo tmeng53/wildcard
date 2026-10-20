@@ -8,6 +8,7 @@ import type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
+  SquadMembership,
   WeeklyPlanStore,
 } from '../ports.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
@@ -63,6 +64,7 @@ export interface CheckIns {
 
 export function createCheckIns(deps: {
   readonly store: CheckInStore;
+  readonly membership: SquadMembership;
   readonly reactions: ReactionStore;
   readonly photos: PhotoFiles;
   readonly plans: WeeklyPlanStore;

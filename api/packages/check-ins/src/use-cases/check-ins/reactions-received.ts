@@ -1,6 +1,6 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
 import { sharedSquads, type ReactionKind } from '../../domain/reaction.js';
-import type { CheckInStore, ReactionStore } from '../../ports.js';
+import type { ReactionStore, SquadMembership } from '../../ports.js';
 
 /**
  * Who reacted to the member's check-ins in `[since, until)`, by kind: each teammate once per
@@ -8,7 +8,10 @@ import type { CheckInStore, ReactionStore } from '../../ports.js';
  * member still share a squad the check-in went to, as in the reactions the member sees.
  */
 export async function reactionsReceived(
-  { store, reactions }: { readonly store: CheckInStore; readonly reactions: ReactionStore },
+  {
+    membership,
+    reactions,
+  }: { readonly membership: SquadMembership; readonly reactions: ReactionStore },
   {
     member,
     since,
@@ -17,12 +20,14 @@ export async function reactionsReceived(
 ): Promise<ReadonlyMap<ReactionKind, ReadonlySet<MemberId>>> {
   const [received, squads] = await Promise.all([
     reactions.receivedBy({ member, since, until }),
-    store.squadsOf(member),
+    membership.squadIdsOf(member),
   ]);
   if (received.length === 0) return new Map();
   const membersOf = new Map<SquadId, ReadonlySet<MemberId>>(
     await Promise.all(
-      [...squads].map(async (squad) => [squad, new Set(await store.membersOf(squad))] as const),
+      [...squads].map(
+        async (squad) => [squad, new Set(await membership.membersOf(squad))] as const,
+      ),
     ),
   );
   const byKind = new Map<ReactionKind, Set<MemberId>>();

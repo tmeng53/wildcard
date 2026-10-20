@@ -48,6 +48,10 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     photos,
     checkIns: createCheckIns({
       store: createPostgresCheckInStore(db),
+      membership: createSquads({
+        store: createPostgresSquadStore(db),
+        inviteCodes: randomInviteCodes,
+      }),
       reactions: createPostgresReactionStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
@@ -127,17 +131,33 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
   // One photo on a check-in, one uploaded and never used.
   const [onCheckIn] = [await upload(), await upload()];
   const now = new Date(Date.now() - 60_000);
-  const checkIn = (author: { token: string }, training: Record<string, unknown>) =>
+  // Each author's own day: mine in Toronto, which lasts until 3am there; the friend has no time
+  // zone yet, so theirs is the UTC day.
+  const torontoDay = new Date(now.getTime() - 3 * 3_600_000).toLocaleDateString('en-CA', {
+    timeZone: 'America/Toronto',
+  });
+  const checkIn = (author: { token: string; day: string }, training: Record<string, unknown>) =>
     call('PUT', `/check-ins/${randomUUID()}`, author.token, {
       version: 1,
-      day: now.toISOString().slice(0, 10),
+      day: author.day,
       createdAt: now.toISOString(),
       audience: [squad],
       kind: 'trained',
       training,
     });
-  expect((await checkIn(me, { sport: 'run', photos: [{ path: onCheckIn }] })).status).toBe(201);
-  expect((await checkIn(friend, { sport: 'swim' })).status).toBe(201);
+  const myCheckIn = await checkIn(
+    { ...me, day: torontoDay },
+    {
+      sport: 'run',
+      photos: [{ path: onCheckIn }],
+    },
+  );
+  expect(myCheckIn.status).toBe(201);
+  const friendsCheckIn = await checkIn(
+    { ...friend, day: now.toISOString().slice(0, 10) },
+    { sport: 'swim' },
+  );
+  expect(friendsCheckIn.status).toBe(201);
   const nextMonday = new Date(now.getTime() + ((8 - now.getUTCDay()) % 7 || 7) * 86_400_000);
   const plan = { version: 1, days: Array.from({ length: 7 }, () => ({ kind: 'rest' })) };
   const weekStart = nextMonday.toISOString().slice(0, 10);

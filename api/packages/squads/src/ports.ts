@@ -25,6 +25,12 @@ export interface SquadStore {
   findByInviteCode(code: InviteCode): Promise<Squad | undefined>;
   /** The squads `member` is in now, the earliest joined first. */
   squadsOf(member: MemberId): Promise<Squad[]>;
+  /** The ids of the squads `member` is in now. */
+  squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
+  /** The members in `squad` now, in the order they joined. */
+  membersOf(squad: SquadId): Promise<MemberId[]>;
+  /** Everyone in any of these squads now, each once. */
+  membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**
    * Saves a new squad with its creator as its first member, unless the id or invite code is
    * taken or the creator is already in `SQUADS_PER_MEMBER` squads.

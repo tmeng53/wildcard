@@ -79,8 +79,14 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
 if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
+const squads = createSquads({
+  store: createPostgresSquadStore(db),
+  inviteCodes: randomInviteCodes,
+});
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
+  // Who is in which squad is the squads module's to keep: check-ins ask it.
+  membership: squads,
   reactions: createPostgresReactionStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
@@ -105,7 +111,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
-  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  squads,
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes

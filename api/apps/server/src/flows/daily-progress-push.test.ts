@@ -37,17 +37,18 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const members = createMembers({ store: createPostgresProfileStore(db) });
+const squads = createSquads({
+  store: createPostgresSquadStore(db),
+  inviteCodes: randomInviteCodes,
+});
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
+  membership: squads,
   reactions: createPostgresReactionStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
-});
-const squads = createSquads({
-  store: createPostgresSquadStore(db),
-  inviteCodes: randomInviteCodes,
 });
 
 /** What each phone was sent, by token. */

@@ -1510,6 +1510,11 @@
               1
             ]
           },
+          "language": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The language the words are in: today `zh-Hans` or `en`. More may come without an app release."
+          },
           "squad": {
             "type": "string",
             "format": "uuid"
@@ -1534,7 +1539,7 @@
           },
           "final": {
             "type": "boolean",
-            "description": "Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still move a little after that, from a check-in sent up to 48 hours late or a reaction left later. Before that the week is still being played."
+            "description": "Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still change after that: a check-in sent up to 48 hours late, a reaction left, changed or taken off later, or a member joining or leaving, since the week is read for the squad as it is now. Before that the week is still being played."
           },
           "awards": {
             "type": "array",
@@ -1560,11 +1565,13 @@
                   "properties": {
                     "kind": {
                       "type": "string",
-                      "enum": [
-                        "cheer",
-                        "highlight",
-                        "lol"
-                      ]
+                      "minLength": 1,
+                      "description": "Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words."
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Its name, in the language asked for."
                     },
                     "count": {
                       "type": "integer",
@@ -1574,6 +1581,7 @@
                   },
                   "required": [
                     "kind",
+                    "label",
                     "count"
                   ],
                   "additionalProperties": false
@@ -1604,11 +1612,13 @@
                   "properties": {
                     "kind": {
                       "type": "string",
-                      "enum": [
-                        "cheer",
-                        "highlight",
-                        "lol"
-                      ]
+                      "minLength": 1,
+                      "description": "Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words."
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Its name, in the language asked for."
                     },
                     "received": {
                       "type": "integer",
@@ -1623,6 +1633,7 @@
                   },
                   "required": [
                     "kind",
+                    "label",
                     "received",
                     "given"
                   ],
@@ -1640,6 +1651,7 @@
         },
         "required": [
           "version",
+          "language",
           "squad",
           "week",
           "final",
@@ -1654,12 +1666,19 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "planCompleted",
-              "crown",
-              "bestDisclaimer"
-            ],
-            "description": "`planCompleted` (领奖台): everyone who trained at least as many days as they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions. A new kind is a contract change."
+            "minLength": 1,
+            "description": "Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Its name, in the language asked for."
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An SF Symbol name to show with it; fall back to a plain one if it is unknown.",
+            "example": "crown.fill"
           },
           "winners": {
             "type": "array",
@@ -1675,6 +1694,11 @@
                   "minimum": 0,
                   "description": "What they won it by, in the award’s own unit."
                 },
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "What they won it by, in words, in the language asked for."
+                },
                 "checkIn": {
                   "type": "string",
                   "format": "uuid",
@@ -1683,7 +1707,8 @@
               },
               "required": [
                 "member",
-                "value"
+                "value",
+                "text"
               ],
               "additionalProperties": false
             },
@@ -1693,6 +1718,8 @@
         },
         "required": [
           "kind",
+          "title",
+          "symbol",
           "winners"
         ],
         "additionalProperties": false
@@ -1702,16 +1729,13 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "trainedDays",
-              "plannedDays",
-              "checkIns",
-              "disclaimers",
-              "healthyMeals",
-              "cheatMeals",
-              "reactionsReceived"
-            ],
-            "description": "`trainedDays`: days with a 练了, several on one day counting once; `plannedDays`: training days in the weekly plan; `checkIns`: check-ins of every kind; `disclaimers`, `healthyMeals`, `cheatMeals`: check-ins of that kind; `reactionsReceived`: teammates’ reactions on them. A new kind is a contract change."
+            "minLength": 1,
+            "description": "Today `trainedDays`, `plannedDays`, `checkIns`, `disclaimers`, `healthyMeals`, `cheatMeals` and `reactionsReceived`. New kinds come without an app release, so show any kind from its words."
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Its name, in the language asked for."
           },
           "value": {
             "type": "integer",
@@ -1721,6 +1745,7 @@
         },
         "required": [
           "kind",
+          "label",
           "value"
         ],
         "additionalProperties": false
@@ -3608,7 +3633,7 @@
       "get": {
         "operationId": "getSquadWeekSummary",
         "summary": "A squad’s week: its awards and counts (周日战报)",
-        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad.",
+        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
         "security": [
           {
             "bearer": []

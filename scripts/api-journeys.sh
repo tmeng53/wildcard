@@ -575,7 +575,9 @@ if want account; then
   path="$(jq -r .path <<<"$body")"
   curl -sf -X PUT "$(jq -r .uploadUrl <<<"$body")" -H 'content-type: image/jpeg' --data-binary 'not really a jpeg' >/dev/null ||
     fail "upload to storage failed"
-  call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
+  # The leaver's own day in Toronto when the check-in was made, which lasts until 3am there.
+  toronto_day="$(node -p "new Date(Date.parse('$now') - 3 * 3_600_000).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' })")"
+  call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$toronto_day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
   expect 201
   echo "account: leaver made a squad with mate and posted a meal with a photo"
 
