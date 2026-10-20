@@ -107,3 +107,21 @@ import Testing
     #expect(await first.calls == [.register(phone), .remove(token)])
     #expect(await second.calls == [.register(phone)])
 }
+
+@Test func signingOutWaitsForARegistrationOnItsWay() async throws {
+    let registration = PushRegistration(system: FakeSystem(.allowed), environment: .sandbox)
+    let registry = SlowRegistry()
+    try await registration.signedIn(registry)
+
+    let registering = Task { try await registration.received(token) }
+    while await registry.calls.isEmpty { await Task.yield() }
+    let signingOut = Task { try await registration.signingOut() }
+    // Give the sign-out every chance to overtake the registration.
+    for _ in 0..<100 { await Task.yield() }
+    #expect(await registry.calls == [.register(phone)])
+
+    await registry.release()
+    try await registering.value
+    try await signingOut.value
+    #expect(await registry.calls == [.register(phone), .remove(token)])
+}

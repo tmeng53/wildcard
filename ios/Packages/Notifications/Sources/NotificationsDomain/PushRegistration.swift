@@ -10,6 +10,9 @@ public actor PushRegistration {
     private let environment: PushEnvironment
     private var token: DeviceToken?
     private var registry: (any DeviceRegistry)?
+    /// The last call to the registry. Each waits for the one before, so a sign-out's removal
+    /// can't overtake a registration still on its way and leave the phone registered.
+    private var lastCall: Task<Result<Void, NotificationsError>, Never>?
 
     public init(system: any PushSystem, environment: PushEnvironment) {
         self.system = system
@@ -52,12 +55,32 @@ public actor PushRegistration {
         guard let registry else { return }
         self.registry = nil
         if let token {
-            try await registry.remove(token)
+            try await inOrder { () async throws(NotificationsError) in try await registry.remove(token) }
         }
     }
 
     private func registerIfSignedIn() async throws(NotificationsError) {
         guard let registry, let token else { return }
-        try await registry.register(PushDevice(token: token, environment: environment))
+        let device = PushDevice(token: token, environment: environment)
+        try await inOrder { () async throws(NotificationsError) in try await registry.register(device) }
+    }
+
+    /// Runs `call` once every earlier call to the registry has finished. The queue is taken
+    /// before the first suspension, so calls reach the API in the order they were made.
+    private func inOrder(
+        _ call: @escaping @Sendable () async throws(NotificationsError) -> Void
+    ) async throws(NotificationsError) {
+        let previous = lastCall
+        let current = Task { () async -> Result<Void, NotificationsError> in
+            _ = await previous?.value
+            do throws(NotificationsError) {
+                try await call()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
+        }
+        lastCall = current
+        try await current.value.get()
     }
 }

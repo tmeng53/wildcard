@@ -52,3 +52,25 @@ actor FakeRegistry: DeviceRegistry {
 
 let token = DeviceToken([0x0a, 0xff, 0x10] + Array(repeating: 0x01, count: 29))
 let phone = PushDevice(token: token, environment: .sandbox)
+
+/// The API's list of phones, where a registration stays on its way until `release()`.
+actor SlowRegistry: DeviceRegistry {
+    private(set) var calls: [FakeRegistry.Call] = []
+    private var waiting: CheckedContinuation<Void, Never>?
+    private var released = false
+
+    func release() {
+        released = true
+        waiting?.resume()
+        waiting = nil
+    }
+
+    func register(_ device: PushDevice) async throws(NotificationsError) {
+        calls.append(.register(device))
+        if !released { await withCheckedContinuation { waiting = $0 } }
+    }
+
+    func remove(_ token: DeviceToken) async throws(NotificationsError) {
+        calls.append(.remove(token))
+    }
+}

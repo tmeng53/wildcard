@@ -43,11 +43,14 @@ private func newToken() -> DeviceToken {
 @Test func pushRegistrationSendsTheTokenThroughTheAPI() async throws {
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
+    let registry = Recorded(APIDeviceRegistry(api: member.api))
     let registration = PushRegistration(system: AllowedPush(), environment: .sandbox)
+    let token = newToken()
 
-    try await registration.received(newToken())
-    try await registration.signedIn(APIDeviceRegistry(api: member.api))
+    try await registration.received(token)
+    try await registration.signedIn(registry)
     try await registration.signingOut()
+    #expect(await registry.calls == ["register \(token) sandbox", "remove \(token)"])
 }
 
 @Test func aSessionThatIsOverIsSignedOutForPushRegistration() async throws {
@@ -67,6 +70,24 @@ private func newToken() -> DeviceToken {
     }
     await #expect(throws: NotificationsError.unavailable) {
         try await APIDeviceRegistry(api: api).register(PushDevice(token: newToken(), environment: .sandbox))
+    }
+}
+
+/// A registry that records each call the API took.
+private actor Recorded: DeviceRegistry {
+    private let wrapped: APIDeviceRegistry
+    private(set) var calls: [String] = []
+
+    init(_ wrapped: APIDeviceRegistry) { self.wrapped = wrapped }
+
+    func register(_ device: PushDevice) async throws(NotificationsError) {
+        try await wrapped.register(device)
+        calls.append("register \(device.token) \(device.environment.rawValue)")
+    }
+
+    func remove(_ token: DeviceToken) async throws(NotificationsError) {
+        try await wrapped.remove(token)
+        calls.append("remove \(token)")
     }
 }
 

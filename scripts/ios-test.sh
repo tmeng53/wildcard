@@ -23,17 +23,29 @@ else
   echo "$want isn't available; using $sim"
 fi
 
+# That simulator on the newest runtime, by id, so the boot below and the tests use the same one.
+udid="$(awk -v name="$sim" '/^-- iOS/ { ios = 1; next } /^-- / { ios = 0 }
+  ios && index($0, "    " name " (") == 1 { line = $0 } END { print line }' <<<"$devices" |
+  sed -E 's/^.*\(([0-9A-Fa-f-]{36})\).*$/\1/')"
+[ -n "$udid" ] || { echo "no id for $sim" >&2; exit 1; }
+
+# Boot it and wait until it has finished booting: a simulator still booting when the tests start
+# answers screenshots and UI queries slowly enough to time them out.
+echo "==> booting $sim ($udid)"
+xcrun simctl bootstatus "$udid" -b
+
 # Start from a fresh install: iOS remembers the notification prompt's answer for as long as the
 # app stays installed, and NotificationPromptUITests needs an app that was never asked.
-xcrun simctl boot "$sim" 2>/dev/null || true
-xcrun simctl uninstall "$sim" app.wildcard.ios 2>/dev/null || true
+if xcrun simctl get_app_container "$udid" app.wildcard.ios >/dev/null 2>&1; then
+  xcrun simctl uninstall "$udid" app.wildcard.ios
+fi
 
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
   -project ios/Wildcard.xcodeproj \
   -scheme Wildcard \
-  -destination "platform=iOS Simulator,OS=latest,name=$sim" \
+  -destination "id=$udid" \
   -derivedDataPath "$out/DerivedData" \
   -resultBundlePath "$out/Wildcard.xcresult" \
   CODE_SIGNING_ALLOWED=NO \
