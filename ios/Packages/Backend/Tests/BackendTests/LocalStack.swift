@@ -70,8 +70,13 @@ struct LocalStack {
     }
 
     /// A squad of these members: the first creates it through the API and the rest accept its
-    /// invite, as `scripts/api-journeys.sh` does. The client has no squad calls yet.
+    /// invite, each agreeing to the AI consent copy first, as `scripts/api-journeys.sh` does. The
+    /// client has no squad or consent calls yet.
     func squad(of creator: SignedInMember, _ others: SignedInMember...) async throws -> SquadID {
+        for member in [creator] + others {
+            let _: AgreedToAI = try await send(
+                "PUT", "me/ai-consent", as: member, body: #"{"version":1,"copyVersion":1}"#, expecting: 200)
+        }
         let squad = SquadID(UUID())
         let created: CreatedSquad = try await send(
             "PUT", "squads/\(squad)", as: creator, body: #"{"version":1,"name":"backend tests"}"#)
@@ -83,7 +88,7 @@ struct LocalStack {
     }
 
     private func send<Answer: Decodable>(
-        _ method: String, _ path: String, as member: SignedInMember, body: String?
+        _ method: String, _ path: String, as member: SignedInMember, body: String?, expecting status: Int = 201
     ) async throws -> Answer {
         var request = URLRequest(url: apiURL.appending(path: path))
         request.httpMethod = method
@@ -94,7 +99,7 @@ struct LocalStack {
         }
         let (data, response) = try await URLSession.shared.data(for: request)
         try #require(
-            (response as? HTTPURLResponse)?.statusCode == 201,
+            (response as? HTTPURLResponse)?.statusCode == status,
             "\(method) \(path): \(String(bytes: data, encoding: .utf8) ?? "")")
         return try JSONDecoder().decode(Answer.self, from: data)
     }
@@ -102,6 +107,7 @@ struct LocalStack {
 
 private struct CreatedSquad: Decodable { let inviteCode: String }
 private struct JoinedSquad: Decodable {}
+private struct AgreedToAI: Decodable {}
 
 /// The session kept in memory, where the app keeps it in the Keychain.
 actor MemorySessionStore: SessionStore {
