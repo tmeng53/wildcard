@@ -25,7 +25,7 @@ A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), an
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 accent stroke and a check |
 | `InputField`, `SearchField` | Text entry |
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
-| `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The squad's week, today's rings, Barlow numbers, the 「+1」 pop |
+| `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `.card(on:)`, `SectionLabel`, `ListRow` | Cards (grey on a page, white on the scene), group labels, list rows |
 | `SpeechBubble`, `SceneFloor`, `CharacterStage` | What the character says; the scene's floor; the character's stage in the editor |
 

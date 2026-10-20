@@ -246,8 +246,22 @@ struct StatusSection: View {
     @State private var mine = RingStatus.open
 
     @State private var plusOnes = 0
+    @State private var page = SquadCardPage.squad
 
     private let squad: [RingStatus] = [.done, .done, .restDay, .open, .open]
+
+    private var squadWeek: SquadWeek {
+        SquadWeek(
+            name: String(localized: "周三不练腿俱乐部", bundle: .module), done: mine == .done ? 15 : 14, goal: 22,
+            members: members)
+    }
+
+    private var myWeek: MyWeek {
+        MyWeek(
+            summary: String(localized: "游泳 1 · 跑步 1", bundle: .module), done: mine == .done ? 3 : 2, planned: 5,
+            days: [.trained, .restDay, .trained, .excused, mine == .done ? .trained : .open, .open, .restDay],
+            today: 4, healthyMeals: 3, cheatMeals: 1, lifetimeTrained: mine == .done ? 48 : 47)
+    }
 
     private var members: [SquadMember] {
         [SquadMember(id: "me", status: mine, accessibilityIdentifier: "styleguide.ring.mine")]
@@ -258,18 +272,14 @@ struct StatusSection: View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 7, title: Text("卡片、状态圈、进度", bundle: .module))
             GuideGroup(Text("场景上：实心白卡片", bundle: .module)) {
-                SquadCard(
-                    squadName: String(localized: "周三不练腿俱乐部", bundle: .module), done: mine == .done ? 15 : 14,
-                    goal: 22, members: members, myDone: mine == .done ? 3 : 2, myGoal: 5
-                ) { member in
+                SquadCard(squad: squadWeek, mine: myWeek, page: $page) { member in
                     GuideFace(index: members.firstIndex(of: member) ?? 0)
                 }
                 .overlay(alignment: .topLeading) {
                     PlusOne(trigger: plusOnes)
-                        .offset(x: Space.s, y: -Space.xxl)
+                        .offset(x: Space.xl, y: -Space.xxl)
                 }
-                .accessibilityIdentifier("styleguide.card")
-                .padding(Space.cardPadding)
+                .padding(.vertical, Space.cardPadding)
                 .background(
                     Color(role: .bgScene, in: theme),
                     in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))

@@ -93,6 +93,8 @@ public enum TypeRamp {
     public static let scoreCard = TypeStyle(face: .scoreboard(.extraBold), size: 32, anchor: .title)
     /// A number in a row.
     public static let scoreInline = TypeStyle(face: .scoreboard(.extraBold), size: 22, anchor: .title3)
+    /// A count beside its label in a row of counts (健康餐 3): 18.
+    public static let scoreSmall = TypeStyle(face: .scoreboard(.extraBold), size: 18, anchor: .body)
 
     /// The denominator after a number (`/22`): a weight lighter and a little over half the size.
     public static func denominator(of number: TypeStyle) -> TypeStyle {
@@ -105,6 +107,6 @@ public enum TypeRamp {
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
         ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
-        ("scoreInline", scoreInline),
+        ("scoreInline", scoreInline), ("scoreSmall", scoreSmall),
     ]
 }

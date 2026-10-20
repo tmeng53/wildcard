@@ -79,6 +79,11 @@ final class StyleGuideUITests: XCTestCase {
         // Let the ring draw and the avatar pop before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "17-status-checked-in")
+        let myWeek = app.buttons["squadcard.page.mine"]
+        myWeek.tap()
+        waitFor(myWeek, "isSelected == true", "the squad card didn't turn to my week")
+        Thread.sleep(forTimeInterval: 0.8)
+        keepScreenshot(named: "17-status-my-week")
     }
 
     /// The list, the character's stage and the motion springs.
