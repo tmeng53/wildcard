@@ -110,34 +110,32 @@ describe('mentionsSelfHarm', () => {
 });
 
 describe('promptFor', () => {
-  it('names the style in Chinese and lists the memes without examples', () => {
+  it('names the style in Chinese and gives the meme’s phrase, meaning and background only', () => {
     expect(
       promptFor({
         reason: DraftReason.parse('oncall 到凌晨三点'),
         style: 'heroic',
-        memes: [
-          {
-            phrase: '班味',
-            meaning: '上班上出来的疲惫感',
-            background: '网友自嘲。',
-            styles: ['funny', 'heroic'],
-          },
-        ],
+        meme: {
+          phrase: '班味',
+          meaning: '上班上出来的疲惫感',
+          background: '网友自嘲。',
+          styles: ['funny', 'heroic'],
+        },
       }),
     ).toBe(
       [
         '原因：oncall 到凌晨三点',
         '风格：中二',
-        '本周梗：',
-        '- 梗：班味',
+        '本周梗：班味',
         '  意思：上班上出来的疲惫感',
         '  背景：网友自嘲。',
-        '  适合的风格：搞笑、中二',
       ].join('\n'),
     );
   });
 
-  it('leaves the meme line out when there are none', () => {
-    expect(promptFor({ reason, style: 'funny', memes: [] })).toBe('原因：早上没起来\n风格：搞笑');
+  it('leaves the meme line out when there is none', () => {
+    expect(promptFor({ reason, style: 'funny', meme: undefined })).toBe(
+      '原因：早上没起来\n风格：搞笑',
+    );
   });
 });
