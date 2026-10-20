@@ -93,7 +93,8 @@ if [ "${PRINT_PREVIEWS:-}" = "1" ]; then
     jpg="$out/preview.jpg"
     sips -Z 700 -s format jpeg -s formatOptions 50 "$png" --out "$jpg" >/dev/null
     echo "----- preview begin: $(basename "$png" .png).jpg -----"
-    base64 -b 76 -i "$jpg"
+    # Long lines: log readers that keep only the last few thousand lines still get every preview.
+    base64 -b 4000 -i "$jpg"
     echo "----- preview end -----"
   done
 fi
