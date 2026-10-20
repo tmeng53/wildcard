@@ -63,7 +63,7 @@ struct ComposeView: View {
 
     /// The board's last sport until the member picks one; detection from the cover comes later.
     private var currentActivity: Activity {
-        activity ?? model.board?.lastActivity ?? .sport(.run)
+        activity ?? model.suggestedActivity
     }
 
     private var bar: some View {

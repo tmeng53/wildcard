@@ -4,6 +4,7 @@ import AvatarUI
 import CheckInDomain
 import Contracts
 import DesignSystem
+import DesignSystemUI
 import Foundation
 import Observation
 import SwiftUI
@@ -46,6 +47,10 @@ public final class TodayModel {
     }
 
     var isBurstOpen = false
+    /// Everyone else on the scene.
+    let cast = SquadCast()
+    /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
+    private(set) var celebrations = 0
     private(set) var step = Step.scene
     /// The photos picked for the open compose step, the cover first.
     var photos: [PreparedPhoto] = []
@@ -61,8 +66,14 @@ public final class TodayModel {
     private let store: TodayStore
     private let writer: any DisclaimerWriter
 
-    public init(store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library) {
+    private let now: () -> Date
+
+    public init(
+        store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
+        now: @escaping () -> Date = Date.init
+    ) {
         self.store = store
+        self.now = now
         self.writer = writer
         self.photoSource = photoSource
         player = try? CharacterPlayer(
@@ -76,18 +87,54 @@ public final class TodayModel {
     /// The lifter's species, whose moves play on top of the persona's.
     private static let species = "person"
 
+    /// How long after posting a 练了 the week's count flips up: after the ring closes and the
+    /// squad starts cheering (the approved check-in moment's 1.7 seconds).
+    private static let scoreDelay = 1.7
+
     /// Each squad picks its scene once squad settings land; 跑道 until then.
     private static let scene = SceneTheme.track
 
-    /// The card's numbers, from the store's home with the member's own posts counted.
-    var board: TodayBoard? {
-        guard let home = store.home, let day = store.day else { return nil }
-        return TodayBoard(
-            squadName: home.squad.name, scene: Self.scene, weekNumber: day.weekOfYear,
-            progress: SquadWeekProgress(
-                done: home.today.squadWeek.trainedDays, goal: home.today.squadWeek.plannedDays),
-            trainedToday: home.today.today.trained, myStatus: store.myStatus,
-            lastActivity: store.suggestedActivity ?? .sport(.run))
+    /// The squad's home, with the member's own posts counted.
+    var home: Home? { store.home }
+
+    /// The squad's scene.
+    var scene: SceneTheme { Self.scene }
+
+    /// The sport a new 练了 starts with, until it is picked from the cover photo.
+    var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
+
+    /// Day or night on the scene, on the member's own clock.
+    var phase: DayPhase {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = store.home?.timeZone ?? .current
+        return DayPhase(hour: calendar.component(.hour, from: now()))
+    }
+
+    /// The ring under my feet.
+    var myRing: RingStatus {
+        StageStatus(training: store.myStatus, activity: nil, plannedRest: home?.mine?.plannedRest ?? false).ring
+    }
+
+    /// The week the card shows. Right after my 练了 it keeps the count from before for a moment,
+    /// so the number flips up once my ring has closed.
+    var cardWeek: (squad: WeekCount, mine: WeekCount)? {
+        if let heldWeek { return heldWeek }
+        guard let today = home?.today else { return nil }
+        return (today.squadWeek, today.myWeek.week)
+    }
+
+    private var heldWeek: (squad: WeekCount, mine: WeekCount)?
+
+    /// The character whose head the card shows for a member (`MemberID`'s description).
+    func head(of member: String) -> CharacterPlayer? {
+        guard member != home?.member.description else { return player }
+        return cast.mates.first { $0.id.description == member }?.player
+    }
+
+    /// Puts everyone where they belong after the home changed.
+    func placeSquad() {
+        guard let home else { return }
+        cast.update(home: home, scene: scene, phase: phase)
     }
 
     var unavailable: Set<CheckInKind> {
@@ -100,6 +147,7 @@ public final class TodayModel {
 
     func load() async {
         await store.load()
+        placeSquad()
     }
 
     func pick(_ kind: CheckInKind) {
@@ -148,19 +196,21 @@ public final class TodayModel {
         isSending = true
         sendFailed = false
         defer { isSending = false }
+        let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
             try await store.post(draft)
+            placeSquad()
             step = .scene
             photos = []
-            land(draft)
+            land(draft, weekBefore: before)
         } catch {
             sendFailed = true
         }
     }
 
     /// Stays on the scene: the character celebrates, the line and cover appear beside it.
-    private func land(_ draft: CheckInDraft) {
+    private func land(_ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?) {
         let line: String?
         let cover: PreparedPhoto?
         switch draft {
@@ -178,6 +228,18 @@ public final class TodayModel {
             let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)
         {
             try? player?.play(cheer)
+        }
+        guard draft.kind == .trained else { return }
+        // The big moment: my ring draws and closes, the squad turns and cheers, and only then
+        // does the week's count flip up.
+        celebrations += 1
+        heldWeek = weekBefore
+        let phase = phase
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Motion.ringFill))
+            cast.cheerMe(at: phase)
+            try? await Task.sleep(for: .seconds(Self.scoreDelay - Motion.ringFill))
+            heldWeek = nil
         }
     }
 }
