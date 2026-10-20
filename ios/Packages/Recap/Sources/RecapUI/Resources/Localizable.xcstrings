@@ -181,12 +181,12 @@
         }
       }
     },
-    "叫主办方充钱去了": {
+    "已催主办方充值 token": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Told the organizers to top up"
+            "value": "Organizers nudged to top up tokens"
           }
         }
       }

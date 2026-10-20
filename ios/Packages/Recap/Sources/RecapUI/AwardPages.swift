@@ -202,7 +202,7 @@ struct PendingPage: View {
                         .typeStyle(TypeRamp.title)
                         .foregroundStyle(Color(role: .fgOnScene, in: theme))
                     if nudged {
-                        Text("叫主办方充钱去了", bundle: .module)
+                        Text("已催主办方充值 token", bundle: .module)
                             .typeStyle(TypeRamp.calloutEmphasis)
                             .foregroundStyle(Color(role: .fgOnScene, in: theme))
                             .transition(.opacity)
