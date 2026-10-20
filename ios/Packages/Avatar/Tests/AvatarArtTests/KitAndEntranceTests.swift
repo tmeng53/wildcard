@@ -130,6 +130,13 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let (root, shadow) = (try figure.index("root"), try figure.index("shadow"))
     let start = figure.pose(entrance, at: 0)
     #expect(start.parts[root].x > figure.width * 3)
+    // Wholly off a stage that ends left of `entranceStartsRightOf`, so it runs in rather than pops in.
+    for (part, placement) in zip(figure.parts, figure.layout(start)) where placement.opacity > 0 && part.id != "shadow"
+    {
+        for point in part.art.flatMap(\.shapes).flatMap({ outline($0.path) }).map(placement.transform.apply(to:)) {
+            #expect(point.x > PlaceholderCharacter.entranceStartsRightOf, "\(part.id)")
+        }
+    }
     var highest = 0.0
     for frame in 0...Int(entrance.clip.duration * 100) {
         let pose = figure.pose(entrance, at: Double(frame) / 100)

@@ -65,7 +65,10 @@ extension CharacterPreviewTests {
         let landed = entrance.clip.duration
         var welcoming = entering
         welcoming.play(try figure.bind(PlaceholderCharacter.clip("welcome", persona: .showoff)), at: landed)
-        let stage = CGRect(x: -60, y: -380, width: 1280, height: 710)
+        // The sign-up design's stage: the phone's width at the design's 0.28 scale, the landing spot
+        // in the middle, and room above for the jump. Its right edge is left of where the run starts.
+        let stage = CGRect(x: -576, y: -380, width: 1392, height: 710)
+        #expect(stage.maxX < PlaceholderCharacter.entranceStartsRightOf)
         try writeGIF(
             frames(seconds: 5.5, fps: 20) { frame in
                 let time = max(0, frame - 0.3)

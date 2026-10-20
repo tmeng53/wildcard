@@ -97,4 +97,7 @@ import Testing
     #expect(slow.loops)
     #expect(throws: AvatarError.invalidTempo(clip: "wave")) { try wave.atTempo(0) }
     #expect(throws: AvatarError.invalidTempo(clip: "wave")) { try wave.atTempo(.infinity) }
+    // Its accents keep in step: a yawn on top plays half as fast too.
+    let yawn = try clip("yawn", duration: 3, loops: true, [track("arm", .rotation, [(0, 0), (3, 0)])])
+    #expect(try wave.accented(by: yawn, tempo: 0.8).atTempo(0.5).accents.first?.tempo == 0.4)
 }
