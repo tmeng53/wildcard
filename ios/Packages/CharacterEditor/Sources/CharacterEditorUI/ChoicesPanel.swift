@@ -19,7 +19,7 @@ struct ChoicesPanel: View {
         case .look:
             VStack(alignment: .leading, spacing: 0) {
                 SwatchRow(model: model, slot: "body")
-                    .padding(.horizontal, Space.gutter)
+                    .padding(.horizontal, Space.pageMargin)
                 scroll {
                     ForEach(model.draft.catalog.species) { species in
                         ChoiceSection(label: EditorNames.species(species.id)) {
@@ -67,7 +67,7 @@ struct ChoicesPanel: View {
             VStack(alignment: .leading, spacing: Space.l) {
                 content()
             }
-            .padding(.horizontal, Space.gutter)
+            .padding(.horizontal, Space.pageMargin)
             .padding(.vertical, Space.s)
         }
         .scrollIndicators(.hidden)
@@ -103,7 +103,7 @@ private struct TileGrid: View {
         let choices: [String?] = (offersNothing ? [nil] : []) + variants.map { $0 }
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.s), count: 4), spacing: Space.s) {
             ForEach(choices, id: \.self) { variant in
-                PictureTile(
+                PickTile(
                     variant.map(EditorNames.variant) ?? EditorNames.nothing(in: slot),
                     isSelected: model.draft.picks.variants[slot] == variant,
                     action: { model.pick(variant, for: slot) },
@@ -121,7 +121,7 @@ private struct TileGrid: View {
         } else {
             Image(systemName: "circle.slash")
                 .font(.system(size: nothingGlyph, weight: .regular))
-                .foregroundStyle(Color(role: .textTertiary, in: theme))
+                .foregroundStyle(Color(role: .fgSubtle, in: theme))
         }
     }
 
@@ -138,10 +138,6 @@ private struct TileGrid: View {
 private struct SwatchRow: View {
     let model: CharacterEditorModel
     let slot: Slot
-    @Environment(\.sceneTheme) private var theme
-    private let diameter: Double = 32
-    private let ring: Double = 2
-    private let ringGap: Double = 3
 
     var body: some View {
         let catalog = model.draft.catalog
@@ -163,26 +159,9 @@ private struct SwatchRow: View {
     }
 
     private func swatch(_ color: RGBAColor, value: RGBAColor?, label: Text, index: Int) -> some View {
-        let isSelected = model.draft.picks.colors[slot] == value
-        return Button {
+        Swatch(Color(swatch: color), label: label, isSelected: model.draft.picks.colors[slot] == value) {
             model.pickColor(value, for: slot)
-        } label: {
-            Circle()
-                .fill(Color(swatch: color))
-                .overlay(Circle().strokeBorder(Color(role: .divider, in: theme), lineWidth: 1))
-                .frame(width: diameter, height: diameter)
-                .padding(ringGap)
-                .overlay {
-                    if isSelected {
-                        Circle().strokeBorder(Color(role: .textPrimary, in: theme), lineWidth: ring)
-                    }
-                }
-                .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                .contentShape(Circle())
         }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(label)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("editor.swatch.\(slot.rawValue).\(index)")
     }
 }

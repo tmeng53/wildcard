@@ -46,3 +46,14 @@ custom_rules:
     message: "AGENTS.md: name shared code after its topic, never Utils, Shared, Common or Helpers."
     regex: '^\s*import\s+(Utils|Shared|Common|Helpers)\b'
     severity: error
+  raw_corner_radius:
+    name: "Raw corner radius"
+    message: "AGENTS.md: take radii from Radius (pick, card, thumbnail, capsule), never a number."
+    regex: 'cornerRadius:\s*-?[0-9]'
+    severity: error
+  palette_outside_design_system:
+    name: "Palette in a screen"
+    message: "AGENTS.md: screens take colors from ColorRole; Palette is for DesignSystem and the character's art."
+    excluded: '.*/(Packages/DesignSystem|Packages/Avatar/Sources/AvatarArt|Tests)/.*'
+    regex: '\bPalette\.'
+    severity: error

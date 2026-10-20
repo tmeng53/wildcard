@@ -2,33 +2,50 @@
 import DesignSystem
 import SwiftUI
 
-/// A score like `18/25`: the count in signature text, the goal smaller in tertiary ink.
+/// A score like `14/22` in Barlow: the count in ink, the goal a weight lighter, a little over half
+/// the size and in subtle ink. One `.hero` score per screen.
 public struct Score: View {
-    @Environment(\.sceneTheme) private var theme
-    let count: Int
-    let goal: Int
-    let countStyle: TypeStyle
-    let goalStyle: TypeStyle
+    public enum Size: Sendable {
+        case hero
+        case card
+        case inline
 
-    public init(count: Int, goal: Int, countStyle: TypeStyle, goalStyle: TypeStyle) {
+        var style: TypeStyle {
+            switch self {
+            case .hero: TypeRamp.scoreHero
+            case .card: TypeRamp.scoreCard
+            case .inline: TypeRamp.scoreInline
+            }
+        }
+    }
+
+    @Environment(\.sceneTheme) private var theme
+    private let count: Int
+    private let goal: Int?
+    private let size: Size
+
+    /// Leave out `goal` for a count on its own (一共练了 46).
+    public init(count: Int, goal: Int? = nil, size: Size) {
         self.count = count
         self.goal = goal
-        self.countStyle = countStyle
-        self.goalStyle = goalStyle
+        self.size = size
     }
 
     public var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 0) {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
             Text(verbatim: "\(count)")
-                .typeStyle(countStyle)
-                .foregroundStyle(Color(role: .signatureText, in: theme))
-            Text(verbatim: "/\(goal)")
-                .typeStyle(goalStyle)
-                .foregroundStyle(Color(role: .textTertiary, in: theme))
+                .typeStyle(size.style)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .contentTransition(.numericText(value: Double(count)))
+            if let goal {
+                Text(verbatim: "/\(goal)")
+                    .typeStyle(TypeRamp.denominator(of: size.style))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+            }
         }
         .monospacedDigit()
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(count)/\(goal)"))
+        .accessibilityLabel(Text(verbatim: goal.map { "\(count)/\($0)" } ?? "\(count)"))
     }
 }
 #endif

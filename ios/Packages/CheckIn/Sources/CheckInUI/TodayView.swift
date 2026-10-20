@@ -28,8 +28,8 @@ public struct TodayView: View {
                     .transition(.opacity)
             }
 
-            if case .composing(let meaning) = model.step {
-                ComposeView(model: model, meaning: meaning)
+            if case .composing(let kind) = model.step {
+                ComposeView(model: model, kind: kind)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
             }
@@ -39,9 +39,9 @@ public struct TodayView: View {
             scene.ignoresSafeArea(.keyboard)
         }
         .environment(\.sceneTheme, theme)
-        .animation(.wildcard(Motion.smooth, reduceMotion: reduceMotion), value: model.step)
-        .animation(.wildcard(Motion.bouncy, reduceMotion: reduceMotion), value: model.board)
-        .animation(.wildcard(Motion.panel, reduceMotion: reduceMotion), value: model.payoff)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
+        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.board)
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .sheet(isPresented: isPickingPhotos) {
             PhotoStep(model: model)
                 .environment(\.sceneTheme, theme)
@@ -60,7 +60,7 @@ public struct TodayView: View {
             VStack(spacing: 0) {
                 if let board = model.board {
                     TopCard(board: board)
-                        .padding(.horizontal, Space.gutter)
+                        .padding(.horizontal, Space.pageMargin)
                         .padding(.top, Space.xs)
                         .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
                         // Out of the way while the 请假条 composer is up.
@@ -74,7 +74,7 @@ public struct TodayView: View {
                     .opacity(model.step == .disclaimer ? 0 : 1)
                 Spacer(minLength: Space.l)
                 // Holds the burst's place while the 请假条 composer hides it.
-                Color.clear.frame(height: Sizing.checkInHeight)
+                Color.clear.frame(height: Sizing.primaryControl)
                     .padding(.bottom, Space.l)
             }
 
@@ -84,7 +84,7 @@ public struct TodayView: View {
                     .contentShape(Rectangle())
                     .ignoresSafeArea()
                     .onTapGesture {
-                        withAnimation(.wildcard(Motion.burst, reduceMotion: reduceMotion)) { model.isBurstOpen = false }
+                        withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.isBurstOpen = false }
                     }
                     .accessibilityHidden(true)
             }
@@ -94,8 +94,8 @@ public struct TodayView: View {
                     Spacer()
                     CheckInBurst(
                         isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
-                    ) { meaning in
-                        model.pick(meaning)
+                    ) { kind in
+                        model.pick(kind)
                     }
                     .padding(.bottom, Space.l)
                 }
@@ -153,30 +153,20 @@ private struct Stage: View {
     }
 }
 
-/// The caption in a bubble with a tail. Nothing until the first post with a line.
+/// The caption in the character's speech bubble. Nothing until the first post with a line.
 private struct PayoffBubble: View {
     /// The widest a bubble grows before its line wraps.
     private static let maxWidth: Double = 230
-    private static let tail: Double = 7
 
-    @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let line: String?
 
     var body: some View {
         if let line {
-            Text(verbatim: line)
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .textPrimary, in: theme))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Space.s)
-                .padding(.vertical, Space.xs)
-                .padding(.bottom, Self.tail)
-                .background(
-                    BubbleShape(cornerRadius: Radius.m, tail: Self.tail).fill(Color(Palette.white).opacity(0.94))
-                )
+            SpeechBubble(Text(verbatim: line))
                 // A fixed-width frame centres the bubble; the text inside takes only the width it needs.
                 .frame(width: Self.maxWidth)
-                .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+                .transition(.speech(reduceMotion: reduceMotion))
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("today.bubble")
         }
@@ -185,35 +175,23 @@ private struct PayoffBubble: View {
 
 /// The post's cover photo, pinned beside the character's head.
 private struct PinnedCover: View {
+    @Environment(\.sceneTheme) private var theme
     let cover: PreparedPhoto?
 
     var body: some View {
         if let cover {
             PhotoImage(photo: cover)
                 .frame(width: 58, height: 58)
-                .clipShape(RoundedRectangle(cornerRadius: Space.xxs, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail - Space.xxs, style: .continuous))
                 .padding(Space.xxs)
-                .background(Color(Palette.white), in: RoundedRectangle(cornerRadius: Space.xs))
+                .background(
+                    Color(role: .bgCanvas, in: theme),
+                    in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous)
+                )
                 .rotationEffect(.degrees(8))
                 .transition(.scale(scale: 0.6).combined(with: .opacity))
                 .accessibilityHidden(true)
         }
-    }
-}
-
-/// A rounded rectangle with a small tail at the middle of its bottom edge, pointing down.
-struct BubbleShape: Shape {
-    let cornerRadius: Double
-    let tail: Double
-
-    func path(in rect: CGRect) -> Path {
-        let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tail)
-        var path = Path(roundedRect: body, cornerRadius: cornerRadius, style: .continuous)
-        path.move(to: CGPoint(x: rect.midX - tail, y: body.maxY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.midX + tail, y: body.maxY))
-        path.closeSubpath()
-        return path
     }
 }
 

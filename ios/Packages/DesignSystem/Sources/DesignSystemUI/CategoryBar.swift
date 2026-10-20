@@ -16,8 +16,9 @@ public struct CategoryBarItem<ID: Hashable>: Identifiable {
     }
 }
 
-/// A horizontally scrolling row of categories. Every item has the same padding; the selected
-/// one sits on a solid graphite pill that slides between items. The edges fade only where
+/// 「我在哪」: a horizontally scrolling row of categories or tabs. Every item has the same
+/// padding; the selected one sits on a solid ink capsule that slides between items, never an
+/// underline or a grey block. The edges fade only where
 /// there is more to scroll. Pass `isPinned` while the bar is stuck over scrolled content, so it
 /// gets a Liquid Glass band behind it; otherwise it has no background.
 public struct CategoryBar<ID: Hashable>: View {
@@ -27,6 +28,8 @@ public struct CategoryBar<ID: Hashable>: View {
     @Binding private var selection: ID
     private let items: [CategoryBarItem<ID>]
     private let isPinned: Bool
+    /// Every item's padding at each end, so the items space evenly.
+    private static var itemInset: Double { Space.s + 2 }
 
     public init(_ items: [CategoryBarItem<ID>], selection: Binding<ID>, isPinned: Bool = false) {
         self.items = items
@@ -42,13 +45,13 @@ public struct CategoryBar<ID: Hashable>: View {
                         itemButton(item).id(item.id)
                     }
                 }
-                .padding(.horizontal, Space.s)
+                .padding(.horizontal, Space.xs)
             }
             .scrollIndicators(.hidden)
             .horizontalScrollFade()
             .onChange(of: selection) { _, selected in
                 // Scrolls only as far as it takes to show the whole item.
-                withAnimation(.wildcard(Motion.smooth, reduceMotion: reduceMotion)) {
+                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                     proxy.scrollTo(selected, anchor: nil)
                 }
             }
@@ -63,24 +66,20 @@ public struct CategoryBar<ID: Hashable>: View {
     private func itemButton(_ item: CategoryBarItem<ID>) -> some View {
         let isSelected = item.id == selection
         return Button {
-            withAnimation(.wildcard(Motion.snappy, reduceMotion: reduceMotion)) { selection = item.id }
+            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { selection = item.id }
         } label: {
             item.title
                 .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
-                .foregroundStyle(Color(role: isSelected ? .canvas : .textSecondary, in: theme))
+                .foregroundStyle(Color(role: isSelected ? .bgCanvas : .fgMuted, in: theme))
                 .lineLimit(1)
                 .fixedSize()
-                .padding(.horizontal, Sizing.categoryItemInset)
+                .padding(.horizontal, Self.itemInset)
                 // The pill hugs this box, so it grows with Dynamic Type instead of clipping.
-                .frame(minHeight: Sizing.categoryPillHeight)
+                .frame(minHeight: Sizing.compactControl)
                 .background {
                     if isSelected {
                         Capsule()
-                            .fill(Color(role: .textPrimary, in: theme))
-                            .shadow(
-                                color: Color(role: .textPrimary, in: theme).opacity(Lift.opacity), radius: Lift.radius,
-                                y: Lift.y
-                            )
+                            .fill(Color(role: .fgDefault, in: theme))
                             .matchedGeometryEffect(id: "selection", in: indicator)
                     }
                 }
