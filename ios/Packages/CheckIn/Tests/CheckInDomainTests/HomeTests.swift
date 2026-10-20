@@ -61,3 +61,13 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(rolled.today.today.resting == 2)
     #expect(rolled.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
 }
+
+@Test func aCheckInSentOnlyToAnotherSquadDoesntShowOnThisOne() throws {
+    let elsewhere = CheckIn(
+        id: CheckInID(id(60)), member: myID, day: tuesday,
+        createdAt: Timestamp(millisecondsSince1970: 1_792_512_000_000),
+        audience: try Audience([SquadID(id(11))]), entry: .trained(Training(activity: .sport(.swim))))
+    let home = sampleHome(checkIns: [elsewhere])
+    #expect(home.todaysCheckIns(of: myID).isEmpty)
+    #expect(home.todaysSport(of: myID) == nil)
+}

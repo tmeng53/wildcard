@@ -289,3 +289,25 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     #expect(today.pending.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
     #expect(today.myStatus == .trained)
 }
+
+@MainActor @Test func aPostMadeWhileTheOutboxIsGoingOutFollowsIt() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+    try await today.post(.disclaimer(try Disclaimer("加班到十点")))
+
+    await backend.set(failure: nil)
+    await backend.holdSaves()
+    let sending = Task { await today.sendPending() }
+    while await backend.savesWaiting == 0 { await Task.yield() }
+    // Never sent ahead of the 请假条 already on its way.
+    #expect(try await today.post(run) == .queued)
+    #expect(await backend.saves.isEmpty)
+
+    await backend.releaseSaves()
+    await sending.value
+    #expect(await backend.saves.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
+    #expect(today.pending.isEmpty)
+    #expect(today.refused.isEmpty)
+}

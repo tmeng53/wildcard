@@ -55,8 +55,8 @@ public final class TodayStore {
     private let outbox: any Outbox
     private let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
-    /// Posts being sent right now, so a retry and a post never send the same one twice at once.
-    private var sending: Set<CheckInID> = []
+    /// Whether the outbox is being sent, so two sends never run at once.
+    private var isDraining = false
 
     public init(
         backend: any CheckInBackend, outbox: any Outbox, now: @escaping @Sendable () -> Date,
@@ -149,13 +149,10 @@ public final class TodayStore {
             draft: draft)
         pending.append(post)
         await outbox.save(pending)
-        // Posts still waiting go first, so the server sees them in the order they were made.
-        guard await sendPending(before: post.id) else { return .queued }
-        do {
-            guard let saved = try await send(post.id) else { return .queued }
-            return .posted(saved)
-        } catch .notSent, .signedOut {
-            return .queued
+        switch await drain(watching: post.id) {
+        case .saved(let saved): return .posted(saved)
+        case .refused(let reason): throw reason
+        case .waiting: return .queued
         }
     }
 
@@ -178,23 +175,41 @@ public final class TodayStore {
     /// Sends every post still waiting, oldest first, and stops at the first that can't go out
     /// yet. One the server refuses is dropped and listed in `refused`.
     public func sendPending() async {
-        await sendPending(before: nil)
+        await drain(watching: nil)
     }
 
-    /// Sends the posts waiting ahead of `last`, or all of them. False when one couldn't go out.
+    /// What became of the post a drain watched.
+    private enum Fate {
+        case saved(CheckIn)
+        case refused(CheckInError)
+        /// Still in the outbox, or going out with a drain already under way.
+        case waiting
+    }
+
+    /// Sends the outbox oldest first, one post at a time, until it is empty or a post can't go
+    /// out yet, so the server sees posts in the order they were made. Only one drain runs at
+    /// once; it reads the outbox afresh after each post, so one made meanwhile goes out with it.
+    /// A refusal is listed in `refused`, except the watched post's, which is returned.
     @discardableResult
-    private func sendPending(before last: CheckInID?) async -> Bool {
-        for post in pending {
-            if post.id == last { break }
-            do {
-                _ = try await send(post.id)
-            } catch .notSent, .signedOut {
-                return false
+    private func drain(watching watched: CheckInID?) async -> Fate {
+        guard !isDraining else { return .waiting }
+        isDraining = true
+        defer { isDraining = false }
+        var fate = Fate.waiting
+        while let post = pending.first {
+            do throws(CheckInError) {
+                let saved = try await send(post)
+                if post.id == watched { fate = .saved(saved) }
             } catch {
-                refused.append(Refused(pending: post, reason: error))
+                if error == .notSent || error == .signedOut { return fate }
+                if post.id == watched {
+                    fate = .refused(error)
+                } else {
+                    refused.append(Refused(pending: post, reason: error))
+                }
             }
         }
-        return true
+        return fate
     }
 
     /// The member has seen why these posts were dropped.
@@ -202,12 +217,11 @@ public final class TodayStore {
         refused = []
     }
 
-    /// Uploads the post's photos still to upload, then saves it. Nil when it is already being
-    /// sent. A refusal drops it from the outbox; a network failure keeps it.
-    private func send(_ id: CheckInID) async throws(CheckInError) -> CheckIn? {
-        guard !sending.contains(id), var post = pending.first(where: { $0.id == id }) else { return nil }
-        sending.insert(id)
-        defer { sending.remove(id) }
+    /// Uploads the post's photos still to upload, then saves it. A refusal drops it from the
+    /// outbox; a network failure keeps it.
+    private func send(_ waiting: PendingCheckIn) async throws(CheckInError) -> CheckIn {
+        var post = waiting
+        let id = post.id
         do throws(CheckInError) {
             for photo in post.photosToUpload {
                 post.uploaded[photo.id] = try await backend.upload(photo)
@@ -229,7 +243,8 @@ public final class TodayStore {
     /// Counts a check-in the server saved into the home it last sent, so the home doesn't
     /// wait for the next load.
     private func fold(_ saved: CheckIn) {
-        guard var home = savedHome?.rolled(to: saved.day), !home.checkIns.contains(where: { $0.id == saved.id })
+        guard var home = savedHome?.rolled(to: saved.day), saved.audience.squads.contains(home.squad.id),
+            !home.checkIns.contains(where: { $0.id == saved.id })
         else { return }
         home.today = home.today.countingMine(saved)
         home.checkIns.append(saved)
