@@ -56,6 +56,15 @@ jobs:
       - run: scripts/verify.sh supabase api backend
       # The verify-wildcard API journeys, over HTTP against the built server.
       - run: scripts/api-journeys.sh
+      # The image the deploy workflow ships builds, starts and reaches the database.
+      - name: Start the server's image
+        run: |
+          docker build -t wildcard-api api
+          eval "$(npx --yes supabase@2.121.0 status -o env)"
+          docker run -d --name api --network host -e PORT=18080 -e DATABASE_URL="$DB_URL" \
+            -e SUPABASE_URL="$API_URL" -e SUPABASE_SECRET_KEY="$SECRET_KEY" wildcard-api
+          curl -fsS --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:18080/health ||
+            { docker logs api; exit 1; }
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.

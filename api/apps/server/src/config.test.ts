@@ -30,6 +30,7 @@ describe('readConfig', () => {
     expect(readConfig(base)).toStrictEqual({
       port: 8080,
       databaseUrl: base.DATABASE_URL,
+      databaseCaFile: undefined,
       supabaseUrl: 'http://127.0.0.1:54321',
       supabaseSecretKey: 'sb_secret_local',
       publicUrl: new URL('http://localhost:8080'),

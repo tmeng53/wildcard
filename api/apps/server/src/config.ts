@@ -4,6 +4,10 @@ import { z } from 'zod';
 const Environment = z.object({
   PORT: z.coerce.number().pipe(z.int().min(1).max(65535)).default(8080),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  // A PEM file of the CA that signs the database's certificate: set, the server talks to the
+  // database over TLS and checks its certificate against it (hosted Supabase signs with its own
+  // root CA, `certs/supabase-root-2021.crt`). Unset, as for local Supabase, it connects in plain.
+  DATABASE_CA_FILE: z.string().min(1).optional(),
   SUPABASE_URL: z.url({ protocol: /^https?$/ }),
   // A Supabase secret key (`sb_secret_…`), for Storage. Never the app's publishable key.
   SUPABASE_SECRET_KEY: z.string().startsWith('sb_secret_'),
@@ -56,6 +60,8 @@ const APNS = ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_PRIVATE_KEY', 'APNS_TOPIC'] a
 export interface Config {
   readonly port: number;
   readonly databaseUrl: string;
+  /** The CA file to verify the database's TLS certificate against; undefined for no TLS. */
+  readonly databaseCaFile: string | undefined;
   readonly supabaseUrl: string;
   readonly supabaseSecretKey: string;
   readonly publicUrl: URL;
@@ -118,6 +124,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
+    databaseCaFile: result.data.DATABASE_CA_FILE,
     supabaseUrl: result.data.SUPABASE_URL.replace(/\/+$/, ''),
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
     publicUrl: new URL(result.data.PUBLIC_URL ?? `http://localhost:${String(result.data.PORT)}`),

@@ -1,0 +1,97 @@
+# Deploys the API to the beta: applies new migrations to the hosted Supabase database, builds the
+# server's image (api/Dockerfile) and rolls it out on Cloud Run. Run it by hand from `main`
+# (Actions → deploy → Run workflow). scripts/gcp-setup.sh made the Google Cloud side once.
+# GitHub holds no keys: the job signs in to Google through Workload Identity, and the server's
+# secrets live in Secret Manager, which Cloud Run reads as the server starts.
+# https://github.com/google-github-actions/auth#workload-identity-federation-through-a-service-account
+# https://cloud.google.com/run/docs/configuring/services/secrets
+name: deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # For the token Workload Identity trades for a short-lived Google one.
+  id-token: write
+
+concurrency:
+  # One deploy at a time, and never cancel one halfway through its migrations.
+  group: deploy
+  cancel-in-progress: false
+
+# None of these is secret.
+env:
+  GCP_PROJECT_ID: TODO
+  GCP_PROJECT_NUMBER: TODO
+  GCP_REGION: us-east4
+  SUPABASE_URL: TODO
+  SERVICE: wildcard-api
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: beta
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          # The deployed commit's migrations are compared with this one's.
+          fetch-depth: 0
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/wildcard
+          service_account: github-deploy@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v3
+
+      # A migration the hosted database already ran is never run again, so an edit to one would
+      # silently never reach it. Until there are real users, migrations are edited in place
+      # (AGENTS.md), so that needs a person to reset the beta database first.
+      - name: Refuse edits to migrations already deployed
+        run: |
+          deployed="$(gcloud run services describe "$SERVICE" --region "$GCP_REGION" \
+            --format 'value(metadata.labels.commit)' 2>/dev/null || true)"
+          if [ -z "$deployed" ]; then
+            echo "first deploy: every migration is new"
+            exit 0
+          fi
+          changed="$(git diff --name-only --diff-filter=MDR "$deployed" HEAD -- supabase/migrations)"
+          if [ -n "$changed" ]; then
+            echo "::error::These migrations changed since $deployed, which the hosted database already ran. Reset the beta database first: $changed"
+            exit 1
+          fi
+
+      - name: Apply new migrations
+        run: |
+          database_url="$(gcloud secrets versions access latest --secret database-url)"
+          echo "::add-mask::$database_url"
+          npx --yes supabase@2.121.0 db push --yes --db-url "$database_url"
+
+      - name: Build and push the image
+        run: |
+          image="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/wildcard/api:$GITHUB_SHA"
+          gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev" --quiet
+          docker build -t "$image" api
+          docker push "$image"
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+
+      - name: Deploy to Cloud Run
+        run: |
+          secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
+          # Optional keys: the server runs without them, with that feature off.
+          if gcloud secrets describe anthropic-api-key >/dev/null 2>&1; then
+            secrets="$secrets,ANTHROPIC_API_KEY=anthropic-api-key:latest"
+          fi
+          gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$GCP_REGION" \
+            --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
+            --allow-unauthenticated \
+            --set-secrets "$secrets" \
+            --set-env-vars "SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt" \
+            --update-labels "commit=$GITHUB_SHA"
+
+      - name: Check it answers
+        run: |
+          url="https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app"
+          curl -fsS --retry 5 --retry-all-errors "$url/health"
