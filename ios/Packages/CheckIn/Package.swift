@@ -19,7 +19,9 @@ let package = Package(
         .package(path: "../Avatar"),
     ],
     targets: [
-        .target(name: "CheckInDomain", dependencies: ["Contracts"]),
+        .target(
+            name: "CheckInDomain",
+            dependencies: ["Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
         .target(
             name: "CheckInUI",
             dependencies: [
