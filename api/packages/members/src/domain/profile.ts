@@ -60,21 +60,24 @@ export const Swatch = z.string().regex(/^#[0-9A-F]{6}$/, 'Must be #RRGGBB in cap
 /** The most slots a look may fill: room for every slot the art has today and a few more. */
 export const LOOK_MAX_SLOTS = 24;
 
+/** A look's fields: what the app sends and, beside a version, what the store keeps. */
+export const lookFields = {
+  persona: ArtId.meta({ description: 'How the character moves (人设), such as `deadpan`.' }),
+  variants: z.record(ArtId, ArtId).meta({
+    description:
+      'The variant each slot wears, such as `{"body": "peach", "hair": "ponytail"}`. `body` ' +
+      'is always there; a slot left out wears the art’s default, or nothing.',
+  }),
+  colors: z.record(ArtId, Swatch).meta({
+    description:
+      'The swatch a slot is recolored to, for slots in `variants` only. A slot left out keeps ' +
+      'its art’s own colors.',
+  }),
+};
+
 /** How a member's character looks and moves, as the character editor made it. */
 export const Look = z
-  .strictObject({
-    persona: ArtId.meta({ description: 'How the character moves (人设), such as `deadpan`.' }),
-    variants: z.record(ArtId, ArtId).meta({
-      description:
-        'The variant each slot wears, such as `{"body": "peach", "hair": "ponytail"}`. `body` ' +
-        'is always there; a slot left out wears the art’s default, or nothing.',
-    }),
-    colors: z.record(ArtId, Swatch).meta({
-      description:
-        'The swatch a slot is recolored to, for slots in `variants` only. A slot left out keeps ' +
-        'its art’s own colors.',
-    }),
-  })
+  .strictObject(lookFields)
   .refine(({ variants }) => 'body' in variants, {
     message: 'Must pick a body',
     path: ['variants'],

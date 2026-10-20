@@ -2,7 +2,7 @@ import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 import { z } from 'zod';
 
-import { Character, MemberId, Profile } from '../domain/profile.js';
+import { Character, lookFields, MemberId, Profile } from '../domain/profile.js';
 import type { ProfileStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -10,7 +10,9 @@ import type { DB } from './tables.js';
 export type MemberTables = DB;
 
 /** `profiles.look`: the look's fields beside the version of its stored shape. */
-const StoredVersion = z.looseObject({ version: z.literal(1) });
+const StoredLook = z.discriminatedUnion('version', [
+  z.strictObject({ version: z.literal(1), ...lookFields }),
+]);
 
 /** The columns a profile's character is kept in: both null, or both set. */
 interface CharacterColumns {
@@ -20,8 +22,8 @@ interface CharacterColumns {
 
 function characterOf({ nickname, look }: CharacterColumns): Character | null {
   if (nickname === null || look === null) return null;
-  const stored = Object.entries(StoredVersion.parse(look)).filter(([key]) => key !== 'version');
-  return Character.parse({ nickname, look: Object.fromEntries(stored) });
+  const { persona, variants, colors } = StoredLook.parse(look);
+  return Character.parse({ nickname, look: { persona, variants, colors } });
 }
 
 function characterColumns(character: Character | null) {
@@ -29,7 +31,7 @@ function characterColumns(character: Character | null) {
     ? { nickname: null, look: null }
     : {
         nickname: character.nickname,
-        look: { version: 1, ...character.look },
+        look: StoredLook.parse({ version: 1, ...character.look }),
       };
 }
 
