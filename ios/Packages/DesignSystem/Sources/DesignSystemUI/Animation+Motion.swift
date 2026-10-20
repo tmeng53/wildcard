@@ -3,8 +3,8 @@ import DesignSystem
 import SwiftUI
 
 extension Animation {
-    /// The animation for a motion token. With Reduce Motion on, it becomes a short ease-out
-    /// with no overshoot.
+    /// The animation for a motion token. With Reduce Motion on, it becomes a short fade-length
+    /// ease-out with no overshoot.
     public static func wildcard(_ spring: MotionSpring, reduceMotion: Bool = false) -> Animation {
         if reduceMotion {
             return .easeOut(duration: Motion.reducedDuration)
@@ -13,7 +13,7 @@ extension Animation {
     }
 }
 
-/// Shrinks a control while it is held (`snappy`) and springs it back with `panel`.
+/// Shrinks a control while it is held and lets it go a fifth faster, both on `press`.
 public struct PressableButtonStyle: ButtonStyle {
     public init() {}
 
@@ -31,7 +31,7 @@ struct PressFeedback: ViewModifier {
         content
             .scaleEffect(isPressed && !reduceMotion ? Motion.pressedScale : 1)
             .animation(
-                .wildcard(isPressed ? Motion.snappy : Motion.panel, reduceMotion: reduceMotion), value: isPressed)
+                .wildcard(isPressed ? Motion.press : Motion.press.exit, reduceMotion: reduceMotion), value: isPressed)
     }
 }
 #endif

@@ -58,7 +58,7 @@ struct PhotoStep: View {
                 }
             }
         }
-        .tint(Color(role: .signatureText, in: theme))
+        .tint(Color(role: .fgAccent, in: theme))
     }
 
     /// Loads each picked photo and shrinks it off the main actor, in the order picked. A photo

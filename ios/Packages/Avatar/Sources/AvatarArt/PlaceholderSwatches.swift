@@ -6,7 +6,7 @@ extension PlaceholderCharacter {
     /// editor's swatches: skin or fur for `body`, then `hair`, `eyes`, `brows`, `top` and
     /// `bottom`. Empty for slots that keep their art's colors (hats, props, mouths, cheeks,
     /// glasses) and for a variant without `tones.json`. Every color comes from the design
-    /// system's palette: its scene and meaning colors for clothes, its character tones for
+    /// system's palette: its scene and clothes colors for clothes, its character tones for
     /// skin, fur, hair, brows and eyes.
     public static func swatches(for slot: Slot, wearing variant: String) -> [RGBAColor] {
         guard BundledArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
