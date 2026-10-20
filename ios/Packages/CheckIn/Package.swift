@@ -19,7 +19,9 @@ let package = Package(
         .package(path: "../Avatar"),
     ],
     targets: [
-        .target(name: "CheckInDomain"),
+        .target(
+            name: "CheckInDomain",
+            dependencies: ["Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
         .target(
             name: "CheckInUI",
             dependencies: [
@@ -31,7 +33,7 @@ let package = Package(
             ],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
-        .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain"]),
+        .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain", "Contracts"]),
         // The screen's non-visual parts, and its String Catalog read as a file; runs on Linux too.
         .testTarget(name: "CheckInUITests", dependencies: ["CheckInUI", "CheckInDomain", "Contracts"]),
     ]

@@ -17,37 +17,33 @@ struct TopCard: View {
                 Text(verbatim: " · ")
                 board.scene.name
             }
-            .typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .signatureText, in: theme))
+            .typeStyle(TypeRamp.label)
+            .foregroundStyle(Color(role: .fgAccent, in: theme))
             .padding(.horizontal, Space.xs)
             .padding(.vertical, Space.xxs)
-            .background(Color(role: .signatureWash, in: theme), in: Capsule())
+            .background(Color(role: .bgAccentSubtle, in: theme), in: Capsule())
 
             Text(verbatim: board.squadName)
                 .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .textPrimary, in: theme))
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
 
             HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
                 Text("本周小队训练", bundle: .module)
                     .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .textSecondary, in: theme))
-                Score(
-                    count: board.progress.done, goal: board.progress.goal, countStyle: TypeRamp.scoreLarge,
-                    goalStyle: TypeRamp.scoreLargeDenominator
-                )
-                .contentTransition(.numericText(value: Double(board.progress.done)))
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                Score(count: board.progress.done, goal: board.progress.goal, size: .card)
+                    .contentTransition(.numericText(value: Double(board.progress.done)))
                 Text("次", bundle: .module)
                     .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .textSecondary, in: theme))
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
             ProgressBar(fraction: board.progress.fraction)
             Text("今天 \(board.trainedToday) 人练了", bundle: .module)
                 .typeStyle(TypeRamp.callout)
-                .foregroundStyle(Color(role: .textPrimary, in: theme))
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.m)
-        .frosted(white: Frost.bannerFill, in: RoundedRectangle(cornerRadius: Radius.l, style: .continuous))
+        .card(on: .scene)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("today.card")
     }

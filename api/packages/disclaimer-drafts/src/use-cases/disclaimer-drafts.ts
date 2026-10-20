@@ -1,5 +1,5 @@
 import type { DraftsOutcome } from '../domain/drafts.js';
-import type { Clock, DraftAllowance, LanguageModel, MemesInUse } from '../ports.js';
+import type { Clock, DraftAllowance, LanguageModel, MemesInUse, Random } from '../ports.js';
 import {
   writeDisclaimerDrafts,
   type WriteDisclaimerDraftsInput,
@@ -15,6 +15,7 @@ export function createDisclaimerDrafts(deps: {
   readonly memes: MemesInUse;
   readonly allowance: DraftAllowance;
   readonly clock: Clock;
+  readonly random: Random;
 }): DisclaimerDrafts {
   return { write: (input) => writeDisclaimerDrafts(deps, input) };
 }

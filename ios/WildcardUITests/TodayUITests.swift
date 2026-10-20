@@ -22,9 +22,8 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
-        for (meaning, label) in [("trained", "练了"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")]
-        {
-            let capsule = app.buttons["today.capsule.\(meaning)"]
+        for (kind, label) in [("trained", "练了"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
+            let capsule = app.buttons["today.capsule.\(kind)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
         }
@@ -174,7 +173,7 @@ final class TodayUITests: XCTestCase {
 
         app.buttons["disclaimer.edit"].tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "好累")
-        XCTAssertTrue(app.buttons["disclaimer.post"].isEnabled, "a changed line can't be posted")
+        waitFor(app.buttons["disclaimer.post"], "isEnabled == true", "a changed line can't be posted")
         XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
     }
 
@@ -238,6 +237,7 @@ final class TodayUITests: XCTestCase {
         app.launchArguments +=
             [
                 "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
+                "-uitest-no-push",
             ] + extra
         app.launch()
         return app
