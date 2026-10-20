@@ -1,0 +1,108 @@
+import Contracts
+import DesignSystem
+
+// The five scenes' stations and floors, from the approved simple home design (2026-10-20).
+// Station coordinates are after each scene's art is lifted (track and pool 36, tennis 30, gym 24,
+// climbing 10) to make room for the 打卡 button; the floors are drawn in screen coordinates.
+extension StageLayout {
+    public static func of(_ scene: SceneTheme) -> StageLayout {
+        switch scene {
+        case .track: track
+        case .pool: pool
+        case .gym: gym
+        case .tennis: tennis
+        case .climbing: climbing
+        }
+    }
+
+    static let track = StageLayout(
+        stations: [
+            Station(
+                kind: .jogging, capacity: 6,
+                path: .loop(
+                    from: -30, to: 420,
+                    lanes: [
+                        StationPath.Lap(y: 354, direction: 1, speed: 56),
+                        StationPath.Lap(y: 405, direction: 1, speed: 48),
+                        StationPath.Lap(y: 456, direction: -1, speed: 48),
+                    ]), scale: nil)
+        ],
+        stationsBySport: [.run: [.jogging]],
+        field: [StageRect(x: 55...335, y: 380...500)],
+        open: [StageRect(x: 0...390, y: 480...650)],
+        props: [])
+
+    private static let poolLanes: [StationPath.Lane] = [328.0, 361, 394, 427].map {
+        StationPath.Lane(from: 36, to: 354, y: $0)
+    }
+
+    // No playing area: the deck in front of the water is the open floor.
+    static let pool = StageLayout(
+        stations: [
+            Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes, speed: 34), scale: nil)
+        ],
+        stationsBySport: [.swim: [.swimming]],
+        field: [],
+        open: [StageRect(x: 0...390, y: 474...650)],
+        props: [])
+
+    static let gym = StageLayout(
+        stations: [
+            Station(
+                kind: .treadmill, capacity: 2, path: .spots([StagePoint(x: 66, y: 385), StagePoint(x: 142, y: 385)]),
+                scale: nil),
+            Station(
+                kind: .squatRack, capacity: 2, path: .spots([StagePoint(x: 246, y: 388), StagePoint(x: 322, y: 388)]),
+                scale: nil),
+            Station(
+                kind: .dumbbells, capacity: 2, path: .spots([StagePoint(x: 80, y: 506), StagePoint(x: 150, y: 506)]),
+                scale: nil),
+            Station(
+                kind: .yogaMat, capacity: 2, path: .spots([StagePoint(x: 250, y: 502), StagePoint(x: 326, y: 502)]),
+                scale: nil),
+        ],
+        stationsBySport: [.run: [.treadmill], .strength: [.squatRack, .dumbbells], .yoga: [.yogaMat]],
+        field: [StageRect(x: 75...315, y: 420...500)],
+        open: [StageRect(x: 0...390, y: 440...650)],
+        props: [StageRect(x: 40...350, y: 350...392), StageRect(x: 40...178, y: 440...456)])
+
+    static let tennis = StageLayout(
+        stations: [
+            Station(
+                kind: .rally, capacity: 4,
+                path: .spots([
+                    StagePoint(x: 130, y: 346), StagePoint(x: 130, y: 462), StagePoint(x: 262, y: 346),
+                    StagePoint(x: 262, y: 462),
+                ]), scale: nil),
+            Station(
+                kind: .serve, capacity: 2, path: .spots([StagePoint(x: 40, y: 322), StagePoint(x: 350, y: 466)]),
+                scale: nil),
+        ],
+        stationsBySport: [.tennis: [.rally, .serve]],
+        field: [StageRect(x: 70...330, y: 346...470)],
+        // The net.
+        fieldGaps: [StageRect(x: 0...390, y: 375...402)],
+        open: [StageRect(x: 0...390, y: 480...650)],
+        props: [])
+
+    static let climbing = StageLayout(
+        stations: [
+            Station(
+                kind: .topRope, capacity: 4,
+                path: .climb(
+                    [132.0, 177, 222, 267].map { StationPath.Column(x: $0, top: 290, bottom: 422) }, speed: 9),
+                scale: 0.19),
+            Station(
+                kind: .bouldering, capacity: 2,
+                path: .climb([322.0, 362].map { StationPath.Column(x: $0, top: 370, bottom: 426) }, speed: 7),
+                scale: 0.19),
+            Station(
+                kind: .chalk, capacity: 2, path: .spots([StagePoint(x: 150, y: 530), StagePoint(x: 240, y: 530)]),
+                scale: nil),
+        ],
+        stationsBySport: [.climb: [.topRope, .bouldering, .chalk]],
+        // The foot of the wall.
+        field: [StageRect(x: 75...315, y: 482...482)],
+        open: [StageRect(x: 0...390, y: 470...650)],
+        props: [])
+}
