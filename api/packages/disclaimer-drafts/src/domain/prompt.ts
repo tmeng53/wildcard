@@ -8,7 +8,7 @@ import { STYLE_NAMES, type DraftReason, type PromptMeme } from './draft-request.
 
 export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写「请假条」：今天没去练，跟小队朋友交代一句。
 
-输入：用户写的原因（一句话）、风格，和本周梗库里的几个梗（可选素材，可能没有）。
+输入：用户写的原因（一句话）、风格，有时还有一个本周梗（可选素材，经常没有）。
 输出：3 条不同的请假条。
 
 怎么写：
@@ -16,7 +16,7 @@ export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写�
 - 每条 15–80 个字，第一人称，像在朋友群里随口发的一句话。能短就短，短句往往更好笑。
 - 原因里的英文词原样保留（oncall、deadline、PR、meeting 等），不要翻译成中文。北美华人平时就是中英夹着说。
 - 3 条要从不同角度写，不是换几个词。
-- 本周梗：3 条里最多 1 条用梗，而且只在跟原因自然贴合时才用；不用也完全可以。只用风格里包含当前风格的梗，按它给的意思用。用了梗的那条也不能拿用户开涮。
+- 本周梗：给了的话，3 条里最多 1 条用它，而且只在跟原因自然贴合时才用；不用也完全可以。按它给的意思用。用了梗的那条也不能拿用户开涮。
 - 风格：
   - 搞笑：一本正经地夸张，像新闻通报或比赛解说。
   - 发疯：崩溃碎碎念，语气激动，但不骂人。
@@ -27,30 +27,26 @@ export const INSTRUCTIONS = `你在帮一个朋友运动打卡 App 的用户写�
 - 体重、身材、长相、热量、饮食控制。
 - 自责、愧疚、「我太没用了」「明天一定」这类让人有压力的话。
 - 别人的名字或隐私；如果原因里有别人的名字，换成「同事」「朋友」这类称呼。
-- 本周梗库以外的任何网络梗；emoji、感叹号连用、「作为一个…」这类 AI 腔。
+- 输入里没给的任何网络梗；emoji、感叹号连用、「作为一个…」这类 AI 腔。
 
 如果原因提到自伤或轻生，不要写，返回 {"version":1,"outcome":"selfHarm","drafts":[]}。
 如果原因含有色情、暴力、仇恨或政治内容，不要写，返回 {"version":1,"outcome":"unsafe","drafts":[]}。
 
 其余情况只输出 JSON：{"version":1,"outcome":"drafts","drafts":["…","…","…"]}`;
 
-/** The user message: the reason, the style, and this week's memes for that style, if any. */
+/** The user message: the reason, the style, and this call's meme, if it got one. */
 export function promptFor(request: {
   readonly reason: DraftReason;
   readonly style: DisclaimerStyle;
-  readonly memes: readonly PromptMeme[];
+  readonly meme: PromptMeme | undefined;
 }): string {
   const lines = [`原因：${request.reason}`, `风格：${STYLE_NAMES[request.style]}`];
-  if (request.memes.length > 0) {
-    lines.push('本周梗：');
-    for (const meme of request.memes) {
-      lines.push(
-        `- 梗：${meme.phrase}`,
-        `  意思：${meme.meaning}`,
-        `  背景：${meme.background}`,
-        `  适合的风格：${meme.styles.map((style) => STYLE_NAMES[style]).join('、')}`,
-      );
-    }
+  if (request.meme !== undefined) {
+    lines.push(
+      `本周梗：${request.meme.phrase}`,
+      `  意思：${request.meme.meaning}`,
+      `  背景：${request.meme.background}`,
+    );
   }
   return lines.join('\n');
 }

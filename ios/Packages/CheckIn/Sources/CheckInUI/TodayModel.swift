@@ -9,7 +9,7 @@ import Observation
 import SwiftUI
 
 extension CheckInDraft {
-    var meaning: Meaning {
+    var kind: CheckInKind {
         switch self {
         case .trained: .trained
         case .healthyMeal: .healthyMeal
@@ -33,14 +33,14 @@ public enum PhotoSource: Sendable {
 public final class TodayModel {
     enum Step: Equatable {
         case scene
-        case pickingPhotos(Meaning)
-        case composing(Meaning)
+        case pickingPhotos(CheckInKind)
+        case composing(CheckInKind)
         case disclaimer
     }
 
     /// What lands on the scene after a post: the line in the bubble and the pinned cover.
     struct Payoff: Equatable {
-        let meaning: Meaning
+        let kind: CheckInKind
         let line: String?
         let cover: PreparedPhoto?
     }
@@ -97,7 +97,7 @@ public final class TodayModel {
             lastActivity: store.suggestedActivity ?? .sport(.run))
     }
 
-    var unavailable: Set<Meaning> {
+    var unavailable: Set<CheckInKind> {
         store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
     }
 
@@ -111,29 +111,29 @@ public final class TodayModel {
         await store.load()
     }
 
-    func pick(_ meaning: Meaning) {
+    func pick(_ kind: CheckInKind) {
         sendFailed = false
         payoff = nil
-        switch meaning {
+        switch kind {
         case .disclaimer:
             step = .disclaimer
         case .trained, .healthyMeal, .cheatMeal:
             switch photoSource {
             case .library:
                 photos = []
-                step = .pickingPhotos(meaning)
+                step = .pickingPhotos(kind)
             case .provided(let given):
                 photos = given
-                step = .composing(meaning)
+                step = .composing(kind)
             }
         }
     }
 
     /// The photo step finished: with photos, or with none (不加照片).
     func photosPicked(_ picked: [PreparedPhoto]) {
-        guard case .pickingPhotos(let meaning) = step else { return }
+        guard case .pickingPhotos(let kind) = step else { return }
         photos = Array(picked.prefix(Photos.maxCount))
-        step = .composing(meaning)
+        step = .composing(kind)
     }
 
     /// Moves `photo` to the front, as the cover.
@@ -182,9 +182,9 @@ public final class TodayModel {
             cover = nil
         }
         posts += 1
-        payoff = Payoff(meaning: draft.meaning, line: line, cover: cover)
+        payoff = Payoff(kind: draft.kind, line: line, cover: cover)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        if draft.meaning != .disclaimer,
+        if draft.kind != .disclaimer,
             let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)
         {
             try? player?.play(cheer)

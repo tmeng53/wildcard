@@ -10,11 +10,11 @@ struct ScoreboardFontTests {
         ScoreboardFont.register()
         #expect(
             ScoreboardFont.registeredNames == [
-                "BarlowCondensed-Bold", "BarlowCondensed-ExtraBold", "BarlowCondensed-SemiBold",
+                "BarlowCondensed-ExtraBold", "BarlowCondensed-SemiBold",
             ])
     }
 
-    @Test(arguments: [ScoreboardWeight.semibold, .bold, .extraBold])
+    @Test(arguments: [ScoreboardWeight.semibold, .extraBold])
     func everyScoreboardFaceResolvesToABundledFont(weight: ScoreboardWeight) {
         ScoreboardFont.register()
         let name = Face.scoreboard(weight).postScriptName
@@ -31,7 +31,7 @@ struct StringCatalogTests {
         let url = try #require(Bundle.module.url(forResource: "Localizable", withExtension: "xcstrings"))
         let catalog = try JSONDecoder().decode(Catalog.self, from: Data(contentsOf: url))
         #expect(catalog.sourceLanguage == "zh-Hans")
-        #expect(catalog.strings["开跑"]?.localizations["en"]?.stringUnit.value == "Go")
+        #expect(catalog.strings["下一步"]?.localizations["en"]?.stringUnit.value == "Next")
         #expect(catalog.strings["打卡"]?.localizations["en"]?.stringUnit.value == "Check in")
         #expect(catalog.strings["坦白放纵餐"]?.localizations["en"]?.stringUnit.value == "Cheat meal confession")
         let missing = catalog.strings.filter { $0.value.localizations["en"]?.stringUnit.value.isEmpty ?? true }
