@@ -316,6 +316,10 @@ describe('PUT /me/profile', () => {
       { nickname: '小周', look: { ...look, colors: { hair: '#2D5BA0' } } },
     ],
     [
+      'a color for a slot named like an object property',
+      { nickname: '小周', look: { ...look, colors: { constructor: '#2D5BA0' } } },
+    ],
+    [
       'a color that isn’t #RRGGBB in capitals',
       { nickname: '小周', look: { ...look, colors: { top: '#2d5ba0' } } },
     ],

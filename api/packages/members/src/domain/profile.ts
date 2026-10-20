@@ -78,7 +78,7 @@ export const lookFields = {
 /** How a member's character looks and moves, as the character editor made it. */
 export const Look = z
   .strictObject(lookFields)
-  .refine(({ variants }) => 'body' in variants, {
+  .refine(({ variants }) => Object.hasOwn(variants, 'body'), {
     message: 'Must pick a body',
     path: ['variants'],
   })
@@ -86,10 +86,13 @@ export const Look = z
     message: `Must fill at most ${String(LOOK_MAX_SLOTS)} slots`,
     path: ['variants'],
   })
-  .refine(({ variants, colors }) => Object.keys(colors).every((slot) => slot in variants), {
-    message: 'Must color only slots it wears',
-    path: ['colors'],
-  });
+  .refine(
+    ({ variants, colors }) => Object.keys(colors).every((slot) => Object.hasOwn(variants, slot)),
+    {
+      message: 'Must color only slots it wears',
+      path: ['colors'],
+    },
+  );
 export type Look = z.infer<typeof Look>;
 
 /** The member's character: its name and its look, made together in the character editor. */
