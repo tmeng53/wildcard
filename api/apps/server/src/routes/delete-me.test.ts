@@ -4,6 +4,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -54,6 +55,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
         inviteCodes: randomInviteCodes,
       }),
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: memberCalendar(members),

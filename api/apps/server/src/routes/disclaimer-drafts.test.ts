@@ -2,6 +2,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -65,6 +66,7 @@ function appWith(model: LanguageModel) {
         inviteCodes: randomInviteCodes,
       }),
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),

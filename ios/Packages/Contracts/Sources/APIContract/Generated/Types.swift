@@ -79,6 +79,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
     func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
+    /// Reply to a teammate’s 请假条
+    ///
+    /// Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/put(replyToDisclaimer)`.
+    func replyToDisclaimer(_ input: Operations.ReplyToDisclaimer.Input) async throws -> Operations.ReplyToDisclaimer.Output
+    /// Take your reply off a 请假条
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/delete(removeMyReply)`.
+    func removeMyReply(_ input: Operations.RemoveMyReply.Input) async throws -> Operations.RemoveMyReply.Output
+    /// A 请假条’s replies
+    ///
+    /// Oldest first, for its author and the teammates who can see it. Empty for any other check-in.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/replies`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/get(listDisclaimerReplies)`.
+    func listDisclaimerReplies(_ input: Operations.ListDisclaimerReplies.Input) async throws -> Operations.ListDisclaimerReplies.Output
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -324,6 +345,53 @@ extension APIProtocol {
         headers: Operations.ListCheckInReactions.Input.Headers = .init()
     ) async throws -> Operations.ListCheckInReactions.Output {
         try await listCheckInReactions(Operations.ListCheckInReactions.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Reply to a teammate’s 请假条
+    ///
+    /// Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/put(replyToDisclaimer)`.
+    public func replyToDisclaimer(
+        path: Operations.ReplyToDisclaimer.Input.Path,
+        headers: Operations.ReplyToDisclaimer.Input.Headers = .init(),
+        body: Operations.ReplyToDisclaimer.Input.Body
+    ) async throws -> Operations.ReplyToDisclaimer.Output {
+        try await replyToDisclaimer(Operations.ReplyToDisclaimer.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your reply off a 请假条
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/delete(removeMyReply)`.
+    public func removeMyReply(
+        path: Operations.RemoveMyReply.Input.Path,
+        headers: Operations.RemoveMyReply.Input.Headers = .init()
+    ) async throws -> Operations.RemoveMyReply.Output {
+        try await removeMyReply(Operations.RemoveMyReply.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A 请假条’s replies
+    ///
+    /// Oldest first, for its author and the teammates who can see it. Empty for any other check-in.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/replies`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/get(listDisclaimerReplies)`.
+    public func listDisclaimerReplies(
+        path: Operations.ListDisclaimerReplies.Input.Path,
+        headers: Operations.ListDisclaimerReplies.Input.Headers = .init()
+    ) async throws -> Operations.ListDisclaimerReplies.Output {
+        try await listDisclaimerReplies(Operations.ListDisclaimerReplies.Input(
             path: path,
             headers: headers
         ))

@@ -1,5 +1,5 @@
 import type { CheckInId, MemberId } from '../../domain/check-in.js';
-import type { Reaction, ReactionKind, ReactOutcome } from '../../domain/reaction.js';
+import type { Reaction, ReactionKind, SaveOutcome } from '../../domain/reaction.js';
 import { OwnCheckInReactionError } from '../../errors.js';
 import type { CheckInStore, Clock, ReactionStore, SquadMembership } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
@@ -12,7 +12,7 @@ export interface ReactToCheckInInput {
 
 export interface Reacted {
   readonly reaction: Reaction;
-  readonly outcome: ReactOutcome;
+  readonly outcome: SaveOutcome;
 }
 
 /**
