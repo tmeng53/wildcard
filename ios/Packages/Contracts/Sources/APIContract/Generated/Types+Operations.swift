@@ -1039,7 +1039,7 @@ public enum Operations {
     }
     /// The signed-in member’s AI consent
     ///
-    /// Whether they have agreed to the current terms, so a returning member isn’t asked again.
+    /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
     ///
     /// - Remark: HTTP `GET /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/get(getMyAiConsent)`.
@@ -1257,9 +1257,9 @@ public enum Operations {
             }
         }
     }
-    /// Agree to the AI terms
+    /// Agree to the AI copy
     ///
-    /// With the terms the app showed, which must be the current ones. Safe to repeat: agreeing again keeps when they first agreed.
+    /// With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.
     ///
     /// - Remark: HTTP `PUT /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
@@ -1377,7 +1377,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid request, or terms that aren’t the current ones (`AI_CONSENT_TERMS_OUTDATED`): read them again and ask again
+            /// Not a valid request, or a version that isn’t the current one (`AI_CONSENT_COPY_OUTDATED`): read the current version and ask again
             ///
             /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)/responses/400`.
             ///
@@ -1585,204 +1585,6 @@ public enum Operations {
             public static var allCases: [Self] {
                 [
                     .json,
-                    .applicationProblemJson
-                ]
-            }
-        }
-    }
-    /// Withdraw the AI consent
-    ///
-    /// Being in a squad needs it, so the member leaves every squad they are in, as leaving one does. Safe to repeat.
-    ///
-    /// - Remark: HTTP `DELETE /me/ai-consent`.
-    /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)`.
-    public enum DeleteMyAiConsent {
-        public static let id: Swift.String = "deleteMyAiConsent"
-        public struct Input: Sendable, Hashable {
-            /// - Remark: Generated from `#/paths/me/ai-consent/DELETE/header`.
-            public struct Headers: Sendable, Hashable {
-                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.DeleteMyAiConsent.AcceptableContentType>]
-                /// Creates a new `Headers`.
-                ///
-                /// - Parameters:
-                ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.DeleteMyAiConsent.AcceptableContentType>] = .defaultValues()) {
-                    self.accept = accept
-                }
-            }
-            public var headers: Operations.DeleteMyAiConsent.Input.Headers
-            /// Creates a new `Input`.
-            ///
-            /// - Parameters:
-            ///   - headers:
-            public init(headers: Operations.DeleteMyAiConsent.Input.Headers = .init()) {
-                self.headers = headers
-            }
-        }
-        @frozen public enum Output: Sendable, Hashable {
-            public struct NoContent: Sendable, Hashable {
-                /// Creates a new `NoContent`.
-                public init() {}
-            }
-            /// Withdrawn, and out of every squad
-            ///
-            /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)/responses/204`.
-            ///
-            /// HTTP response code: `204 noContent`.
-            case noContent(Operations.DeleteMyAiConsent.Output.NoContent)
-            /// Withdrawn, and out of every squad
-            ///
-            /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)/responses/204`.
-            ///
-            /// HTTP response code: `204 noContent`.
-            public static var noContent: Self {
-                .noContent(.init())
-            }
-            /// The associated value of the enum case if `self` is `.noContent`.
-            ///
-            /// - Throws: An error if `self` is not `.noContent`.
-            /// - SeeAlso: `.noContent`.
-            public var noContent: Operations.DeleteMyAiConsent.Output.NoContent {
-                get throws {
-                    switch self {
-                    case let .noContent(response):
-                        return response
-                    default:
-                        try throwUnexpectedResponseStatus(
-                            expectedStatus: "noContent",
-                            response: self
-                        )
-                    }
-                }
-            }
-            public struct Unauthorized: Sendable, Hashable {
-                /// - Remark: Generated from `#/paths/me/ai-consent/DELETE/responses/401/content`.
-                @frozen public enum Body: Sendable, Hashable {
-                    /// - Remark: Generated from `#/paths/me/ai-consent/DELETE/responses/401/content/application\/problem+json`.
-                    case applicationProblemJson(Components.Schemas.Problem)
-                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
-                    ///
-                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
-                    /// - SeeAlso: `.applicationProblemJson`.
-                    public var applicationProblemJson: Components.Schemas.Problem {
-                        get throws {
-                            switch self {
-                            case let .applicationProblemJson(body):
-                                return body
-                            }
-                        }
-                    }
-                }
-                /// Received HTTP response body
-                public var body: Operations.DeleteMyAiConsent.Output.Unauthorized.Body
-                /// Creates a new `Unauthorized`.
-                ///
-                /// - Parameters:
-                ///   - body: Received HTTP response body
-                public init(body: Operations.DeleteMyAiConsent.Output.Unauthorized.Body) {
-                    self.body = body
-                }
-            }
-            /// No bearer token, or not a valid one
-            ///
-            /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)/responses/401`.
-            ///
-            /// HTTP response code: `401 unauthorized`.
-            case unauthorized(Operations.DeleteMyAiConsent.Output.Unauthorized)
-            /// The associated value of the enum case if `self` is `.unauthorized`.
-            ///
-            /// - Throws: An error if `self` is not `.unauthorized`.
-            /// - SeeAlso: `.unauthorized`.
-            public var unauthorized: Operations.DeleteMyAiConsent.Output.Unauthorized {
-                get throws {
-                    switch self {
-                    case let .unauthorized(response):
-                        return response
-                    default:
-                        try throwUnexpectedResponseStatus(
-                            expectedStatus: "unauthorized",
-                            response: self
-                        )
-                    }
-                }
-            }
-            public struct ServiceUnavailable: Sendable, Hashable {
-                /// - Remark: Generated from `#/paths/me/ai-consent/DELETE/responses/503/content`.
-                @frozen public enum Body: Sendable, Hashable {
-                    /// - Remark: Generated from `#/paths/me/ai-consent/DELETE/responses/503/content/application\/problem+json`.
-                    case applicationProblemJson(Components.Schemas.Problem)
-                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
-                    ///
-                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
-                    /// - SeeAlso: `.applicationProblemJson`.
-                    public var applicationProblemJson: Components.Schemas.Problem {
-                        get throws {
-                            switch self {
-                            case let .applicationProblemJson(body):
-                                return body
-                            }
-                        }
-                    }
-                }
-                /// Received HTTP response body
-                public var body: Operations.DeleteMyAiConsent.Output.ServiceUnavailable.Body
-                /// Creates a new `ServiceUnavailable`.
-                ///
-                /// - Parameters:
-                ///   - body: Received HTTP response body
-                public init(body: Operations.DeleteMyAiConsent.Output.ServiceUnavailable.Body) {
-                    self.body = body
-                }
-            }
-            /// Sign-in can’t be checked right now
-            ///
-            /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)/responses/503`.
-            ///
-            /// HTTP response code: `503 serviceUnavailable`.
-            case serviceUnavailable(Operations.DeleteMyAiConsent.Output.ServiceUnavailable)
-            /// The associated value of the enum case if `self` is `.serviceUnavailable`.
-            ///
-            /// - Throws: An error if `self` is not `.serviceUnavailable`.
-            /// - SeeAlso: `.serviceUnavailable`.
-            public var serviceUnavailable: Operations.DeleteMyAiConsent.Output.ServiceUnavailable {
-                get throws {
-                    switch self {
-                    case let .serviceUnavailable(response):
-                        return response
-                    default:
-                        try throwUnexpectedResponseStatus(
-                            expectedStatus: "serviceUnavailable",
-                            response: self
-                        )
-                    }
-                }
-            }
-            /// Undocumented response.
-            ///
-            /// A response with a code that is not documented in the OpenAPI document.
-            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
-        }
-        @frozen public enum AcceptableContentType: AcceptableProtocol {
-            case applicationProblemJson
-            case other(Swift.String)
-            public init?(rawValue: Swift.String) {
-                switch rawValue.lowercased() {
-                case "application/problem+json":
-                    self = .applicationProblemJson
-                default:
-                    self = .other(rawValue)
-                }
-            }
-            public var rawValue: Swift.String {
-                switch self {
-                case let .other(string):
-                    return string
-                case .applicationProblemJson:
-                    return "application/problem+json"
-                }
-            }
-            public static var allCases: [Self] {
-                [
                     .applicationProblemJson
                 ]
             }

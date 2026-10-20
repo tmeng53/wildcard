@@ -47,7 +47,7 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
-  /** Members' consent to the AI terms, which squads and drafts ask for themselves. */
+  /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** Rate limits for the routes anyone can call without signing in. */
   readonly publicRoutes: PublicRoutes;

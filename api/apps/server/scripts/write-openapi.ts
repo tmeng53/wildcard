@@ -65,7 +65,6 @@ const app = createApp({
   aiConsent: {
     find: unused,
     give: unused,
-    withdraw: unused,
     hasCurrent: unused,
     currentAmong: unused,
   },

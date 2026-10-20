@@ -1,34 +1,31 @@
 import {
-  sameTerms,
   stateOf,
   type AiConsentState,
-  type AiConsentTerms,
+  type CopyVersion,
   type MemberId,
 } from '../../domain/ai-consent.js';
-import { AiConsentTermsOutdatedError } from '../../errors.js';
+import { AiConsentCopyOutdatedError } from '../../errors.js';
 import type { Clock, ConsentStore } from '../../ports.js';
 
 export interface GiveConsentInput {
   readonly member: MemberId;
-  /** The terms the app showed the member, which must be the current ones. */
-  readonly terms: AiConsentTerms;
+  /** The version of the copy the app showed the member, which must be the current one. */
+  readonly copyVersion: CopyVersion;
 }
 
 /**
- * Records the member's consent to the current terms. Safe to repeat: a member who consented to
- * them already keeps that consent and when they gave it. Throws `AiConsentTermsOutdatedError`
- * for any other terms.
+ * Records the member's consent to the current copy. Safe to repeat: a member who agreed to it
+ * already keeps when they did. Throws `AiConsentCopyOutdatedError` for any other version.
  */
 export async function giveConsent(
-  deps: { readonly store: ConsentStore; readonly terms: AiConsentTerms; readonly clock: Clock },
-  { member, terms }: GiveConsentInput,
+  deps: {
+    readonly store: ConsentStore;
+    readonly copyVersion: CopyVersion;
+    readonly clock: Clock;
+  },
+  { member, copyVersion }: GiveConsentInput,
 ): Promise<AiConsentState> {
-  if (!sameTerms(terms, deps.terms)) throw new AiConsentTermsOutdatedError();
-  const latest = await deps.store.latest(member);
-  if (latest !== undefined && sameTerms(latest.terms, deps.terms)) {
-    return stateOf(deps.terms, latest);
-  }
-  const given = { terms: deps.terms, givenAt: deps.clock() };
-  await deps.store.give(member, given);
-  return stateOf(deps.terms, given);
+  if (copyVersion !== deps.copyVersion) throw new AiConsentCopyOutdatedError(copyVersion);
+  const kept = await deps.store.give(member, { copyVersion, givenAt: deps.clock() });
+  return stateOf(deps.copyVersion, kept);
 }

@@ -68,11 +68,11 @@ export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []
   };
 }
 
-/** Members' AI consent on local Supabase, to the terms the server runs by default. */
+/** Members' AI consent on local Supabase, to the current copy. */
 export function aiConsentOn(db: Database) {
   return createAiConsent({
     store: createPostgresConsentStore(db),
-    terms: { copyVersion: AI_CONSENT_COPY_VERSION, provider: config.llmProvider },
+    copyVersion: AI_CONSENT_COPY_VERSION,
     clock: () => new Date(),
   });
 }

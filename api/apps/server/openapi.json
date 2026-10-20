@@ -205,8 +205,11 @@
               1
             ]
           },
-          "terms": {
-            "$ref": "#/components/schemas/AiConsentTerms"
+          "copyVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.",
+            "example": 1
           },
           "given": {
             "type": "object",
@@ -214,16 +217,8 @@
               "copyVersion": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "The version of the consent copy, which the app’s String Catalog holds.",
+                "description": "The version they agreed to.",
                 "example": 1
-              },
-              "provider": {
-                "type": "string",
-                "enum": [
-                  "openai",
-                  "anthropic"
-                ],
-                "description": "The AI provider the copy names: the one members’ words are sent to."
               },
               "givenAt": {
                 "type": "string",
@@ -233,48 +228,22 @@
             },
             "required": [
               "copyVersion",
-              "provider",
               "givenAt"
             ],
             "additionalProperties": false,
-            "description": "The member’s latest consent: left out when they never gave one or withdrew it. It may be to older terms."
+            "description": "The member’s latest consent, left out when they never gave one. It may be to an older version."
           },
           "current": {
             "type": "boolean",
-            "description": "True when `given` is to `terms`. Joining or making a squad, AI drafts and the weekly awards need it; when false, show the copy for `terms` and ask."
+            "description": "True when `given` is to `copyVersion`. Making or joining a squad, AI drafts and the weekly awards need it; when false, show that version of the copy and ask."
           }
         },
         "required": [
           "version",
-          "terms",
+          "copyVersion",
           "current"
         ],
         "additionalProperties": false
-      },
-      "AiConsentTerms": {
-        "type": "object",
-        "properties": {
-          "copyVersion": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "The version of the consent copy, which the app’s String Catalog holds.",
-            "example": 1
-          },
-          "provider": {
-            "type": "string",
-            "enum": [
-              "openai",
-              "anthropic"
-            ],
-            "description": "The AI provider the copy names: the one members’ words are sent to."
-          }
-        },
-        "required": [
-          "copyVersion",
-          "provider"
-        ],
-        "additionalProperties": false,
-        "description": "What the member must agree to now."
       },
       "AiConsentGiven": {
         "type": "object",
@@ -288,25 +257,15 @@
           "copyVersion": {
             "type": "integer",
             "minimum": 1,
-            "description": "The version of the consent copy, which the app’s String Catalog holds.",
+            "description": "The version of the copy the app showed the member, who agreed.",
             "example": 1
-          },
-          "provider": {
-            "type": "string",
-            "enum": [
-              "openai",
-              "anthropic"
-            ],
-            "description": "The AI provider the copy names: the one members’ words are sent to."
           }
         },
         "required": [
           "version",
-          "copyVersion",
-          "provider"
+          "copyVersion"
         ],
-        "additionalProperties": false,
-        "description": "The terms the app showed the member, who agreed to them."
+        "additionalProperties": false
       },
       "CheckIn": {
         "oneOf": [
@@ -2320,7 +2279,7 @@
       "get": {
         "operationId": "getMyAiConsent",
         "summary": "The signed-in member’s AI consent",
-        "description": "Whether they have agreed to the current terms, so a returning member isn’t asked again.",
+        "description": "Whether they have agreed to the current copy, so a returning member isn’t asked again.",
         "security": [
           {
             "bearer": []
@@ -2361,8 +2320,8 @@
       },
       "put": {
         "operationId": "putMyAiConsent",
-        "summary": "Agree to the AI terms",
-        "description": "With the terms the app showed, which must be the current ones. Safe to repeat: agreeing again keeps when they first agreed.",
+        "summary": "Agree to the AI copy",
+        "description": "With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.",
         "security": [
           {
             "bearer": []
@@ -2390,7 +2349,7 @@
             }
           },
           "400": {
-            "description": "Not a valid request, or terms that aren’t the current ones (`AI_CONSENT_TERMS_OUTDATED`): read them again and ask again",
+            "description": "Not a valid request, or a version that isn’t the current one (`AI_CONSENT_COPY_OUTDATED`): read the current version and ask again",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2411,41 +2370,6 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "deleteMyAiConsent",
-        "summary": "Withdraw the AI consent",
-        "description": "Being in a squad needs it, so the member leaves every squad they are in, as leaving one does. Safe to repeat.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Withdrawn, and out of every squad"
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

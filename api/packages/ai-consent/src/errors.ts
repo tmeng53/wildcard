@@ -1,15 +1,17 @@
 import { AppError } from '@wildcard/errors';
 
 /**
- * Thrown when a member agrees to terms that aren't the current ones: the app showed copy for
- * an older version or another provider. It reads the terms again and asks again.
+ * Thrown when a member agrees to a version of the copy that isn't the current one: the app
+ * showed older words. It reads the current version and asks again.
  */
-export class AiConsentTermsOutdatedError extends AppError {
-  override readonly name = 'AiConsentTermsOutdatedError';
-  readonly reason = 'AI_CONSENT_TERMS_OUTDATED';
+export class AiConsentCopyOutdatedError extends AppError {
+  override readonly name = 'AiConsentCopyOutdatedError';
+  readonly reason = 'AI_CONSENT_COPY_OUTDATED';
   readonly status = 'FAILED_PRECONDITION';
 
-  constructor() {
-    super('These aren’t the current AI consent terms. Show the current ones and ask again.');
+  constructor(readonly copyVersion: number) {
+    super(
+      `Version ${String(copyVersion)} isn’t the current AI consent copy. Show it and ask again.`,
+    );
   }
 }

@@ -84,11 +84,11 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
-// What members agree to before their words go to the AI: the app's copy, naming the provider
-// LLM_PROVIDER picks. Squads and drafts ask it; withdrawing it leaves every squad.
+// What members agree to before their words go to AI providers: the current version of the app's
+// copy, which names them. Squads and drafts ask it.
 const aiConsent = createAiConsent({
   store: createPostgresConsentStore(db),
-  terms: { copyVersion: AI_CONSENT_COPY_VERSION, provider: config.llmProvider },
+  copyVersion: AI_CONSENT_COPY_VERSION,
   clock: () => new Date(),
 });
 const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));

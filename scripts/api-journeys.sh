@@ -65,19 +65,20 @@ sign_up() {
     jq -r '"\(.user.id) \(.access_token)"'
 }
 
-# The member agrees to the AI terms the server asks for, as the squad step of sign-up does
-# before it makes or joins a squad.
+# The member agrees to the current AI consent copy, as the squad step of sign-up does before it
+# makes or joins a squad.
 agree_to_ai() {
   call GET /me/ai-consent "$1"
   expect 200
-  call PUT /me/ai-consent "$1" "$(jq -c '{version: 1} + .terms' <<<"$body")"
+  call PUT /me/ai-consent "$1" "$(jq -c '{version: 1, copyVersion}' <<<"$body")"
   expect 200
   [ "$(jq -r .current <<<"$body")" = true ] || fail "consent should be current: $body"
 }
 
-# A squad the first token creates and the others join by its invite code, as the app does:
-# sets $squad and $invite_code.
+# A squad the first token creates and the others join by its invite code, as the app does
+# (each agreeing to the AI copy first): sets $squad and $invite_code.
 squad_of() {
+  for token in "$@"; do agree_to_ai "$token"; done
   call PUT "/squads/$(new_id)" "$1" '{"version":1,"name":" 早八跑团 "}'
   expect 201
   squad="$(jq -r .id <<<"$body")"
@@ -118,8 +119,6 @@ if want squad; then
   expect 400 AI_CONSENT_REQUIRED
   echo "squad: making a squad before agreeing to the AI terms refused (400 AI_CONSENT_REQUIRED)"
 fi
-agree_to_ai "$me_token"
-agree_to_ai "$mate_token"
 squad_of "$me_token" "$mate_token"
 echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
@@ -246,13 +245,13 @@ if want squad; then
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 400 AI_CONSENT_REQUIRED
   call GET /me/ai-consent "$newcomer_token"
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"terms":{"copyVersion":1,"provider":"openai"},"current":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":1,"current":false}' ] ||
     fail "newcomer should have no consent yet: $body"
-  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0,"provider":"openai"}'
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
   expect 400 REQUEST_INVALID
-  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":2,"provider":"openai"}'
-  expect 400 AI_CONSENT_TERMS_OUTDATED
-  echo "squad: joining before agreeing refused (400 AI_CONSENT_REQUIRED); other terms refused (400 AI_CONSENT_TERMS_OUTDATED)"
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":2}'
+  expect 400 AI_CONSENT_COPY_OUTDATED
+  echo "squad: joining before agreeing refused (400 AI_CONSENT_REQUIRED); another copy version refused (400 AI_CONSENT_COPY_OUTDATED)"
   agree_to_ai "$newcomer_token"
   given_at="$(jq -r .given.givenAt <<<"$body")"
   agree_to_ai "$newcomer_token"
@@ -282,20 +281,6 @@ if want squad; then
   [ "$(jq '.squads | length' <<<"$body")" = 0 ] || fail "newcomer still lists a squad: $body"
   echo "squad: newcomer left (204) and can't read it any more"
 
-  call POST "/squad-invites/$invite_code/accept" "$newcomer_token"
-  expect 201
-  call DELETE /me/ai-consent "$newcomer_token"
-  expect 204
-  call GET /me/squads "$newcomer_token"
-  [ "$(jq '.squads | length' <<<"$body")" = 0 ] || fail "withdrawing should leave every squad: $body"
-  call GET /me/ai-consent "$newcomer_token"
-  [ "$(jq -r '.current, has("given")' <<<"$body" | tr '\n' ' ')" = "false false " ] ||
-    fail "consent should be withdrawn: $body"
-  [ "$(psql "$DB_URL" -tAc "select count(*) from public.ai_consents where member_id = '$newcomer' and withdrawn_at is not null")" = 1 ] ||
-    fail "the withdrawn consent should be kept as a record"
-  call POST "/squad-invites/$invite_code/accept" "$newcomer_token"
-  expect 400 AI_CONSENT_REQUIRED
-  echo "squad: newcomer rejoined, withdrew the AI consent (204), is out of the squad and can't rejoin without agreeing"
 fi
 
 if want disclaimer-drafts; then

@@ -34,25 +34,18 @@ public protocol APIProtocol: Sendable {
     func putMyProfile(_ input: Operations.PutMyProfile.Input) async throws -> Operations.PutMyProfile.Output
     /// The signed-in member’s AI consent
     ///
-    /// Whether they have agreed to the current terms, so a returning member isn’t asked again.
+    /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
     ///
     /// - Remark: HTTP `GET /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/get(getMyAiConsent)`.
     func getMyAiConsent(_ input: Operations.GetMyAiConsent.Input) async throws -> Operations.GetMyAiConsent.Output
-    /// Agree to the AI terms
+    /// Agree to the AI copy
     ///
-    /// With the terms the app showed, which must be the current ones. Safe to repeat: agreeing again keeps when they first agreed.
+    /// With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.
     ///
     /// - Remark: HTTP `PUT /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
     func putMyAiConsent(_ input: Operations.PutMyAiConsent.Input) async throws -> Operations.PutMyAiConsent.Output
-    /// Withdraw the AI consent
-    ///
-    /// Being in a squad needs it, so the member leaves every squad they are in, as leaving one does. Safe to repeat.
-    ///
-    /// - Remark: HTTP `DELETE /me/ai-consent`.
-    /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)`.
-    func deleteMyAiConsent(_ input: Operations.DeleteMyAiConsent.Input) async throws -> Operations.DeleteMyAiConsent.Output
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -248,16 +241,16 @@ extension APIProtocol {
     }
     /// The signed-in member’s AI consent
     ///
-    /// Whether they have agreed to the current terms, so a returning member isn’t asked again.
+    /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
     ///
     /// - Remark: HTTP `GET /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/get(getMyAiConsent)`.
     public func getMyAiConsent(headers: Operations.GetMyAiConsent.Input.Headers = .init()) async throws -> Operations.GetMyAiConsent.Output {
         try await getMyAiConsent(Operations.GetMyAiConsent.Input(headers: headers))
     }
-    /// Agree to the AI terms
+    /// Agree to the AI copy
     ///
-    /// With the terms the app showed, which must be the current ones. Safe to repeat: agreeing again keeps when they first agreed.
+    /// With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.
     ///
     /// - Remark: HTTP `PUT /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
@@ -269,15 +262,6 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
-    }
-    /// Withdraw the AI consent
-    ///
-    /// Being in a squad needs it, so the member leaves every squad they are in, as leaving one does. Safe to repeat.
-    ///
-    /// - Remark: HTTP `DELETE /me/ai-consent`.
-    /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)`.
-    public func deleteMyAiConsent(headers: Operations.DeleteMyAiConsent.Input.Headers = .init()) async throws -> Operations.DeleteMyAiConsent.Output {
-        try await deleteMyAiConsent(Operations.DeleteMyAiConsent.Input(headers: headers))
     }
     /// Save a check-in
     ///

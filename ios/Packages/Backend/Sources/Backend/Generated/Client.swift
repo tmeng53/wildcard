@@ -522,7 +522,7 @@ internal struct Client: APIProtocol {
     }
     /// The signed-in member’s AI consent
     ///
-    /// Whether they have agreed to the current terms, so a returning member isn’t asked again.
+    /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
     ///
     /// - Remark: HTTP `GET /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/get(getMyAiConsent)`.
@@ -626,9 +626,9 @@ internal struct Client: APIProtocol {
             }
         )
     }
-    /// Agree to the AI terms
+    /// Agree to the AI copy
     ///
-    /// With the terms the app showed, which must be the current ones. Safe to repeat: agreeing again keeps when they first agreed.
+    /// With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.
     ///
     /// - Remark: HTTP `PUT /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
@@ -754,92 +754,6 @@ internal struct Client: APIProtocol {
                 case 503:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Operations.PutMyAiConsent.Output.ServiceUnavailable.Body
-                    let chosenContentType = try converter.bestContentType(
-                        received: contentType,
-                        options: [
-                            "application/problem+json"
-                        ]
-                    )
-                    switch chosenContentType {
-                    case "application/problem+json":
-                        body = try await converter.getResponseBodyAsJSON(
-                            Components.Schemas.Problem.self,
-                            from: responseBody,
-                            transforming: { value in
-                                .applicationProblemJson(value)
-                            }
-                        )
-                    default:
-                        preconditionFailure("bestContentType chose an invalid content type.")
-                    }
-                    return .serviceUnavailable(.init(body: body))
-                default:
-                    return .undocumented(
-                        statusCode: response.status.code,
-                        .init(
-                            headerFields: response.headerFields,
-                            body: responseBody
-                        )
-                    )
-                }
-            }
-        )
-    }
-    /// Withdraw the AI consent
-    ///
-    /// Being in a squad needs it, so the member leaves every squad they are in, as leaving one does. Safe to repeat.
-    ///
-    /// - Remark: HTTP `DELETE /me/ai-consent`.
-    /// - Remark: Generated from `#/paths//me/ai-consent/delete(deleteMyAiConsent)`.
-    internal func deleteMyAiConsent(_ input: Operations.DeleteMyAiConsent.Input) async throws -> Operations.DeleteMyAiConsent.Output {
-        try await client.send(
-            input: input,
-            forOperation: Operations.DeleteMyAiConsent.id,
-            serializer: { input in
-                let path = try converter.renderedPath(
-                    template: "/me/ai-consent",
-                    parameters: []
-                )
-                var request: HTTPTypes.HTTPRequest = .init(
-                    soar_path: path,
-                    method: .delete
-                )
-                suppressMutabilityWarning(&request)
-                converter.setAcceptHeader(
-                    in: &request.headerFields,
-                    contentTypes: input.headers.accept
-                )
-                return (request, nil)
-            },
-            deserializer: { response, responseBody in
-                switch response.status.code {
-                case 204:
-                    return .noContent(.init())
-                case 401:
-                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
-                    let body: Operations.DeleteMyAiConsent.Output.Unauthorized.Body
-                    let chosenContentType = try converter.bestContentType(
-                        received: contentType,
-                        options: [
-                            "application/problem+json"
-                        ]
-                    )
-                    switch chosenContentType {
-                    case "application/problem+json":
-                        body = try await converter.getResponseBodyAsJSON(
-                            Components.Schemas.Problem.self,
-                            from: responseBody,
-                            transforming: { value in
-                                .applicationProblemJson(value)
-                            }
-                        )
-                    default:
-                        preconditionFailure("bestContentType chose an invalid content type.")
-                    }
-                    return .unauthorized(.init(body: body))
-                case 503:
-                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
-                    let body: Operations.DeleteMyAiConsent.Output.ServiceUnavailable.Body
                     let chosenContentType = try converter.bestContentType(
                         received: contentType,
                         options: [

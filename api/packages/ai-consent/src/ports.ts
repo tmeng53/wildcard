@@ -1,15 +1,16 @@
-import type { AiConsentTerms, GivenConsent, MemberId } from './domain/ai-consent.js';
+import type { CopyVersion, GivenConsent, MemberId } from './domain/ai-consent.js';
 
-/** Where members' consents are kept, each one given as a record of its own. */
+/** Where members' consents are kept, one for each version of the copy they agreed to. */
 export interface ConsentStore {
-  /** The member's latest consent that isn't withdrawn. */
+  /** The member's consent to the latest version they agreed to. */
   latest(member: MemberId): Promise<GivenConsent | undefined>;
-  /** Records a consent the member gave. */
-  give(member: MemberId, consent: GivenConsent): Promise<void>;
-  /** Withdraws every consent the member has given. Nothing happens if there are none. */
-  withdraw(member: MemberId, at: Date): Promise<void>;
-  /** Those of `members` whose latest consent that isn't withdrawn is to `terms`. */
-  consentingTo(terms: AiConsentTerms, members: readonly MemberId[]): Promise<ReadonlySet<MemberId>>;
+  /**
+   * Records a consent the member gave. Returns the one kept: an earlier consent to the same
+   * version stays as it was.
+   */
+  give(member: MemberId, consent: GivenConsent): Promise<GivenConsent>;
+  /** Those of `members` who have agreed to `copyVersion`. */
+  agreedTo(copyVersion: CopyVersion, members: readonly MemberId[]): Promise<ReadonlySet<MemberId>>;
 }
 
 /** The current time. */

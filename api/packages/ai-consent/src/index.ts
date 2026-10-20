@@ -1,5 +1,5 @@
-// @wildcard/ai-consent: members' consent to having their words sent to the AI provider, the
-// terms it must match, and its table.
+// @wildcard/ai-consent: members' consent to having their words sent to AI providers, the copy
+// version it must match, and its table.
 
 export {
   createPostgresConsentStore,
@@ -7,12 +7,11 @@ export {
 } from './adapters/postgres-consent-store.js';
 export {
   AI_CONSENT_COPY_VERSION,
-  AiConsentTerms,
-  AiProvider,
+  CopyVersion,
   MemberId,
   type AiConsentState,
   type GivenConsent,
 } from './domain/ai-consent.js';
-export { AiConsentTermsOutdatedError } from './errors.js';
+export { AiConsentCopyOutdatedError } from './errors.js';
 export type { Clock, ConsentStore } from './ports.js';
 export { createAiConsent, type AiConsent } from './use-cases/ai-consent.js';
