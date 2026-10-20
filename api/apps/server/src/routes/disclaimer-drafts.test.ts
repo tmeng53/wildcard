@@ -77,6 +77,7 @@ function appWith(model: LanguageModel) {
       memes: () => Promise.resolve([]),
       allowance: createPostgresDraftAllowance(db),
       clock: () => new Date(),
+      random: () => 0,
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     weeklyPlans: createWeeklyPlans({
