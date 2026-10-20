@@ -79,6 +79,7 @@ function appWith(model: LanguageModel) {
       allowance: createPostgresDraftAllowance(db),
       aiConsent: () => Promise.resolve(true),
       clock: () => new Date(),
+      random: () => 0,
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     weeklyPlans: createWeeklyPlans({

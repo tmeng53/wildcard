@@ -49,3 +49,6 @@ export type AiConsentCheck = (member: MemberId) => Promise<boolean>;
 
 /** The current time. */
 export type Clock = () => Date;
+
+/** A random number from 0 up to, not including, 1. */
+export type Random = () => number;

@@ -76,6 +76,7 @@ const app = createApp({
     allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
     clock: () => new Date(),
+    random: () => 0,
   }),
   push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
   log: createLog(() => undefined),

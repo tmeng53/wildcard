@@ -150,6 +150,7 @@ const app = createApp({
     allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
     clock: () => new Date(),
+    random: Math.random,
   }),
   push,
   log,

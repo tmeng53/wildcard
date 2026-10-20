@@ -19,6 +19,7 @@ export type {
   DraftAllowance,
   LanguageModel,
   MemesInUse,
+  Random,
   Reservation,
 } from './ports.js';
 export { createDisclaimerDrafts, type DisclaimerDrafts } from './use-cases/disclaimer-drafts.js';
