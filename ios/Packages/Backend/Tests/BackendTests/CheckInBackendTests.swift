@@ -21,7 +21,7 @@ private func scratch() -> URL {
 }
 
 private func jpeg(_ byte: UInt8) -> PreparedPhoto {
-    PreparedPhoto(jpeg: Data([0xFF, 0xD8, 0xFF, byte] + (0..<2048).map { _ in UInt8.random(in: 0...255) }))
+    PreparedPhoto(id: UUID(), jpeg: Data([0xFF, 0xD8, 0xFF, byte] + (0..<2048).map { _ in UInt8.random(in: 0...255) }))
 }
 
 @MainActor @Test func theHomeLoadsTheSquadsTodayAndKeepsACopy() async throws {
@@ -45,6 +45,31 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
 
     // The copy on disk is the same home, read back without the network.
     #expect(await APICheckInBackend(api: author.api, directory: directory).savedHome() == home)
+}
+
+@MainActor @Test func theHomeHasTheMembersOwnCheckInsForTheirWeek() async throws {
+    // The member's own week comes from their check-ins wherever they posted them: one posted to
+    // a second squad shows up on the home of the first, which the squad's list alone would miss.
+    let stack = try LocalStack()
+    let author = try await stack.signedInMember()
+    let shown = try await stack.squad(of: author)
+    let other = try await stack.squad(of: author)
+    let directory = scratch()
+    let today = store(author, directory: directory)
+    await today.load()
+    #expect(today.home?.squad.id == shown)
+    let day = try #require(today.day)
+    let elsewhere = CheckIn(
+        id: CheckInID(UUID()), member: author.id, day: day, createdAt: Timestamp(Date()),
+        audience: try Audience([other]), entry: .healthyMeal(Meal(caption: try Caption("沙拉"))))
+    _ = try await author.api.save(elsewhere)
+
+    await today.load()
+    #expect(today.home?.checkIns.map(\.id) == [elsewhere.id])
+    // Kept on the device too.
+    #expect(
+        await APICheckInBackend(api: author.api, directory: directory).savedHome()?.checkIns.map(\.id) == [elsewhere.id]
+    )
 }
 
 @MainActor @Test func aMemberInNoSquadHasNoHome() async throws {

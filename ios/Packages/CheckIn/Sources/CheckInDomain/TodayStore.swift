@@ -140,9 +140,14 @@ public final class TodayStore {
     /// today, or a refusal from the server.
     @discardableResult
     public func post(_ draft: CheckInDraft) async throws(CheckInError) -> PostOutcome {
-        // A copy from an earlier day can't say what today holds (another phone may have posted):
-        // ask the server first when it can be reached.
-        if let saved = savedHome, let day, saved.mine.map({ $0.day < day }) ?? false { await refresh() }
+        // Another phone may have posted since the last load: a 请假条 must know about a 练了 the
+        // server has, and a copy from an earlier day can't say what today holds. Ask the server
+        // first; offline, the home shown decides.
+        if case .disclaimer = draft {
+            await refresh()
+        } else if let saved = savedHome, let day, saved.mine.map({ $0.day < day }) ?? false {
+            await refresh()
+        }
         guard let home, let day else { throw .notSent }
         if case .disclaimer = draft {
             switch myStatus {

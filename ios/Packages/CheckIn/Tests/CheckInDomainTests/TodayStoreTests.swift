@@ -244,3 +244,21 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     #expect(today.home?.today.squadWeek.trainedDays == 15)
     #expect(today.home?.todaysSport(of: myID) == .sport(.run))
 }
+
+@MainActor @Test func aDisclaimerAsksTheServerFirstForATrainingFromAnotherPhone() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+
+    // The member trains on another phone after this one loaded.
+    var trained = sampleToday()
+    trained.members[1] = entry(myID, .trained, since: 1_792_515_000_000)
+    trained.today.trained = 2
+    await backend.set(server: sampleHome(today: trained))
+    #expect(today.myStatus == .notCheckedIn)
+
+    await #expect(throws: CheckInError.alreadyTrained) {
+        try await today.post(.disclaimer(try Disclaimer("加班")))
+    }
+    #expect(await backend.saves.isEmpty)
+}

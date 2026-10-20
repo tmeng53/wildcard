@@ -35,7 +35,7 @@ public enum PhotoPreparation {
         CGImageDestinationAddImage(
             destination, image, [kCGImageDestinationLossyCompressionQuality: jpegQuality] as CFDictionary)
         guard CGImageDestinationFinalize(destination) else { throw .unreadablePhoto }
-        return PreparedPhoto(jpeg: output as Data)
+        return PreparedPhoto(id: UUID(), jpeg: output as Data)
     }
 }
 #endif
