@@ -53,7 +53,7 @@ public struct PickRow: View {
         }
         .buttonStyle(PressableButtonStyle())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
-        .sensoryFeedback(.selection, trigger: taps)
+        .haptic(.pick, trigger: taps)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -122,7 +122,7 @@ public struct PickPill: View {
         }
         .buttonStyle(PressableButtonStyle())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
-        .sensoryFeedback(.selection, trigger: taps)
+        .haptic(.pick, trigger: taps)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityHint(isRemovable ? Text("移除这一项", bundle: .module) : Text(verbatim: ""))
     }
@@ -175,7 +175,7 @@ public struct PickTile<Picture: View>: View {
         }
         .buttonStyle(PressableButtonStyle())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
-        .sensoryFeedback(.selection, trigger: taps)
+        .haptic(.pick, trigger: taps)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -256,7 +256,7 @@ public struct Swatch: View {
         }
         .buttonStyle(PressableButtonStyle())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
-        .sensoryFeedback(.selection, trigger: taps)
+        .haptic(.pick, trigger: taps)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

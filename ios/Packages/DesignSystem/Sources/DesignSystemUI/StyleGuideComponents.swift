@@ -6,10 +6,20 @@ import SwiftUI
 
 struct ButtonSection: View {
     @Environment(\.sceneTheme) private var theme
+    @State private var tab = 0
+
+    private var tabs: [TabBarItem<Int>] {
+        [
+            TabBarItem(id: 0, title: Text("今天", bundle: .module), systemImage: "sun.max"),
+            TabBarItem(id: 1, title: Text("小队", bundle: .module), systemImage: "person.3"),
+            TabBarItem(id: 2, title: Text("战报", bundle: .module), systemImage: "trophy"),
+            TabBarItem(id: 3, title: Text("我", bundle: .module), systemImage: "person.crop.circle"),
+        ]
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 4, title: Text("按钮和页头", bundle: .module))
+            SectionTitle(number: 4, title: Text("按钮、页头、标签栏", bundle: .module))
             GuideGroup(Text("主按钮：当前场景色", bundle: .module)) {
                 VStack(spacing: Space.xs) {
                     Button {
@@ -59,6 +69,13 @@ struct ButtonSection: View {
                         HeaderButton(Text("设置", bundle: .module), systemImage: "gearshape") {}
                     }
                 }
+            }
+            GuideGroup(Text("标签栏：玻璃，选中是浅灰块", bundle: .module)) {
+                TabBar(tabs, selection: $tab)
+                    .padding(Space.s)
+                    .background(
+                        Color(role: .bgScene, in: theme),
+                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
         }
     }
@@ -228,20 +245,38 @@ struct StatusSection: View {
     @Environment(\.sceneTheme) private var theme
     @State private var mine = RingStatus.open
 
+    @State private var plusOnes = 0
+
     private let squad: [RingStatus] = [.done, .done, .excused, .open, .open]
+
+    private var members: [SquadMember] {
+        [SquadMember(id: "me", status: mine, accessibilityIdentifier: "styleguide.ring.mine")]
+            + squad.enumerated().map { SquadMember(id: "mate\($0.offset)", status: $0.element) }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 7, title: Text("卡片、状态圈、进度", bundle: .module))
             GuideGroup(Text("场景上：实心白卡片", bundle: .module)) {
-                SquadCard(squad: squad, mine: mine)
-                    .padding(Space.cardPadding)
-                    .background(
-                        Color(role: .bgScene, in: theme),
-                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                SquadCard(
+                    squadName: String(localized: "周三不练腿俱乐部", bundle: .module), done: mine == .done ? 15 : 14,
+                    goal: 22, members: members, myDone: mine == .done ? 3 : 2, myGoal: 5
+                ) { member in
+                    GuideFace(index: members.firstIndex(of: member) ?? 0)
+                }
+                .overlay(alignment: .topLeading) {
+                    PlusOne(trigger: plusOnes)
+                        .offset(x: Space.s, y: -Space.xxl)
+                }
+                .accessibilityIdentifier("styleguide.card")
+                .padding(Space.cardPadding)
+                .background(
+                    Color(role: .bgScene, in: theme),
+                    in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
             Button {
                 mine = mine == .done ? .open : .done
+                if mine == .done { plusOnes += 1 }
             } label: {
                 mine == .done ? Text("重来", bundle: .module) : Text("我打卡了", bundle: .module)
             }
@@ -261,42 +296,6 @@ struct StatusSection: View {
                 .card()
             }
         }
-    }
-}
-
-private struct SquadCard: View {
-    @Environment(\.sceneTheme) private var theme
-    let squad: [RingStatus]
-    let mine: RingStatus
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.s + 2) {
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    SectionLabel(Text("本周小队训练", bundle: .module))
-                    Text("周三不练腿俱乐部", bundle: .module)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                }
-                Spacer()
-                Score(count: mine == .done ? 15 : 14, goal: 22, size: .hero)
-            }
-            ProgressBar(fraction: Double(mine == .done ? 15 : 14) / 22)
-            HStack(spacing: Space.xxs) {
-                StatusRing(status: mine) { GuideFace(index: 0) }
-                    .accessibilityIdentifier("styleguide.ring.mine")
-                ForEach(Array(squad.enumerated()), id: \.offset) { index, status in
-                    StatusRing(status: status) { GuideFace(index: index + 1) }
-                }
-                Spacer()
-                Text("我 3/5", bundle: .module)
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-            }
-        }
-        .card(on: .scene)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("styleguide.card")
     }
 }
 

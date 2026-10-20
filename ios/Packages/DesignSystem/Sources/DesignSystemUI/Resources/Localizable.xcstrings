@@ -61,6 +61,16 @@
         }
       }
     },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
     "今天 3 人练了": {
       "localizations": {
         "en": {
@@ -411,6 +421,16 @@
         }
       }
     },
+    "小队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad"
+          }
+        }
+      }
+    },
     "平时练什么？": {
       "localizations": {
         "en": {
@@ -501,12 +521,22 @@
         }
       }
     },
-    "我 3/5": {
+    "我": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Me 3/5"
+            "value": "Me"
+          }
+        }
+      }
+    },
+    "我 %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me %1$lld/%2$lld"
           }
         }
       }
@@ -537,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "What I picked: hairline, then an accent border and a check"
+          }
+        }
+      }
+    },
+    "战报": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recap"
           }
         }
       }
@@ -621,12 +661,12 @@
         }
       }
     },
-    "按钮和页头": {
+    "按钮、页头、标签栏": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Buttons and headers"
+            "value": "Buttons, headers and tab bar"
           }
         }
       }
@@ -787,6 +827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tags and switches"
+          }
+        }
+      }
+    },
+    "标签栏：玻璃，选中是浅灰块": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab bar: glass, the selected tab on light grey"
           }
         }
       }

@@ -56,7 +56,7 @@ struct PersonaCarousel: View {
             guard centered != persona else { return }
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { centered = persona }
         }
-        .sensoryFeedback(.selection, trigger: model.draft.persona)
+        .haptic(.pick, trigger: model.draft.persona)
     }
 
     private func item(_ persona: Persona) -> some View {

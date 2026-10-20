@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import AvatarArt
 import AvatarDomain
+import AvatarUI
 import CharacterEditorDomain
 import DesignSystem
 import DesignSystemUI
@@ -159,18 +160,10 @@ private struct SwatchRow: View {
     }
 
     private func swatch(_ color: RGBAColor, value: RGBAColor?, label: Text, index: Int) -> some View {
-        Swatch(Color(swatch: color), label: label, isSelected: model.draft.picks.colors[slot] == value) {
+        Swatch(Color(color), label: label, isSelected: model.draft.picks.colors[slot] == value) {
             model.pickColor(value, for: slot)
         }
         .accessibilityIdentifier("editor.swatch.\(slot.rawValue).\(index)")
-    }
-}
-
-extension Color {
-    init(swatch color: RGBAColor) {
-        self.init(
-            .sRGB, red: Double(color.red) / 255, green: Double(color.green) / 255, blue: Double(color.blue) / 255,
-            opacity: color.opacity)
     }
 }
 #endif

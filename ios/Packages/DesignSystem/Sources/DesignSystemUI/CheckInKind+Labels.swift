@@ -136,7 +136,7 @@ extension View {
                 LinearKeyframe(0, duration: 0.08)
             }
         }
-        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.4), trigger: trigger)
+        .haptic(.refuse, trigger: trigger)
     }
 }
 #endif

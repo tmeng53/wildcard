@@ -237,6 +237,7 @@ struct LayoutTests {
         #expect([Sizing.characterHead, Sizing.characterBust, Sizing.characterFull] == [28, 84, 132])
         #expect([Sizing.kindButton, Sizing.kindIcon, Sizing.tag] == [52, 22, 28])
         #expect([Sizing.icon, Sizing.smallIcon] == [20, 15])
+        #expect([Sizing.tabBar, Sizing.tabItemWidth, Sizing.tabItemHeight, Sizing.tabBarBottom] == [62, 76, 54, 26])
     }
 
     @Test func scrimIsALightBlurNotADim() {
@@ -277,6 +278,8 @@ struct TypographyTests {
             rungs.map(\.face) == [.text(.semibold), .text(.medium), .text(.semibold), .text(.medium), .text(.regular)])
         #expect(TypeRamp.calloutEmphasis.anchor == TypeRamp.callout.anchor)
         #expect(TypeRamp.footnoteEmphasis.size == TypeRamp.footnote.size)
+        #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.face) == [.text(.medium), .text(.semibold)])
+        #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
     @Test func numbersAreBarlowAtThreeSizes() {
@@ -291,6 +294,16 @@ struct TypographyTests {
             return false
         }
         #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline"])
+    }
+}
+
+struct HapticTests {
+    @Test func everyMomentHasOneName() {
+        #expect(
+            Haptic.allCases.map(\.rawValue) == [
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
+            ])
+        #expect(Haptic.ringTicks == 3)
     }
 }
 

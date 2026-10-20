@@ -48,6 +48,10 @@ public enum Motion {
     public static let ringFill: Double = 0.5
     /// How far the avatar pops when its ring closes, on `celebrate`.
     public static let ringPopScale: Double = 1.08
+    /// The 「+1」 over a character who just checked in: how high it rises, in points, and how long
+    /// it stays, in seconds.
+    public static let plusOneRise: Double = 44
+    public static let plusOneDuration: Double = 1.1
     /// With Reduce Motion on, motion becomes a fade of this length, in seconds.
     public static let reducedDuration: Double = 0.2
 

@@ -49,8 +49,8 @@ public struct CheckInBurst: View {
         }
         .frame(height: Sizing.primaryControl)
         // Haptics only where the spec puts them: the burst opening and picking a type.
-        .sensoryFeedback(.impact(weight: .light), trigger: isOpen) { _, opened in opened }
-        .sensoryFeedback(.selection, trigger: picked)
+        .haptic(.appear, trigger: isOpen) { _, opened in opened }
+        .haptic(.pick, trigger: picked)
     }
 
     /// Out of the button along the arc, staggered; back in faster, in reverse order.

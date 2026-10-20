@@ -58,8 +58,8 @@ struct DisclaimerComposer: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: drafts)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isEditing)
-        .sensoryFeedback(.selection, trigger: style)
-        .sensoryFeedback(.impact(weight: .light), trigger: landed)
+        .haptic(.pick, trigger: style)
+        .haptic(.appear, trigger: landed)
         .task {
             drafts = DiceDisclaimerWriter.rollDefault(3)
             // Writing the reason comes first: the page opens with the keyboard up.
@@ -70,7 +70,7 @@ struct DisclaimerComposer: View {
     /// Today's date and the page's name, small; × on the right.
     private var header: some View {
         HStack(spacing: Space.s) {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text(Date.now, format: .dateTime.month(.defaultDigits).day().weekday(.abbreviated))
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))

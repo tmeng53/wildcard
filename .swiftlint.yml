@@ -46,14 +46,34 @@ custom_rules:
     message: "AGENTS.md: name shared code after its topic, never Utils, Shared, Common or Helpers."
     regex: '^\s*import\s+(Utils|Shared|Common|Helpers)\b'
     severity: error
+  # Screens take their look from DesignSystem by name (AGENTS.md, Architecture). A view of its
+  # own is fine in a screen; a raw color, radius, font, spacing or haptic is not.
+  raw_color:
+    name: "Raw color"
+    message: "AGENTS.md: take colors from ColorRole, never Palette, a system color or RGB numbers."
+    excluded: '.*/(Packages/DesignSystem|Packages/Avatar|Tests)/.*'
+    regex: '(\bPalette\.|\bColor\.(red|orange|yellow|green|mint|teal|cyan|blue|indigo|purple|pink|brown|white|gray|black|primary|secondary)\b|\bColor\((red|white|hue):|\.sRGB\b)'
+    severity: error
   raw_corner_radius:
     name: "Raw corner radius"
     message: "AGENTS.md: take radii from Radius (pick, card, thumbnail, capsule), never a number."
     regex: 'cornerRadius:\s*-?[0-9]'
     severity: error
-  palette_outside_design_system:
-    name: "Palette in a screen"
-    message: "AGENTS.md: screens take colors from ColorRole; Palette is for DesignSystem and the character's art."
-    excluded: '.*/(Packages/DesignSystem|Packages/Avatar/Sources/AvatarArt|Tests)/.*'
-    regex: '\bPalette\.'
+  raw_spacing:
+    name: "Raw spacing"
+    message: "AGENTS.md: take spacing from Space, never a number (0 is fine)."
+    excluded: '.*/(Packages/DesignSystem|Packages/Avatar|Tests)/.*'
+    regex: '(spacing:\s*[1-9]|\.padding\((\.[A-Za-z]+,\s*)?[1-9])'
+    severity: error
+  raw_text_style:
+    name: "Raw text style"
+    message: "AGENTS.md: set type with .typeStyle(TypeRamp...), never a system text style or a font size."
+    excluded: '.*/(Packages/DesignSystem|Tests)/.*'
+    regex: '\.font\(\.(largeTitle|title|title2|title3|headline|subheadline|body|callout|footnote|caption|caption2)\b'
+    severity: error
+  raw_haptic:
+    name: "Raw haptic"
+    message: "AGENTS.md: play haptics with .haptic(Haptic...), never sensoryFeedback or a feedback generator."
+    excluded: '.*/(Packages/DesignSystem|Tests)/.*'
+    regex: '(\.sensoryFeedback\(|FeedbackGenerator\b)'
     severity: error

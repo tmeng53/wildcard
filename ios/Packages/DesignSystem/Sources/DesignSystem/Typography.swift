@@ -81,6 +81,9 @@ public enum TypeRamp {
     public static let action = TypeStyle(face: .text(.semibold), size: 19, anchor: .headline)
     /// Unselected switches and pills, and capsule labels.
     public static let callout = TypeStyle(face: .text(.medium), size: 15, anchor: .callout)
+    /// A tab bar item's name; the selected one uses `tabSelected`.
+    public static let tab = TypeStyle(face: .text(.medium), size: 12, anchor: .caption)
+    public static let tabSelected = TypeStyle(face: .text(.semibold), size: 12, anchor: .caption)
     /// Secondary and text buttons, and the selected switch or pill: `callout`, one weight heavier.
     public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
 
@@ -100,7 +103,8 @@ public enum TypeRamp {
         ("largeTitle", largeTitle), ("taskTitle", taskTitle), ("title", title), ("headline", headline),
         ("body", body), ("field", field), ("pick", pick), ("footnote", footnote),
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
-        ("calloutEmphasis", calloutEmphasis), ("scoreHero", scoreHero), ("scoreCard", scoreCard),
+        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreHero", scoreHero),
+        ("scoreCard", scoreCard),
         ("scoreInline", scoreInline),
     ]
 }

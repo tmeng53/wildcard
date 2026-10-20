@@ -15,7 +15,8 @@ public enum RingStatus: Sendable, Hashable {
 /// An avatar's ring for today, like Apple Fitness: a grey track, drawn closed in the scene's ring
 /// color from 12 o'clock once the person checks in; a 请假条 keeps the grey ring and gets a small
 /// moon. When the ring turns `done` while on screen it draws itself in, fast then slow, and the
-/// avatar pops once. With Reduce Motion on, the closed ring just appears.
+/// avatar pops once: light ticks while it draws, one heavy hit as it closes. With Reduce Motion
+/// on, the closed ring just appears, with the hit.
 public struct StatusRing<Avatar: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -24,6 +25,8 @@ public struct StatusRing<Avatar: View>: View {
     private let avatar: Avatar
     @State private var drawn: Double
     @State private var pops = 0
+    @State private var ticks = 0
+    @State private var closes = 0
 
     public init(status: RingStatus, avatarSize: Double = Sizing.characterHead, @ViewBuilder avatar: () -> Avatar) {
         self.status = status
@@ -79,14 +82,29 @@ public struct StatusRing<Avatar: View>: View {
             }
             if reduceMotion {
                 drawn = 1
+                closes += 1
             } else {
                 withAnimation(.timingCurve(0.2, 0.8, 0.3, 1, duration: Motion.ringFill)) { drawn = 1 }
                 pops += 1
+                Task { await playDrawing() }
             }
         }
-        .sensoryFeedback(.success, trigger: pops)
+        .haptic(.tick, trigger: ticks)
+        .haptic(.checkIn, trigger: closes)
         .accessibilityElement(children: .combine)
         .accessibilityValue(statusLabel)
+    }
+
+    /// The ticks spread across the drawing, then the hit as the ring closes.
+    @MainActor
+    private func playDrawing() async {
+        let step = Motion.ringFill / Double(Haptic.ringTicks + 1)
+        for _ in 0..<Haptic.ringTicks {
+            try? await Task.sleep(for: .seconds(step))
+            ticks += 1
+        }
+        try? await Task.sleep(for: .seconds(step))
+        closes += 1
     }
 
     private var statusLabel: Text {

@@ -206,7 +206,7 @@ private struct CoverChoice: View {
                 }
         }
         .buttonStyle(PressableButtonStyle())
-        .sensoryFeedback(.selection, trigger: isCover)
+        .haptic(.pick, trigger: isCover)
         .accessibilityLabel(Text("第 \(number) 张照片", bundle: .module))
         .accessibilityHint(isCover ? Text(verbatim: "") : Text("设为封面", bundle: .module))
         .accessibilityAddTraits(isCover ? .isSelected : [])

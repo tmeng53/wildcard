@@ -47,7 +47,7 @@ public struct TodayView: View {
                 .environment(\.sceneTheme, theme)
         }
         // The one strong haptic of the payoff.
-        .sensoryFeedback(.impact(weight: .heavy), trigger: model.posts)
+        .haptic(.checkIn, trigger: model.posts)
         .task { await model.load() }
     }
 
