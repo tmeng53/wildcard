@@ -79,6 +79,11 @@ private struct BurstButton: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var isOpen: Bool
 
+    /// The design's insets: 22 on the plus's side, 28 on the word's side, around the primary
+    /// button's own `Space.l`.
+    private static let iconSide: Double = 22
+    private static let textSide: Double = 28
+
     var body: some View {
         Button {
             withAnimation(.wildcard(isOpen ? Motion.sheet.exit : Motion.sheet, reduceMotion: reduceMotion)) {
@@ -90,8 +95,14 @@ private struct BurstButton: View {
                     .fontWeight(.bold)
                     .rotationEffect(.degrees(isOpen ? 135 : 0))
                     .accessibilityHidden(true)
-                isOpen ? Text("收起", bundle: .module) : Text("打卡", bundle: .module)
+                if isOpen {
+                    Text("收起", bundle: .module)
+                } else {
+                    Text("打卡", bundle: .module)
+                }
             }
+            .padding(.leading, Self.iconSide - Space.l)
+            .padding(.trailing, Self.textSide - Space.l)
         }
         .buttonStyle(PrimaryButtonStyle())
     }

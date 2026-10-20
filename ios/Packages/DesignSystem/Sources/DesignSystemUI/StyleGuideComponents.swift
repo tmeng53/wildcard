@@ -247,7 +247,7 @@ struct StatusSection: View {
 
     @State private var plusOnes = 0
 
-    private let squad: [RingStatus] = [.done, .done, .excused, .open, .open]
+    private let squad: [RingStatus] = [.done, .done, .restDay, .open, .open]
 
     private var members: [SquadMember] {
         [SquadMember(id: "me", status: mine, accessibilityIdentifier: "styleguide.ring.mine")]

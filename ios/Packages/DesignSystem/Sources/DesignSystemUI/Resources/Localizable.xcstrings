@@ -121,6 +121,16 @@
         }
       }
     },
+    "休息日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest day"
+          }
+        }
+      }
+    },
     "健康餐": {
       "localizations": {
         "en": {
@@ -1047,16 +1057,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Day off"
-          }
-        }
-      }
-    },
-    "请假了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Excused"
           }
         }
       }

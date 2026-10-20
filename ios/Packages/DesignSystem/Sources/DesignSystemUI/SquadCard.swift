@@ -19,7 +19,7 @@ public struct SquadMember: Identifiable, Sendable, Hashable {
 /// The squad's week on the home scene: 本周小队训练 and the squad's name, the count against the
 /// week's planned training days in big Barlow, the bar, then everyone's status rings and my own
 /// count. A solid white card, straight on the scene. The caller orders the members: checked in
-/// first, by time, then excused or resting, then everyone else.
+/// first, by time, then resting, then everyone else.
 public struct SquadCard<Avatar: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let squadName: String
