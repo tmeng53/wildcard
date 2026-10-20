@@ -29,6 +29,7 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
                 .product(name: "AvatarArt", package: "Avatar"),
+                .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "AvatarUI", package: "Avatar"),
             ],
             resources: [.process("Resources/Localizable.xcstrings"), .process("Resources/Scenes")]

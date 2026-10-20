@@ -45,9 +45,11 @@ struct SquadSceneView: View {
                     reduceMotion ? 1 : zoom,
                     anchor: UnitPoint(x: 0.5, y: StageLayout.mySpot.y / Stage.height))
             } keyframes: { _ in
-                CubicKeyframe(1, duration: Motion.ringFill)
-                CubicKeyframe(Self.lean, duration: 0.23)
-                CubicKeyframe(1, duration: 0.42)
+                KeyframeTrack {
+                    CubicKeyframe(1, duration: Motion.ringFill)
+                    CubicKeyframe(Self.lean, duration: 0.23)
+                    CubicKeyframe(1, duration: 0.42)
+                }
             }
         }
         .background(Color(role: .bgSubtle, in: theme))
