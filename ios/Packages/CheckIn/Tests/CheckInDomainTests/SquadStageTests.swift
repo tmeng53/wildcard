@@ -25,10 +25,6 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(StageStatus(training: .disclaimer, activity: nil, plannedRest: true) == .disclaimer)
     #expect(StageStatus(training: .notCheckedIn, activity: nil, plannedRest: true) == .restDay)
     #expect(StageStatus(training: .notCheckedIn, activity: nil, plannedRest: false) == .notYet)
-    #expect(StageStatus.trained(run).ring == .checkedIn)
-    #expect(StageStatus.disclaimer.ring == .checkedIn)
-    #expect(StageStatus.restDay.ring == .restDay)
-    #expect(StageStatus.notYet.ring == .none)
 }
 
 @Test func nightIsFromSevenInTheEveningToSixInTheMorning() {

@@ -23,21 +23,4 @@ public enum StageStatus: Hashable, Sendable {
             self = plannedRest ? .restDay : .notYet
         }
     }
-
-    /// The ring under the feet and around the head in the card.
-    public var ring: StatusRing {
-        switch self {
-        case .trained, .disclaimer: .checkedIn
-        case .restDay: .restDay
-        case .notYet: .none
-        }
-    }
-}
-
-/// The status ring, drawn the same way under a character's feet and around their head in the
-/// card: thick in the scene's bright colour once checked in, thin and grey on a rest day.
-public enum StatusRing: Hashable, Sendable {
-    case checkedIn
-    case restDay
-    case none
 }
