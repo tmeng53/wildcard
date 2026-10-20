@@ -10,18 +10,28 @@ import SwiftUI
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var today = TodayModel(
-        service: InMemoryCheckInService.sampleSquad(now: .now),
-        writer: LaunchOptions.disclaimerWriter,
-        photoSource: LaunchOptions.photoSource,
-        posted: {
-            guard LaunchOptions.asksForNotifications else { return }
-            Task {
-                try? await Task.sleep(for: Push.promptDelay)
-                await Push.registration.checkedIn()
-            }
-        })
+    @State private var today: TodayModel
     @State private var editor = CharacterEditorDemo.model()
+
+    // An init, not a property initializer: those run outside the main actor, and the post
+    // callback is the main actor's.
+    init() {
+        _today = State(
+            initialValue: TodayModel(
+                service: InMemoryCheckInService.sampleSquad(now: .now),
+                writer: LaunchOptions.disclaimerWriter,
+                photoSource: LaunchOptions.photoSource,
+                posted: Self.askForNotifications))
+    }
+
+    /// After a post, once the cheer has played: the first one brings up the permission prompt.
+    private static func askForNotifications() {
+        guard LaunchOptions.asksForNotifications else { return }
+        Task {
+            try? await Task.sleep(for: Push.promptDelay)
+            await Push.registration.checkedIn()
+        }
+    }
 
     var body: some Scene {
         WindowGroup {

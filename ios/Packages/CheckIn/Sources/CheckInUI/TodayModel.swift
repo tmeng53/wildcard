@@ -56,7 +56,7 @@ public final class TodayModel {
     ///   asks for notifications after the first.
     public init(
         service: any CheckInService, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        posted: @escaping @MainActor () -> Void = {}
+        posted: @escaping @MainActor () -> Void
     ) {
         self.service = service
         self.writer = writer
