@@ -1,7 +1,7 @@
 import type { CheckInId, MemberId } from '../../domain/check-in.js';
 import type { Reaction, ReactionKind, ReactOutcome } from '../../domain/reaction.js';
 import { OwnCheckInReactionError } from '../../errors.js';
-import type { CheckInStore, Clock, ReactionStore } from '../../ports.js';
+import type { CheckInStore, Clock, ReactionStore, SquadMembership } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
 export interface ReactToCheckInInput {
@@ -23,12 +23,18 @@ export interface Reacted {
 export async function reactToCheckIn(
   {
     store,
+    membership,
     reactions,
     clock,
-  }: { readonly store: CheckInStore; readonly reactions: ReactionStore; readonly clock: Clock },
+  }: {
+    readonly store: CheckInStore;
+    readonly membership: SquadMembership;
+    readonly reactions: ReactionStore;
+    readonly clock: Clock;
+  },
   { checkIn: id, member, kind }: ReactToCheckInInput,
 ): Promise<Reacted> {
-  const { checkIn } = await findVisibleCheckIn(store, { id, viewer: member });
+  const { checkIn } = await findVisibleCheckIn({ store, membership }, { id, viewer: member });
   if (checkIn.member === member) throw new OwnCheckInReactionError();
   const asked = { member, kind, reactedAt: clock() };
   const outcome = await reactions.save(id, asked);

@@ -73,6 +73,10 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
+const squads = createSquads({
+  store: createPostgresSquadStore(db),
+  inviteCodes: randomInviteCodes,
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -86,6 +90,8 @@ const app = createApp({
       : createAppleSignInRevoker(config.appleSignInKey),
   checkIns: createCheckIns({
     store: createPostgresCheckInStore(db),
+    // Who is in which squad is the squads module's to keep: check-ins ask it.
+    membership: squads,
     reactions: createPostgresReactionStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
@@ -98,7 +104,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
-  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  squads,
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes

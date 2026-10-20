@@ -8,6 +8,7 @@ import type {
   Clock,
   MemberCalendar,
   ReactionStore,
+  SquadMembership,
   WeeklyPlanStore,
 } from '../../ports.js';
 import { findWeeklyPlan } from '../weekly-plans.js';
@@ -17,8 +18,8 @@ export interface SquadWeekSummary extends WeekSummary {
   readonly from: WeekStart;
   readonly to: string;
   /**
-   * Every member's own Sunday is over. A check-in sent up to 48 hours late or a reaction left
-   * later can still change the numbers.
+   * Every member's own Sunday is over. A check-in sent up to 48 hours late, a reaction left,
+   * changed or taken off later, or a member joining or leaving can still change the numbers.
    */
   readonly final: boolean;
 }
@@ -31,6 +32,7 @@ export interface SquadWeekSummary extends WeekSummary {
 export async function squadWeekSummary(
   deps: {
     readonly store: CheckInStore;
+    readonly membership: SquadMembership;
     readonly reactions: ReactionStore;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
@@ -42,10 +44,10 @@ export async function squadWeekSummary(
     weekStart,
   }: { readonly viewer: MemberId; readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<SquadWeekSummary> {
-  const { store, reactions, plans, calendarOf, clock } = deps;
+  const { store, membership, reactions, plans, calendarOf, clock } = deps;
   const now = clock();
   const week = weekOf(weekStart);
-  const memberIds = await store.membersOf(squad);
+  const memberIds = await membership.membersOf(squad);
   if (!memberIds.includes(viewer)) throw new SquadNotJoinedError(squad);
 
   const zones = await zonesOf(calendarOf, { members: memberIds, viewer });
@@ -57,7 +59,7 @@ export async function squadWeekSummary(
   // A squad has at most 8 members, so one plan read each is fine.
   const [plansOf, checkIns] = await Promise.all([
     Promise.all(memberIds.map((member) => findWeeklyPlan({ store: plans }, { member, weekStart }))),
-    store.listForSquad({ squad, from: week.from, to: week.to }),
+    store.listForSquad({ squad, members: memberIds, from: week.from, to: week.to }),
   ]);
   const members = memberIds.map((member, index) => ({
     member,

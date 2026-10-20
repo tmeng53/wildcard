@@ -1,6 +1,6 @@
 import type { CheckInId, MemberId } from '../../domain/check-in.js';
 import type { Reaction } from '../../domain/reaction.js';
-import type { CheckInStore, ReactionStore } from '../../ports.js';
+import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
 /**
@@ -9,10 +9,18 @@ import { findVisibleCheckIn } from './find-visible-check-in.js';
  * squad. Throws `CheckInNotFoundError` for a check-in they can't see.
  */
 export async function listReactions(
-  { store, reactions }: { readonly store: CheckInStore; readonly reactions: ReactionStore },
+  {
+    store,
+    membership,
+    reactions,
+  }: {
+    readonly store: CheckInStore;
+    readonly membership: SquadMembership;
+    readonly reactions: ReactionStore;
+  },
   { checkIn: id, viewer }: { readonly checkIn: CheckInId; readonly viewer: MemberId },
 ): Promise<Reaction[]> {
-  const { through } = await findVisibleCheckIn(store, { id, viewer });
-  const [all, members] = await Promise.all([reactions.list(id), store.membersOfAny(through)]);
+  const { through } = await findVisibleCheckIn({ store, membership }, { id, viewer });
+  const [all, members] = await Promise.all([reactions.list(id), membership.membersOfAny(through)]);
   return all.filter((reaction) => members.has(reaction.member));
 }

@@ -149,6 +149,9 @@ importers:
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
+      '@wildcard/squads':
+        specifier: workspace:*
+        version: link:../squads
       pg:
         specifier: 8.23.1
         version: 8.23.1

@@ -6747,7 +6747,7 @@ public enum Operations {
     }
     /// A squad’s week: its awards and counts (周日战报)
     ///
-    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad.
+    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/summary`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/summary/get(getSquadWeekSummary)`.
