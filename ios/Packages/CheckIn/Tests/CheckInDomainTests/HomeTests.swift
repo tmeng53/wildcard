@@ -34,3 +34,30 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(home.suggestedActivity(on: tuesday.adding(days: -1)) == .sport(.tennis))
     #expect(home.suggestedActivity(on: tuesday) == .sport(.yoga))
 }
+
+@Test func aHomeRolledIntoANewWeekStartsTheWeeksFromNothing() {
+    var trained = sampleToday()
+    trained.members[1] = entry(myID, .trained, since: 1_792_512_000_000)
+    trained.today.trained = 2
+    let monday = tuesday.adding(days: 6)
+
+    let rolled = sampleHome(today: trained).rolled(to: monday)
+    #expect(rolled.mine?.day == monday)
+    #expect(rolled.mine?.training == .notCheckedIn)
+    #expect(rolled.mine?.plannedRest == false)
+    #expect(rolled.today.today == TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false))
+    #expect(rolled.today.myWeek.firstDay == monday)
+    #expect(rolled.today.myWeek.week == WeekCount(trainedDays: 0, plannedDays: 5))
+    #expect(rolled.today.myWeek.lifetimeTrainedDays == 30)
+    #expect(rolled.today.squadWeek == WeekCount(trainedDays: 0, plannedDays: 22))
+    // Already on that day, nothing moves.
+    #expect(rolled.rolled(to: monday) == rolled)
+}
+
+@Test func aHomeRolledOntoAPlannedRestDayCountsTheMemberResting() {
+    // Wednesday rests in the plan.
+    let rolled = sampleHome().rolled(to: tuesday.adding(days: 1))
+    #expect(rolled.mine?.plannedRest == true)
+    #expect(rolled.today.today.resting == 2)
+    #expect(rolled.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
+}

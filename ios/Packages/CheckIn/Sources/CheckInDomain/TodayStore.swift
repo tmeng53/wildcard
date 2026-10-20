@@ -70,9 +70,11 @@ public final class TodayStore {
 
     // MARK: - Reading
 
-    /// The home to show: the server's, with every post still waiting counted.
+    /// The home to show: the server's, moved on to the member's day if it is from an earlier
+    /// one, with every post still waiting counted.
     public var home: Home? {
-        guard var home = savedHome else { return nil }
+        guard let saved = savedHome, let day else { return nil }
+        var home = saved.rolled(to: day)
         for post in pending {
             home.today = home.today.countingMine(post)
         }
@@ -109,11 +111,16 @@ public final class TodayStore {
         await sendPending()
     }
 
-    /// Loads the server's home; keeps the one shown when the server can't be reached.
+    /// Loads the server's home; keeps the one shown when the server can't be reached. A post
+    /// saved while the load was on its way, and missing from what it read, is counted again.
     public func refresh() async {
         do {
-            if let home = try await backend.home() {
-                savedHome = home
+            if let fresh = try await backend.home() {
+                let earlier = savedHome
+                savedHome = fresh
+                for saved in earlier?.checkIns ?? [] where saved.member == fresh.member && saved.day == day {
+                    fold(saved)
+                }
                 phase = .current
             } else {
                 savedHome = nil
@@ -133,6 +140,9 @@ public final class TodayStore {
     /// today, or a refusal from the server.
     @discardableResult
     public func post(_ draft: CheckInDraft) async throws(CheckInError) -> PostOutcome {
+        // A copy from an earlier day can't say what today holds (another phone may have posted):
+        // ask the server first when it can be reached.
+        if let saved = savedHome, let day, saved.mine.map({ $0.day < day }) ?? false { await refresh() }
         guard let home, let day else { throw .notSent }
         if case .disclaimer = draft {
             switch myStatus {
@@ -188,8 +198,9 @@ public final class TodayStore {
             }
             guard let checkIn = try post.checkIn() else { throw .refused }
             let saved = try await backend.save(checkIn)
-            await drop(id)
+            // Counted as saved before it leaves the outbox, so the home never shows it as neither.
             fold(saved)
+            await drop(id)
             return saved
         } catch {
             // Offline or signed out, it waits; refused, it never goes out.
@@ -201,7 +212,8 @@ public final class TodayStore {
     /// Counts a check-in the server saved into the home it last sent, so the home doesn't
     /// wait for the next load.
     private func fold(_ saved: CheckIn) {
-        guard var home = savedHome, !home.checkIns.contains(where: { $0.id == saved.id }) else { return }
+        guard var home = savedHome?.rolled(to: saved.day), !home.checkIns.contains(where: { $0.id == saved.id })
+        else { return }
         home.today = home.today.countingMine(saved)
         home.checkIns.append(saved)
         savedHome = home
