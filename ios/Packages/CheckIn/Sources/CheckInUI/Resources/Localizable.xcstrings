@@ -1215,6 +1215,16 @@
         }
       }
     },
+    "动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feed"
+          }
+        }
+      }
+    },
     "名场面": {
       "localizations": {
         "en": {

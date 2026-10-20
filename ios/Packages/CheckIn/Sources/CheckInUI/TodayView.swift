@@ -132,13 +132,13 @@ public struct TodayView: View {
     /// The app's tabs, as the approved home draws them. Only 今天 is built so far, so the bar
     /// stays on it.
     private enum Tab: Hashable {
-        case today, moments, schedule, profile
+        case today, feed, schedule, profile
     }
 
     private static let tabs: [TabBarItem<Tab>] = [
         TabBarItem(
             id: .today, title: Text("今天", bundle: .module), systemImage: "house", accessibilityIdentifier: "tab.today"),
-        TabBarItem(id: .moments, title: Text("名场面", bundle: .module), systemImage: "star"),
+        TabBarItem(id: .feed, title: Text("动态", bundle: .module), systemImage: "bubble.left.and.bubble.right"),
         TabBarItem(id: .schedule, title: Text("出赛表", bundle: .module), systemImage: "list.bullet.rectangle"),
         TabBarItem(id: .profile, title: Text("我", bundle: .module), systemImage: "person"),
     ]
