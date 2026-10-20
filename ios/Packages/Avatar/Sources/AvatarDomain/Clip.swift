@@ -199,6 +199,20 @@ public struct Clip: Hashable, Sendable {
         return accented
     }
 
+    /// This clip played `tempo` times as fast, as a calm character jogs slower than a lively
+    /// one. Only the timing changes; every pose it passes through is the same.
+    public func atTempo(_ tempo: Double) throws(AvatarError) -> Clip {
+        guard tempo > 0, tempo.isFinite else { throw .invalidTempo(clip: name) }
+        let paced = tracks.map { track in
+            Track(
+                part: track.part, channel: track.channel,
+                keys: track.keys.map { Keyframe(time: $0.time / tempo, value: $0.value, easing: $0.easing) })
+        }
+        var clip = try Clip(name: name, duration: duration / tempo, loops: loops, tracks: paced)
+        clip.accents = accents
+        return clip
+    }
+
     public static func decode(_ data: Data) throws(AvatarError) -> Clip {
         let file: ClipFile = try decodeJSON(data, version: currentVersion, shape: ClipFile.shape)
         var tracks: [Track] = []

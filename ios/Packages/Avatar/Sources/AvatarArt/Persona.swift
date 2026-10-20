@@ -1,6 +1,6 @@
-/// How a character moves: its own idle loop and check-in cheer. Each persona is a folder of
-/// clips (`clips/<raw value>/idle.json`, `clips/<raw value>/cheer.json`); every look can play
-/// every persona. Display names are UI copy and live in the app's String Catalog, not here.
+/// How a character moves: its own idle loop, check-in cheer and 上场 welcome. Each persona is a
+/// folder of clips (`clips/<raw value>/idle.json`, `cheer.json`, `welcome.json`); every look can
+/// play every persona. Display names are UI copy and live in the app's String Catalog, not here.
 public enum Persona: String, CaseIterable, Sendable {
     /// Barely moves: a slow sway, a late and low hop, a nod.
     case deadpan

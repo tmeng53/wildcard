@@ -1,16 +1,30 @@
 /// What a character is doing over time: an idle loop, and clips played on top of it. A
 /// one-shot clip, like a cheer, hands back to idle when it ends; a looping clip keeps
-/// going until the next `play`. Changes blend over a short crossfade so nothing snaps.
+/// going until the next `play`. Changes blend over a short crossfade so nothing snaps. A
+/// character can also change clothes partway (`change`), as it does when a sport is picked.
 ///
 /// Times are seconds on any clock the caller picks, as long as it only goes forward.
 /// The struct never reads a clock itself, so tests drive it frame by frame.
 public struct Performance: Sendable {
+    /// The figure on screen until a change of clothes swaps in another (`figure(at:)`).
     public let figure: Figure
     public let idle: BoundClip
     /// Seconds a change of clip takes to blend in.
     public let blendDuration: Double
 
     private var current: Playing
+    /// A change of clothes under way: from `at`, the performance in the new outfit takes over.
+    private var change: Change?
+
+    private final class Change: Sendable {
+        /// When the new outfit goes on.
+        let swap: Double
+        let performance: Performance
+
+        init(swap: Double, performance: Performance) {
+            (self.swap, self.performance) = (swap, performance)
+        }
+    }
 
     private struct Playing: Sendable {
         var clip: BoundClip
@@ -38,17 +52,42 @@ public struct Performance: Sendable {
         }
     }
 
-    /// Starts a clip now, blending from whatever is on screen.
+    /// Starts a clip now, blending from whatever is on screen. A change of clothes still under
+    /// way stops where it is, in the clothes on screen.
     public mutating func play(_ clip: BoundClip, at time: Double) {
-        current = Playing(clip: clip, start: time, from: pose(at: time))
+        settle(at: time)
+        let onScreen = pose(at: time)
+        change = nil
+        current = Playing(clip: clip, start: time, from: onScreen)
+    }
+
+    /// Changes clothes with a quick turn: `turningOut` plays in the clothes on screen and ends
+    /// edge-on, `figure` takes over on its last frame, out of sight, and plays `turningIn`, which
+    /// starts edge-on, then `idle` (a sport's move). Both figures come from the same rig.
+    public mutating func change(
+        into figure: Figure, idle: BoundClip, turningOut: BoundClip, turningIn: BoundClip, at time: Double
+    ) {
+        play(turningOut, at: time)
+        let swap = time + turningOut.clip.duration
+        var next = Performance(figure: figure, idle: idle, startingAt: swap, blendDuration: blendDuration)
+        next.current = Playing(clip: turningIn, start: swap, from: nil)
+        change = Change(swap: swap, performance: next)
+    }
+
+    /// The figure on screen at a time: the new outfit once a change has swapped it in.
+    public func figure(at time: Double) -> Figure {
+        if let change, time >= change.swap { return change.performance.figure(at: time) }
+        return figure
     }
 
     /// The clip on screen at a time: a one-shot clip that has ended is idle again.
     public func clipName(at time: Double) -> String {
-        finishedOneShot(at: time) == nil ? current.clip.clip.name : idle.clip.name
+        if let change, time >= change.swap { return change.performance.clipName(at: time) }
+        return finishedOneShot(at: time) == nil ? current.clip.clip.name : idle.clip.name
     }
 
     public func pose(at time: Double) -> Pose {
+        if let change, time >= change.swap { return change.performance.pose(at: time) }
         if let end = finishedOneShot(at: time) {
             // Idle restarts from its first frame, blended from the one-shot's last.
             let last = figure.pose(current.clip, at: current.clip.clip.duration)
@@ -57,6 +96,11 @@ public struct Performance: Sendable {
         let pose = figure.pose(current.clip, at: time - current.start)
         guard let from = current.from else { return pose }
         return blend(from: from, to: pose, since: time - current.start)
+    }
+
+    /// Becomes the performance in the new outfit once a change has swapped it in by `time`.
+    private mutating func settle(at time: Double) {
+        if let change, time >= change.swap { self = change.performance }
     }
 
     /// When the playing clip is a one-shot that has ended by `time`, the time it ended.
