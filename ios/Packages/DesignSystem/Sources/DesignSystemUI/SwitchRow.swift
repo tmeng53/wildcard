@@ -7,11 +7,11 @@ import SwiftUI
 /// scene's accent; off, the hairline grey; the knob is white with no shadow. VoiceOver reads it
 /// as a switch.
 public struct SwitchRow: View {
-    @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let title: Text
     private let systemImage: String?
     @Binding private var isOn: Bool
+    @State private var taps = 0
     private let showsDivider: Bool
 
     public init(_ title: Text, systemImage: String? = nil, isOn: Binding<Bool>, showsDivider: Bool = true) {
@@ -23,34 +23,16 @@ public struct SwitchRow: View {
 
     public var body: some View {
         Button {
-            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { isOn.toggle() }
+            taps += 1
+            withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { isOn.toggle() }
         } label: {
-            HStack(spacing: Space.s) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: Sizing.smallIcon + 2))
-                        .frame(width: Sizing.icon)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .accessibilityHidden(true)
-                }
-                title
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            RowShell(title: title, systemImage: systemImage, showsDivider: showsDivider) {
                 SwitchTrack(isOn: isOn)
             }
-            .frame(minHeight: Sizing.pickRow)
-            .overlay(alignment: .bottom) {
-                if showsDivider {
-                    Rectangle()
-                        .fill(Color(role: .borderDefault, in: theme))
-                        .frame(height: Sizing.hairline)
-                }
-            }
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .haptic(.pick, trigger: isOn)
+        // On taps only: a setting loaded or synced from elsewhere changes quietly.
+        .haptic(.pick, trigger: taps)
         .accessibilityRepresentation {
             Toggle(isOn: $isOn) { title }
         }
