@@ -47,6 +47,16 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(restyled.pose(at: 1.7).parts[1].rotation == 0)
 }
 
+@Test func aClipCanCutInWithoutBlending() throws {
+    let (figure, idle, cheer) = try setUp()
+    var performance = Performance(figure: figure, idle: idle, blendDuration: 0.2)
+    performance.play(cheer, at: 1)
+    // Mid-cheer at 50°: cutting to a fresh cheer starts it at 0°, where blending would hold 50°.
+    performance.play(cheer, at: 1.5, blending: false)
+    #expect(performance.pose(at: 1.5).parts[1].rotation == 0)
+    #expect(abs(performance.pose(at: 1.6).parts[1].rotation - 10) < 1e-9)
+}
+
 @Test func standingStillHoldsTheRestPose() throws {
     let figure = try figure()
     let performance = Performance(figure: figure, idle: try figure.bind(.still))
@@ -54,24 +64,24 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(performance.pose(at: 7.3) == figure.restPose)
 }
 
-/// Picking a sport: the arm turns out to 30° in the old clothes, the tee goes on at the end of
-/// that, out of sight, the turn back plays from 30° to 0°, then the sport's move loops in the tee.
+/// Picking a sport: the arm goes out to 30° in the old clothes, the tee goes on at the end of
+/// that, the way back plays from 30° to 0°, then the sport's move loops in the tee.
 @Test func aChangeOfClothesSwapsTheFigureMidTurn() throws {
     let (figure, idle, _) = try setUp()
     let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
     let out = try figure.bind(
-        clip("turnOut", duration: 0.2, loops: false, [track("arm", .rotation, [(0, 0), (0.2, 30)])]))
+        clip("hopOut", duration: 0.2, loops: false, [track("arm", .rotation, [(0, 0), (0.2, 30)])]))
     let back = try dressed.bind(
-        clip("turnIn", duration: 0.4, loops: false, [track("arm", .rotation, [(0, 30), (0.4, 0)])]))
+        clip("hopIn", duration: 0.4, loops: false, [track("arm", .rotation, [(0, 30), (0.4, 0)])]))
     let move = try dressed.bind(
         clip("move", duration: 1, loops: true, [track("arm", .rotation, [(0, 0), (0.5, -60), (1, 0)])]))
     var performance = Performance(figure: figure, idle: idle, blendDuration: 0)
-    performance.change(into: dressed, idle: move, turningOut: out, turningIn: back, at: 1)
+    performance.change(into: dressed, idle: move, leaving: out, arriving: back, at: 1)
     #expect(performance.figure(at: 1.1) == figure)
-    #expect(performance.clipName(at: 1.1) == "turnOut")
+    #expect(performance.clipName(at: 1.1) == "hopOut")
     #expect(abs(performance.pose(at: 1.1).parts[1].rotation - 15) < 1e-9)
     #expect(performance.figure(at: 1.2) == dressed)
-    #expect(performance.clipName(at: 1.3) == "turnIn")
+    #expect(performance.clipName(at: 1.3) == "hopIn")
     #expect(abs(performance.pose(at: 1.4).parts[1].rotation - 15) < 1e-9)
     #expect(performance.clipName(at: 1.7) == "move")
     #expect(abs(performance.pose(at: 2.1).parts[1].rotation - -60) < 1e-9)
@@ -81,14 +91,14 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(performance.figure == dressed)
 }
 
-/// A clip played mid-turn stops the change: the character stays in the clothes on screen.
-@Test func playingMidTurnKeepsTheClothesOnScreen() throws {
+/// A clip played mid-hop stops the change: the character stays in the clothes on screen.
+@Test func playingMidHopKeepsTheClothesOnScreen() throws {
     let (figure, idle, cheer) = try setUp()
     let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
     let out = try figure.bind(
-        clip("turnOut", duration: 0.2, loops: false, [track("arm", .rotation, [(0, 0), (0.2, 30)])]))
+        clip("hopOut", duration: 0.2, loops: false, [track("arm", .rotation, [(0, 0), (0.2, 30)])]))
     var performance = Performance(figure: figure, idle: idle, blendDuration: 0)
-    performance.change(into: dressed, idle: idle, turningOut: out, turningIn: out, at: 1)
+    performance.change(into: dressed, idle: idle, leaving: out, arriving: out, at: 1)
     performance.play(cheer, at: 1.1)
     #expect(performance.figure(at: 5) == figure)
     #expect(performance.clipName(at: 1.5) == "cheer")

@@ -32,28 +32,30 @@ public final class CharacterPlayer {
         drawing = FigureDrawing(figure)
     }
 
-    /// Changes into another outfit with a quick turn and hop, then plays `idle` in it: a sport's
-    /// kit and move when the sport is picked (`PlaceholderCharacter.turn()` and `move(for:)`).
-    /// Build `figure` before calling, so nothing is parsed mid-turn.
+    /// Changes into another outfit with a hop, then plays `idle` in it: a sport's kit and move
+    /// when the sport is picked (`PlaceholderCharacter.kitHop()` and `move(for:)`). Build
+    /// `figure` before calling, so nothing is parsed mid-hop.
     public func change(
-        into figure: Figure, idle: Clip, turn: (out: Clip, in: Clip), now: Date = .now
+        into figure: Figure, idle: Clip, hop: (out: Clip, in: Clip), now: Date = .now
     ) throws(AvatarError) {
-        let (move, out, back) = (try figure.bind(idle), try figure.bind(turn.out), try figure.bind(turn.in))
+        let (move, out, back) = (try figure.bind(idle), try figure.bind(hop.out), try figure.bind(hop.in))
         settle(at: now)
         let time = now.timeIntervalSince(epoch)
-        performance.change(into: figure, idle: move, turningOut: out, turningIn: back, at: time)
-        nextDrawing = (time + turn.out.duration, FigureDrawing(figure))
+        performance.change(into: figure, idle: move, leaving: out, arriving: back, at: time)
+        nextDrawing = (time + hop.out.duration, FigureDrawing(figure))
     }
 
     /// The figure on screen.
     public var figure: Figure { performance.figure(at: .infinity) }
 
-    /// Plays a clip from now, blending from the current pose. One-shot clips return to idle; a
-    /// change of clothes under way stops in the clothes on screen.
-    public func play(_ clip: Clip, now: Date = .now) throws(AvatarError) {
+    /// Plays a clip from now, blending from the current pose unless `blending` is false (play
+    /// `PlaceholderCharacter.entrance()` that way). One-shot clips return to idle; a change of
+    /// clothes under way stops in the clothes on screen.
+    public func play(_ clip: Clip, now: Date = .now, blending: Bool = true) throws(AvatarError) {
         settle(at: now)
         nextDrawing = nil
-        performance.play(try performance.figure.bind(clip), at: now.timeIntervalSince(epoch))
+        performance.play(
+            try performance.figure.bind(clip), at: now.timeIntervalSince(epoch), blending: blending)
     }
 
     /// What to draw at a moment: the outfit on screen then, and where its parts are.

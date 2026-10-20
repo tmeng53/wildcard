@@ -6,7 +6,7 @@ public enum Persona: String, CaseIterable, Sendable {
     case deadpan
     /// Can't stand still: bounces in place, then a double jump, the highest of all.
     case energetic
-    /// Shimmies and poses: spins in the air and lands in a pose.
+    /// Shimmies and poses: hops into a flex and lands in a pose.
     case showoff
     /// Big sighs and big gestures: leaps with arms wide, then bows as if taking an award.
     case drama

@@ -42,20 +42,20 @@ struct CharacterRenderTests {
         #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
     }
 
-    /// Picking a sport: the player draws the old clothes until the turn is edge-on, the kit after.
-    @Test func thePlayerSwapsTheKitInMidTurn() throws {
+    /// Picking a sport: the player draws the old clothes until the hop's squash, the kit after.
+    @Test func thePlayerSwapsTheKitInMidHop() throws {
         let start = Date(timeIntervalSinceReferenceDate: 0)
         let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
         let player = try CharacterPlayer(
             figure: lifter, idle: PlaceholderCharacter.clip("idle", persona: .shy), now: start)
         let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
         let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
-        let turn = try PlaceholderCharacter.turn()
+        let hop = try PlaceholderCharacter.kitHop()
         try player.change(
-            into: swimmer, idle: PlaceholderCharacter.move(for: swim, persona: .shy), turn: turn,
+            into: swimmer, idle: PlaceholderCharacter.move(for: swim, persona: .shy), hop: hop,
             now: start.addingTimeInterval(1))
-        let before = player.frame(at: start.addingTimeInterval(1 + turn.out.duration / 2))
-        let after = player.frame(at: start.addingTimeInterval(1 + turn.out.duration + 0.01))
+        let before = player.frame(at: start.addingTimeInterval(1 + hop.out.duration / 2))
+        let after = player.frame(at: start.addingTimeInterval(1 + hop.out.duration + 0.01))
         let hat = try #require(swimmer.parts.firstIndex { $0.id == "crown" })
         #expect(before.drawing.width == after.drawing.width)
         #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)

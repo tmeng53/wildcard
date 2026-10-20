@@ -52,25 +52,27 @@ public struct Performance: Sendable {
         }
     }
 
-    /// Starts a clip now, blending from whatever is on screen. A change of clothes still under
-    /// way stops where it is, in the clothes on screen.
-    public mutating func play(_ clip: BoundClip, at time: Double) {
+    /// Starts a clip now, blending from whatever is on screen, or cutting straight to its first
+    /// frame without `blending` (the entrance, which starts off stage: blending would slide the
+    /// character out from its spot first). A change of clothes still under way stops where it
+    /// is, in the clothes on screen.
+    public mutating func play(_ clip: BoundClip, at time: Double, blending: Bool = true) {
         settle(at: time)
-        let onScreen = pose(at: time)
+        let onScreen = blending ? pose(at: time) : nil
         change = nil
         current = Playing(clip: clip, start: time, from: onScreen)
     }
 
-    /// Changes clothes with a quick turn: `turningOut` plays in the clothes on screen and ends
-    /// edge-on, `figure` takes over on its last frame, out of sight, and plays `turningIn`, which
-    /// starts edge-on, then `idle` (a sport's move). Both figures come from the same rig.
+    /// Changes clothes with a hop: `leaving` plays in the clothes on screen (a squash down),
+    /// `figure` takes over on its last frame and plays `arriving` (the pop back up), then `idle`
+    /// (a sport's move). Both figures come from the same rig.
     public mutating func change(
-        into figure: Figure, idle: BoundClip, turningOut: BoundClip, turningIn: BoundClip, at time: Double
+        into figure: Figure, idle: BoundClip, leaving: BoundClip, arriving: BoundClip, at time: Double
     ) {
-        play(turningOut, at: time)
-        let swap = time + turningOut.clip.duration
+        play(leaving, at: time)
+        let swap = time + leaving.clip.duration
         var next = Performance(figure: figure, idle: idle, startingAt: swap, blendDuration: blendDuration)
-        next.current = Playing(clip: turningIn, start: swap, from: nil)
+        next.current = Playing(clip: arriving, start: swap, from: nil)
         change = Change(swap: swap, performance: next)
     }
 

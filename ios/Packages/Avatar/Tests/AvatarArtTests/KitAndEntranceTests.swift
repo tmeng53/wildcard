@@ -85,23 +85,23 @@ import Testing
     }
 }
 
-/// Every kit on every kind of character: the quick turn meets edge-on, so the swap is out of
-/// sight; the turn back lands where the kit's move starts, and the move loops without a jump.
-/// Nothing leaves the canvas.
+/// Every kit on every kind of character: the hop squashes down, where the kit goes on, and pops
+/// back up from that same squash to land where the kit's move starts; the move loops without a
+/// jump. Nothing leaves the canvas.
 @Test(arguments: Persona.allCases)
 func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let kits = try PlaceholderCharacter.sportKits()
-    let turn = try PlaceholderCharacter.turn()
-    #expect(!turn.out.loops && !turn.in.loops)
+    let hop = try PlaceholderCharacter.kitHop()
+    #expect(!hop.out.loops && !hop.in.loops)
     for kit in kits.kits {
         for look in Looks.squad {
             let figure = try PlaceholderCharacter.figure(wearing: kit.dress(look))
-            let out = try figure.bind(turn.out)
-            let back = try figure.bind(turn.in)
+            let out = try figure.bind(hop.out)
+            let back = try figure.bind(hop.in)
             let move = try figure.bind(PlaceholderCharacter.move(for: kit, persona: persona))
             #expect(move.clip.loops)
             let root = try figure.index("root")
-            #expect(figure.pose(out, at: out.clip.duration).parts[root].scaleX < 0.1)
+            #expect(figure.pose(out, at: out.clip.duration).parts[root].scaleY < 0.9)
             #expect(nearlyEqual(figure.pose(out, at: out.clip.duration), figure.pose(back, at: 0)))
             #expect(nearlyEqual(figure.pose(back, at: back.clip.duration), figure.restPose))
             #expect(nearlyEqual(figure.pose(move, at: move.clip.duration - 1e-9), figure.pose(move, at: 0)))
@@ -122,8 +122,7 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
 }
 
 /// 上场: the root carries the figure in from the right and up into the jump while the shadow
-/// keeps to the floor, following only sideways; the figure faces the way it runs, spins in the
-/// air and ends at rest on its spot.
+/// keeps to the floor, following only sideways; the figure ends at rest on its spot.
 @Test func theEntranceRunsInAndLandsAtRest() throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let entrance = try figure.bind(PlaceholderCharacter.entrance())
@@ -131,23 +130,19 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let (root, shadow) = (try figure.index("root"), try figure.index("shadow"))
     let start = figure.pose(entrance, at: 0)
     #expect(start.parts[root].x > figure.width * 3)
-    #expect(start.parts[root].scaleX == -1)
     var highest = 0.0
-    var spun = false
     for frame in 0...Int(entrance.clip.duration * 100) {
         let pose = figure.pose(entrance, at: Double(frame) / 100)
         #expect(pose.parts[shadow].y == 0)
         #expect(abs(pose.parts[shadow].x - pose.parts[root].x) < 1e-9)
         highest = min(highest, pose.parts[root].y)
-        if Double(frame) / 100 > 1.2, pose.parts[root].scaleX < 0 { spun = true }
     }
     #expect(highest < -300)
-    #expect(spun)
     #expect(nearlyEqual(figure.pose(entrance, at: entrance.clip.duration), figure.restPose))
 }
 
 /// Teammates cheer a new member in their own way: the energetic ones jump highest, the show-off
-/// spins, the shy one edges away afterwards.
+/// flexes, the shy one edges away afterwards.
 @Test func personasWelcomeTheirOwnWay() throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let root = try figure.index("root")
@@ -160,6 +155,32 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let peaks = try Persona.allCases.map { try values($0, \.y).min() ?? 0 }
     #expect(peaks.min() == peaks[Persona.allCases.firstIndex(of: .energetic) ?? 0])
     #expect(abs(peaks[Persona.allCases.firstIndex(of: .deadpan) ?? 0]) < 0.5)
-    #expect(try values(.showoff, \.scaleX).min() ?? 1 < 0)
+    let showoff = try figure.bind(PlaceholderCharacter.clip("welcome", persona: .showoff))
+    let flexing = figure.pose(showoff, at: 1).parts[try figure.index("armR")].rotation
+    #expect(flexing < -90)
     #expect(try values(.shy, \.x).min() ?? 0 < -5)
+}
+
+/// The art is flat, so no clip turns the whole character side-on, mirrors it or spins it: the
+/// root and torso keep facing front (a squash is fine) and lean at most 15°.
+@Test func noClipTurnsTheCharacter() throws {
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
+    let kits = try PlaceholderCharacter.sportKits()
+    let hop = try PlaceholderCharacter.kitHop()
+    var clips = [hop.out, hop.in, try PlaceholderCharacter.entrance()]
+    for persona in Persona.allCases {
+        clips += try ["idle", "cheer", "welcome"].map { try PlaceholderCharacter.clip($0, persona: persona) }
+        clips += try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: persona) }
+    }
+    let whole = [try figure.index("root"), try figure.index("torso")]
+    for clip in clips {
+        let bound = try figure.bind(clip)
+        for frame in 0...Int(clip.duration * 100) {
+            let pose = figure.pose(bound, at: Double(frame) / 100)
+            for part in whole {
+                #expect(pose.parts[part].scaleX > 0.85, "\(clip.name) at \(frame)")
+                #expect(abs(pose.parts[part].rotation) <= 15, "\(clip.name) at \(frame)")
+            }
+        }
+    }
 }

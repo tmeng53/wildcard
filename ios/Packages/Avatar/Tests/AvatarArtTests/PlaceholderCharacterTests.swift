@@ -176,8 +176,6 @@ func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
     #expect(abs(peaks[1] - -36) < 0.5)  // energetic
     #expect(peaks.min() == peaks[1])
     #expect(peaks.max() == peaks[0])
-    // The show-off spins: the figure flips through its own width.
-    #expect(try rootValues(.showoff, \.scaleX).min() ?? 1 < 0)
     // The shy one edges sideways before it hops.
     #expect(abs((try rootValues(.shy, \.x).min() ?? 0) - -10) < 0.5)
 }

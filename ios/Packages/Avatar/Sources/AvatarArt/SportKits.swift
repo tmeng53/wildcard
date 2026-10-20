@@ -117,9 +117,10 @@ extension PlaceholderCharacter {
         try Clip.decode(file("moves/sports/\(kit.id).json")).atTempo(persona.tempo)
     }
 
-    /// The quick turn and hop a character changes into a kit in: `out` turns it edge-on, where
-    /// the kit goes on unseen, and `in` turns it back and lands it (`Performance.change`).
-    public static func turn() throws(AvatarError) -> (out: Clip, in: Clip) {
-        (try Clip.decode(file("moves/turn-out.json")), try Clip.decode(file("moves/turn-in.json")))
+    /// The hop a character changes into a kit in: `out` squashes it down, where the kit goes on,
+    /// and `in` pops it up and lands it (`Performance.change`). It never turns or flips: the art
+    /// is flat and reads badly side-on or mirrored.
+    public static func kitHop() throws(AvatarError) -> (out: Clip, in: Clip) {
+        (try Clip.decode(file("moves/kit-out.json")), try Clip.decode(file("moves/kit-in.json")))
     }
 }
