@@ -174,12 +174,13 @@ final class CharacterEditorUITests: XCTestCase {
 
     /// Scrolls the choices a little at a time until `element` can be tapped: the grid only
     /// makes the tiles in view, and one under the done bar can't be tapped. The drag starts
-    /// low on the screen, in the choices and clear of the stage above.
+    /// low on the screen, in the choices and clear of the stage above, and holds at the end so
+    /// the list doesn't coast: a tap while it coasts only stops it.
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
         for _ in 0..<8 where !(element.exists && element.isHittable) {
-            start.press(forDuration: 0.05, thenDragTo: end)
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(element.exists && element.isHittable, "\(element.identifier) never scrolled into view")
     }
