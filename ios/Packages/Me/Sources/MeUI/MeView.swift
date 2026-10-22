@@ -51,9 +51,9 @@ public struct MeView: View {
             content
                 .navigationDestination(isPresented: $isDeleting) {
                     DeleteAccountView(model: model) { isDeleting = false }
-                        .toolbar(.hidden, for: .navigationBar)
+                        .hidesNavigationBar()
                 }
-                .toolbar(.hidden, for: .navigationBar)
+                .hidesNavigationBar()
         }
         .task { await model.reload() }
     }
@@ -185,6 +185,18 @@ public struct MeView: View {
             .accessibilityIdentifier("me.deleteAccount")
         }
         .card()
+    }
+}
+
+extension View {
+    /// 我 and the 注销 page draw their own headers; macOS, where `swift test` builds this, has no
+    /// navigation bar to hide.
+    fileprivate func hidesNavigationBar() -> some View {
+        #if os(iOS)
+        toolbar(.hidden, for: .navigationBar)
+        #else
+        self
+        #endif
     }
 }
 
