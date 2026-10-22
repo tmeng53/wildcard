@@ -99,7 +99,7 @@ extension Activity {
     }
 
     /// The name as plain text, for lines that join several.
-    var localizedName: String {
+    public var localizedName: String {
         switch self {
         case .sport(let sport): sport.localizedName
         case .custom(let custom): custom.name
