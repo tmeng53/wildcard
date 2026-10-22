@@ -57,6 +57,23 @@ public enum Palette {
     public static let climbingText = SRGBColor(red: 0x7A, green: 0x3E, blue: 0x24)
     public static let climbingFloor = SRGBColor(red: 0xEB, green: 0xDD, blue: 0xD5)
 
+    // MARK: Kraft: the carton a scene nobody in the squad has opened comes in (scene pick)
+
+    /// The carton's sides.
+    public static let kraft = SRGBColor(red: 0xD2, green: 0xAE, blue: 0x80)
+    /// Its base edge and the tile's band line.
+    public static let kraftShade = SRGBColor(red: 0xC3, green: 0x9C, blue: 0x6C)
+    public static let kraftBandLine = SRGBColor(red: 0xB8, green: 0x8E, blue: 0x5E)
+    /// The closed flaps: the left one, the right one in shadow.
+    public static let kraftFlap = SRGBColor(red: 0xC7, green: 0x9E, blue: 0x6D)
+    public static let kraftFlapShade = SRGBColor(red: 0xBE, green: 0x95, blue: 0x63)
+    /// Packing tape across the flaps.
+    public static let kraftTape = SRGBColor(red: 0xE6, green: 0xCD, blue: 0xA4)
+    /// The printed "this way up" arrows and handle.
+    public static let kraftInk = SRGBColor(red: 0x9E, green: 0x78, blue: 0x49)
+    /// The ink over a page while a carton is opened on it.
+    public static let dusk = SRGBColor(red: 0x1A, green: 0x1C, blue: 0x22)
+
     // MARK: Clothes: outfit swatches for the character only, never UI color
 
     public static let cobalt = SRGBColor(red: 0x2D, green: 0x5B, blue: 0xA0)

@@ -12,3 +12,11 @@ public enum Scrim {
     public static let fadeIn: Double = 0.20
     public static let fadeOut: Double = 0.16
 }
+
+/// The scene-pick reveal's own colours, beside the scenes' (approved 2026-10-22).
+public enum Reveal {
+    /// The ink the page dims under.
+    public static let dim = Palette.dusk
+    /// The kraft confetti, the carton's tape colour.
+    public static let kraft = Palette.kraftTape
+}

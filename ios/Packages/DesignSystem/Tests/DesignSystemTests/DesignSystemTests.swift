@@ -314,7 +314,42 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
+        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption"])
+        #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
+    }
+}
+
+struct KraftTests {
+    /// The carton's colours, from the approved scene-pick prototype (2026-10-22).
+    @Test func theCartonIsKraftFromThePrototype() {
+        #expect(
+            [
+                Palette.kraft, Palette.kraftShade, Palette.kraftBandLine, Palette.kraftFlap, Palette.kraftFlapShade,
+                Palette.kraftTape, Palette.kraftInk, Palette.dusk,
+            ].map(\.hex) == ["#D2AE80", "#C39C6C", "#B88E5E", "#C79E6D", "#BE9563", "#E6CDA4", "#9E7849", "#1A1C22"])
+        #expect(TypeRamp.caption.size == 12 && TypeRamp.caption.face == .text(.regular))
+    }
+}
+
+struct EasingTests {
+    /// The prototype's curves at a few points, as its JavaScript computes them.
+    @Test func curvesMatchThePrototype() {
+        func near(_ value: Double, _ expected: Double) -> Bool { abs(value - expected) < 1e-9 }
+        #expect(near(Easing.cubicOut(0.5), 0.875) && near(Easing.quadIn(0.5), 0.25))
+        #expect(near(Easing.cubicInOut(0.25), 0.0625) && near(Easing.cubicInOut(0.75), 0.9375))
+        #expect(near(Easing.backOut(0.5), 1.0875) && near(Easing.backOut(1), 1) && near(Easing.backOut(0), 0))
+        #expect(Easing.squash(1) == 0 && near(Easing.squash(0), 1))
+        #expect(Easing.progress(1.25, from: 1, lasting: 0.5) == 0.5 && Easing.progress(0, from: 1, lasting: 0.4) == 0)
+        #expect(Easing.mix(10, 20, 0.25) == 12.5)
+        // CSS ease-in-out, as the prototype's bezier solver gives it.
+        #expect(abs(Easing.easeInOut(0.25) - 0.129_161) < 1e-4 && abs(Easing.easeInOut(0.5) - 0.5) < 1e-4)
+    }
+
+    /// A picked carton's shake: -7°, 6°, -4°, 2° in the first fifth of 2.4 s, then still.
+    @Test func thePickedCartonWiggles() {
+        #expect(abs(Wiggle.degrees(at: 0.096) + 7) < 1e-6 && abs(Wiggle.degrees(at: 0.192) - 6) < 1e-6)
+        #expect(Wiggle.degrees(at: 0) == 0 && Wiggle.degrees(at: 1.2) == 0)
+        #expect(abs(Wiggle.degrees(at: 2.4 + 0.288) + 4) < 1e-6)
     }
 }
 
@@ -328,7 +363,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "unbox",
             ])
         #expect(Haptic.ringTicks == 3)
     }
