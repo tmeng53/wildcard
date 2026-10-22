@@ -21,7 +21,15 @@ import { AppleAuthorizationCodeInvalidError } from '../errors.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
-import { adminOn, aiConsentOn, config, noJobs, pushOn, signOut, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signOut,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:

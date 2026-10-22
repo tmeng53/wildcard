@@ -29,7 +29,14 @@ import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.j
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, aiConsentOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
