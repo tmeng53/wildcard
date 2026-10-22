@@ -688,10 +688,11 @@ if want account; then
       (select count(*) from public.profiles where member_id = '$leaver') || ' ' ||
       (select count(*) from public.check_ins where member_id = '$leaver') || ' ' ||
       (select count(*) from public.squad_members where member_id = '$leaver') || ' ' ||
+      (select count(*) from public.ai_consents where member_id = '$leaver') || ' ' ||
       (select count(*) from storage.objects where name like '$leaver/%') || ' ' ||
       (select count(*) from public.squad_members where squad_id = '$squad')")"
-  [ "$left" = "0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, photos should be gone and the squad left to mate: $left"
-  echo "account: deleted (204): no user, profile, check-in, membership or photo left; the squad stays with mate"
+  [ "$left" = "0 0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, AI consent, photos should be gone and the squad left to mate: $left"
+  echo "account: deleted (204): no user, profile, check-in, membership, AI consent or photo left; the squad stays with mate"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 401
