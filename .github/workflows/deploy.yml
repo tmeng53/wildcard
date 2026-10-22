@@ -119,8 +119,9 @@ jobs:
         run: |
           # --update-* keeps what was set by hand in the console (APNS_*, APPLE_*, LLM_PROVIDER...).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
-          # Optional keys: the server runs without them, with that feature off.
-          for key in openai-api-key anthropic-api-key; do
+          # Optional keys: the server runs without them, with that feature off (JOBS_TOKEN: the
+          # scheduled jobs, such as the daily progress push).
+          for key in openai-api-key anthropic-api-key jobs-token; do
             if gcloud secrets describe "$key" >/dev/null 2>&1; then
               variable="$(tr 'a-z-' 'A-Z_' <<<"$key")"
               secrets="$secrets,$variable=$key:latest"
