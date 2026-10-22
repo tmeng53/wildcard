@@ -49,7 +49,10 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(code.waitForExistence(timeout: Self.wait), "no invite code field")
         code.tap()
         code.typeText("k7q2m9xd")
-        XCTAssertTrue(app.otherElements["squad.found"].waitForExistence(timeout: Self.wait), "the squad wasn't found")
+        // The found squad is one combined element, which reads as text rather than a group.
+        XCTAssertTrue(
+            app.descendants(matching: .any)["squad.found"].waitForExistence(timeout: Self.wait),
+            "the squad wasn't found")
         let squadDone = app.buttons["squad.done"]
         XCTAssertFalse(squadDone.isEnabled, "加入小队 is on before agreeing to AI")
         app.buttons["squad.aiConsent"].tap()
@@ -85,7 +88,7 @@ final class SignUpUITests: XCTestCase {
     /// Frames of 上场 as fast as the simulator takes them, for the MP4; the squad card has
     /// dropped in by three seconds, and home takes over at the end.
     private func watchTheEntrance(in app: XCUIApplication) {
-        let entrance = app.otherElements["entrance"]
+        let entrance = app.descendants(matching: .any)["entrance"]
         XCTAssertTrue(entrance.waitForExistence(timeout: Self.wait), "上场 never started")
         let start = Date.now
         var frame = 0
