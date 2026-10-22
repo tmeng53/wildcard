@@ -20,6 +20,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -59,6 +60,7 @@ const app = createApp({
   members: createMembers({ store: createPostgresProfileStore(db) }),
   push: pushOn(db),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

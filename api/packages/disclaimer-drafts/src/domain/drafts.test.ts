@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { DraftReason, mentionsSelfHarm } from './draft-request.js';
+import { mentionsSelfHarm } from '@wildcard/typed-text';
+
+import { DraftReason } from './draft-request.js';
 import { outcomeOf } from './drafts.js';
 import { promptFor } from './prompt.js';
 

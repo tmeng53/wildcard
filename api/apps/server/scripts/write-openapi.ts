@@ -70,10 +70,19 @@ const app = createApp({
     sender: createOffSender(),
   }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  weeklyAwards: {
+    awards: {
+      give: unused,
+      find: unused,
+      claimNudge: unused,
+      claimWinners: unused,
+    },
+    clock: unused,
+  },
   log: createLog(unused),
   jobs: { token: undefined, interactions: [], clock: unused },
   admin: {
-    admins: () => ({ requireAdmin: unused, logChange: unused, listLog: unused }),
+    admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL('http://localhost:54321/auth/v1'),

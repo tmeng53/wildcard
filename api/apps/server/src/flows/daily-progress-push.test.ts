@@ -22,6 +22,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { adminOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
   reactionInteractions,
@@ -89,6 +90,7 @@ const deps = {
   squads,
   push,
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+  weeklyAwards: unusedWeeklyAwards,
   log,
   jobs: { token: JOBS_TOKEN, interactions, clock: () => new Date() },
   admin: adminOn(),

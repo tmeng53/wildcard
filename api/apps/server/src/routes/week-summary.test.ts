@@ -21,6 +21,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -61,6 +62,7 @@ const app = createApp({
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+  weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,
