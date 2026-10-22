@@ -7,6 +7,7 @@ import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
+import type { WeeklyAwards } from '@wildcard/weekly-awards';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
@@ -37,6 +38,7 @@ import { pushSettings } from './routes/push-settings.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadToday } from './routes/squad-today.js';
+import { weekStory } from './routes/week-story.js';
 import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
@@ -57,6 +59,8 @@ export interface AppDependencies {
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
+  /** Each squad's weekly awards, and the clock that says when they are due. */
+  readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {
@@ -111,6 +115,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', weekSummary(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
+  app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.
   app.route(
     '/',

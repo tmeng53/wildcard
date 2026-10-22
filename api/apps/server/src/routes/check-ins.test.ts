@@ -26,6 +26,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -69,6 +70,7 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
+  weeklyAwards: unusedWeeklyAwards,
   aiConsent: aiConsentOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,

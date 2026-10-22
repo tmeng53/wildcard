@@ -30,6 +30,12 @@ import {
   createPush,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  AwardsWriterUnavailableError,
+  createPostgresAwardsStore,
+  createWeeklyAwards,
+  type LanguageModel as AwardsModel,
+} from '@wildcard/weekly-awards';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
@@ -74,6 +80,25 @@ const model: LanguageModel =
       ? createOpenAILanguageModel({ apiKey: llm.apiKey, model: llm.model })
       : createAnthropicLanguageModel({ apiKey: llm.apiKey, model: llm.model });
 if (llm === undefined) log.info('no key for LLM_PROVIDER: AI drafts are off');
+// AWARDS_LLM_PROVIDER writes each squad's weekly awards, in a job nobody waits on: a longer
+// answer, given more time. Without its key the awards stay pending.
+const awardsLlm = config.awardsModel;
+const awardsOptions = { timeoutMs: 120_000, maxOutputTokens: 16_384 };
+const awardsModel: AwardsModel =
+  awardsLlm === undefined
+    ? {
+        answer: () =>
+          Promise.reject(
+            new AwardsWriterUnavailableError({
+              cause: new Error('No API key is set for AWARDS_LLM_PROVIDER'),
+            }),
+          ),
+      }
+    : awardsLlm.provider === 'openai'
+      ? createOpenAILanguageModel({ ...awardsLlm, ...awardsOptions })
+      : createAnthropicLanguageModel({ ...awardsLlm, ...awardsOptions });
+if (awardsLlm === undefined) log.info('no key for AWARDS_LLM_PROVIDER: weekly awards stay pending');
+const awards = createWeeklyAwards({ model: awardsModel, store: createPostgresAwardsStore(db) });
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 if (config.appleSignInKey === undefined) {
   log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
@@ -160,6 +185,7 @@ const app = createApp({
     random: Math.random,
   }),
   push,
+  weeklyAwards: { awards, clock: () => new Date() },
   log,
   jobs: {
     token: config.jobsToken,

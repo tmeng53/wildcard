@@ -35,6 +35,9 @@
       "path": "packages/squads"
     },
     {
+      "path": "packages/weekly-awards"
+    },
+    {
       "path": "apps/server"
     }
   ]

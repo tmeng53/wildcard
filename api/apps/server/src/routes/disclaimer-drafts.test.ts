@@ -33,6 +33,7 @@ import {
 } from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database, and each provider's
 // adapter answering from recorded responses instead of the provider.
@@ -100,6 +101,7 @@ function appWith(model: LanguageModel) {
     }),
     push: pushOn(db),
     aiConsent: aiConsentOn(db),
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),

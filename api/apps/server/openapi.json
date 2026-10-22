@@ -2159,6 +2159,301 @@
           "days"
         ],
         "additionalProperties": false
+      },
+      "WeekStory": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
+              },
+              "squad": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              "hottest": {
+                "$ref": "#/components/schemas/StoryHottest"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ready"
+                ]
+              },
+              "titles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "member": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "titles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryTitle"
+                      },
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "description": "The best first."
+                    }
+                  },
+                  "required": [
+                    "member",
+                    "titles"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too."
+              }
+            },
+            "required": [
+              "version",
+              "language",
+              "squad",
+              "week",
+              "status",
+              "titles"
+            ],
+            "additionalProperties": false,
+            "description": "The week’s titles are written."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
+              },
+              "squad": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              "hottest": {
+                "$ref": "#/components/schemas/StoryHottest"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "language",
+              "squad",
+              "week",
+              "status"
+            ],
+            "additionalProperties": false,
+            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
+          }
+        ]
+      },
+      "StoryHottest": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained",
+              "healthyMeal",
+              "cheatMeal",
+              "disclaimer"
+            ]
+          },
+          "sport": {
+            "type": "string",
+            "description": "For a 练了: the listed sport’s key, or the name of the member’s own."
+          },
+          "caption": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "description": "For a 请假条: its text."
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryPhoto"
+            },
+            "description": "Up to 3 photos, the cover first; empty when there are none."
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Today `cheer`, `highlight` or `lol`; show any kind from its label."
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Its name, in the language asked for."
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "kind",
+                "label",
+                "count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Teammates’ reactions on it by kind, as they stood at the awards."
+          }
+        },
+        "required": [
+          "checkIn",
+          "day",
+          "kind",
+          "photos",
+          "reactions"
+        ],
+        "additionalProperties": false,
+        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any."
+      },
+      "StoryPhoto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "`GET` the photo here. It works for an hour."
+          }
+        },
+        "required": [
+          "path",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "StoryTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The title (头衔), at most 6 characters.",
+            "example": "雨中狠人"
+          },
+          "speech": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Its award line (颁奖词), at most 24 characters, citing something real from the week.",
+            "example": "周三下着雨还去跑了 5 公里"
+          },
+          "move": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          }
+        },
+        "required": [
+          "title",
+          "speech",
+          "move"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {}
@@ -4192,6 +4487,193 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/story/nudge": {
+      "post": {
+        "operationId": "nudgeSquadWeekStory",
+        "summary": "Nudges the organisers about a story whose titles haven’t come (催一下主办方)",
+        "description": "For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Nudged, or nothing to nudge about"
+          },
+          "400": {
+            "description": "Not a Monday",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/story": {
+      "get": {
+        "operationId": "getSquadWeekStory",
+        "summary": "A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)",
+        "description": "Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The story, or `pending` while it is being written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekStory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a Monday",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
             "content": {
               "application/problem+json": {
                 "schema": {

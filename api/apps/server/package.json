@@ -23,6 +23,7 @@
     "@wildcard/memes": "workspace:*",
     "@wildcard/push": "workspace:*",
     "@wildcard/squads": "workspace:*",
+    "@wildcard/weekly-awards": "workspace:*",
     "hono": "4.13.13",
     "kysely": "0.29.7",
     "openai": "7.39.0",

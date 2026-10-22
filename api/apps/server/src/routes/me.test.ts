@@ -27,6 +27,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 async function send(
   path: string,
@@ -67,6 +68,7 @@ async function send(
       inviteCodes: randomInviteCodes,
       aiConsent: () => Promise.resolve(true),
     }),
+    weeklyAwards: unusedWeeklyAwards,
     aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,

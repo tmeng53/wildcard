@@ -19,14 +19,8 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import {
-  adminOn,
-  aiConsentOn,
-  config,
-  noJobs,
-  pushOn,
-  signUp,
-} from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -75,6 +69,7 @@ const app = createApp({
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
+  weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
