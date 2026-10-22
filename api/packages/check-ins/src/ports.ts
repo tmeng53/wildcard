@@ -2,7 +2,7 @@ import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check
 import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
-import type { Reaction, ReactionKind, SaveOutcome } from './domain/reaction.js';
+import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { Reply, ReplyKind } from './domain/reply.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
@@ -47,7 +47,7 @@ export interface ReactionStore {
   /** Saves the member's reaction on a check-in, in place of any they left before. */
   save(
     checkIn: CheckInId,
-    reaction: { readonly member: MemberId; readonly kind: ReactionKind; readonly reactedAt: Date },
+    reaction: { readonly member: MemberId; readonly emoji: Emoji; readonly reactedAt: Date },
   ): Promise<SaveOutcome>;
   /** Takes the member's reaction off a check-in, if there is one. */
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;

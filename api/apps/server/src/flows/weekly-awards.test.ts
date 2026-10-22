@@ -11,6 +11,7 @@ import {
   createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
+  Emoji,
   type CheckInRecord,
 } from '@wildcard/check-ins';
 import {
@@ -297,7 +298,7 @@ const Story = z.object({
       kind: z.string(),
       caption: z.string().optional(),
       photos: z.array(z.object({ path: z.string(), url: z.url() })),
-      reactions: z.array(z.object({ kind: z.string(), label: z.string(), count: z.int() })),
+      reactions: z.array(z.object({ emoji: z.string(), count: z.int() })),
     })
     .optional(),
 });
@@ -337,7 +338,7 @@ describe('weekly awards', () => {
     });
     await reactions.save(top, {
       member: CheckInMember.parse(bo.userId),
-      kind: 'cheer',
+      emoji: Emoji.parse('❤️'),
       reactedAt: new Date(),
     });
 
@@ -375,7 +376,7 @@ describe('weekly awards', () => {
     const forAna = Story.parse((await read({ token: ana.token, squad })).body);
     expect(forAna.hottest?.checkIn).toBe(top);
     expect(forAna.hottest?.caption).toBe(caption);
-    expect(forAna.hottest?.reactions).toStrictEqual([{ kind: 'cheer', label: '加油', count: 1 }]);
+    expect(forAna.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
     const view = forAna.hottest?.photos[0];
     expect(view?.path).toBe(photo);
     expect((await fetch(view?.url ?? '')).ok).toBe(true);
@@ -422,7 +423,7 @@ describe('weekly awards', () => {
     const top = await trained(ana, { squad });
     await reactions.save(top, {
       member: CheckInMember.parse(bo.userId),
-      kind: 'lol',
+      emoji: Emoji.parse('😂'),
       reactedAt: new Date(),
     });
 
@@ -439,7 +440,7 @@ describe('weekly awards', () => {
       undefined,
       top,
     ]);
-    expect(pending.hottest?.reactions).toStrictEqual([{ kind: 'lol', label: '笑死', count: 1 }]);
+    expect(pending.hottest?.reactions).toStrictEqual([{ emoji: '😂', count: 1 }]);
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(0);
 
     // 催一下主办方: the first nudge tells each admin which squad, how many tries failed and why.

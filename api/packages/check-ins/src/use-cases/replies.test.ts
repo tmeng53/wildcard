@@ -19,8 +19,11 @@ import { createPostgresReactionStore } from '../adapters/postgres-reaction-store
 import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
+import { Emoji } from '../domain/reaction.js';
 import { CheckInNotFoundError, NotADisclaimerError, OwnDisclaimerReplyError } from '../errors.js';
 import { createCheckIns } from './check-ins.js';
+
+const laughing = Emoji.parse('😂');
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
 const db = new Kysely<CheckInTables & SquadTables>({
@@ -154,16 +157,18 @@ describe('replying to a 请假条', () => {
 
     now = new Date('2026-10-18T20:05:00.000Z');
     await checkIns.reply({ checkIn: excuse.id, member: ann, kind: 'approved' });
-    await checkIns.react({ checkIn: excuse.id, member: ann, kind: 'lol' });
+    await checkIns.react({ checkIn: excuse.id, member: ann, emoji: laughing });
     await checkIns.removeReaction({ checkIn: excuse.id, member: ann });
     expect(await checkIns.listReplies({ checkIn: excuse.id, viewer: tracy })).toStrictEqual([
       { member: ann, kind: 'approved', repliedAt: new Date('2026-10-18T20:05:00.000Z') },
     ]);
-    await checkIns.react({ checkIn: excuse.id, member: ann, kind: 'lol' });
+    await checkIns.react({ checkIn: excuse.id, member: ann, emoji: laughing });
     await checkIns.removeReply({ checkIn: excuse.id, member: ann });
     expect(
-      (await checkIns.listReactions({ checkIn: excuse.id, viewer: tracy })).map(({ kind }) => kind),
-    ).toStrictEqual(['lol']);
+      (await checkIns.listReactions({ checkIn: excuse.id, viewer: tracy })).map(
+        ({ emoji }) => emoji,
+      ),
+    ).toStrictEqual(['😂']);
   });
 
   it('takes a reply off, and taking it off again is fine', async () => {

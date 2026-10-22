@@ -155,11 +155,11 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     const first = await call('PUT', {
       path,
       token: ann.token,
-      body: { version: 1, kind: 'cheer' },
+      body: { version: 1, emoji: '❤️' },
     });
     expect(first.status).toBe(201);
-    expect(first.body).toMatchObject({ version: 1, member: ann.userId, kind: 'cheer' });
-    await call('PUT', { path, token: bo.token, body: { version: 1, kind: 'highlight' } });
+    expect(first.body).toMatchObject({ version: 1, member: ann.userId, emoji: '❤️' });
+    await call('PUT', { path, token: bo.token, body: { version: 1, emoji: '💪' } });
 
     for (const viewer of [tracy, bo]) {
       const listed = await call('GET', {
@@ -170,8 +170,8 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
       expect(listed.body).toMatchObject({
         version: 1,
         reactions: [
-          { member: ann.userId, kind: 'cheer' },
-          { member: bo.userId, kind: 'highlight' },
+          { member: ann.userId, emoji: '❤️' },
+          { member: bo.userId, emoji: '💪' },
         ],
       });
     }
@@ -184,33 +184,33 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     const first = await call('PUT', {
       path,
       token: ann.token,
-      body: { version: 1, kind: 'cheer' },
+      body: { version: 1, emoji: '❤️' },
     });
     const again = await call('PUT', {
       path,
       token: ann.token,
-      body: { version: 1, kind: 'cheer' },
+      body: { version: 1, emoji: '❤️' },
     });
     const changed = await call('PUT', {
       path,
       token: ann.token,
-      body: { version: 1, kind: 'lol' },
+      body: { version: 1, emoji: '😂' },
     });
     expect([first.status, again.status, changed.status]).toStrictEqual([201, 200, 200]);
     expect(again.body).toStrictEqual(first.body);
-    expect(changed.body).toMatchObject({ kind: 'lol' });
+    expect(changed.body).toMatchObject({ emoji: '😂' });
   });
 
   it('shows a teammate only the reactions from squads they share the check-in through', async () => {
     const [tracy, ann, bo] = [await signUp(), await signUp(), await signUp()];
     const run = await checkIn(tracy.token, await squadOf(tracy, ann), await squadOf(tracy, bo));
     const path = `/check-ins/${run}/reactions/mine`;
-    await call('PUT', { path, token: ann.token, body: { version: 1, kind: 'cheer' } });
-    await call('PUT', { path, token: bo.token, body: { version: 1, kind: 'lol' } });
+    await call('PUT', { path, token: ann.token, body: { version: 1, emoji: '❤️' } });
+    await call('PUT', { path, token: bo.token, body: { version: 1, emoji: '😂' } });
 
     expect(
       await call('GET', { path: `/check-ins/${run}/reactions`, token: ann.token }),
-    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, kind: 'cheer' }] } });
+    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, emoji: '❤️' }] } });
     const forTracy = await call('GET', { path: `/check-ins/${run}/reactions`, token: tracy.token });
     expect(forTracy.body).toMatchObject({
       reactions: [{ member: ann.userId }, { member: bo.userId }],
@@ -221,7 +221,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     const [tracy, ann] = [await signUp(), await signUp()];
     const run = await checkIn(tracy.token, await squadOf(tracy, ann));
     const path = `/check-ins/${run}/reactions/mine`;
-    await call('PUT', { path, token: ann.token, body: { version: 1, kind: 'cheer' } });
+    await call('PUT', { path, token: ann.token, body: { version: 1, emoji: '❤️' } });
     expect((await call('DELETE', { path, token: ann.token })).status).toBe(204);
     expect((await call('DELETE', { path, token: ann.token })).status).toBe(204);
     expect(
@@ -238,11 +238,13 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     const path = `/check-ins/${run}/reactions/mine`;
 
     expect(
-      await call('PUT', { path, token: tracy.token, body: { version: 1, kind: 'cheer' } }),
+      await call('PUT', { path, token: tracy.token, body: { version: 1, emoji: '❤️' } }),
     ).toMatchObject({ status: 400, body: { reason: 'OWN_CHECK_IN_REACTION' } });
-    expect(
-      await call('PUT', { path, token: stranger.token, body: { version: 1, kind: 'steady' } }),
-    ).toMatchObject({ status: 400, body: { reason: 'REQUEST_INVALID' } });
+    for (const emoji of ['1', '❤️❤️', 'ok']) {
+      expect(
+        await call('PUT', { path, token: stranger.token, body: { version: 1, emoji } }),
+      ).toMatchObject({ status: 400, body: { reason: 'REQUEST_INVALID' } });
+    }
     for (const [method, route] of [
       ['PUT', path],
       ['DELETE', path],
@@ -252,7 +254,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
         await call(method, {
           path: route,
           token: stranger.token,
-          body: method === 'PUT' ? { version: 1, kind: 'cheer' } : undefined,
+          body: method === 'PUT' ? { version: 1, emoji: '❤️' } : undefined,
         }),
       ).toStrictEqual({
         status: 404,
@@ -273,7 +275,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     expect(
       await call('PUT', {
         path: `/check-ins/${randomUUID()}/reactions/mine`,
-        body: { version: 1, kind: 'cheer' },
+        body: { version: 1, emoji: '❤️' },
       }),
     ).toMatchObject({ status: 401, body: { reason: 'AUTH_TOKEN_MISSING' } });
   });

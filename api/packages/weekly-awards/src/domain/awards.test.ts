@@ -112,18 +112,18 @@ const checkIn = (overrides: Partial<WeekCheckIn>): WeekCheckIn => ({
 
 describe('topCheckInOf', () => {
   it('is the check-in with the most reactions, the latest on a tie', () => {
-    const first = checkIn({ id: 'c0000000-0000-4000-8000-000000000001', reactions: { cheer: 2 } });
+    const first = checkIn({ id: 'c0000000-0000-4000-8000-000000000001', reactions: { '❤️': 2 } });
     const second = checkIn({
       id: 'c0000000-0000-4000-8000-000000000002',
       kind: 'cheatMeal',
       sport: undefined,
       caption: '火锅',
       photos: ['a/b', 'a/c'],
-      reactions: { lol: 3 },
+      reactions: { '😂': 3 },
     });
     const third = checkIn({
       id: 'c0000000-0000-4000-8000-000000000003',
-      reactions: { cheer: 1, lol: 2 },
+      reactions: { '❤️': 1, '😂': 2 },
     });
     expect(topCheckInOf([first, second, third])).toStrictEqual({
       checkIn: third.id,
@@ -131,7 +131,7 @@ describe('topCheckInOf', () => {
       kind: 'trained',
       sport: 'run',
       photos: [],
-      reactions: { cheer: 1, lol: 2 },
+      reactions: { '❤️': 1, '😂': 2 },
     });
     expect(topCheckInOf([first, second])).toStrictEqual({
       checkIn: second.id,
@@ -139,7 +139,7 @@ describe('topCheckInOf', () => {
       kind: 'cheatMeal',
       caption: '火锅',
       photos: ['a/b', 'a/c'],
-      reactions: { lol: 3 },
+      reactions: { '😂': 3 },
     });
   });
 

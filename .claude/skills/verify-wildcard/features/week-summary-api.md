@@ -23,7 +23,7 @@ server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 week-summary: squad=<id> in Etc/GMT+7 (2026-10-19) ace trained on a week planned all rest, writer posted a 请假条, fan laughed at it
 week-summary: still being played; podium and crown ace (1 day), best 请假条 writer's (1 reaction)
-week-summary: squad 1/10 days in 2 check-ins, 1 笑死, which the fan sees as given
+week-summary: squad 1/10 days in 2 check-ins, one 😂, which the fan sees as given
 week-summary: next week refused (400 WEEK_NOT_STARTED), outsider refused (403 SQUAD_NOT_JOINED)
 api-journeys: ok (week-summary)
 ```
@@ -35,7 +35,7 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 `<squad>` is the id on the first `week-summary:` line, not the one on `members:`.
 
 - `psql "$DB_URL" -c "select member_id, day, kind from public.check_ins where id in (select check_in_id from public.check_in_squads where squad_id = '<squad>') order by created_at"`: two rows on the logged day, a `trained` from ace and a `disclaimer` from writer.
-- `psql "$DB_URL" -c "select member_id, kind from public.check_in_reactions where check_in_id in (select check_in_id from public.check_in_squads where squad_id = '<squad>')"`: one `lol` from the fan.
+- `psql "$DB_URL" -c "select member_id, emoji from public.check_in_reactions where check_in_id in (select check_in_id from public.check_in_squads where squad_id = '<squad>')"`: one 😂 from the fan.
 
 ## Worth probing
 

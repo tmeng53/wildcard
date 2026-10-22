@@ -270,20 +270,20 @@ public final class TodayStore {
     }
 
     /// The member's own reaction on a check-in, if any.
-    public func myReaction(on checkIn: CheckInID) -> ReactionKind? {
+    public func myReaction(on checkIn: CheckInID) -> Emoji? {
         guard let member = savedHome?.member else { return nil }
-        return reactions[checkIn]?.first { $0.member == member }?.kind
+        return reactions[checkIn]?.first { $0.member == member }?.emoji
     }
 
     /// Sets the member's reaction, shown at once and taken back if the server says no.
-    public func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(CheckInError) {
+    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
         guard let member = savedHome?.member else { throw .notSent }
         let before = reactions[checkIn]
         var after = (before ?? []).filter { $0.member != member }
-        after.append(Reaction(member: member, kind: kind, reactedAt: Timestamp(now())))
+        after.append(Reaction(member: member, emoji: emoji, reactedAt: Timestamp(now())))
         reactions[checkIn] = after
         do {
-            try await backend.react(kind, to: checkIn)
+            try await backend.react(emoji, to: checkIn)
         } catch {
             reactions[checkIn] = before
             throw error

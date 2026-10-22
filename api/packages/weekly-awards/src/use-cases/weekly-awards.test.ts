@@ -89,7 +89,7 @@ const checkIn = (reactions: Record<string, number> = {}) => ({
 });
 
 const weekOf = ([ana, bo, cy]: readonly [MemberId, MemberId, MemberId]): MemberWeek[] => [
-  { member: ana, timeZone: 'UTC', checkIns: [checkIn({ cheer: 2 }), checkIn()] },
+  { member: ana, timeZone: 'UTC', checkIns: [checkIn({ '❤️': 2 }), checkIn()] },
   { member: cy, timeZone: 'UTC', checkIns: [] },
   { member: bo, timeZone: 'UTC', checkIns: [checkIn()] },
 ];
@@ -120,7 +120,7 @@ describe('createWeeklyAwards', () => {
             kind: 'trained',
             sport: 'run',
             photos: [],
-            reactions: { cheer: 2 },
+            reactions: { '❤️': 2 },
           },
         },
         {

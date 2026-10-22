@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { LocalDay, ReactionKind, SquadId, WeekStart } from '@wildcard/check-ins';
+import { Emoji, LocalDay, SquadId, WeekStart } from '@wildcard/check-ins';
 import {
   AWARD_MOVES,
   CheckInKind,
@@ -20,7 +20,6 @@ import {
 import { PhotoPath, type PhotoStorage, type VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
-import { languageOf, REACTION_COPY } from './week-summary-copy.js';
 
 /** How long a photo's view URL works. The app reads the story again for fresh ones. */
 const PHOTO_VIEW_SECONDS = 60 * 60;
@@ -83,27 +82,20 @@ const Hottest = z
     reactions: z
       .array(
         z.strictObject({
-          kind: z.string().min(1).meta({
-            description: 'Today `cheer`, `highlight` or `lol`; show any kind from its label.',
-          }),
-          label: z.string().min(1).meta({ description: 'Its name, in the language asked for.' }),
+          emoji: Emoji.meta({ description: 'Any one emoji.', example: '❤️' }),
           count: z.int().min(1),
         }),
       )
-      .meta({ description: 'Teammates’ reactions on it by kind, as they stood at the awards.' }),
+      .meta({
+        description:
+          'Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at ' +
+          'the awards.',
+      }),
   })
   .openapi('StoryHottest');
 
 const storyFields = {
   version: bodyVersion(1),
-  language: z
-    .string()
-    .min(1)
-    .meta({
-      description:
-        'The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines ' +
-        'in Chinese.',
-    }),
   squad: z.strictObject({ id: z.uuid(), name: z.string() }),
   week: z.strictObject({ from: WeekStart, to: LocalDay }),
   hottest: Hottest.optional().meta({
@@ -172,8 +164,7 @@ export function weekStory(
       'Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s ' +
       'check-ins made before then: 1 to 3 titles for each member who checked in, nothing for ' +
       'anyone who didn’t. Check-ins made later still count for the week, only not for its ' +
-      'awards. Only for members of the squad. Reaction labels come in the language of the ' +
-      'request’s `Accept-Language`, as the week summary’s do.',
+      'awards. Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params },
@@ -224,7 +215,6 @@ export function weekStory(
     })
     .openapi(route, async (c) => {
       const { squadId, weekStart } = c.req.valid('param');
-      const language = languageOf(c.req.header('accept-language'));
       const viewer = c.var.caller.userId;
       const story = await squadStory(deps, {
         viewer,
@@ -243,15 +233,13 @@ export function weekStory(
           if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
           return { path, url: url.href };
         }),
-        reactions: Object.entries(top.reactions).map(([kind, count]) => {
-          const known = ReactionKind.safeParse(kind);
-          return { kind, label: known.success ? REACTION_COPY[known.data][language] : kind, count };
-        }),
+        reactions: Object.entries(top.reactions)
+          .sort(([, a], [, b]) => b - a)
+          .map(([emoji, count]) => ({ emoji: Emoji.parse(emoji), count })),
       });
       const to = new Date(Date.parse(weekStart) + 6 * DAY).toISOString().slice(0, 10);
       const fields = {
         version: 1 as const,
-        language,
         squad: story.squad,
         week: { from: weekStart, to },
         ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),

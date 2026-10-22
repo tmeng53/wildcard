@@ -131,10 +131,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         reactionsByCheckIn[checkIn] ?? []
     }
 
-    public func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(CheckInError) {
+    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
         guard let member = current?.member else { throw .notInSquad }
         var list = (reactionsByCheckIn[checkIn] ?? []).filter { $0.member != member }
-        list.append(Reaction(member: member, kind: kind, reactedAt: Timestamp(Date())))
+        list.append(Reaction(member: member, emoji: emoji, reactedAt: Timestamp(Date())))
         reactionsByCheckIn[checkIn] = list
     }
 

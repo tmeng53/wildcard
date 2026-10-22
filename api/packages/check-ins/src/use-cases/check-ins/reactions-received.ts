@@ -1,11 +1,11 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
-import { sharedSquads, type ReactionKind } from '../../domain/reaction.js';
+import { sharedSquads } from '../../domain/reaction.js';
 import type { ReactionStore, SquadMembership } from '../../ports.js';
 
 /**
- * Who reacted to the member's check-ins in `[since, until)`, by kind: each teammate once per
- * kind, however many check-ins they reacted to. A reaction counts only while its author and the
- * member still share a squad the check-in went to, as in the reactions the member sees.
+ * Who reacted to the member's check-ins in `[since, until)`: each teammate once, however many
+ * check-ins they reacted to and with whichever emoji. A reaction counts only while its author
+ * and the member still share a squad the check-in went to, as in the reactions the member sees.
  */
 export async function reactionsReceived(
   {
@@ -17,12 +17,12 @@ export async function reactionsReceived(
     since,
     until,
   }: { readonly member: MemberId; readonly since: Date; readonly until: Date },
-): Promise<ReadonlyMap<ReactionKind, ReadonlySet<MemberId>>> {
+): Promise<ReadonlySet<MemberId>> {
   const [received, squads] = await Promise.all([
     reactions.receivedBy({ member, since, until }),
     membership.squadIdsOf(member),
   ]);
-  if (received.length === 0) return new Map();
+  if (received.length === 0) return new Set();
   const membersOf = new Map<SquadId, ReadonlySet<MemberId>>(
     await Promise.all(
       [...squads].map(
@@ -30,14 +30,12 @@ export async function reactionsReceived(
       ),
     ),
   );
-  const byKind = new Map<ReactionKind, Set<MemberId>>();
-  for (const { member: from, kind, audience } of received) {
+  const people = new Set<MemberId>();
+  for (const { member: from, audience } of received) {
     // The member is the author, so they see it through the squads it went to that they're in.
     const through = sharedSquads({ audience }, { viewerSquads: squads, authorSquads: squads });
     if (!through.some((squad) => membersOf.get(squad)?.has(from) === true)) continue;
-    const people = byKind.get(kind) ?? new Set<MemberId>();
     people.add(from);
-    byKind.set(kind, people);
   }
-  return byKind;
+  return people;
 }

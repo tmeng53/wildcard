@@ -18,7 +18,7 @@ public protocol CheckInBackend: Sendable {
     func save(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn
     func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction]
     /// Sets the member's one reaction on a check-in, replacing any earlier one.
-    func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(CheckInError)
+    func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError)
     func removeReaction(from checkIn: CheckInID) async throws(CheckInError)
 }
 
