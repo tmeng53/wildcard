@@ -40,7 +40,8 @@ struct StepPage<Content: View, Actions: View>: View {
                                 .frame(width: Self.characterSize.width, height: Self.characterSize.height)
                         }
                     }
-                    .frame(minHeight: Self.characterSize.height, alignment: .bottom)
+                    // Room for the character only on the steps that show one beside the title.
+                    .frame(minHeight: character == nil ? nil : Self.characterSize.height, alignment: .bottom)
                     content
                 }
                 .padding(.horizontal, Space.pageMargin)

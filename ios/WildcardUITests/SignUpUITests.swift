@@ -79,7 +79,11 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "一周练几天？ never appeared")
         settle()
         keepScreenshot(named: "45-signup-week")
-        app.buttons["week.choice.rest"].tap()
+        // The whole poster and the day's choices show above the buttons, with no scrolling.
+        let rest = app.buttons["week.choice.rest"]
+        XCTAssertLessThanOrEqual(count.frame.maxY, rest.frame.minY, "the week's total is under the choices")
+        XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
+        rest.tap()
         settle()
         keepScreenshot(named: "46-signup-week-changed")
         app.buttons["week.done"].tap()
