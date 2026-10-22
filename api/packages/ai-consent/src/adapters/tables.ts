@@ -3,7 +3,7 @@
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from 'kysely';
+import type { ColumnType } from "kysely";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
