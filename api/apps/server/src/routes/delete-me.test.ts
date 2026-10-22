@@ -8,7 +8,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -22,7 +21,7 @@ import { AppleAuthorizationCodeInvalidError } from '../errors.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
-import { adminOn, config, signOut, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signOut, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -67,10 +66,11 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     }),
     members,
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
-    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+    push: pushOn(db),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
+    jobs: noJobs,
     admin: adminOn(),
   });
   const call = async (

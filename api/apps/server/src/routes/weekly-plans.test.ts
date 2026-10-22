@@ -6,7 +6,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -16,7 +15,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -56,10 +55,11 @@ const app = createApp({
   }),
   members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
+  jobs: noJobs,
   admin: adminOn(),
 });
 

@@ -10,7 +10,13 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
+import {
+  createOffSender,
+  createPostgresDailyPushStore,
+  createPostgresDeviceStore,
+  createPostgresSettingsStore,
+  createPush,
+} from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from '../src/adapters/postgres.js';
@@ -55,7 +61,12 @@ const app = createApp({
     clock: unused,
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: createPush({
+    store: createPostgresDeviceStore(db),
+    settings: createPostgresSettingsStore(db),
+    daily: createPostgresDailyPushStore(db),
+    sender: createOffSender(),
+  }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
   weeklyAwards: {
     awards: {
@@ -67,6 +78,7 @@ const app = createApp({
     clock: unused,
   },
   log: createLog(unused),
+  jobs: { token: undefined, interactions: [], clock: unused },
   admin: {
     admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],

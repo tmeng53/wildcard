@@ -17,13 +17,7 @@ import {
   createMembers,
   createPostgresProfileStore,
 } from '@wildcard/members';
-import {
-  DeviceToken,
-  MemberId as PushMember,
-  createPostgresDeviceStore,
-  createPush,
-  type PushNotification,
-} from '@wildcard/push';
+import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
   createPostgresAwardsStore,
@@ -41,7 +35,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { giveWeeklyAwards } from './weekly-awards.js';
 
@@ -104,13 +98,10 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     },
   };
   const sent: { token: string; notification: PushNotification }[] = [];
-  const push = createPush({
-    store: createPostgresDeviceStore(db),
-    sender: {
-      send: (device, notification) => {
-        sent.push({ token: device.token, notification });
-        return Promise.resolve('sent');
-      },
+  const push = pushOn(db, {
+    send: (device, notification) => {
+      sent.push({ token: device.token, notification });
+      return Promise.resolve('sent');
     },
   });
   const awards = createWeeklyAwards({ model, store: createPostgresAwardsStore(db) });
@@ -147,6 +138,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
     log: createLog(() => undefined),
+    jobs: noJobs,
     admin: adminOn(),
   });
   const read = async ({
@@ -190,13 +182,10 @@ async function member(timeZone = 'America/Los_Angeles') {
   const signedUp = await signUp();
   await members.saveProfile({
     member: MembersMember.parse(signedUp.userId),
-    profile: { timeZone, catchphrase: null },
+    profile: { timeZone, catchphrase: null, character: null },
   });
   const token = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
-  await createPush({
-    store: createPostgresDeviceStore(db),
-    sender: { send: () => Promise.resolve('sent') },
-  }).registerDevice({
+  await pushOn(db).registerDevice({
     member: PushMember.parse(signedUp.userId),
     device: { token, environment: 'sandbox' },
   });

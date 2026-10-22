@@ -19,7 +19,6 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -30,7 +29,7 @@ import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.j
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
@@ -98,10 +97,11 @@ beforeAll(async () => {
             inviteCodes: randomInviteCodes,
           }),
           disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
-          push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+          push: pushOn(db),
           photos,
           weeklyAwards: unusedWeeklyAwards,
           log: createLog(() => undefined),
+          jobs: noJobs,
           admin: {
             ...admin,
             // Writing the log fails for a meme marked so, as a dropped connection would.

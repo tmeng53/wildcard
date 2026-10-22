@@ -38,6 +38,7 @@ describe('readConfig', () => {
       languageModel: undefined,
       awardsModel: undefined,
       appleSignInKey: undefined,
+      jobsToken: undefined,
       apns: undefined,
     });
   });

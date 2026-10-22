@@ -10,7 +10,7 @@ insert into storage.objects (bucket_id, name, owner_id) values
 -- Every table the migrations create, so a new one without the lock fails here.
 select is(
   (select array_agg(tablename::text order by tablename) from pg_tables where schemaname = 'public'),
-  array['admin_actions', 'admins', 'check_in_photos', 'check_in_reactions', 'check_in_squads', 'check_ins', 'disclaimer_draft_requests', 'memes', 'profiles', 'push_devices', 'squad_members', 'squads', 'weekly_award_winners', 'weekly_awards', 'weekly_plans'],
+  array['admin_actions', 'admins', 'check_in_photos', 'check_in_reactions', 'check_in_squads', 'check_ins', 'daily_pushes', 'disclaimer_draft_requests', 'memes', 'profiles', 'push_devices', 'push_settings', 'squad_members', 'squads', 'weekly_award_winners', 'weekly_awards', 'weekly_plans'],
   'these are all the tables'
 );
 select is(
