@@ -47,6 +47,17 @@ public final class TodayModel {
 
     var isBurstOpen = false
     private(set) var step = Step.scene
+
+    /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
+    /// anywhere outside its capsules closes it) or a check-in is being written (the compose and
+    /// 请假条 pages take the whole screen).
+    public var showsTabBar: Bool {
+        switch step {
+        case .scene, .pickingPhotos: !isBurstOpen
+        case .composing, .disclaimer: false
+        }
+    }
+
     /// The photos picked for the open compose step, the cover first.
     var photos: [PreparedPhoto] = []
     private(set) var payoff: Payoff?
