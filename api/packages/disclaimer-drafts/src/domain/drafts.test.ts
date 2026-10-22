@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { mentionsSelfHarm } from '@wildcard/typed-text';
-
 import { DraftReason } from './draft-request.js';
 import { outcomeOf } from './drafts.js';
 import { promptFor } from './prompt.js';
@@ -75,30 +73,6 @@ describe('DraftReason', () => {
     expect(DraftReason.safeParse('👍🏽'.repeat(101)).success).toBe(false);
     expect(DraftReason.safeParse('\u200B').success).toBe(false);
   });
-});
-
-describe('mentionsSelfHarm', () => {
-  it.each(['想自杀', '不想活了', '我不想活', '活不下去', '想自残', '想轻生'])(
-    'catches 「%s」',
-    (reason) => {
-      expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(true);
-    },
-  );
-
-  it('catches plain words in English, whatever the case', () => {
-    expect(mentionsSelfHarm(DraftReason.parse('I want to KILL MYSELF'))).toBe(true);
-  });
-
-  it('leaves everyday exaggeration to the model', () => {
-    expect(mentionsSelfHarm(DraftReason.parse('加班累得想死'))).toBe(false);
-  });
-
-  it.each(['今天不想活动', '不想活动筋骨'])(
-    'leaves 「%s」 alone: it means not wanting to move',
-    (reason) => {
-      expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(false);
-    },
-  );
 });
 
 describe('promptFor', () => {

@@ -160,22 +160,13 @@ describe('createDisclaimerDrafts', () => {
     ).toStrictEqual([]);
   });
 
-  it('answers the care line for a reason about self-harm, without asking the model', async () => {
-    // No AI sees the reason, so the care line needs no AI consent.
-    const { drafts, prompts } = setup({ consentsToAi: false });
-    const member = await newMember();
-    expect(await drafts.write(request(member, '想自杀'))).toEqual({ kind: 'care' });
-    expect(prompts).toEqual([]);
-  });
-
-  it('answers what the model decides for subtler reasons', async () => {
+  it('answers the care line or a decline when the model says so, with no word list of its own', async () => {
     const member = await newMember();
     const care = setup({
       answer: () => Promise.resolve({ version: 1, outcome: 'selfHarm', drafts: [] }),
     });
-    expect(await care.drafts.write(request(member, '最近觉得撑不下去了'))).toEqual({
-      kind: 'care',
-    });
+    expect(await care.drafts.write(request(member, '想自杀'))).toEqual({ kind: 'care' });
+    expect(care.prompts).toHaveLength(1);
     const unsafe = setup({
       answer: () => Promise.resolve({ version: 1, outcome: 'unsafe', drafts: [] }),
     });

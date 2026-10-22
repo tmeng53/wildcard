@@ -134,10 +134,8 @@ export function containsLink(text: string): boolean {
 }
 
 /**
- * Words that mean a text is about self-harm. A 请假条 reason with one gets the care line straight
- * away, before any model is asked, and a 请假条 with one is never handed to a model to joke
- * about. Everyday exaggeration such as 「累得想死」 is left to the model, so a tired member still
- * gets a joke.
+ * Words that mean a text is about self-harm: a 请假条 with one is never handed to the weekly
+ * awards' model to joke about. Everyday exaggeration such as 「累得想死」 is left in.
  */
 const SELF_HARM_WORDS = [
   '自杀',

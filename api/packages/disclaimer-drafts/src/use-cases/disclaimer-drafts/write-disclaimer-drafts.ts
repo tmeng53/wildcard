@@ -1,5 +1,4 @@
 import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
-import { mentionsSelfHarm } from '@wildcard/typed-text';
 
 import type { DraftReason, MemberId, PromptMeme } from '../../domain/draft-request.js';
 import { ModelReply, outcomeOf, type DraftsOutcome } from '../../domain/drafts.js';
@@ -32,9 +31,9 @@ export interface WriteDisclaimerDraftsInput {
 }
 
 /**
- * Three drafts for a member's 请假条, written by the model from their reason, or the care
- * line, or a decline. Only asked for when the member taps the button, never as they type, and
- * only for a member with a current AI consent: the care line needs none, since no AI sees it.
+ * Three drafts for a member's 请假条, written by the model from their reason, or the care line
+ * or a decline when the model says so. Only asked for when the member taps the button, never as
+ * they type, and only for a member with a current AI consent.
  */
 export async function writeDisclaimerDrafts(
   deps: {
@@ -47,7 +46,6 @@ export async function writeDisclaimerDrafts(
   },
   input: WriteDisclaimerDraftsInput,
 ): Promise<DraftsOutcome> {
-  if (mentionsSelfHarm(input.reason)) return { kind: 'care' };
   if (!(await deps.aiConsent(input.member))) throw new AiConsentRequiredError();
 
   const now = deps.clock();
