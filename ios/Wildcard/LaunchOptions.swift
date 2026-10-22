@@ -1,7 +1,6 @@
 import CheckInDomain
 import CheckInUI
 import Foundation
-import OnboardingUI
 import UIKit
 
 /// Launch arguments the UI tests pass in.
@@ -34,11 +33,15 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-onboarding")
     }
 
-    /// The day sign-up starts on: this week's Monday with `-uitest-monday`, so the week step's
-    /// default plan and screenshots don't change with the day the tests run; otherwise now.
-    static var signUpDay: Date {
+    /// The moment sign-up starts at: noon on this week's Monday with `-uitest-monday`, so the
+    /// week step's default plan and screenshots don't change with the day the tests run;
+    /// otherwise now.
+    static var signUpTime: Date {
         guard ProcessInfo.processInfo.arguments.contains("-uitest-monday") else { return .now }
-        return SignUpModel.weekCalendar.dateInterval(of: .weekOfYear, for: .now)?.start ?? .now
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = .current
+        guard let monday = calendar.dateInterval(of: .weekOfYear, for: .now)?.start else { return .now }
+        return calendar.date(byAdding: .hour, value: 12, to: monday) ?? .now
     }
 
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the

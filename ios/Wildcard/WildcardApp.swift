@@ -34,7 +34,7 @@ struct WildcardApp: App {
             _signUp = State(
                 initialValue: SignUpModel(
                     service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "",
-                    today: LaunchOptions.signUpDay))
+                    now: LaunchOptions.signUpTime))
         }
     }
 

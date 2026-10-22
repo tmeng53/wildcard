@@ -106,7 +106,7 @@ private struct WeekPoster: View {
             model.selectDay(index)
         } label: {
             HStack(spacing: Space.s) {
-                Text(model.weekDays[safe: index].map { $0.formatted(.dateTime.weekday(.abbreviated)) } ?? "")
+                Text(model.weekDays[safe: index].map(Self.weekday) ?? "")
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .frame(minWidth: Sizing.control, alignment: .leading)
                 DayName(day: day)
@@ -136,9 +136,16 @@ private struct WeekPoster: View {
         return "\(Self.short(first))–\(Self.short(last))"
     }
 
-    private static func short(_ date: Date) -> String {
-        let parts = SignUpModel.weekCalendar.dateComponents([.month, .day], from: date)
-        return "\(parts.month ?? 0).\(parts.day ?? 0)"
+    private static func short(_ day: LocalDay) -> String {
+        "\(day.month).\(day.day)"
+    }
+
+    /// 周一, Mon: the day's name at its noon on the phone's clock.
+    private static func weekday(_ day: LocalDay) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let noon = calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
+        return noon?.formatted(.dateTime.weekday(.abbreviated)) ?? ""
     }
 }
 

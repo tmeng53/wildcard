@@ -46,8 +46,8 @@ public final class SignUpModel {
         case failed(InviteCode, SignUpError)
     }
 
-    /// This week's days, its first day first, for the poster's dates.
-    let weekDays: [Date]
+    /// This week's days, Monday first, for the poster's dates.
+    let weekDays: [LocalDay]
     /// The week's number in the year, the poster's W43.
     let weekNumber: Int
 
@@ -56,30 +56,23 @@ public final class SignUpModel {
     @ObservationIgnored let daysGone: Int
 
     /// `invite`: the code an invite link carried. `nickname`: the name Sign in with Apple shared,
-    /// to start the nickname from. `today` in `calendar` says which week the plan is for and
-    /// which of its days are over; weeks start on Monday. `hasAgreedToAI`: the account consented
-    /// to AI writing before, so 你的小队 doesn't ask again.
+    /// to start the nickname from. `now` in `timeZone` says which week the plan is for and which
+    /// of its days are over, by the member's day as the API counts it (until 3am it is still the
+    /// day before); weeks start on Monday. `hasAgreedToAI`: the account consented to AI writing
+    /// before, so 你的小队 doesn't ask again.
     public init(
-        service: any SignUpService, invite: InviteCode?, nickname: String, today: Date,
-        calendar: Calendar = SignUpModel.weekCalendar, hasAgreedToAI: Bool = false
+        service: any SignUpService, invite: InviteCode?, nickname: String, now: Date,
+        in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false
     ) {
         self.service = service
         agreesToAI = hasAgreedToAI
         asksForAIConsent = !hasAgreedToAI
         self.nickname = nickname
         squad = SquadDraft(invite: invite, suggestedName: "")
-        let start = calendar.dateInterval(of: .weekOfYear, for: today)?.start ?? calendar.startOfDay(for: today)
-        weekDays = (0..<WeeklyPlan.dayCount).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
-        daysGone = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: today)).day ?? 0
-        weekNumber = calendar.component(.weekOfYear, from: today)
-    }
-
-    /// Weeks from Monday, numbered as ISO 8601 does, in the phone's time zone.
-    public nonisolated static var weekCalendar: Calendar {
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.timeZone = .current
-        calendar.locale = .current
-        return calendar
+        let today = LocalDay(at: now, in: timeZone)
+        weekDays = (0..<WeeklyPlan.dayCount).map { today.weekStart.adding(days: $0) }
+        daysGone = today.weekday - 1
+        weekNumber = today.weekOfYear
     }
 
     /// The nickname so far, for the squad's suggested name and the poster.
@@ -99,8 +92,10 @@ public final class SignUpModel {
         failure = .unavailable
     }
 
+    /// Back a step, but not while a save is on its way: it would move the member on again when
+    /// it lands, after they chose to go back.
     func back() {
-        guard let previous = step.previous else { return }
+        guard !isWorking, let previous = step.previous else { return }
         failure = nil
         show(previous, forward: false)
     }
