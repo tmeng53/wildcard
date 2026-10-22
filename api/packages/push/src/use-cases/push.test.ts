@@ -197,6 +197,25 @@ describe('push devices', () => {
   });
 });
 
+describe('push settings', () => {
+  it('logs each switch flipped, in order, and never a save that changed nothing', async () => {
+    const member = await newMember();
+    await stores.settings.save(member, { dailyProgress: false });
+    await stores.settings.save(member, { dailyProgress: false });
+    await stores.settings.save(member, { dailyProgress: true });
+    const { rows } = await sql<{ topic: string; enabled: boolean }>`
+      select topic, enabled from push_setting_events where member_id = ${member} order by id
+    `.execute(db);
+    expect(rows).toStrictEqual([
+      { topic: 'dailyProgress', enabled: false },
+      { topic: 'dailyProgress', enabled: true },
+    ]);
+    expect(await stores.settings.changedBy(member)).toStrictEqual(
+      new Map([['dailyProgress', true]]),
+    );
+  });
+});
+
 describe('DeviceToken', () => {
   it.each([
     ['not hex', 'z'.repeat(64)],

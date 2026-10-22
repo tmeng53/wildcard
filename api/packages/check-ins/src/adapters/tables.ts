@@ -11,6 +11,8 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Json = JsonValue;
 
 export type JsonArray = JsonValue[];
@@ -60,10 +62,17 @@ export interface DisclaimerReplies {
   replied_at: Timestamp;
 }
 
+export interface WeeklyPlanEvents {
+  at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  member_id: string;
+  payload: Json;
+  week_start: string;
+}
+
 export interface WeeklyPlans {
   member_id: string;
   payload: Json;
-  updated_at: Generated<Timestamp>;
   week_start: string;
 }
 
@@ -73,5 +82,6 @@ export interface DB {
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
   disclaimer_replies: DisclaimerReplies;
+  weekly_plan_events: WeeklyPlanEvents;
   weekly_plans: WeeklyPlans;
 }

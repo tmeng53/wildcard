@@ -9,6 +9,8 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Json = JsonValue;
 
 export type JsonArray = JsonValue[];
@@ -23,6 +25,16 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface ProfileEvents {
+  at: Generated<Timestamp>;
+  catchphrase: string | null;
+  id: Generated<Int8>;
+  look: Json | null;
+  member_id: string;
+  nickname: string | null;
+  time_zone: string;
+}
+
 export interface Profiles {
   catchphrase: string | null;
   created_at: Generated<Timestamp>;
@@ -30,9 +42,9 @@ export interface Profiles {
   member_id: string;
   nickname: string | null;
   time_zone: string;
-  updated_at: Generated<Timestamp>;
 }
 
 export interface DB {
+  profile_events: ProfileEvents;
   profiles: Profiles;
 }

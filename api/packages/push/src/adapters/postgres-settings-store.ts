@@ -28,15 +28,24 @@ export function createPostgresSettingsStore(db: Kysely<DB>): SettingsStore {
         topic,
         enabled: settings[topic],
       }));
+      // One statement: the switches and their log entries are saved together, and only the
+      // switches that changed are logged.
       await db
-        .insertInto('push_settings')
-        .values(rows)
-        .onConflict((conflict) =>
-          conflict.columns(['member_id', 'topic']).doUpdateSet({
-            enabled: (eb) => eb.ref('excluded.enabled'),
-            updated_at: sql`now()`,
-          }),
+        .with('saved', (cte) =>
+          cte
+            .insertInto('push_settings')
+            .values(rows)
+            .onConflict((conflict) =>
+              conflict
+                .columns(['member_id', 'topic'])
+                .doUpdateSet({ enabled: (eb) => eb.ref('excluded.enabled') })
+                .where(sql<boolean>`push_settings.enabled is distinct from excluded.enabled`),
+            )
+            .returning(['member_id', 'topic', 'enabled']),
         )
+        .insertInto('push_setting_events')
+        .columns(['member_id', 'topic', 'enabled'])
+        .expression((eb) => eb.selectFrom('saved').select(['member_id', 'topic', 'enabled']))
         .execute();
     },
   };
