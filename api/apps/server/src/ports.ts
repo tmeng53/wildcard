@@ -1,4 +1,5 @@
 import type { AdminTables } from '@wildcard/admins';
+import type { AiConsentTables } from '@wildcard/ai-consent';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
@@ -124,6 +125,7 @@ export type Tables = CheckInTables &
   PushTables &
   SquadTables &
   AdminTables &
+  AiConsentTables &
   WeeklyAwardTables;
 
 /** The database: any Postgres, through Kysely. */

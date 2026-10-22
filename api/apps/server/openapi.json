@@ -257,6 +257,77 @@
         ],
         "additionalProperties": false
       },
+      "AiConsent": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "copyVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.",
+            "example": 1
+          },
+          "given": {
+            "type": "object",
+            "properties": {
+              "copyVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The version they agreed to.",
+                "example": 1
+              },
+              "givenAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When they agreed, in UTC."
+              }
+            },
+            "required": [
+              "copyVersion",
+              "givenAt"
+            ],
+            "additionalProperties": false,
+            "description": "The member’s latest consent, left out when they never gave one. It may be to an older version."
+          },
+          "current": {
+            "type": "boolean",
+            "description": "True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask."
+          }
+        },
+        "required": [
+          "version",
+          "copyVersion",
+          "current"
+        ],
+        "additionalProperties": false
+      },
+      "AiConsentGiven": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "copyVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version of the copy the app showed the member, who agreed.",
+            "example": 1
+          }
+        },
+        "required": [
+          "version",
+          "copyVersion"
+        ],
+        "additionalProperties": false
+      },
       "CheckIn": {
         "oneOf": [
           {
@@ -990,6 +1061,45 @@
         ],
         "additionalProperties": false
       },
+      "CheckInTotals": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "trainedDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days with a 练了; several 练了 on one day count once."
+          },
+          "healthyMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "健康餐 check-ins."
+          },
+          "cheatMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "坦白放纵餐 check-ins."
+          },
+          "disclaimers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "今日请假条 check-ins, at most one a day."
+          }
+        },
+        "required": [
+          "version",
+          "trainedDays",
+          "healthyMeals",
+          "cheatMeals",
+          "disclaimers"
+        ],
+        "additionalProperties": false
+      },
       "PhotoUpload": {
         "type": "object",
         "properties": {
@@ -1127,6 +1237,119 @@
         "required": [
           "version",
           "reactions"
+        ],
+        "additionalProperties": false
+      },
+      "Reply": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who replied."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "hug",
+              "together"
+            ],
+            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
+          },
+          "repliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they replied, in UTC with milliseconds.",
+            "example": "2026-10-18T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "version",
+          "member",
+          "kind",
+          "repliedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReplyDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "hug",
+              "together"
+            ],
+            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
+          }
+        },
+        "required": [
+          "version",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "ReplyList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Who replied."
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "approved",
+                    "hug",
+                    "together"
+                  ],
+                  "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
+                },
+                "repliedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When they replied, in UTC with milliseconds.",
+                  "example": "2026-10-18T20:05:00.000Z"
+                }
+              },
+              "required": [
+                "member",
+                "kind",
+                "repliedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "version",
+          "replies"
         ],
         "additionalProperties": false
       },
@@ -2599,6 +2822,122 @@
         }
       }
     },
+    "/me/ai-consent": {
+      "get": {
+        "operationId": "getMyAiConsent",
+        "summary": "The signed-in member’s AI consent",
+        "description": "Whether they have agreed to the current copy, so a returning member isn’t asked again.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Their consent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConsent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "putMyAiConsent",
+        "summary": "Agree to the AI copy",
+        "description": "With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiConsentGiven"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agreed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConsent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid request, or a version that isn’t the current one (`AI_CONSENT_COPY_OUTDATED`): read the current version and ask again",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/check-ins/{id}": {
       "put": {
         "operationId": "saveCheckIn",
@@ -2881,6 +3220,50 @@
         }
       }
     },
+    "/me/check-in-totals": {
+      "get": {
+        "operationId": "getMyCheckInTotals",
+        "summary": "Everything the signed-in member ever checked in, counted by kind",
+        "description": "All of their check-ins, wherever they went; 我 shows them. Counts only go up.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInTotals"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/photo-uploads": {
       "post": {
         "operationId": "createPhotoUpload",
@@ -3123,6 +3506,252 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReactionList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{checkInId}/replies/mine": {
+      "put": {
+        "operationId": "replyToDisclaimer",
+        "summary": "Reply to a teammate’s 请假条",
+        "description": "Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplyDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already there, or changed from another reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reply"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Replied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid reply, not a 请假条 (`NOT_A_DISCLAIMER`), or the caller’s own (`OWN_DISCLAIMER_REPLY`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeMyReply",
+        "summary": "Take your reply off a 请假条",
+        "description": "Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Taken off"
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{checkInId}/replies": {
+      "get": {
+        "operationId": "listDisclaimerReplies",
+        "summary": "A 请假条’s replies",
+        "description": "Oldest first, for its author and the teammates who can see it. Empty for any other check-in.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The replies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyList"
                 }
               }
             }
@@ -3473,7 +4102,7 @@
       "put": {
         "operationId": "createSquad",
         "summary": "Create a squad",
-        "description": "With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
+        "description": "With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
         "security": [
           {
             "bearer": []
@@ -3522,7 +4151,7 @@
             }
           },
           "400": {
-            "description": "Not a valid name, or the member is in 3 squads already (`SQUAD_LIMIT_REACHED`)",
+            "description": "Not a valid name, the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3774,7 +4403,7 @@
       "post": {
         "operationId": "joinSquad",
         "summary": "Join a squad by invite code",
-        "description": "Safe to repeat: joining a squad the member is in answers 200 with it.",
+        "description": "The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.",
         "security": [
           {
             "bearer": []
@@ -3813,7 +4442,7 @@
             }
           },
           "400": {
-            "description": "The squad has 8 members (`SQUAD_FULL`), or the member is in 3 squads already (`SQUAD_LIMIT_REACHED`)",
+            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4115,7 +4744,7 @@
             }
           },
           "400": {
-            "description": "Not a valid request",
+            "description": "Not a valid request, or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

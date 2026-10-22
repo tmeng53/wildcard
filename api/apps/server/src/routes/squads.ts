@@ -112,6 +112,7 @@ const signedInFailures = {
   503: problem('Sign-in can’t be checked right now'),
 };
 const limitReached = `the member is in ${String(SQUADS_PER_MEMBER)} squads already (\`SQUAD_LIMIT_REACHED\`)`;
+const noConsent = 'the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)';
 
 /** What routes anyone can call without signing in need: a rate limit per client. */
 export interface PublicRoutes {
@@ -158,7 +159,8 @@ export function squads(deps: {
     operationId: 'createSquad',
     summary: 'Create a squad',
     description:
-      'With only a name; the caller is its first member. The app makes the id, so a create can ' +
+      'With only a name; the caller is its first member, and needs a current AI consent ' +
+      '(`GET /me/ai-consent`). The app makes the id, so a create can ' +
       'be retried: the same squad again answers 200, another name or member under that id 409.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -169,7 +171,7 @@ export function squads(deps: {
     responses: {
       200: squadResponse('Already created: this was a retry'),
       201: squadResponse('Created'),
-      400: problem(`Not a valid name, or ${limitReached}`),
+      400: problem(`Not a valid name, ${limitReached}, or ${noConsent}`),
       409: problem('The id holds another squad (`SQUAD_ID_CONFLICT`)'),
       ...jsonBodyFailures,
       ...signedInFailures,
@@ -272,7 +274,9 @@ export function squads(deps: {
     path: '/squad-invites/{inviteCode}/accept',
     operationId: 'joinSquad',
     summary: 'Join a squad by invite code',
-    description: 'Safe to repeat: joining a squad the member is in answers 200 with it.',
+    description:
+      'The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a ' +
+      'squad the member is in answers 200 with it.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: inviteParams },
@@ -280,7 +284,7 @@ export function squads(deps: {
       200: squadResponse('Already in it'),
       201: squadResponse('Joined'),
       400: problem(
-        `The squad has ${String(SQUAD_MEMBER_LIMIT)} members (\`SQUAD_FULL\`), or ${limitReached}`,
+        `The squad has ${String(SQUAD_MEMBER_LIMIT)} members (\`SQUAD_FULL\`), ${limitReached}, or ${noConsent}`,
       ),
       404: problem('No squad has this code (`INVITE_CODE_UNKNOWN`)'),
       ...signedInFailures,

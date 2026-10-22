@@ -16,6 +16,7 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
+import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { MemberId, SquadId, type CheckInRecord } from '../domain/check-in.js';
 import { WeekStart, type PlanDay } from '../domain/weekly-plan.js';
@@ -32,6 +33,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 // Wednesday 2026-10-21, 1pm in Los Angeles and already 5am Thursday in Tokyo.
@@ -45,6 +47,7 @@ const checkInsAt = (moment: Date) =>
     store: createPostgresCheckInStore(db),
     membership,
     reactions: createPostgresReactionStore(db),
+    replies: createPostgresReplyStore(db),
     plans,
     photos: { exists: () => Promise.reject(new Error('unused')) },
     calendarOf: (member) => {

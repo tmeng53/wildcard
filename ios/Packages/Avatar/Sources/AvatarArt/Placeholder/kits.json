@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "kits": [
+    { "id": "swim", "wear": { "hat": "swimcap", "top": "tank", "shoes": "sneaker", "prop": null } },
+    { "id": "run", "wear": { "hat": "headband", "top": "tank", "bottom": "shorts", "shoes": "runner", "prop": "stopwatch" } },
+    { "id": "strength", "wear": { "hat": null, "top": "tank", "shoes": "sneaker", "prop": "dumbbell" } },
+    { "id": "tennis", "wear": { "hat": "cap", "top": "tee", "shoes": "sneaker", "prop": "racket" } },
+    { "id": "climb", "wear": { "hat": null, "top": "tank", "bottom": "leggings", "shoes": "climbing", "prop": "chalkbag" } },
+    { "id": "yoga", "wear": { "hat": null, "top": "tee", "bottom": "leggings", "shoes": "sneaker", "prop": "yogamat" } },
+    { "id": "warmup", "wear": {} }
+  ],
+  "categories": {
+    "runWalk": "run", "cardio": "run", "strength": "strength", "combat": "strength", "mindBody": "yoga",
+    "water": "swim", "racket": "tennis"
+  },
+  "sports": { "climb": "climb" },
+  "otherwise": "warmup"
+}

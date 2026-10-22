@@ -2,7 +2,8 @@
 import AvatarArt
 import AvatarDomain
 import AvatarLooks
-import AvatarUI
+@testable import AvatarUI
+import Contracts
 import CoreGraphics
 import Foundation
 import SwiftUI
@@ -40,6 +41,49 @@ struct CharacterRenderTests {
         let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Point(x: 193, y: 255))
         #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
     }
+
+    /// Picking a sport: the player draws the old clothes until the hop's squash, the kit after.
+    @Test func thePlayerSwapsTheKitInMidHop() throws {
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
+        let player = try CharacterPlayer(
+            figure: lifter, idle: PlaceholderCharacter.clip("idle", persona: .shy), now: start)
+        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+        let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
+        let hop = try PlaceholderCharacter.kitHop()
+        try player.change(
+            into: swimmer, idle: PlaceholderCharacter.move(for: swim, persona: .shy), hop: hop,
+            now: start.addingTimeInterval(1))
+        let before = player.frame(at: start.addingTimeInterval(1 + hop.out.duration / 2))
+        let after = player.frame(at: start.addingTimeInterval(1 + hop.out.duration + 0.01))
+        let hat = try #require(swimmer.parts.firstIndex { $0.id == "crown" })
+        #expect(before.drawing.width == after.drawing.width)
+        #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)
+        #expect(player.figure == swimmer)
+        // Reduce Motion shows the kit straight away, standing still.
+        #expect(player.restFrame.placements == swimmer.layout(swimmer.restPose))
+    }
+
+    /// Taking a sport off mid-hop: the outfit worn instead stays on, the kit never shows.
+    @Test func wearingMidHopDropsTheKit() throws {
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
+        let idle = try PlaceholderCharacter.clip("idle", persona: .shy)
+        let player = try CharacterPlayer(figure: lifter, idle: idle, now: start)
+        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+        let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
+        try player.change(
+            into: swimmer, idle: PlaceholderCharacter.move(for: swim, persona: .shy),
+            hop: PlaceholderCharacter.kitHop(), now: start.addingTimeInterval(1))
+        try player.wear(lifter, idle: idle, now: start.addingTimeInterval(1.05))
+        let later = player.frame(at: start.addingTimeInterval(2))
+        let hat = try #require(swimmer.parts.firstIndex { $0.id == "crown" })
+        // The swim cap is drawn only in the kit.
+        #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)
+        #expect(later.drawing.parts[hat].isEmpty)
+        #expect(player.restFrame.drawing.parts[hat].isEmpty)
+        #expect(player.figure == lifter)
+    }
 }
 
 /// One outfit's figure and a way to draw a pose of it at the canvas's own size.
@@ -57,9 +101,10 @@ struct Frame {
         try Bitmap(render(image: pose, scale: scale, background: background))
     }
 
-    func render(image pose: Pose, scale: Double, background: Color) throws -> CGImage {
-        let view = CharacterCanvas(drawing: drawing, placements: figure.layout(pose))
-            .frame(width: drawing.width, height: drawing.height)
+    /// `crop`, in canvas points, draws that area instead of the canvas, as for the 上场 stage.
+    func render(image pose: Pose, scale: Double, background: Color, crop: CGRect? = nil) throws -> CGImage {
+        let view = CharacterCanvas(drawing: drawing, placements: figure.layout(pose), crop: crop)
+            .frame(width: crop?.width ?? drawing.width, height: crop?.height ?? drawing.height)
             .background(background)
         let renderer = ImageRenderer(content: view)
         renderer.scale = scale

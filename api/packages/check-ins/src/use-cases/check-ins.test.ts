@@ -16,6 +16,7 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
+import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import {
   CheckInDraft,
@@ -38,6 +39,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 const now = new Date('2026-10-18T20:00:00.000Z');
@@ -50,6 +52,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
+  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf,
@@ -207,6 +210,7 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf,
@@ -275,6 +279,7 @@ describe('saving a check-in', () => {
         },
         membership,
         reactions: createPostgresReactionStore(db),
+        replies: createPostgresReplyStore(db),
         plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf,
@@ -374,6 +379,7 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: (who) =>

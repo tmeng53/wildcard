@@ -1,6 +1,20 @@
 import { AppError } from '@wildcard/errors';
 
 /**
+ * Thrown when a member without a current AI consent asks for drafts. The app shows its dice
+ * suggestions. Squads answer with the same reason.
+ */
+export class AiConsentRequiredError extends AppError {
+  override readonly name = 'AiConsentRequiredError';
+  readonly reason = 'AI_CONSENT_REQUIRED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('Agree to the AI terms to get AI drafts. The dice still work.');
+  }
+}
+
+/**
  * Thrown when a member has asked for drafts as often as a day allows (the first batch and 5
  * 换一批). The app shows its dice suggestions until the allowance comes back.
  */
