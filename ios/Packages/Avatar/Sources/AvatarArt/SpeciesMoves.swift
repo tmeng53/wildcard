@@ -14,8 +14,8 @@ extension PlaceholderCharacter {
 }
 
 extension Persona {
-    /// How fast a species' idle moves play for this persona: a deadpan cat yawns slowly, an
-    /// energetic dog wags fast.
+    /// How fast a species' idle moves and a sport's move play for this persona: a deadpan cat
+    /// yawns and swims slowly, an energetic dog wags and swims fast.
     public var accentTempo: Double {
         switch self {
         case .deadpan: 0.7

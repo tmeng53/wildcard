@@ -2,9 +2,10 @@ import AvatarDomain
 import Foundation
 
 /// What the character editor offers beyond every bundled variant: bodies grouped by species,
-/// in the order the editor shows them, and the props of this release. Read from
-/// `editor.json`, so adding a species or releasing a prop is a data change. People show one
-/// body and take their skin tone from the swatches.
+/// in the order the editor shows them, and the hats, shoes and props of this release. Read from
+/// `editor.json`, so adding a species or releasing a hat, a pair of shoes or a prop is a data
+/// change; bundled art the lists leave out (a swim cap only a sport's kit wears) stays hidden.
+/// People show one body and take their skin tone from the swatches.
 public struct EditorChoices: Hashable, Sendable {
     public struct Species: Hashable, Sendable, Identifiable {
         /// `person`, `cat`, ... Its display name is UI copy, in the editor's String Catalog.
@@ -19,30 +20,36 @@ public struct EditorChoices: Hashable, Sendable {
     }
 
     public let species: [Species]
+    public let hats: [String]
+    /// Every species wears them; the first is what a look leaves out wears (the rig's default).
+    public let shoes: [String]
     public let props: [String]
 
-    public init(species: [Species], props: [String]) {
-        (self.species, self.props) = (species, props)
+    public init(species: [Species], hats: [String], shoes: [String], props: [String]) {
+        (self.species, self.hats, self.shoes, self.props) = (species, hats, shoes, props)
     }
 
     /// The only `version` of `editor.json` this build reads.
     public static let currentVersion = 1
 
-    /// `{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hair": true}], "props": ["dumbbell"]}`
+    /// `{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hair": true}], "hats": ["cap"],
+    /// "shoes": ["sneaker"], "props": ["dumbbell"]}`
     public static func decode(_ data: Data) throws(AvatarError) -> EditorChoices {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
         return EditorChoices(
             species: file.species.map { Species(id: $0.id, bodies: $0.bodies, wearsHair: $0.hair ?? false) },
-            props: file.props)
+            hats: file.hats, shoes: file.shoes, props: file.props)
     }
 
     private struct File: Decodable {
         static let shape = JSONShape.object([
-            "version": .value, "props": .value,
+            "version": .value, "hats": .value, "shoes": .value, "props": .value,
             "species": .array(.object(["id": .value, "bodies": .value, "hair": .value])),
         ])
 
         let species: [SpeciesFile]
+        let hats: [String]
+        let shoes: [String]
         let props: [String]
     }
 

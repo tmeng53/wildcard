@@ -9,7 +9,7 @@
       { "t": 0.75, "v": 0, "ease": "easeIn" } ] },
     { "part": "root", "channel": "scaleX", "keys": [
       { "t": 0, "v": 1 }, { "t": 0.15, "v": 1.06, "ease": "easeOut" }, { "t": 0.3, "v": 1, "ease": "easeOut" },
-      { "t": 0.45, "v": -1, "ease": "easeInOut" }, { "t": 0.66, "v": 1, "ease": "easeInOut" },
+      { "t": 0.45, "v": 0.94, "ease": "easeInOut" }, { "t": 0.66, "v": 1, "ease": "easeInOut" },
       { "t": 0.76, "v": 1.03, "ease": "easeOut" }, { "t": 0.95, "v": 1, "ease": "backOut" } ] },
     { "part": "root", "channel": "scaleY", "keys": [
       { "t": 0, "v": 1 }, { "t": 0.15, "v": 0.9, "ease": "easeOut" },

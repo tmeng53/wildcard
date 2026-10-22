@@ -86,3 +86,18 @@ import Testing
                 """#.utf8))
     }
 }
+
+/// A calm character plays the same move slower: every key keeps its value at a stretched time.
+@Test func aClipPlaysAtATempo() throws {
+    let wave = try clip("wave", duration: 2, loops: true, [track("arm", .rotation, [(0, 0), (1, 90), (2, 0)])])
+    let slow = try wave.atTempo(0.5)
+    #expect(slow.duration == 4)
+    #expect(slow.tracks[0].value(at: 2) == 90)
+    #expect(slow.tracks[0].value(at: 1) == 45)
+    #expect(slow.loops)
+    #expect(throws: AvatarError.invalidTempo(clip: "wave")) { try wave.atTempo(0) }
+    #expect(throws: AvatarError.invalidTempo(clip: "wave")) { try wave.atTempo(.infinity) }
+    // Its accents keep in step: a yawn on top plays half as fast too.
+    let yawn = try clip("yawn", duration: 3, loops: true, [track("arm", .rotation, [(0, 0), (3, 0)])])
+    #expect(try wave.accented(by: yawn, tempo: 0.8).atTempo(0.5).accents.first?.tempo == 0.4)
+}

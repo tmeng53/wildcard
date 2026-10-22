@@ -93,7 +93,7 @@ The tier the PR is verified at (see Independent verification) and why, in one li
 
 The author can't pass its own work. A verdict comes from an agent that did not write the change, ran it, and tied what it saw to the exact code it ran. Green CI, the code reviews (Claude's, and Codex's on a bigger PR) and the author re-reading its own diff ("adversarial self-review") are necessary but never the verdict. A verifier earns its time with what CI can't do: looking at the screens, checking the PR's claims, driving the journey and trying the edge case. So how deep it goes depends on what the change can break. The owner picks the tier from the diff and says which and why in the description; the code reviewer may raise it, never lower it, and when in doubt it's the higher one:
 
-- **Tier 1, CI only:** docs and comments, tests only, a copy typo, or a small fix in one file that comes with its test. Green CI and the code review are enough; no verifier.
+- **Tier 1, CI only:** docs and comments, tests only, a copy typo, or a small fix in one file that comes with its test. Green CI is enough: no code review and no verifier.
 - **Tier 2, light:** a small UI change, or logic inside one module, touching no contract, schema, auth, privacy, user data or AI. The verifier reads the diff, CI's results and screenshots for the head, and tries one edge case; it doesn't launch the stack unless that edge case needs it.
 - **Tier 3, full:** the API or `Contracts`, the database schema or a migration, auth, privacy, user data or AI, a new user flow, or a change across modules. The verifier runs everything below.
 
@@ -130,7 +130,7 @@ Steps 1 to 8 apply to tiers 2 and 3.
 
 If other work in progress is affected, link the PR from its issue.
 
-**Every PR gets a Claude code review first.** Once the head is green (every CI job passed on it), start a fresh Claude agent that did not write the PR as the reviewer. Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One Claude review per head. It is a review, not a verdict: on tier 2 or 3 the verifier still runs. It also checks the tier the description names and raises it when the diff warrants more.
+**Every PR but tier 1 gets a Claude code review first.** A tier 1 PR (docs only, tests only, a typo, or a small fix with its test; see Independent verification) skips it: CI is its check. Otherwise, once the head is green (every CI job passed on it), start a fresh Claude agent that did not write the PR as the reviewer, on Sonnet (`model: "sonnet"`). Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One Claude review per head. It is a review, not a verdict: on tier 2 or 3 the verifier still runs. It also checks the tier the description names and raises it when the diff warrants more.
 
 **Bigger PRs also get a Codex review.** Codex is installed on the repo, but Tracy's Codex usage is limited, so ask it only for a feature, an API, contract or schema change, an architecture change, a new dependency or a large refactor; small fixes, docs and test-only changes skip it. Codex doesn't review on its own: post one `@codex review` comment once CI is green on the head and the verifier has passed it (`PASS` or `PASS+NOTES`). **At most two `@codex review` comments per PR, ever:** normally one; a second only when a later head changes the code substantially. Never repeat it for the same commit, and write the mention only in that comment, never in a PR description or other text: Codex reacts to it wherever it appears. If Codex can't review (it replies that it is out of usage, or no review has landed two hours after the ask), the Claude review stands and the PR doesn't wait for Codex.
 
@@ -144,7 +144,7 @@ Tracy's rule (2026-10-18): the owner thread merges most PRs itself; only a key t
 
 1. Every check is green: the `verify` workflow passed on the head commit.
 2. For tier 2 or 3, the latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff, and each of its notes has an answer on the PR (see Independent verification).
-3. The Claude review is clean on the head commit; on a bigger PR, Codex has reviewed a head of this PR (unless it couldn't, see After opening) and each of its findings is answered; and no review thread is unresolved.
+3. For tier 2 or 3, the Claude review is clean on the head commit; on a bigger PR, Codex has reviewed a head of this PR (unless it couldn't, see After opening) and each of its findings is answered; and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
 5. It isn't one of the PRs below that wait for Tracy.
 
