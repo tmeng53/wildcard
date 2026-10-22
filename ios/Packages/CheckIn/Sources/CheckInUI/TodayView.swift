@@ -2,23 +2,26 @@
 import AvatarUI
 import CheckInDomain
 import DesignSystem
+import Contracts
 import DesignSystemUI
 import SwiftUI
 
-/// The 今天 tab: the squad's scene with the week's card on top, your character, and 打卡.
-/// Every check-in starts and ends here: the burst opens over the lightly blurred scene, and
-/// after posting you stay on the scene for the payoff (spec rev 186, section 1).
+/// The 今天 tab: the whole squad on its scene with the week's card on top, me front and centre,
+/// and 打卡. Every check-in starts and ends here: the burst opens over the lightly blurred scene,
+/// and after posting you stay on the scene for the payoff (the approved home, version 15).
 public struct TodayView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayModel
+    /// The card's page, kept so the card reopens where it was left.
+    @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
 
     public init(model: TodayModel) {
         _model = State(initialValue: model)
     }
 
     public var body: some View {
-        let theme = model.board?.scene ?? .track
+        let theme = model.scene
         // The 请假条 composer and the compose page make room for the keyboard. The scene sits in
         // the background, so it neither sizes this stack nor moves with the keyboard: as a layer
         // of it, the scene, taller than what the keyboard leaves, would push the composer and the
@@ -41,7 +44,7 @@ public struct TodayView: View {
         }
         .environment(\.sceneTheme, theme)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
-        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.board)
+        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .sheet(isPresented: isPickingPhotos) {
             PhotoStep(model: model)
@@ -56,31 +59,45 @@ public struct TodayView: View {
         }
     }
 
-    /// The floor, the week's card, the character and the 打卡 burst.
+    /// The squad on its scene, the week's card, my payoff and the 打卡 burst.
     private var scene: some View {
         ZStack {
-            SceneFloor(isBlurred: model.isSceneDimmed)
-                .ignoresSafeArea()
+            SquadSceneView(
+                cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
+                celebration: model.celebrations
+            )
+            .overlay { MyPayoff(model: model) }
+            .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
+            .overlay(Color(Scrim.tint).opacity(model.isSceneDimmed ? Scrim.tintOpacity : 0))
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if let board = model.board {
-                    TopCard(board: board)
-                        .padding(.horizontal, Space.pageMargin)
-                        .padding(.top, Space.xs)
-                        .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
-                        // Out of the way while the 请假条 composer is up.
-                        .opacity(model.step == .disclaimer ? 0 : 1)
-                        .offset(y: model.step == .disclaimer ? -Space.s : 0)
-                }
-                Spacer(minLength: Space.l)
-                Stage(model: model)
-                    .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
-                    // The 请假条 composer shows the character above the keyboard instead.
+                if let home = model.home, let week = model.cardWeek, let day = home.mine?.day {
+                    SquadCard(
+                        squad: SquadWeek(
+                            name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
+                            members: home.today.members.map { mate in
+                                SquadMember(
+                                    id: mate.member.description,
+                                    status: StageStatus(
+                                        training: mate.training, activity: nil, plannedRest: mate.plannedRest
+                                    ).ring,
+                                    isMe: mate.member == home.member,
+                                    accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
+                            }),
+                        mine: myWeek(home: home, day: day, week: week.mine),
+                        page: $cardPage
+                    ) { member in
+                        Head(player: model.head(of: member.id))
+                    }
+                    .padding(.top, Space.xs)
+                    .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
+                    // Out of the way while the 请假条 composer is up.
                     .opacity(model.step == .disclaimer ? 0 : 1)
-                Spacer(minLength: Space.l)
-                // Holds the burst's place while the 请假条 composer hides it.
-                Color.clear.frame(height: Sizing.primaryControl)
-                    .padding(.bottom, Space.l)
+                    .offset(y: model.step == .disclaimer ? -Space.s : 0)
+                    .accessibilityIdentifier("today.card")
+                }
+                Spacer()
             }
 
             if model.isBurstOpen {
@@ -103,10 +120,36 @@ public struct TodayView: View {
                         model.pick(kind)
                     }
                     .padding(.bottom, Space.l)
+                    // Room for the app's tab bar, which sits above this screen.
+                    Color.clear
+                        .frame(height: Sizing.tabBar + Sizing.tabBarBottom)
+                        .accessibilityHidden(true)
                 }
                 .transition(.opacity)
             }
         }
+    }
+
+    /// My week for the card's second page: this week's days, what I trained and my meals, with
+    /// the counts the squad's today carries.
+    private func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
+        let record = home.week(on: day)
+        return DesignSystemUI.MyWeek(
+            summary: record.trained.map {
+                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module)
+            }
+            .joined(separator: " · "),
+            done: week.trainedDays, planned: week.plannedDays,
+            days: record.days.map {
+                switch $0 {
+                case .trained: .trained
+                case .disclaimer: .excused
+                case .restDay: .restDay
+                case .open: .open
+                }
+            },
+            today: record.today, healthyMeals: record.healthyMeals, cheatMeals: record.cheatMeals,
+            lifetimeTrained: home.today.myWeek.lifetimeTrainedDays)
     }
 
     private var isPickingPhotos: Binding<Bool> {
@@ -119,43 +162,48 @@ public struct TodayView: View {
     }
 }
 
-/// The character on the scene. The payoff's bubble sits on its head, pointing down at it, and
-/// the cover photo is pinned beside it like a polaroid: one figure, not three objects.
-private struct Stage: View {
-    /// The figure's height on the scene.
-    private static let figureHeight: Double = 220
-    /// How far below the top of the figure's frame the bubble's tail ends: the art leaves this
-    /// much room above the hair for hats and the cheer's jump.
-    private static let headroom: Double = 0.16
-    /// Width over height of the empty spot that stands in for missing art.
-    private static let placeholderAspect: Double = 0.6
-
+/// My payoff over my character, front and centre: the 「+1」 of a 练了, the line in the bubble
+/// on my head and the cover pinned beside it, like a polaroid: one figure, not three objects.
+private struct MyPayoff: View {
     let model: TodayModel
 
     var body: some View {
-        figure
-            .frame(height: Self.figureHeight)
-            .overlay(alignment: .top) {
+        GeometryReader { proxy in
+            let unit = proxy.size.width / StageLayout.width
+            let head = CGPoint(
+                x: StageLayout.mySpot.x * unit,
+                y: (StageLayout.mySpot.y - Self.headHeight * StageLayout.myScale) * unit)
+            ZStack(alignment: .topLeading) {
                 PayoffBubble(line: model.payoff?.line)
-                    .alignmentGuide(.top) { $0[.bottom] - Self.figureHeight * Self.headroom }
-            }
-            .overlay(alignment: .topTrailing) {
+                    .alignmentGuide(.top) { $0[.bottom] }
+                    .alignmentGuide(.leading) { $0.width / 2 }
+                    .offset(x: head.x, y: head.y)
                 PinnedCover(cover: model.payoff?.cover)
-                    .alignmentGuide(.trailing) { $0[.leading] + Space.xxs }
-                    .alignmentGuide(.top) { $0[.top] - Self.figureHeight * 0.18 }
+                    .offset(x: head.x + Space.xl, y: head.y)
+                PlusOne(trigger: model.celebrations)
+                    .alignmentGuide(.top) { $0[.bottom] }
+                    .alignmentGuide(.leading) { $0.width / 2 }
+                    .offset(x: head.x, y: head.y - Space.l)
             }
-            .frame(maxWidth: .infinity)
-    }
-
-    /// The character, or an empty spot of its size if its art failed to load, so a post still
-    /// shows its line and cover.
-    @ViewBuilder private var figure: some View {
-        if let player = model.player {
-            CharacterView(player: player)
-        } else {
-            Color.clear.frame(width: Self.figureHeight * Self.placeholderAspect)
         }
     }
+
+    /// How far above the feet the top of the head is, in the rig's points.
+    private static let headHeight = 250.0
+}
+
+/// A member's head in the card's ring.
+private struct Head: View {
+    let player: CharacterPlayer?
+
+    var body: some View {
+        if let player {
+            CharacterCanvas(drawing: player.drawing, placements: player.restPlacements, crop: Self.face)
+        }
+    }
+
+    /// The face on the rig's 240 by 320 canvas.
+    private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
 }
 
 /// The caption in the character's speech bubble. Nothing until the first post with a line.

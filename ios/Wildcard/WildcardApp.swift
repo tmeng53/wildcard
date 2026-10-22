@@ -8,7 +8,7 @@ import SwiftUI
 /// The app target only wires packages together. It opens on 今天, backed by an in-memory squad
 /// until sign-in and the squad step land; `-styleguide` opens the design system's style guide and
 /// `-character-editor` the character editor instead. After the first check-in it asks for
-/// notifications; a tapped one brings the member back to 今天 with the board read again.
+/// notifications; a tapped one brings the member back to 今天 with the home loaded again.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate

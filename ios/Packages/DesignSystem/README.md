@@ -27,7 +27,7 @@ A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), an
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `.card(on:)`, `SectionLabel`, `ListRow` | Cards (grey on a page, white on the scene), group labels, list rows |
-| `SpeechBubble`, `SceneFloor`, `CharacterStage` | What the character says; the scene's floor; the character's stage in the editor |
+| `SpeechBubble`, `CharacterStage` | What the character says; the character's stage in the editor |
 
 Conventions, as SwiftUI's own controls do it: the label comes first (`Text`, so it goes through the String Catalog), state comes in as a value (`isSelected`, `status`) and changes go out through an `action` closure or a `Binding`; button variants are `ButtonStyle`s; the scene comes from the environment (`\.sceneTheme`); UI-test identifiers are set by the caller. Each component's doc comment says when to use it and what its states look like, and the style guide shows every state.
 
