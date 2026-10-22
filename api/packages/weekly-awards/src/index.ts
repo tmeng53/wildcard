@@ -35,5 +35,5 @@ export {
   AwardsWriterUnavailableError,
   WeekStoryNotReadyError,
 } from './errors.js';
-export type { AwardsStore, LanguageModel } from './ports.js';
+export type { AiConsented, AwardsStore, LanguageModel } from './ports.js';
 export { createWeeklyAwards, type WeeklyAwards } from './use-cases/weekly-awards.js';

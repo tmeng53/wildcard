@@ -11,7 +11,7 @@ import {
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
-import type { AwardsStore, LanguageModel } from '../../ports.js';
+import type { AiConsented, AwardsStore, LanguageModel } from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
 const ATTEMPTS = 2;
@@ -25,18 +25,26 @@ export interface GiveAwardsInput {
 
 /**
  * A squad's awards for the week: the ones saved already, or new ones the model writes for every
- * member who checked in, saved once. A squad where nobody checked in gets none, without asking
- * the model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
+ * member who checked in and agreed to AI use, saved once. A squad where none of them did gets
+ * none, without asking the model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
  * the failed try and why.
  */
 export async function giveAwards(
-  deps: { readonly model: LanguageModel; readonly store: AwardsStore },
+  deps: {
+    readonly model: LanguageModel;
+    readonly store: AwardsStore;
+    readonly aiConsented: AiConsented;
+  },
   { squad, weekStart, members }: GiveAwardsInput,
 ): Promise<Awards> {
   const saved = await deps.store.find(squad, weekStart);
   if (saved?.status === 'given') return saved.awards;
 
-  const winners = members.filter(({ checkIns }) => checkIns.length > 0);
+  const checkedIn = members.filter(({ checkIns }) => checkIns.length > 0);
+  const agreed = new Set(
+    checkedIn.length === 0 ? [] : await deps.aiConsented(checkedIn.map(({ member }) => member)),
+  );
+  const winners = checkedIn.filter(({ member }) => agreed.has(member));
   let titles: Titles = new Map<MemberId, Title[]>();
   if (winners.length > 0) {
     try {
@@ -63,7 +71,10 @@ export async function giveAwards(
   return theirs.awards;
 }
 
-/** The cause kept when every reply named the wrong members (one missing, repeated or unknown). */
+/**
+ * The cause kept when every reply named the wrong members (one missing, repeated or unknown) or
+ * left a title or line blank.
+ */
 const FAILED_CHECKS = 'FailedChecks';
 
 /** An error's string property, when it has one. */
