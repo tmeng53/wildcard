@@ -35,7 +35,14 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
@@ -51,6 +58,7 @@ const members = createMembers({ store: createPostgresProfileStore(db) });
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
@@ -137,6 +145,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
+    aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: { ...noJobs, token: JOBS_TOKEN },
     admin: adminOn(),

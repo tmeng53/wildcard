@@ -144,14 +144,23 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       }
     },
 
-    async countTrainedDays(member) {
-      const { days } = await db
+    async totals(member) {
+      const counts = await db
         .selectFrom('check_ins')
-        .select(sql<string>`count(distinct day)`.as('days'))
+        .select([
+          sql<string>`count(distinct day) filter (where kind = 'trained')`.as('trainedDays'),
+          sql<string>`count(*) filter (where kind = 'healthyMeal')`.as('healthyMeals'),
+          sql<string>`count(*) filter (where kind = 'cheatMeal')`.as('cheatMeals'),
+          sql<string>`count(*) filter (where kind = 'disclaimer')`.as('disclaimers'),
+        ])
         .where('member_id', '=', member)
-        .where('kind', '=', 'trained')
         .executeTakeFirstOrThrow();
-      return Number(days);
+      return {
+        trainedDays: Number(counts.trainedDays),
+        healthyMeals: Number(counts.healthyMeals),
+        cheatMeals: Number(counts.cheatMeals),
+        disclaimers: Number(counts.disclaimers),
+      };
     },
 
     async listForSquad({ squad, members, from, to }) {

@@ -96,7 +96,10 @@ export function disclaimerDrafts(deps: {
         description: 'Drafts, the care line, or a decline',
         content: { 'application/json': { schema: DisclaimerDraftList } },
       },
-      400: problem('Not a valid request'),
+      400: problem(
+        'Not a valid request, or the member hasn’t agreed to the current AI terms ' +
+          '(`AI_CONSENT_REQUIRED`)',
+      ),
       401: problem('No bearer token, or not a valid one'),
       ...jsonBodyFailures,
       429: problem('The member has used today’s batches'),

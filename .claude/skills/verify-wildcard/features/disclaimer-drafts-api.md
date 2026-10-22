@@ -23,6 +23,7 @@ server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 disclaimer-drafts: no key, so 503 DISCLAIMER_WRITER_UNAVAILABLE (the app shows its dice), no error logged
 disclaimer-drafts: a self-harm reason gets the care line (200), with or without a key
+disclaimer-drafts: a member who hasn't agreed to the AI terms refused (400 AI_CONSENT_REQUIRED)
 disclaimer-drafts: an unknown style refused (400), a signed-out caller refused (401)
 disclaimer-drafts: no batch counted
 api-journeys: ok (disclaimer-drafts)
