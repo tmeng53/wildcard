@@ -132,3 +132,64 @@ const LINK = new RegExp(
 export function containsLink(text: string): boolean {
   return LINK.test(text);
 }
+
+/**
+ * Words AI-written copy never holds: no body metrics, calories or macros in v1. Matched
+ * case-blind, so copy that trips one is never shown.
+ */
+const BODY_WORDS = [
+  '体重',
+  '胖',
+  '瘦',
+  '身材',
+  '体脂',
+  '减肥',
+  '减脂',
+  '公斤',
+  '卡路里',
+  '热量',
+  '大卡',
+  '蛋白质',
+  '碳水',
+  '脂肪',
+  'bmi',
+  'calorie',
+  'kcal',
+  'macros',
+];
+
+/** True when the text speaks of bodies, weight, calories or macros, which v1 never does. */
+export function mentionsBodyMetrics(text: string): boolean {
+  const lower = text.toLowerCase();
+  return BODY_WORDS.some((word) => lower.includes(word));
+}
+
+/**
+ * Words that mean a text is about self-harm. A 请假条 reason with one gets the care line straight
+ * away, before any model is asked, and a 请假条 with one is never handed to a model to joke
+ * about. Everyday exaggeration such as 「累得想死」 is left to the model, so a tired member still
+ * gets a joke.
+ */
+const SELF_HARM_WORDS = [
+  '自杀',
+  '自尽',
+  '轻生',
+  '自残',
+  '割腕',
+  '活不下去',
+  '结束生命',
+  'suicide',
+  'suicidal',
+  'kill myself',
+  'self harm',
+  'self-harm',
+];
+
+/** 「不想活」, but not 「不想活动」 (don't feel like moving), 「活跃」 or 「活泼」. */
+const NOT_WANTING_TO_LIVE = /不想活(?![动跃泼])/u;
+
+/** True when the text plainly speaks of self-harm. */
+export function mentionsSelfHarm(text: string): boolean {
+  const lower = text.toLowerCase();
+  return NOT_WANTING_TO_LIVE.test(lower) || SELF_HARM_WORDS.some((word) => lower.includes(word));
+}

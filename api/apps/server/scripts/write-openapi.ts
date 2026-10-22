@@ -6,11 +6,18 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
+import {
+  createOffSender,
+  createPostgresDailyPushStore,
+  createPostgresDeviceStore,
+  createPostgresSettingsStore,
+  createPush,
+} from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 
 import { createDatabase } from '../src/adapters/postgres.js';
@@ -43,6 +50,7 @@ const app = createApp({
       inviteCodes: randomInviteCodes,
     }),
     reactions: createPostgresReactionStore(db),
+    replies: createPostgresReplyStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: unused,
@@ -55,11 +63,26 @@ const app = createApp({
     clock: unused,
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: createPush({
+    store: createPostgresDeviceStore(db),
+    settings: createPostgresSettingsStore(db),
+    daily: createPostgresDailyPushStore(db),
+    sender: createOffSender(),
+  }),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  weeklyAwards: {
+    awards: {
+      give: unused,
+      find: unused,
+      claimNudge: unused,
+      claimWinners: unused,
+    },
+    clock: unused,
+  },
   log: createLog(unused),
+  jobs: { token: undefined, interactions: [], clock: unused },
   admin: {
-    admins: () => ({ requireAdmin: unused, logChange: unused, listLog: unused }),
+    admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL('http://localhost:54321/auth/v1'),

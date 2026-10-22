@@ -4,11 +4,11 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
@@ -17,7 +17,9 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
+import { noJobs, pushOn } from './test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
+import { unusedWeeklyAwards } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -45,6 +47,7 @@ describe('openapi.json', () => {
           inviteCodes: randomInviteCodes,
         }),
         reactions: createPostgresReactionStore(db),
+        replies: createPostgresReplyStore(db),
         plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf: () => Promise.resolve(undefined),
@@ -60,12 +63,15 @@ describe('openapi.json', () => {
         clock: () => new Date(),
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
-      push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+      push: pushOn(db),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+      weeklyAwards: unusedWeeklyAwards,
       log: createLog(() => undefined),
+      jobs: noJobs,
       admin: {
         admins: () => ({
           requireAdmin: () => Promise.reject(new Error('unused')),
+          list: () => Promise.reject(new Error('unused')),
           logChange: () => Promise.reject(new Error('unused')),
           listLog: () => Promise.reject(new Error('unused')),
         }),

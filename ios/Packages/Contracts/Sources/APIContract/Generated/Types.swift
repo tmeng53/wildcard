@@ -53,6 +53,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
     func listMyCheckIns(_ input: Operations.ListMyCheckIns.Input) async throws -> Operations.ListMyCheckIns.Output
+    /// Everything the signed-in member ever checked in, counted by kind
+    ///
+    /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
+    ///
+    /// - Remark: HTTP `GET /me/check-in-totals`.
+    /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
+    func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
     /// A signed URL to upload one check-in photo to
     ///
     /// - Remark: HTTP `POST /photo-uploads`.
@@ -79,6 +86,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
     func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
+    /// Reply to a teammate’s 请假条
+    ///
+    /// Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/put(replyToDisclaimer)`.
+    func replyToDisclaimer(_ input: Operations.ReplyToDisclaimer.Input) async throws -> Operations.ReplyToDisclaimer.Output
+    /// Take your reply off a 请假条
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/delete(removeMyReply)`.
+    func removeMyReply(_ input: Operations.RemoveMyReply.Input) async throws -> Operations.RemoveMyReply.Output
+    /// A 请假条’s replies
+    ///
+    /// Oldest first, for its author and the teammates who can see it. Empty for any other check-in.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/replies`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/get(listDisclaimerReplies)`.
+    func listDisclaimerReplies(_ input: Operations.ListDisclaimerReplies.Input) async throws -> Operations.ListDisclaimerReplies.Output
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -93,6 +121,18 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /me/devices/remove`.
     /// - Remark: Generated from `#/paths//me/devices/remove/post(removeMyDevice)`.
     func removeMyDevice(_ input: Operations.RemoveMyDevice.Input) async throws -> Operations.RemoveMyDevice.Output
+    /// Which kinds of push the member gets
+    ///
+    /// - Remark: HTTP `GET /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/get(getMyPushSettings)`.
+    func getMyPushSettings(_ input: Operations.GetMyPushSettings.Input) async throws -> Operations.GetMyPushSettings.Output
+    /// Turn kinds of push on or off
+    ///
+    /// Takes every switch at once. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
+    func saveMyPushSettings(_ input: Operations.SaveMyPushSettings.Input) async throws -> Operations.SaveMyPushSettings.Output
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -135,7 +175,7 @@ public protocol APIProtocol: Sendable {
     func joinSquad(_ input: Operations.JoinSquad.Input) async throws -> Operations.JoinSquad.Output
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
@@ -175,6 +215,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
     func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
+    /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
+    ///
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
+    func nudgeSquadWeekStory(_ input: Operations.NudgeSquadWeekStory.Input) async throws -> Operations.NudgeSquadWeekStory.Output
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    func getSquadWeekStory(_ input: Operations.GetSquadWeekStory.Input) async throws -> Operations.GetSquadWeekStory.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -274,6 +328,15 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Everything the signed-in member ever checked in, counted by kind
+    ///
+    /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
+    ///
+    /// - Remark: HTTP `GET /me/check-in-totals`.
+    /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
+    public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
+        try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
+    }
     /// A signed URL to upload one check-in photo to
     ///
     /// - Remark: HTTP `POST /photo-uploads`.
@@ -328,6 +391,53 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Reply to a teammate’s 请假条
+    ///
+    /// Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/put(replyToDisclaimer)`.
+    public func replyToDisclaimer(
+        path: Operations.ReplyToDisclaimer.Input.Path,
+        headers: Operations.ReplyToDisclaimer.Input.Headers = .init(),
+        body: Operations.ReplyToDisclaimer.Input.Body
+    ) async throws -> Operations.ReplyToDisclaimer.Output {
+        try await replyToDisclaimer(Operations.ReplyToDisclaimer.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your reply off a 请假条
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/delete(removeMyReply)`.
+    public func removeMyReply(
+        path: Operations.RemoveMyReply.Input.Path,
+        headers: Operations.RemoveMyReply.Input.Headers = .init()
+    ) async throws -> Operations.RemoveMyReply.Output {
+        try await removeMyReply(Operations.RemoveMyReply.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A 请假条’s replies
+    ///
+    /// Oldest first, for its author and the teammates who can see it. Empty for any other check-in.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/replies`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/get(listDisclaimerReplies)`.
+    public func listDisclaimerReplies(
+        path: Operations.ListDisclaimerReplies.Input.Path,
+        headers: Operations.ListDisclaimerReplies.Input.Headers = .init()
+    ) async throws -> Operations.ListDisclaimerReplies.Output {
+        try await listDisclaimerReplies(Operations.ListDisclaimerReplies.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -354,6 +464,28 @@ extension APIProtocol {
         body: Operations.RemoveMyDevice.Input.Body
     ) async throws -> Operations.RemoveMyDevice.Output {
         try await removeMyDevice(Operations.RemoveMyDevice.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Which kinds of push the member gets
+    ///
+    /// - Remark: HTTP `GET /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/get(getMyPushSettings)`.
+    public func getMyPushSettings(headers: Operations.GetMyPushSettings.Input.Headers = .init()) async throws -> Operations.GetMyPushSettings.Output {
+        try await getMyPushSettings(Operations.GetMyPushSettings.Input(headers: headers))
+    }
+    /// Turn kinds of push on or off
+    ///
+    /// Takes every switch at once. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
+    public func saveMyPushSettings(
+        headers: Operations.SaveMyPushSettings.Input.Headers = .init(),
+        body: Operations.SaveMyPushSettings.Input.Body
+    ) async throws -> Operations.SaveMyPushSettings.Output {
+        try await saveMyPushSettings(Operations.SaveMyPushSettings.Input(
             headers: headers,
             body: body
         ))
@@ -444,7 +576,7 @@ extension APIProtocol {
     }
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
@@ -532,6 +664,36 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
+    ///
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
+    public func nudgeSquadWeekStory(
+        path: Operations.NudgeSquadWeekStory.Input.Path,
+        headers: Operations.NudgeSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.NudgeSquadWeekStory.Output {
+        try await nudgeSquadWeekStory(Operations.NudgeSquadWeekStory.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    public func getSquadWeekStory(
+        path: Operations.GetSquadWeekStory.Input.Path,
+        headers: Operations.GetSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeekStory.Output {
+        try await getSquadWeekStory(Operations.GetSquadWeekStory.Input(
+            path: path,
+            headers: headers
         ))
     }
 }

@@ -17,8 +17,8 @@ export interface Reaction {
   readonly reactedAt: Date;
 }
 
-/** What reacting did: a new reaction, a different one in place of the member's last, or nothing. */
-export type ReactOutcome = 'created' | 'changed' | 'unchanged';
+/** What saving a reaction or reply did: a new one, a different one in place of the member's last, or nothing. */
+export type SaveOutcome = 'created' | 'changed' | 'unchanged';
 
 /**
  * The squads through which `viewer` sees a check-in: those it went to that both they and its
@@ -27,7 +27,7 @@ export type ReactOutcome = 'created' | 'changed' | 'unchanged';
  * shown to them, so a reaction never reveals a squad they aren't in.
  */
 export function sharedSquads(
-  checkIn: CheckInRecord,
+  checkIn: Pick<CheckInRecord, 'audience'>,
   {
     viewerSquads,
     authorSquads,

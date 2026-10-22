@@ -4,11 +4,11 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -18,8 +18,9 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -44,6 +45,7 @@ const app = createApp({
       inviteCodes: randomInviteCodes,
     }),
     reactions: createPostgresReactionStore(db),
+    replies: createPostgresReplyStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
@@ -56,9 +58,11 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: pushOn(db),
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
+  jobs: noJobs,
   admin: adminOn(),
 });
 
@@ -363,6 +367,48 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
         })
       ).status,
     ).toBe(200);
+  });
+});
+
+describe('GET /me/check-in-totals', () => {
+  it('counts everything the member ever checked in by kind, 练了 by day', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me);
+    const yesterday = new Date(Date.now() - 24 * 60 * 60_000);
+    const put = async (when: Date, fields: Record<string, unknown>): Promise<number> => {
+      const body = {
+        version: 1,
+        day: when.toISOString().slice(0, 10),
+        createdAt: when.toISOString(),
+        audience: [squad],
+        ...fields,
+      };
+      const path = `/check-ins/${randomUUID()}`;
+      return (await call({ method: 'PUT', path, token: me.token, body })).status;
+    };
+    const now = new Date(Date.now() - 60_000);
+    const statuses = [
+      await put(now, { kind: 'trained', training: { sport: 'run' } }),
+      await put(now, { kind: 'trained', training: { sport: 'swim' } }),
+      await put(yesterday, { kind: 'trained', training: { sport: 'run' } }),
+      await put(now, { kind: 'healthyMeal', meal: { caption: '沙拉' } }),
+      await put(yesterday, { kind: 'healthyMeal', meal: {} }),
+      await put(now, { kind: 'cheatMeal', meal: {} }),
+      await put(yesterday, { kind: 'disclaimer', disclaimer: { text: '下雨了' } }),
+    ];
+    expect(statuses).toStrictEqual([201, 201, 201, 201, 201, 201, 201]);
+
+    expect(
+      await call({ method: 'GET', path: '/me/check-in-totals', token: me.token }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, trainedDays: 2, healthyMeals: 2, cheatMeals: 1, disclaimers: 1 },
+    });
+    expect(
+      (await call({ method: 'GET', path: '/me/check-in-totals', token: friend.token })).body,
+    ).toStrictEqual({ version: 1, trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0 });
+    expect((await call({ method: 'GET', path: '/me/check-in-totals' })).status).toBe(401);
   });
 });
 

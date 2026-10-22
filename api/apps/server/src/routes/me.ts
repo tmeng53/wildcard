@@ -1,11 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { Catchphrase, MemberId, TimeZone, type Members } from '@wildcard/members';
+import { Catchphrase, MemberId, TimeZone, type Members, type Profile } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
 import { deleteAccount, type DeleteAccountDependencies } from '../flows/delete-account.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { CharacterBody } from './character.js';
 
 const profileFields = {
   timeZone: TimeZone.meta({
@@ -22,6 +23,10 @@ const profileFields = {
         'the app then uses their persona’s own line. Squadmates read it on the squad’s today.',
       example: '冲就完了🔥',
     }),
+  // Missing until the member makes their character, right after signing in; a save that leaves
+  // it out clears it. Left out rather than null: the Swift generator can't read a nullable
+  // reference.
+  character: CharacterBody.optional(),
 };
 
 /** The member's profile, as `PUT /me/profile` takes it and returns it. */
@@ -57,6 +62,11 @@ export const AccountDeletion = z
       }),
   })
   .openapi('AccountDeletion');
+
+/** The profile as the API sends it: a character only once there is one. */
+function wireProfile({ character, ...profile }: Profile) {
+  return character === null ? profile : { ...profile, character };
+}
 
 const unauthorized = {
   401: problem('No bearer token, or not a valid one'),
@@ -102,7 +112,8 @@ export function me(
     responses: {
       200: { description: 'Saved', content: { 'application/json': { schema: ProfileBody } } },
       400: problem(
-        'Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a ' +
+        'Not a valid profile (such as a catchphrase over 10 characters, a nickname holding a ' +
+          'link, or a look with no body), or a ' +
           'time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)',
       ),
       ...jsonBodyFailures,
@@ -151,15 +162,22 @@ export function me(
     .openapi(getMe, async (c) => {
       const userId = c.var.caller.userId;
       const profile = await deps.members.findProfile(MemberId.parse(userId));
-      return c.json({ version: 1, userId, profile: profile ?? null } as const, 200);
+      return c.json(
+        {
+          version: 1,
+          userId,
+          profile: profile === undefined ? null : wireProfile(profile),
+        } as const,
+        200,
+      );
     })
     .openapi(putProfile, async (c) => {
-      const { timeZone, catchphrase } = c.req.valid('json');
+      const { timeZone, catchphrase, character } = c.req.valid('json');
       const saved = await deps.members.saveProfile({
         member: MemberId.parse(c.var.caller.userId),
-        profile: { timeZone, catchphrase },
+        profile: { timeZone, catchphrase, character: character ?? null },
       });
-      return c.json({ version: 1, ...saved } as const, 200);
+      return c.json({ version: 1, ...wireProfile(saved) } as const, 200);
     })
     .openapi(deleteMe, async (c) => {
       const { appleAuthorizationCode } = c.req.valid('json');

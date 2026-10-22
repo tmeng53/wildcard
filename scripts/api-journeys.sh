@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [devices] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [replies] [devices] [daily-push] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions replies devices daily-push account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | replies | devices | daily-push | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, replies, devices, daily-push, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -217,11 +217,12 @@ if want squad; then
     fail "preview should show the name and 2 members only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
-  # The web invite page, before anyone signs in: no token, only the name, size and whether full.
+  # The web invite page, before anyone signs in: no token, only the name, size, whether full
+  # and the members' looks (none here: neither has made a character), never names or ids.
   call GET "/public/squad-invites/$typed" ""
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false}' ] ||
-    fail "public preview should show the name, size and full only: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"looks":[]}' ] ||
+    fail "public preview should show the name, size, full and looks only: $body"
   call GET "/public/squad-invites/ZZZZZZZZ" ""
   expect 404 INVITE_CODE_UNKNOWN
   echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
@@ -332,15 +333,20 @@ if want squad-today; then
     call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
     expect 200
   done
-  # The runner picks a catchphrase (口头禅); the napper's are refused, so theirs stays unset.
-  call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \"}"
+  # The runner picks a catchphrase (口头禅) and makes a character; the napper's catchphrases are
+  # refused, so theirs stays unset.
+  runner_look='{"persona":"energetic","variants":{"body":"shiba","top":"jersey"},"colors":{"top":"#2D5BA0"}}'
+  call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \",\"character\":{\"nickname\":\" 跑跑 \",\"look\":$runner_look}}"
   expect 200
   [ "$(jq -r .catchphrase <<<"$body")" = '冲就完了🔥' ] || fail "the catchphrase should be saved trimmed: $body"
+  # Compared with sorted keys: the database keeps JSON objects in its own key order.
+  [ "$(jq -cS .character <<<"$body")" = "$(jq -cS --argjson look "$runner_look" -n '{nickname: "跑跑", look: $look}')" ] ||
+    fail "the character should be saved with its nickname trimmed: $body"
   call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"今天也是冲冲冲的一天!\"}"
   expect 400 REQUEST_INVALID
   call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"看abc.com\"}"
   expect 400 REQUEST_INVALID
-  echo "squad-today: runner's catchphrase 冲就完了🔥 saved; napper's 11 characters and link refused (400)"
+  echo "squad-today: runner's catchphrase 冲就完了🔥 and character 跑跑 saved; napper's 11 characters and link refused (400)"
   squad_of "$runner_token" "$napper_token" "$rester_token"
   plan_of() { jq -cn --arg kind "$1" '{version: 1, days: [range(7) | {kind: $kind}]}'; }
   for token in "$runner_token" "$napper_token"; do
@@ -373,6 +379,9 @@ if want squad-today; then
   [ "$(jq -c '[.members[] | .catchphrase]' <<<"$body")" = '[null,"冲就完了🔥",null]' ] ||
     fail "squadmates should see the runner's catchphrase, and null for the others: $body"
   echo "squad-today: napper sees runner's catchphrase 冲就完了🔥, null for self and rester"
+  [ "$(jq -cS '[.members[] | .character]' <<<"$body")" = "$(jq -cS --argjson look "$runner_look" -n '[null, {nickname: "跑跑", look: $look}, null]')" ] ||
+    fail "squadmates should see the runner's character, and none for the others: $body"
+  echo "squad-today: napper sees runner's character 跑跑 (shiba in a jersey), none for self and rester"
 
   call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
@@ -382,6 +391,17 @@ if want squad-today; then
     '["trained",{"trained":2,"disclaimer":0,"resting":1,"everyoneTrained":true},1,{"trainedDays":2,"plannedDays":14}]' ] ||
     fail "napper's 练了 should win over the disclaimer, and the rester's rest day count toward everyone: $body"
   echo "squad-today: napper trained after all, so 练了 wins over the disclaimer; with rester resting, everyone trained"
+
+  # 我's lifetime counts: every check-in the member ever made, by kind.
+  call GET /me/check-in-totals "$runner_token"
+  expect 200
+  [ "$(jq -c '[.trainedDays, .healthyMeals, .cheatMeals, .disclaimers]' <<<"$body")" = '[1,1,0,0]' ] ||
+    fail "runner's totals should be 1 trained day and 1 healthy meal: $body"
+  call GET /me/check-in-totals "$napper_token"
+  expect 200
+  [ "$(jq -c '[.trainedDays, .healthyMeals, .cheatMeals, .disclaimers]' <<<"$body")" = '[1,0,0,1]' ] ||
+    fail "napper's totals should be 1 trained day and 1 disclaimer: $body"
+  echo "check-in-totals: runner 1 练了 day + 1 健康餐, napper 1 练了 day + 1 请假条"
 
   call GET "/squads/$squad/today" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
@@ -471,6 +491,49 @@ if want reactions; then
   echo "reactions: mate took it off (204, again 204), no row left"
 fi
 
+if want replies; then
+  excuse="$(new_id)"
+  call PUT "/check-ins/$excuse" "$me_token" "$(check_in_of "$squad" "$day" disclaimer '"disclaimer":{"text":"今天加班到很晚"}')"
+  expect 201
+  reply() { echo "{\"version\":1,\"kind\":\"$1\"}"; }
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply approved)"
+  expect 201
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply approved)"
+  expect 200
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply hug)"
+  expect 200
+  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"kind":"lol"}'
+  expect 201
+  echo "replies: mate replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too"
+
+  call GET "/check-ins/$excuse/replies" "$me_token"
+  expect 200
+  [ "$(jq -c '[.replies[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"hug"]]')" ] ||
+    fail "the author should see one reply, mate's hug: $body"
+  echo "replies: the author sees one reply, mate's 抱抱, apart from the reaction"
+
+  run="$(new_id)"
+  call PUT "/check-ins/$run" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
+  expect 201
+  call PUT "/check-ins/$run/replies/mine" "$mate_token" "$(reply approved)"
+  expect 400 NOT_A_DISCLAIMER
+  call PUT "/check-ins/$excuse/replies/mine" "$me_token" "$(reply approved)"
+  expect 400 OWN_DISCLAIMER_REPLY
+  call PUT "/check-ins/$excuse/replies/mine" "$outsider_token" "$(reply approved)"
+  expect 404 CHECK_IN_NOT_FOUND
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply cheer)"
+  expect 400 REQUEST_INVALID
+  echo "replies: a 练了 refused (400 NOT_A_DISCLAIMER), own 请假条 refused (400 OWN_DISCLAIMER_REPLY), outsider sees nothing (404), unknown kind refused (400)"
+
+  call DELETE "/check-ins/$excuse/replies/mine" "$mate_token"
+  expect 204
+  call DELETE "/check-ins/$excuse/replies/mine" "$mate_token"
+  expect 204
+  rows="$(psql "$DB_URL" -tAc "select (select count(*) from public.disclaimer_replies where check_in_id = '$excuse') || ' ' || (select count(*) from public.check_in_reactions where check_in_id = '$excuse')")"
+  [ "$rows" = "0 1" ] || fail "the reply should be gone and the reaction kept: $rows"
+  echo "replies: mate took it off (204, again 204), no reply row left, the reaction kept"
+fi
+
 if want devices; then
   phone="$(node -p 'crypto.randomBytes(32).toString("hex")')"
   owner_of() { psql "$DB_URL" -tAc "select member_id || ' ' || environment from public.push_devices where token = '$phone'"; }
@@ -497,6 +560,62 @@ if want devices; then
   call PUT /me/devices "$me_token" '{"version":1,"token":"not-hex","environment":"sandbox"}'
   expect 400 REQUEST_INVALID
   echo "devices: a token that isn't hex refused (400)"
+fi
+
+if want daily-push; then
+  # A time zone where it is about 8pm now, and its today: past the daily push's 6pm.
+  read -r evening evening_day <<<"$(node -e '
+    const offset = ((20 - new Date().getUTCHours() + 36) % 24) - 12;
+    const local = new Date(Date.now() + offset * 3_600_000);
+    const zone = offset === 0 ? "Etc/GMT" : `Etc/GMT${offset > 0 ? "-" : "+"}${Math.abs(offset)}`;
+    console.log(zone, local.toISOString().slice(0, 10));')"
+  read -r runner runner_token <<<"$(sign_up)"
+  read -r cheerer cheerer_token <<<"$(sign_up)"
+  read -r resting resting_token <<<"$(sign_up)"
+  read -r loner loner_token <<<"$(sign_up)"
+  for token in "$runner_token" "$cheerer_token" "$resting_token" "$loner_token"; do
+    call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$evening\"}"
+    expect 200
+    call PUT /me/devices "$token" "{\"version\":1,\"token\":\"$(node -p 'crypto.randomBytes(32).toString("hex")')\",\"environment\":\"sandbox\"}"
+    expect 200
+  done
+  squad_of "$runner_token" "$cheerer_token" "$resting_token"
+  handled() {
+    psql "$DB_URL" -tAc "select string_agg(member_id || ' ' || day || ' ' || quiet, ',' order by member_id) from public.daily_pushes
+      where member_id in ('$runner', '$cheerer', '$resting', '$loner')"
+  }
+
+  call GET /me/push-settings "$resting_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"settings":{"dailyProgress":true}}' ] || fail "the push is on until turned off: $body"
+  call PUT /me/push-settings "$resting_token" '{"version":1,"settings":{"dailyProgress":false}}'
+  expect 200
+  call GET /me/push-settings "$resting_token"
+  [ "$(jq -c .settings <<<"$body")" = '{"dailyProgress":false}' ] || fail "the push should be off: $body"
+  call PUT /me/push-settings "$resting_token" '{"version":1,"settings":{}}'
+  expect 400 REQUEST_INVALID
+  echo "daily-push: on until turned off, then off (200); a missing switch refused (400)"
+
+  call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$evening_day" trained '"training":{"sport":"run"}')"
+  expect 201
+  post="$(jq -r .id <<<"$body")"
+  call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"kind":"cheer"}'
+  expect 201
+  echo "daily-push: in $evening, runner trained and cheerer cheered them"
+
+  call POST /jobs/daily-progress-push "$runner_token"
+  expect 401 JOB_TOKEN_INVALID
+  call POST /jobs/daily-progress-push "$jobs_token"
+  expect 200
+  [ "$(handled)" = "$(printf '%s\n' "$cheerer $evening_day false" "$loner $evening_day true" "$runner $evening_day false" | sort | paste -sd,)" ] ||
+    fail "runner and cheerer handled with news, loner quiet, resting not at all: $(handled)"
+  echo "daily-push: a member's token refused (401); the job handled runner and cheerer, loner quietly, resting not at all"
+
+  before="$(handled)"
+  call POST /jobs/daily-progress-push "$jobs_token"
+  expect 200
+  [ "$(handled)" = "$before" ] || fail "a second run should handle no one again: $(handled)"
+  echo "daily-push: a second run handled no one again"
 fi
 
 if want account; then

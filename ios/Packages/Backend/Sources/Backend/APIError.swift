@@ -35,21 +35,29 @@ public enum Refusal: Equatable, Sendable {
     case photoRejected
     /// A time zone the API doesn't know.
     case timeZoneUnknown
+    /// The check-in is gone, or the member can't see it.
+    case checkInNotFound
+    /// Today's AI 请假条 drafts are used up.
+    case disclaimerDraftsUsedUp
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
     init(reason: String) {
-        self =
-            switch reason {
-            case "CHECK_IN_ID_CONFLICT": .checkInIDConflict
-            case "DISCLAIMER_ALREADY_POSTED": .disclaimerAlreadyPosted
-            case "SQUAD_NOT_JOINED": .squadNotJoined
-            case "CHECK_IN_TOO_OLD", "CHECK_IN_IN_THE_FUTURE", "CHECK_IN_DAY_MISMATCH": .checkInOutOfTime
-            case "PHOTO_NOT_YOURS": .photoNotYours
-            case "PHOTO_IN_USE": .photoInUse
-            case "PHOTO_NOT_UPLOADED": .photoNotUploaded
-            case "TIME_ZONE_UNKNOWN": .timeZoneUnknown
-            default: .invalid(reason: reason)
-            }
+        self = Self.byReason[reason] ?? .invalid(reason: reason)
     }
+
+    private static let byReason: [String: Refusal] = [
+        "CHECK_IN_ID_CONFLICT": .checkInIDConflict,
+        "DISCLAIMER_ALREADY_POSTED": .disclaimerAlreadyPosted,
+        "SQUAD_NOT_JOINED": .squadNotJoined,
+        "CHECK_IN_TOO_OLD": .checkInOutOfTime,
+        "CHECK_IN_IN_THE_FUTURE": .checkInOutOfTime,
+        "CHECK_IN_DAY_MISMATCH": .checkInOutOfTime,
+        "PHOTO_NOT_YOURS": .photoNotYours,
+        "PHOTO_IN_USE": .photoInUse,
+        "PHOTO_NOT_UPLOADED": .photoNotUploaded,
+        "TIME_ZONE_UNKNOWN": .timeZoneUnknown,
+        "CHECK_IN_NOT_FOUND": .checkInNotFound,
+        "DISCLAIMER_DRAFTS_USED_UP": .disclaimerDraftsUsedUp,
+    ]
 }
