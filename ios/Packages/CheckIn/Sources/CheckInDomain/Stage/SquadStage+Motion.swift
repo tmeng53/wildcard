@@ -33,6 +33,9 @@ public struct StagePosition: Hashable, Sendable {
     public let point: StagePoint
     public let facing: Double
     public let scale: Double
+
+    /// Where I stand: front and centre, facing right, a little bigger than the squad.
+    public static let mine = StagePosition(point: StageLayout.mySpot, facing: 1, scale: StageLayout.myScale)
 }
 
 extension SquadStage {

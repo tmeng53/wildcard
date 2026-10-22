@@ -11,10 +11,9 @@ final class TodayUITests: XCTestCase {
     /// with the squad bar ticked up. Afterwards 请假 is greyed out for the day.
     func testTrainedCheckIn() {
         let app = launch(language: "zh-Hans", photos: 3)
-        let card = topCard(in: app)
-        XCTAssertTrue(card.label.contains("周三不练腿俱乐部"))
-        XCTAssertTrue(card.label.contains("14/22"))
-        XCTAssertTrue(card.label.contains("今天 3 人练了"))
+        _ = topCard(in: app)
+        XCTAssertTrue(labeled("周三不练腿俱乐部", in: app).exists)
+        XCTAssertTrue(labeled("14/22", in: app).exists)
         settle()
         keepScreenshot(named: "13-today")
 
@@ -46,11 +45,19 @@ final class TodayUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(post.frame.minY, 44, "发布 slid under the status bar: \(post.frame)")
 
         post.tap()
+        // Frames of the check-in moment from when the scene is back, named with when each was
+        // taken, for a recording of it.
+        XCTAssertTrue(post.waitForNonExistence(timeout: Self.wait), "the compose page didn't close after posting")
+        let posted = Date()
+        for frame in 0..<12 {
+            let after = Int(Date().timeIntervalSince(posted) * 1000)
+            keepScreenshot(named: String(format: "16-moment-%02d-%04dms", frame, after))
+        }
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after posting")
         XCTAssertTrue(bubble.label.contains("晨跑 5 公里，腿还在"))
-        waitForLabel(of: card, "label CONTAINS %@", "15/22", "the squad bar didn't tick up to 15/22")
-        XCTAssertTrue(card.label.contains("今天 4 人练了"))
+        XCTAssertTrue(
+            labeled("15/22", in: app).waitForExistence(timeout: Self.wait), "the squad's score didn't tick up to 15/22")
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "16-today-trained-payoff")
@@ -69,7 +76,7 @@ final class TodayUITests: XCTestCase {
     /// the squad bar.
     func testDisclaimer() {
         let app = launch(language: "zh-Hans", photos: 0)
-        let card = topCard(in: app)
+        _ = topCard(in: app)
         let field = openDisclaimer(in: app)
         let close = app.buttons["disclaimer.close"]
         let post = app.buttons["disclaimer.post"]
@@ -124,9 +131,19 @@ final class TodayUITests: XCTestCase {
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
         XCTAssertTrue(bubble.label.contains(line))
-        XCTAssertTrue(card.label.contains("14/22"), "a 请假条 moved the squad bar")
+        XCTAssertTrue(labeled("14/22", in: app).exists, "a 请假条 moved the squad's score")
         settle()
         keepScreenshot(named: "19-today-disclaimer-posted")
+
+        assertOpensItsPost(bubble, in: app)
+    }
+
+    /// A caption's bubble opens its post: the 动态 tab, until the feed can scroll to it.
+    private func assertOpensItsPost(_ bubble: XCUIElement, in app: XCUIApplication) {
+        bubble.tap()
+        let feed = app.staticTexts["tab.upcoming"]
+        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "tapping the bubble didn't leave 今天")
+        XCTAssertEqual(feed.label, "动态", "tapping the bubble opened another tab")
     }
 
     /// The excuse shows exactly what will be posted: Return finishes editing, and typing stops
@@ -223,27 +240,49 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "22-compose-healthy-meal")
     }
 
+    /// The squad card's second page: my week, Monday to Sunday.
+    func testMyWeekPage() {
+        let app = launch(language: "zh-Hans", photos: 0, cardPage: nil)
+        _ = topCard(in: app)
+        let mine = app.buttons["squadcard.page.mine"]
+        XCTAssertTrue(mine.waitForExistence(timeout: Self.wait), "no dot for my week")
+        mine.tap()
+        XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
+        settle()
+        keepScreenshot(named: "13-today-my-week")
+        // Leave the card as the other tests expect it.
+        app.buttons["squadcard.page.squad"].tap()
+    }
+
     func testTodayInEnglish() {
         let app = launch(language: "en", photos: 0)
-        XCTAssertTrue(topCard(in: app).label.contains("Skip Leg Day Club"))
+        _ = topCard(in: app)
+        XCTAssertTrue(labeled("Skip Leg Day Club", in: app).exists)
         XCTAssertEqual(app.buttons["today.checkin"].label, "Check in")
         settle()
         keepScreenshot(named: "20-today-en")
     }
 
-    private func launch(language: String, photos: Int, extra: [String] = []) -> XCUIApplication {
+    /// `cardPage` pins the squad card to its first page, since the card reopens where it was
+    /// left; pass nil to let the test swipe it.
+    private func launch(language: String, photos: Int, extra: [String] = [], cardPage: Int? = 0) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments +=
             [
                 "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
-                "-uitest-no-push",
-            ] + extra
+                "-uitest-no-push", "-uitest-noon",
+            ] + (cardPage.map { ["-today.cardPage", "\($0)"] } ?? []) + extra
         app.launch()
         return app
     }
 
-    /// The top card, which VoiceOver reads as one element.
+    /// Any element showing exactly `label`: the squad's name, a score.
+    private func labeled(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+    }
+
+    /// The squad card at the top.
     private func topCard(in app: XCUIApplication) -> XCUIElement {
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared")

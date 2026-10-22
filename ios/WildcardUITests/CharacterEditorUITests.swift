@@ -50,6 +50,36 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "22-editor-outfit")
     }
 
+    /// 脸 opens on the rig's round eyes; 星星眼 in the third eye color, then 坏笑 and round
+    /// glasses further down.
+    func testPickingAFace() {
+        let app = launch(language: "zh-Hans")
+        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
+        app.buttons["editor.tab.face"].tap()
+        let sparkle = app.buttons["editor.tile.eyes.sparkle"]
+        XCTAssertTrue(sparkle.waitForExistence(timeout: Self.wait), "no 星星眼 tile")
+        XCTAssertTrue(app.buttons["editor.tile.eyes.round"].isSelected, "the rig's round eyes aren't picked")
+        XCTAssertTrue(app.buttons["editor.tile.brows.soft"].isSelected, "the sample's brows aren't picked")
+        sparkle.tap()
+        waitUntilSelected(sparkle, "picking 星星眼 didn't select it")
+        app.buttons["editor.swatch.eyes.2"].tap()
+        waitUntilSelected(app.buttons["editor.swatch.eyes.2"], "the eye swatch didn't select")
+        settle()
+        keepScreenshot(named: "29-editor-face")
+
+        let smirk = app.buttons["editor.tile.mouth.smirk"]
+        scrollUntilHittable(smirk, in: app)
+        smirk.tap()
+        waitUntilSelected(smirk, "picking 坏笑 didn't select it")
+        let glasses = app.buttons["editor.tile.glasses.round"]
+        scrollUntilHittable(glasses, in: app)
+        XCTAssertTrue(app.buttons["editor.tile.glasses.none"].isSelected, "the sample wears glasses")
+        glasses.tap()
+        waitUntilSelected(glasses, "picking 圆框 didn't select it")
+        settle()
+        keepScreenshot(named: "30-editor-face-glasses")
+    }
+
     /// The racket plays its move; undo brings the dumbbell back.
     func testPickingAPropAndUndoing() {
         let app = launch(language: "zh-Hans")
@@ -83,7 +113,7 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "25-editor-persona-showoff")
     }
 
-    /// A cat wears no hair, so 发型 goes away; 就这样 waits for a nickname.
+    /// A cat wears no hair or person's face, so 发型 and 脸 go away; 就这样 waits for a nickname.
     func testBecomingACatWithANickname() {
         let app = launch(language: "zh-Hans")
         let done = app.buttons["editor.done"]
@@ -94,6 +124,7 @@ final class CharacterEditorUITests: XCTestCase {
         cat.tap()
         waitUntilSelected(cat, "picking the cat didn't select it")
         XCTAssertFalse(app.buttons["editor.tab.hair"].exists, "a cat still shows 发型")
+        XCTAssertFalse(app.buttons["editor.tab.face"].exists, "a cat still shows 脸")
         settle()
         keepScreenshot(named: "26-editor-cat")
 
@@ -139,6 +170,19 @@ final class CharacterEditorUITests: XCTestCase {
     ) {
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: timeout), .completed, message)
+    }
+
+    /// Scrolls the choices a little at a time until `element` can be tapped: the grid only
+    /// makes the tiles in view, and one under the done bar can't be tapped. The drag starts
+    /// low on the screen, in the choices and clear of the stage above, and holds at the end so
+    /// the list doesn't coast: a tap while it coasts only stops it.
+    private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
+        for _ in 0..<8 where !(element.exists && element.isHittable) {
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(element.exists && element.isHittable, "\(element.identifier) never scrolled into view")
     }
 
     /// Lets thumbnails build and the character's one move finish before a screenshot.

@@ -63,28 +63,6 @@ struct ScenePattern: View {
     }
 }
 
-/// The scene's floor behind the squad: the scene's floor color with its markings. Blurred lightly
-/// while a check-in is open. A stand-in until the scene art lands.
-public struct SceneFloor: View {
-    @Environment(\.sceneTheme) private var theme
-    private let isBlurred: Bool
-
-    public init(isBlurred: Bool = false) {
-        self.isBlurred = isBlurred
-    }
-
-    public var body: some View {
-        ZStack {
-            Color(role: .bgScene, in: theme)
-            ScenePattern(floorTop: 0.55, ink: Color(role: .bgCanvas, in: theme).opacity(theme == .gym ? 0.12 : 0.7))
-        }
-        .blur(radius: isBlurred ? Scrim.blurRadius : 0)
-        .overlay(Color(Scrim.tint).opacity(isBlurred ? Scrim.tintOpacity : 0))
-        .animation(.easeOut(duration: isBlurred ? Scrim.fadeIn : Scrim.fadeOut), value: isBlurred)
-        .accessibilityHidden(true)
-    }
-}
-
 /// Where the character stands while it is being dressed or shown off: a subtle block with
 /// 12-point corners and a grey floor band carrying the scene's markings, so the scene shows
 /// without its color competing with the accent. The content stands with its feet on the floor.
