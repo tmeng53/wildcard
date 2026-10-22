@@ -83,12 +83,12 @@ describe('titlesOf', () => {
   it('keeps a title and line on one line', () => {
     const title = {
       title: '雨中\n狠人',
-      speech: '周三下着雨\r\n 还去跑了。',
+      speech: '周三下着雨\r\n 还去\u2028跑了。',
       move: 'pump' as const,
     };
     expect(
       titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
-    ).toStrictEqual([{ title: '雨中 狠人', speech: '周三下着雨 还去跑了。', move: 'pump' }]);
+    ).toStrictEqual([{ title: '雨中 狠人', speech: '周三下着雨 还去 跑了。', move: 'pump' }]);
   });
 
   it('leaves the words to the model: the prompt says what they may say', () => {

@@ -167,7 +167,7 @@ export function titlesOf(
 }
 
 /** The text on one line: trimmed, each line break (and the spaces around it) one space. */
-const oneLine = (text: string) => text.trim().replace(/\s*[\r\n]+\s*/gu, ' ');
+const oneLine = (text: string) => text.trim().replace(/\s*[\r\n\u0085\u2028\u2029]+\s*/gu, ' ');
 
 /**
  * A member's check-in with the most reactions, the latest on a tie (check-ins come oldest
