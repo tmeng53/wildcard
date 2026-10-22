@@ -527,6 +527,164 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/AiConsent`.
+        public struct AiConsent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AiConsent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AiConsent/version`.
+            public var version: Components.Schemas.AiConsent.VersionPayload
+            /// The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/copyVersion`.
+            public var copyVersion: Swift.Int
+            /// The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
+            public struct GivenPayload: Codable, Hashable, Sendable {
+                /// The version they agreed to.
+                ///
+                /// - Remark: Generated from `#/components/schemas/AiConsent/given/copyVersion`.
+                public var copyVersion: Swift.Int
+                /// When they agreed, in UTC.
+                ///
+                /// - Remark: Generated from `#/components/schemas/AiConsent/given/givenAt`.
+                public var givenAt: Foundation.Date
+                /// Creates a new `GivenPayload`.
+                ///
+                /// - Parameters:
+                ///   - copyVersion: The version they agreed to.
+                ///   - givenAt: When they agreed, in UTC.
+                public init(
+                    copyVersion: Swift.Int,
+                    givenAt: Foundation.Date
+                ) {
+                    self.copyVersion = copyVersion
+                    self.givenAt = givenAt
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case copyVersion
+                    case givenAt
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.copyVersion = try container.decode(
+                        Swift.Int.self,
+                        forKey: .copyVersion
+                    )
+                    self.givenAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .givenAt
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "copyVersion",
+                        "givenAt"
+                    ])
+                }
+            }
+            /// The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
+            public var given: Components.Schemas.AiConsent.GivenPayload?
+            /// True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/current`.
+            public var current: Swift.Bool
+            /// Creates a new `AiConsent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - copyVersion: The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
+            ///   - given: The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///   - current: True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
+            public init(
+                version: Components.Schemas.AiConsent.VersionPayload,
+                copyVersion: Swift.Int,
+                given: Components.Schemas.AiConsent.GivenPayload? = nil,
+                current: Swift.Bool
+            ) {
+                self.version = version
+                self.copyVersion = copyVersion
+                self.given = given
+                self.current = current
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case copyVersion
+                case given
+                case current
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AiConsent.VersionPayload.self,
+                    forKey: .version
+                )
+                self.copyVersion = try container.decode(
+                    Swift.Int.self,
+                    forKey: .copyVersion
+                )
+                self.given = try container.decodeIfPresent(
+                    Components.Schemas.AiConsent.GivenPayload.self,
+                    forKey: .given
+                )
+                self.current = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .current
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "copyVersion",
+                    "given",
+                    "current"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AiConsentGiven`.
+        public struct AiConsentGiven: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/version`.
+            public var version: Components.Schemas.AiConsentGiven.VersionPayload
+            /// The version of the copy the app showed the member, who agreed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/copyVersion`.
+            public var copyVersion: Swift.Int
+            /// Creates a new `AiConsentGiven`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - copyVersion: The version of the copy the app showed the member, who agreed.
+            public init(
+                version: Components.Schemas.AiConsentGiven.VersionPayload,
+                copyVersion: Swift.Int
+            ) {
+                self.version = version
+                self.copyVersion = copyVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case copyVersion
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AiConsentGiven.VersionPayload.self,
+                    forKey: .version
+                )
+                self.copyVersion = try container.decode(
+                    Swift.Int.self,
+                    forKey: .copyVersion
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "copyVersion"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckIn`.
         @frozen public enum CheckIn: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckIn/CheatMealCheckIn`.
@@ -1932,6 +2090,89 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
+        public struct CheckInTotals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
+            public var version: Components.Schemas.CheckInTotals.VersionPayload
+            /// Days with a 练了; several 练了 on one day count once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// 健康餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// 坦白放纵餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// 今日请假条 check-ins, at most one a day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
+            public var disclaimers: Swift.Int
+            /// Creates a new `CheckInTotals`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
+            ///   - healthyMeals: 健康餐 check-ins.
+            ///   - cheatMeals: 坦白放纵餐 check-ins.
+            ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            public init(
+                version: Components.Schemas.CheckInTotals.VersionPayload,
+                trainedDays: Swift.Int,
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                disclaimers: Swift.Int
+            ) {
+                self.version = version
+                self.trainedDays = trainedDays
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.disclaimers = disclaimers
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case trainedDays
+                case healthyMeals
+                case cheatMeals
+                case disclaimers
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.CheckInTotals.VersionPayload.self,
+                    forKey: .version
+                )
+                self.trainedDays = try container.decode(
+                    Swift.Int.self,
+                    forKey: .trainedDays
+                )
+                self.healthyMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .healthyMeals
+                )
+                self.cheatMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .cheatMeals
+                )
+                self.disclaimers = try container.decode(
+                    Swift.Int.self,
+                    forKey: .disclaimers
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "trainedDays",
+                    "healthyMeals",
+                    "cheatMeals",
+                    "disclaimers"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
         public struct PhotoUpload: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PhotoUpload/version`.
@@ -2223,6 +2464,243 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "reactions"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Reply`.
+        public struct Reply: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Reply/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Reply/version`.
+            public var version: Components.Schemas.Reply.VersionPayload
+            /// Who replied.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/member`.
+            public var member: Swift.String
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approved = "approved"
+                case hug = "hug"
+                case together = "together"
+            }
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/kind`.
+            public var kind: Components.Schemas.Reply.KindPayload
+            /// When they replied, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/repliedAt`.
+            public var repliedAt: Foundation.Date
+            /// Creates a new `Reply`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - member: Who replied.
+            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///   - repliedAt: When they replied, in UTC with milliseconds.
+            public init(
+                version: Components.Schemas.Reply.VersionPayload,
+                member: Swift.String,
+                kind: Components.Schemas.Reply.KindPayload,
+                repliedAt: Foundation.Date
+            ) {
+                self.version = version
+                self.member = member
+                self.kind = kind
+                self.repliedAt = repliedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case member
+                case kind
+                case repliedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Reply.VersionPayload.self,
+                    forKey: .version
+                )
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.Reply.KindPayload.self,
+                    forKey: .kind
+                )
+                self.repliedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .repliedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "member",
+                    "kind",
+                    "repliedAt"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReplyDraft`.
+        public struct ReplyDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/version`.
+            public var version: Components.Schemas.ReplyDraft.VersionPayload
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approved = "approved"
+                case hug = "hug"
+                case together = "together"
+            }
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/kind`.
+            public var kind: Components.Schemas.ReplyDraft.KindPayload
+            /// Creates a new `ReplyDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            public init(
+                version: Components.Schemas.ReplyDraft.VersionPayload,
+                kind: Components.Schemas.ReplyDraft.KindPayload
+            ) {
+                self.version = version
+                self.kind = kind
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ReplyDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.ReplyDraft.KindPayload.self,
+                    forKey: .kind
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "kind"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReplyList`.
+        public struct ReplyList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
+            public var version: Components.Schemas.ReplyList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload`.
+            public struct RepliesPayloadPayload: Codable, Hashable, Sendable {
+                /// Who replied.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/member`.
+                public var member: Swift.String
+                /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case approved = "approved"
+                    case hug = "hug"
+                    case together = "together"
+                }
+                /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/kind`.
+                public var kind: Components.Schemas.ReplyList.RepliesPayloadPayload.KindPayload
+                /// When they replied, in UTC with milliseconds.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/repliedAt`.
+                public var repliedAt: Foundation.Date
+                /// Creates a new `RepliesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member: Who replied.
+                ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+                ///   - repliedAt: When they replied, in UTC with milliseconds.
+                public init(
+                    member: Swift.String,
+                    kind: Components.Schemas.ReplyList.RepliesPayloadPayload.KindPayload,
+                    repliedAt: Foundation.Date
+                ) {
+                    self.member = member
+                    self.kind = kind
+                    self.repliedAt = repliedAt
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case kind
+                    case repliedAt
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.member = try container.decode(
+                        Swift.String.self,
+                        forKey: .member
+                    )
+                    self.kind = try container.decode(
+                        Components.Schemas.ReplyList.RepliesPayloadPayload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.repliedAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .repliedAt
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "member",
+                        "kind",
+                        "repliedAt"
+                    ])
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ReplyList/replies`.
+            public typealias RepliesPayload = [Components.Schemas.ReplyList.RepliesPayloadPayload]
+            /// - Remark: Generated from `#/components/schemas/ReplyList/replies`.
+            public var replies: Components.Schemas.ReplyList.RepliesPayload
+            /// Creates a new `ReplyList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - replies:
+            public init(
+                version: Components.Schemas.ReplyList.VersionPayload,
+                replies: Components.Schemas.ReplyList.RepliesPayload
+            ) {
+                self.version = version
+                self.replies = replies
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case replies
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ReplyList.VersionPayload.self,
+                    forKey: .version
+                )
+                self.replies = try container.decode(
+                    Components.Schemas.ReplyList.RepliesPayload.self,
+                    forKey: .replies
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "replies"
                 ])
             }
         }

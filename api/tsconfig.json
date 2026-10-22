@@ -8,6 +8,9 @@
       "path": "packages/admins"
     },
     {
+      "path": "packages/ai-consent"
+    },
+    {
       "path": "packages/typed-text"
     },
     {

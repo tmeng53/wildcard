@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "kitOut",
+  "duration": 0.12,
+  "loops": false,
+  "tracks": [
+    { "part": "root", "channel": "scaleY", "keys": [ {"t": 0, "v": 1}, {"t": 0.12, "v": 0.84, "ease": "easeOut"} ] },
+    { "part": "root", "channel": "scaleX", "keys": [ {"t": 0, "v": 1}, {"t": 0.12, "v": 1.05, "ease": "easeOut"} ] },
+    { "part": "shadow", "channel": "scaleX", "keys": [ {"t": 0, "v": 1}, {"t": 0.12, "v": 1.08, "ease": "easeOut"} ] }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "name": "climb",
+  "duration": 1.6,
+  "loops": true,
+  "tracks": [
+    { "part": "armL", "channel": "rotation", "keys": [ {"t": 0.0, "v": 118}, {"t": 0.8, "v": 92, "ease": "easeInOut"}, {"t": 1.6, "v": 118, "ease": "easeInOut"} ] },
+    { "part": "armR", "channel": "rotation", "keys": [ {"t": 0.0, "v": -92}, {"t": 0.8, "v": -118, "ease": "easeInOut"}, {"t": 1.6, "v": -92, "ease": "easeInOut"} ] },
+    { "part": "legL", "channel": "rotation", "keys": [ {"t": 0.0, "v": 0}, {"t": 0.8, "v": 18, "ease": "easeInOut"}, {"t": 1.6, "v": 0, "ease": "easeInOut"} ] },
+    { "part": "legR", "channel": "rotation", "keys": [ {"t": 0.0, "v": -18}, {"t": 0.8, "v": 0, "ease": "easeInOut"}, {"t": 1.6, "v": -18, "ease": "easeInOut"} ] },
+    { "part": "root", "channel": "y", "keys": [ {"t": 0.0, "v": 0}, {"t": 0.4, "v": -8, "ease": "easeInOut"}, {"t": 0.8, "v": 0, "ease": "easeInOut"}, {"t": 1.2, "v": -8, "ease": "easeInOut"}, {"t": 1.6, "v": 0, "ease": "easeInOut"} ] }
+  ]
+}

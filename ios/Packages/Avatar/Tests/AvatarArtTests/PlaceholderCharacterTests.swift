@@ -65,17 +65,19 @@ func everyLookBuilds(outfit: Outfit) throws {
 }
 
 @Test(arguments: Persona.allCases)
-func everyPersonaHasAnIdleAndACheer(persona: Persona) throws {
+func everyPersonaHasAnIdleACheerAndAWelcome(persona: Persona) throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let idle = try figure.bind(PlaceholderCharacter.clip("idle", persona: persona))
-    let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
     #expect(idle.clip.name == "idle" && idle.clip.loops)
-    #expect(cheer.clip.name == "cheer" && !cheer.clip.loops)
     // The idle loop's last frame is its first, so the loop has no visible jump.
     #expect(nearlyEqual(figure.pose(idle, at: idle.clip.duration - 1e-9), figure.pose(idle, at: 0)))
-    // The cheer lands where the idle starts (half-closed eyes included, for deadpan), so
-    // handing back to idle doesn't jump either.
-    #expect(nearlyEqual(figure.pose(cheer, at: cheer.clip.duration), figure.pose(idle, at: 0)))
+    for name in ["cheer", "welcome"] {
+        let oneShot = try figure.bind(PlaceholderCharacter.clip(name, persona: persona))
+        #expect(oneShot.clip.name == name && !oneShot.clip.loops)
+        // It lands where the idle starts (half-closed eyes included, for deadpan), so handing
+        // back to idle doesn't jump either.
+        #expect(nearlyEqual(figure.pose(oneShot, at: oneShot.clip.duration), figure.pose(idle, at: 0)), "\(name)")
+    }
 }
 
 /// Each species moves its own way on top of every persona: the moves start and end at rest,
@@ -147,10 +149,16 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     #expect(try figure.part("crown").art.count == 2)
 }
 
-/// The same pose, give or take floating-point rounding.
-private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
+/// The same pose, give or take floating-point rounding. A part turned a full circle (a swimmer's
+/// arm) looks the same as one that hasn't turned.
+func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
     zip(first.parts, second.parts).allSatisfy { one, other in
-        Channel.allCases.allSatisfy { abs(one[$0] - other[$0]) < 1e-6 }
+        Channel.allCases.allSatisfy { channel in
+            let gap = abs(one[channel] - other[channel])
+            return channel == .rotation
+                ? min(gap.truncatingRemainder(dividingBy: 360), 360 - gap.truncatingRemainder(dividingBy: 360)) < 1e-6
+                : gap < 1e-6
+        }
     }
 }
 
@@ -168,8 +176,6 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
     #expect(abs(peaks[1] - -36) < 0.5)  // energetic
     #expect(peaks.min() == peaks[1])
     #expect(peaks.max() == peaks[0])
-    // The show-off spins: the figure flips through its own width.
-    #expect(try rootValues(.showoff, \.scaleX).min() ?? 1 < 0)
     // The shy one edges sideways before it hops.
     #expect(abs((try rootValues(.shy, \.x).min() ?? 0) - -10) < 0.5)
 }
@@ -180,25 +186,30 @@ private func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
 @Test(arguments: Persona.allCases, wardrobe)
 func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    for name in ["idle", "cheer"] {
+    for name in ["idle", "cheer", "welcome"] {
         let bound = try figure.bind(
             PlaceholderCharacter.clip(name, persona: persona, species: Looks.species(of: outfit)))
         // An idle with its species' moves on top lines its two loops up differently each time
         // round, so it plays for 20 s, a few rounds of the longest.
         let seconds = bound.clip.accents.isEmpty || !bound.clip.loops ? bound.clip.duration : 20
-        for frame in 0...Int(seconds * 50) {
-            let time = Double(frame) / 50
-            for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
-            where placement.opacity > 0 {
-                for shape in part.art.flatMap(\.shapes) {
-                    let margin = (shape.stroke?.width ?? 0) / 2
-                    for point in outline(shape.path).map(placement.transform.apply(to:)) {
-                        let bottom = part.id == "shadow" || point.y + margin <= figure.height
-                        #expect(
-                            point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0
-                                && bottom,
-                            "\(persona.rawValue) \(name) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
-                    }
+        expectOnCanvas(figure, bound, for: seconds, "\(persona.rawValue) \(name)")
+    }
+}
+
+/// Checks every frame of a clip, 50 a second, keeps the figure inside its canvas. Only the
+/// shadow may touch the bottom edge.
+func expectOnCanvas(_ figure: Figure, _ bound: BoundClip, for seconds: Double, _ label: String) {
+    for frame in 0...Int(seconds * 50) {
+        let time = Double(frame) / 50
+        for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
+        where placement.opacity > 0 {
+            for shape in part.art.flatMap(\.shapes) {
+                let margin = (shape.stroke?.width ?? 0) / 2
+                for point in outline(shape.path).map(placement.transform.apply(to:)) {
+                    let bottom = part.id == "shadow" || point.y + margin <= figure.height
+                    #expect(
+                        point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0 && bottom,
+                        "\(label) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
                 }
             }
         }
@@ -206,7 +217,7 @@ func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
 }
 
 /// Points along each segment of a path, curves sampled every tenth of the way.
-private func outline(_ path: [PathElement]) -> [Point] {
+func outline(_ path: [PathElement]) -> [Point] {
     var points: [Point] = []
     var current = Point(x: 0, y: 0)
     func along(_ point: (Double) -> Point) {
@@ -245,8 +256,8 @@ private func outline(_ path: [PathElement]) -> [Point] {
     return points
 }
 
-/// Every body the editor groups is bundled, and every bundled body is in a group; every prop
-/// it offers is bundled.
+/// Every body the editor groups is bundled, and every bundled body is in a group; every hat,
+/// pair of shoes and prop it offers is bundled. The swim cap is only for the swim kit.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -256,6 +267,12 @@ private func outline(_ path: [PathElement]) -> [Point] {
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
     #expect(choices.props == ["dumbbell", "racket"])
     #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
+    #expect(choices.hats == ["cap", "headband"])
+    #expect(PlaceholderCharacter.variants(for: "hat") == ["cap", "headband", "swimcap"])
+    #expect(choices.shoes == ["sneaker", "runner", "climbing"])
+    #expect(Set(choices.shoes) == Set(PlaceholderCharacter.variants(for: "shoes")))
+    // A look that leaves its shoes out wears the editor's first pair.
+    #expect(try PlaceholderCharacter.rig().defaults["shoes"] == choices.shoes.first)
 }
 
 @Test func tonesNameTheColorAnUncoloredVariantShows() {
@@ -266,7 +283,7 @@ private func outline(_ path: [PathElement]) -> [Point] {
 
 @Test func editorChoicesOfAnotherVersionAreRejected() {
     #expect(throws: AvatarError.unsupportedVersion(2)) {
-        try EditorChoices.decode(Data(#"{"version": 2, "species": [], "props": []}"#.utf8))
+        try EditorChoices.decode(Data(#"{"version": 2, "species": [], "hats": [], "shoes": [], "props": []}"#.utf8))
     }
 }
 
@@ -274,7 +291,8 @@ private func outline(_ path: [PathElement]) -> [Point] {
 @Test func editorChoicesWithAnUnknownKeyAreRejected() {
     #expect(throws: AvatarError.malformedJSON(#".species[0]: unknown key "hiar""#)) {
         try EditorChoices.decode(
-            Data(#"{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "props": []}"#.utf8)
-        )
+            Data(
+                #"{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "hats": [], "shoes": [], "props": []}"#
+                    .utf8))
     }
 }

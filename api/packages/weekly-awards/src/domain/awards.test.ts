@@ -71,58 +71,20 @@ describe('titlesOf', () => {
     ).toBeUndefined();
   });
 
-  it('refuses no titles, or more than 3', () => {
-    const title = { title: '狠人', speech: '周三去跑了。', move: 'pump' as const };
-    const many = [1, 2, 3, 4].map((n) => ({ ...title, title: `狠人${String(n)}` }));
-    expect(titlesOf({ ...good, awards: [{ member: 'A', titles: [] }] }, [ana])).toBeUndefined();
-    expect(titlesOf({ ...good, awards: [{ member: 'A', titles: many }] }, [ana])).toBeUndefined();
+  it('refuses a title or line that is blank once trimmed', () => {
+    const blank = (title: string, speech: string) => ({
+      ...good,
+      awards: [{ member: 'A', titles: [{ title, speech, move: 'pump' as const }] }],
+    });
+    expect(titlesOf(blank(' ', '周三下着雨还去跑了。'), [ana])).toBeUndefined();
+    expect(titlesOf(blank('雨中狠人', '  '), [ana])).toBeUndefined();
+  });
+
+  it('leaves the words to the model: the prompt says what they may say', () => {
+    const title = { title: '体重稳了', speech: '这周吃了三碗饭还去跑了。', move: 'pump' as const };
     expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: many.slice(0, 3) }] }, [ana])?.get(ana),
-    ).toHaveLength(3);
-  });
-
-  it('refuses a title over 6 characters, a line over 24, or either empty', () => {
-    const one = (title: string, speech: string) =>
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [{ title, speech, move: 'cheer' }] }] }, [
-        ana,
-      ]);
-    expect(one('网球场钉子户', '一'.repeat(24))?.get(ana)?.[0]?.title).toBe('网球场钉子户');
-    expect(one('网球场钉子户长', '周三去跑了。')).toBeUndefined();
-    expect(one('狠人', '一'.repeat(25))).toBeUndefined();
-    expect(one(' ', '周三去跑了。')).toBeUndefined();
-  });
-
-  it('refuses a title used twice in the squad', () => {
-    const same = { title: '雨中狠人', speech: '周三去跑了。', move: 'pump' as const };
-    expect(
-      titlesOf(
-        {
-          ...good,
-          awards: [
-            { member: 'A', titles: [same] },
-            { member: 'B', titles: [same] },
-          ],
-        },
-        [ana, bo],
-      ),
-    ).toBeUndefined();
-  });
-
-  it('refuses body words, ranking words, self-harm words, emoji and line breaks', () => {
-    for (const speech of [
-      '这周体重稳住了。',
-      '本周垫底选手。',
-      '周三去跑了🔥',
-      '周三\n去跑了',
-      '不想活了也要去跑',
-    ]) {
-      expect(
-        titlesOf(
-          { ...good, awards: [{ member: 'A', titles: [{ title: '狠人', speech, move: 'pump' }] }] },
-          [ana],
-        ),
-      ).toBeUndefined();
-    }
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
+    ).toStrictEqual([title]);
   });
 });
 

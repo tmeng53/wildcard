@@ -23,7 +23,8 @@ public enum PlaceholderCharacter {
         try Rig.decode(file("rig.json"))
     }
 
-    /// A persona's `idle` (loops) or `cheer` (plays once, for a check-in).
+    /// A persona's `idle` (loops), `cheer` (plays once, for a check-in) or `welcome` (plays once
+    /// at 上场: teammates cheering a new member in, one after another, and the newcomer on landing).
     public static func clip(_ name: String, persona: Persona) throws(AvatarError) -> Clip {
         try Clip.decode(file("clips/\(persona.rawValue)/\(name).json"))
     }

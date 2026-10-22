@@ -13,12 +13,13 @@ export {
   type SquadMember,
 } from './domain/squad.js';
 export {
+  AiConsentRequiredError,
   InviteCodeUnknownError,
   SquadFullError,
   SquadIdConflictError,
   SquadLimitReachedError,
   SquadNotJoinedError,
 } from './errors.js';
-export type { CreateOutcome, JoinOutcome, NewSquad, SquadStore } from './ports.js';
+export type { AiConsentCheck, CreateOutcome, JoinOutcome, NewSquad, SquadStore } from './ports.js';
 export { createSquads, type Squads } from './use-cases/squads.js';
 export type { InvitePreview, PublicInvitePreview } from './use-cases/squads/preview-invite.js';

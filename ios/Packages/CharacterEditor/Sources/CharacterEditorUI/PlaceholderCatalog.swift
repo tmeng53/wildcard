@@ -3,13 +3,12 @@ import AvatarDomain
 import CharacterEditorDomain
 
 extension Catalog {
-    /// What the placeholder character's bundled art offers: the species and props in its
-    /// `editor.json`, every bundled hair, face part, hat, top and bottom, and their preset
-    /// colors.
+    /// What the placeholder character's bundled art offers: the species, hats and props in its
+    /// `editor.json`, every bundled hair, face part, top and bottom, and their preset colors.
     public static func placeholder() throws(AvatarError) -> Catalog {
         let choices = try PlaceholderCharacter.editorChoices()
-        var variants: [Slot: [String]] = [:]
-        for slot in Catalog.dressSlots where slot != "prop" {
+        var variants: [Slot: [String]] = ["hat": choices.hats]
+        for slot in Catalog.dressSlots where slot != "prop" && slot != "hat" {
             variants[slot] = PlaceholderCharacter.variants(for: slot)
         }
         var swatches: [Slot: [String: [RGBAColor]]] = [:]
