@@ -45,7 +45,9 @@ final class TodayUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(post.frame.minY, 44, "发布 slid under the status bar: \(post.frame)")
 
         post.tap()
-        // Frames of the check-in moment, named with when each was taken, for a recording of it.
+        // Frames of the check-in moment from when the scene is back, named with when each was
+        // taken, for a recording of it.
+        XCTAssertTrue(post.waitForNonExistence(timeout: Self.wait), "the compose page didn't close after posting")
         let posted = Date()
         for frame in 0..<12 {
             let after = Int(Date().timeIntervalSince(posted) * 1000)

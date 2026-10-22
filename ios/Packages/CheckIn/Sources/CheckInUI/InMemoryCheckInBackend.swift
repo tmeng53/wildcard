@@ -36,7 +36,11 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             mate(mates[4], .notCheckedIn, rest: true), mate(mates[5], .notCheckedIn), mate(mates[6], .notCheckedIn),
             mate(member, .notCheckedIn),
         ]
-        let checkIns = sampleCheckIns(by: mates, on: day, in: squadID) { at($0) }
+        // My week so far: a swim yesterday and a run the day before, where those are this week.
+        let earlier = [1, 2].map { day.adding(days: -$0) }.filter { $0.weekStart == day.weekStart }
+        let checkIns =
+            sampleCheckIns(by: mates, on: day, in: squadID) { at($0) }
+            + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
             days: [.train(.sport(.run)), .train(nil), .rest, .train(.sport(.run)), .train(nil), .train(nil), .rest])
@@ -53,7 +57,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                         today: TodayCounts(trained: 3, disclaimer: 1, resting: 1, everyoneTrained: false),
                         myWeek: MyWeek(
                             firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
-                            week: WeekCount(trainedDays: 2, plannedDays: 5), lifetimeTrainedDays: 40),
+                            week: WeekCount(trainedDays: earlier.count, plannedDays: 5), lifetimeTrainedDays: 40),
                         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
             })
@@ -76,6 +80,26 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             checkIn(mates[1], 4, .trained(Training(activity: .sport(.yoga)))),
             checkIn(mates[2], 3, .trained(Training(activity: .sport(.swim)))),
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
+    }
+
+    /// The member's own check-ins on `days` (most recent first): a swim and a healthy meal, then
+    /// a run.
+    private static func myEarlierCheckIns(
+        by member: MemberID, on days: [LocalDay], in squad: SquadID, at time: (Double) -> Timestamp
+    ) -> [CheckIn] {
+        guard let audience = try? Audience([squad]) else { return [] }
+        let entries: [[CheckIn.Entry]] = [
+            [.trained(Training(activity: .sport(.swim))), .healthyMeal(Meal())],
+            [.trained(Training(activity: .sport(.run)))],
+        ]
+        return zip(days, entries).enumerated().flatMap { offset, pair in
+            pair.1.map { entry in
+                CheckIn(
+                    id: CheckInID(UUID()), member: member, day: pair.0, createdAt: time(Double(offset + 1) * 24),
+                    audience: audience, entry: entry)
+            }
+        }
+        .sorted { $0.createdAt < $1.createdAt }
     }
 
     public func savedHome() async -> Home? { current }

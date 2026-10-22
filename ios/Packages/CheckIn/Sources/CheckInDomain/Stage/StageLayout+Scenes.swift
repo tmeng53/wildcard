@@ -29,7 +29,7 @@ extension StageLayout {
         ],
         stationsBySport: [.run: [.jogging]],
         field: [StageRect(x: 55...335, y: 380...500)],
-        open: [StageRect(x: 0...390, y: 528...650)],
+        open: [StageRect(x: 0...390, y: 545...650)],
         props: [])
 
     private static let poolLanes: [StationPath.Lane] = [328.0, 361, 394, 427].map {

@@ -175,20 +175,33 @@ private struct MyPayoff: View {
             let head = CGPoint(
                 x: StageLayout.mySpot.x * unit,
                 y: (StageLayout.mySpot.y - Self.headHeight * StageLayout.myScale) * unit)
-            ZStack(alignment: .topLeading) {
-                PayoffBubble(line: model.payoff?.line)
-                    .alignmentGuide(.top) { $0[.bottom] }
-                    .alignmentGuide(.leading) { $0.width / 2 }
-                    .offset(x: head.x, y: head.y)
-                PinnedCover(cover: model.payoff?.cover)
-                    .offset(x: head.x + Space.xl, y: head.y)
-                PlusOne(trigger: model.celebrations)
-                    .alignmentGuide(.top) { $0[.bottom] }
-                    .alignmentGuide(.leading) { $0.width / 2 }
-                    .offset(x: head.x, y: head.y - Space.l)
+            // Each piece hangs off a zero-height anchor placed on the head: the bubble and the
+            // 「+1」 sit above it, centred; the cover is pinned beside it.
+            ZStack {
+                Self.anchor(width: Self.bubbleWidth, at: head, alignment: .bottom) {
+                    PayoffBubble(line: model.payoff?.line).fixedSize(horizontal: false, vertical: true)
+                }
+                Self.anchor(width: 0, at: CGPoint(x: head.x + Space.xl, y: head.y), alignment: .topLeading) {
+                    PinnedCover(cover: model.payoff?.cover).fixedSize()
+                }
+                Self.anchor(width: 0, at: CGPoint(x: head.x, y: head.y - Space.l), alignment: .bottom) {
+                    PlusOne(trigger: model.celebrations).fixedSize()
+                }
             }
         }
     }
+
+    private static func anchor(
+        width: Double, at point: CGPoint, alignment: Alignment, @ViewBuilder content: () -> some View
+    ) -> some View {
+        Color.clear
+            .frame(width: width, height: 0)
+            .overlay(alignment: alignment, content: content)
+            .position(point)
+    }
+
+    /// The widest the caption's bubble gets before it wraps.
+    private static let bubbleWidth = 240.0
 
     /// How far above the feet the top of the head is, in the rig's points.
     private static let headHeight = 250.0

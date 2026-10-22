@@ -195,7 +195,6 @@ private struct GroundRing: View {
             case .done:
                 shape.trim(from: 0, to: drawn ?? 1)
                     .stroke(Color(role: .ring, in: theme), style: StrokeStyle(lineWidth: 3 * unit, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
             case .restDay:
                 shape.stroke(Color(role: .borderDefault, in: theme), lineWidth: 1.6 * unit)
             case .open:
