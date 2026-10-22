@@ -10,7 +10,6 @@ import {
 } from '@wildcard/check-ins';
 import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -20,7 +19,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, aiConsentOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // Wired as main.ts wires it: squads and drafts ask the AI consent module itself.
@@ -78,7 +77,8 @@ const app = createApp({
     clock: () => new Date(),
     random: () => 0,
   }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: pushOn(db),
+  jobs: noJobs,
   log: createLog(() => undefined),
   admin: adminOn(),
 });

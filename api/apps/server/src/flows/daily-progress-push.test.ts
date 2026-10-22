@@ -19,7 +19,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   dailyProgressNotification,
@@ -40,6 +40,7 @@ const members = createMembers({ store: createPostgresProfileStore(db) });
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
@@ -91,6 +92,7 @@ const deps = {
   jobs: { token: JOBS_TOKEN, interactions, clock: () => new Date() },
   admin: adminOn(),
   publicRoutes: unlimitedPublicRoutes,
+  aiConsent: aiConsentOn(db),
 };
 const app = createApp(deps);
 
