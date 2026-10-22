@@ -1,0 +1,42 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "push.weeklyAwards.ready": {
+      "comment": "The push when a squad's Sunday 战报 is ready. It never says who won anything.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week's awards are in. Come see who's on the podium."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本周颁奖开始了，快来看看谁上了领奖台"
+          }
+        }
+      }
+    },
+    "push.weeklyAwards.stuck": {
+      "comment": "Admins only, after a member taps 催一下主办方: the squad's name, how many tries failed, and the last error.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ nudged: the awards failed %2$@ times (%3$@). Time to top up tokens."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 在催了：颁奖失败 %2$@ 次（%3$@），该给主办方充值 token 了"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

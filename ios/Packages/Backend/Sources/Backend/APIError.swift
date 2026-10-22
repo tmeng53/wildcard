@@ -39,6 +39,8 @@ public enum Refusal: Equatable, Sendable {
     case checkInNotFound
     /// Today's AI 请假条 drafts are used up.
     case disclaimerDraftsUsedUp
+    /// The week's 战报 isn't out yet: its awards come on Sunday at 8pm Eastern.
+    case weekStoryNotReady
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -59,5 +61,6 @@ public enum Refusal: Equatable, Sendable {
         "TIME_ZONE_UNKNOWN": .timeZoneUnknown,
         "CHECK_IN_NOT_FOUND": .checkInNotFound,
         "DISCLAIMER_DRAFTS_USED_UP": .disclaimerDraftsUsedUp,
+        "WEEK_STORY_NOT_READY": .weekStoryNotReady,
     ]
 }

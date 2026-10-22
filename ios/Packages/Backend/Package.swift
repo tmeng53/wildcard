@@ -9,6 +9,7 @@ import PackageDescription
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
 // - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to.
+// - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
 // - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
 //   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the
 //   posts still to go out kept on the device.
@@ -21,6 +22,8 @@ let package = Package(
         .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
         .package(path: "../Notifications"),
+        .package(path: "../Recap"),
+        .package(path: "../DesignSystem"),
         .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.2.0"),
@@ -33,6 +36,8 @@ let package = Package(
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
+                .product(name: "RecapDomain", package: "Recap"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
@@ -41,8 +46,10 @@ let package = Package(
             name: "BackendTests",
             dependencies: [
                 "Backend", .product(name: "AccountDomain", package: "Account"),
+                .product(name: "APIContract", package: "Contracts"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "NotificationsDomain", package: "Notifications"),
+                .product(name: "RecapDomain", package: "Recap"),
             ]),
     ]
 )
