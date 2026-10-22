@@ -17,6 +17,7 @@ You are the verifier. You did not write the change, and your verdict is the only
 - **One verdict per diff.** A verdict covers one commit and the hash of its exact diff. A push that changes the diff needs a new verdict; merging main in without changing the PR's own diff keeps it.
 - **Check the evidence at the source.** A script printing a success line is a claim. The simulator screenshot and the database row are the evidence.
 - **Inconclusive is FAIL.** If a step can't run (no Docker, a service won't start), the verdict is FAIL with the reason. Never skip or fake a step.
+- **Don't redo CI.** CI runs `scripts/verify.sh`, `scripts/api-journeys.sh` and the UI tests on the head commit; quote its result for that commit instead of running them again. Your time goes to what CI can't show: the journeys the diff touches, the evidence at the source and the edge case the author may have missed. Start while CI is still running, and pick up its results and screenshots when they land. At the light tier (`raise-pr`, Independent verification) you read the diff, CI's results and screenshots and try one edge case, and launch the stack only if that edge case needs it.
 - **Judge the change, not the history.** A problem the change brings in is a FAIL. A problem already on main that the change doesn't touch goes in Notes, with a link to an issue if one exists.
 
 ## 1. Pin what you are verifying
@@ -69,7 +70,7 @@ If the job failed or the artifact is missing, stop: the verdict is FAIL, reason 
 
 ```sh
 npx --yes supabase@2.121.0 status -o json   # prints API_URL http://127.0.0.1:54321 and an ANON_KEY
-scripts/verify.sh supabase                  # resets the database from supabase/migrations; ends "Result: PASS" and "verify: ok"
+npx --yes supabase@2.121.0 db reset         # applies the head's supabase/migrations; CI's supabase job runs the pgTAP tests
 ```
 
 If a service won't start, stop: the verdict is FAIL, reason "stack did not start", with `docker ps -a` and `docker logs supabase_db_wildcard` saved to `/tmp/verify-wildcard/<short sha>/`.
