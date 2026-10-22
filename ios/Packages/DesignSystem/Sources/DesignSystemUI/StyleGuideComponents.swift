@@ -57,6 +57,15 @@ struct ButtonSection: View {
                         Text("删除", bundle: .module)
                     }
                     .buttonStyle(TextButtonStyle(.plain))
+                    Button {
+                    } label: {
+                        Label {
+                            Text("用 Apple 确认", bundle: .module)
+                        } icon: {
+                            Image(systemName: "apple.logo")
+                        }
+                    }
+                    .buttonStyle(AppleButtonStyle())
                 }
             }
             GuideGroup(Text("页头：44 的圆，右边最多一个", bundle: .module)) {
