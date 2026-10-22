@@ -71,15 +71,17 @@ gcloud secrets add-iam-policy-binding database-url \
 exists gcloud iam workload-identity-pools describe github --location global ||
   gcloud iam workload-identity-pools create github --location global --display-name "GitHub Actions"
 # Only the deploy workflow, run from main in the `beta` environment, may act as the deployer.
-condition="assertion.repository_id == '$repo_id' && assertion.ref == 'refs/heads/main' && assertion.job_workflow_ref == 'tmeng53/wildcard/.github/workflows/deploy.yml@refs/heads/main' && assertion.environment == 'beta'"
+condition="assertion.repository_id == '$repo_id' && assertion.ref == 'refs/heads/main' && assertion.workflow_ref == 'tmeng53/wildcard/.github/workflows/deploy.yml@refs/heads/main' && assertion.environment == 'beta'"
+# Every claim the condition reads is mapped too, as Google asks.
+mapping="google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref,attribute.workflow_ref=assertion.workflow_ref,attribute.environment=assertion.environment"
 if exists gcloud iam workload-identity-pools providers describe wildcard --location global \
   --workload-identity-pool github; then
   gcloud iam workload-identity-pools providers update-oidc wildcard --location global \
-    --workload-identity-pool github --attribute-condition "$condition"
+    --workload-identity-pool github --attribute-mapping "$mapping" --attribute-condition "$condition"
 else
   gcloud iam workload-identity-pools providers create-oidc wildcard --location global \
     --workload-identity-pool github --issuer-uri https://token.actions.githubusercontent.com \
-    --attribute-mapping 'google.subject=assertion.sub,attribute.repository_id=assertion.repository_id' \
+    --attribute-mapping "$mapping" \
     --attribute-condition "$condition"
 fi
 gcloud iam service-accounts add-iam-policy-binding "$deployer" --role roles/iam.workloadIdentityUser \
