@@ -1,11 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { LocalDay, MemberId, SquadId, type CheckIns } from '@wildcard/check-ins';
-import type { Members } from '@wildcard/members';
+import type { Character, Members } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { CharacterBody } from './character.js';
 
 const count = (description: string) => z.int().min(0).meta({ description });
 
@@ -19,6 +20,9 @@ const MemberToday = z.strictObject({
         'What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). ' +
         'Null when they haven’t picked one: the app uses their persona’s own line.',
     }),
+  // Missing until they make their character. Left out rather than null: the Swift generator
+  // can't read a nullable reference.
+  character: CharacterBody.optional(),
   day: LocalDay.meta({
     description:
       'The member’s own today: their local date in their time zone, where anything before 3am ' +
@@ -89,6 +93,11 @@ export const SquadToday = z
   })
   .openapi('SquadToday');
 
+/** A member's character field: left out until they make one. */
+function characterOf(character: Character | null) {
+  return character === null ? {} : { character };
+}
+
 /** `GET /squads/{squadId}/today`: the home screen's squad, for one of its members. */
 export function squadToday(deps: {
   readonly verifyToken: VerifyToken;
@@ -127,16 +136,15 @@ export function squadToday(deps: {
       squad,
     });
     // Only after squadToday, which refuses a viewer outside the squad.
-    const catchphrases = await deps.members.catchphrasesOf(
-      today.members.map(({ member }) => member),
-    );
+    const squadmates = await deps.members.squadmates(today.members.map(({ member }) => member));
     return c.json(
       {
         version: 1 as const,
         squad,
         members: today.members.map(({ latestMeal, firstCheckInAt, ...member }) => ({
           ...member,
-          catchphrase: catchphrases.get(member.member) ?? null,
+          catchphrase: squadmates.get(member.member)?.catchphrase ?? null,
+          ...characterOf(squadmates.get(member.member)?.character ?? null),
           ...(latestMeal === undefined ? {} : { latestMeal }),
           ...(firstCheckInAt === undefined ? {} : { firstCheckInAt: firstCheckInAt.toISOString() }),
         })),

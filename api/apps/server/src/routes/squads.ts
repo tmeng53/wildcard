@@ -10,12 +10,14 @@ import {
   type Squad as SquadRecord,
   type Squads,
 } from '@wildcard/squads';
+import type { Members } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
 import type { RateLimit, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { rateLimited } from '../rate-limited.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { LookBody } from './character.js';
 
 const inviteCodeField = z.string().meta({
   description:
@@ -76,6 +78,11 @@ const PublicSquadInvite = z
     full: z.boolean().meta({
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
     }),
+    looks: z.array(LookBody).meta({
+      description:
+        'The members’ characters, the earliest to join first, for the page to show the squad. ' +
+        'Members who haven’t made theirs yet are left out. No names or ids.',
+    }),
   })
   .openapi('PublicSquadInvite');
 
@@ -121,6 +128,7 @@ export interface PublicRoutes {
 export function squads(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
+  readonly members: Members;
   readonly publicRoutes: PublicRoutes;
 }) {
   const squadParams = z.strictObject({ squadId: SquadId });
@@ -228,8 +236,9 @@ export function squads(deps: {
     summary: 'The squad an invite code belongs to, for anyone',
     description:
       'What the web invite page shows before the app is installed: no sign-in, so only the ' +
-      'name, the size and whether it is full; nothing about who is in it. Limited per client ' +
-      'address. Case, spaces and dashes in the code don’t matter.',
+      'name, the size, whether it is full and the members’ characters; no names or ids, nothing ' +
+      'that says who is in it. Limited per client address. Case, spaces and dashes in the code ' +
+      'don’t matter.',
     middleware: [
       rateLimited(deps.publicRoutes.inviteLookups, deps.publicRoutes.proxyHops),
     ] as const,
@@ -239,7 +248,7 @@ export function squads(deps: {
         description: 'The squad',
         headers: {
           'Cache-Control': {
-            description: '`no-store`: the size changes as people join.',
+            description: '`no-store`: the size and looks change as people join.',
             schema: { type: 'string' },
           },
         },
@@ -323,11 +332,16 @@ export function squads(deps: {
     });
 
   const publicRoutes = new OpenAPIHono().openapi(publicPreview, async (c) => {
-    const invite = await deps.squads.previewPublicInvite(
+    const { name, memberCount, full, members } = await deps.squads.previewPublicInvite(
       inviteCodeOf(c.req.valid('param').inviteCode),
     );
+    const squadmates = await deps.members.squadmates(members);
+    const looks = members.flatMap((member) => {
+      const look = squadmates.get(member)?.character?.look;
+      return look === undefined ? [] : [look];
+    });
     c.header('cache-control', 'no-store');
-    return c.json({ version: 1 as const, ...invite }, 200);
+    return c.json({ version: 1 as const, name, memberCount, full, looks }, 200);
   });
 
   return new OpenAPIHono().route('/', signedInRoutes).route('/', publicRoutes);

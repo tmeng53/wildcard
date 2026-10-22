@@ -147,7 +147,7 @@ public protocol APIProtocol: Sendable {
     func joinSquad(_ input: Operations.JoinSquad.Input) async throws -> Operations.JoinSquad.Output
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
@@ -478,7 +478,7 @@ extension APIProtocol {
     }
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.

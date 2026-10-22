@@ -1,4 +1,4 @@
-import type { MemberId, Profile } from './domain/profile.js';
+import type { MemberId, Profile, Squadmate } from './domain/profile.js';
 
 /** Where members' profiles are kept. */
 export interface ProfileStore {
@@ -9,8 +9,8 @@ export interface ProfileStore {
    * time zone.
    */
   save(member: MemberId, profile: Profile): Promise<boolean>;
-  /** The catchphrases these members picked, by member. Members without one are left out. */
-  catchphrases(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, string>>;
+  /** What squadmates see of these members, by member. Members without a profile are left out. */
+  squadmates(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, Squadmate>>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**
