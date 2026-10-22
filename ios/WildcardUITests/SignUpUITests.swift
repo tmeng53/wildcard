@@ -134,6 +134,12 @@ final class SignUpUITests: XCTestCase {
 
         let skip = app.buttons["sports.skip"]
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the sports step never appeared")
+        // Back on the squad step, the squad just made stays as it is and isn't made again.
+        app.buttons["Back"].tap()
+        XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "Back didn't return to the squad step")
+        XCTAssertFalse(app.textFields["squad.name"].isEnabled, "the squad name can change after the squad was made")
+        squadDone.tap()
+        XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the squad step didn't carry on to sports")
         skip.tap()
         let count = app.staticTexts["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")

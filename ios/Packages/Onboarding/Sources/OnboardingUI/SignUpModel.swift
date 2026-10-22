@@ -188,8 +188,10 @@ public final class SignUpModel {
         failure = nil
     }
 
-    /// Whether 加入小队 or 建小队 can go: a squad found that has room, or a name the API takes.
+    /// Whether 加入小队 or 建小队 can go: a squad found that has room, or a name the API takes, or the
+    /// squad already joined or made.
     var canFinishSquad: Bool {
+        if joined != nil { return true }
         guard agreesToAI else { return false }
         switch squad.choice {
         case .join:
@@ -201,6 +203,12 @@ public final class SignUpModel {
     }
 
     func finishSquad() {
+        // Back on 你的小队 after the squad was joined or made: it is settled, so carry on rather
+        // than join or make another.
+        if joined != nil {
+            show(.sports)
+            return
+        }
         guard canFinishSquad else { return }
         let choice = squad.choice
         let code = squad.code

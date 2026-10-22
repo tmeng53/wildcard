@@ -33,9 +33,12 @@ struct SquadStep: View {
                 }
             }
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isJoining)
+            // Back here after joining or making the squad: it shows what was chosen, read-only.
+            .disabled(model.joined != nil)
         } actions: {
             if model.asksForAIConsent {
                 AIConsentRow(isOn: model.agreesToAI, toggle: model.toggleAIConsent)
+                    .disabled(model.joined != nil)
             }
             FailureLine(failure: model.failure)
             StepButton(
