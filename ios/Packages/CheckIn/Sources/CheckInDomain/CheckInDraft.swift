@@ -1,16 +1,15 @@
-import CheckInDomain
 import Contracts
-import DesignSystem
 import Foundation
 
 /// A photo ready to post: resized and compressed on the phone (`PhotoPreparation`), so upload
-/// and storage stay small. Its id only tells photos apart on screen.
+/// and storage stay small. Its id tells photos apart, on screen and in the outbox, which
+/// records the ones already uploaded.
 public struct PreparedPhoto: Hashable, Sendable, Identifiable {
     public let id: UUID
     /// JPEG, at most `PhotoPreparation.maxPixelSize` on the long edge.
     public let jpeg: Data
 
-    public init(id: UUID = UUID(), jpeg: Data) {
+    public init(id: UUID, jpeg: Data) {
         self.id = id
         self.jpeg = jpeg
     }
@@ -32,25 +31,24 @@ public struct PostBody: Hashable, Sendable {
     public var cover: PreparedPhoto? { photos.first }
 
     /// What the caption field keeps while typing: no line breaks, at most `Caption.maxLength`.
-    static func fitCaption(_ text: String) -> String {
+    public static func fitCaption(_ text: String) -> String {
         String(text.filter { !$0.isNewline }.prefix(Caption.maxLength))
     }
 }
 
-/// A check-in as the compose step and the 请假条 card hand it over. The service adds the
-/// member, the day, the time and the squads.
+/// A check-in as the compose step and the 请假条 card hand it over. `TodayStore` adds the
+/// id, the member, the day, the time and the squad.
 public enum CheckInDraft: Hashable, Sendable {
     case trained(Activity, PostBody)
     case healthyMeal(PostBody)
     case cheatMeal(PostBody)
     case disclaimer(Disclaimer)
 
-    var kind: CheckInKind {
+    /// The photos to upload before the check-in is saved, the cover first.
+    public var photos: [PreparedPhoto] {
         switch self {
-        case .trained: .trained
-        case .healthyMeal: .healthyMeal
-        case .cheatMeal: .cheatMeal
-        case .disclaimer: .disclaimer
+        case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body): body.photos
+        case .disclaimer: []
         }
     }
 }
