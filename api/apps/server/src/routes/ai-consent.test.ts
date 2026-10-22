@@ -28,6 +28,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // Wired as main.ts wires it: squads and drafts ask the AI consent module itself.
 const db = createDatabase(config.databaseUrl);
@@ -85,6 +86,7 @@ const app = createApp({
     random: () => 0,
   }),
   push: pushOn(db),
+  weeklyAwards: unusedWeeklyAwards,
   jobs: noJobs,
   log: createLog(() => undefined),
   admin: adminOn(),
