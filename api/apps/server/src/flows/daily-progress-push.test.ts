@@ -4,6 +4,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -47,6 +48,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership: squads,
   reactions: createPostgresReactionStore(db),
+  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),

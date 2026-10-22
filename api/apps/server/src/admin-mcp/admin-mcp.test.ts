@@ -14,6 +14,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -89,6 +90,7 @@ beforeAll(async () => {
               aiConsent: () => Promise.resolve(true),
             }),
             reactions: createPostgresReactionStore(db),
+            replies: createPostgresReplyStore(db),
             photos,
             plans: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),
