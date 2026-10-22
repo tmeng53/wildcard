@@ -165,15 +165,20 @@ public struct StageLayout: Hashable, Sendable {
         return spots.enumerated().sorted { ($0.element.1, $0.offset) < ($1.element.1, $1.offset) }.map(\.element.0)
     }
 
-    /// The open floor on a team-photo grid: rows 70 apart from the front, 92 apart across and
-    /// centred on the screen, every other row offset half a step, clear of the `busy` spots.
+    /// The open floor on a team-photo grid: rows 70 apart from the front (closer on a shallow
+    /// floor, so three rows always fit), five across the whole width 76 apart and centred on
+    /// the screen, every other row offset half a step, clear of the `busy` spots.
     private static func floorSpots(in areas: [StageRect], avoiding: [StageRect], busy: [StagePoint]) -> [StagePoint] {
-        var spots: [StagePoint] = []
+        // 76 rather than the spec's 80, so the outer ones aren't cut off by the screen's edge.
+        let across = 76.0
+        var spots: [(point: StagePoint, row: Int)] = []
         for area in areas {
             var row = 0
             var y = area.maxY - 24
+            // Never under a character's width apart, so a floor too shallow for rows still ends.
+            let gap = max(24, min(70, (y - area.minY) / 2))
             while y >= area.minY {
-                var x = mySpot.x - (row.isMultiple(of: 2) ? 0 : 46) - 92
+                var x = mySpot.x - across * (row.isMultiple(of: 2) ? 2 : 1.5)
                 while x <= area.maxX - 30 {
                     let point = StagePoint(x: x, y: y)
                     let besideMe = abs(x - mySpot.x) < 60 && y > 590
@@ -181,18 +186,22 @@ public struct StageLayout: Hashable, Sendable {
                     let onProp = avoiding.contains { $0.blocks(point) }
                     let taken = busy.contains { crowds($0, point) }
                     if !besideMe && !offScreen && !onProp && !taken {
-                        spots.append(point)
+                        spots.append((point, row))
                     }
-                    x += 92
+                    x += across
                 }
-                y -= 70
+                y -= gap
                 row += 1
             }
         }
-        // Front first, then the middle: a spot's worth is its depth less half its distance from centre.
-        func worth(_ point: StagePoint) -> Double { point.y - abs(point.x - mySpot.x) * 0.5 }
-        return spots.enumerated().sorted { (-worth($0.element), $0.offset) < (-worth($1.element), $1.offset) }
-            .map(\.element)
+        // Front row first, then from the middle out.
+        func fromMiddle(_ point: StagePoint) -> Double { abs(point.x - mySpot.x) }
+        return spots.enumerated()
+            .sorted {
+                ($0.element.row, fromMiddle($0.element.point), $0.offset)
+                    < ($1.element.row, fromMiddle($1.element.point), $1.offset)
+            }
+            .map(\.element.point)
     }
 }
 // swiftlint:enable identifier_name

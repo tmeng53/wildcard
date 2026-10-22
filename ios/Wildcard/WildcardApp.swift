@@ -8,7 +8,7 @@ import SwiftUI
 /// The app target only wires packages together. It opens on 今天 under the tab bar, backed by an
 /// in-memory squad until sign-in and the squad step land; `-styleguide` opens the design system's style guide and
 /// `-character-editor` the character editor instead. After the first check-in it asks for
-/// notifications; a tapped one brings the member back to 今天 with the board read again.
+/// notifications; a tapped one brings the member back to 今天 with the home loaded again.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
@@ -22,10 +22,11 @@ struct WildcardApp: App {
         _today = State(
             initialValue: TodayModel(
                 store: TodayStore(
-                    backend: InMemoryCheckInBackend.sampleSquad(now: .now), outbox: InMemoryOutbox(),
-                    now: { Date() }, newID: { UUID() }),
+                    backend: InMemoryCheckInBackend.sampleSquad(now: LaunchOptions.now()), outbox: InMemoryOutbox(),
+                    now: LaunchOptions.now, newID: { UUID() }),
                 writer: LaunchOptions.disclaimerWriter,
                 photoSource: LaunchOptions.photoSource,
+                now: LaunchOptions.now,
                 posted: Self.askForNotifications))
     }
 
