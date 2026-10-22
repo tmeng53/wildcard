@@ -377,7 +377,7 @@ private struct Confetti: View {
                             x: -Self.bitSize.width / 2, y: -Self.bitSize.height / 2, width: Self.bitSize.width,
                             height: Self.bitSize.height)
                         piece.fill(
-                            Path(roundedRect: rect, cornerRadius: 1), with: .color(Color(role: bit.role, in: theme)))
+                            Path(rect), with: .color(Color(role: bit.role, in: theme)))
                     }
                 }
             }
