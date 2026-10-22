@@ -235,6 +235,29 @@ describe('leaving and listing', () => {
     expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['二']);
   });
 
+  it('keeps a record of each time a member left, with when they had joined', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await newSquad(bo);
+    const stints = () =>
+      sql<{
+        joined: boolean;
+        left: boolean;
+      }>`select joined_at < left_at as joined, left_at <= now() as left
+        from public.squad_leaves where squad_id = ${squad.id} and member_id = ${ann}
+        order by left_at`.execute(db);
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    // Leaving a squad you aren't in leaves no record.
+    await squads.leave({ squad: squad.id, member: ann });
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    expect((await stints()).rows).toStrictEqual([
+      { joined: true, left: true },
+      { joined: true, left: true },
+    ]);
+    expect(await squads.membersOf(squad.id)).toStrictEqual([bo]);
+  });
+
   it('shows a squad only to its members, the same way whether or not it exists', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann);

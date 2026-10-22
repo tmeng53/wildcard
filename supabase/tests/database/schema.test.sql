@@ -140,12 +140,15 @@ select lives_ok(
     where member_id = 'a0000000-0000-0000-0000-000000000001'$$,
   'a nickname and a versioned look are saved together'
 );
+insert into public.squad_leaves (squad_id, member_id, joined_at) values
+  ('5a000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', now() - interval '1 day');
 delete from auth.users where id = 'a0000000-0000-0000-0000-000000000001';
 select is(
   (select count(*)::int from public.check_ins where member_id = 'a0000000-0000-0000-0000-000000000001')
   + (select count(*)::int from public.profiles where member_id = 'a0000000-0000-0000-0000-000000000001')
-  + (select count(*)::int from public.squad_members where member_id = 'a0000000-0000-0000-0000-000000000001'),
-  0, 'deleting an account takes its check-ins, profile and memberships with it'
+  + (select count(*)::int from public.squad_members where member_id = 'a0000000-0000-0000-0000-000000000001')
+  + (select count(*)::int from public.squad_leaves where member_id = 'a0000000-0000-0000-0000-000000000001'),
+  0, 'deleting an account takes its check-ins, profile, memberships and the squads it left with it'
 );
 
 select * from finish();

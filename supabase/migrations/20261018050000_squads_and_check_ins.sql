@@ -30,6 +30,19 @@ create table public.squad_members (
 
 create index squad_members_member_id_idx on public.squad_members (member_id);
 
+-- Who left a squad, and when, kept for our own records (Tracy, 2026-10-22); no feature or
+-- yearly stat reads it. Leaving moves the membership here, so a member who rejoins has a
+-- row per stint. Deleting the account still takes these with it.
+create table public.squad_leaves (
+  squad_id uuid not null references public.squads (id) on delete cascade,
+  member_id uuid not null references auth.users (id) on delete cascade,
+  joined_at timestamptz not null,
+  left_at timestamptz not null default now(),
+  primary key (squad_id, member_id, left_at)
+);
+
+create index squad_leaves_member_id_idx on public.squad_leaves (member_id);
+
 -- Members ----------------------------------------------------------------------
 
 -- One row per member for their own settings.
@@ -138,6 +151,7 @@ revoke usage on schema public from public, anon, authenticated;
 
 alter table public.squads enable row level security;
 alter table public.squad_members enable row level security;
+alter table public.squad_leaves enable row level security;
 alter table public.profiles enable row level security;
 alter table public.check_ins enable row level security;
 alter table public.check_in_squads enable row level security;

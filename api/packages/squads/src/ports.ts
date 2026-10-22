@@ -47,6 +47,9 @@ export interface SquadStore {
    * members, or they are in `SQUADS_PER_MEMBER` squads.
    */
   join(squad: SquadId, member: MemberId): Promise<JoinOutcome>;
-  /** Takes `member` out of the squad. Nothing happens if they aren't in it. */
+  /**
+   * Takes `member` out of the squad, keeping when they joined and left. Nothing happens if
+   * they aren't in it.
+   */
   leave(squad: SquadId, member: MemberId): Promise<void>;
 }

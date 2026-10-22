@@ -11,6 +11,13 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface SquadLeaves {
+  joined_at: Timestamp;
+  left_at: Generated<Timestamp>;
+  member_id: string;
+  squad_id: string;
+}
+
 export interface SquadMembers {
   joined_at: Generated<Timestamp>;
   member_id: string;
@@ -26,6 +33,7 @@ export interface Squads {
 }
 
 export interface DB {
+  squad_leaves: SquadLeaves;
   squad_members: SquadMembers;
   squads: Squads;
 }

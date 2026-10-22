@@ -195,10 +195,18 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
     },
 
     async leave(squad, member) {
+      // One statement, so the membership is never gone without its record, or kept twice.
       await db
-        .deleteFrom('squad_members')
-        .where('squad_id', '=', squad)
-        .where('member_id', '=', member)
+        .with('left', (eb) =>
+          eb
+            .deleteFrom('squad_members')
+            .where('squad_id', '=', squad)
+            .where('member_id', '=', member)
+            .returning(['squad_id', 'member_id', 'joined_at']),
+        )
+        .insertInto('squad_leaves')
+        .columns(['squad_id', 'member_id', 'joined_at'])
+        .expression((eb) => eb.selectFrom('left').select(['squad_id', 'member_id', 'joined_at']))
         .execute();
     },
   };
