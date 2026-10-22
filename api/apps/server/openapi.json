@@ -1990,130 +1990,174 @@
         "additionalProperties": false
       },
       "WeekStory": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "language": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ready",
-              "pending"
-            ],
-            "description": "`ready` once the week’s titles are written. `pending` when they are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
-          },
-          "squad": {
+        "oneOf": [
+          {
             "type": "object",
             "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid"
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
               },
-              "name": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "name"
-            ],
-            "additionalProperties": false
-          },
-          "week": {
-            "type": "object",
-            "properties": {
-              "from": {
+              "language": {
                 "type": "string",
-                "format": "date"
+                "minLength": 1,
+                "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
               },
-              "to": {
-                "type": "string",
-                "format": "date"
-              }
-            },
-            "required": [
-              "from",
-              "to"
-            ],
-            "additionalProperties": false
-          },
-          "titles": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "member": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "titles": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StoryTitle"
+              "squad": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
                   },
-                  "minItems": 1,
-                  "maxItems": 3,
-                  "description": "The best first."
-                }
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               },
-              "required": [
-                "member",
-                "titles"
-              ],
-              "additionalProperties": false
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              "hottest": {
+                "$ref": "#/components/schemas/StoryHottest"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ready"
+                ]
+              },
+              "titles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "member": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "titles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryTitle"
+                      },
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "description": "The best first."
+                    }
+                  },
+                  "required": [
+                    "member",
+                    "titles"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too."
+              }
             },
-            "description": "Once `ready`: every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in; missing while `pending`. The weekly poster’s stickers read these too."
+            "required": [
+              "version",
+              "language",
+              "squad",
+              "week",
+              "status",
+              "titles"
+            ],
+            "additionalProperties": false,
+            "description": "The week’s titles are written."
           },
-          "hottest": {
-            "$ref": "#/components/schemas/StoryHottest"
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
+              },
+              "squad": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              "hottest": {
+                "$ref": "#/components/schemas/StoryHottest"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "language",
+              "squad",
+              "week",
+              "status"
+            ],
+            "additionalProperties": false,
+            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
           }
-        },
-        "required": [
-          "version",
-          "language",
-          "status",
-          "squad",
-          "week"
-        ],
-        "additionalProperties": false
-      },
-      "StoryTitle": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The title (头衔), at most 6 characters.",
-            "example": "雨中狠人"
-          },
-          "speech": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Its award line (颁奖词), at most 24 characters, citing something real from the week.",
-            "example": "周三下着雨还去跑了 5 公里"
-          },
-          "move": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
-            "example": "pump"
-          }
-        },
-        "required": [
-          "title",
-          "speech",
-          "move"
-        ],
-        "additionalProperties": false
+        ]
       },
       "StoryHottest": {
         "type": "object",
@@ -2208,6 +2252,35 @@
         "required": [
           "path",
           "url"
+        ],
+        "additionalProperties": false
+      },
+      "StoryTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The title (头衔), at most 6 characters.",
+            "example": "雨中狠人"
+          },
+          "speech": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Its award line (颁奖词), at most 24 characters, citing something real from the week.",
+            "example": "周三下着雨还去跑了 5 公里"
+          },
+          "move": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          }
+        },
+        "required": [
+          "title",
+          "speech",
+          "move"
         ],
         "additionalProperties": false
       }

@@ -259,9 +259,12 @@ describe('createWeeklyAwards', () => {
     expect(await nudge()).toBeUndefined();
   });
 
-  it('keeps an answer that failed the checks as FailedChecks', async () => {
+  it('keeps an answer that failed the checks as FailedChecks, even after an error', async () => {
     const bad = { ...reply, awards: reply.awards.slice(0, 1) };
-    const { awards } = setup([() => Promise.resolve(bad)]);
+    const { awards } = setup([
+      () => Promise.reject(Object.assign(new Error('timed out'), { name: 'Timeout' })),
+      () => Promise.resolve(bad),
+    ]);
     const squad = await newSquad();
     const members = weekOf([await member(), await member(), await member()]);
     await reasonOf(awards.give({ squad, weekStart: week, members }));

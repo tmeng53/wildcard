@@ -101,7 +101,7 @@ async function writeTitles(
   }: { readonly weekStart: WeekStart; readonly winners: readonly MemberWeek[] },
 ): Promise<Titles> {
   const prompt = promptFor({ weekStart, members: winners });
-  let cause: unknown = FAILED_CHECKS;
+  let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {
       const reply = await model.answer({ instructions: INSTRUCTIONS, prompt, reply: ModelReply });
@@ -110,6 +110,7 @@ async function writeTitles(
         winners.map(({ member }) => member),
       );
       if (titles !== undefined) return titles;
+      cause = FAILED_CHECKS;
     } catch (error) {
       cause = error;
     }

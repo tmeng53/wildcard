@@ -94,47 +94,59 @@ const Hottest = z
   })
   .openapi('StoryHottest');
 
+const storyFields = {
+  version: bodyVersion(1),
+  language: z
+    .string()
+    .min(1)
+    .meta({
+      description:
+        'The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines ' +
+        'in Chinese.',
+    }),
+  squad: z.strictObject({ id: z.uuid(), name: z.string() }),
+  week: z.strictObject({ from: WeekStart, to: LocalDay }),
+  hottest: Hottest.optional().meta({
+    description:
+      'The signed-in member’s check-in with the most reactions at the awards, the latest on a ' +
+      'tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs ' +
+      'had any.',
+  }),
+};
+
 export const WeekStoryBody = z
-  .strictObject({
-    version: bodyVersion(1),
-    language: z
-      .string()
-      .min(1)
-      .meta({
-        description:
-          'The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines ' +
-          'in Chinese.',
-      }),
-    status: z.enum(['ready', 'pending']).meta({
+  .discriminatedUnion('status', [
+    z
+      .strictObject({
+        ...storyFields,
+        status: z.literal('ready'),
+        titles: z
+          .array(
+            z.strictObject({
+              member: z.uuid(),
+              titles: z
+                .array(Title)
+                .min(1)
+                .max(TITLES_MAX)
+                .meta({ description: 'The best first.' }),
+            }),
+          )
+          .meta({
+            description:
+              'Every member still in the squad who checked in before the awards, in the order ' +
+              'they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly ' +
+              'poster’s stickers read these too.',
+          }),
+      })
+      .meta({ description: 'The week’s titles are written.' }),
+    z.strictObject({ ...storyFields, status: z.literal('pending') }).meta({
       description:
-        '`ready` once the week’s titles are written. `pending` when they are due but not ' +
-        'written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, ' +
-        'showing that the organisers are out of funds with a button that nudges them ' +
-        '(`POST …/story/nudge`); every other page shows as usual. Read again later.',
+        'The titles are due but not written yet (the AI failed, or hasn’t reached the squad): ' +
+        'only the titles page waits, showing that the organisers are out of funds with a ' +
+        'button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read ' +
+        'again later.',
     }),
-    squad: z.strictObject({ id: z.uuid(), name: z.string() }),
-    week: z.strictObject({ from: WeekStart, to: LocalDay }),
-    titles: z
-      .array(
-        z.strictObject({
-          member: z.uuid(),
-          titles: z.array(Title).min(1).max(TITLES_MAX).meta({ description: 'The best first.' }),
-        }),
-      )
-      .optional()
-      .meta({
-        description:
-          'Once `ready`: every member still in the squad who checked in before the awards, in ' +
-          'the order they joined, with 1 to 3 titles. Empty when nobody checked in; missing ' +
-          'while `pending`. The weekly poster’s stickers read these too.',
-      }),
-    hottest: Hottest.optional().meta({
-      description:
-        'The signed-in member’s check-in with the most reactions at the awards, the latest on a ' +
-        'tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs ' +
-        'had any.',
-    }),
-  })
+  ])
   .openapi('WeekStory');
 
 /** `GET /squads/{squadId}/weeks/{weekStart}/story`: a squad's Sunday 战报 story. */
@@ -237,23 +249,24 @@ export function weekStory(
         }),
       });
       const to = new Date(Date.parse(weekStart) + 6 * DAY).toISOString().slice(0, 10);
+      const fields = {
+        version: 1 as const,
+        language,
+        squad: story.squad,
+        week: { from: weekStart, to },
+        ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),
+      };
       return c.json(
-        {
-          version: 1 as const,
-          language,
-          status: story.status,
-          squad: story.squad,
-          week: { from: weekStart, to },
-          ...(story.status === 'ready'
-            ? {
-                titles: story.members.map(({ member, titles }) => ({
-                  member,
-                  titles: [...titles],
-                })),
-              }
-            : {}),
-          ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),
-        },
+        story.status === 'ready'
+          ? {
+              ...fields,
+              status: 'ready' as const,
+              titles: story.members.map(({ member, titles }) => ({
+                member,
+                titles: [...titles],
+              })),
+            }
+          : { ...fields, status: 'pending' as const },
         200,
       );
     });
