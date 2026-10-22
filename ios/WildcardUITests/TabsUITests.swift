@@ -26,19 +26,41 @@ final class TabsUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "30-tabs-today")
 
-        for tab in ["tab.feed", "tab.schedule", "tab.me"] {
+        let upcoming = app.staticTexts["tab.upcoming"]
+        for (tab, title) in [("tab.feed", "动态"), ("tab.schedule", "出赛表"), ("tab.me", "我")] {
             app.buttons[tab].tap()
             waitFor(app.buttons[tab], "isSelected == true", "\(tab) didn't open")
+            XCTAssertEqual(upcoming.label, title, "\(tab) shows another tab's screen")
+            XCTAssertFalse(checkIn.exists, "今天 still shows under \(tab)")
         }
         app.buttons["tab.today"].tap()
         waitFor(today, "isSelected == true", "今天 didn't open again")
+        XCTAssertFalse(upcoming.exists, "the last tab's screen stayed over 今天")
 
+        // The 打卡 burst takes the screen: the bar steps aside until it closes.
         checkIn.tap()
         let meal = app.buttons["today.capsule.healthyMeal"]
         XCTAssertTrue(meal.waitForExistence(timeout: 30))
+        waitFor(today, "exists == false", "the tab bar stayed over the open burst")
         meal.tap()
         XCTAssertTrue(app.buttons["compose.post"].waitForExistence(timeout: 30), "the compose page never opened")
         waitFor(today, "exists == false", "the tab bar stayed over the compose page")
+    }
+
+    /// `-tab` opens straight on another tab, as screenshots of later tabs need.
+    func testLaunchOnAnotherTab() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-tab", "schedule",
+        ]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+
+        let schedule = app.buttons["tab.schedule"]
+        XCTAssertTrue(schedule.waitForExistence(timeout: 30), "no tab bar")
+        XCTAssertTrue(schedule.isSelected, "-tab schedule didn't open on 出赛表")
+        XCTAssertEqual(app.staticTexts["tab.upcoming"].label, "出赛表")
     }
 
     private func keepScreenshot(named name: String) {

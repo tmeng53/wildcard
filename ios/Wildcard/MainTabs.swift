@@ -12,7 +12,8 @@ struct MainTabs: View {
     }
 
     let today: TodayModel
-    @State private var selection: Tab = LaunchOptions.firstTab
+    @Binding var selection: Tab
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { proxy in
@@ -30,6 +31,7 @@ struct MainTabs: View {
                             .transition(.opacity)
                     }
                 }
+                .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         }
     }
 
@@ -38,29 +40,38 @@ struct MainTabs: View {
         selection != .today || today.showsTabBar
     }
 
-    @ViewBuilder private var screen: some View {
-        switch selection {
-        case .today:
+    /// 今天 stays alive under the other tabs, so coming back keeps its scene and doesn't read the
+    /// home again; the other tabs are built when picked.
+    private var screen: some View {
+        ZStack {
             TodayView(model: today)
-        case .feed:
-            UpcomingTab(title: Text("动态"))
-        case .schedule:
-            UpcomingTab(title: Text("出赛表"))
-        case .profile:
-            UpcomingTab(title: Text("我"))
+                .opacity(selection == .today ? 1 : 0)
+                .allowsHitTesting(selection == .today)
+                .accessibilityHidden(selection != .today)
+            switch selection {
+            case .today:
+                EmptyView()
+            case .feed:
+                UpcomingTab(title: Text("动态"))
+            case .schedule:
+                UpcomingTab(title: Text("出赛表"))
+            case .profile:
+                UpcomingTab(title: Text("我"))
+            }
         }
     }
 
     private static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(id: .today, title: Text("今天"), systemImage: "house", accessibilityIdentifier: "tab.today"),
+        TabBarItem(id: .today, title: Text("今天"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
         TabBarItem(
             id: .feed, title: Text("动态"), systemImage: "bubble.left.and.bubble.right",
             accessibilityIdentifier: "tab.feed"
         ),
         TabBarItem(
-            id: .schedule, title: Text("出赛表"), systemImage: "list.bullet.rectangle",
+            id: .schedule, title: Text("出赛表"), systemImage: "calendar",
             accessibilityIdentifier: "tab.schedule"),
-        TabBarItem(id: .profile, title: Text("我"), systemImage: "person", accessibilityIdentifier: "tab.me"),
+        TabBarItem(
+            id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
     ]
 }
 
@@ -77,5 +88,6 @@ private struct UpcomingTab: View {
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.l)
             .background(Color(role: .bgCanvas, in: theme))
+            .accessibilityIdentifier("tab.upcoming")
     }
 }

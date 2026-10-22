@@ -13,6 +13,7 @@ import SwiftUI
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
+    @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var editor = CharacterEditorDemo.model()
 
     // An init, not a property initializer: those run outside the main actor, and the post
@@ -44,8 +45,13 @@ struct WildcardApp: App {
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
             } else {
-                MainTabs(today: today)
-                    .onAppear { delegate.opened = { [today] in Task { await today.load() } } }
+                MainTabs(today: today, selection: $tab)
+                    .onAppear {
+                        delegate.opened = { [today, $tab] in
+                            $tab.wrappedValue = .today
+                            Task { await today.load() }
+                        }
+                    }
             }
         }
     }
