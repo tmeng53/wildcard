@@ -1,6 +1,6 @@
 import type { InviteCodes } from '../domain/invite-code.js';
 import type { MemberId, Squad, SquadId } from '../domain/squad.js';
-import type { SquadStore } from '../ports.js';
+import type { AiConsentCheck, SquadStore } from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
@@ -38,6 +38,7 @@ export interface Squads {
 export function createSquads(deps: {
   readonly store: SquadStore;
   readonly inviteCodes: InviteCodes;
+  readonly aiConsent: AiConsentCheck;
 }): Squads {
   return {
     create: (input) => createSquad(deps, input),

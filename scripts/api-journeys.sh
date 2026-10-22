@@ -65,9 +65,20 @@ sign_up() {
     jq -r '"\(.user.id) \(.access_token)"'
 }
 
-# A squad the first token creates and the others join by its invite code, as the app does:
-# sets $squad and $invite_code.
+# The member agrees to the current AI consent copy, as the squad step of sign-up does before it
+# makes or joins a squad.
+agree_to_ai() {
+  call GET /me/ai-consent "$1"
+  expect 200
+  call PUT /me/ai-consent "$1" "$(jq -c '{version: 1, copyVersion}' <<<"$body")"
+  expect 200
+  [ "$(jq -r .current <<<"$body")" = true ] || fail "consent should be current: $body"
+}
+
+# A squad the first token creates and the others join by its invite code, as the app does
+# (each agreeing to the AI copy first): sets $squad and $invite_code.
 squad_of() {
+  for token in "$@"; do agree_to_ai "$token"; done
   call PUT "/squads/$(new_id)" "$1" '{"version":1,"name":" 早八跑团 "}'
   expect 201
   squad="$(jq -r .id <<<"$body")"
@@ -103,6 +114,11 @@ read -r me me_token <<<"$(sign_up)"
 read -r mate mate_token <<<"$(sign_up)"
 read -r outsider outsider_token <<<"$(sign_up)"
 for m in "$me" "$mate" "$outsider"; do [[ "$m" =~ ^[0-9a-f-]{36}$ ]] || fail "sign-up failed"; done
+if want squad; then
+  call PUT "/squads/$(new_id)" "$me_token" '{"version":1,"name":"早八跑团"}'
+  expect 400 AI_CONSENT_REQUIRED
+  echo "squad: making a squad before agreeing to the AI terms refused (400 AI_CONSENT_REQUIRED)"
+fi
 squad_of "$me_token" "$mate_token"
 echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
@@ -228,6 +244,22 @@ if want squad; then
   echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
 
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
+  expect 400 AI_CONSENT_REQUIRED
+  call GET /me/ai-consent "$newcomer_token"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":1,"current":false}' ] ||
+    fail "newcomer should have no consent yet: $body"
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
+  expect 400 REQUEST_INVALID
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":2}'
+  expect 400 AI_CONSENT_COPY_OUTDATED
+  echo "squad: joining before agreeing refused (400 AI_CONSENT_REQUIRED); another copy version refused (400 AI_CONSENT_COPY_OUTDATED)"
+  agree_to_ai "$newcomer_token"
+  given_at="$(jq -r .given.givenAt <<<"$body")"
+  agree_to_ai "$newcomer_token"
+  [ "$(jq -r .given.givenAt <<<"$body")" = "$given_at" ] || fail "agreeing again should keep $given_at: $body"
+  echo "squad: newcomer agreed to the AI terms at $given_at; agreeing again keeps it"
+
+  call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 201
   [ "$(jq -r '.members | map(.userId) | last' <<<"$body")" = "$newcomer" ] || fail "newcomer isn't last: $body"
   call POST "/squad-invites/$invite_code/accept" "$newcomer_token"
@@ -249,6 +281,7 @@ if want squad; then
   call GET /me/squads "$newcomer_token"
   [ "$(jq '.squads | length' <<<"$body")" = 0 ] || fail "newcomer still lists a squad: $body"
   echo "squad: newcomer left (204) and can't read it any more"
+
 fi
 
 if want disclaimer-drafts; then
@@ -262,6 +295,10 @@ if want disclaimer-drafts; then
   expect 200
   [ "$(jq -c . <<<"$body")" = '{"version":1,"kind":"care"}' ] || fail "expected the care line: $body"
   echo "disclaimer-drafts: a self-harm reason gets the care line (200), with or without a key"
+
+  call POST /disclaimer-drafts "$outsider_token" "$(ask 早上没起来 funny)"
+  expect 400 AI_CONSENT_REQUIRED
+  echo "disclaimer-drafts: a member who hasn't agreed to the AI terms refused (400 AI_CONSENT_REQUIRED)"
 
   call POST /disclaimer-drafts "$me_token" "$(ask 下雨了 poetic)"
   expect 400 REQUEST_INVALID
@@ -651,10 +688,11 @@ if want account; then
       (select count(*) from public.profiles where member_id = '$leaver') || ' ' ||
       (select count(*) from public.check_ins where member_id = '$leaver') || ' ' ||
       (select count(*) from public.squad_members where member_id = '$leaver') || ' ' ||
+      (select count(*) from public.ai_consents where member_id = '$leaver') || ' ' ||
       (select count(*) from storage.objects where name like '$leaver/%') || ' ' ||
       (select count(*) from public.squad_members where squad_id = '$squad')")"
-  [ "$left" = "0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, photos should be gone and the squad left to mate: $left"
-  echo "account: deleted (204): no user, profile, check-in, membership or photo left; the squad stays with mate"
+  [ "$left" = "0 0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, AI consent, photos should be gone and the squad left to mate: $left"
+  echo "account: deleted (204): no user, profile, check-in, membership, AI consent or photo left; the squad stays with mate"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 401

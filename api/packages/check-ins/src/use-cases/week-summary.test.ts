@@ -33,6 +33,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 // Monday 2026-10-26, 1pm in Los Angeles and 5am Tuesday in Tokyo: the week of 10-19 is over.

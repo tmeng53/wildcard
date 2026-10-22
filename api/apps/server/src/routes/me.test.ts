@@ -19,7 +19,14 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -40,6 +47,7 @@ async function send(
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
       replies: createPostgresReplyStore(db),
@@ -57,8 +65,13 @@ async function send(
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     push: pushOn(db),
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     weeklyAwards: unusedWeeklyAwards,
+    aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),

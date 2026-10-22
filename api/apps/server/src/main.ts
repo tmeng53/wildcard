@@ -1,6 +1,12 @@
 import { serve } from '@hono/node-server';
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
+  AI_CONSENT_COPY_VERSION,
+  MemberId as ConsentMember,
+  createAiConsent,
+  createPostgresConsentStore,
+} from '@wildcard/ai-consent';
+import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
@@ -109,10 +115,19 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
+// What members agree to before their words go to AI providers: the current version of the app's
+// copy, which names them. Squads and drafts ask it.
+const aiConsent = createAiConsent({
+  store: createPostgresConsentStore(db),
+  copyVersion: AI_CONSENT_COPY_VERSION,
+  clock: () => new Date(),
+});
+const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
 if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: hasAiConsent,
 });
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
@@ -144,6 +159,7 @@ const app = createApp({
   }),
   members,
   squads,
+  aiConsent,
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes
@@ -166,6 +182,7 @@ const app = createApp({
         styles,
       })),
     allowance: createPostgresDraftAllowance(db),
+    aiConsent: hasAiConsent,
     clock: () => new Date(),
     random: Math.random,
   }),

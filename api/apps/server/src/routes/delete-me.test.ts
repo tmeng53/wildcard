@@ -22,7 +22,15 @@ import { AppleAuthorizationCodeInvalidError } from '../errors.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
-import { adminOn, config, noJobs, pushOn, signOut, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signOut,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -53,6 +61,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
       replies: createPostgresReplyStore(db),
@@ -67,9 +76,14 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       clock: () => new Date(),
     }),
     members,
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     push: pushOn(db),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+    aiConsent: aiConsentOn(db),
     weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,

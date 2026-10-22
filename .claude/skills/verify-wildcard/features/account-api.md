@@ -23,7 +23,7 @@ server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved
 account: leaver made a squad with mate and posted a meal with a photo
-account: deleted (204): no user, profile, check-in, membership or photo left; the squad stays with mate
+account: deleted (204): no user, profile, check-in, membership, AI consent or photo left; the squad stays with mate
 account: deleting again with the old token refused (401)
 api-journeys: ok (account)
 ```

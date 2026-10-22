@@ -527,6 +527,164 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/AiConsent`.
+        public struct AiConsent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AiConsent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AiConsent/version`.
+            public var version: Components.Schemas.AiConsent.VersionPayload
+            /// The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/copyVersion`.
+            public var copyVersion: Swift.Int
+            /// The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
+            public struct GivenPayload: Codable, Hashable, Sendable {
+                /// The version they agreed to.
+                ///
+                /// - Remark: Generated from `#/components/schemas/AiConsent/given/copyVersion`.
+                public var copyVersion: Swift.Int
+                /// When they agreed, in UTC.
+                ///
+                /// - Remark: Generated from `#/components/schemas/AiConsent/given/givenAt`.
+                public var givenAt: Foundation.Date
+                /// Creates a new `GivenPayload`.
+                ///
+                /// - Parameters:
+                ///   - copyVersion: The version they agreed to.
+                ///   - givenAt: When they agreed, in UTC.
+                public init(
+                    copyVersion: Swift.Int,
+                    givenAt: Foundation.Date
+                ) {
+                    self.copyVersion = copyVersion
+                    self.givenAt = givenAt
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case copyVersion
+                    case givenAt
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.copyVersion = try container.decode(
+                        Swift.Int.self,
+                        forKey: .copyVersion
+                    )
+                    self.givenAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .givenAt
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "copyVersion",
+                        "givenAt"
+                    ])
+                }
+            }
+            /// The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
+            public var given: Components.Schemas.AiConsent.GivenPayload?
+            /// True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/current`.
+            public var current: Swift.Bool
+            /// Creates a new `AiConsent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - copyVersion: The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
+            ///   - given: The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///   - current: True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
+            public init(
+                version: Components.Schemas.AiConsent.VersionPayload,
+                copyVersion: Swift.Int,
+                given: Components.Schemas.AiConsent.GivenPayload? = nil,
+                current: Swift.Bool
+            ) {
+                self.version = version
+                self.copyVersion = copyVersion
+                self.given = given
+                self.current = current
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case copyVersion
+                case given
+                case current
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AiConsent.VersionPayload.self,
+                    forKey: .version
+                )
+                self.copyVersion = try container.decode(
+                    Swift.Int.self,
+                    forKey: .copyVersion
+                )
+                self.given = try container.decodeIfPresent(
+                    Components.Schemas.AiConsent.GivenPayload.self,
+                    forKey: .given
+                )
+                self.current = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .current
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "copyVersion",
+                    "given",
+                    "current"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AiConsentGiven`.
+        public struct AiConsentGiven: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/version`.
+            public var version: Components.Schemas.AiConsentGiven.VersionPayload
+            /// The version of the copy the app showed the member, who agreed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/copyVersion`.
+            public var copyVersion: Swift.Int
+            /// Creates a new `AiConsentGiven`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - copyVersion: The version of the copy the app showed the member, who agreed.
+            public init(
+                version: Components.Schemas.AiConsentGiven.VersionPayload,
+                copyVersion: Swift.Int
+            ) {
+                self.version = version
+                self.copyVersion = copyVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case copyVersion
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AiConsentGiven.VersionPayload.self,
+                    forKey: .version
+                )
+                self.copyVersion = try container.decode(
+                    Swift.Int.self,
+                    forKey: .copyVersion
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "copyVersion"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckIn`.
         @frozen public enum CheckIn: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckIn/CheatMealCheckIn`.

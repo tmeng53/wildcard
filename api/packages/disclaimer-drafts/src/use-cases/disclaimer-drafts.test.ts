@@ -42,6 +42,7 @@ function setup(
     /** The random numbers the use case draws, in order; the last one repeats. */
     rolls?: number[];
     now?: Date;
+    consentsToAi?: boolean;
   } = {},
 ) {
   const rolls = options.rolls ?? [0.99];
@@ -58,6 +59,7 @@ function setup(
     model,
     memes: () => Promise.resolve(options.memes ?? []),
     allowance: createPostgresDraftAllowance(db),
+    aiConsent: () => Promise.resolve(options.consentsToAi ?? true),
     clock: () => now,
     random: () => rolls[Math.min(drawn++, rolls.length - 1)] ?? 0,
   });
@@ -144,8 +146,23 @@ describe('createDisclaimerDrafts', () => {
     }
   });
 
+  it('refuses a member without a current AI consent, without asking the model', async () => {
+    const { drafts, prompts } = setup({ consentsToAi: false });
+    const member = await newMember();
+    expect(await reasonOf(drafts.write(request(member)))).toBe('AI_CONSENT_REQUIRED');
+    expect(prompts).toStrictEqual([]);
+    expect(
+      await db
+        .selectFrom('disclaimer_draft_requests')
+        .select('id')
+        .where('member_id', '=', member)
+        .execute(),
+    ).toStrictEqual([]);
+  });
+
   it('answers the care line for a reason about self-harm, without asking the model', async () => {
-    const { drafts, prompts } = setup();
+    // No AI sees the reason, so the care line needs no AI consent.
+    const { drafts, prompts } = setup({ consentsToAi: false });
     const member = await newMember();
     expect(await drafts.write(request(member, '想自杀'))).toEqual({ kind: 'care' });
     expect(prompts).toEqual([]);
