@@ -71,112 +71,11 @@ describe('titlesOf', () => {
     ).toBeUndefined();
   });
 
-  it('refuses no titles, or more than 3', () => {
-    const title = { title: '狠人', speech: '周三去跑了。', move: 'pump' as const };
-    const many = [1, 2, 3, 4].map((n) => ({ ...title, title: `狠人${String(n)}` }));
-    expect(titlesOf({ ...good, awards: [{ member: 'A', titles: [] }] }, [ana])).toBeUndefined();
-    expect(titlesOf({ ...good, awards: [{ member: 'A', titles: many }] }, [ana])).toBeUndefined();
+  it('leaves the words to the model: the prompt says what they may say', () => {
+    const title = { title: '体重稳了', speech: '这周吃了三碗饭还去跑了。', move: 'pump' as const };
     expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: many.slice(0, 3) }] }, [ana])?.get(ana),
-    ).toHaveLength(3);
-  });
-
-  it('refuses a title over 6 characters, a line over 24, or either empty', () => {
-    const one = (title: string, speech: string) =>
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [{ title, speech, move: 'cheer' }] }] }, [
-        ana,
-      ]);
-    expect(one('网球场钉子户', '一'.repeat(24))?.get(ana)?.[0]?.title).toBe('网球场钉子户');
-    expect(one('网球场钉子户长', '周三去跑了。')).toBeUndefined();
-    expect(one('狠人', '一'.repeat(25))).toBeUndefined();
-    expect(one(' ', '周三去跑了。')).toBeUndefined();
-  });
-
-  it('drops only the titles that fail a check, and refuses a member left with none', () => {
-    const kept = { title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' as const };
-    const eaten = { title: '干饭王', speech: '周五吃了三碗饭。', move: 'fullbelly' as const };
-    expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [eaten, kept] }] }, [ana])?.get(ana),
-    ).toStrictEqual([kept]);
-    expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [eaten] }] }, [ana]),
-    ).toBeUndefined();
-  });
-
-  it('refuses a title used twice in the squad', () => {
-    const same = { title: '雨中狠人', speech: '周三去跑了。', move: 'pump' as const };
-    expect(
-      titlesOf(
-        {
-          ...good,
-          awards: [
-            { member: 'A', titles: [same] },
-            { member: 'B', titles: [same] },
-          ],
-        },
-        [ana, bo],
-      ),
-    ).toBeUndefined();
-  });
-
-  it('refuses body words, ranking words, self-harm words, emoji and line breaks', () => {
-    for (const speech of [
-      '这周体重稳住了。',
-      '本周垫底选手。',
-      '周三去跑了🔥',
-      '周三\n去跑了',
-      '不想活了也要去跑',
-    ]) {
-      expect(
-        titlesOf(
-          { ...good, awards: [{ member: 'A', titles: [{ title: '狠人', speech, move: 'pump' }] }] },
-          [ana],
-        ),
-      ).toBeUndefined();
-    }
-  });
-
-  it('refuses how much someone ate, but not eating itself', () => {
-    const speechOf = (speech: string) =>
-      titlesOf(
-        { ...good, awards: [{ member: 'A', titles: [{ title: '狠人', speech, move: 'pump' }] }] },
-        [ana],
-      );
-    for (const speech of [
-      '周五一口气吃了三碗饭。',
-      '三碗米饭下肚。',
-      '周六炫了一整只烤鸭。',
-      '吃了三个汉堡。',
-      '吃了 12 个饺子。',
-      '一口气吃了五块披萨。',
-      '喝了三杯奶茶。',
-      '干掉两盘饺子。',
-      '连吃三顿火锅。',
-      '炫了半个蛋糕。',
-      '吞了两个汉堡。',
-      '吃了两人份的烧烤。',
-      '本周大胃王。',
-      '饭量惊人。',
-      '吃撑了还去跑。',
-      '不知道吃了多少。',
-    ]) {
-      expect(speechOf(speech)).toBeUndefined();
-    }
-    for (const speech of [
-      '健康餐打了三次卡。',
-      '周三吃得好练得狠。',
-      '星期五吃了沙拉还去跑了。',
-      '周四干了十个引体向上。',
-      '连干三个小时网球。',
-      '练了三组深蹲。',
-      '打了三盘网球。',
-    ]) {
-      expect(
-        speechOf(speech)
-          ?.get(ana)
-          ?.map((each) => each.speech),
-      ).toStrictEqual([speech]);
-    }
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
+    ).toStrictEqual([title]);
   });
 });
 

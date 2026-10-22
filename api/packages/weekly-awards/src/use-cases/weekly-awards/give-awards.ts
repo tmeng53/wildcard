@@ -63,7 +63,7 @@ export async function giveAwards(
   return theirs.awards;
 }
 
-/** The cause kept when every reply came back in shape but failed the checks. */
+/** The cause kept when every reply named the wrong members (one missing, repeated or unknown). */
 const FAILED_CHECKS = 'FailedChecks';
 
 /** An error's string property, when it has one. */

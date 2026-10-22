@@ -1,10 +1,9 @@
-import { graphemeCount, mentionsBodyMetrics, mentionsSelfHarm } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 import { AwardMove } from './moves.js';
 
-// A squad's awards for a week: what the model writes for each member who checked in, the checks
-// every award passes before anyone sees it, and the shape they are stored in.
+// A squad's awards for a week: what the model writes for each member who checked in, and the
+// shape they are stored in. What the awards may say is the prompt's job, not a check's.
 
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
@@ -50,13 +49,9 @@ export const SPEECH_MAX = 24;
 /** The most titles a member gets. */
 export const TITLES_MAX = 3;
 
-/** Words no award holds, besides body metrics: none ranks anyone last. */
-const RANKING_WORDS = ['垫底', '最懒', '倒数'];
-
 /**
  * The model's reply, held to this shape by structured output. Members are named by key. The
- * limits go to the model in the schema and are checked again on the answer, so a reply over
- * them is retried like any other that fails a check.
+ * limits go to the model in the schema, so the titles fit the screen.
  */
 export const ModelReply = z.strictObject({
   version: z.literal(1),
@@ -144,52 +139,10 @@ export interface Failures {
 /** The key a member goes by in the prompt: A, B, C…, so no id or name reaches the model. */
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
-/** A count in a line: 三, 两, 半, 几, 12, １２. */
-const COUNT = '[一二两三四五六七八九十百千几半整\\d０-９]';
-
 /**
- * How much someone ate, which the awards never say. Erring on the safe side: eating (吃, 炫,
- * 啃, 吞, 喝, 干掉) with any count in the same line, a count of bowls, or words like 大胃王 and
- * 饭量. Reps, sets and hours have no eating in them (「干了十个引体向上」), and a line refused
- * here only drops its title.
- */
-const EATING = /[吃炫啃吞喝]|干掉|干饭/u;
-const EATING_AMOUNT = new RegExp(
-  [
-    `${COUNT}\\s*[整大]*碗`,
-    '饭量|食量|胃口|大胃|饭桶|吃撑|撑死|吃了多少|吃了好多|吃了好几|暴食|[两双三多]人份',
-  ].join('|'),
-  'u',
-);
-const COUNTED = new RegExp(COUNT, 'u');
-/** 周三, 星期五: a day, not a count. */
-const WEEKDAY = /(?:周|星期|礼拜)[一二三四五六日天]/gu;
-const mentionsEatingAmount = (text: string) =>
-  EATING_AMOUNT.test(text) || (EATING.test(text) && COUNTED.test(text.replace(WEEKDAY, '')));
-
-/**
- * True when a title or line may be shown: one line, no emoji, nothing about bodies, eating
- * amounts, ranks or self-harm.
- */
-function isShowable(text: string, max: number): boolean {
-  const length = graphemeCount(text);
-  return (
-    length >= 1 &&
-    length <= max &&
-    !/[\r\n\u2028\u2029]/u.test(text) &&
-    !/\p{Extended_Pictographic}/u.test(text) &&
-    !mentionsBodyMetrics(text) &&
-    !mentionsSelfHarm(text) &&
-    !mentionsEatingAmount(text) &&
-    !RANKING_WORDS.some((word) => text.includes(word))
-  );
-}
-
-/**
- * The awards a reply comes to for these members (those who checked in, in the prompt's order).
- * A title or line that fails a check (out of bounds, bodies, eating amounts, ranks, self-harm)
- * only drops its title. `undefined` when the reply is out of shape: a member missing, repeated
- * or unknown, more than 3 titles, a member left with none, or a title used twice in the squad.
+ * The awards a reply comes to for these members (those who checked in, in the prompt's order),
+ * or `undefined` when it names a member missing, repeated or unknown. The words themselves are
+ * the model's: what they may say is set in the prompt.
  */
 export function titlesOf(
   reply: ModelReply,
@@ -198,22 +151,17 @@ export function titlesOf(
   if (reply.awards.length !== members.length) return undefined;
   const byKey = new Map(members.map((member, index) => [promptKey(index), member]));
   const result = new Map<MemberId, Title[]>();
-  const seen = new Set<string>();
   for (const award of reply.awards) {
     const member = byKey.get(award.member.trim());
     if (member === undefined || result.has(member)) return undefined;
-    if (award.titles.length > TITLES_MAX) return undefined;
-    const titles = award.titles
-      .map(({ title, speech, move }) => ({ title: title.trim(), speech: speech.trim(), move }))
-      .filter(
-        ({ title, speech }) => isShowable(title, TITLE_MAX) && isShowable(speech, SPEECH_MAX),
-      );
-    if (titles.length === 0) return undefined;
-    for (const { title } of titles) {
-      if (seen.has(title)) return undefined;
-      seen.add(title);
-    }
-    result.set(member, titles);
+    result.set(
+      member,
+      award.titles.map(({ title, speech, move }) => ({
+        title: title.trim(),
+        speech: speech.trim(),
+        move,
+      })),
+    );
   }
   return result;
 }
