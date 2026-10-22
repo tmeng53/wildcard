@@ -137,14 +137,12 @@ private struct StageFigure: View {
     var body: some View {
         let scale = figure.position.scale * unit
         let point = figure.position.point
+        let frame = reduceMotion ? figure.player.restFrame : figure.player.frame(at: date)
         ZStack {
             GroundRing(ring: figure.ring, scale: scale, unit: unit)
                 .position(x: Self.feet.x * scale, y: Self.feet.y * scale - 2 * unit)
-            CharacterCanvas(
-                drawing: figure.player.drawing,
-                placements: reduceMotion ? figure.player.restPlacements : figure.player.placements(at: date)
-            )
-            .scaleEffect(x: figure.position.facing, y: 1)
+            CharacterCanvas(drawing: frame.drawing, placements: frame.placements)
+                .scaleEffect(x: figure.position.facing, y: 1)
             if figure.pose == .holdingSign {
                 SignCard(scale: scale)
                     .position(x: Self.feet.x * scale, y: 249 * scale)

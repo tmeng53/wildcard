@@ -212,8 +212,8 @@ private struct Head: View {
     let player: CharacterPlayer?
 
     var body: some View {
-        if let player {
-            CharacterCanvas(drawing: player.drawing, placements: player.restPlacements, crop: Self.face)
+        if let frame = player?.restFrame {
+            CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
         }
     }
 
