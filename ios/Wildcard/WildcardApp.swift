@@ -21,10 +21,11 @@ struct WildcardApp: App {
         _today = State(
             initialValue: TodayModel(
                 store: TodayStore(
-                    backend: InMemoryCheckInBackend.sampleSquad(now: .now), outbox: InMemoryOutbox(),
-                    now: { Date() }, newID: { UUID() }),
+                    backend: InMemoryCheckInBackend.sampleSquad(now: LaunchOptions.now()), outbox: InMemoryOutbox(),
+                    now: LaunchOptions.now, newID: { UUID() }),
                 writer: LaunchOptions.disclaimerWriter,
                 photoSource: LaunchOptions.photoSource,
+                now: LaunchOptions.now,
                 posted: Self.askForNotifications))
     }
 

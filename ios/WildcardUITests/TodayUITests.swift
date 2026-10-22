@@ -261,7 +261,7 @@ final class TodayUITests: XCTestCase {
         app.launchArguments +=
             [
                 "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
-                "-uitest-no-push",
+                "-uitest-no-push", "-uitest-noon",
             ] + (cardPage.map { ["-today.cardPage", "\($0)"] } ?? []) + extra
         app.launch()
         return app

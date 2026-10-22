@@ -22,6 +22,16 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
     }
 
+    /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in
+    /// daylight and the squad cheers whatever time CI runs the UI tests.
+    static let now: @Sendable () -> Date = {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-noon"),
+            let noon = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())
+        else { return { Date() } }
+        let launched = Date()
+        return { noon.addingTimeInterval(Date().timeIntervalSince(launched)) }
+    }()
+
     /// `-uitest-photos N`: hand N generated photos to every check-in instead of the system photo
     /// picker, which UI tests can't drive reliably.
     static var photoSource: PhotoSource {
