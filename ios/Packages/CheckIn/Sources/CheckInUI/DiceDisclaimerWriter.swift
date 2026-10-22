@@ -1,3 +1,4 @@
+import CheckInDomain
 import Contracts
 import Foundation
 

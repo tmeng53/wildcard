@@ -93,6 +93,18 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /me/devices/remove`.
     /// - Remark: Generated from `#/paths//me/devices/remove/post(removeMyDevice)`.
     func removeMyDevice(_ input: Operations.RemoveMyDevice.Input) async throws -> Operations.RemoveMyDevice.Output
+    /// Which kinds of push the member gets
+    ///
+    /// - Remark: HTTP `GET /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/get(getMyPushSettings)`.
+    func getMyPushSettings(_ input: Operations.GetMyPushSettings.Input) async throws -> Operations.GetMyPushSettings.Output
+    /// Turn kinds of push on or off
+    ///
+    /// Takes every switch at once. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
+    func saveMyPushSettings(_ input: Operations.SaveMyPushSettings.Input) async throws -> Operations.SaveMyPushSettings.Output
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -135,7 +147,7 @@ public protocol APIProtocol: Sendable {
     func joinSquad(_ input: Operations.JoinSquad.Input) async throws -> Operations.JoinSquad.Output
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
@@ -358,6 +370,28 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// Which kinds of push the member gets
+    ///
+    /// - Remark: HTTP `GET /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/get(getMyPushSettings)`.
+    public func getMyPushSettings(headers: Operations.GetMyPushSettings.Input.Headers = .init()) async throws -> Operations.GetMyPushSettings.Output {
+        try await getMyPushSettings(Operations.GetMyPushSettings.Input(headers: headers))
+    }
+    /// Turn kinds of push on or off
+    ///
+    /// Takes every switch at once. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
+    public func saveMyPushSettings(
+        headers: Operations.SaveMyPushSettings.Input.Headers = .init(),
+        body: Operations.SaveMyPushSettings.Input.Body
+    ) async throws -> Operations.SaveMyPushSettings.Output {
+        try await saveMyPushSettings(Operations.SaveMyPushSettings.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -444,7 +478,7 @@ extension APIProtocol {
     }
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.

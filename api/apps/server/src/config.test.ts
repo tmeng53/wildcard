@@ -38,6 +38,7 @@ describe('readConfig', () => {
       proxyHops: 1,
       languageModel: undefined,
       appleSignInKey: undefined,
+      jobsToken: undefined,
       apns: undefined,
     });
   });

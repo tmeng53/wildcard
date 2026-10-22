@@ -125,6 +125,9 @@
                 "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
                 "x-max-characters": 10,
                 "example": "冲就完了🔥"
+              },
+              "character": {
+                "$ref": "#/components/schemas/Character"
               }
             },
             "required": [
@@ -140,6 +143,61 @@
           "profile"
         ],
         "additionalProperties": false
+      },
+      "Character": {
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.",
+            "x-max-characters": 12
+          },
+          "look": {
+            "$ref": "#/components/schemas/Look"
+          }
+        },
+        "required": [
+          "nickname",
+          "look"
+        ],
+        "additionalProperties": false,
+        "description": "The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then."
+      },
+      "Look": {
+        "type": "object",
+        "properties": {
+          "persona": {
+            "type": "string",
+            "maxLength": 32,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+            "description": "How the character moves (人设), such as `deadpan`."
+          },
+          "variants": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 32,
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+            },
+            "description": "The variant each slot wears, such as `{\"body\": \"peach\", \"hair\": \"ponytail\"}`. `body` is always there; a slot left out wears the art’s default, or nothing."
+          },
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^#[0-9A-F]{6}$"
+            },
+            "description": "The swatch a slot is recolored to, for slots in `variants` only. A slot left out keeps its art’s own colors."
+          }
+        },
+        "required": [
+          "persona",
+          "variants",
+          "colors"
+        ],
+        "additionalProperties": false,
+        "description": "How a member’s character looks and moves, by the ids of the app’s character art. The API keeps no list of them, so new art needs no API change; an app that doesn’t know an id draws that slot’s default."
       },
       "Profile": {
         "type": "object",
@@ -167,6 +225,9 @@
             "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
             "x-max-characters": 10,
             "example": "冲就完了🔥"
+          },
+          "character": {
+            "$ref": "#/components/schemas/Character"
           }
         },
         "required": [
@@ -1122,6 +1183,34 @@
         ],
         "additionalProperties": false
       },
+      "PushSettings": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "dailyProgress": {
+                "type": "boolean"
+              }
+            },
+            "description": "Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.",
+            "example": {
+              "dailyProgress": true
+            }
+          }
+        },
+        "required": [
+          "version",
+          "settings"
+        ],
+        "additionalProperties": false
+      },
       "SquadList": {
         "type": "object",
         "properties": {
@@ -1284,13 +1373,21 @@
           "full": {
             "type": "boolean",
             "description": "True when it has 8 members and can’t take more."
+          },
+          "looks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Look"
+            },
+            "description": "The members’ characters, the earliest to join first, for the page to show the squad. Members who haven’t made theirs yet are left out. No names or ids."
           }
         },
         "required": [
           "version",
           "name",
           "memberCount",
-          "full"
+          "full",
+          "looks"
         ],
         "additionalProperties": false
       },
@@ -1322,6 +1419,9 @@
                     "null"
                   ],
                   "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line."
+                },
+                "character": {
+                  "$ref": "#/components/schemas/Character"
                 },
                 "day": {
                   "type": "string",
@@ -2162,7 +2262,7 @@
             }
           },
           "400": {
-            "description": "Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)",
+            "description": "Not a valid profile (such as a catchphrase over 10 characters, a nickname holding a link, or a look with no body), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2916,6 +3016,121 @@
         }
       }
     },
+    "/me/push-settings": {
+      "get": {
+        "operationId": "getMyPushSettings",
+        "summary": "Which kinds of push the member gets",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every switch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveMyPushSettings",
+        "summary": "Turn kinds of push on or off",
+        "description": "Takes every switch at once. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid body, or a switch missing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/squads": {
       "get": {
         "operationId": "listMySquads",
@@ -3349,7 +3564,7 @@
       "get": {
         "operationId": "getPublicSquadInvite",
         "summary": "The squad an invite code belongs to, for anyone",
-        "description": "What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.",
+        "description": "What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.",
         "parameters": [
           {
             "schema": {
@@ -3366,7 +3581,7 @@
             "description": "The squad",
             "headers": {
               "Cache-Control": {
-                "description": "`no-store`: the size changes as people join.",
+                "description": "`no-store`: the size and looks change as people join.",
                 "schema": {
                   "type": "string"
                 }

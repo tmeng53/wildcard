@@ -8,7 +8,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -20,7 +19,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -61,9 +60,10 @@ const app = createApp({
   }),
   members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   log: createLog(() => undefined),
+  jobs: noJobs,
   admin: adminOn(),
 });
 
@@ -316,15 +316,41 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
     };
   }
 
-  it('shows anyone the name, size and whether it is full, and nothing about who is in it', async () => {
-    const creator = await signUp();
+  it('shows anyone the name, size, whether it is full and the looks, and nothing about who is in it', async () => {
+    const looks = [
+      { persona: 'drama', variants: { body: 'peach', hair: 'bob' }, colors: { hair: '#3B2A20' } },
+      { persona: 'shy', variants: { body: 'lop' }, colors: {} },
+    ];
+    const [creator, notYet, joiner] = [await signUp(), await signUp(), await signUp()];
+    for (const [member, character] of [
+      [creator, { nickname: '安安', look: looks[0] }],
+      [notYet, undefined],
+      [joiner, { nickname: '小周', look: looks[1] }],
+    ] as const) {
+      const saved = await call({
+        method: 'PUT',
+        path: '/me/profile',
+        token: member.token,
+        body: { version: 1, timeZone: 'UTC', character },
+      });
+      expect(saved.status).toBe(200);
+    }
     const squad = await newSquad(creator.token, '周末网球');
+    for (const member of [notYet, joiner]) {
+      const joined = await call({
+        method: 'POST',
+        path: `/squad-invites/${squad.inviteCode}/accept`,
+        token: member.token,
+      });
+      expect(joined.status).toBe(201);
+    }
     const typed = `${squad.inviteCode.slice(0, 4).toLowerCase()}-${squad.inviteCode.slice(4)}`;
+    // In the order they joined; no nicknames or ids, and nothing for one with no character yet.
     expect(await lookUp(typed, '203.0.113.10')).toStrictEqual({
       status: 200,
       cacheControl: 'no-store',
       retryAfter: null,
-      body: { version: 1, name: '周末网球', memberCount: 1, full: false },
+      body: { version: 1, name: '周末网球', memberCount: 3, full: false, looks },
     });
   });
 

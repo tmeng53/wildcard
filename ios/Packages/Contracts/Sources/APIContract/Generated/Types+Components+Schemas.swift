@@ -188,21 +188,27 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/catchphrase`.
                 public var catchphrase: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/Me/profile/character`.
+                public var character: Components.Schemas.Character?
                 /// Creates a new `ProfilePayload`.
                 ///
                 /// - Parameters:
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+                ///   - character:
                 public init(
                     timeZone: Swift.String,
-                    catchphrase: Swift.String? = nil
+                    catchphrase: Swift.String? = nil,
+                    character: Components.Schemas.Character? = nil
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
+                    self.character = character
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
                     case catchphrase
+                    case character
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -214,9 +220,14 @@ extension Components {
                         Swift.String.self,
                         forKey: .catchphrase
                     )
+                    self.character = try container.decodeIfPresent(
+                        Components.Schemas.Character.self,
+                        forKey: .character
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "timeZone",
-                        "catchphrase"
+                        "catchphrase",
+                        "character"
                     ])
                 }
             }
@@ -265,6 +276,145 @@ extension Components {
                 ])
             }
         }
+        /// The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Character`.
+        public struct Character: Codable, Hashable, Sendable {
+            /// What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Character/nickname`.
+            public var nickname: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Character/look`.
+            public var look: Components.Schemas.Look
+            /// Creates a new `Character`.
+            ///
+            /// - Parameters:
+            ///   - nickname: What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
+            ///   - look:
+            public init(
+                nickname: Swift.String,
+                look: Components.Schemas.Look
+            ) {
+                self.nickname = nickname
+                self.look = look
+            }
+            public enum CodingKeys: String, CodingKey {
+                case nickname
+                case look
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.nickname = try container.decode(
+                    Swift.String.self,
+                    forKey: .nickname
+                )
+                self.look = try container.decode(
+                    Components.Schemas.Look.self,
+                    forKey: .look
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "nickname",
+                    "look"
+                ])
+            }
+        }
+        /// How a member’s character looks and moves, by the ids of the app’s character art. The API keeps no list of them, so new art needs no API change; an app that doesn’t know an id draws that slot’s default.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Look`.
+        public struct Look: Codable, Hashable, Sendable {
+            /// How the character moves (人设), such as `deadpan`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Look/persona`.
+            public var persona: Swift.String
+            /// The variant each slot wears, such as `{"body": "peach", "hair": "ponytail"}`. `body` is always there; a slot left out wears the art’s default, or nothing.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Look/variants`.
+            public struct VariantsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `VariantsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// The variant each slot wears, such as `{"body": "peach", "hair": "ponytail"}`. `body` is always there; a slot left out wears the art’s default, or nothing.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Look/variants`.
+            public var variants: Components.Schemas.Look.VariantsPayload
+            /// The swatch a slot is recolored to, for slots in `variants` only. A slot left out keeps its art’s own colors.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Look/colors`.
+            public struct ColorsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `ColorsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// The swatch a slot is recolored to, for slots in `variants` only. A slot left out keeps its art’s own colors.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Look/colors`.
+            public var colors: Components.Schemas.Look.ColorsPayload
+            /// Creates a new `Look`.
+            ///
+            /// - Parameters:
+            ///   - persona: How the character moves (人设), such as `deadpan`.
+            ///   - variants: The variant each slot wears, such as `{"body": "peach", "hair": "ponytail"}`. `body` is always there; a slot left out wears the art’s default, or nothing.
+            ///   - colors: The swatch a slot is recolored to, for slots in `variants` only. A slot left out keeps its art’s own colors.
+            public init(
+                persona: Swift.String,
+                variants: Components.Schemas.Look.VariantsPayload,
+                colors: Components.Schemas.Look.ColorsPayload
+            ) {
+                self.persona = persona
+                self.variants = variants
+                self.colors = colors
+            }
+            public enum CodingKeys: String, CodingKey {
+                case persona
+                case variants
+                case colors
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.persona = try container.decode(
+                    Swift.String.self,
+                    forKey: .persona
+                )
+                self.variants = try container.decode(
+                    Components.Schemas.Look.VariantsPayload.self,
+                    forKey: .variants
+                )
+                self.colors = try container.decode(
+                    Components.Schemas.Look.ColorsPayload.self,
+                    forKey: .colors
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "persona",
+                    "variants",
+                    "colors"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Profile`.
         public struct Profile: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Profile/version`.
@@ -281,25 +431,31 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Profile/catchphrase`.
             public var catchphrase: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Profile/character`.
+            public var character: Components.Schemas.Character?
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
             ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
+            ///   - character:
             public init(
                 version: Components.Schemas.Profile.VersionPayload,
                 timeZone: Swift.String,
-                catchphrase: Swift.String? = nil
+                catchphrase: Swift.String? = nil,
+                character: Components.Schemas.Character? = nil
             ) {
                 self.version = version
                 self.timeZone = timeZone
                 self.catchphrase = catchphrase
+                self.character = character
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case timeZone
                 case catchphrase
+                case character
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -315,10 +471,15 @@ extension Components {
                     Swift.String.self,
                     forKey: .catchphrase
                 )
+                self.character = try container.decodeIfPresent(
+                    Components.Schemas.Character.self,
+                    forKey: .character
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "timeZone",
-                    "catchphrase"
+                    "catchphrase",
+                    "character"
                 ])
             }
         }
@@ -2173,6 +2334,67 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PushSettings`.
+        public struct PushSettings: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
+            public var version: Components.Schemas.PushSettings.VersionPayload
+            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
+            public struct SettingsPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PushSettings/settings/dailyProgress`.
+                public var dailyProgress: Swift.Bool?
+                /// Creates a new `SettingsPayload`.
+                ///
+                /// - Parameters:
+                ///   - dailyProgress:
+                public init(dailyProgress: Swift.Bool? = nil) {
+                    self.dailyProgress = dailyProgress
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case dailyProgress
+                }
+            }
+            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
+            public var settings: Components.Schemas.PushSettings.SettingsPayload
+            /// Creates a new `PushSettings`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - settings: Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            public init(
+                version: Components.Schemas.PushSettings.VersionPayload,
+                settings: Components.Schemas.PushSettings.SettingsPayload
+            ) {
+                self.version = version
+                self.settings = settings
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case settings
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.PushSettings.VersionPayload.self,
+                    forKey: .version
+                )
+                self.settings = try container.decode(
+                    Components.Schemas.PushSettings.SettingsPayload.self,
+                    forKey: .settings
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "settings"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
         public struct SquadList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.
@@ -2504,6 +2726,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/full`.
             public var full: Swift.Bool
+            /// The members’ characters, the earliest to join first, for the page to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/looks`.
+            public var looks: [Components.Schemas.Look]
             /// Creates a new `PublicSquadInvite`.
             ///
             /// - Parameters:
@@ -2511,22 +2737,26 @@ extension Components {
             ///   - name: The squad’s name.
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
+            ///   - looks: The members’ characters, the earliest to join first, for the page to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
                 version: Components.Schemas.PublicSquadInvite.VersionPayload,
                 name: Swift.String,
                 memberCount: Swift.Int,
-                full: Swift.Bool
+                full: Swift.Bool,
+                looks: [Components.Schemas.Look]
             ) {
                 self.version = version
                 self.name = name
                 self.memberCount = memberCount
                 self.full = full
+                self.looks = looks
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case name
                 case memberCount
                 case full
+                case looks
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -2546,11 +2776,16 @@ extension Components {
                     Swift.Bool.self,
                     forKey: .full
                 )
+                self.looks = try container.decode(
+                    [Components.Schemas.Look].self,
+                    forKey: .looks
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "name",
                     "memberCount",
-                    "full"
+                    "full",
+                    "looks"
                 ])
             }
         }
@@ -2572,6 +2807,8 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/catchphrase`.
                 public var catchphrase: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/character`.
+                public var character: Components.Schemas.Character?
                 /// The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
@@ -2612,6 +2849,7 @@ extension Components {
                 /// - Parameters:
                 ///   - member:
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
+                ///   - character:
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
@@ -2620,6 +2858,7 @@ extension Components {
                 public init(
                     member: Swift.String,
                     catchphrase: Swift.String? = nil,
+                    character: Components.Schemas.Character? = nil,
                     day: Swift.String,
                     training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload,
                     latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload? = nil,
@@ -2628,6 +2867,7 @@ extension Components {
                 ) {
                     self.member = member
                     self.catchphrase = catchphrase
+                    self.character = character
                     self.day = day
                     self.training = training
                     self.latestMeal = latestMeal
@@ -2637,6 +2877,7 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case member
                     case catchphrase
+                    case character
                     case day
                     case training
                     case latestMeal
@@ -2652,6 +2893,10 @@ extension Components {
                     self.catchphrase = try container.decodeIfPresent(
                         Swift.String.self,
                         forKey: .catchphrase
+                    )
+                    self.character = try container.decodeIfPresent(
+                        Components.Schemas.Character.self,
+                        forKey: .character
                     )
                     self.day = try container.decode(
                         Swift.String.self,
@@ -2676,6 +2921,7 @@ extension Components {
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "member",
                         "catchphrase",
+                        "character",
                         "day",
                         "training",
                         "latestMeal",

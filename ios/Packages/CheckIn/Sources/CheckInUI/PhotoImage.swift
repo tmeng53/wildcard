@@ -1,4 +1,5 @@
 #if os(iOS)
+import CheckInDomain
 import DesignSystem
 import DesignSystemUI
 import ImageIO
