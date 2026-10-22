@@ -18,17 +18,28 @@ struct CheerBubbles: View {
     private static let hold = 1.8
     /// How far above the feet a bubble's tail ends, in the rig's points: just over the head.
     private static let headHeight = 250.0
+    /// The widest a line's bubble gets (`SpeechBubble`'s line width) and how far it keeps from
+    /// the screen's edge, in the stage's points.
+    private static let widest = 160.0
+    private static let margin = 12.0
+
+    private static func centre(over head: Double) -> Double {
+        min(max(head, widest / 2 + margin), StageLayout.width - widest / 2 - margin)
+    }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack {
             ForEach(cast.mates.filter { shown.contains($0.id) }) { mate in
                 if let position = cast.stage.position(of: mate.id, at: 0) {
-                    SpeechBubble(Text(verbatim: mate.line))
-                        .fixedSize()
-                        .alignmentGuide(.top) { $0[.bottom] }
-                        .alignmentGuide(.leading) { $0.width / 2 }
-                        .offset(
-                            x: position.point.x * unit,
+                    // Over the head, but never past the screen's edge for someone at the side.
+                    Color.clear
+                        .frame(width: Self.widest * unit, height: 0)
+                        .overlay(alignment: .bottom) {
+                            SpeechBubble(Text(verbatim: mate.line))
+                                .fixedSize()
+                        }
+                        .position(
+                            x: Self.centre(over: position.point.x) * unit,
                             y: (position.point.y - Self.headHeight * position.scale) * unit
                         )
                         .transition(.speech(reduceMotion: reduceMotion))
