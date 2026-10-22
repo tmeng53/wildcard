@@ -1,6 +1,6 @@
 # Wildcard — guide for agents
 
-<!-- Follows the agent-instructions skill. Keep it under 200 lines. Working name; replace when the name is decided. -->
+<!-- Follows the agent-instructions skill. Keep it under 200 lines. -->
 
 Wildcard is an iOS app where friend squads check in every day (练了 / 健康餐 / 坦白放纵餐 / 今日请假条), see each other on a shared track, get a Sunday 战报 recap and share a weekly 3:4 schedule poster. Chinese-first UI. The MVP plan lives in the project's docs; this file holds how the code is built.
 
