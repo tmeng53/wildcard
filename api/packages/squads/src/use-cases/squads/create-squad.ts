@@ -34,8 +34,9 @@ const INVITE_CODE_ATTEMPTS = 5;
 
 /**
  * Creates a squad under the id the app made, with only a name (a venue comes later, from squad
- * settings), and the creator as its first member, who needs a current AI consent. A retry is safe: the same squad again is a
- * success, a different name or another member's squad under that id is refused.
+ * settings), and the creator as its first member, who needs a current AI consent. A retry is
+ * safe, consent or not: the same squad again is a success, a different name or another member's
+ * squad under that id is refused.
  */
 export async function createSquad(
   {
@@ -49,6 +50,9 @@ export async function createSquad(
   },
   { id, creator, name }: CreateSquadInput,
 ): Promise<CreatedSquad> {
+  // A retry of a squad already made is answered as before, whatever the consent is now.
+  if ((await store.find(id)) !== undefined)
+    return { squad: await asRetry(store, { id, creator, name }), created: false };
   if (!(await aiConsent(creator))) throw new AiConsentRequiredError();
   for (let attempt = 0; attempt < INVITE_CODE_ATTEMPTS; attempt += 1) {
     const outcome = await store.create({ id, name, creator, inviteCode: inviteCodes() });

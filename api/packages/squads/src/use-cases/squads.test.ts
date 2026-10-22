@@ -102,6 +102,15 @@ describe('creating a squad', () => {
     expect(await squads.listMine(member)).toStrictEqual([]);
   });
 
+  it('answers a retry as before once the creator’s consent is to an older copy', async () => {
+    const creator = await newMember();
+    const squad = await newSquad(creator);
+    consented.delete(creator);
+    const again = await squads.create({ id: squad.id, creator, name: squad.name });
+    expect([again.created, again.squad]).toStrictEqual([false, squad]);
+    await expect(newSquad(creator)).rejects.toMatchObject({ reason: 'AI_CONSENT_REQUIRED' });
+  });
+
   it('refuses a fourth squad, and allows one again after leaving', async () => {
     const member = await newMember();
     const [first] = [await newSquad(member), await newSquad(member), await newSquad(member)];
