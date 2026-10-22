@@ -69,14 +69,16 @@ describe('readConfig', () => {
     });
   });
 
-  it('refuses TLS settings in the database URL once a CA file is given', () => {
-    expect(() =>
-      readConfig({
-        ...base,
-        DATABASE_URL: `${base.DATABASE_URL}?sslmode=no-verify`,
-        DATABASE_CA_FILE: '/certs/ca.crt',
-      }),
-    ).toThrow('DATABASE_URL sets sslmode, which would override DATABASE_CA_FILE');
+  it('refuses settings in the database URL once a CA file is given', () => {
+    for (const query of ['?sslmode=no-verify', '?ssl=no-verify', '?ssl=0']) {
+      expect(() =>
+        readConfig({
+          ...base,
+          DATABASE_URL: `${base.DATABASE_URL}${query}`,
+          DATABASE_CA_FILE: '/certs/ca.crt',
+        }),
+      ).toThrow('DATABASE_URL has a query string, whose settings would override DATABASE_CA_FILE');
+    }
     expect(readConfig({ ...base, DATABASE_CA_FILE: '/certs/ca.crt' }).databaseCaFile).toBe(
       '/certs/ca.crt',
     );

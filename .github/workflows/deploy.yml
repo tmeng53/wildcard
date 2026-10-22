@@ -38,8 +38,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-          # The migrations of the commit the database last ran are compared with this one's.
-          fetch-depth: 0
       - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/wildcard
@@ -54,42 +52,60 @@ jobs:
       # A migration the hosted database already ran is never run again, so an edit to one would
       # silently never reach it. Until there are real users, migrations are edited in place
       # (AGENTS.md), so that needs a person to reset the beta database first. The database itself
-      # records the commit whose migrations it last ran, as a comment on the CLI's history table.
+      # keeps the hash of each migration file it ran, as a comment on the CLI's history table,
+      # written after every push, even one that fails partway.
       - name: Apply new migrations
         run: |
+          # A failed psql inside a pipe or a test must stop the step, never pass the guard.
+          set -o pipefail
           database_url="$(gcloud secrets versions access latest --secret database-url)"
           echo "::add-mask::$database_url"
-          password="${database_url#*://}"
-          password="${password%%@*}"
-          echo "::add-mask::${password#*:}"
           case "$database_url" in
-            *:6543/*\?*) echo "::error::database-url should have no query string" && exit 1 ;;
+            *\?*) echo "::error::database-url should have no query string" && exit 1 ;;
             *:6543/*) ;;
             *) echo "::error::database-url should be Supabase's transaction pooler (port 6543)" && exit 1 ;;
           esac
+          userinfo="${database_url#*://}"
+          userinfo="${userinfo%@*}"
+          password="${userinfo#*:}"
+          echo "::add-mask::$password"
+          echo "::add-mask::$(printf '%b' "${password//%/\\x}")"
+          # A raw @, / or : splits the URL somewhere else, and psql would print the rest of it.
+          if [[ ! "$password" =~ ^[A-Za-z0-9%._~-]+$ ]]; then
+            echo "::error::Percent-encode the database-url password, or reset it to letters and digits"
+            exit 1
+          fi
           ca="$PWD/api/apps/server/certs/supabase-root-2021.crt"
           url="${database_url/:6543\//:5432/}?sslmode=verify-full&sslrootcert=$ca"
           command -v psql >/dev/null || sudo apt-get install -y -qq postgresql-client
           history="supabase_migrations.schema_migrations"
-          applied=0
-          if [ "$(psql "$url" -Atc "select to_regclass('$history') is not null")" = t ]; then
-            applied="$(psql "$url" -Atc "select count(*) from $history")"
-          fi
-          if [ "$applied" -gt 0 ]; then
-            deployed="$(psql "$url" -Atc "select obj_description('$history'::regclass, 'pg_class')")"
-            deployed="${deployed#deployed }"
-            if [ -z "$deployed" ]; then
-              echo "::error::The hosted database ran migrations, but not through this workflow. Reset the beta database first."
+          # "<version> <sha256 of its file>" for each migration the database ran, from the files here.
+          hashes() {
+            psql "$url" -Atc "select version from $history order by version" | while read -r version; do
+              for file in supabase/migrations/"$version"_*.sql; do
+                if [ -f "$file" ]; then echo "$version $(sha256sum < "$file" | cut -d' ' -f1)"; fi
+              done
+            done
+          }
+          exists="$(psql "$url" -Atc "select to_regclass('$history') is not null")"
+          if [ "$exists" = t ]; then
+            recorded="$(psql "$url" -Atc "select obj_description('$history'::regclass, 'pg_class')")"
+            ran="$(psql "$url" -Atc "select count(*) from $history")"
+            current="$(hashes)"
+            if [ "$ran" -gt 0 ] && [ "$current" != "$recorded" ]; then
+              echo "::error::Migrations the hosted database already ran were edited, removed or run outside this workflow. Reset the beta database first."
+              diff <(echo "$recorded") <(echo "$current") || true
               exit 1
             fi
-            changed="$(git diff --name-only --diff-filter=MDR "$deployed" HEAD -- supabase/migrations)"
-            if [ -n "$changed" ]; then
-              echo "::error::These migrations changed since $deployed, which the hosted database already ran. Reset the beta database first: $changed"
-              exit 1
-            fi
           fi
+          record() {
+            status=$?
+            psql "$url" -v ON_ERROR_STOP=1 -v hashes="$(hashes)" <<<"comment on table $history is :'hashes'" ||
+              status=1
+            exit "$status"
+          }
+          trap record EXIT
           npx --yes supabase@2.121.0 db push --yes --db-url "$url"
-          psql "$url" -Atc "comment on table $history is 'deployed $GITHUB_SHA'"
 
       - name: Build and push the image
         run: |
@@ -101,6 +117,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          # --update-* keeps what was set by hand in the console (APNS_*, APPLE_*, LLM_PROVIDER...).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
           # Optional keys: the server runs without them, with that feature off.
           for key in openai-api-key anthropic-api-key; do
@@ -113,8 +130,8 @@ jobs:
             --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
             --allow-unauthenticated \
             --max-instances 3 \
-            --set-secrets "$secrets" \
-            --set-env-vars "SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
+            --update-secrets "$secrets" \
+            --update-env-vars "SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
 
       - name: Check it answers
         run: |
