@@ -164,8 +164,8 @@ public struct TodayView: View {
     }
 }
 
-/// My payoff over my character, front and centre: the 「+1」 of a 练了, the line in the bubble
-/// on my head and the cover pinned beside it, like a polaroid: one figure, not three objects.
+/// My payoff over my character, front and centre: the 「+1」 of a 练了 and the line in the bubble
+/// on my head.
 private struct MyPayoff: View {
     let model: TodayModel
 
@@ -176,13 +176,10 @@ private struct MyPayoff: View {
                 x: StageLayout.mySpot.x * unit,
                 y: (StageLayout.mySpot.y - Self.headHeight * StageLayout.myScale) * unit)
             // Each piece hangs off a zero-height anchor placed on the head: the bubble and the
-            // 「+1」 sit above it, centred; the cover is pinned beside it.
+            // 「+1」 sit above it, centred.
             ZStack {
                 Self.anchor(width: Self.bubbleWidth, at: head, alignment: .bottom) {
                     PayoffBubble(line: model.payoff?.line).fixedSize(horizontal: false, vertical: true)
-                }
-                Self.anchor(width: 0, at: CGPoint(x: head.x + Space.xl, y: head.y), alignment: .topLeading) {
-                    PinnedCover(cover: model.payoff?.cover).fixedSize()
                 }
                 Self.anchor(width: 0, at: CGPoint(x: head.x, y: head.y - Space.l), alignment: .bottom) {
                     PlusOne(trigger: model.celebrations).fixedSize()
@@ -236,34 +233,4 @@ private struct PayoffBubble: View {
     }
 }
 
-/// The post's cover photo, pinned beside the character's head.
-private struct PinnedCover: View {
-    @Environment(\.sceneTheme) private var theme
-    let cover: PreparedPhoto?
-
-    var body: some View {
-        if let cover {
-            PhotoImage(photo: cover)
-                .frame(width: 58, height: 58)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail - Space.xxs, style: .continuous))
-                .padding(Space.xxs)
-                .background(
-                    Color(role: .bgCanvas, in: theme),
-                    in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous)
-                )
-                .rotationEffect(.degrees(8))
-                .transition(.scale(scale: 0.6).combined(with: .opacity))
-                .accessibilityHidden(true)
-        }
-    }
-}
-
-#Preview {
-    TodayView(
-        model: TodayModel(
-            store: TodayStore(
-                backend: InMemoryCheckInBackend.sampleSquad(now: .now), outbox: InMemoryOutbox(), now: { Date() },
-                newID: { UUID() }),
-            writer: DiceDisclaimerWriter(), posted: {}))
-}
 #endif

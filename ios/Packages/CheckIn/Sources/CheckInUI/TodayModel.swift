@@ -39,11 +39,10 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the line in the bubble and the pinned cover.
+    /// What lands on the scene after a post: the line in the bubble.
     struct Payoff: Equatable {
         let kind: CheckInKind
         let line: String?
-        let cover: PreparedPhoto?
     }
 
     var isBurstOpen = false
@@ -216,20 +215,18 @@ public final class TodayModel {
         }
     }
 
-    /// Stays on the scene: the character celebrates, the line and cover appear beside it.
+    /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
+    /// in the post, off the scene (the product owner: too busy).
     private func land(_ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?) {
         let line: String?
-        let cover: PreparedPhoto?
         switch draft {
         case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body):
             line = body.caption
-            cover = body.cover
         case .disclaimer(let disclaimer):
             line = disclaimer.text
-            cover = nil
         }
         posts += 1
-        payoff = Payoff(kind: draft.kind, line: line, cover: cover)
+        payoff = Payoff(kind: draft.kind, line: line)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.kind != .disclaimer,
             let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)
