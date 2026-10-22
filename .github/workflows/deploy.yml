@@ -127,10 +127,14 @@ jobs:
           absent=""
           for key in openai-api-key anthropic-api-key; do
             variable="$(tr 'a-z-' 'A-Z_' <<<"$key")"
-            if gcloud secrets describe "$key" >/dev/null 2>&1; then
+            # Only a secret that doesn't exist turns its feature off; any other error stops here.
+            if error="$(gcloud secrets describe "$key" 2>&1 >/dev/null)"; then
               secrets="$secrets,$variable=$key:latest"
-            else
+            elif [[ "$error" == *NOT_FOUND* ]]; then
               absent="${absent:+$absent,}$variable"
+            else
+              echo "$error" >&2
+              exit 1
             fi
           done
           remove=()
