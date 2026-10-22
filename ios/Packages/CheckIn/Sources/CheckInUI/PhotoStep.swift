@@ -1,4 +1,5 @@
 #if os(iOS)
+import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI

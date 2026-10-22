@@ -10,6 +10,7 @@ import SwiftUI
 /// after posting you stay on the scene for the payoff (spec rev 186, section 1).
 public struct TodayView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayModel
 
     public init(model: TodayModel) {
@@ -49,6 +50,10 @@ public struct TodayView: View {
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         .task { await model.load() }
+        // Back in the app, possibly on a new day or after posts went out from another phone.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await model.load() } }
+        }
     }
 
     /// The floor, the week's card, the character and the 打卡 burst.
@@ -193,6 +198,9 @@ private struct PinnedCover: View {
 #Preview {
     TodayView(
         model: TodayModel(
-            service: InMemoryCheckInService.sampleSquad(now: .now), writer: DiceDisclaimerWriter(), posted: {}))
+            store: TodayStore(
+                backend: InMemoryCheckInBackend.sampleSquad(now: .now), outbox: InMemoryOutbox(), now: { Date() },
+                newID: { UUID() }),
+            writer: DiceDisclaimerWriter(), posted: {}))
 }
 #endif

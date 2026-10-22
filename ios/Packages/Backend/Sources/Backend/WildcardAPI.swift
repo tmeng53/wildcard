@@ -1,5 +1,6 @@
 import APIContract
 import AccountDomain
+import CheckInDomain
 import Contracts
 import Foundation
 import NotificationsDomain
@@ -50,7 +51,7 @@ public struct WildcardAPI: Sendable {
 
     /// The signed-in member, with their profile once it is saved.
     public func me() async throws(APIError) -> Member {
-        let answer = try await call { try await client.getMe().ok.body.json }
+        let answer = try await meWire()
         guard let id = UUID(uuidString: answer.userId) else { throw .unreadableResponse }
         return Member(id: MemberID(id), profile: try answer.profile.map(Profile.init))
     }
@@ -86,20 +87,123 @@ public struct WildcardAPI: Sendable {
     /// The squad's check-ins counted for these days (at most 31), as its members see them.
     public func checkIns(of squad: SquadID, from: LocalDay, through last: LocalDay) async throws(APIError) -> [CheckIn]
     {
-        let list = try await call {
-            try await client.listSquadCheckIns(
-                path: .init(squadId: squad.description), query: .init(from: from.description, to: last.description)
-            ).ok.body.json
-        }
-        return try read(list)
+        try read(try await checkInsWire(of: squad, from: from, through: last))
     }
 
     /// The member's own check-ins counted for these days (at most 31).
     public func myCheckIns(from: LocalDay, through last: LocalDay) async throws(APIError) -> [CheckIn] {
+        try read(try await myCheckInsWire(from: from, through: last))
+    }
+
+    // MARK: - Squads and their today
+
+    /// The member's squads, the earliest joined first.
+    public func mySquads() async throws(APIError) -> [Squad] {
+        let list = try await mySquadsWire()
+        return try read { () throws(ContractsError) in try list.squads.map(Squad.init) }
+    }
+
+    /// The squad's today: every member's day, today's counts, the member's 本周 and the squad's.
+    public func today(of squad: SquadID) async throws(APIError) -> SquadToday {
+        let wire = try await todayWire(of: squad)
+        return try read { () throws(ContractsError) in try SquadToday(wire) }
+    }
+
+    /// The member's plan for the week starting on `weekStart`, a Monday: the one saved, else
+    /// last week's carried over, else the default.
+    public func weeklyPlan(weekStart: LocalDay) async throws(APIError) -> WeeklyPlan {
+        let wire = try await weeklyPlanWire(weekStart: weekStart)
+        return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
+    }
+
+    // MARK: - Reactions
+
+    /// Who reacted to a check-in, and how.
+    public func reactions(to checkIn: CheckInID) async throws(APIError) -> [Reaction] {
         let list = try await call {
+            try await client.listCheckInReactions(path: .init(checkInId: checkIn.description)).ok.body.json
+        }
+        return try read { () throws(ContractsError) in try list.reactions.map(Reaction.init) }
+    }
+
+    /// Sets the member's one reaction on a teammate's check-in, replacing any earlier one.
+    public func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(APIError) {
+        try await call {
+            switch try await client.reactToCheckIn(path: .init(checkInId: checkIn.description), body: .json(kind.draft))
+            {
+            case .ok, .created: return
+            default: throw APIError.unreadableResponse
+            }
+        }
+    }
+
+    /// Takes the member's reaction back; fine when there is none.
+    public func removeReaction(from checkIn: CheckInID) async throws(APIError) {
+        try await call {
+            _ = try await client.removeMyReaction(path: .init(checkInId: checkIn.description)).noContent
+        }
+    }
+
+    // MARK: - 请假条 drafts
+
+    /// What the AI writer made of the member's reason, in a style; nil when it doesn't write
+    /// about this reason, and the dice stand in.
+    public func disclaimerDrafts(reason: String, style: DisclaimerStyle) async throws(APIError)
+        -> DisclaimerSuggestions?
+    {
+        let wireStyle: Components.Schemas.DisclaimerDraftRequest.StylePayload =
+            switch style {
+            case .funny: .funny
+            case .unhinged: .unhinged
+            case .heroic: .heroic
+            case .stubborn: .stubborn
+            }
+        let answer = try await call {
+            try await client.writeDisclaimerDrafts(body: .json(.init(version: ._1, reason: reason, style: wireStyle)))
+                .ok.body.json
+        }
+        return switch answer {
+        case .case1(let drafts): .drafts(drafts.drafts)
+        case .case2: .blocked
+        case .case3: nil
+        }
+    }
+
+    // MARK: - Wire answers, which the device copy keeps as the API sent them
+
+    func meWire() async throws(APIError) -> Components.Schemas.Me {
+        try await call { try await client.getMe().ok.body.json }
+    }
+
+    func mySquadsWire() async throws(APIError) -> Components.Schemas.SquadList {
+        try await call { try await client.listMySquads().ok.body.json }
+    }
+
+    func todayWire(of squad: SquadID) async throws(APIError) -> Components.Schemas.SquadToday {
+        try await call { try await client.getSquadToday(path: .init(squadId: squad.description)).ok.body.json }
+    }
+
+    func weeklyPlanWire(weekStart: LocalDay) async throws(APIError) -> Components.Schemas.WeeklyPlan {
+        try await call {
+            try await client.getMyWeeklyPlan(path: .init(weekStart: weekStart.description)).ok.body.json
+        }
+    }
+
+    func myCheckInsWire(from: LocalDay, through last: LocalDay) async throws(APIError) -> Components.Schemas.CheckInList
+    {
+        try await call {
             try await client.listMyCheckIns(query: .init(from: from.description, to: last.description)).ok.body.json
         }
-        return try read(list)
+    }
+
+    func checkInsWire(of squad: SquadID, from: LocalDay, through last: LocalDay) async throws(APIError)
+        -> Components.Schemas.CheckInList
+    {
+        try await call {
+            try await client.listSquadCheckIns(
+                path: .init(squadId: squad.description), query: .init(from: from.description, to: last.description)
+            ).ok.body.json
+        }
     }
 
     // MARK: - Photos
@@ -172,7 +276,7 @@ public struct WildcardAPI: Sendable {
     }
 
     /// Reads what the API sent into `Contracts` types, which check every rule.
-    private func read<T>(_ body: () throws(ContractsError) -> T) throws(APIError) -> T {
+    func read<T>(_ body: () throws(ContractsError) -> T) throws(APIError) -> T {
         do {
             return try body()
         } catch {
@@ -180,7 +284,7 @@ public struct WildcardAPI: Sendable {
         }
     }
 
-    private func read(_ list: Components.Schemas.CheckInList) throws(APIError) -> [CheckIn] {
+    func read(_ list: Components.Schemas.CheckInList) throws(APIError) -> [CheckIn] {
         try read { () throws(ContractsError) in try list.checkIns.map(CheckIn.init) }
     }
 }
