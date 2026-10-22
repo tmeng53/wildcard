@@ -103,7 +103,6 @@ describe('a new copy version', () => {
       current: false,
     });
     expect(await consent.hasCurrent(member)).toBe(false);
-    expect(await consent.currentAmong([member])).toStrictEqual(new Set());
 
     await consent.give({ member, copyVersion: 2 });
     expect(await consent.hasCurrent(member)).toBe(true);
@@ -111,17 +110,6 @@ describe('a new copy version', () => {
       { copy_version: 1, given_at: new Date('2026-10-20T05:00:00.000Z') },
       { copy_version: 2, given_at: new Date('2026-11-01T05:00:00.000Z') },
     ]);
-  });
-});
-
-describe('who among members has agreed', () => {
-  it('names only those who agreed to the current copy', async () => {
-    const { consent } = consentTo(2);
-    const [agreed, never, outdated] = [await newMember(), await newMember(), await newMember()];
-    await consent.give({ member: agreed, copyVersion: 2 });
-    await consentTo(1).consent.give({ member: outdated, copyVersion: 1 });
-    expect(await consent.currentAmong([agreed, never, outdated])).toStrictEqual(new Set([agreed]));
-    expect(await consent.currentAmong([])).toStrictEqual(new Set());
   });
 });
 

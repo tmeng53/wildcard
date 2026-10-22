@@ -34,8 +34,8 @@ export const AiConsent = z
       }),
     current: z.boolean().meta({
       description:
-        'True when `given` is to `copyVersion`. Making or joining a squad, AI drafts and the ' +
-        'weekly awards need it; when false, show that version of the copy and ask.',
+        'True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need ' +
+        'it; when false, show that version of the copy and ask.',
     }),
   })
   .openapi('AiConsent');
