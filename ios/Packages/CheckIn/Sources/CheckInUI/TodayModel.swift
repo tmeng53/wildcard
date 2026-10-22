@@ -39,10 +39,12 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the line in the bubble.
+    /// What lands on the scene after a post: the line in the bubble, and the post it opens once
+    /// the server saved it.
     struct Payoff: Equatable {
         let kind: CheckInKind
         let line: String?
+        let post: CheckIn?
     }
 
     var isBurstOpen = false
@@ -112,7 +114,7 @@ public final class TodayModel {
     var home: Home? { store.home }
 
     /// The squad's scene.
-    var scene: SceneTheme { Self.scene }
+    public var scene: SceneTheme { Self.scene }
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
@@ -215,11 +217,11 @@ public final class TodayModel {
         let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
-            try await store.post(draft)
+            let outcome = try await store.post(draft)
             placeSquad()
             step = .scene
             photos = []
-            land(draft, weekBefore: before)
+            land(draft, weekBefore: before, saved: outcome)
             posted()
         } catch {
             sendFailed = true
@@ -228,7 +230,9 @@ public final class TodayModel {
 
     /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
     /// in the post, off the scene (the product owner: too busy).
-    private func land(_ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?) {
+    private func land(
+        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, saved: TodayStore.PostOutcome
+    ) {
         let line: String?
         switch draft {
         case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body):
@@ -237,7 +241,8 @@ public final class TodayModel {
             line = disclaimer.text
         }
         posts += 1
-        payoff = Payoff(kind: draft.kind, line: line)
+        let post: CheckIn? = if case .posted(let checkIn) = saved { checkIn } else { nil }
+        payoff = Payoff(kind: draft.kind, line: line, post: post)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.kind != .disclaimer,
             let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)

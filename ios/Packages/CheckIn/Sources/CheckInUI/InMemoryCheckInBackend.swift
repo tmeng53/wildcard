@@ -15,13 +15,14 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
     /// every state (three trained: running, yoga, swimming; one 请假条; one rest day; two not yet)
-    /// and the member not checked in, today being `now`'s day in the device's zone.
-    public static func sampleSquad(now: Date) -> InMemoryCheckInBackend {
+    /// and the member not checked in, today being `now`'s day in the device's zone. Pass
+    /// `member` and `squad` to share them with another screen's sample, such as 动态's.
+    public static func sampleSquad(
+        now: Date, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID())
+    ) -> InMemoryCheckInBackend {
         let zone = TimeZone.current
         let day = LocalDay(at: now, in: zone)
-        let member = MemberID(UUID())
         let mates = (0..<7).map { _ in MemberID(UUID()) }
-        let squadID = SquadID(UUID())
         func at(_ hoursAgo: Double) -> Timestamp { Timestamp(now.addingTimeInterval(-hoursAgo * 3600)) }
         func mate(_ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil)
             -> SquadmateToday

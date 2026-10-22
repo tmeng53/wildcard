@@ -17,6 +17,8 @@
 		A1C0DE000000000000000052 /* MeDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000051 /* MeDomain */; };
 		A1C0DE000000000000000054 /* MeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000053 /* MeUI */; };
 		A1C0DE000000000000000062 /* OnboardingUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000061 /* OnboardingUI */; };
+		A1C0DE000000000000000072 /* FeedDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000071 /* FeedDomain */; };
+		A1C0DE000000000000000074 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* FeedUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +64,8 @@
 				A1C0DE000000000000000052 /* MeDomain in Frameworks */,
 				A1C0DE000000000000000054 /* MeUI in Frameworks */,
 				A1C0DE000000000000000062 /* OnboardingUI in Frameworks */,
+				A1C0DE000000000000000072 /* FeedDomain in Frameworks */,
+				A1C0DE000000000000000074 /* FeedUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,6 +127,8 @@
 				A1C0DE000000000000000051 /* MeDomain */,
 				A1C0DE000000000000000053 /* MeUI */,
 				A1C0DE000000000000000061 /* OnboardingUI */,
+				A1C0DE000000000000000071 /* FeedDomain */,
+				A1C0DE000000000000000073 /* FeedUI */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -185,6 +191,7 @@
 				A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */,
 				A1C0DE000000000000000050 /* XCLocalSwiftPackageReference "Packages/Me" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
+				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -433,9 +440,23 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Onboarding;
 		};
+		A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Feed;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A1C0DE000000000000000071 /* FeedDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			productName = FeedDomain;
+		};
+		A1C0DE000000000000000073 /* FeedUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			productName = FeedUI;
+		};
 		A1C0DE00000000000000001C /* DesignSystemUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
