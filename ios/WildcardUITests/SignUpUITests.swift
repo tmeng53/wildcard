@@ -102,7 +102,7 @@ final class SignUpUITests: XCTestCase {
                 checkedCard = true
             }
         }
-        XCTAssertTrue(app.buttons["today.kind.trained"].waitForExistence(timeout: Self.wait), "home never took over")
+        XCTAssertTrue(app.buttons["tab.today"].waitForExistence(timeout: Self.wait), "home never took over")
         keepScreenshot(named: "48-signup-home")
     }
 
