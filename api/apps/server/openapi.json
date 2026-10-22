@@ -990,6 +990,45 @@
         ],
         "additionalProperties": false
       },
+      "CheckInTotals": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "trainedDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days with a 练了; several 练了 on one day count once."
+          },
+          "healthyMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "健康餐 check-ins."
+          },
+          "cheatMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "坦白放纵餐 check-ins."
+          },
+          "disclaimers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "今日请假条 check-ins, at most one a day."
+          }
+        },
+        "required": [
+          "version",
+          "trainedDays",
+          "healthyMeals",
+          "cheatMeals",
+          "disclaimers"
+        ],
+        "additionalProperties": false
+      },
       "PhotoUpload": {
         "type": "object",
         "properties": {
@@ -2967,6 +3006,50 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/check-in-totals": {
+      "get": {
+        "operationId": "getMyCheckInTotals",
+        "summary": "Everything the signed-in member ever checked in, counted by kind",
+        "description": "All of their check-ins, wherever they went; 我 shows them. Counts only go up.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInTotals"
                 }
               }
             }

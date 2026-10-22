@@ -27,6 +27,7 @@ export {
 export { PhotoPath, PhotoRef, Photos, isOwnPhoto } from './domain/photos.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
 export { DayRange } from './domain/day-range.js';
+export type { CheckInTotals } from './domain/totals.js';
 export { ReactionKind, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { ReplyKind, type Reply } from './domain/reply.js';
 export {
