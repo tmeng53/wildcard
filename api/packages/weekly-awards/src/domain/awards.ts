@@ -141,8 +141,8 @@ export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
 /**
  * The awards a reply comes to for these members (those who checked in, in the prompt's order),
- * or `undefined` when it names a member missing, repeated or unknown. The words themselves are
- * the model's: what they may say is set in the prompt.
+ * or `undefined` when it names a member missing, repeated or unknown, or leaves a title or line
+ * blank. The words themselves are the model's: what they may say is set in the prompt.
  */
 export function titlesOf(
   reply: ModelReply,
@@ -154,14 +154,13 @@ export function titlesOf(
   for (const award of reply.awards) {
     const member = byKey.get(award.member.trim());
     if (member === undefined || result.has(member)) return undefined;
-    result.set(
-      member,
-      award.titles.map(({ title, speech, move }) => ({
-        title: title.trim(),
-        speech: speech.trim(),
-        move,
-      })),
-    );
+    const titles = award.titles.map(({ title, speech, move }) => ({
+      title: title.trim(),
+      speech: speech.trim(),
+      move,
+    }));
+    if (titles.some(({ title, speech }) => title === '' || speech === '')) return undefined;
+    result.set(member, titles);
   }
   return result;
 }

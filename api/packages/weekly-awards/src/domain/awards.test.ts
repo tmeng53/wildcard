@@ -71,6 +71,15 @@ describe('titlesOf', () => {
     ).toBeUndefined();
   });
 
+  it('refuses a title or line that is blank once trimmed', () => {
+    const blank = (title: string, speech: string) => ({
+      ...good,
+      awards: [{ member: 'A', titles: [{ title, speech, move: 'pump' as const }] }],
+    });
+    expect(titlesOf(blank(' ', '周三下着雨还去跑了。'), [ana])).toBeUndefined();
+    expect(titlesOf(blank('雨中狠人', '  '), [ana])).toBeUndefined();
+  });
+
   it('leaves the words to the model: the prompt says what they may say', () => {
     const title = { title: '体重稳了', speech: '这周吃了三碗饭还去跑了。', move: 'pump' as const };
     expect(
