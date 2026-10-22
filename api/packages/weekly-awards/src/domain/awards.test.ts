@@ -124,6 +124,30 @@ describe('titlesOf', () => {
       ).toBeUndefined();
     }
   });
+
+  it('refuses how much someone ate, but not eating itself', () => {
+    const speechOf = (speech: string) =>
+      titlesOf(
+        { ...good, awards: [{ member: 'A', titles: [{ title: '狠人', speech, move: 'pump' }] }] },
+        [ana],
+      );
+    for (const speech of [
+      '周五一口气吃了三碗饭。',
+      '周六炫了一整个披萨。',
+      '干了两盘饺子。',
+      '饭量惊人。',
+      '不知道吃了多少。',
+    ]) {
+      expect(speechOf(speech)).toBeUndefined();
+    }
+    for (const speech of ['健康餐打了三次卡。', '周三吃了顿好的。', '练了三组深蹲。']) {
+      expect(
+        speechOf(speech)
+          ?.get(ana)
+          ?.map((each) => each.speech),
+      ).toStrictEqual([speech]);
+    }
+  });
 });
 
 const checkIn = (overrides: Partial<WeekCheckIn>): WeekCheckIn => ({

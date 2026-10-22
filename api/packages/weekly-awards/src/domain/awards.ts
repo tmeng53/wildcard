@@ -145,8 +145,15 @@ export interface Failures {
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
 /**
- * True when a title or line may be shown: one line, no emoji, nothing about bodies, ranks or
- * self-harm.
+ * How much someone ate, which the awards never say: 「吃了三碗」, 「炫了一整个」, 「饭量」. Eating
+ * itself is fine (「健康餐打卡王」); an amount is not.
+ */
+const EATING_AMOUNT =
+  /(?:[吃炫干啃嗦][了掉下光完]*[一二两三四五六七八九十百几半整\d]+[整大小]*[碗盘份个块斤杯顿串片盒袋桶锅碟笼屉])|饭量|食量|吃了多少|吃了好多|暴食/u;
+
+/**
+ * True when a title or line may be shown: one line, no emoji, nothing about bodies, eating
+ * amounts, ranks or self-harm.
  */
 function isShowable(text: string, max: number): boolean {
   const length = graphemeCount(text);
@@ -157,6 +164,7 @@ function isShowable(text: string, max: number): boolean {
     !/\p{Extended_Pictographic}/u.test(text) &&
     !mentionsBodyMetrics(text) &&
     !mentionsSelfHarm(text) &&
+    !EATING_AMOUNT.test(text) &&
     !RANKING_WORDS.some((word) => text.includes(word))
   );
 }

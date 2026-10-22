@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 import {
   CheckInId,
@@ -11,7 +11,6 @@ import {
   createWeeklyPlans,
   type CheckInRecord,
 } from '@wildcard/check-ins';
-import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
   MemberId as MembersMember,
   createMembers,
@@ -37,7 +36,6 @@ import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
 import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { giveWeeklyAwards } from './weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -63,6 +61,16 @@ const checkIns = createCheckIns({
   photos,
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
+});
+
+const JOBS_TOKEN = randomBytes(32).toString('hex');
+const RunBody = z.strictObject({
+  version: z.literal(1),
+  weeks: z.array(z.string()),
+  squads: z.number(),
+  given: z.number(),
+  failed: z.number(),
+  told: z.number(),
 });
 
 // The week of Monday 2026-10-19; its awards are on Sunday 10-25 at 8pm in New York.
@@ -106,16 +114,6 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
   });
   const awards = createWeeklyAwards({ model, store: createPostgresAwardsStore(db) });
   const clock = () => now;
-  const deps = {
-    checkIns,
-    members,
-    squads,
-    awards,
-    push,
-    admins: createAdmins({ store: createPostgresAdminStore(db), clock }),
-    clock,
-    log: createLog(() => undefined),
-  };
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -138,7 +136,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
     log: createLog(() => undefined),
-    jobs: noJobs,
+    jobs: { ...noJobs, token: JOBS_TOKEN },
     admin: adminOn(),
   });
   const read = async ({
@@ -166,7 +164,16 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     return response.status;
   };
   return {
-    run: () => giveWeeklyAwards(deps),
+    // As the scheduler starts it, every hour.
+    run: async () => {
+      const response = await app.request('/jobs/weekly-awards', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${JOBS_TOKEN}` },
+      });
+      expect(response.status).toBe(200);
+      return RunBody.parse(await response.json());
+    },
+    app,
     read,
     nudge,
     prompts,
@@ -272,6 +279,19 @@ const Story = z.object({
 });
 
 describe('weekly awards', () => {
+  it('runs only for the scheduler', async () => {
+    const { app } = setup();
+    const start = (authorization?: string) =>
+      app.request('/jobs/weekly-awards', {
+        method: 'POST',
+        headers: authorization === undefined ? {} : { authorization },
+      });
+    const wrong = await start(`Bearer ${randomBytes(32).toString('hex')}`);
+    expect(wrong.status).toBe(401);
+    expect(await wrong.json()).toMatchObject({ reason: 'JOB_TOKEN_INVALID' });
+    expect((await start()).status).toBe(401);
+  });
+
   it('awards members who checked in before Sunday 8pm Eastern, and tells each once', async () => {
     const { run, read, sent, prompts } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];

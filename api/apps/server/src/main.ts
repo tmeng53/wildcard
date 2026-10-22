@@ -25,6 +25,7 @@ import {
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
+  AwardsModelMissingError,
   AwardsWriterUnavailableError,
   createPostgresAwardsStore,
   createWeeklyAwards,
@@ -83,9 +84,7 @@ const awardsModel: AwardsModel =
     ? {
         answer: () =>
           Promise.reject(
-            new AwardsWriterUnavailableError({
-              cause: new Error('No API key is set for AWARDS_LLM_PROVIDER'),
-            }),
+            new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
           ),
       }
     : awardsLlm.provider === 'openai'
@@ -108,7 +107,8 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
-if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
+if (config.jobsToken === undefined)
+  log.info('no JOBS_TOKEN: the daily progress push and weekly awards are off');
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,

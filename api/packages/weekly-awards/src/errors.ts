@@ -16,6 +16,20 @@ export class AwardsWriterUnavailableError extends AppError {
 }
 
 /**
+ * The cause of every failed try on a server with no key for the awards model: kept by name as
+ * the week's last error, so the admins' nudge says the key is missing rather than just `Error`.
+ */
+export class AwardsModelMissingError extends AppError {
+  override readonly name = 'AwardsModelMissingError';
+  readonly reason = 'AWARDS_MODEL_MISSING';
+  readonly status = 'UNAVAILABLE';
+
+  constructor() {
+    super('No API key is set for AWARDS_LLM_PROVIDER.');
+  }
+}
+
+/**
  * Thrown when a week's story is asked for before its awards (Sunday 8pm Eastern): there is
  * nothing to show yet, so the feed shows no tile for it.
  */
