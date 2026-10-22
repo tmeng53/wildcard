@@ -66,7 +66,7 @@ export async function writeDisclaimerDrafts(
       prompt: promptFor({ reason: input.reason, style: input.style, meme }),
       reply: ModelReply,
     });
-    const outcome = outcomeOf(reply, input.reason);
+    const outcome = outcomeOf(reply);
     if (outcome === undefined) {
       throw new DisclaimerWriterUnavailableError({
         cause: new Error('The drafts failed the checks'),
