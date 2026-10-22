@@ -58,7 +58,7 @@ npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supa
 
 All must pass before you drive anything:
 
-**The iOS app:**
+**The iOS app** (CI skips the `ios` job on a PR that changes nothing under `ios/`, its script or the workflow; then there is no app to check, so skip this part and say so in the verdict):
 
 - The `ios` job ran on exactly the head commit you pinned and concluded `success`; its log has the line `ios-test: ok` (printed before the screenshot previews).
 - The screenshots artifact has one PNG per screenshot the UI tests name (`XCTAttachment` names in `ios/WildcardUITests/`), each named after it, e.g. `01-scene-pool.png`.

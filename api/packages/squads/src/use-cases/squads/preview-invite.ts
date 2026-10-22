@@ -9,18 +9,24 @@ import {
 import { InviteCodeUnknownError } from '../../errors.js';
 import type { SquadStore } from '../../ports.js';
 
-/**
- * What anyone holding an invite may see, signed in or not: no ids, no members' details, nothing
- * that says who is in it.
- */
-export interface PublicInvitePreview {
+/** The squad an invite belongs to, before joining. */
+interface InviteSummary {
   readonly name: SquadName;
   readonly memberCount: number;
   readonly full: boolean;
 }
 
+/**
+ * What the web invite page shows anyone holding an invite: the squad, and its members, the
+ * earliest to join first, for the page to show their characters. The ids are for looking those
+ * up; the page is never sent anything that says who is in it.
+ */
+export interface PublicInvitePreview extends InviteSummary {
+  readonly members: readonly MemberId[];
+}
+
 /** What a signed-in member holding an invite sees before joining. */
-export interface InvitePreview extends PublicInvitePreview {
+export interface InvitePreview extends InviteSummary {
   /** True when the viewer is in the squad already. */
   readonly joined: boolean;
 }
@@ -32,7 +38,7 @@ export async function previewInvite(
 ): Promise<InvitePreview> {
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
-  return { ...publicPart(squad), joined: isMemberOf(squad, viewer) };
+  return { ...summary(squad), joined: isMemberOf(squad, viewer) };
 }
 
 /** The squad an invite code belongs to, as the web invite page shows it to anyone. */
@@ -42,10 +48,10 @@ export async function previewPublicInvite(
 ): Promise<PublicInvitePreview> {
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
-  return publicPart(squad);
+  return { ...summary(squad), members: squad.members.map(({ member }) => member) };
 }
 
-function publicPart(squad: Squad): PublicInvitePreview {
+function summary(squad: Squad): InviteSummary {
   return {
     name: squad.name,
     memberCount: squad.members.length,
