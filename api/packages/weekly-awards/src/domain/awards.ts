@@ -144,12 +144,23 @@ export interface Failures {
 /** The key a member goes by in the prompt: A, B, C…, so no id or name reaches the model. */
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
+/** A count in a line: 三, 两, 半, 几, 12, １２. */
+const COUNT = '[一二两三四五六七八九十百几半整\\d０-９]+';
+
 /**
- * How much someone ate, which the awards never say: 「吃了三碗」, 「炫了一整个」, 「饭量」. Eating
- * itself is fine (「健康餐打卡王」); an amount is not.
+ * How much someone ate, which the awards never say: 「三碗饭」, 「吃了一整只烤鸭」, 「大胃王」.
+ * Eating itself is fine (「健康餐打卡王」, 「吃了一顿好的」), and so are reps, hours and sets
+ * (「干了十个引体向上」, 「三盘网球」): only bowls count on their own, other units only after
+ * 吃 or 炫, and 个, 块, 片, 顿 and 杯 never.
  */
-const EATING_AMOUNT =
-  /(?:[吃炫干啃嗦][了掉下光完]*[一二两三四五六七八九十百几半整\d]+[整大小]*[碗盘份个块斤杯顿串片盒袋桶锅碟笼屉])|饭量|食量|吃了多少|吃了好多|暴食/u;
+const EATING_AMOUNT = new RegExp(
+  [
+    `${COUNT}[整大]*碗`,
+    `[吃炫][了掉下光完]*(?:满满|整整|足足)?${COUNT}[整大小]*[盘份斤桶锅碟笼屉盒袋串只]`,
+    '饭量|食量|胃口|大胃|干饭王|饭桶|吃撑|撑死|吃了多少|吃了好多|吃了好几|暴食|[两双三多]人份',
+  ].join('|'),
+  'u',
+);
 
 /**
  * True when a title or line may be shown: one line, no emoji, nothing about bodies, eating

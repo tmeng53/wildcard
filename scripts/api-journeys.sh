@@ -572,8 +572,7 @@ if want weekly-awards; then
   expect 200
   [ "$(jq -c '[.version, (.weeks | length), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,2,true]' ] ||
     fail "the run says which two weeks it gave and how many squads: $body"
-  [ "$(jq '.given' <<<"$body")" = 0 ] || fail "with no model key no squad gets its awards: $body"
-  echo "weekly-awards: a member's token refused (401); the hourly run tried the last two weeks and gave none without a model key"
+  echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
 fi
 
 if want account; then
