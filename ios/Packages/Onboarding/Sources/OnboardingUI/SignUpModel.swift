@@ -75,7 +75,7 @@ public final class SignUpModel {
     }
 
     /// Weeks from Monday, numbered as ISO 8601 does, in the phone's time zone.
-    public static var weekCalendar: Calendar {
+    public nonisolated static var weekCalendar: Calendar {
         var calendar = Calendar(identifier: .iso8601)
         calendar.timeZone = .current
         calendar.locale = .current
