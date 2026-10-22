@@ -1,4 +1,5 @@
 #if os(iOS)
+import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -11,7 +12,7 @@ struct ComposeView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: TodayModel
-    let meaning: Meaning
+    let kind: CheckInKind
     @State private var caption = ""
     @FocusState private var isWriting: Bool
     @State private var activity: Activity?
@@ -24,31 +25,31 @@ struct ComposeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.l) {
                         MediaBlock(model: model)
-                        if meaning == .trained {
+                        if kind == .trained {
                             SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
                         }
                         captionField.id(Self.captionID)
                         if model.sendFailed {
                             Text("没发出去，再点一次发布", bundle: .module)
-                                .typeStyle(TypeRamp.caption)
-                                .foregroundStyle(Color(role: .textSecondary, in: theme))
+                                .typeStyle(TypeRamp.footnote)
+                                .foregroundStyle(Color(role: .fgMuted, in: theme))
                                 .accessibilityIdentifier("compose.failed")
                         }
                     }
-                    .padding(.horizontal, Space.gutter)
+                    .padding(.horizontal, Space.pageMargin)
                     .padding(.vertical, Space.m)
                 }
                 .scrollDismissesKeyboard(.interactively)
                 // Keep the line being written above the keyboard.
                 .onChange(of: isWriting) { _, writing in
                     guard writing else { return }
-                    withAnimation(.wildcard(Motion.smooth, reduceMotion: reduceMotion)) {
+                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                         proxy.scrollTo(Self.captionID, anchor: .bottom)
                     }
                 }
             }
         }
-        .background(Color(role: .canvas, in: theme).ignoresSafeArea())
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
             SportPicker(selected: currentActivity) { picked in
                 activity = picked
@@ -72,7 +73,7 @@ struct ComposeView: View {
             } label: {
                 Text("取消", bundle: .module)
                     .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .textPrimary, in: theme))
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .frame(minHeight: Sizing.minimumTapTarget)
             }
             .accessibilityIdentifier("compose.cancel")
@@ -85,7 +86,7 @@ struct ComposeView: View {
                 } else {
                     Text("发布", bundle: .module)
                         .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .signatureText, in: theme))
+                        .foregroundStyle(Color(role: .fgAccent, in: theme))
                 }
             }
             .frame(minHeight: Sizing.minimumTapTarget)
@@ -93,12 +94,12 @@ struct ComposeView: View {
             .accessibilityIdentifier("compose.post")
         }
         .overlay {
-            meaning.fullName
+            kind.fullName
                 .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .textPrimary, in: theme))
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .accessibilityAddTraits(.isHeader)
         }
-        .padding(.horizontal, Space.gutter)
+        .padding(.horizontal, Space.pageMargin)
         .padding(.vertical, Space.xxs)
     }
 
@@ -118,15 +119,15 @@ struct ComposeView: View {
             // The count shows only near the limit, so the field stays quiet.
             if caption.count >= Caption.maxLength - 10 {
                 Text(verbatim: "\(caption.count)/\(Caption.maxLength)")
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .textTertiary, in: theme))
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
                     .monospacedDigit()
             }
         }
     }
 
     private var placeholder: Text {
-        switch meaning {
+        switch kind {
         case .trained: Text("炫耀一下成果…", bundle: .module)
         case .healthyMeal: Text("这顿很自律…", bundle: .module)
         case .cheatMeal, .disclaimer: Text("坦白从宽…", bundle: .module)
@@ -135,7 +136,7 @@ struct ComposeView: View {
 
     private var draft: CheckInDraft {
         let body = PostBody(photos: model.photos, caption: caption)
-        return switch meaning {
+        return switch kind {
         case .trained: .trained(currentActivity, body)
         case .healthyMeal: .healthyMeal(body)
         case .cheatMeal, .disclaimer: .cheatMeal(body)
@@ -155,7 +156,7 @@ private struct MediaBlock: View {
                 PhotoImage(photo: cover)
                     // Wider than tall, so the sport row and the caption fit below it on one screen.
                     .aspectRatio(4 / 3, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.m, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                     .accessibilityElement()
                     .accessibilityLabel(Text("封面", bundle: .module))
                     .accessibilityIdentifier("compose.cover")
@@ -187,26 +188,26 @@ private struct CoverChoice: View {
         Button(action: action) {
             PhotoImage(photo: photo)
                 .frame(width: side, height: side)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
                 .overlay {
                     if isCover {
-                        RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
-                            .strokeBorder(Color(role: .signature, in: theme), lineWidth: Sizing.selectionStroke * 1.5)
+                        RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+                            .strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
                     }
                 }
                 .overlay(alignment: .bottom) {
                     if isCover {
                         Text("封面", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .onSignature, in: theme))
+                            .typeStyle(TypeRamp.label)
+                            .foregroundStyle(Color(role: .fgOnAccent, in: theme))
                             .padding(.horizontal, Space.xs)
-                            .background(Color(role: .signature, in: theme), in: Capsule())
+                            .background(Color(role: .bgAccent, in: theme), in: Capsule())
                             .padding(.bottom, Space.xxs)
                     }
                 }
         }
         .buttonStyle(PressableButtonStyle())
-        .sensoryFeedback(.selection, trigger: isCover)
+        .haptic(.pick, trigger: isCover)
         .accessibilityLabel(Text("第 \(number) 张照片", bundle: .module))
         .accessibilityHint(isCover ? Text(verbatim: "") : Text("设为封面", bundle: .module))
         .accessibilityAddTraits(isCover ? .isSelected : [])
@@ -224,14 +225,14 @@ private struct SportRow: View {
         VStack(alignment: .leading, spacing: Space.xxs) {
             SectionLabel(Text("运动", bundle: .module))
             ScrollView(.horizontal) {
-                HStack(spacing: Sizing.pillGap) {
+                HStack(spacing: Space.xs) {
                     ForEach(choices, id: \.key) { activity in
-                        ChoicePill(activity.name, systemImage: activity.symbol, isSelected: activity == selected) {
+                        PickPill(activity.name, systemImage: activity.symbol, isSelected: activity == selected) {
                             pick(activity)
                         }
                         .accessibilityIdentifier("compose.sport.\(activity.key)")
                     }
-                    ChoicePill(Text("更多", bundle: .module), systemImage: "ellipsis", isSelected: false) {
+                    PickPill(Text("更多", bundle: .module), systemImage: "ellipsis", isSelected: false) {
                         isPickingSport = true
                     }
                     .accessibilityIdentifier("compose.sport.more")

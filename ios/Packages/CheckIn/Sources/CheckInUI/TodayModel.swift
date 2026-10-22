@@ -8,6 +8,17 @@ import Foundation
 import Observation
 import SwiftUI
 
+extension CheckInDraft {
+    var kind: CheckInKind {
+        switch self {
+        case .trained: .trained
+        case .healthyMeal: .healthyMeal
+        case .cheatMeal: .cheatMeal
+        case .disclaimer: .disclaimer
+        }
+    }
+}
+
 /// Where photos for a 练了 or a meal come from.
 public enum PhotoSource: Sendable {
     /// The system photo picker.
@@ -22,19 +33,18 @@ public enum PhotoSource: Sendable {
 public final class TodayModel {
     enum Step: Equatable {
         case scene
-        case pickingPhotos(Meaning)
-        case composing(Meaning)
+        case pickingPhotos(CheckInKind)
+        case composing(CheckInKind)
         case disclaimer
     }
 
     /// What lands on the scene after a post: the line in the bubble and the pinned cover.
     struct Payoff: Equatable {
-        let meaning: Meaning
+        let kind: CheckInKind
         let line: String?
         let cover: PreparedPhoto?
     }
 
-    private(set) var board: TodayBoard?
     var isBurstOpen = false
     private(set) var step = Step.scene
     /// The photos picked for the open compose step, the cover first.
@@ -48,17 +58,17 @@ public final class TodayModel {
 
     let photoSource: PhotoSource
     let player: CharacterPlayer?
-    private let service: any CheckInService
+    private let store: TodayStore
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
 
     /// - Parameter posted: called each time a check-in lands, after the payoff starts; the app
     ///   asks for notifications after the first.
     public init(
-        service: any CheckInService, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
+        store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         posted: @escaping @MainActor () -> Void
     ) {
-        self.service = service
+        self.store = store
         self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
@@ -73,43 +83,57 @@ public final class TodayModel {
     /// The lifter's species, whose moves play on top of the persona's.
     private static let species = "person"
 
-    var unavailable: Set<Meaning> {
-        (board?.myStatus.allowsDisclaimer ?? true) ? [] : [.disclaimer]
+    /// Each squad picks its scene once squad settings land; 跑道 until then.
+    private static let scene = SceneTheme.track
+
+    /// The card's numbers, from the store's home with the member's own posts counted.
+    var board: TodayBoard? {
+        guard let home = store.home, let day = store.day else { return nil }
+        return TodayBoard(
+            squadName: home.squad.name, scene: Self.scene, weekNumber: day.weekOfYear,
+            progress: SquadWeekProgress(
+                done: home.today.squadWeek.trainedDays, goal: home.today.squadWeek.plannedDays),
+            trainedToday: home.today.today.trained, myStatus: store.myStatus,
+            lastActivity: store.suggestedActivity ?? .sport(.run))
+    }
+
+    var unavailable: Set<CheckInKind> {
+        store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
     /// writes on the scene itself.
     var isSceneDimmed: Bool { isBurstOpen }
 
-    /// Reads the board, on opening 今天 and again when a tapped notification brings the member
-    /// back to it.
+    /// Loads the home, on opening 今天, on coming back to the app, and when a tapped
+    /// notification brings the member back to it.
     public func load() async {
-        board = try? await service.board()
+        await store.load()
     }
 
-    func pick(_ meaning: Meaning) {
+    func pick(_ kind: CheckInKind) {
         sendFailed = false
         payoff = nil
-        switch meaning {
+        switch kind {
         case .disclaimer:
             step = .disclaimer
         case .trained, .healthyMeal, .cheatMeal:
             switch photoSource {
             case .library:
                 photos = []
-                step = .pickingPhotos(meaning)
+                step = .pickingPhotos(kind)
             case .provided(let given):
                 photos = given
-                step = .composing(meaning)
+                step = .composing(kind)
             }
         }
     }
 
     /// The photo step finished: with photos, or with none (不加照片).
     func photosPicked(_ picked: [PreparedPhoto]) {
-        guard case .pickingPhotos(let meaning) = step else { return }
+        guard case .pickingPhotos(let kind) = step else { return }
         photos = Array(picked.prefix(Photos.maxCount))
-        step = .composing(meaning)
+        step = .composing(kind)
     }
 
     /// Moves `photo` to the front, as the cover.
@@ -134,11 +158,11 @@ public final class TodayModel {
         sendFailed = false
         defer { isSending = false }
         do {
-            let updated = try await service.post(draft)
+            // Posted or waiting to go out, it counts on the scene now.
+            try await store.post(draft)
             step = .scene
             photos = []
             land(draft)
-            board = updated
             posted()
         } catch {
             sendFailed = true
@@ -158,9 +182,9 @@ public final class TodayModel {
             cover = nil
         }
         posts += 1
-        payoff = Payoff(meaning: draft.meaning, line: line, cover: cover)
+        payoff = Payoff(kind: draft.kind, line: line, cover: cover)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        if draft.meaning != .disclaimer,
+        if draft.kind != .disclaimer,
             let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)
         {
             try? player?.play(cheer)

@@ -58,7 +58,7 @@ npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supa
 
 All must pass before you drive anything:
 
-**The iOS app:**
+**The iOS app** (CI skips the `ios` job on a PR that changes nothing under `ios/`, its script or the workflow; then there is no app to check, so skip this part and say so in the verdict):
 
 - The `ios` job ran on exactly the head commit you pinned and concluded `success`; its log has the line `ios-test: ok` (printed before the screenshot previews).
 - The screenshots artifact has one PNG per screenshot the UI tests name (`XCTAttachment` names in `ios/WildcardUITests/`), each named after it, e.g. `01-scene-pool.png`.
@@ -88,6 +88,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | [A squad's today through the API](features/squad-today-api.md): each member's today and the counts | **Ready** (API only; CI runs it) |
 | [Reactions through the API](features/reactions-api.md): react, change, take off, refusals | **Ready** (API only; CI runs it) |
 | [Push devices through the API](features/devices-api.md): register, move to another member, remove | **Ready** (API only, no APNs key; CI runs it) |
+| [Daily progress push through the API](features/daily-push-api.md): the push switch, the scheduler's job, once a day | **Ready** (API only, no APNs key; CI runs it) |
 | [Profile and account deletion through the API](features/account-api.md): save a profile, delete everything | **Ready** (API only, no Apple key; CI runs it) |
 | [Admin MCP server](features/admin-mcp-api.md): sign an admin in with OAuth, manage memes, read the log | **Ready** (API only, consent approved through Supabase's API; CI runs it) |
 | Daily check-in in the app: pick 练了 / 健康餐 / 坦白放纵餐 / 今日请假条 and see it on the squad track | Screen on main against an in-memory squad; no feature file yet |

@@ -49,6 +49,15 @@ export interface ReactionStore {
   list(checkIn: CheckInId): Promise<Reaction[]>;
   /** The reactions on each of these check-ins, oldest first; a check-in without any is left out. */
   listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Reaction[]>>;
+  /**
+   * Reactions left in `[since, until)` on any of the member's check-ins, oldest first, each with
+   * the squads that check-in went to.
+   */
+  receivedBy(query: {
+    readonly member: MemberId;
+    readonly since: Date;
+    readonly until: Date;
+  }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
 }
 
 /** Where uploaded photo files are kept. */

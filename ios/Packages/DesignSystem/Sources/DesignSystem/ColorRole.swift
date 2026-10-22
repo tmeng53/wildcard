@@ -1,5 +1,5 @@
-/// The scene a squad picked. A scene swaps only its signature group (signature, buttons,
-/// selected states, the score and the scene band); neutrals and meaning accents stay fixed.
+/// The scene a squad picked. A scene swaps only its accent group (primary actions, selection,
+/// the scene's washes and floor, check-in kinds and status rings); neutrals stay fixed.
 public enum SceneTheme: String, CaseIterable, Sendable {
     case pool
     case track
@@ -10,69 +10,70 @@ public enum SceneTheme: String, CaseIterable, Sendable {
     public var colors: SceneColors {
         switch self {
         case .pool:
-            SceneColors(
-                signature: Palette.poolSignature, shade: Palette.poolShade, wash: Palette.poolWash,
-                onSignature: Palette.white, signatureText: Palette.poolText, progressFill: Palette.poolSignature)
+            .light(
+                accent: Palette.poolSignature, subtle: Palette.poolWash, text: Palette.poolText,
+                floor: Palette.poolFloor)
         case .track:
-            SceneColors(
-                signature: Palette.trackSignature, shade: Palette.trackShade, wash: Palette.trackWash,
-                onSignature: Palette.white, signatureText: Palette.trackText, progressFill: Palette.trackSignature)
+            .light(
+                accent: Palette.trackSignature, subtle: Palette.trackWash, text: Palette.trackText,
+                floor: Palette.trackFloor)
         case .gym:
-            // Graphite is dark, so text, icons and progress on it are volt.
+            // Graphite is dark, so what sits on it is volt: the primary button's label, the ring,
+            // and the check-in kinds on the gym's dark floor. Volt on a white card is faint, so
+            // with Increase Contrast on the ring turns graphite.
             SceneColors(
-                signature: Palette.graphite, shade: Palette.black, wash: Palette.gymWash,
-                onSignature: Palette.volt, signatureText: Palette.graphite, progressFill: Palette.volt)
+                accent: Palette.graphite, accentSubtle: Palette.gymWash, onAccent: Palette.volt,
+                accentText: Palette.graphite, floor: Palette.graphite, onFloor: Palette.white, ring: Palette.volt,
+                ringIncreasedContrast: Palette.graphite, kindFill: Palette.gymKind, kindFillOnFloor: Palette.gymKind,
+                kindInk: Palette.volt)
         case .tennis:
-            SceneColors(
-                signature: Palette.tennisSignature, shade: Palette.tennisShade, wash: Palette.tennisWash,
-                onSignature: Palette.white, signatureText: Palette.tennisText, progressFill: Palette.tennisSignature)
+            .light(
+                accent: Palette.tennisSignature, subtle: Palette.tennisWash, text: Palette.tennisText,
+                floor: Palette.tennisFloor)
         case .climbing:
-            SceneColors(
-                signature: Palette.climbingSignature, shade: Palette.climbingShade, wash: Palette.climbingWash,
-                onSignature: Palette.white, signatureText: Palette.climbingText,
-                progressFill: Palette.climbingSignature)
+            .light(
+                accent: Palette.climbingSignature, subtle: Palette.climbingWash, text: Palette.climbingText,
+                floor: Palette.climbingFloor)
         }
     }
 }
 
-/// One scene's signature group.
+/// One scene's accent group.
 public struct SceneColors: Sendable, Hashable {
-    /// 打卡 and primary actions (solid fills), selected states, the score and the scene band.
-    public let signature: SRGBColor
-    /// The base edge of raised signature buttons.
-    public let shade: SRGBColor
-    /// The light scene background.
-    public let wash: SRGBColor
-    /// Labels and icons drawn on `signature`.
-    public let onSignature: SRGBColor
-    /// Signature-colored text and the score on `wash` or white.
-    public let signatureText: SRGBColor
-    /// Progress bars and the ring of an avatar who trained.
-    public let progressFill: SRGBColor
-}
+    /// The scene's one accent: primary buttons and selection. One accent per screen.
+    public let accent: SRGBColor
+    /// The light scene wash: tags and the check-in kind buttons on white.
+    public let accentSubtle: SRGBColor
+    /// Labels and icons drawn on `accent`.
+    public let onAccent: SRGBColor
+    /// Accent-colored text and icons on white or `accentSubtle`.
+    public let accentText: SRGBColor
+    /// The ground the squad stands on in the scene.
+    public let floor: SRGBColor
+    /// Text drawn straight on `floor`.
+    public let onFloor: SRGBColor
+    /// A status ring once someone checked in: the scene's brightest color.
+    public let ring: SRGBColor
+    /// The ring on a white card when the person turned on Increase Contrast.
+    public let ringIncreasedContrast: SRGBColor
+    /// A check-in kind button on white.
+    public let kindFill: SRGBColor
+    /// A check-in kind button on the scene's floor.
+    public let kindFillOnFloor: SRGBColor
+    /// The icon on a check-in kind button.
+    public let kindInk: SRGBColor
 
-/// An accent used only as an icon tint, a dot or a tag (wash background with dark text),
-/// never as a large fill or a solid disc.
-public struct AccentFamily: Sendable, Hashable {
-    /// Dots and rings.
-    public let tint: SRGBColor
-    /// Icons on light surfaces and glass: 3:1 or more.
-    public let ink: SRGBColor
-    /// Tag backgrounds.
-    public let wash: SRGBColor
-    /// Tag text on `wash`: 4.5:1 or more.
-    public let text: SRGBColor
-
-    public init(tint: SRGBColor, ink: SRGBColor, wash: SRGBColor, text: SRGBColor) {
-        self.tint = tint
-        self.ink = ink
-        self.wash = wash
-        self.text = text
+    /// A light scene: white on the accent, the accent as the ring, kinds on the wash or white.
+    static func light(accent: SRGBColor, subtle: SRGBColor, text: SRGBColor, floor: SRGBColor) -> SceneColors {
+        SceneColors(
+            accent: accent, accentSubtle: subtle, onAccent: Palette.white, accentText: text, floor: floor,
+            onFloor: Palette.ink, ring: accent, ringIncreasedContrast: accent, kindFill: subtle,
+            kindFillOnFloor: Palette.white, kindInk: text)
     }
 }
 
-/// What a check-in means, each with its accent.
-public enum Meaning: String, CaseIterable, Sendable {
+/// The four check-in kinds. They share the scene's colors and differ by icon and word only.
+public enum CheckInKind: String, CaseIterable, Sendable {
     /// 练了.
     case trained
     /// 健康餐.
@@ -81,93 +82,83 @@ public enum Meaning: String, CaseIterable, Sendable {
     case cheatMeal
     /// 今日请假条.
     case disclaimer
-
-    public func accent(in theme: SceneTheme) -> AccentFamily {
-        accent
-    }
-
-    /// The accent, the same in every scene.
-    public var accent: AccentFamily {
-        switch self {
-        case .trained: Self.family(Palette.cobalt, Palette.cobaltWash, Palette.cobaltText)
-        case .healthyMeal: Self.family(Palette.mint, Palette.mintWash, Palette.mintText)
-        case .cheatMeal: Self.family(Palette.honey, Palette.honeyWash, Palette.honeyText)
-        case .disclaimer: Self.family(Palette.lavender, Palette.lavenderWash, Palette.lavenderText)
-        }
-    }
-
-    private static func family(_ color: SRGBColor, _ wash: SRGBColor, _ text: SRGBColor) -> AccentFamily {
-        AccentFamily(tint: color, ink: color, wash: wash, text: text)
-    }
 }
 
-/// What a color is for. Each role's pairing rules are tested in `DesignSystemTests`.
+/// What a color is for, named like Primer and Polaris: `bg`, `fg` or `border`, then what it is.
+/// Screens use these, never `Palette`. Each role's pairing rules are tested in `DesignSystemTests`.
 public enum ColorRole: String, CaseIterable, Sendable {
-    case canvas
-    case surface
-    case divider
-    case textPrimary
-    case textSecondary
-    /// Large type and decoration only.
-    case textTertiary
+    /// The page: white.
+    case bgCanvas
+    /// Blocks set into the page, unselected tracks, cards on a white page.
+    case bgSubtle
+    /// Dividers, hairline borders and unfinished steps.
+    case borderDefault
+    /// Titles and body text.
+    case fgDefault
+    /// Secondary text and values.
+    case fgMuted
+    /// Placeholders, denominators and chevrons: large type and decoration only.
+    case fgSubtle
 
-    case signature
-    case signatureShade
-    case signatureWash
-    case onSignature
-    case signatureText
-    case progressFill
+    /// The scene's accent: primary buttons and selection, nothing else.
+    case bgAccent
+    /// The scene's wash: tags.
+    case bgAccentSubtle
+    /// Labels and icons on `bgAccent`.
+    case fgOnAccent
+    /// Accent-colored text and icons on white or `bgAccentSubtle`.
+    case fgAccent
+    /// The scene's floor, under the squad.
+    case bgScene
+    /// Text straight on `bgScene`.
+    case fgOnScene
+    /// A status ring once someone checked in, on a white card.
+    case ring
+    /// A check-in kind button on white.
+    case bgKind
+    /// A check-in kind button on the scene's floor.
+    case bgKindOnScene
+    /// The icon on a check-in kind button.
+    case fgKind
 
-    case meaningTrained, meaningTrainedInk, meaningTrainedWash, meaningTrainedText
-    case meaningFresh, meaningFreshInk, meaningFreshWash, meaningFreshText
-    case meaningIndulgence, meaningIndulgenceInk, meaningIndulgenceWash, meaningIndulgenceText
-    case meaningDisclaimer, meaningDisclaimerInk, meaningDisclaimerWash, meaningDisclaimerText
-
-    /// The color this role takes in a scene.
-    public func color(in theme: SceneTheme) -> SRGBColor {
+    /// The color this role takes in a scene, and with Increase Contrast on (only the ring changes).
+    public func color(in theme: SceneTheme, contrast: ColorContrast = .standard) -> SRGBColor {
+        if self == .ring, contrast == .increased { return theme.colors.ringIncreasedContrast }
         switch source {
-        case .fixed(let color): color
-        case .scene(let path): theme.colors[keyPath: path]
-        case .accent(let meaning, let path): meaning.accent(in: theme)[keyPath: path]
+        case .fixed(let color): return color
+        case .scene(let path): return theme.colors[keyPath: path]
         }
     }
 
     private enum Source {
         case fixed(SRGBColor)
         case scene(KeyPath<SceneColors, SRGBColor>)
-        case accent(Meaning, KeyPath<AccentFamily, SRGBColor>)
     }
 
     private var source: Source {
         switch self {
-        case .canvas: .fixed(Palette.white)
-        case .surface: .fixed(Palette.mist)
-        case .divider: .fixed(Palette.line)
-        case .textPrimary: .fixed(Palette.ink)
-        case .textSecondary: .fixed(Palette.inkSecondary)
-        case .textTertiary: .fixed(Palette.inkTertiary)
-        case .signature: .scene(\.signature)
-        case .signatureShade: .scene(\.shade)
-        case .signatureWash: .scene(\.wash)
-        case .onSignature: .scene(\.onSignature)
-        case .signatureText: .scene(\.signatureText)
-        case .progressFill: .scene(\.progressFill)
-        case .meaningTrained: .accent(.trained, \.tint)
-        case .meaningTrainedInk: .accent(.trained, \.ink)
-        case .meaningTrainedWash: .accent(.trained, \.wash)
-        case .meaningTrainedText: .accent(.trained, \.text)
-        case .meaningFresh: .accent(.healthyMeal, \.tint)
-        case .meaningFreshInk: .accent(.healthyMeal, \.ink)
-        case .meaningFreshWash: .accent(.healthyMeal, \.wash)
-        case .meaningFreshText: .accent(.healthyMeal, \.text)
-        case .meaningIndulgence: .accent(.cheatMeal, \.tint)
-        case .meaningIndulgenceInk: .accent(.cheatMeal, \.ink)
-        case .meaningIndulgenceWash: .accent(.cheatMeal, \.wash)
-        case .meaningIndulgenceText: .accent(.cheatMeal, \.text)
-        case .meaningDisclaimer: .accent(.disclaimer, \.tint)
-        case .meaningDisclaimerInk: .accent(.disclaimer, \.ink)
-        case .meaningDisclaimerWash: .accent(.disclaimer, \.wash)
-        case .meaningDisclaimerText: .accent(.disclaimer, \.text)
+        case .bgCanvas: .fixed(Palette.white)
+        case .bgSubtle: .fixed(Palette.mist)
+        case .borderDefault: .fixed(Palette.line)
+        case .fgDefault: .fixed(Palette.ink)
+        case .fgMuted: .fixed(Palette.inkSecondary)
+        case .fgSubtle: .fixed(Palette.inkTertiary)
+        case .bgAccent: .scene(\.accent)
+        case .bgAccentSubtle: .scene(\.accentSubtle)
+        case .fgOnAccent: .scene(\.onAccent)
+        case .fgAccent: .scene(\.accentText)
+        case .bgScene: .scene(\.floor)
+        case .fgOnScene: .scene(\.onFloor)
+        case .ring: .scene(\.ring)
+        case .bgKind: .scene(\.kindFill)
+        case .bgKindOnScene: .scene(\.kindFillOnFloor)
+        case .fgKind: .scene(\.kindInk)
         }
     }
+}
+
+/// Whether the person turned on Increase Contrast (Settings, Accessibility, Display & Text Size).
+public enum ColorContrast: Sendable {
+    case standard
+    case increased
 }

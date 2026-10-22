@@ -1,5 +1,6 @@
 #if os(iOS)
 import AvatarUI
+import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -45,8 +46,8 @@ struct DisclaimerComposer: View {
             }
             if model.sendFailed {
                 Text("没发出去，再点一次打卡", bundle: .module)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .textSecondary, in: theme))
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .padding(.bottom, Space.xs)
             }
             PostButton(model: model, disclaimer: entry.disclaimer)
@@ -54,12 +55,12 @@ struct DisclaimerComposer: View {
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
         .padding(.bottom, Space.xs)
-        .background(Color(role: .surface, in: theme).ignoresSafeArea())
-        .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: entry)
-        .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: drafts)
-        .animation(.wildcard(Motion.snappy, reduceMotion: reduceMotion), value: isEditing)
-        .sensoryFeedback(.selection, trigger: style)
-        .sensoryFeedback(.impact(weight: .light), trigger: landed)
+        .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: drafts)
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isEditing)
+        .haptic(.pick, trigger: style)
+        .haptic(.appear, trigger: landed)
         .task {
             drafts = DiceDisclaimerWriter.rollDefault(3)
             // Writing the reason comes first: the page opens with the keyboard up.
@@ -70,13 +71,13 @@ struct DisclaimerComposer: View {
     /// Today's date and the page's name, small; × on the right.
     private var header: some View {
         HStack(spacing: Space.s) {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text(Date.now, format: .dateTime.month(.defaultDigits).day().weekday(.abbreviated))
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .textPrimary, in: theme))
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Text("今日请假条", bundle: .module)
-                    .typeStyle(TypeRamp.sectionLabel)
-                    .foregroundStyle(Color(role: .textSecondary, in: theme))
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .accessibilityAddTraits(.isHeader)
             }
             Spacer()
@@ -84,8 +85,8 @@ struct DisclaimerComposer: View {
                 model.cancel()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: Sizing.pillGlyph, weight: .medium))
-                    .foregroundStyle(Color(role: .textPrimary, in: theme))
+                    .font(.system(size: Sizing.smallIcon, weight: .medium))
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget, alignment: .trailing)
             }
             .accessibilityLabel(Text("关闭", bundle: .module))
@@ -97,13 +98,13 @@ struct DisclaimerComposer: View {
     private var hero: some View {
         VStack(alignment: .leading, spacing: Space.s) {
             Capsule()
-                .fill(Color(role: .signature, in: theme))
+                .fill(Color(role: .bgAccent, in: theme))
                 .frame(width: Self.accentBar.width, height: Self.accentBar.height)
             TextField(text: $text, axis: .vertical) {
                 Text("为什么没练？", bundle: .module)
             }
-            .typeStyle(TypeRamp.hero)
-            .foregroundStyle(Color(role: .textPrimary, in: theme))
+            .typeStyle(TypeRamp.largeTitle)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1...4)
             .focused($isEditing)
             .opacity(isWriting ? 0.4 : 1)
@@ -123,8 +124,8 @@ struct DisclaimerComposer: View {
                 // The count while typing; otherwise 编辑, which starts typing.
                 if isEditing {
                     Text(verbatim: "\(entry.text.count)/\(Disclaimer.maxLength)")
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .textTertiary, in: theme))
+                        .typeStyle(TypeRamp.label)
+                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
                         .monospacedDigit()
                         .accessibilityIdentifier("disclaimer.count")
                 } else {
@@ -132,8 +133,8 @@ struct DisclaimerComposer: View {
                         isEditing = true
                     } label: {
                         Text("编辑", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .textSecondary, in: theme))
+                            .typeStyle(TypeRamp.label)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .frame(minHeight: Sizing.minimumTapTarget)
                     }
                     .accessibilityIdentifier("disclaimer.edit")
@@ -144,8 +145,8 @@ struct DisclaimerComposer: View {
                         text = entry.text
                     } label: {
                         Text("用回我写的", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .textSecondary, in: theme))
+                            .typeStyle(TypeRamp.label)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .underline()
                             .frame(minHeight: Sizing.minimumTapTarget)
                     }
@@ -185,8 +186,8 @@ struct DisclaimerComposer: View {
                 Text("灵感：\(entry.mine)", bundle: .module)
             }
         }
-        .typeStyle(TypeRamp.caption)
-        .foregroundStyle(Color(role: .textSecondary, in: theme))
+        .typeStyle(TypeRamp.footnote)
+        .foregroundStyle(Color(role: .fgMuted, in: theme))
         .lineLimit(1)
         .accessibilityIdentifier("disclaimer.source")
     }
@@ -200,13 +201,13 @@ struct DisclaimerComposer: View {
                     isEditing = false
                 } label: {
                     option.label
-                        .typeStyle(TypeRamp.tileLabel)
-                        .foregroundStyle(Color(role: option == style ? .textPrimary : .textSecondary, in: theme))
+                        .typeStyle(TypeRamp.callout)
+                        .foregroundStyle(Color(role: option == style ? .fgDefault : .fgMuted, in: theme))
                         .frame(minHeight: Sizing.minimumTapTarget)
                         .overlay(alignment: .bottom) {
                             if option == style {
                                 Rectangle()
-                                    .fill(Color(role: .signature, in: theme))
+                                    .fill(Color(role: .bgAccent, in: theme))
                                     .frame(height: Self.tabUnderline)
                             }
                         }
@@ -218,7 +219,7 @@ struct DisclaimerComposer: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color(role: .divider, in: theme)).frame(height: 1)
+            Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: 1)
         }
     }
 
@@ -289,11 +290,11 @@ private struct DraftRow: View {
         Button(action: action) {
             HStack(spacing: Space.s) {
                 Circle()
-                    .fill(isPicked ? Color(role: .signature, in: theme) : .clear)
+                    .fill(isPicked ? Color(role: .bgAccent, in: theme) : .clear)
                     .frame(width: Self.dot, height: Self.dot)
                 Text(verbatim: line)
                     .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: isPicked ? .textPrimary : .textSecondary, in: theme))
+                    .foregroundStyle(Color(role: isPicked ? .fgDefault : .fgMuted, in: theme))
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -302,7 +303,7 @@ private struct DraftRow: View {
             .frame(minHeight: Sizing.minimumTapTarget)
             .contentShape(Rectangle())
             .overlay(alignment: .bottom) {
-                Rectangle().fill(Color(role: .divider, in: theme)).frame(height: 1)
+                Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: 1)
             }
         }
         .buttonStyle(.plain)
@@ -329,8 +330,8 @@ private struct WriteButton: View {
             } icon: {
                 Image(systemName: isAgain ? "arrow.clockwise" : "pencil.line")
             }
-            .typeStyle(TypeRamp.caption)
-            .foregroundStyle(Color(role: .textPrimary, in: theme))
+            .typeStyle(TypeRamp.footnote)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
             .frame(minHeight: Sizing.minimumTapTarget)
         }
         .disabled(isWriting)
@@ -338,7 +339,7 @@ private struct WriteButton: View {
     }
 }
 
-/// The one solid button: ink, so the excuse stays the page's hero.
+/// The page's one primary button.
 private struct PostButton: View {
     @Environment(\.sceneTheme) private var theme
     let model: TodayModel
@@ -347,25 +348,20 @@ private struct PostButton: View {
 
     var body: some View {
         Button {
-            guard let disclaimer else { return }
+            guard let disclaimer, !model.isSending else { return }
             Task { await model.post(.disclaimer(disclaimer)) }
         } label: {
             ZStack {
                 Text("发布请假条", bundle: .module)
                     .opacity(model.isSending ? 0 : 1)
-                if model.isSending { ProgressView().tint(Color(Palette.white)) }
+                if model.isSending { ProgressView().tint(Color(role: .fgOnAccent, in: theme)) }
             }
-            .typeStyle(TypeRamp.headline)
-            .foregroundStyle(Color(role: disclaimer == nil ? .textTertiary : .canvas, in: theme))
-            .frame(maxWidth: .infinity, minHeight: Sizing.checkInHeight)
-            .background(
-                Color(role: disclaimer == nil ? .divider : .textPrimary, in: theme),
-                in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(PressableButtonStyle())
-        .disabled(model.isSending || disclaimer == nil)
+        .buttonStyle(PrimaryButtonStyle())
+        // Still enabled while sending, so it stays the accent color under its spinner; the action
+        // ignores taps until the post is done.
+        .disabled(disclaimer == nil)
         .accessibilityIdentifier("disclaimer.post")
     }
 }

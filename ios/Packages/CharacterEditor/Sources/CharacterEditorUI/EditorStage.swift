@@ -5,15 +5,13 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The character standing on the scene's floor, its nickname under its feet. A tap makes it
-/// cheer; on the 性格 tab a swipe across it tries the next persona.
+/// The character standing on its stage's floor, its nickname under its feet. A tap makes it
+/// cheer; on the 性格 tab a swipe across it tries the next persona. The editor puts it in a
+/// `CharacterStage`.
 struct EditorStage: View {
     @Bindable var model: CharacterEditorModel
-    @Environment(\.sceneTheme) private var theme
 
-    private let height: Double = 300
-    private let floorHeight: Double = 64
-    private let floorLine: Double = 2
+    static let height: Double = 300
     private let character = CGSize(width: 200, height: 267)
     /// How far above the stage's bottom the character's box sits, so its feet land on the floor.
     private let feet: Double = 46
@@ -22,12 +20,6 @@ struct EditorStage: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-                Rectangle().fill(Color(role: .canvas, in: theme)).frame(height: floorLine)
-                Rectangle().fill(Color(role: .signature, in: theme).opacity(Tint.floor)).frame(height: floorHeight)
-            }
-            .accessibilityHidden(true)
             Group {
                 if let player = model.player {
                     CharacterView(player: player)
@@ -43,7 +35,8 @@ struct EditorStage: View {
             NicknameField(nickname: $model.nickname)
                 .padding(.bottom, Space.xs)
         }
-        .frame(height: height)
+        .frame(maxWidth: .infinity)
+        .frame(height: Self.height)
     }
 
     private var personaSwipe: some Gesture {
@@ -56,7 +49,7 @@ struct EditorStage: View {
     }
 }
 
-/// The nickname, typed straight onto a glass tag under the character's feet.
+/// The nickname, typed straight onto a white tag under the character's feet.
 private struct NicknameField: View {
     @Binding var nickname: String
     @Environment(\.sceneTheme) private var theme
@@ -70,7 +63,7 @@ private struct NicknameField: View {
             Text("昵称", bundle: .module)
         }
         .typeStyle(TypeRamp.headline)
-        .foregroundStyle(Color(role: .textPrimary, in: theme))
+        .foregroundStyle(Color(role: .fgDefault, in: theme))
         .multilineTextAlignment(.center)
         .submitLabel(.done)
         .autocorrectionDisabled()
@@ -79,11 +72,13 @@ private struct NicknameField: View {
         .overlay(alignment: .trailing) {
             Image(systemName: "pencil")
                 .font(.system(size: pen, weight: .semibold))
-                .foregroundStyle(Color(role: .textSecondary, in: theme))
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .padding(.trailing, Space.m)
                 .accessibilityHidden(true)
         }
-        .glassEffect(.regular, in: Capsule())
+        .background(
+            Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+        )
         .accessibilityIdentifier("editor.nickname")
     }
 }
