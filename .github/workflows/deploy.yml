@@ -100,8 +100,11 @@ jobs:
           fi
           record() {
             status=$?
-            psql "$url" -v ON_ERROR_STOP=1 -v hashes="$(hashes)" <<<"comment on table $history is :'hashes'" ||
+            if ! applied="$(hashes)" ||
+              ! psql "$url" -v ON_ERROR_STOP=1 -v hashes="$applied" <<<"comment on table $history is :'hashes'"; then
+              echo "::error::Couldn't record the migrations the database ran, so the next deploy will refuse. Once a person has checked none was edited, they set the comment on $history to one '<version> <sha256 of its file>' line per migration it ran."
               status=1
+            fi
             exit "$status"
           }
           trap record EXIT
@@ -119,19 +122,28 @@ jobs:
         run: |
           # --update-* keeps what was set by hand in the console (APNS_*, APPLE_*, LLM_PROVIDER...).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
-          # Optional keys: the server runs without them, with that feature off (JOBS_TOKEN: the
-          # scheduled jobs, such as the daily progress push).
-          for key in openai-api-key anthropic-api-key jobs-token; do
+          # Optional keys: the server runs without them, with that feature off. One deleted from
+          # Secret Manager is unmapped, since Cloud Run can't start with a missing secret.
+          absent=""
+          for key in openai-api-key anthropic-api-key; do
+            variable="$(tr 'a-z-' 'A-Z_' <<<"$key")"
             if gcloud secrets describe "$key" >/dev/null 2>&1; then
-              variable="$(tr 'a-z-' 'A-Z_' <<<"$key")"
               secrets="$secrets,$variable=$key:latest"
+            else
+              absent="${absent:+$absent,}$variable"
             fi
           done
+          remove=()
+          if [ -n "$absent" ]; then remove=(--remove-secrets "$absent"); fi
+          # The startup probe keeps traffic on the old revision unless the new one reaches the
+          # database (/health runs `select 1`).
           gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$GCP_REGION" \
             --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
             --allow-unauthenticated \
             --max-instances 3 \
+            --startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=3,timeoutSeconds=3,failureThreshold=10 \
             --update-secrets "$secrets" \
+            "${remove[@]}" \
             --update-env-vars "SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
 
       - name: Check it answers
