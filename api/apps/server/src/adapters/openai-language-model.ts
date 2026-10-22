@@ -19,6 +19,13 @@ export function createOpenAILanguageModel(options: {
   readonly apiKey: string;
   /** Which OpenAI model answers; `OPENAI_MODEL` unless the config names another. */
   readonly model?: string;
+  /**
+   * How long one attempt may take, and how many tokens its answer may use (reasoning
+   * included). A member waiting on drafts gets the defaults; a job writing a squad's awards
+   * gets more of both.
+   */
+  readonly timeoutMs?: number;
+  readonly maxOutputTokens?: number;
   /** Tests only: where requests go, instead of OpenAI. */
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
@@ -32,7 +39,7 @@ export function createOpenAILanguageModel(options: {
     // Nor its organization or project: the key alone says whose balance pays.
     organization: null,
     project: null,
-    timeout: TIMEOUT_MS,
+    timeout: options.timeoutMs ?? TIMEOUT_MS,
     maxRetries: 1,
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
   });
@@ -44,7 +51,7 @@ export function createOpenAILanguageModel(options: {
           model: options.model ?? OPENAI_MODEL,
           instructions,
           input: prompt,
-          max_output_tokens: MAX_OUTPUT_TOKENS,
+          max_output_tokens: options.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
           // Short, playful lines: low effort keeps the wait short.
           reasoning: { effort: 'low' },
           text: { format: zodTextFormat(reply, 'reply') },

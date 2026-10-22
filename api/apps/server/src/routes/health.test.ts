@@ -16,6 +16,7 @@ import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 import { adminOn, noJobs, pushOn } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
@@ -58,6 +59,7 @@ async function getHealth(db: Database) {
     members: createMembers({ store: createPostgresProfileStore(db) }),
     push: pushOn(db),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => lines.push(line)),
     jobs: noJobs,
     admin: adminOn(),
@@ -136,6 +138,7 @@ describe('an unknown route', () => {
       members: createMembers({ store: createPostgresProfileStore(db) }),
       push: pushOn(db),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+      weeklyAwards: unusedWeeklyAwards,
       log: createLog(() => undefined),
       jobs: noJobs,
       admin: adminOn(),

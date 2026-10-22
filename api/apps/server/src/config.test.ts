@@ -36,6 +36,7 @@ describe('readConfig', () => {
       adminPasswordSignIn: false,
       proxyHops: 1,
       languageModel: undefined,
+      awardsModel: undefined,
       appleSignInKey: undefined,
       jobsToken: undefined,
       apns: undefined,
@@ -58,6 +59,26 @@ describe('readConfig', () => {
   it('turns drafts off while the chosen provider has no key, and refuses an unknown one', () => {
     expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModel).toBeUndefined();
     expect(() => readConfig({ ...base, LLM_PROVIDER: 'gemini' })).toThrow('LLM_PROVIDER');
+  });
+
+  it('writes the weekly awards with GPT-6 Luna unless told otherwise, apart from drafts', () => {
+    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
+    expect(readConfig({ ...base, ...keys, LLM_PROVIDER: 'anthropic' }).awardsModel).toStrictEqual({
+      provider: 'openai',
+      apiKey: 'sk-openai',
+      model: 'gpt-6-luna',
+    });
+    expect(
+      readConfig({ ...base, ...keys, AWARDS_LLM_PROVIDER: 'anthropic' }).awardsModel,
+    ).toStrictEqual({
+      provider: 'anthropic',
+      apiKey: 'sk-ant',
+      model: 'claude-sonnet-5-5',
+    });
+    expect(readConfig({ ...base, ...keys, AWARDS_LLM_MODEL: 'gpt-6' }).awardsModel?.model).toBe(
+      'gpt-6',
+    );
+    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).awardsModel).toBeUndefined();
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {

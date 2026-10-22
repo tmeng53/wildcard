@@ -18,6 +18,7 @@ import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
 import { noJobs, pushOn } from './test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
+import { unusedWeeklyAwards } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -62,11 +63,13 @@ describe('openapi.json', () => {
       members: createMembers({ store: createPostgresProfileStore(db) }),
       push: pushOn(db),
       squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+      weeklyAwards: unusedWeeklyAwards,
       log: createLog(() => undefined),
       jobs: noJobs,
       admin: {
         admins: () => ({
           requireAdmin: () => Promise.reject(new Error('unused')),
+          list: () => Promise.reject(new Error('unused')),
           logChange: () => Promise.reject(new Error('unused')),
           listLog: () => Promise.reject(new Error('unused')),
         }),
