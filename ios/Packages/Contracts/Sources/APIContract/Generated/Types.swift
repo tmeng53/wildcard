@@ -67,6 +67,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
     func listMyCheckIns(_ input: Operations.ListMyCheckIns.Input) async throws -> Operations.ListMyCheckIns.Output
+    /// Everything the signed-in member ever checked in, counted by kind
+    ///
+    /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
+    ///
+    /// - Remark: HTTP `GET /me/check-in-totals`.
+    /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
+    func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
     /// A signed URL to upload one check-in photo to
     ///
     /// - Remark: HTTP `POST /photo-uploads`.
@@ -358,6 +365,15 @@ extension APIProtocol {
             query: query,
             headers: headers
         ))
+    }
+    /// Everything the signed-in member ever checked in, counted by kind
+    ///
+    /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
+    ///
+    /// - Remark: HTTP `GET /me/check-in-totals`.
+    /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
+    public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
+        try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
     }
     /// A signed URL to upload one check-in photo to
     ///
