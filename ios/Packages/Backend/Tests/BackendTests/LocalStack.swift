@@ -74,8 +74,7 @@ struct LocalStack {
     /// client has no squad or consent calls yet.
     func squad(of creator: SignedInMember, _ others: SignedInMember...) async throws -> SquadID {
         for member in [creator] + others {
-            let _: AgreedToAI = try await send(
-                "PUT", "me/ai-consent", as: member, body: #"{"version":1,"copyVersion":1}"#, expecting: 200)
+            try await agreeToAI(member)
         }
         let squad = SquadID(UUID())
         let created: CreatedSquad = try await send(
@@ -85,6 +84,12 @@ struct LocalStack {
                 "POST", "squad-invites/\(created.inviteCode)/accept", as: member, body: nil)
         }
         return squad
+    }
+
+    /// The member agrees to the AI consent copy, which squads and AI drafts need.
+    func agreeToAI(_ member: SignedInMember) async throws {
+        let _: AgreedToAI = try await send(
+            "PUT", "me/ai-consent", as: member, body: #"{"version":1,"copyVersion":1}"#, expecting: 200)
     }
 
     private func send<Answer: Decodable>(
