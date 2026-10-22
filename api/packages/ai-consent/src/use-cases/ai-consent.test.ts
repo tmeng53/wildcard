@@ -113,6 +113,24 @@ describe('a new copy version', () => {
   });
 });
 
+describe('currentAmong', () => {
+  it('is those of the members who agreed to the current copy, in the order given', async () => {
+    const [ana, bo, cy, dee] = [
+      await newMember(),
+      await newMember(),
+      await newMember(),
+      await newMember(),
+    ];
+    await consentTo(1).consent.give({ member: ana, copyVersion: 1 });
+    await consentTo(1).consent.give({ member: bo, copyVersion: 1 });
+    await consentTo(2).consent.give({ member: bo, copyVersion: 2 });
+    await consentTo(2).consent.give({ member: cy, copyVersion: 2 });
+    const { consent } = consentTo(2);
+    expect(await consent.currentAmong([dee, cy, ana, bo])).toStrictEqual([cy, bo]);
+    expect(await consent.currentAmong([])).toStrictEqual([]);
+  });
+});
+
 describe('deleting an account', () => {
   it('deletes the member’s consents with it', async () => {
     const member = await newMember();

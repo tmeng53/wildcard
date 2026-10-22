@@ -162,7 +162,7 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
     expect((await ask(app, { token })).body).toEqual({ version: 1, kind });
   });
 
-  it.each<Fixture>(['body-talk', 'refusal', 'overloaded'])(
+  it.each<Fixture>(['refusal', 'overloaded'])(
     'answers 503 when %s leaves nothing to show',
     async (fixture) => {
       const { app } = appAnswering(provider, fixture);

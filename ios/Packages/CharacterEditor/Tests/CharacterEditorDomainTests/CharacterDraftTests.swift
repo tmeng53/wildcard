@@ -179,3 +179,38 @@ func aNicknameNeedsOneToTwelveCharacters(typed: String) {
 private func changed(_ editing: inout CharacterDraft, _ change: (inout CharacterDraft) -> Bool) -> Bool {
     change(&editing)
 }
+
+/// A look without eyes or a mouth starts on the rig's, so their tiles show as picked; a look
+/// that picks its own keeps them.
+@Test func aLookStartsOnTheRigsDefaultFace() {
+    var faces = catalog
+    faces.defaults = ["eyes": "round", "mouth": "smile"]
+    let plain = CharacterDraft(catalog: faces, look: lifter, persona: .energetic, nickname: "Tracy")
+    #expect(plain.picks.variants["eyes"] == "round")
+    #expect(plain.picks.variants["mouth"] == "smile")
+    #expect(!plain.canUndo)
+    let sleepy = CharacterDraft(
+        catalog: faces, look: Outfit(["body": "peach", "eyes": "sleepy"]), persona: .energetic, nickname: "Tracy")
+    #expect(sleepy.picks.variants["eyes"] == "sleepy")
+}
+
+/// Random looks wear a face from the catalog, with the brows in the hair's color.
+@Test func randomLooksWearAFace() {
+    var faces = catalog
+    faces.variants["eyes"] = ["round", "sleepy"]
+    faces.variants["mouth"] = ["smile"]
+    faces.variants["brows"] = ["soft"]
+    faces.swatches["brows"] = ["soft": hairColors]
+    var generator = SplitMix64(state: 42)
+    var withBrows = 0
+    for _ in 0..<200 {
+        let look = CharacterDraft.randomLook(from: faces, using: &generator)
+        #expect(["round", "sleepy"].contains(look.variants["eyes"] ?? ""))
+        #expect(look.variants["mouth"] == "smile")
+        if look.variants["brows"] != nil {
+            withBrows += 1
+            #expect(look.colors["brows"] == look.colors["hair"])
+        }
+    }
+    #expect(withBrows > 150)
+}

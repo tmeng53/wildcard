@@ -1,4 +1,4 @@
-import type { GivenConsent, MemberId } from './domain/ai-consent.js';
+import type { CopyVersion, GivenConsent, MemberId } from './domain/ai-consent.js';
 
 /** Where members' consents are kept, one for each version of the copy they agreed to. */
 export interface ConsentStore {
@@ -9,6 +9,8 @@ export interface ConsentStore {
    * version stays as it was.
    */
   give(member: MemberId, consent: GivenConsent): Promise<GivenConsent>;
+  /** Those of these members who agreed to this version of the copy. */
+  agreedTo(copyVersion: CopyVersion, members: readonly MemberId[]): Promise<MemberId[]>;
 }
 
 /** The current time. */

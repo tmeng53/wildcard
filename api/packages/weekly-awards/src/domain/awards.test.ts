@@ -80,8 +80,19 @@ describe('titlesOf', () => {
     expect(titlesOf(blank('雨中狠人', '  '), [ana])).toBeUndefined();
   });
 
+  it('keeps a title and line on one line', () => {
+    const title = {
+      title: '雨中\n狠人',
+      speech: '周三下着雨\r\n 还去\u2028跑了。',
+      move: 'pump' as const,
+    };
+    expect(
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
+    ).toStrictEqual([{ title: '雨中 狠人', speech: '周三下着雨 还去 跑了。', move: 'pump' }]);
+  });
+
   it('leaves the words to the model: the prompt says what they may say', () => {
-    const title = { title: '体重稳了', speech: '这周吃了三碗饭还去跑了。', move: 'pump' as const };
+    const title = { title: '本周第一', speech: '这周练得最多，排第一。', move: 'pump' as const };
     expect(
       titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
     ).toStrictEqual([title]);

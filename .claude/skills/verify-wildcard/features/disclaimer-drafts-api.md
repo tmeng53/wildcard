@@ -42,4 +42,4 @@ Check at the source, with the ids from the log:
 
 - 「不想活动」 (don't feel like moving) is not self-harm: it must reach the model, not get the care line.
 - With a key (a fake one, pointed at a local stub replaying `api/apps/server/src/test-kit/openai/*.json`, or `anthropic/*.json` with `LLM_PROVIDER=anthropic`): 3 drafts per batch, and the 7th counted batch in 24 hours answers 429 `DISCLAIMER_DRAFTS_USED_UP`. About 3 in 10 prompts carry one `本周梗` line, for a meme in use that suits the style; the rest carry none, and none ever lists the whole library.
-- A draft with body metrics, calories or macros is never shown: the batch answers 503 and doesn't count.
+- The server checks only a batch's shape (exactly 3 distinct drafts, 15 to 80 characters, one line each); a batch out of shape answers 503 and doesn't count. What the drafts say is the prompt's job: there are no word checks on them.

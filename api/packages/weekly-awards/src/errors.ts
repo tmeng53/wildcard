@@ -2,8 +2,8 @@ import { AppError } from '@wildcard/errors';
 
 /**
  * Thrown when a squad's awards couldn't be written: the model can't be reached, declined, or
- * answered twice naming the wrong members. Nothing is saved, so the story says the organisers
- * are working late and the next hourly run tries again.
+ * answered twice naming the wrong members or leaving a title or line blank. Nothing is saved, so
+ * the story says the organisers are working late and the next hourly run tries again.
  */
 export class AwardsWriterUnavailableError extends AppError {
   override readonly name = 'AwardsWriterUnavailableError';

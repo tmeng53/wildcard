@@ -38,7 +38,10 @@ const reply: ModelReply = {
   ],
 };
 
-function setup(answers: (() => Promise<unknown>)[] = [() => Promise.resolve(reply)]) {
+function setup(
+  answers: (() => Promise<unknown>)[] = [() => Promise.resolve(reply)],
+  agreed: (member: MemberId) => boolean = () => true,
+) {
   const asked: string[] = [];
   const model: LanguageModel = {
     answer: async ({ prompt, reply: shape }) => {
@@ -48,7 +51,16 @@ function setup(answers: (() => Promise<unknown>)[] = [() => Promise.resolve(repl
       return shape.parse(await next());
     },
   };
-  return { awards: createWeeklyAwards({ model, store: createPostgresAwardsStore(db) }), asked };
+  const consentAsked: (readonly MemberId[])[] = [];
+  const awards = createWeeklyAwards({
+    model,
+    store: createPostgresAwardsStore(db),
+    aiConsented: (members) => {
+      consentAsked.push(members);
+      return Promise.resolve(members.filter(agreed));
+    },
+  });
+  return { awards, asked, consentAsked };
 }
 
 async function newSquad() {
@@ -126,6 +138,29 @@ describe('createWeeklyAwards', () => {
       awards: given,
     });
     expect(asked).toHaveLength(1);
+  });
+
+  it('sends the model only the weeks of members who agreed to AI use, and awards only them', async () => {
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const { awards, asked, consentAsked } = setup(
+      [() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })],
+      (each) => each === ana,
+    );
+    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(consentAsked).toStrictEqual([[ana, bo]]);
+    expect(given.members.map(({ member: each }) => each)).toStrictEqual([ana]);
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).toContain('"member":"A"');
+    expect(asked[0]).not.toContain('"member":"B"');
+  });
+
+  it('asks the model nothing when nobody who checked in agreed to AI use', async () => {
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const { awards, asked } = setup(undefined, () => false);
+    expect(
+      await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) }),
+    ).toStrictEqual({ members: [] });
+    expect(asked).toHaveLength(0);
   });
 
   it('asks once more when the first answer fails the checks', async () => {
