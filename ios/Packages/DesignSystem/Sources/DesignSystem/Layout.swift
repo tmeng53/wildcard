@@ -68,6 +68,10 @@ public enum Sizing {
     public static let hairline: Double = 1
     /// A color swatch.
     public static let swatch: Double = 32
+    /// A switch: a capsule with a white knob inset from its edge.
+    public static let switchWidth: Double = 51
+    public static let switchHeight: Double = 31
+    public static let switchKnobInset: Double = 2
 
     // MARK: Icons
 

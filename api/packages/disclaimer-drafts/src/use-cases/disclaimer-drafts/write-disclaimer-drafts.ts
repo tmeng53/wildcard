@@ -1,7 +1,7 @@
 import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+import { mentionsSelfHarm } from '@wildcard/typed-text';
 
 import type { DraftReason, MemberId, PromptMeme } from '../../domain/draft-request.js';
-import { mentionsSelfHarm } from '../../domain/draft-request.js';
 import { ModelReply, outcomeOf, type DraftsOutcome } from '../../domain/drafts.js';
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
 import { DisclaimerDraftsUsedUpError, DisclaimerWriterUnavailableError } from '../../errors.js';

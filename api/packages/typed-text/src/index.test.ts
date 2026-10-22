@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { containsLink, graphemeCount } from './index.js';
+import { containsLink, graphemeCount, mentionsBodyMetrics } from './index.js';
 
 describe('graphemeCount', () => {
   it.each([
@@ -39,4 +39,16 @@ describe('containsLink', () => {
       expect(containsLink(text)).toBe(false);
     },
   );
+});
+
+describe('mentionsBodyMetrics', () => {
+  it('finds body, calorie and macro words, case-blind', () => {
+    for (const text of ['周末体重没变', '热量爆表', 'BMI 正常', '200 kcal', 'Calories']) {
+      expect(mentionsBodyMetrics(text)).toBe(true);
+    }
+  });
+
+  it('lets everything else through', () => {
+    expect(mentionsBodyMetrics('周三冒雨跑了 5 公里')).toBe(false);
+  });
 });

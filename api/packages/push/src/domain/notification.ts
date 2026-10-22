@@ -27,13 +27,25 @@ export interface PushNotification {
    * screen; `active` is a normal notification.
    */
   readonly interruption: 'passive' | 'active';
-  /** What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`. */
-  readonly event: Readonly<Record<string, string>>;
+  /**
+   * Lets the app's notification service extension rewrite the alert from `event` before it is
+   * shown (APNs `mutable-content`), for copy one String Catalog key can't say, such as a list of
+   * counts. The alert stays as sent when the extension doesn't run.
+   */
+  readonly mutableContent?: boolean;
+  /**
+   * What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`, or counts by kind
+   * such as `{ received: { cheer: 3 } }`.
+   */
+  readonly event: Readonly<Record<string, EventValue>>;
 }
+
+/** A value in a notification's `event`: text, a number, or counts by kind. */
+export type EventValue = string | number | Readonly<Record<string, number>>;
 
 /** The APNs JSON payload for a notification, with the `version` every wire body carries. */
 export function apnsPayload(notification: PushNotification) {
-  const { alert, category, thread, interruption, event } = notification;
+  const { alert, category, thread, interruption, mutableContent, event } = notification;
   return {
     version: 1,
     aps: {
@@ -45,6 +57,7 @@ export function apnsPayload(notification: PushNotification) {
       'thread-id': thread,
       'interruption-level': interruption,
       ...(interruption === 'active' ? { sound: 'default' } : {}),
+      ...(mutableContent === true ? { 'mutable-content': 1 } : {}),
     },
     event,
   };

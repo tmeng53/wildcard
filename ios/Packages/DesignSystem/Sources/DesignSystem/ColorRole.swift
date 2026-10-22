@@ -19,11 +19,13 @@ public enum SceneTheme: String, CaseIterable, Sendable {
                 floor: Palette.trackFloor)
         case .gym:
             // Graphite is dark, so what sits on it is volt: the primary button's label, the ring,
-            // and the check-in kinds on the gym's dark floor.
+            // and the check-in kinds on the gym's dark floor. Volt on a white card is faint, so
+            // with Increase Contrast on the ring turns graphite.
             SceneColors(
                 accent: Palette.graphite, accentSubtle: Palette.gymWash, onAccent: Palette.volt,
                 accentText: Palette.graphite, floor: Palette.graphite, onFloor: Palette.white, ring: Palette.volt,
-                kindFill: Palette.gymKind, kindFillOnFloor: Palette.gymKind, kindInk: Palette.volt)
+                ringIncreasedContrast: Palette.graphite, kindFill: Palette.gymKind, kindFillOnFloor: Palette.gymKind,
+                kindInk: Palette.volt)
         case .tennis:
             .light(
                 accent: Palette.tennisSignature, subtle: Palette.tennisWash, text: Palette.tennisText,
@@ -52,6 +54,8 @@ public struct SceneColors: Sendable, Hashable {
     public let onFloor: SRGBColor
     /// A status ring once someone checked in: the scene's brightest color.
     public let ring: SRGBColor
+    /// The ring on a white card when the person turned on Increase Contrast.
+    public let ringIncreasedContrast: SRGBColor
     /// A check-in kind button on white.
     public let kindFill: SRGBColor
     /// A check-in kind button on the scene's floor.
@@ -63,7 +67,8 @@ public struct SceneColors: Sendable, Hashable {
     static func light(accent: SRGBColor, subtle: SRGBColor, text: SRGBColor, floor: SRGBColor) -> SceneColors {
         SceneColors(
             accent: accent, accentSubtle: subtle, onAccent: Palette.white, accentText: text, floor: floor,
-            onFloor: Palette.ink, ring: accent, kindFill: subtle, kindFillOnFloor: Palette.white, kindInk: text)
+            onFloor: Palette.ink, ring: accent, ringIncreasedContrast: accent, kindFill: subtle,
+            kindFillOnFloor: Palette.white, kindInk: text)
     }
 }
 
@@ -107,7 +112,7 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case bgScene
     /// Text straight on `bgScene`.
     case fgOnScene
-    /// A status ring once someone checked in.
+    /// A status ring once someone checked in, on a white card.
     case ring
     /// A check-in kind button on white.
     case bgKind
@@ -116,11 +121,12 @@ public enum ColorRole: String, CaseIterable, Sendable {
     /// The icon on a check-in kind button.
     case fgKind
 
-    /// The color this role takes in a scene.
-    public func color(in theme: SceneTheme) -> SRGBColor {
+    /// The color this role takes in a scene, and with Increase Contrast on (only the ring changes).
+    public func color(in theme: SceneTheme, contrast: ColorContrast = .standard) -> SRGBColor {
+        if self == .ring, contrast == .increased { return theme.colors.ringIncreasedContrast }
         switch source {
-        case .fixed(let color): color
-        case .scene(let path): theme.colors[keyPath: path]
+        case .fixed(let color): return color
+        case .scene(let path): return theme.colors[keyPath: path]
         }
     }
 
@@ -149,4 +155,10 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgKind: .scene(\.kindInk)
         }
     }
+}
+
+/// Whether the person turned on Increase Contrast (Settings, Accessibility, Display & Text Size).
+public enum ColorContrast: Sendable {
+    case standard
+    case increased
 }

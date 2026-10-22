@@ -21,6 +21,11 @@ const Environment = z.object({
   // default). Without that provider's key the server still runs and the app shows its dice.
   LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
   LLM_MODEL: z.string().min(1).optional(),
+  // Which provider writes each squad's weekly awards (the Sunday 战报), and with which model.
+  // Tracy picked OpenAI's GPT-6 Luna for it (2026-10-20): close to Claude Sonnet 5.5 in her
+  // blind test, for far less. Without that provider's key the awards stay pending.
+  AWARDS_LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
+  AWARDS_LLM_MODEL: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
@@ -52,7 +57,13 @@ const Environment = z.object({
     .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
     .optional(),
   APNS_TOPIC: z.string().min(1).optional(),
+  // What the scheduler sends to start jobs such as the daily progress push. Without it no job
+  // runs. Long and random, like any secret.
+  JOBS_TOKEN: z.string().min(32).optional(),
 });
+
+/** Each provider's model for the weekly awards, unless AWARDS_LLM_MODEL names another. */
+const AWARDS_MODELS = { openai: 'gpt-6-luna', anthropic: 'claude-sonnet-5-5' } as const;
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
 const APNS = ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_PRIVATE_KEY', 'APNS_TOPIC'] as const;
@@ -76,6 +87,15 @@ export interface Config {
         readonly model: string | undefined;
       }
     | undefined;
+  /** The model that writes each squad's weekly awards; undefined while its provider has no key. */
+  readonly awardsModel:
+    | {
+        readonly provider: 'openai' | 'anthropic';
+        readonly apiKey: string;
+        /** Undefined for the adapter's default. */
+        readonly model: string | undefined;
+      }
+    | undefined;
   /** Sign in with Apple's key; undefined until it is set up. */
   readonly appleSignInKey:
     | {
@@ -85,6 +105,8 @@ export interface Config {
         readonly clientId: string;
       }
     | undefined;
+  /** The token that starts jobs; undefined until a scheduler is set up. */
+  readonly jobsToken: string | undefined;
   /** Undefined until there is an APNs key: then no pushes are sent. */
   readonly apns:
     | {
@@ -128,9 +150,10 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     );
   }
   const { LLM_PROVIDER, LLM_MODEL } = result.data;
-  const llmKey = { openai: result.data.OPENAI_API_KEY, anthropic: result.data.ANTHROPIC_API_KEY }[
-    LLM_PROVIDER
-  ];
+  const keys = { openai: result.data.OPENAI_API_KEY, anthropic: result.data.ANTHROPIC_API_KEY };
+  const llmKey = keys[LLM_PROVIDER];
+  const { AWARDS_LLM_PROVIDER, AWARDS_LLM_MODEL } = result.data;
+  const awardsKey = keys[AWARDS_LLM_PROVIDER];
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -143,7 +166,16 @@ export function readConfig(environment: Record<string, string | undefined>): Con
       llmKey === undefined
         ? undefined
         : { provider: LLM_PROVIDER, apiKey: llmKey, model: LLM_MODEL },
+    awardsModel:
+      awardsKey === undefined
+        ? undefined
+        : {
+            provider: AWARDS_LLM_PROVIDER,
+            apiKey: awardsKey,
+            model: AWARDS_LLM_MODEL ?? AWARDS_MODELS[AWARDS_LLM_PROVIDER],
+          },
     appleSignInKey,
+    jobsToken: result.data.JOBS_TOKEN,
     apns:
       APNS_KEY_ID === undefined ||
       APNS_TEAM_ID === undefined ||

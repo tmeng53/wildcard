@@ -12,7 +12,7 @@ Like Material 3's reference, system and component tokens, and Atlassian's `color
 | Semantic | `ColorRole` (`bg*`, `fg*`, `border*`, per scene through `SceneTheme`), `TypeRamp`, `Space`, `Radius`, `Sizing`, `Motion`, `Haptic` | Screens and components |
 | Component | Each component's own choice of semantic tokens, and sizes that belong to one view | That component |
 
-A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), and the scene decides the color. Check-in kinds have no colors of their own; they use the scene's.
+A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), and the scene decides the color. With Increase Contrast on, the gym's volt ring turns graphite (`Color(role:in:contrast:)`). Check-in kinds have no colors of their own; they use the scene's.
 
 ## Components
 
@@ -26,7 +26,7 @@ A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), an
 | `InputField`, `SearchField` | Text entry |
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
-| `.card(on:)`, `SectionLabel`, `ListRow` | Cards (grey on a page, white on the scene), group labels, list rows |
+| `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows, a setting's on/off row |
 | `SpeechBubble`, `CharacterStage` | What the character says; the character's stage in the editor |
 
 Conventions, as SwiftUI's own controls do it: the label comes first (`Text`, so it goes through the String Catalog), state comes in as a value (`isSelected`, `status`) and changes go out through an `action` closure or a `Binding`; button variants are `ButtonStyle`s; the scene comes from the environment (`\.sceneTheme`); UI-test identifiers are set by the caller. Each component's doc comment says when to use it and what its states look like, and the style guide shows every state.

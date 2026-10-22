@@ -18,6 +18,10 @@ export function createPostgresAdminStore(db: Kysely<AdminTables>): AdminStore {
         .executeTakeFirst();
       return row !== undefined;
     },
+    list: async () => {
+      const rows = await db.selectFrom('admins').select('member_id').execute();
+      return rows.map(({ member_id }) => AdminId.parse(member_id));
+    },
     log: async ({ admin, at, action }) => {
       await db
         .insertInto('admin_actions')
