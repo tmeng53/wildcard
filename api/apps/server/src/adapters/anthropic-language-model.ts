@@ -22,6 +22,13 @@ export function createAnthropicLanguageModel(options: {
   readonly apiKey: string;
   /** Which Claude model answers; `ANTHROPIC_MODEL` unless the config names another. */
   readonly model?: string;
+  /**
+   * How long one attempt may take, and how many tokens its answer may use (reasoning
+   * included). A member waiting on drafts gets the defaults; a job writing a squad's awards
+   * gets more of both.
+   */
+  readonly timeoutMs?: number;
+  readonly maxOutputTokens?: number;
   /** Tests only: where requests go, instead of Anthropic. */
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
@@ -32,7 +39,7 @@ export function createAnthropicLanguageModel(options: {
     // Never the environment's: an ANTHROPIC_BASE_URL meant for another tool must not redirect
     // members' reasons.
     baseURL: options.baseURL ?? 'https://api.anthropic.com',
-    timeout: TIMEOUT_MS,
+    timeout: options.timeoutMs ?? TIMEOUT_MS,
     maxRetries: 1,
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
   });
@@ -42,7 +49,7 @@ export function createAnthropicLanguageModel(options: {
       try {
         message = await client.messages.parse({
           model: options.model ?? ANTHROPIC_MODEL,
-          max_tokens: MAX_TOKENS,
+          max_tokens: options.maxOutputTokens ?? MAX_TOKENS,
           system: instructions,
           messages: [{ role: 'user', content: prompt }],
           // Short, playful lines: low effort keeps the wait short.

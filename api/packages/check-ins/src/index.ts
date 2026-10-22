@@ -81,3 +81,4 @@ export {
   type Winner,
 } from './domain/week-summary.js';
 export type { SquadWeekSummary } from './use-cases/check-ins/week-summary.js';
+export type { SquadWeekCheckIns } from './use-cases/check-ins/week-for-awards.js';

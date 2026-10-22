@@ -28,6 +28,11 @@ import { reactionsReceived } from './check-ins/reactions-received.js';
 import { removeReaction } from './check-ins/remove-reaction.js';
 import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summary.js';
 import {
+  squadWeekCheckIns,
+  squadsCheckedInto,
+  type SquadWeekCheckIns,
+} from './check-ins/week-for-awards.js';
+import {
   saveCheckIn,
   type SaveCheckInInput,
   type SavedCheckIn,
@@ -63,6 +68,17 @@ export interface CheckIns {
     readonly squad: SquadId;
     readonly weekStart: WeekStart;
   }): Promise<SquadWeekSummary>;
+  /** The squads that got a check-in for a day of the week made before `before`. */
+  squadsCheckedInto(input: {
+    readonly weekStart: WeekStart;
+    readonly before: Date;
+  }): Promise<SquadId[]>;
+  /** A squad's check-ins for the week made before `before`, for the week's awards. */
+  squadWeekCheckIns(input: {
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+    readonly before: Date;
+  }): Promise<SquadWeekCheckIns>;
 }
 
 export function createCheckIns(deps: {
@@ -85,5 +101,7 @@ export function createCheckIns(deps: {
     reactionsReceived: (input) => reactionsReceived(deps, input),
     squadToday: (input) => squadToday(deps, input),
     weekSummary: (input) => squadWeekSummary(deps, input),
+    squadsCheckedInto: (input) => squadsCheckedInto(deps, input),
+    squadWeekCheckIns: (input) => squadWeekCheckIns(deps, input),
   };
 }

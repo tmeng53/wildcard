@@ -183,6 +183,20 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return withAudiences(rows);
     },
 
+    async squadsCheckedInto({ from, to, before }) {
+      const rows = await db
+        .selectFrom('check_in_squads')
+        .innerJoin('check_ins', 'check_ins.id', 'check_in_squads.check_in_id')
+        .select('check_in_squads.squad_id')
+        .distinct()
+        .where('check_ins.day', '>=', from)
+        .where('check_ins.day', '<=', to)
+        .where('check_ins.created_at', '<', before)
+        .orderBy('check_in_squads.squad_id')
+        .execute();
+      return rows.map((row) => SquadId.parse(row.squad_id));
+    },
+
     async listForMember({ member, from, to }) {
       const rows = await db
         .selectFrom('check_ins')

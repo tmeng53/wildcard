@@ -194,6 +194,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
     func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
+    /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
+    ///
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
+    func nudgeSquadWeekStory(_ input: Operations.NudgeSquadWeekStory.Input) async throws -> Operations.NudgeSquadWeekStory.Output
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    func getSquadWeekStory(_ input: Operations.GetSquadWeekStory.Input) async throws -> Operations.GetSquadWeekStory.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -582,6 +596,36 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
+    ///
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
+    public func nudgeSquadWeekStory(
+        path: Operations.NudgeSquadWeekStory.Input.Path,
+        headers: Operations.NudgeSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.NudgeSquadWeekStory.Output {
+        try await nudgeSquadWeekStory(Operations.NudgeSquadWeekStory.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    public func getSquadWeekStory(
+        path: Operations.GetSquadWeekStory.Input.Path,
+        headers: Operations.GetSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeekStory.Output {
+        try await getSquadWeekStory(Operations.GetSquadWeekStory.Input(
+            path: path,
+            headers: headers
         ))
     }
 }

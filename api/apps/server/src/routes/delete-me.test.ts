@@ -23,6 +23,7 @@ import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
 import { adminOn, config, noJobs, pushOn, signOut, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
 // its servers can't be called without a real key and a real sign-in.
@@ -67,6 +68,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
     push: pushOn(db),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),
@@ -162,6 +164,15 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
   const plan = { version: 1, days: Array.from({ length: 7 }, () => ({ kind: 'rest' })) };
   const weekStart = nextMonday.toISOString().slice(0, 10);
   expect((await call('PUT', `/me/weekly-plans/${weekStart}`, me.token, plan)).status).toBe(200);
+  // Last week's awards, with a title each.
+  const title = { title: '早八战神', speech: '周一早上七点就去跑了。', move: 'pump' };
+  await sql`insert into public.weekly_awards (squad_id, week_start, given_at)
+    values (${squad}, '2026-10-12', now())`.execute(db);
+  for (const [position, { userId }] of [me, friend].entries()) {
+    const award = JSON.stringify({ version: 1, titles: [title] });
+    await sql`insert into public.weekly_award_winners (squad_id, week_start, member_id, position, award)
+      values (${squad}, '2026-10-12', ${userId}, ${position}, ${award}::jsonb)`.execute(db);
+  }
   return { me, friend, squad };
 }
 
@@ -205,6 +216,9 @@ async function whatIsLeftOf(member: string) {
     weeklyPlans: await count(
       sql`select count(*) as n from public.weekly_plans where member_id = ${member}`,
     ),
+    awards: await count(
+      sql`select count(*) as n from public.weekly_award_winners where member_id = ${member}`,
+    ),
     files: z.array(z.unknown()).parse(await files.json()).length,
   };
 }
@@ -217,6 +231,7 @@ const nothing = {
   squadMemberships: 0,
   squadsMade: 0,
   weeklyPlans: 0,
+  awards: 0,
   files: 0,
 };
 const everything = {
@@ -227,6 +242,7 @@ const everything = {
   squadMemberships: 1,
   squadsMade: 1,
   weeklyPlans: 1,
+  awards: 1,
   files: 2,
 };
 
@@ -249,6 +265,8 @@ describe('DELETE /me', () => {
     }>`select created_by, (select count(*)::int from public.squad_members where squad_id = ${squad}) as members
        from public.squads where id = ${squad}`.execute(db);
     expect(squads.rows).toStrictEqual([{ created_by: null, members: 1 }]);
+    // The friend keeps their weekly award.
+    expect((await whatIsLeftOf(friend.userId)).awards).toBe(1);
     const day = new Date(Date.now() - 60_000).toISOString().slice(0, 10);
     const { body } = await call(
       'GET',
