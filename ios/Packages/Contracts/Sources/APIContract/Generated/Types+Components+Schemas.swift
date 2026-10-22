@@ -587,7 +587,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
             public var given: Components.Schemas.AiConsent.GivenPayload?
-            /// True when `given` is to `copyVersion`. Making or joining a squad, AI drafts and the weekly awards need it; when false, show that version of the copy and ask.
+            /// True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
             ///
             /// - Remark: Generated from `#/components/schemas/AiConsent/current`.
             public var current: Swift.Bool
@@ -597,7 +597,7 @@ extension Components {
             ///   - version:
             ///   - copyVersion: The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
             ///   - given: The member’s latest consent, left out when they never gave one. It may be to an older version.
-            ///   - current: True when `given` is to `copyVersion`. Making or joining a squad, AI drafts and the weekly awards need it; when false, show that version of the copy and ask.
+            ///   - current: True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
             public init(
                 version: Components.Schemas.AiConsent.VersionPayload,
                 copyVersion: Swift.Int,

@@ -66,7 +66,6 @@ const app = createApp({
     find: unused,
     give: unused,
     hasCurrent: unused,
-    currentAmong: unused,
   },
   log: createLog(unused),
   admin: {
