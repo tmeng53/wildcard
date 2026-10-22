@@ -307,13 +307,16 @@ public struct Pose: Hashable, Sendable {
         self.parts = parts
     }
 
-    /// Partway from this pose to another: 0 is this one, 1 is `other`.
+    /// Partway from this pose to another: 0 is this one, 1 is `other`. Rotations take the short
+    /// way round, so an arm stopped mid-stroke at -500° swings back 140°, not 500°.
     public func blended(to other: Pose, amount: Double) -> Pose {
         Pose(
             parts: zip(parts, other.parts).map { start, target in
                 var mixed = start
                 for channel in Channel.allCases {
-                    mixed[channel] = start[channel] + (target[channel] - start[channel]) * amount
+                    var gap = target[channel] - start[channel]
+                    if channel == .rotation { gap = remainder(gap, 360) }
+                    mixed[channel] = target[channel] - gap * (1 - amount)
                 }
                 return mixed
             })
