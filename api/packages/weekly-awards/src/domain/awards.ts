@@ -145,22 +145,27 @@ export interface Failures {
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
 /** A count in a line: 三, 两, 半, 几, 12, １２. */
-const COUNT = '[一二两三四五六七八九十百几半整\\d０-９]+';
+const COUNT = '[一二两三四五六七八九十百千几半整\\d０-９]';
 
 /**
- * How much someone ate, which the awards never say: 「三碗饭」, 「吃了一整只烤鸭」, 「大胃王」.
- * Eating itself is fine (「健康餐打卡王」, 「吃了一顿好的」), and so are reps, hours and sets
- * (「干了十个引体向上」, 「三盘网球」): only bowls count on their own, other units only after
- * 吃 or 炫, and 个, 块, 片, 顿 and 杯 never.
+ * How much someone ate, which the awards never say. Erring on the safe side: eating (吃, 炫,
+ * 啃, 吞, 喝, 干掉) with any count in the same line, a count of bowls, or words like 大胃王 and
+ * 饭量. Reps, sets and hours have no eating in them (「干了十个引体向上」), and a line refused
+ * here only drops its title.
  */
+const EATING = /[吃炫啃吞喝]|干掉|干饭/u;
 const EATING_AMOUNT = new RegExp(
   [
-    `${COUNT}[整大]*碗`,
-    `[吃炫][了掉下光完]*(?:满满|整整|足足)?${COUNT}[整大小]*[盘份斤桶锅碟笼屉盒袋串只]`,
-    '饭量|食量|胃口|大胃|干饭王|饭桶|吃撑|撑死|吃了多少|吃了好多|吃了好几|暴食|[两双三多]人份',
+    `${COUNT}\\s*[整大]*碗`,
+    '饭量|食量|胃口|大胃|饭桶|吃撑|撑死|吃了多少|吃了好多|吃了好几|暴食|[两双三多]人份',
   ].join('|'),
   'u',
 );
+const COUNTED = new RegExp(COUNT, 'u');
+/** 周三, 星期五: a day, not a count. */
+const WEEKDAY = /(?:周|星期|礼拜)[一二三四五六日天]/gu;
+const mentionsEatingAmount = (text: string) =>
+  EATING_AMOUNT.test(text) || (EATING.test(text) && COUNTED.test(text.replace(WEEKDAY, '')));
 
 /**
  * True when a title or line may be shown: one line, no emoji, nothing about bodies, eating
@@ -175,15 +180,16 @@ function isShowable(text: string, max: number): boolean {
     !/\p{Extended_Pictographic}/u.test(text) &&
     !mentionsBodyMetrics(text) &&
     !mentionsSelfHarm(text) &&
-    !EATING_AMOUNT.test(text) &&
+    !mentionsEatingAmount(text) &&
     !RANKING_WORDS.some((word) => text.includes(word))
   );
 }
 
 /**
- * The awards a reply comes to for these members (those who checked in, in the prompt's order),
- * or `undefined` when it fails a check: a member missing, repeated or unknown, 0 or more than 3
- * titles, a title or line out of bounds, or a title used twice in the squad.
+ * The awards a reply comes to for these members (those who checked in, in the prompt's order).
+ * A title or line that fails a check (out of bounds, bodies, eating amounts, ranks, self-harm)
+ * only drops its title. `undefined` when the reply is out of shape: a member missing, repeated
+ * or unknown, more than 3 titles, a member left with none, or a title used twice in the squad.
  */
 export function titlesOf(
   reply: ModelReply,
@@ -196,14 +202,14 @@ export function titlesOf(
   for (const award of reply.awards) {
     const member = byKey.get(award.member.trim());
     if (member === undefined || result.has(member)) return undefined;
-    if (award.titles.length < 1 || award.titles.length > TITLES_MAX) return undefined;
-    const titles = award.titles.map(({ title, speech, move }) => ({
-      title: title.trim(),
-      speech: speech.trim(),
-      move,
-    }));
-    for (const { title, speech } of titles) {
-      if (!isShowable(title, TITLE_MAX) || !isShowable(speech, SPEECH_MAX)) return undefined;
+    if (award.titles.length > TITLES_MAX) return undefined;
+    const titles = award.titles
+      .map(({ title, speech, move }) => ({ title: title.trim(), speech: speech.trim(), move }))
+      .filter(
+        ({ title, speech }) => isShowable(title, TITLE_MAX) && isShowable(speech, SPEECH_MAX),
+      );
+    if (titles.length === 0) return undefined;
+    for (const { title } of titles) {
       if (seen.has(title)) return undefined;
       seen.add(title);
     }

@@ -1,6 +1,6 @@
 # A squad's weekly AI awards and Sunday story through the API
 
-**Status: On main.** A scheduler runs the awards every hour with `POST /jobs/weekly-awards` and `JOBS_TOKEN`. Over HTTP, `scripts/api-journeys.sh weekly-awards` checks the route's token and what a run answers. The awards themselves need a week that ended before now, so drive them from the flow test, which starts the same route with a test model and a moved clock.
+**Status: Ready** since the hourly job route (#119); CI's `supabase` job runs `scripts/api-journeys.sh weekly-awards`. A scheduler runs the awards every hour with `POST /jobs/weekly-awards` and `JOBS_TOKEN`. Over HTTP, `scripts/api-journeys.sh weekly-awards` checks the route's token and what a run answers. The awards themselves need a week that ended before now, so drive them from the flow test, which starts the same route with a test model and a moved clock.
 
 After Sunday 8pm New York, every member who checked in that week before then gets 1 to 3 titles (at most 6 characters each), each with a 颁奖词 (at most 24) and a move. The awards are written once per squad-week; each winner gets one `push.weeklyAwards.ready` that doesn't say what they won. While the model fails, the story is `pending`: no `titles`, everything else (`hottest`) as usual. A member's 「催一下主办方」 (`POST …/story/nudge`) tells the admins once per failed try with the squad's name, the tries and the error's name and status. Stand-in: no model key, so a run fails the way production does without credit.
 

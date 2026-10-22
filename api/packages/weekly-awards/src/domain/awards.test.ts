@@ -92,6 +92,17 @@ describe('titlesOf', () => {
     expect(one(' ', '周三去跑了。')).toBeUndefined();
   });
 
+  it('drops only the titles that fail a check, and refuses a member left with none', () => {
+    const kept = { title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' as const };
+    const eaten = { title: '干饭王', speech: '周五吃了三碗饭。', move: 'fullbelly' as const };
+    expect(
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [eaten, kept] }] }, [ana])?.get(ana),
+    ).toStrictEqual([kept]);
+    expect(
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [eaten] }] }, [ana]),
+    ).toBeUndefined();
+  });
+
   it('refuses a title used twice in the squad', () => {
     const same = { title: '雨中狠人', speech: '周三去跑了。', move: 'pump' as const };
     expect(
@@ -135,8 +146,14 @@ describe('titlesOf', () => {
       '周五一口气吃了三碗饭。',
       '三碗米饭下肚。',
       '周六炫了一整只烤鸭。',
-      '吃了满满两份火锅。',
-      '炫了两盘饺子。',
+      '吃了三个汉堡。',
+      '吃了 12 个饺子。',
+      '一口气吃了五块披萨。',
+      '喝了三杯奶茶。',
+      '干掉两盘饺子。',
+      '连吃三顿火锅。',
+      '炫了半个蛋糕。',
+      '吞了两个汉堡。',
       '吃了两人份的烧烤。',
       '本周大胃王。',
       '饭量惊人。',
@@ -147,12 +164,10 @@ describe('titlesOf', () => {
     }
     for (const speech of [
       '健康餐打了三次卡。',
-      '周三吃了一顿好的。',
-      '健康餐连吃三顿没断。',
-      '周日吃了一个大苹果当健康餐。',
+      '周三吃得好练得狠。',
+      '星期五吃了沙拉还去跑了。',
       '周四干了十个引体向上。',
       '连干三个小时网球。',
-      '啃下一块硬骨头，周五照样练。',
       '练了三组深蹲。',
       '打了三盘网球。',
     ]) {
