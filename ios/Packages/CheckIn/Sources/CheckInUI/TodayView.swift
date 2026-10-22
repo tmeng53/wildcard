@@ -16,8 +16,13 @@ public struct TodayView: View {
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
 
-    public init(model: TodayModel) {
+    /// Opens the post my caption's bubble is from: for now the 动态 tab, which will scroll to it
+    /// once the feed is built.
+    private let openPost: () -> Void
+
+    public init(model: TodayModel, openPost: @escaping () -> Void = {}) {
         _model = State(initialValue: model)
+        self.openPost = openPost
     }
 
     public var body: some View {
@@ -66,7 +71,7 @@ public struct TodayView: View {
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 celebration: model.celebrations
             )
-            .overlay { MyPayoff(model: model) }
+            .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
             .overlay(Color(Scrim.tint).opacity(model.isSceneDimmed ? Scrim.tintOpacity : 0))
             .ignoresSafeArea()
@@ -168,6 +173,7 @@ public struct TodayView: View {
 /// on my head.
 private struct MyPayoff: View {
     let model: TodayModel
+    let openPost: () -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -179,7 +185,7 @@ private struct MyPayoff: View {
             // 「+1」 sit above it, centred.
             ZStack {
                 Self.anchor(width: Self.bubbleWidth, at: head, alignment: .bottom) {
-                    PayoffBubble(line: model.payoff?.line).fixedSize(horizontal: false, vertical: true)
+                    PayoffBubble(line: model.payoff?.line, open: openPost).fixedSize(horizontal: false, vertical: true)
                 }
                 Self.anchor(width: 0, at: CGPoint(x: head.x, y: head.y - Space.l), alignment: .bottom) {
                     PlusOne(trigger: model.celebrations).fixedSize()
@@ -222,10 +228,11 @@ private struct Head: View {
 private struct PayoffBubble: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let line: String?
+    let open: () -> Void
 
     var body: some View {
         if let line {
-            SpeechBubble(Text(verbatim: line), kind: .info(title: nil))
+            SpeechBubble(Text(verbatim: line), kind: .info(title: nil), action: open)
                 .transition(.speech(reduceMotion: reduceMotion))
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("today.bubble")
