@@ -13,13 +13,17 @@ public struct Catalog: Hashable, Sendable {
     public var swatches: [Slot: [String: [RGBAColor]]]
     /// The color a recolorable variant shows before any swatch is picked (the 原色 swatch).
     public var originals: [Slot: [String: RGBAColor]]
+    /// What the rig draws in a slot a look leaves out, such as round eyes, so its tile shows
+    /// as picked.
+    public var defaults: [Slot: String]
 
     public init(
         species: [EditorChoices.Species], variants: [Slot: [String]], props: [String],
-        swatches: [Slot: [String: [RGBAColor]]], originals: [Slot: [String: RGBAColor]]
+        swatches: [Slot: [String: [RGBAColor]]], originals: [Slot: [String: RGBAColor]],
+        defaults: [Slot: String] = [:]
     ) {
         (self.species, self.variants, self.props) = (species, variants, props)
-        (self.swatches, self.originals) = (swatches, originals)
+        (self.swatches, self.originals, self.defaults) = (swatches, originals, defaults)
     }
 
     /// The preset colors `variant` offers in `slot`; empty when it keeps its art's colors.
@@ -32,5 +36,5 @@ public struct Catalog: Hashable, Sendable {
     }
 
     /// The slots picked by tiles, besides `body`: what a look may wear.
-    public static let dressSlots: [Slot] = ["hair", "hat", "top", "bottom", "prop"]
+    public static let dressSlots: [Slot] = ["hair"] + PlaceholderCharacter.faceSlots + ["hat", "top", "bottom", "prop"]
 }

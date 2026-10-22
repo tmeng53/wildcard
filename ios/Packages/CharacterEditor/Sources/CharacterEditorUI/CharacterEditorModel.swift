@@ -6,9 +6,12 @@ import CharacterEditorDomain
 import Foundation
 import Observation
 
-/// The editor's tabs, in order. 发型 shows only while the character is a person.
+/// The editor's tabs, in order. 发型 and 脸 show only while the character is a person.
 public enum EditorTab: String, CaseIterable, Hashable, Sendable {
-    case look, hair, outfit, prop, persona
+    case look, hair, face, outfit, prop, persona
+
+    /// Whether the tab dresses a person only: an animal's face and coat come together.
+    var isForPeople: Bool { self == .hair || self == .face }
 }
 
 /// Where the editor is open: as a step of sign-up, or from 我 to change the character.
@@ -64,7 +67,7 @@ public final class CharacterEditorModel {
     public static let sampleLook = PlaceholderCharacter.lifter
 
     public var tabs: [EditorTab] {
-        EditorTab.allCases.filter { $0 != .hair || draft.wearsHair }
+        EditorTab.allCases.filter { !$0.isForPeople || draft.wearsHair }
     }
 
     /// The field keeps what is typed, so pinyin still being composed is never cut; a name
@@ -87,7 +90,7 @@ public final class CharacterEditorModel {
 
     func pick(_ variant: String?, for slot: Slot) {
         guard draft.pick(variant, for: slot) else { return }
-        if tab == .hair && !draft.wearsHair { tab = .look }
+        leaveTabsForPeople()
         restyle(move: true)
     }
 
@@ -103,15 +106,20 @@ public final class CharacterEditorModel {
 
     func undo() {
         guard draft.undo() else { return }
-        if tab == .hair && !draft.wearsHair { tab = .look }
+        leaveTabsForPeople()
         restyle(move: true)
     }
 
     func shuffle() {
         var generator = SystemRandomNumberGenerator()
         draft.shuffle(using: &generator)
-        if tab == .hair && !draft.wearsHair { tab = .look }
+        leaveTabsForPeople()
         restyle(move: true)
+    }
+
+    /// Back to 样子 when the character became an animal on 发型 or 脸, which it no longer has.
+    private func leaveTabsForPeople() {
+        if tab.isForPeople && !draft.wearsHair { tab = .look }
     }
 
     /// The persona's cheer, for a tap on the character.
