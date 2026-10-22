@@ -1,19 +1,19 @@
 #if os(iOS)
 import Contracts
-import DesignSystem
 import Foundation
 import SwiftUI
 
 extension Sport {
     /// String Catalog key for the name people see.
-    var nameKey: String { "sport.\(rawValue)" }
+    public var nameKey: String { "sport.\(rawValue)" }
 
-    var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
+    public var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
 
     /// The localized name as a string, for search.
-    var localizedName: String { Bundle.module.localizedString(forKey: nameKey, value: nil, table: nil) }
+    public var localizedName: String { Bundle.module.localizedString(forKey: nameKey, value: nil, table: nil) }
 
-    var symbol: String {
+    /// The SF Symbol drawn beside the name.
+    public var symbol: String {
         switch self {
         case .run, .trailRun: "figure.run"
         case .walk, .walkCommute: "figure.walk"
@@ -63,24 +63,35 @@ extension Sport {
     }
 
     /// The sports a 练了 offers before the full list, most common first.
-    static let quickPicks: [Sport] = [.run, .strength, .yoga, .swim, .spin, .hike, .tennis]
+    public static let quickPicks: [Sport] = [.run, .strength, .yoga, .swim, .spin, .hike, .tennis]
+
+    /// The sports whose name, as people see it or as its id, contains `query`; every sport in
+    /// list order. An empty query matches none, so a search field shows its usual list instead.
+    public static func matching(_ query: String) -> [Sport] {
+        let needle = query.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty else { return [] }
+        return allCases.filter {
+            $0.localizedName.localizedCaseInsensitiveContains(needle)
+                || $0.rawValue.localizedCaseInsensitiveContains(needle)
+        }
+    }
 }
 
 extension SportCategory {
-    var nameKey: String { "sportCategory.\(rawValue)" }
+    public var nameKey: String { "sportCategory.\(rawValue)" }
 
-    var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
+    public var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
 }
 
 extension Activity {
-    var name: Text {
+    public var name: Text {
         switch self {
         case .sport(let sport): sport.name
         case .custom(let custom): Text(verbatim: custom.name)
         }
     }
 
-    var symbol: String {
+    public var symbol: String {
         switch self {
         case .sport(let sport): sport.symbol
         case .custom: "figure.mixed.cardio"
@@ -88,7 +99,7 @@ extension Activity {
     }
 
     /// A stable key for identifiers and `ForEach`.
-    var key: String {
+    public var key: String {
         switch self {
         case .sport(let sport): sport.rawValue
         case .custom(let custom): "custom.\(custom.name)"

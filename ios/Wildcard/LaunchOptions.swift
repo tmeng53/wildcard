@@ -16,6 +16,11 @@ enum LaunchOptions {
         !ProcessInfo.processInfo.arguments.contains("-uitest-no-push")
     }
 
+    /// `-onboarding`: open sign-up, then 今天 once it is done.
+    static var showsOnboarding: Bool {
+        ProcessInfo.processInfo.arguments.contains("-onboarding")
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {

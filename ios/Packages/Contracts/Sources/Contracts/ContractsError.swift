@@ -44,6 +44,14 @@ public enum ContractsError: Error, Equatable, Sendable {
     case multilineNickname
     /// A nickname with nothing visible in it, or with a text-direction control.
     case invisibleNickname
+    /// A squad name that is empty or longer than `SquadName.maxLength` characters.
+    case squadNameLength(Int)
+    /// A squad name with a line break, tab or other control character.
+    case multilineSquadName
+    /// A squad name with nothing visible in it, or with a text-direction control.
+    case invisibleSquadName
+    /// Text that can't be an invite code: not 8 letters from `InviteCode.alphabet`.
+    case invalidInviteCode(String)
     /// A timestamp that isn't ISO 8601.
     case invalidTimestamp(String)
 }

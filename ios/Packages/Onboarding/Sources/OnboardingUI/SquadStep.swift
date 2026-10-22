@@ -1,0 +1,238 @@
+#if canImport(SwiftUI)
+import Contracts
+import DesignSystem
+import DesignSystemUI
+import OnboardingDomain
+import SwiftUI
+
+/// 你的小队, step 2: 加入小队 by invite code, with the squad it finds, or 建一个小队 with a
+/// name. The character just made stands beside the title.
+struct SquadStep: View {
+    let model: SignUpModel
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        StepPage(step: .squad, title: Text("你的小队", bundle: .module), character: model.myCharacter, onBack: model.back) {
+            VStack(alignment: .leading, spacing: Space.xs) {
+                PickRow(Text("加入小队", bundle: .module), systemImage: "person.2", isSelected: isJoining) {
+                    model.choose(.join)
+                }
+                .accessibilityIdentifier("squad.join")
+                if isJoining {
+                    JoinPanel(model: model)
+                        .transition(panelTransition)
+                }
+                PickRow(Text("建一个小队", bundle: .module), systemImage: "plus", isSelected: !isJoining) {
+                    model.choose(.create)
+                }
+                .accessibilityIdentifier("squad.create")
+                if !isJoining {
+                    CreatePanel(model: model)
+                        .transition(panelTransition)
+                }
+            }
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isJoining)
+        } actions: {
+            if model.asksForAIConsent {
+                AIConsentRow(isOn: model.agreesToAI, toggle: model.toggleAIConsent)
+            }
+            FailureLine(failure: model.failure)
+            StepButton(
+                title: isJoining ? Text("加入小队", bundle: .module) : Text("建小队", bundle: .module),
+                isWorking: model.isWorking, isEnabled: model.canFinishSquad, action: model.finishSquad
+            )
+            .accessibilityIdentifier("squad.done")
+        }
+    }
+
+    private var isJoining: Bool { model.squad.choice == .join }
+
+    private var panelTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .offset(y: -Space.xs))
+    }
+}
+
+/// 邀请码 in one box per letter, typed into a field the boxes cover, and the squad it finds.
+private struct JoinPanel: View {
+    let model: SignUpModel
+    @Environment(\.sceneTheme) private var theme
+    @FocusState private var isTyping: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.labelGap) {
+            SectionLabel(Text("邀请码", bundle: .module))
+            ZStack {
+                TextField(
+                    text: Binding(get: { model.squad.typedCode }, set: model.typeCode),
+                    prompt: Text(verbatim: "")
+                ) {
+                    Text("邀请码", bundle: .module)
+                }
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .focused($isTyping)
+                // The boxes show what is typed; the field only takes the keys.
+                .opacity(0.02)
+                .accessibilityIdentifier("squad.code")
+                HStack(spacing: Space.xxs + 2) {
+                    ForEach(0..<InviteCode.length, id: \.self) { index in
+                        CodeBox(
+                            letter: index < model.squad.codeLetters.count ? model.squad.codeLetters[index] : nil,
+                            isNext: isTyping && index == min(model.squad.codeLetters.count, InviteCode.length - 1))
+                    }
+                }
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { isTyping = true }
+            SquadFound(lookup: model.preview)
+                .padding(.top, Space.xxs)
+        }
+        .padding(.vertical, Space.xs)
+        .onAppear { if model.squad.code == nil { isTyping = true } }
+    }
+}
+
+/// One letter of the invite code, in big Barlow on a subtle box; the box the next letter goes
+/// into takes the accent border while typing.
+private struct CodeBox: View {
+    let letter: Character?
+    let isNext: Bool
+    @Environment(\.sceneTheme) private var theme
+    private let height: Double = 52
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+        Text(verbatim: letter.map(String.init) ?? "")
+            .typeStyle(TypeRamp.scoreCard)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .background(Color(role: .bgSubtle, in: theme), in: shape)
+            .overlay {
+                if isNext {
+                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                }
+            }
+    }
+}
+
+/// The squad a whole code finds: its name and how many are in it, or why there's none.
+private struct SquadFound: View {
+    let lookup: SignUpModel.Lookup
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        switch lookup {
+        case .none:
+            EmptyView()
+        case .looking:
+            HStack(spacing: Space.xs) {
+                ProgressView()
+                Text("正在找这个小队", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .card()
+        case .found(let squad):
+            HStack(spacing: Space.s) {
+                Image(systemName: "flag.checkered")
+                    .font(.system(size: Sizing.icon, weight: .semibold))
+                    .foregroundStyle(Color(role: .fgAccent, in: theme))
+                    .frame(width: Sizing.control, height: Sizing.control)
+                    .background(
+                        Color(role: .bgAccentSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.thumbnail)
+                    )
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    Text(verbatim: squad.name)
+                        .typeStyle(TypeRamp.headline)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .lineLimit(1)
+                    Group {
+                        if squad.isFull {
+                            Text("\(squad.memberCount) 人 · 满员了", bundle: .module)
+                        } else {
+                            Text("\(squad.memberCount) 人", bundle: .module)
+                        }
+                    }
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                }
+                Spacer(minLength: 0)
+            }
+            .card()
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("squad.found")
+        case .failed(_, let failure):
+            FailureLine(failure: failure)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+/// 同意使用 AI 功能 (Tracy's approved copy), ticked by the member before they can join or make a squad; off
+/// at first. The privacy policy gets its link once it is published.
+private struct AIConsentRow: View {
+    let isOn: Bool
+    let toggle: () -> Void
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: toggle) {
+            HStack(alignment: .top, spacing: Space.xs) {
+                ZStack {
+                    if isOn {
+                        CheckBadge()
+                            .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
+                    } else {
+                        Circle()
+                            .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.selectionStroke)
+                    }
+                }
+                .frame(width: Sizing.checkBadge, height: Sizing.checkBadge)
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖和编请假条，不发照片。", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    // Becomes a link once the privacy policy is published.
+                    Text("隐私政策", bundle: .module)
+                        .typeStyle(TypeRamp.footnoteEmphasis)
+                        .foregroundStyle(Color(role: .fgAccent, in: theme))
+                }
+                .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+            }
+            .frame(minHeight: Sizing.minimumTapTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isOn)
+        .haptic(.pick, trigger: isOn)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityIdentifier("squad.aiConsent")
+    }
+}
+
+/// 小队名, starting from 「Tracy 的小队」.
+private struct CreatePanel: View {
+    let model: SignUpModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.labelGap) {
+            SectionLabel(Text("小队名", bundle: .module))
+            InputField(
+                text: Binding(get: { model.squad.typedName }, set: model.typeName),
+                label: Text("小队名", bundle: .module), limit: SquadName.maxLength
+            )
+            .accessibilityIdentifier("squad.name")
+        }
+        .padding(.top, Space.xs)
+    }
+}
+#endif

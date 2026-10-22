@@ -72,7 +72,9 @@ Landed: `Account`, signing in: `AccountDomain` (`AccountSession`, which signs in
 
 Landed: `Notifications`, push on this phone: `NotificationsDomain` (`PushRegistration`: asks for permission only after the member's first check-in, never at sign-up, asks APNs for the token on every launch once allowed, and registers it through its `DeviceRegistry` port while someone is signed in; pure Swift) and `NotificationsUI` (the system prompt and APNs registration, taps on a notification, and which APNs servers this build's tokens are for). `Backend`'s `APIDeviceRegistry` is the registry, over `PUT /me/devices`.
 
-Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`, `Poster`, `Onboarding`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
+Landed: `Onboarding`, sign-up from the open screen to 上场: `OnboardingDomain` (the steps, the squad choice, the sports picked, the week drawn on its poster, the welcome lines and when each teammate cheers and where their bubble goes; pure Swift, the backend behind its `SignUpService` port) and `OnboardingUI` (the screens, step 1 being the character editor itself, the AI consent asked once per account on 你的小队, and `InMemorySignUpService` behind `-onboarding`). `Sports` holds `SportsUI`, the sports' names and symbols every picker shows.
+
+Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`, `Poster`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
 
 ## Domain rules
 
