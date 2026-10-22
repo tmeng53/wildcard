@@ -199,10 +199,19 @@ extension MeView {
     }
 }
 
-/// The member's character on a little floor shadow, as large as the page's hero. It plays its
-/// persona's idle and changes clothes in place when the character is edited.
+/// The member's character on a little floor shadow, as large as the page's hero: typing at its
+/// laptop on 我, near tears on 注销账号, at its persona's pace. It changes clothes in place when
+/// the character is edited.
 struct MeStage: View {
+    enum Mood {
+        /// At a small desk behind a laptop, typing and peeking over the screen now and then.
+        case typing
+        /// Worried brows, a wobbly frown and tears rolling down.
+        case teary
+    }
+
     let character: MeCharacter?
+    var mood = Mood.typing
     @State private var player: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
     static let size = CGSize(width: 180, height: 240)
@@ -230,8 +239,12 @@ struct MeStage: View {
     private func dress() {
         guard let character else { return }
         do {
-            let figure = try PlaceholderCharacter.figure(wearing: character.outfit)
-            let idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
+            let look = mood == .typing ? PlaceholderCharacter.atDesk(character.outfit) : character.outfit
+            let figure = try PlaceholderCharacter.figure(wearing: look)
+            let idle =
+                try mood == .typing
+                ? PlaceholderCharacter.typing(persona: character.persona)
+                : PlaceholderCharacter.teary(persona: character.persona)
             if let player {
                 try player.wear(figure, idle: idle)
             } else {
