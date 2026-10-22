@@ -120,11 +120,13 @@ public struct TodayView: View {
                         model.pick(kind)
                     }
                     .padding(.bottom, Space.l)
-                    // Room for the app's tab bar, which sits above this screen.
+                    // Room for the app's tab bar, which sits above this screen, measured from the
+                    // screen's bottom edge as the design does.
                     Color.clear
                         .frame(height: Sizing.tabBar + Sizing.tabBarBottom)
                         .accessibilityHidden(true)
                 }
+                .ignoresSafeArea(edges: .bottom)
                 .transition(.opacity)
             }
         }

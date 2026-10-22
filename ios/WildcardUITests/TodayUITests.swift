@@ -45,6 +45,12 @@ final class TodayUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(post.frame.minY, 44, "发布 slid under the status bar: \(post.frame)")
 
         post.tap()
+        // Frames of the check-in moment, named with when each was taken, for a recording of it.
+        let posted = Date()
+        for frame in 0..<12 {
+            let after = Int(Date().timeIntervalSince(posted) * 1000)
+            keepScreenshot(named: String(format: "16-moment-%02d-%04dms", frame, after))
+        }
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after posting")
         XCTAssertTrue(bubble.label.contains("晨跑 5 公里，腿还在"))
@@ -231,7 +237,7 @@ final class TodayUITests: XCTestCase {
         mine.tap()
         XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
         settle()
-        keepScreenshot(named: "13b-today-my-week")
+        keepScreenshot(named: "13-today-my-week")
         // Leave the card as the other tests expect it.
         app.buttons["squadcard.page.squad"].tap()
     }
