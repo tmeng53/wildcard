@@ -111,7 +111,7 @@ export async function squadToday(
   const me = members.find(({ member }) => member === viewer);
   if (me === undefined) throw new SquadNotJoinedError(squad);
 
-  const [squadCheckIns, mine, myLifetimeTrainedDays] = await Promise.all([
+  const [squadCheckIns, mine, myTotals] = await Promise.all([
     store.listForSquad({
       squad,
       members: memberIds,
@@ -119,7 +119,7 @@ export async function squadToday(
       to: members.map(({ week }) => week.to).reduce((a, b) => (a > b ? a : b)),
     }),
     store.listForMember({ member: viewer, from: me.week.from, to: me.week.to }),
-    store.countTrainedDays(viewer),
+    store.totals(viewer),
   ]);
 
   const rows = members.map(({ member, day, week, plan }) => {
@@ -152,7 +152,7 @@ export async function squadToday(
       trainedDays: trainedDays(mine, me.week.days),
       plannedDays: plannedTrainingDays(me.plan),
     },
-    myLifetimeTrainedDays,
+    myLifetimeTrainedDays: myTotals.trainedDays,
     squadWeek: {
       trainedDays: rows.reduce((sum, { trained }) => sum + trained, 0),
       plannedDays: rows.reduce((sum, { planned }) => sum + planned, 0),

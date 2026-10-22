@@ -17,7 +17,14 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { PhotoPath } from '../ports.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -46,6 +53,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
       replies: createPostgresReplyStore(db),
@@ -62,8 +70,13 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     push: pushOn(db),
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     weeklyAwards: unusedWeeklyAwards,
+    aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),
