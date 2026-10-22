@@ -30,6 +30,7 @@ extension Catalog {
         }
         return Catalog(
             species: choices.species, variants: variants, props: choices.props, swatches: swatches,
-            originals: originals, defaults: try PlaceholderCharacter.rig().defaults)
+            originals: originals,
+            defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) })
     }
 }
