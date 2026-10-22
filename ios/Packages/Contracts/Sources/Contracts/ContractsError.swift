@@ -38,6 +38,12 @@ public enum ContractsError: Error, Equatable, Sendable {
     case catchphraseLength(Int)
     /// A catchphrase with a line break; it is one line.
     case multilineCatchphrase
+    /// A nickname that is empty or longer than `Nickname.maxLength` characters.
+    case nicknameLength(Int)
+    /// A nickname with a line break, tab or other control character.
+    case multilineNickname
+    /// A nickname with nothing visible in it, or with a text-direction control.
+    case invisibleNickname
     /// A timestamp that isn't ISO 8601.
     case invalidTimestamp(String)
 }

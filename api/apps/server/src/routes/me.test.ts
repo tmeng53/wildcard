@@ -173,7 +173,11 @@ describe('PUT /me/profile', () => {
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: 'America/Los_Angeles', catchphrase: null } },
+      {
+        version: 1,
+        userId,
+        profile: { timeZone: 'America/Los_Angeles', catchphrase: null },
+      },
     ]);
   });
 
@@ -185,7 +189,11 @@ describe('PUT /me/profile', () => {
     expect(await putProfile(token, moved)).toStrictEqual([200, moved]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: 'America/Toronto', catchphrase: null } },
+      {
+        version: 1,
+        userId,
+        profile: { timeZone: 'America/Toronto', catchphrase: null },
+      },
     ]);
   });
 
@@ -231,6 +239,121 @@ describe('PUT /me/profile', () => {
       version: 1,
       timeZone: 'America/Los_Angeles',
       catchphrase,
+    });
+    expect([status, z.object({ reason: z.string() }).parse(problemBody).reason]).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+  });
+
+  /** A look as the character editor makes one: a cat with a hoodie, a swatch and a persona. */
+  const look = {
+    persona: 'deadpan',
+    variants: { body: 'tuxedo', top: 'hoodie', prop: 'racket' },
+    colors: { top: '#2D5BA0' },
+  };
+
+  it('saves the character with its nickname trimmed, and the next save replaces or clears it', async () => {
+    const { token, userId } = await signUp();
+    const zone = 'America/Los_Angeles';
+    // 12 characters, an emoji with a skin tone among them.
+    const nickname = '早八跑团的小周同学👍🏽冲';
+    const saved = { version: 1, timeZone: zone, catchphrase: null, character: { nickname, look } };
+    expect(
+      await putProfile(token, { ...saved, character: { nickname: ` ${nickname}\n`, look } }),
+    ).toStrictEqual([200, saved]);
+    expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
+      200,
+      {
+        version: 1,
+        userId,
+        profile: { timeZone: zone, catchphrase: null, character: { nickname, look } },
+      },
+    ]);
+    // A new look in place of the old one: slots and colors it leaves out are gone.
+    const dog = { persona: 'energetic', variants: { body: 'shiba' }, colors: {} };
+    expect(
+      await putProfile(token, { ...saved, character: { nickname: '小周', look: dog } }),
+    ).toStrictEqual([200, { ...saved, character: { nickname: '小周', look: dog } }]);
+    // The body is the whole profile, so leaving the character out clears it.
+    expect(await putProfile(token, { version: 1, timeZone: zone })).toStrictEqual([
+      200,
+      { version: 1, timeZone: zone, catchphrase: null },
+    ]);
+    expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
+      200,
+      { version: 1, userId, profile: { timeZone: zone, catchphrase: null } },
+    ]);
+  });
+
+  it('takes art ids it has never seen, so new art needs no API change', async () => {
+    const { token } = await signUp();
+    const character = {
+      nickname: 'Ann',
+      look: {
+        persona: 'gym-rat2',
+        variants: { body: 'axolotl', shoes: 'climbing-shoes', wings: 'tiny' },
+        colors: { shoes: '#FFD400' },
+      },
+    };
+    expect(
+      await putProfile(token, { version: 1, timeZone: 'UTC', catchphrase: null, character }),
+    ).toStrictEqual([200, { version: 1, timeZone: 'UTC', catchphrase: null, character }]);
+  });
+
+  it.each([
+    ['a nickname over 12 characters', { nickname: '一二三四五六七八九十一二三', look }],
+    ['a blank nickname', { nickname: ' \u3000 ', look }],
+    ['a nickname on two lines', { nickname: '小\n周', look }],
+    ['a nickname with a tab', { nickname: '小\t周', look }],
+    ['a nickname with a link', { nickname: '看abc.com', look }],
+    ['no nickname', { look }],
+    ['no look', { nickname: '小周' }],
+    ['a look with no body', { nickname: '小周', look: { ...look, variants: { top: 'hoodie' } } }],
+    ['a look with no persona', { nickname: '小周', look: { variants: look.variants, colors: {} } }],
+    [
+      'a color for a slot it doesn’t wear',
+      { nickname: '小周', look: { ...look, colors: { hair: '#2D5BA0' } } },
+    ],
+    [
+      'a color for a slot named like an object property',
+      { nickname: '小周', look: { ...look, colors: { constructor: '#2D5BA0' } } },
+    ],
+    [
+      'a color that isn’t #RRGGBB in capitals',
+      { nickname: '小周', look: { ...look, colors: { top: '#2d5ba0' } } },
+    ],
+    ['a color by name', { nickname: '小周', look: { ...look, colors: { top: 'blue' } } }],
+    ['an id with capitals', { nickname: '小周', look: { ...look, variants: { body: 'Tuxedo' } } }],
+    [
+      'an id that is a path',
+      { nickname: '小周', look: { ...look, variants: { body: '../peach' } } },
+    ],
+    [
+      'more than 24 slots',
+      {
+        nickname: '小周',
+        look: {
+          ...look,
+          variants: Object.fromEntries(
+            ['body', ...Array.from({ length: 24 }, (_, index) => `slot${String(index)}`)].map(
+              (slot) => [slot, 'a'],
+            ),
+          ),
+          colors: {},
+        },
+      },
+    ],
+    ['an unknown field in the look', { nickname: '小周', look: { ...look, weight: 60 } }],
+    // Left out, not null, clears it: the generated Swift client never sends null.
+    ['null', null],
+  ])('refuses a character with %s', async (_case, character) => {
+    const { token } = await signUp();
+    const [status, problemBody] = await putProfile(token, {
+      version: 1,
+      timeZone: 'America/Los_Angeles',
+      catchphrase: null,
+      character,
     });
     expect([status, z.object({ reason: z.string() }).parse(problemBody).reason]).toStrictEqual([
       400,

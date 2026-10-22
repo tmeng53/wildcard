@@ -60,10 +60,12 @@ public struct WildcardAPI: Sendable {
         let saved = try await call {
             try await client.putMyProfile(
                 body: .json(
-                    .init(version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text))
+                    .init(
+                        version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text,
+                        character: profile.character.map(Components.Schemas.Character.init)))
             ).ok.body.json
         }
-        return try Profile(timeZone: saved.timeZone, catchphrase: saved.catchphrase)
+        return try Profile(timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character)
     }
 
     // MARK: - Check-ins
@@ -197,23 +199,52 @@ public struct Profile: Hashable, Sendable {
     /// What their character shouts when the squad cheers a teammate's 练了. Nil until they pick
     /// one, and the app uses their persona's own line.
     public let catchphrase: Catchphrase?
+    /// Their nickname and character's look. Nil until they make it, right after signing in.
+    /// A save without it clears it, since the profile is saved whole.
+    public let character: MemberCharacter?
 
-    public init(timeZone: TimeZone, catchphrase: Catchphrase? = nil) {
+    public init(timeZone: TimeZone, catchphrase: Catchphrase? = nil, character: MemberCharacter? = nil) {
         self.timeZone = timeZone
         self.catchphrase = catchphrase
+        self.character = character
     }
 
-    init(timeZone identifier: String, catchphrase: String?) throws(APIError) {
+    init(timeZone identifier: String, catchphrase: String?, character: Components.Schemas.Character?)
+        throws(APIError)
+    {
         guard let timeZone = TimeZone(identifier: identifier) else { throw .unreadableResponse }
-        self.init(
-            timeZone: timeZone,
-            catchphrase: try catchphrase.map { text throws(APIError) in
-                do { return try Catchphrase(text) } catch { throw .unreadableResponse }
-            })
+        do {
+            self.init(
+                timeZone: timeZone,
+                catchphrase: try catchphrase.map { text throws(ContractsError) in try Catchphrase(text) },
+                character: try character.map { wire throws(ContractsError) in try MemberCharacter(wire) })
+        } catch {
+            throw .unreadableResponse
+        }
     }
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
-        try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase)
+        try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character)
+    }
+}
+
+extension MemberCharacter {
+    init(_ wire: Components.Schemas.Character) throws(ContractsError) {
+        self.init(
+            nickname: try Nickname(wire.nickname),
+            look: CharacterLook(
+                persona: wire.look.persona, variants: wire.look.variants.additionalProperties,
+                colors: wire.look.colors.additionalProperties))
+    }
+}
+
+extension Components.Schemas.Character {
+    init(_ character: MemberCharacter) {
+        self.init(
+            nickname: character.nickname.text,
+            look: .init(
+                persona: character.look.persona, variants: .init(additionalProperties: character.look.variants),
+                colors: .init(additionalProperties: character.look.colors)))
     }
 }
 
