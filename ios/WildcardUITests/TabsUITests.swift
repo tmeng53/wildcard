@@ -27,12 +27,10 @@ final class TabsUITests: XCTestCase {
         keepScreenshot(named: "30-tabs-today")
 
         let upcoming = app.staticTexts["tab.upcoming"]
-        for (tab, title) in [("tab.feed", "动态")] {
-            app.buttons[tab].tap()
-            waitFor(app.buttons[tab], "isSelected == true", "\(tab) didn't open")
-            XCTAssertEqual(upcoming.label, title, "\(tab) shows another tab's screen")
-            XCTAssertFalse(checkIn.exists, "今天 still shows under \(tab)")
-        }
+        app.buttons["tab.feed"].tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "tab.feed didn't open")
+        XCTAssertEqual(upcoming.label, "动态", "tab.feed shows another tab's screen")
+        XCTAssertFalse(checkIn.exists, "今天 still shows under tab.feed")
         app.buttons["tab.schedule"].tap()
         waitFor(app.buttons["tab.schedule"], "isSelected == true", "出赛表 didn't open")
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 shows another tab's screen")

@@ -18,7 +18,7 @@ struct PosterContent: Equatable {
     /// The bottom right of the poster.
     enum Tally: Equatable {
         /// This week (本周 2/5) or a past one (练了 4/5): days trained against days planned.
-        case trained(Int, of: Int, isPast: Bool)
+        case trained(Int, planned: Int, isPast: Bool)
         /// Next week: 5 练 2 休.
         case planned(train: Int, rest: Int)
     }
@@ -80,8 +80,8 @@ struct PosterContent: Equatable {
         let planned = days.count { $0 != .rest }
         switch tense {
         case .upcoming: tally = .planned(train: planned, rest: days.count - planned)
-        case .current: tally = .trained(sheet.trainedDays, of: planned, isPast: false)
-        case .past: tally = .trained(sheet.trainedDays, of: planned, isPast: true)
+        case .current: tally = .trained(sheet.trainedDays, planned: planned, isPast: false)
+        case .past: tally = .trained(sheet.trainedDays, planned: planned, isPast: true)
         }
     }
 

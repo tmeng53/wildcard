@@ -32,7 +32,7 @@ struct PosterContentTests {
             sheet: try sheet(monday), board: board, nickname: "Tracy", openTitle: nil, fuelOpen: true)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
         #expect(content.lanes.map(\.isEditable) == [false, false, false, false, true, true, true])
-        #expect(content.tally == .trained(2, of: 5, isPast: false))
+        #expect(content.tally == .trained(2, planned: 5, isPast: false))
         #expect(content.titles.isEmpty, "titles wait for the week's awards")
         #expect(!content.fuelOpen, "this week's goals stay shut")
         #expect(content.weekEnd == Self.day("2026-10-25"))
@@ -67,7 +67,7 @@ struct PosterContentTests {
             sheet: try sheet(last), board: board, nickname: "Tracy", openTitle: titles[0], fuelOpen: true)
         #expect(content.titles == titles)
         #expect(content.openTitle == titles[0])
-        #expect(content.tally == .trained(2, of: 5, isPast: true))
+        #expect(content.tally == .trained(2, planned: 5, isPast: true))
         #expect(!content.fuelOpen)
         #expect(content.lanes.allSatisfy { !$0.isEditable })
     }

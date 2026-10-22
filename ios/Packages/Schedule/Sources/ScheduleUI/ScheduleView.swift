@@ -179,69 +179,18 @@ public struct ScheduleView: View {
                 if store.board?.tense == .upcoming {
                     CountdownCard(store: store)
                 } else {
-                    counts(sheet)
+                    ScheduleCounts(store: store, sheet: sheet)
                 }
             case .dayPicks(let index):
-                dayPicks(sheet, index)
+                DayPicks(store: store, sheet: sheet, index: index, onPick: model.pick, onRest: model.rest) {
+                    picksAll = true
+                }
             case .fuel:
                 fuelPicks(sheet)
             }
-            note
+            PanelNote(model: model)
         }
         .transition(.opacity)
-    }
-
-    private func counts(_ sheet: WeekSheet) -> some View {
-        let isPast = store.board?.tense == .past
-        return HStack(alignment: .top, spacing: Space.cardGap) {
-            if isPast {
-                CountCard(
-                    label: Text("这周练了", bundle: .module), count: sheet.trainedDays, goal: sheet.plannedDays,
-                    unit: Text("天", bundle: .module)
-                )
-                .accessibilityIdentifier("schedule.count.week")
-            } else {
-                CountCard(
-                    label: Text("一共练了", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
-                    unit: Text("天", bundle: .module)
-                )
-                .accessibilityIdentifier("schedule.count.lifetime")
-            }
-            if let squad = sheet.squad {
-                CountCard(
-                    label: isPast ? Text("小队训练", bundle: .module) : Text("本周小队训练", bundle: .module),
-                    count: squad.trained, goal: squad.planned, unit: Text("次", bundle: .module)
-                )
-                .accessibilityIdentifier("schedule.count.squad")
-            }
-        }
-    }
-
-    private func dayPicks(_ sheet: WeekSheet, _ index: Int) -> some View {
-        let day = sheet.weekStart.adding(days: index)
-        let plan = sheet.plan[index]
-        return VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(
-                Text("\(ScheduleLabels.weekday(day)) · \(ScheduleLabels.shortDate(day))", bundle: .module))
-            FlowRow {
-                ForEach(store.suggestedActivities, id: \.key) { activity in
-                    PickPill(activity.name, systemImage: activity.symbol, isSelected: plan == .train(activity)) {
-                        model.pick(activity)
-                    }
-                    .accessibilityIdentifier("schedule.pick.\(activity.key)")
-                }
-                if store.board?.offersRest == true {
-                    PickPill(Text("休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
-                        model.rest()
-                    }
-                    .accessibilityIdentifier("schedule.pick.rest")
-                }
-                PickPill(Text("更多", bundle: .module), systemImage: "magnifyingglass", isSelected: false) {
-                    picksAll = true
-                }
-                .accessibilityIdentifier("schedule.pick.more")
-            }
-        }
     }
 
     private var selectedActivity: Activity {
@@ -273,34 +222,6 @@ public struct ScheduleView: View {
                 .opacity(full ? 0.4 : 1)
                 .accessibilityIdentifier("schedule.fuel.own")
             }
-        }
-    }
-
-    /// What became of the last save or 存图, for a moment.
-    @ViewBuilder
-    private var note: some View {
-        if model.saving == .saved {
-            Text("存好了，去相册看看", bundle: .module)
-                .noteStyle(theme)
-                .accessibilityIdentifier("schedule.saved")
-        } else if model.saving == .notAllowed {
-            HStack(spacing: Space.xs) {
-                Text("要先允许存到相册", bundle: .module)
-                    .noteStyle(theme)
-                if let settings = URL(string: UIApplication.openSettingsURLString) {
-                    Link(destination: settings) {
-                        Text("去设置", bundle: .module)
-                    }
-                    .buttonStyle(TextButtonStyle(.plain))
-                }
-            }
-        } else if model.saving == .failed {
-            Text("没存上，再试一次", bundle: .module)
-                .noteStyle(theme)
-        } else if let failure = store.failure {
-            ScheduleLabels.failure(failure)
-                .noteStyle(theme)
-                .accessibilityIdentifier("schedule.failure")
         }
     }
 
@@ -338,79 +259,6 @@ public struct ScheduleView: View {
             ownFuel = ""
             typingFuel = false
         }
-    }
-}
-
-/// A label over a number and its unit, on a grey card: 一共练了 46 天, 本周小队训练 14/22 次.
-private struct CountCard: View {
-    let label: Text
-    let count: Int
-    let goal: Int?
-    let unit: Text
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(label)
-            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                Score(count: count, goal: goal, size: .card)
-                unit
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card(on: .page)
-        .accessibilityElement(children: .combine)
-    }
-}
-
-/// Next week: how long until it starts, ticking every second, and the Monday it starts on.
-private struct CountdownCard: View {
-    let store: ScheduleStore
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: Space.labelGap) {
-                    SectionLabel(Text("离开赛还有", bundle: .module))
-                    if let left = store.untilNextWeek {
-                        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                            Score(count: left.days, size: .card)
-                            Text("天", bundle: .module)
-                                .typeStyle(TypeRamp.footnote)
-                                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            Text(
-                                verbatim: String(format: "%02d:%02d:%02d", left.hours, left.minutes, left.seconds)
-                            )
-                            .typeStyle(TypeRamp.scoreCard)
-                            .monospacedDigit()
-                            .foregroundStyle(Color(role: .fgDefault, in: theme))
-                            .padding(.leading, Space.xs - 2)
-                        }
-                    }
-                }
-                Spacer(minLength: Space.xs)
-                if let start = store.shownWeek {
-                    Text("周一 \(ScheduleLabels.shortDate(start))", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card(on: .page)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("schedule.countdown")
-    }
-}
-
-extension View {
-    /// A short note under the poster: what just happened.
-    fileprivate func noteStyle(_ theme: SceneTheme) -> some View {
-        typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .fgMuted, in: theme))
     }
 }
 #endif
