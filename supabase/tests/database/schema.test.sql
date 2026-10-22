@@ -1,7 +1,7 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(21);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -124,6 +124,21 @@ select lives_ok(
 );
 select is(
   (select time_zone from public.profiles where member_id = 'a0000000-0000-0000-0000-000000000001'), 'America/Toronto', 'the change is kept'
+);
+-- A character is a nickname and a versioned look together.
+select throws_ok(
+  $$update public.profiles set nickname = '安' where member_id = 'a0000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a nickname without a look is refused'
+);
+select throws_ok(
+  $$update public.profiles set nickname = '安', look = '{"persona": "deadpan"}'
+    where member_id = 'a0000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a look without a numeric version is refused'
+);
+select lives_ok(
+  $$update public.profiles set nickname = '安', look = '{"version": 1, "persona": "deadpan"}'
+    where member_id = 'a0000000-0000-0000-0000-000000000001'$$,
+  'a nickname and a versioned look are saved together'
 );
 delete from auth.users where id = 'a0000000-0000-0000-0000-000000000001';
 select is(

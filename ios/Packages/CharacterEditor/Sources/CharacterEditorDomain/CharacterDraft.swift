@@ -1,5 +1,6 @@
 import AvatarArt
 import AvatarDomain
+import Contracts
 import Foundation
 
 /// The character being made: what each slot wears and its color, the persona, the nickname,
@@ -17,8 +18,8 @@ public struct CharacterDraft: Hashable, Sendable {
 
     /// How many looks undo goes back.
     public static let historyLimit = 30
-    /// The most characters a nickname may have.
-    public static let nicknameLimit = 12
+    /// The most characters a nickname may have: the API's.
+    public static let nicknameLimit = Nickname.maxLength
 
     /// A slot the look leaves out starts on what the rig draws there, so the screen shows it
     /// picked.
@@ -53,11 +54,9 @@ public struct CharacterDraft: Hashable, Sendable {
 
     public var canUndo: Bool { !history.isEmpty }
 
-    /// The nickname to save: trimmed, 1 to 12 characters; nil while it isn't one.
+    /// The nickname to save, by the API's rule; nil while it isn't one.
     public var name: String? {
-        let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed.count <= Self.nicknameLimit else { return nil }
-        return trimmed
+        try? Nickname(nickname).text
     }
 
     /// Wears `variant` in `slot`, or nothing there when nil. A color stays when the new

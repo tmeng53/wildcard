@@ -1,18 +1,18 @@
 import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+import { mentionsSelfHarm } from '@wildcard/typed-text';
 
-import type { DraftReason, MemberId } from '../../domain/draft-request.js';
-import { mentionsSelfHarm } from '../../domain/draft-request.js';
+import type { DraftReason, MemberId, PromptMeme } from '../../domain/draft-request.js';
 import { ModelReply, outcomeOf, type DraftsOutcome } from '../../domain/drafts.js';
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
 import { DisclaimerDraftsUsedUpError, DisclaimerWriterUnavailableError } from '../../errors.js';
-import type { Clock, DraftAllowance, LanguageModel, MemesInUse } from '../../ports.js';
+import type { Clock, DraftAllowance, LanguageModel, MemesInUse, Random } from '../../ports.js';
 
 /** Batches a member may ask for in a day: the first and 5 换一批 (spec A4). */
 export const BATCHES_PER_DAY = 6;
 /** A day, for the allowance: the last 24 hours, so it needs no time zone. */
 const DAY_MS = 86_400_000;
-/** The most memes the prompt lists. */
-const MEMES_MAX = 8;
+/** How often a request gets one of this week's memes (Tracy, 2026-10-19). */
+export const MEME_CHANCE = 0.3;
 
 export interface WriteDisclaimerDraftsInput {
   readonly member: MemberId;
@@ -30,6 +30,7 @@ export async function writeDisclaimerDrafts(
     readonly memes: MemesInUse;
     readonly allowance: DraftAllowance;
     readonly clock: Clock;
+    readonly random: Random;
   },
   input: WriteDisclaimerDraftsInput,
 ): Promise<DraftsOutcome> {
@@ -45,12 +46,10 @@ export async function writeDisclaimerDrafts(
   if (reservation === undefined) throw new DisclaimerDraftsUsedUpError();
 
   try {
-    const memes = (await deps.memes())
-      .filter((meme) => meme.styles.includes(input.style))
-      .slice(0, MEMES_MAX);
+    const meme = await memeFor(deps, input.style);
     const reply = await deps.model.answer({
       instructions: INSTRUCTIONS,
-      prompt: promptFor({ reason: input.reason, style: input.style, memes }),
+      prompt: promptFor({ reason: input.reason, style: input.style, meme }),
       reply: ModelReply,
     });
     const outcome = outcomeOf(reply, input.reason);
@@ -65,4 +64,17 @@ export async function writeDisclaimerDrafts(
     await deps.allowance.release(reservation);
     throw error;
   }
+}
+
+/**
+ * One of this week's memes that suits the style, on MEME_CHANCE of requests, or none. Never the
+ * whole library: one meme at a time keeps memes in moderation and the prompt short.
+ */
+async function memeFor(
+  deps: { readonly memes: MemesInUse; readonly random: Random },
+  style: DisclaimerStyle,
+): Promise<PromptMeme | undefined> {
+  if (deps.random() >= MEME_CHANCE) return undefined;
+  const suited = (await deps.memes()).filter((meme) => meme.styles.includes(style));
+  return suited[Math.floor(deps.random() * suited.length)];
 }

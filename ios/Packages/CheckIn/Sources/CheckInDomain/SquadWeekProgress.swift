@@ -16,9 +16,4 @@ public struct SquadWeekProgress: Hashable, Sendable {
         guard goal > 0 else { return 0 }
         return min(Double(done) / Double(goal), 1)
     }
-
-    /// The same week after one more member-day of training.
-    public func addingTrainedDay() -> SquadWeekProgress {
-        SquadWeekProgress(done: done + 1, goal: goal)
-    }
 }

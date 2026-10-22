@@ -18,10 +18,18 @@ import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import {
   createApnsSender,
   createOffSender,
+  createPostgresDailyPushStore,
   createPostgresDeviceStore,
+  createPostgresSettingsStore,
   createPush,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  AwardsWriterUnavailableError,
+  createPostgresAwardsStore,
+  createWeeklyAwards,
+  type LanguageModel as AwardsModel,
+} from '@wildcard/weekly-awards';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
@@ -35,6 +43,7 @@ import {
 } from './adapters/supabase-auth.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -65,6 +74,25 @@ const model: LanguageModel =
       ? createOpenAILanguageModel({ apiKey: llm.apiKey, model: llm.model })
       : createAnthropicLanguageModel({ apiKey: llm.apiKey, model: llm.model });
 if (llm === undefined) log.info('no key for LLM_PROVIDER: AI drafts are off');
+// AWARDS_LLM_PROVIDER writes each squad's weekly awards, in a job nobody waits on: a longer
+// answer, given more time. Without its key the awards stay pending.
+const awardsLlm = config.awardsModel;
+const awardsOptions = { timeoutMs: 120_000, maxOutputTokens: 16_384 };
+const awardsModel: AwardsModel =
+  awardsLlm === undefined
+    ? {
+        answer: () =>
+          Promise.reject(
+            new AwardsWriterUnavailableError({
+              cause: new Error('No API key is set for AWARDS_LLM_PROVIDER'),
+            }),
+          ),
+      }
+    : awardsLlm.provider === 'openai'
+      ? createOpenAILanguageModel({ ...awardsLlm, ...awardsOptions })
+      : createAnthropicLanguageModel({ ...awardsLlm, ...awardsOptions });
+if (awardsLlm === undefined) log.info('no key for AWARDS_LLM_PROVIDER: weekly awards stay pending');
+const awards = createWeeklyAwards({ model: awardsModel, store: createPostgresAwardsStore(db) });
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 if (config.appleSignInKey === undefined) {
   log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
@@ -72,15 +100,28 @@ if (config.appleSignInKey === undefined) {
 const members = createMembers({ store: createPostgresProfileStore(db) });
 const push = createPush({
   store: createPostgresDeviceStore(db),
+  settings: createPostgresSettingsStore(db),
+  daily: createPostgresDailyPushStore(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
 // The admin tools get a database or a transaction of it: each change commits with its log row.
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
+if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+});
+const checkIns = createCheckIns({
+  store: createPostgresCheckInStore(db),
+  // Who is in which squad is the squads module's to keep: check-ins ask it.
+  membership: squads,
+  reactions: createPostgresReactionStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
+  photos,
+  calendarOf: memberCalendar(members),
+  clock: () => new Date(),
 });
 const app = createApp({
   db,
@@ -93,16 +134,7 @@ const app = createApp({
     config.appleSignInKey === undefined
       ? undefined
       : createAppleSignInRevoker(config.appleSignInKey),
-  checkIns: createCheckIns({
-    store: createPostgresCheckInStore(db),
-    // Who is in which squad is the squads module's to keep: check-ins ask it.
-    membership: squads,
-    reactions: createPostgresReactionStore(db),
-    plans: createPostgresWeeklyPlanStore(db),
-    photos,
-    calendarOf: memberCalendar(members),
-    clock: () => new Date(),
-  }),
+  checkIns,
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
@@ -133,9 +165,17 @@ const app = createApp({
       })),
     allowance: createPostgresDraftAllowance(db),
     clock: () => new Date(),
+    random: Math.random,
   }),
   push,
+  weeklyAwards: { awards, clock: () => new Date() },
   log,
+  jobs: {
+    token: config.jobsToken,
+    // Each kind of interaction the daily push counts comes from one of these.
+    interactions: [reactionInteractions(checkIns)],
+    clock: () => new Date(),
+  },
   admin: {
     admins: adminsOn,
     tools: (scope) => [

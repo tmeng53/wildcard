@@ -1,3 +1,4 @@
+import CheckInDomain
 import CheckInUI
 import Foundation
 import UIKit
@@ -44,7 +45,7 @@ enum LaunchOptions {
             }
         }
         guard let jpeg = image.jpegData(compressionQuality: 0.7) else { return nil }
-        return PreparedPhoto(jpeg: jpeg)
+        return PreparedPhoto(id: UUID(), jpeg: jpeg)
     }
 }
 

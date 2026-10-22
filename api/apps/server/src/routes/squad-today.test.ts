@@ -8,7 +8,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -19,8 +18,9 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -58,9 +58,11 @@ const app = createApp({
   }),
   members,
   squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+  weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
+  jobs: noJobs,
   admin: adminOn(),
 });
 
@@ -103,12 +105,18 @@ const isoTime: unknown = expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\
 /** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
 const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
 
-async function member(timeZone = 'UTC', catchphrase: string | null = null) {
+async function member(
+  timeZone = 'UTC',
+  {
+    catchphrase = null,
+    character,
+  }: { readonly catchphrase?: string | null; readonly character?: unknown } = {},
+) {
   const signedUp = await signUp();
   const saved = await call('PUT', {
     path: '/me/profile',
     token: signedUp.token,
-    body: { version: 1, timeZone, catchphrase },
+    body: { version: 1, timeZone, catchphrase, character },
   });
   expect(saved.status).toBe(200);
   return signedUp;
@@ -190,7 +198,7 @@ describe('GET /squads/{squadId}/today', () => {
   });
 
   it('shows squadmates each member’s catchphrase, and null for one who hasn’t picked one', async () => {
-    const [shouter, quiet] = [await member('UTC', '冲就完了🔥'), await member()];
+    const [shouter, quiet] = [await member('UTC', { catchphrase: '冲就完了🔥' }), await member()];
     const squad = await squadOf(shouter, quiet);
     const { status, body } = await call('GET', {
       path: `/squads/${squad}/today`,
@@ -203,6 +211,28 @@ describe('GET /squads/{squadId}/today', () => {
         { member: quiet.userId, catchphrase: null },
       ],
     });
+  });
+
+  it('shows squadmates each member’s nickname and look, and none for one who hasn’t made them', async () => {
+    const character = {
+      nickname: '小周',
+      look: {
+        persona: 'showoff',
+        variants: { body: 'peach', hair: 'bun' },
+        colors: { hair: '#3B2A20' },
+      },
+    };
+    const [made, notYet] = [await member('UTC', { character }), await member()];
+    const squad = await squadOf(made, notYet);
+    const { status, body } = await call('GET', {
+      path: `/squads/${squad}/today`,
+      token: notYet.token,
+    });
+    expect(status).toBe(200);
+    expect(body).toMatchObject({
+      members: [{ member: made.userId, character }, { member: notYet.userId }],
+    });
+    expect(body).not.toHaveProperty('members.1.character');
   });
 
   it('answers only the squad’s members', async () => {

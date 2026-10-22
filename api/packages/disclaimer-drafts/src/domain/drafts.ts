@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { graphemeCount } from '@wildcard/typed-text';
+import { graphemeCount, mentionsBodyMetrics } from '@wildcard/typed-text';
 
 import type { DraftReason } from './draft-request.js';
 
@@ -28,31 +28,6 @@ export type DraftsOutcome =
 const DRAFT_MIN = 15;
 const DRAFT_MAX = 80;
 
-/**
- * Words a draft never holds: no body metrics, calories or macros in v1. Matched case-blind, so
- * a draft that trips one falls back to the dice rather than reaching a member.
- */
-const BODY_WORDS = [
-  '体重',
-  '胖',
-  '瘦',
-  '身材',
-  '体脂',
-  '减肥',
-  '减脂',
-  '公斤',
-  '卡路里',
-  '热量',
-  '大卡',
-  '蛋白质',
-  '碳水',
-  '脂肪',
-  'bmi',
-  'calorie',
-  'kcal',
-  'macros',
-];
-
 /** Reasons this short may be echoed: a keyword is fine, the whole sentence isn't. */
 const ECHO_MIN = 4;
 
@@ -64,7 +39,7 @@ function isShowable(draft: string, reason: DraftReason): boolean {
     length <= DRAFT_MAX &&
     !/[\r\n\u2028\u2029]/u.test(draft) &&
     !/\p{Extended_Pictographic}/u.test(draft) &&
-    !BODY_WORDS.some((word) => draft.toLowerCase().includes(word)) &&
+    !mentionsBodyMetrics(draft) &&
     !(graphemeCount(reason) >= ECHO_MIN && draft.includes(reason))
   );
 }

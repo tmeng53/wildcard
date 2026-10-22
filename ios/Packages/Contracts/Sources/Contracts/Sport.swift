@@ -63,22 +63,12 @@ public struct CustomSport: Hashable, Sendable {
     public let name: String
 
     public init(_ name: String) throws(ContractsError) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard
-            !trimmed.unicodeScalars.contains(where: {
-                $0.properties.generalCategory == .control || $0.properties.isWhitespace && $0 != " " && $0 != "\u{3000}"
-            })
-        else { throw .multilineCustomSport }
-        guard (1...Self.maxLength).contains(trimmed.count) else { throw .customSportLength(trimmed.count) }
-        // A bidi control (U+202E flips what follows), or only format characters such as a lone
-        // zero-width joiner, shows as a blank or garbled label. Joiners inside 🏃‍♀️ are fine.
-        guard
-            !trimmed.unicodeScalars.contains(where: { $0.properties.isBidiControl }),
-            trimmed.unicodeScalars.contains(where: {
-                $0.properties.generalCategory != .format && !$0.properties.isWhitespace
-            })
-        else { throw .invisibleCustomSport }
-        self.name = trimmed
+        switch NameText.check(name, maxLength: Self.maxLength) {
+        case .success(let trimmed): self.name = trimmed
+        case .failure(.notOneLine): throw .multilineCustomSport
+        case .failure(.length(let length)): throw .customSportLength(length)
+        case .failure(.invisible): throw .invisibleCustomSport
+        }
     }
 }
 

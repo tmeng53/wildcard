@@ -21,6 +21,11 @@ export interface CheckInStore {
   listForSquad(
     query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },
   ): Promise<CheckInRecord[]>;
+  /**
+   * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
+   * each once.
+   */
+  squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
 }
@@ -48,6 +53,15 @@ export interface ReactionStore {
   list(checkIn: CheckInId): Promise<Reaction[]>;
   /** The reactions on each of these check-ins, oldest first; a check-in without any is left out. */
   listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Reaction[]>>;
+  /**
+   * Reactions left in `[since, until)` on any of the member's check-ins, oldest first, each with
+   * the squads that check-in went to.
+   */
+  receivedBy(query: {
+    readonly member: MemberId;
+    readonly since: Date;
+    readonly until: Date;
+  }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
 }
 
 /** Where uploaded photo files are kept. */

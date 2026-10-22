@@ -105,3 +105,14 @@ func customSportNameHasNoDirectionControls(control: String) {
             .dogWalk, .walkCommute, .bikeCommute, .deepClean, .moving, .strollerWalk, .gardening,
         ])
 }
+
+@Test func nicknameIsOneLineOfUpToTwelveCharacters() throws {
+    #expect(try Nickname("  早八跑团的小周同学👍🏽冲 ").text == "早八跑团的小周同学👍🏽冲")
+    #expect(throws: ContractsError.nicknameLength(13)) { try Nickname(String(repeating: "周", count: 13)) }
+    #expect(throws: ContractsError.nicknameLength(0)) { try Nickname(" \u{3000} ") }
+    #expect(throws: ContractsError.multilineNickname) { try Nickname("小\n周") }
+    #expect(throws: ContractsError.multilineNickname) { try Nickname("小\t周") }
+    #expect(throws: ContractsError.invisibleNickname) { try Nickname("\u{200D}") }
+    #expect(throws: ContractsError.invisibleNickname) { try Nickname("小\u{202E}周") }
+    #expect(try Nickname("Ann Lee").text == "Ann Lee")
+}

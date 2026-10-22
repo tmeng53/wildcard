@@ -27,17 +27,12 @@ public struct CharacterEditorView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                EditorHeader(model: model, context: context, onBack: onBack)
+            EditorHeader(model: model, context: context, onBack: onBack)
+            CharacterStage {
                 EditorStage(model: model)
             }
-            .background {
-                UnevenRoundedRectangle(
-                    bottomLeadingRadius: Radius.xl, bottomTrailingRadius: Radius.xl, style: .continuous
-                )
-                .fill(Color(role: .signatureWash, in: theme))
-                .ignoresSafeArea(edges: .top)
-            }
+            .frame(height: EditorStage.height)
+            .padding(.horizontal, Space.pageMargin)
             CategoryBar(
                 model.tabs.map {
                     CategoryBarItem(
@@ -48,7 +43,7 @@ public struct CharacterEditorView: View {
             .padding(.top, Space.s)
             ChoicesPanel(model: model)
         }
-        .background(Color(role: .canvas, in: theme))
+        .background(Color(role: .bgCanvas, in: theme))
         .safeAreaInset(edge: .bottom, spacing: 0) {
             DoneBar(context: context, result: model.result, onDone: onDone)
         }
@@ -56,104 +51,51 @@ public struct CharacterEditorView: View {
     }
 }
 
-/// Back or 取消 on the leading side, the sign-up step in the middle, undo and shuffle on the
-/// trailing side. The buttons are Liquid Glass, since they float over the scene.
+/// Back or 取消 on the leading side, the sign-up step segments in the middle, undo and shuffle
+/// on the trailing side.
 private struct EditorHeader: View {
     let model: CharacterEditorModel
     let context: EditorContext
     let onBack: () -> Void
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        ZStack {
-            if case .signUp(let step, let total) = context {
-                StepBar(step: step, total: total)
-            }
-            HStack(spacing: Space.xxs) {
-                switch context {
-                case .signUp:
-                    GlassIconButton(systemImage: "chevron.left", label: Text("返回", bundle: .module), action: onBack)
-                        .accessibilityIdentifier("editor.back")
-                case .profile:
-                    Button(action: onBack) {
-                        Text("取消", bundle: .module)
-                            .typeStyle(TypeRamp.body)
-                            .foregroundStyle(Color(role: .textPrimary, in: theme))
-                            .padding(.horizontal, Space.xs)
-                            .frame(minHeight: Sizing.minimumTapTarget)
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityIdentifier("editor.cancel")
+        HStack(spacing: Space.xs) {
+            switch context {
+            case .signUp:
+                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: onBack)
+                    .accessibilityIdentifier("editor.back")
+            case .profile:
+                Button(action: onBack) {
+                    Text("取消", bundle: .module)
                 }
+                .buttonStyle(TextButtonStyle(.plain))
+                .accessibilityIdentifier("editor.cancel")
+            }
+            if case .signUp(let step, let total) = context {
+                StepSegments(step: step, of: total)
+                    .padding(.horizontal, Space.xs)
+                    .accessibilityIdentifier("editor.steps")
+            } else {
                 Spacer(minLength: 0)
-                GlassIconButton(
-                    systemImage: "arrow.uturn.backward", label: Text("撤销", bundle: .module), action: { model.undo() }
-                )
+            }
+            HeaderButton(Text("撤销", bundle: .module), systemImage: "arrow.uturn.backward") { model.undo() }
                 .disabled(!model.draft.canUndo)
                 .accessibilityIdentifier("editor.undo")
-                GlassIconButton(systemImage: "dice", label: Text("随机换一个", bundle: .module), action: { model.shuffle() })
-                    .accessibilityIdentifier("editor.shuffle")
-            }
+            HeaderButton(Text("随机换一个", bundle: .module), systemImage: "dice") { model.shuffle() }
+                .accessibilityIdentifier("editor.shuffle")
         }
-        .padding(.horizontal, Space.s)
-        .frame(minHeight: Sizing.minimumTapTarget + Space.xxs)
+        .padding(.horizontal, Space.pageMargin)
+        .padding(.vertical, Space.xs)
     }
 }
 
-/// Four short bars, the steps done and this one in the scene's color.
-private struct StepBar: View {
-    let step: Int
-    let total: Int
-    @Environment(\.sceneTheme) private var theme
-    private let barHeight: Double = 5
-    private let width: Double = 150
-
-    var body: some View {
-        HStack(spacing: Space.xxs + 2) {
-            ForEach(1...max(total, 1), id: \.self) { index in
-                Capsule()
-                    .fill(Color(role: index <= step ? .signature : .divider, in: theme))
-                    .frame(height: barHeight)
-            }
-        }
-        .frame(width: width)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("第 \(step) 步，共 \(total) 步", bundle: .module))
-        .accessibilityIdentifier("editor.steps")
-    }
-}
-
-/// A round Liquid Glass button with a symbol, for controls over the scene.
-private struct GlassIconButton: View {
-    let systemImage: String
-    let label: Text
-    let action: () -> Void
-    @Environment(\.sceneTheme) private var theme
-    @Environment(\.isEnabled) private var isEnabled
-    private let glyph: Double = 18
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: glyph, weight: .semibold))
-                .foregroundStyle(Color(role: isEnabled ? .textPrimary : .textTertiary, in: theme))
-                .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                .contentShape(Circle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .glassEffect(.regular.interactive(), in: Circle())
-        .accessibilityLabel(label)
-    }
-}
-
-/// The finishing button on a frosted bar: 就这样 in sign-up, 保存 from 我. It waits for a
-/// nickname.
+/// The finishing button, full width on the page: 就这样 in sign-up, 保存 from 我. It waits
+/// for a nickname.
 private struct DoneBar: View {
     let context: EditorContext
     let result: EditedCharacter?
     let onDone: (EditedCharacter) -> Void
     @Environment(\.sceneTheme) private var theme
-    private let minimumWidth: Double = 200
 
     var body: some View {
         Button {
@@ -166,26 +108,15 @@ private struct DoneBar: View {
                     Text("就这样", bundle: .module)
                 }
             }
-            .typeStyle(TypeRamp.action)
-            .padding(.horizontal, Space.xl)
-            .frame(minWidth: minimumWidth)
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
         .disabled(result == nil)
         .accessibilityIdentifier("editor.done")
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.s)
         .padding(.bottom, Space.xs)
-        .background {
-            // Frost down to the screen's bottom edge, under the home indicator.
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .overlay(Color(Palette.white).opacity(Frost.cardFill))
-                .ignoresSafeArea(edges: .bottom)
-        }
-        .overlay(alignment: .top) {
-            Rectangle().fill(Color(role: .divider, in: theme)).frame(height: 1)
-        }
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
     }
 }
 #endif

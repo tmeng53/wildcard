@@ -2,10 +2,10 @@
 import DesignSystem
 import SwiftUI
 
-/// A thin track filled in the scene's progress color. It never turns red and stops at full.
-/// A fill too faint to hold its shape on white (gym's volt) gets a signature edge.
+/// A thin bar filled in ink on a subtle track. It never turns red and stops at full.
 public struct ProgressBar: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let fraction: Double
 
     /// `fraction` is clamped to 0...1.
@@ -14,21 +14,18 @@ public struct ProgressBar: View {
     }
 
     public var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color(role: .divider, in: theme))
-                Capsule()
-                    .fill(Color(role: .progressFill, in: theme))
-                    .overlay {
-                        if theme.colors.progressFill.contrastRatio(with: Palette.white) < 3 {
-                            Capsule().strokeBorder(Color(role: .signature, in: theme), lineWidth: 1)
-                        }
-                    }
-                    .frame(width: proxy.size.width * fraction)
+        Capsule()
+            .fill(Color(role: .bgSubtle, in: theme))
+            .overlay(alignment: .leading) {
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(Color(role: .fgDefault, in: theme))
+                        .frame(width: proxy.size.width * fraction)
+                }
             }
-        }
-        .frame(height: Space.xs)
-        .accessibilityHidden(true)
+            .frame(height: Sizing.progress)
+            .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: fraction)
+            .accessibilityHidden(true)
     }
 }
 #endif

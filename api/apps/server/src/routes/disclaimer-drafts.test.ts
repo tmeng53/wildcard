@@ -12,7 +12,6 @@ import {
   type LanguageModel,
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -24,9 +23,10 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database, and each provider's
 // adapter answering from recorded responses instead of the provider.
@@ -77,6 +77,7 @@ function appWith(model: LanguageModel) {
       memes: () => Promise.resolve([]),
       allowance: createPostgresDraftAllowance(db),
       clock: () => new Date(),
+      random: () => 0,
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     weeklyPlans: createWeeklyPlans({
@@ -85,8 +86,10 @@ function appWith(model: LanguageModel) {
       clock: () => new Date(),
     }),
     squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
-    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+    push: pushOn(db),
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
+    jobs: noJobs,
     admin: adminOn(),
   });
   return { app, logged };
