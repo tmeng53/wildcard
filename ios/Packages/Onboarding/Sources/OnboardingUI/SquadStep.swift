@@ -64,7 +64,7 @@ private struct JoinPanel: View {
             SectionLabel(Text("邀请码", bundle: .module))
             ZStack {
                 TextField(
-                    text: Binding(get: { model.squad.typedCode }, set: model.typeCode),
+                    text: Binding(get: { model.squad.typedCode }, set: { model.typeCode($0) }),
                     prompt: Text(verbatim: "")
                 ) {
                     Text("邀请码", bundle: .module)
@@ -227,7 +227,7 @@ private struct CreatePanel: View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
             SectionLabel(Text("小队名", bundle: .module))
             InputField(
-                text: Binding(get: { model.squad.typedName }, set: model.typeName),
+                text: Binding(get: { model.squad.typedName }, set: { model.typeName($0) }),
                 label: Text("小队名", bundle: .module), limit: SquadName.maxLength
             )
             .accessibilityIdentifier("squad.name")

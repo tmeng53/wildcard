@@ -103,7 +103,8 @@ final class SignUpUITests: XCTestCase {
         keepScreenshot(named: "48-signup-home")
     }
 
-    /// Making a squad, skipping sports and the week, in English.
+    /// Making a squad, skipping sports and the week, in English. Sign-up starts on a Monday, so
+    /// no day is over yet and the default plan reads 5/7.
     func testStartingASquadInEnglish() {
         let app = launch(language: "en")
         let signIn = app.buttons["signup.signIn"]
@@ -141,7 +142,9 @@ final class SignUpUITests: XCTestCase {
     private func launch(language: String) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", language, "-onboarding"]
+        app.launchArguments += [
+            "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-onboarding", "-uitest-monday",
+        ]
         app.launch()
         // Close the app when the test ends, so the next launch never has to stop it.
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }

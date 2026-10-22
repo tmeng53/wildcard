@@ -32,7 +32,8 @@ struct WildcardApp: App {
         if LaunchOptions.showsOnboarding {
             _signUp = State(
                 initialValue: SignUpModel(
-                    service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "", today: .now))
+                    service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "",
+                    today: LaunchOptions.signUpDay))
         }
     }
 
