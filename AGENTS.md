@@ -77,7 +77,9 @@ Landed: `Onboarding`, sign-up from the open screen to 上场: `OnboardingDomain`
 
 Landed: `Me`, the 我 tab: `MeDomain` (`MeModel`: the member's character, lifetime counts, squad and daily-push switch, signing out and deleting the account after confirming with Apple; the backend is its `MeService` port; pure Swift) and `MeUI` (我, the 注销账号 page, and an in-memory member the app passes until the API adapter lands). The app target's `MainTabs` puts one `TabBar` over 今天, 动态, 出赛表 and 我; a tab's full-screen step (writing a check-in) hides it.
 
-Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`, `Poster`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
+Landed: `Schedule`, the 出赛表 tab: `ScheduleDomain` (pure Swift: `WeekBoard`, what a tap does in a past, this or next week (past weeks read-only; this week keeps today and the days before, and swaps a lifted rest day with a training day so the rest count stays; next week changes any day), and `ScheduleStore`, which loads the weeks back to the member's first, saves plans one at a time and puts a refused change back; the 饮食小目标 change only next week) and `ScheduleUI` (the 3:4 poster drawn at 360 × 480 points, so the screen and the 存图 picture are one drawing, saved to Photos add-only; the award titles from the weekly awards as stickers). It reaches the server through its `ScheduleBackend` port; until its adapter lands the app passes `InMemoryScheduleBackend`, which keeps the API's rules.
+
+Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
 
 ## Domain rules
 
