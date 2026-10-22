@@ -1,4 +1,4 @@
-/// Spacing on a 4-point grid.
+/// Spacing: seven steps on a 4-point grid, and the named uses screens take them by.
 public enum Space {
     public static let xxs: Double = 4
     public static let xs: Double = 8
@@ -7,68 +7,109 @@ public enum Space {
     public static let l: Double = 24
     public static let xl: Double = 32
     public static let xxl: Double = 48
-    /// Side margin of a full-width screen.
-    public static let gutter: Double = 16
+
+    /// The page's left and right margin.
+    public static let pageMargin: Double = m
+    /// Inside a card.
+    public static let cardPadding: Double = m
+    /// Between cards.
+    public static let cardGap: Double = s
+    /// From a label to what it labels.
+    public static let labelGap: Double = xs
+    /// Between sections.
+    public static let sectionGap: Double = xl
+    /// From the header to the first block of content.
+    public static let headerGap: Double = l
 }
 
-/// Corner radii, drawn as continuous (squircle) corners.
+/// Corner radii, drawn as continuous (squircle) corners: crisp, not soft. Only buttons are
+/// capsules.
 public enum Radius {
-    /// Choice tiles in a picker grid.
-    public static let tile: Double = 13
-    /// Sport chips.
-    public static let s: Double = 14
-    /// Draft cards and text fields.
-    public static let m: Double = 16
-    /// Primary buttons.
-    public static let button: Double = 18
-    /// The squad banner.
-    public static let l: Double = 24
-    /// Highlight cards and glass cards.
-    public static let xl: Double = 26
+    /// Thumbnails and small pictures.
+    public static let thumbnail: Double = 6
+    /// Pick rows, picture tiles and inputs.
+    public static let pick: Double = 10
+    /// Cards and the character's stage.
+    public static let card: Double = 12
 
-    /// Capsules (打卡, tabs, chips): half the height, so the ends are fully round.
+    /// Capsules (buttons, pills, tags): half the height, so the ends are fully round.
     public static func capsule(height: Double) -> Double {
         height / 2
     }
+
+    /// The radius of a shape inset in another, so the two curves stay concentric.
+    public static func concentric(outer: Double, inset: Double) -> Double {
+        max(outer - inset, 0)
+    }
 }
 
-/// Fixed control sizes, in points at the default Dynamic Type size.
+/// Fixed sizes, in points at the default Dynamic Type size.
 public enum Sizing {
-    /// Height of the 打卡 glass button.
-    public static let checkInHeight: Double = 50
-    /// Height of a check-in capsule.
-    public static let capsuleHeight: Double = 44
-    /// The frame of the icon inside a check-in capsule.
-    public static let capsuleIcon: Double = 22
-    /// The SF Symbol point size drawn inside `capsuleIcon`.
-    public static let capsuleGlyph: Double = 17.6
+    // MARK: Controls: three heights
+
+    /// The primary button, one per screen.
+    public static let primaryControl: Double = 52
+    /// Ordinary buttons, inputs and header buttons.
+    public static let control: Double = 44
+    /// Tags, pills and switches. Their tap target stays `minimumTapTarget`.
+    public static let compactControl: Double = 36
     /// The smallest tap target, even when a control draws smaller.
     public static let minimumTapTarget: Double = 44
 
-    // MARK: Pickers
+    // MARK: Picks
 
-    /// Height of a search field.
-    public static let searchFieldHeight: Double = 44
-    /// The drawn height of a compact choice pill. Its tap target stays `minimumTapTarget`.
-    public static let pillHeight: Double = 36
-    /// The SF Symbol point size inside a choice pill.
-    public static let pillGlyph: Double = 15
-    /// The gap between a pill's icon, label and cross.
-    public static let pillGap: Double = 6
-    /// A pill's padding at its leading edge, and at its trailing edge when it ends in a cross.
-    public static let pillInset: Double = 10
-    /// The search field's padding before its magnifier.
-    public static let fieldInset: Double = 14
-    /// Height of a choice tile in a picker grid.
-    public static let tileHeight: Double = 86
-    /// The SF Symbol point size on a choice tile.
-    public static let tileGlyph: Double = 28
-    /// The solid check badge in the corner of a selected tile.
-    public static let checkBadge: Double = 18
-    /// The drawn height of the selected item's pill in a category bar.
-    public static let categoryPillHeight: Double = 34
-    /// Leading and trailing padding of every category bar item, so the items space evenly.
-    public static let categoryItemInset: Double = 14
-    /// The signature border of a selected pill or tile.
-    public static let selectionStroke: Double = 1.75
+    /// A pick row: one choice in a list or a two-column grid.
+    public static let pickRow: Double = 52
+    /// The solid check on a selected pick.
+    public static let checkBadge: Double = 20
+    /// The accent border of a selected pick.
+    public static let selectionStroke: Double = 1.5
+    /// The border of an unselected pick, a field or a hairline divider.
+    public static let hairline: Double = 1
+    /// A color swatch.
+    public static let swatch: Double = 32
+
+    // MARK: Icons
+
+    /// Icons in rows, picks and header buttons.
+    public static let icon: Double = 20
+    /// Icons inside pills and fields.
+    public static let smallIcon: Double = 15
+
+    // MARK: Check-in kinds
+
+    /// A check-in kind button: a circle.
+    public static let kindButton: Double = 52
+    /// The icon on a kind button and on a check-in capsule.
+    public static let kindIcon: Double = 22
+    /// A tag's height.
+    public static let tag: Double = 28
+
+    // MARK: Progress and status
+
+    /// A progress bar's and a step segment's thickness.
+    public static let progress: Double = 4
+    /// The width of a status ring.
+    public static let ringWidth: Double = 3
+    /// The white gap between a status ring and the avatar inside it.
+    public static let ringGap: Double = 2
+
+    // MARK: Tab bar
+
+    /// The floating tab bar's height; it is a capsule.
+    public static let tabBar: Double = 62
+    /// One tab: its icon over its name.
+    public static let tabItemWidth: Double = 76
+    public static let tabItemHeight: Double = 54
+    /// From the tab bar to the bottom of the screen.
+    public static let tabBarBottom: Double = 26
+
+    // MARK: The character: three sizes only
+
+    /// A head in an avatar circle.
+    public static let characterHead: Double = 28
+    /// From the waist up, beside a task title.
+    public static let characterBust: Double = 84
+    /// Full height, on 我 and the stage.
+    public static let characterFull: Double = 132
 }

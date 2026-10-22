@@ -1,12 +1,32 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "1 人请假": {
+    "一": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "1 day off"
+            "value": "M"
+          }
+        }
+      }
+    },
+    "三": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "W"
+          }
+        }
+      }
+    },
+    "下一步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
           }
         }
       }
@@ -17,6 +37,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Neutrals"
+          }
+        }
+      }
+    },
+    "主按钮，一屏一个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primary button, one per screen"
+          }
+        }
+      }
+    },
+    "主按钮：当前场景色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primary button: the scene's color"
+          }
+        }
+      }
+    },
+    "主操作、选中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primary action, selected"
+          }
+        }
+      }
+    },
+    "主文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
+          }
+        }
+      }
+    },
+    "二": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T"
+          }
+        }
+      }
+    },
+    "五": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "F"
           }
         }
       }
@@ -41,6 +121,16 @@
         }
       }
     },
+    "今天游了 2 公里，水有点凉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swam 2 km today, the water was a bit cold"
+          }
+        }
+      }
+    },
     "今日请假条": {
       "localizations": {
         "en": {
@@ -51,12 +141,42 @@
         }
       }
     },
-    "会开到第五个，我已经分不清自己是人还是待办": {
+    "以后再选": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "By the fifth meeting I couldn't tell if I was a person or a to-do"
+            "value": "Later"
+          }
+        }
+      }
+    },
+    "任务页标题和控件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task titles and controls"
+          }
+        }
+      }
+    },
+    "休息日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest day"
+          }
+        }
+      }
+    },
+    "假": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
           }
         }
       }
@@ -81,22 +201,72 @@
         }
       }
     },
-    "请假": {
+    "全屏：换页": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Day off"
+            "value": "Page: changing screens"
           }
         }
       }
     },
-    "全部运动": {
+    "全部": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All sports"
+            "value": "All"
+          }
+        }
+      }
+    },
+    "六": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S"
+          }
+        }
+      }
+    },
+    "六级中文字号，最粗 600": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Six text sizes, Semibold at most"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "内块、未选中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocks, unselected"
+          }
+        }
+      }
+    },
+    "冲冲冲！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let's go!"
           }
         }
       }
@@ -106,7 +276,47 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Schedule"
+            "value": "Lineup"
+          }
+        }
+      }
+    },
+    "分隔线、未完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dividers, to do"
+          }
+        }
+      }
+    },
+    "切换和选择": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switches and picks"
+          }
+        }
+      }
+    },
+    "列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lists"
+          }
+        }
+      }
+    },
+    "删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
           }
         }
       }
@@ -121,12 +331,12 @@
         }
       }
     },
-    "力量训练": {
+    "动态": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Strength training"
+            "value": "Feed"
           }
         }
       }
@@ -141,22 +351,82 @@
         }
       }
     },
-    "名场面": {
+    "半屏：展开、弹出": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Highlights"
+            "value": "Sheet: opening in place"
           }
         }
       }
     },
-    "含义色": {
+    "卡片": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Meanings"
+            "value": "Cards"
+          }
+        }
+      }
+    },
+    "卡片、状态圈、进度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cards, status rings, progress"
+          }
+        }
+      }
+    },
+    "去打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check in"
+          }
+        }
+      }
+    },
+    "发布": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post"
+          }
+        }
+      }
+    },
+    "变色：选中、切换，不回弹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change: selection, switches, no bounce"
+          }
+        }
+      }
+    },
+    "口头禅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catchphrase"
+          }
+        }
+      }
+    },
+    "可以": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sure"
           }
         }
       }
@@ -171,6 +441,16 @@
         }
       }
     },
+    "四": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T"
+          }
+        }
+      }
+    },
     "回到起点": {
       "localizations": {
         "en": {
@@ -181,22 +461,42 @@
         }
       }
     },
-    "场景": {
+    "图片选项和色块": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scene"
+            "value": "Picture picks and swatches"
           }
         }
       }
     },
-    "场景签名色": {
+    "圆角：只有按钮是胶囊": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scene signature"
+            "value": "Corners: only buttons are capsules"
+          }
+        }
+      }
+    },
+    "场景上：实心白卡片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the scene: solid white cards"
+          }
+        }
+      }
+    },
+    "场景底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene floor"
           }
         }
       }
@@ -221,32 +521,102 @@
         }
       }
     },
-    "完成": {
+    "小人舞台和气泡": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Done"
+            "value": "The character's stage and speech bubble"
           }
         }
       }
     },
-    "已选": {
+    "小美 · 请假条": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Picked"
+            "value": "Mei · Excuse"
           }
         }
       }
     },
-    "开跑": {
+    "小队": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Go"
+            "value": "Squad"
+          }
+        }
+      }
+    },
+    "平时练什么？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What do you usually do?"
+          }
+        }
+      }
+    },
+    "庆祝：只在打卡成功那一下回弹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Celebrate: bounces only when a check-in lands"
+          }
+        }
+      }
+    },
+    "弱文字、占位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Placeholders"
+          }
+        }
+      }
+    },
+    "强调上的字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On accent"
+          }
+        }
+      }
+    },
+    "强调浅底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accent wash"
+          }
+        }
+      }
+    },
+    "强调色文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accent text"
+          }
+        }
+      }
+    },
+    "强调：当前场景色，一屏只有这一种": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accent: the scene's color, one per screen"
           }
         }
       }
@@ -261,12 +631,12 @@
         }
       }
     },
-    "快走": {
+    "性格": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Walking"
+            "value": "Personality"
           }
         }
       }
@@ -281,12 +651,42 @@
         }
       }
     },
-    "我 · 本周": {
+    "我在哪：墨色胶囊": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Me · this week"
+            "value": "Where I am: ink capsule"
+          }
+        }
+      }
+    },
+    "我打卡了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I checked in"
+          }
+        }
+      }
+    },
+    "我这周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My week"
+          }
+        }
+      }
+    },
+    "我选了啥：白底细线，选中是场景色描边加勾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What I picked: hairline, then an accent border and a check"
           }
         }
       }
@@ -301,12 +701,122 @@
         }
       }
     },
-    "搜索运动": {
+    "打卡了": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Search sports"
+            "value": "Checked in"
+          }
+        }
+      }
+    },
+    "打卡四类": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check-in kinds"
+          }
+        }
+      }
+    },
+    "打卡四类图标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check-in kind icons"
+          }
+        }
+      }
+    },
+    "打卡四类：用场景浅底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check-in kinds: the scene's wash"
+          }
+        }
+      }
+    },
+    "打卡展开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check-in, opened"
+          }
+        }
+      }
+    },
+    "按下：所有按钮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press: every button"
+          }
+        }
+      }
+    },
+    "按钮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buttons"
+          }
+        }
+      }
+    },
+    "按钮、页头、标签栏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buttons, headers and tab bar"
+          }
+        }
+      }
+    },
+    "换一组": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "控件高度：只有三种": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control heights: three only"
+          }
+        }
+      }
+    },
+    "搜索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
+    "播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play"
           }
         }
       }
@@ -331,6 +841,26 @@
         }
       }
     },
+    "放在场景底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the scene floor"
+          }
+        }
+      }
+    },
+    "放在白底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On white"
+          }
+        }
+      }
+    },
     "放纵餐": {
       "localizations": {
         "en": {
@@ -341,82 +871,142 @@
         }
       }
     },
-    "最近使用": {
+    "数字：Barlow Condensed，只给数字": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recent"
+            "value": "Numbers: Barlow Condensed, for numbers only"
           }
         }
       }
     },
-    "有氧": {
+    "日": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cardio"
+            "value": "S"
           }
         }
       }
     },
-    "本周全队还差 7 次达标": {
+    "普拉提": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "7 more to hit the squad goal"
+            "value": "Pilates"
           }
         }
       }
     },
-    "次要": {
+    "普通按钮、输入框、页头按钮": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Secondary"
+            "value": "Buttons, fields, header buttons"
           }
         }
       }
     },
-    "正文": {
+    "本周": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Text"
+            "value": "This week"
           }
         }
       }
     },
-    "水上": {
+    "本周小队训练": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Water"
+            "value": "Squad this week"
           }
         }
       }
     },
-    "浅底": {
+    "本周我的训练": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wash"
+            "value": "My training this week"
           }
         }
       }
     },
-    "深一档": {
+    "标签": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shade"
+            "value": "Tags"
+          }
+        }
+      }
+    },
+    "标签和切换": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tags and switches"
+          }
+        }
+      }
+    },
+    "标签栏：玻璃，选中是浅灰块": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab bar: glass, the selected tab on light grey"
+          }
+        }
+      }
+    },
+    "次要按钮、文字按钮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondary and text buttons"
+          }
+        }
+      }
+    },
+    "次要文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondary text"
+          }
+        }
+      }
+    },
+    "每周计划": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly plan"
+          }
+        }
+      }
+    },
+    "淡人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chill"
           }
         }
       }
@@ -441,6 +1031,16 @@
         }
       }
     },
+    "游泳 1 · 跑步 1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swim 1 · Run 1"
+          }
+        }
+      }
+    },
     "游泳池": {
       "localizations": {
         "en": {
@@ -451,42 +1051,32 @@
         }
       }
     },
-    "球拍": {
+    "点人看状态：整段显示": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Racket"
+            "value": "Tap a person: their status, all of it"
           }
         }
       }
     },
-    "球类": {
+    "状态圈": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ball games"
+            "value": "Status ring"
           }
         }
       }
     },
-    "瑜伽": {
+    "白底页上：浅灰卡片": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yoga"
-          }
-        }
-      }
-    },
-    "画布": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Canvas"
+            "value": "On a white page: subtle grey cards"
           }
         }
       }
@@ -501,52 +1091,22 @@
         }
       }
     },
-    "第 42 周": {
+    "穿搭": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Week 42"
+            "value": "Outfit"
           }
         }
       }
     },
-    "第三级": {
+    "第 %lld 步，共 %lld 步": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tertiary"
-          }
-        }
-      }
-    },
-    "签名": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Signature"
-          }
-        }
-      }
-    },
-    "签名上的字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On signature"
-          }
-        }
-      }
-    },
-    "签名色文字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Signature text"
+            "value": "Step %1$lld of %2$lld"
           }
         }
       }
@@ -561,12 +1121,22 @@
         }
       }
     },
-    "线": {
+    "累计练了": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Line"
+            "value": "Trained in all"
+          }
+        }
+      }
+    },
+    "练 5 休 2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 on, 2 off"
           }
         }
       }
@@ -581,12 +1151,12 @@
         }
       }
     },
-    "练腿日，腿还在": {
+    "缩略图": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leg day. Legs still here."
+            "value": "Thumbnails"
           }
         }
       }
@@ -611,22 +1181,42 @@
         }
       }
     },
-    "表面": {
+    "羽毛球": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Surface"
+            "value": "Badminton"
           }
         }
       }
     },
-    "越野跑": {
+    "腿还在酸，今天先躺平，明天一定练。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trail running"
+            "value": "Legs still sore, lying flat today, training tomorrow for sure."
+          }
+        }
+      }
+    },
+    "设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "请假": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day off"
           }
         }
       }
@@ -641,16 +1231,6 @@
         }
       }
     },
-    "跑走": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Run & walk"
-          }
-        }
-      }
-    },
     "跑道": {
       "localizations": {
         "en": {
@@ -661,52 +1241,132 @@
         }
       }
     },
-    "跳绳": {
+    "输入框": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jump rope"
+            "value": "Fields"
           }
         }
       }
     },
-    "身心": {
+    "返回": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mind & body"
+            "value": "Back"
           }
         }
       }
     },
-    "进度": {
+    "还没打卡": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Progress"
+            "value": "Not checked in yet"
           }
         }
       }
     },
-    "选择": {
+    "还没练": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choices"
+            "value": "Not yet"
           }
         }
       }
     },
-    "配色": {
+    "选项、输入框": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Picks, fields"
+          }
+        }
+      }
+    },
+    "重来": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        }
+      }
+    },
+    "间距、圆角、控件高度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spacing, corners, control heights"
+          }
+        }
+      }
+    },
+    "间距：4 的倍数，7 档": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spacing: seven steps of 4"
+          }
+        }
+      }
+    },
+    "随机换一个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "页头：44 的圆，右边最多一个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Headers: 44-point circles, at most one on the right"
+          }
+        }
+      }
+    },
+    "页面底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page"
+          }
+        }
+      }
+    },
+    "颜色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Color"
+          }
+        }
+      }
+    },
+    "骑车": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycling"
           }
         }
       }

@@ -6,10 +6,9 @@ public enum TextWeight: Sendable, Hashable {
     case semibold
 }
 
-/// Weights of the bundled Barlow Condensed cuts.
+/// Weights of the bundled Barlow Condensed cuts: numbers, and their lighter denominators.
 public enum ScoreboardWeight: Sendable, Hashable {
     case semibold
-    case bold
     case extraBold
 }
 
@@ -17,7 +16,7 @@ public enum ScoreboardWeight: Sendable, Hashable {
 public enum Face: Sendable, Hashable {
     /// PingFang SC: all Chinese and Latin running text, so mixed names share one design.
     case text(TextWeight)
-    /// Barlow Condensed: scoreboard numbers, week numbers, bibs and short Latin labels.
+    /// Barlow Condensed: numbers only.
     case scoreboard(ScoreboardWeight)
 
     public var postScriptName: String {
@@ -26,7 +25,6 @@ public enum Face: Sendable, Hashable {
         case .text(.medium): "PingFangSC-Medium"
         case .text(.semibold): "PingFangSC-Semibold"
         case .scoreboard(.semibold): "BarlowCondensed-SemiBold"
-        case .scoreboard(.bold): "BarlowCondensed-Bold"
         case .scoreboard(.extraBold): "BarlowCondensed-ExtraBold"
         }
     }
@@ -53,54 +51,62 @@ public struct TypeStyle: Sendable, Hashable {
     }
 }
 
-/// The type ramp. Chinese tops out at Semibold, so levels come from size, not weight.
-/// One `hero` per screen; scoreboard styles carry the numbers that matter most.
+/// The type ramp. Six text levels, each at least 4 points or one weight apart from the next;
+/// Chinese tops out at Semibold, so levels come from size, not weight. Multi-line Chinese runs at
+/// 1.5 line height. Barlow is for numbers only: one hero number per screen.
 public enum TypeRamp {
-    public static let hero = TypeStyle(face: .text(.semibold), size: 30, anchor: .largeTitle)
-    public static let title = TypeStyle(face: .text(.semibold), size: 24, anchor: .title)
-    /// The solid signature buttons (打卡, 开跑). Large enough to count as large text, so white on
-    /// the brighter signatures only needs 3:1.
-    public static let action = TypeStyle(face: .text(.semibold), size: 19, anchor: .headline)
-    /// Squad names and card titles.
+    /// The name or title at the top of a tab's home: 32/40.
+    public static let largeTitle = TypeStyle(face: .text(.semibold), size: 32, anchor: .largeTitle)
+    /// The question at the top of a task step (平时练什么？): 26/34.
+    public static let taskTitle = TypeStyle(face: .text(.semibold), size: 26, anchor: .title)
+    /// Section titles: 22/30.
+    public static let title = TypeStyle(face: .text(.semibold), size: 22, anchor: .title2)
+    /// Card titles and squad names: 17/24.
     public static let headline = TypeStyle(face: .text(.semibold), size: 17, anchor: .headline)
+    /// Body text and list rows: 16/24.
     public static let body = TypeStyle(face: .text(.regular), size: 16, anchor: .body)
-    /// Draft cards, capsule labels and chips.
-    public static let callout = TypeStyle(face: .text(.medium), size: 15, anchor: .callout)
-    /// The selected item of a category bar: `callout`, one weight heavier.
-    public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
-    /// Labels on choice tiles.
-    public static let tileLabel = TypeStyle(face: .text(.medium), size: 14, anchor: .subheadline)
-    /// Text typed into a search field.
-    public static let field = TypeStyle(face: .text(.medium), size: 17, anchor: .body)
-    /// Small section labels over a group (最近使用, 全部运动), in secondary ink.
-    public static let sectionLabel = TypeStyle(face: .text(.semibold), size: 13, tracking: 0.26, anchor: .footnote)
-    /// Tabs, name tags and reaction buttons.
-    public static let caption = TypeStyle(face: .text(.medium), size: 13, anchor: .caption)
-    /// Capsule badges such as 第 42 周 and 我 · 本周.
-    public static let footnote = TypeStyle(face: .text(.semibold), size: 12, anchor: .footnote)
+    /// Text typed into a field.
+    public static let field = TypeStyle(face: .text(.regular), size: 16, anchor: .body)
+    /// The label of a pick row.
+    public static let pick = TypeStyle(face: .text(.medium), size: 16, anchor: .body)
+    /// Supporting text and the values at the end of a row: 13/18.
+    public static let footnote = TypeStyle(face: .text(.regular), size: 13, anchor: .footnote)
+    /// Tags and short emphasized notes (我 2/5).
+    public static let footnoteEmphasis = TypeStyle(face: .text(.semibold), size: 13, anchor: .footnote)
+    /// The small label over a number or a group, letter-spaced 0.04 em: 12/16.
+    public static let label = TypeStyle(face: .text(.semibold), size: 12, tracking: 0.48, anchor: .caption)
 
-    /// The big number on a highlight card.
-    public static let scoreHero = TypeStyle(
-        face: .scoreboard(.extraBold), size: 92, tracking: -1.84, anchor: .largeTitle)
-    /// The squad's week score, like a broadcast score bug.
-    public static let scoreLarge = TypeStyle(face: .scoreboard(.extraBold), size: 52, anchor: .largeTitle)
-    /// The `/25` after `scoreLarge`, in tertiary ink.
-    public static let scoreLargeDenominator = TypeStyle(face: .scoreboard(.extraBold), size: 28, anchor: .title)
-    /// Podium counts in the Sunday recap.
-    public static let scoreMedium = TypeStyle(face: .scoreboard(.extraBold), size: 30, anchor: .title)
-    /// 我 · 本周 `3/5`.
-    public static let scoreSmall = TypeStyle(face: .scoreboard(.extraBold), size: 20, anchor: .title3)
-    /// The `/5` after `scoreSmall`, in tertiary ink.
-    public static let scoreSmallDenominator = TypeStyle(face: .scoreboard(.extraBold), size: 14, anchor: .footnote)
-    /// Short uppercase Latin labels: `WK42`, `LANE 3`.
-    public static let scoreLabel = TypeStyle(face: .scoreboard(.semibold), size: 14, tracking: 1.5, anchor: .caption)
+    /// The primary button's label. Large enough to count as large text, so white on the brighter
+    /// accents only needs 3:1.
+    public static let action = TypeStyle(face: .text(.semibold), size: 19, anchor: .headline)
+    /// Unselected switches and pills, and capsule labels.
+    public static let callout = TypeStyle(face: .text(.medium), size: 15, anchor: .callout)
+    /// A tab bar item's name; the selected one uses `tabSelected`.
+    public static let tab = TypeStyle(face: .text(.medium), size: 12, anchor: .caption)
+    public static let tabSelected = TypeStyle(face: .text(.semibold), size: 12, anchor: .caption)
+    /// Secondary and text buttons, and the selected switch or pill: `callout`, one weight heavier.
+    public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
+
+    /// The one hero number on a screen (the squad's 14/22).
+    public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 60, anchor: .largeTitle)
+    /// A number on a card.
+    public static let scoreCard = TypeStyle(face: .scoreboard(.extraBold), size: 32, anchor: .title)
+    /// A number in a row.
+    public static let scoreInline = TypeStyle(face: .scoreboard(.extraBold), size: 22, anchor: .title3)
+    /// A count beside its label in a row of counts (健康餐 3): 18.
+    public static let scoreSmall = TypeStyle(face: .scoreboard(.extraBold), size: 18, anchor: .body)
+
+    /// The denominator after a number (`/22`): a weight lighter and a little over half the size.
+    public static func denominator(of number: TypeStyle) -> TypeStyle {
+        TypeStyle(face: .scoreboard(.semibold), size: (number.size * 0.55).rounded(), anchor: number.anchor)
+    }
 
     public static let all: [(name: String, style: TypeStyle)] = [
-        ("hero", hero), ("title", title), ("headline", headline), ("action", action), ("body", body),
-        ("callout", callout), ("calloutEmphasis", calloutEmphasis), ("tileLabel", tileLabel), ("field", field),
-        ("sectionLabel", sectionLabel), ("caption", caption), ("footnote", footnote), ("scoreHero", scoreHero),
-        ("scoreLarge", scoreLarge), ("scoreLargeDenominator", scoreLargeDenominator),
-        ("scoreMedium", scoreMedium), ("scoreSmall", scoreSmall),
-        ("scoreSmallDenominator", scoreSmallDenominator), ("scoreLabel", scoreLabel),
+        ("largeTitle", largeTitle), ("taskTitle", taskTitle), ("title", title), ("headline", headline),
+        ("body", body), ("field", field), ("pick", pick), ("footnote", footnote),
+        ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
+        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreHero", scoreHero),
+        ("scoreCard", scoreCard),
+        ("scoreInline", scoreInline), ("scoreSmall", scoreSmall),
     ]
 }
