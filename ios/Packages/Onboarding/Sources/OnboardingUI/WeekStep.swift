@@ -114,8 +114,7 @@ private struct WeekPoster: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, Space.xs)
-            // Compact rows, so the whole week and the choices under it fit above the buttons.
-            .frame(minHeight: Sizing.compactControl)
+            .frame(minHeight: Sizing.minimumTapTarget)
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)

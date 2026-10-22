@@ -83,6 +83,7 @@ final class SignUpUITests: XCTestCase {
         let rest = app.buttons["week.choice.rest"]
         XCTAssertLessThanOrEqual(count.frame.maxY, rest.frame.minY, "the week's total is under the choices")
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
+        XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 44, "a day is a full tap target")
         rest.tap()
         settle()
         keepScreenshot(named: "46-signup-week-changed")
