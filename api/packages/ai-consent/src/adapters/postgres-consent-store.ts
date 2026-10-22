@@ -37,5 +37,17 @@ export function createPostgresConsentStore(db: Kysely<AiConsentTables>): Consent
         .executeTakeFirstOrThrow();
       return { copyVersion, givenAt: new Date(kept.given_at) };
     },
+
+    async agreedTo(copyVersion, members) {
+      if (members.length === 0) return [];
+      const rows = await db
+        .selectFrom('ai_consents')
+        .select('member_id')
+        .where('copy_version', '=', copyVersion)
+        .where('member_id', 'in', [...members])
+        .execute();
+      const agreed = new Set<string>(rows.map(({ member_id }) => member_id));
+      return members.filter((member) => agreed.has(member));
+    },
   };
 }

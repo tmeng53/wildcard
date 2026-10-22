@@ -42,7 +42,7 @@ export interface MemberWeek {
   readonly checkIns: readonly WeekCheckIn[];
 }
 
-/** The longest title, in characters as people see them. */
+/** The longest title, in UTF-16 code units as the schema counts them: one per Chinese character. */
 export const TITLE_MAX = 6;
 /** The longest award line (颁奖词). */
 export const SPEECH_MAX = 24;
@@ -142,7 +142,8 @@ export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 /**
  * The awards a reply comes to for these members (those who checked in, in the prompt's order),
  * or `undefined` when it names a member missing, repeated or unknown, or leaves a title or line
- * blank. The words themselves are the model's: what they may say is set in the prompt.
+ * blank. Each is trimmed and kept on one line, as the story and stickers lay it out. The words
+ * themselves are the model's: what they may say is set in the prompt.
  */
 export function titlesOf(
   reply: ModelReply,
@@ -155,8 +156,8 @@ export function titlesOf(
     const member = byKey.get(award.member.trim());
     if (member === undefined || result.has(member)) return undefined;
     const titles = award.titles.map(({ title, speech, move }) => ({
-      title: title.trim(),
-      speech: speech.trim(),
+      title: oneLine(title),
+      speech: oneLine(speech),
       move,
     }));
     if (titles.some(({ title, speech }) => title === '' || speech === '')) return undefined;
@@ -164,6 +165,9 @@ export function titlesOf(
   }
   return result;
 }
+
+/** The text on one line: trimmed, each line break (and the spaces around it) one space. */
+const oneLine = (text: string) => text.trim().replace(/\s*[\r\n\u0085\u2028\u2029]+\s*/gu, ' ');
 
 /**
  * A member's check-in with the most reactions, the latest on a tie (check-ins come oldest

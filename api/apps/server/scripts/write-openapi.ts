@@ -79,6 +79,7 @@ const app = createApp({
     find: unused,
     give: unused,
     hasCurrent: unused,
+    currentAmong: unused,
   },
   weeklyAwards: {
     awards: {
