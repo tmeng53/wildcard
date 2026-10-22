@@ -40,24 +40,18 @@ struct MainTabs: View {
         selection != .today || today.showsTabBar
     }
 
-    /// 今天 stays alive under the other tabs, so coming back keeps its scene and doesn't read the
-    /// home again; the other tabs are built when picked.
-    private var screen: some View {
-        ZStack {
+    /// Coming back to 今天 shows the home the store kept at once, then reads the server's again
+    /// and sends any post still waiting.
+    @ViewBuilder private var screen: some View {
+        switch selection {
+        case .today:
             TodayView(model: today)
-                .opacity(selection == .today ? 1 : 0)
-                .allowsHitTesting(selection == .today)
-                .accessibilityHidden(selection != .today)
-            switch selection {
-            case .today:
-                EmptyView()
-            case .feed:
-                UpcomingTab(title: Text("动态"))
-            case .schedule:
-                UpcomingTab(title: Text("出赛表"))
-            case .profile:
-                UpcomingTab(title: Text("我"))
-            }
+        case .feed:
+            UpcomingTab(title: Text("动态"))
+        case .schedule:
+            UpcomingTab(title: Text("出赛表"))
+        case .profile:
+            UpcomingTab(title: Text("我"))
         }
     }
 
