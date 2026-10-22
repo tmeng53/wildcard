@@ -24,6 +24,13 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "41-me-bottom")
 
+        // 退出登录 asks first; the in-memory member has nothing to sign out of, so 我 stays.
+        app.buttons["me.signOut"].tap()
+        let signOut = app.buttons["me.signOut.confirm"]
+        XCTAssertTrue(signOut.waitForExistence(timeout: 30), "退出登录 didn't ask first")
+        signOut.tap()
+        waitFor(signOut, "exists == false", "the sign-out confirm stayed open")
+
         app.buttons["me.deleteAccount"].tap()
         let delete = app.descendants(matching: .any).matching(identifier: "delete.page").firstMatch
         XCTAssertTrue(delete.waitForExistence(timeout: 30), "the 注销账号 page never opened")

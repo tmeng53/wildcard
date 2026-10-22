@@ -37,6 +37,7 @@ public struct MeView: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
     @State private var isDeleting = false
+    @State private var isSigningOut = false
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -165,9 +166,18 @@ public struct MeView: View {
     private var accountRows: some View {
         VStack(spacing: 0) {
             ListRow(Text("退出登录", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right") {
-                Task { await model.signOut() }
+                isSigningOut = true
             }
             .accessibilityIdentifier("me.signOut")
+            // The system's own confirm, as the design asks: signing out is one tap from undoable.
+            .confirmationDialog(Text("退出登录？", bundle: .module), isPresented: $isSigningOut, titleVisibility: .visible) {
+                Button(role: .destructive) {
+                    Task { await model.signOut() }
+                } label: {
+                    Text("退出登录", bundle: .module)
+                }
+                .accessibilityIdentifier("me.signOut.confirm")
+            }
             ListRow(Text("注销账号", bundle: .module), systemImage: "person.crop.circle.badge.xmark", showsDivider: false) {
                 model.openDeletion()
                 isDeleting = true

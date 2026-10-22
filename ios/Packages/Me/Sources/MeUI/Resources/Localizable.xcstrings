@@ -267,6 +267,16 @@
         }
       }
     },
+    "退出登录？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out?"
+          }
+        }
+      }
+    },
     "通知": {
       "localizations": {
         "en": {
