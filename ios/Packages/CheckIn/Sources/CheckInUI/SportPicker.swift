@@ -16,27 +16,27 @@ struct SportPicker: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.m) {
                 SearchField(text: $query, prompt: Text("搜索运动", bundle: .module))
-                    .padding(.horizontal, Space.m)
+                    .padding(.horizontal, Space.pageMargin)
                     .accessibilityIdentifier("sports.search")
                 if query.isEmpty {
                     CategoryBar(categories, selection: $category)
                 }
                 LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3),
+                    columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 2),
                     spacing: Space.xs
                 ) {
                     ForEach(shown, id: \.self) { sport in
-                        ChoiceTile(sport.name, systemImage: sport.symbol, isSelected: selected == .sport(sport)) {
+                        PickRow(sport.name, systemImage: sport.symbol, isSelected: selected == .sport(sport)) {
                             pick(.sport(sport))
                         }
                         .accessibilityIdentifier("sports.tile.\(sport.rawValue)")
                     }
                 }
-                .padding(.horizontal, Space.m)
+                .padding(.horizontal, Space.pageMargin)
             }
             .padding(.vertical, Space.m)
         }
-        .background(Color(role: .surface, in: theme).ignoresSafeArea())
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }

@@ -2,7 +2,7 @@
 import DesignSystem
 import SwiftUI
 
-/// A small label over a group of choices, such as 最近使用 or 全部运动.
+/// The small letter-spaced label over a group or a number (最常见, 本周小队训练).
 public struct SectionLabel: View {
     @Environment(\.sceneTheme) private var theme
     private let title: Text
@@ -13,8 +13,8 @@ public struct SectionLabel: View {
 
     public var body: some View {
         title
-            .typeStyle(TypeRamp.sectionLabel)
-            .foregroundStyle(Color(role: .textSecondary, in: theme))
+            .typeStyle(TypeRamp.label)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
             .accessibilityAddTraits(.isHeader)
     }
 }

@@ -45,7 +45,7 @@ public enum CheckInDraft: Hashable, Sendable {
     case cheatMeal(PostBody)
     case disclaimer(Disclaimer)
 
-    var meaning: Meaning {
+    var kind: CheckInKind {
         switch self {
         case .trained: .trained
         case .healthyMeal: .healthyMeal
