@@ -32,6 +32,7 @@ import {
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
+  AwardsModelMissingError,
   AwardsWriterUnavailableError,
   createPostgresAwardsStore,
   createWeeklyAwards,
@@ -90,16 +91,13 @@ const awardsModel: AwardsModel =
     ? {
         answer: () =>
           Promise.reject(
-            new AwardsWriterUnavailableError({
-              cause: new Error('No API key is set for AWARDS_LLM_PROVIDER'),
-            }),
+            new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
           ),
       }
     : awardsLlm.provider === 'openai'
       ? createOpenAILanguageModel({ ...awardsLlm, ...awardsOptions })
       : createAnthropicLanguageModel({ ...awardsLlm, ...awardsOptions });
 if (awardsLlm === undefined) log.info('no key for AWARDS_LLM_PROVIDER: weekly awards stay pending');
-const awards = createWeeklyAwards({ model: awardsModel, store: createPostgresAwardsStore(db) });
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 if (config.appleSignInKey === undefined) {
   log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
@@ -116,14 +114,21 @@ if (config.apns === undefined) log.info('push notifications are off: no APNs key
 const adminsOn = (scope: Database) =>
   createAdmins({ store: createPostgresAdminStore(scope), clock: () => new Date() });
 // What members agree to before their words go to AI providers: the current version of the app's
-// copy, which names them. Squads and drafts ask it.
+// copy, which names them. Squads, drafts and the weekly awards ask it.
 const aiConsent = createAiConsent({
   store: createPostgresConsentStore(db),
   copyVersion: AI_CONSENT_COPY_VERSION,
   clock: () => new Date(),
 });
 const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
-if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
+const awards = createWeeklyAwards({
+  model: awardsModel,
+  store: createPostgresAwardsStore(db),
+  aiConsented: (members) =>
+    aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+});
+if (config.jobsToken === undefined)
+  log.info('no JOBS_TOKEN: the daily progress push and weekly awards are off');
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,

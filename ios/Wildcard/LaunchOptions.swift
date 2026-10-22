@@ -11,6 +11,18 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
 
+    /// `-tab me`: open on another tab than 今天 (`feed`, `schedule`, `me`).
+    static var firstTab: MainTabs.Tab {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return .today }
+        switch arguments[flag + 1] {
+        case "feed": return .feed
+        case "schedule": return .schedule
+        case "me": return .profile
+        default: return .today
+        }
+    }
+
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
     /// tests check after a post. Only the notification UI test leaves it out.
     static var asksForNotifications: Bool {

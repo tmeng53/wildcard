@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [replies] [devices] [daily-push] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [replies] [devices] [daily-push] [weekly-awards] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions replies devices daily-push account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions replies devices daily-push weekly-awards account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | replies | devices | daily-push | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, replies, devices, daily-push, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | replies | devices | daily-push | weekly-awards | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, replies, devices, daily-push, weekly-awards, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -653,6 +653,17 @@ if want daily-push; then
   expect 200
   [ "$(handled)" = "$before" ] || fail "a second run should handle no one again: $(handled)"
   echo "daily-push: a second run handled no one again"
+fi
+
+if want weekly-awards; then
+  read -r _ awards_member_token <<<"$(sign_up)"
+  call POST /jobs/weekly-awards "$awards_member_token"
+  expect 401 JOB_TOKEN_INVALID
+  call POST /jobs/weekly-awards "$jobs_token"
+  expect 200
+  [ "$(jq -c '[.version, (.weeks | length), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,2,true]' ] ||
+    fail "the run says which two weeks it gave and how many squads: $body"
+  echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
 fi
 
 if want account; then

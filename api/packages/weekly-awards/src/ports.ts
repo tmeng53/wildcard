@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import type { Awards, AwardsState, Failures, SquadId } from './domain/awards.js';
+import type { Awards, AwardsState, Failures, MemberId, SquadId } from './domain/awards.js';
 import type { WeekStart } from './domain/schedule.js';
 
 /**
@@ -48,3 +48,9 @@ export interface AwardsStore {
    */
   claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
 }
+
+/**
+ * Those of these members who agreed to having their words sent to AI providers (the current
+ * copy): only their weeks go to the model.
+ */
+export type AiConsented = (members: readonly MemberId[]) => Promise<readonly string[]>;
