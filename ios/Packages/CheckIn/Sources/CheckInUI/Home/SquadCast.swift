@@ -34,8 +34,6 @@ final class SquadCast {
         var order: [MemberID]
     }
 
-    /// The pose each character is playing, so a new pose is set only when it changes.
-    private var playing: [MemberID: StagePose] = [:]
     private var players: [MemberID: CharacterPlayer] = [:]
 
     /// Places the squad from the store's home: everyone but `me`.
@@ -54,7 +52,7 @@ final class SquadCast {
         stage.arrange(members)
         mates = zip(teammates, members).compactMap { mate, member in
             let persona = Self.persona(of: member.id)
-            guard let player = player(for: member, persona: persona, phase: phase) else { return nil }
+            guard let player = player(for: member, persona: persona) else { return nil }
             return Mate(
                 member: member, persona: persona, player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
@@ -90,28 +88,19 @@ final class SquadCast {
         }
     }
 
-    private func player(for member: StageMember, persona: Persona, phase: DayPhase) -> CharacterPlayer? {
-        let pose = stage.pose(of: member, at: phase)
-        if let existing = players[member.id] {
-            if playing[member.id] != pose, let clip = Self.clip(for: pose, persona: persona) {
-                try? existing.wear(existing.figure, idle: clip)
-                playing[member.id] = pose
-            }
-            return existing
-        }
+    private func player(for member: StageMember, persona: Persona) -> CharacterPlayer? {
+        if let existing = players[member.id] { return existing }
         guard let figure = try? PlaceholderCharacter.figure(wearing: Self.look(of: member.id)),
-            let clip = Self.clip(for: pose, persona: persona),
+            let clip = Self.idle(persona: persona),
             let player = try? CharacterPlayer(figure: figure, idle: clip)
         else { return nil }
         players[member.id] = player
-        playing[member.id] = pose
         return player
     }
 
-    /// The loop a pose plays. The sport, sitting, sign and sleeping moves are still being drawn;
-    /// until they land everyone plays their persona's idle, and the scene adds the sign and the
-    /// sleep.
-    private static func clip(for pose: StagePose, persona: Persona) -> Clip? {
+    /// The persona's idle, which everyone plays until the sport, sitting, sign and sleeping moves
+    /// land; the scene adds the sign and the sleep.
+    private static func idle(persona: Persona) -> Clip? {
         try? PlaceholderCharacter.clip("idle", persona: persona, species: species)
     }
 

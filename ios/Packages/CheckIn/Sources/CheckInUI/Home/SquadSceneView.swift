@@ -20,9 +20,6 @@ struct SquadSceneView: View {
     /// Bumps on each of my 练了: the ground ring draws, the camera leans in, the streamers fall.
     let celebration: Int
 
-    @State private var tapped: MemberID?
-    @State private var taps = 0
-
     var body: some View {
         GeometryReader { proxy in
             let unit = proxy.size.width / StageLayout.width
@@ -54,7 +51,6 @@ struct SquadSceneView: View {
         }
         .background(Color(role: .bgSubtle, in: theme))
         .clipped()
-        .haptic(.pick, trigger: taps)
     }
 
     /// How far the camera leans in when my ring closes.
@@ -68,7 +64,6 @@ struct SquadSceneView: View {
             ZStack(alignment: .topLeading) {
                 ForEach(figures) { figure in
                     StageFigure(figure: figure, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
-                        .onTapGesture { tap(figure.id) }
                         .zIndex(figure.depth)
                 }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in
@@ -81,26 +76,20 @@ struct SquadSceneView: View {
         }
     }
 
-    private func tap(_ figure: Placed.ID) {
-        guard case .mate(let member) = figure else { return }
-        tapped = tapped == member ? nil : member
-        taps += 1
-    }
-
     /// Each figure's spot this frame, back to front. Me a little in front of my own row.
     private func placed(at seconds: Double) -> [Placed] {
         var figures = cast.mates.compactMap { mate -> Placed? in
             guard let position = cast.stage.position(of: mate.id, at: seconds) else { return nil }
             return Placed(
                 id: .mate(mate.id), player: mate.player, position: position, ring: mate.member.status.ring,
-                pose: cast.stage.pose(of: mate.member, at: phase), sign: mate.disclaimer, isTapped: tapped == mate.id)
+                pose: cast.stage.pose(of: mate.member, at: phase), sign: mate.disclaimer)
         }
         if let myPlayer {
             figures.append(
                 Placed(
                     id: .mine, player: myPlayer,
                     position: .mine,
-                    ring: myRing, pose: .standing, sign: nil, isTapped: false))
+                    ring: myRing, pose: .standing, sign: nil))
         }
         return figures
     }
@@ -129,7 +118,6 @@ private struct Placed: Identifiable {
     let ring: RingStatus
     let pose: StagePose
     let sign: String?
-    let isTapped: Bool
 
     var depth: Double { position.point.y + (id == .mine ? 50 : 0) }
 }
