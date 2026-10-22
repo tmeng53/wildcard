@@ -43,61 +43,53 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(StageLayout.mySpot == point(195, 676))
 }
 
-@Test func theFloorFillsLikeATeamPhotoFrontRowFirstFromTheMiddleOut() {
-    let floor = StageLayout.of(.track).floor
-    // The middle of the front row is mine.
-    #expect(
-        Array(floor.prefix(8)) == [
-            point(119, 626), point(271, 626), point(43, 626), point(347, 626),
-            point(157, 585.5), point(233, 585.5), point(81, 585.5), point(309, 585.5),
-        ])
-    #expect(!floor.contains(point(195, 626)))
-}
-
-@Test func nobodyStandsOnTheTrackOrTheCourtTheirRowsCloseUpInstead() {
-    // The track's lanes end at 513 and the court at 532 in the scene art; the back row's feet
-    // stand where the design's do.
-    #expect(Set(StageLayout.of(.track).floor.map(\.y)) == [626, 585.5, 545])
-    #expect(StageLayout.of(.tennis).floor.allSatisfy { $0.y >= 545 })
-    #expect(Set(StageLayout.of(.tennis).floor.map(\.y)) == [626, 585.5, 545])
-    // A floor deep enough keeps its rows 70 apart.
+@Test func everyoneCanStandAnywhereOnTheSceneTheTrackAndTheCourtIncluded() {
+    // Rows 70 apart from the front all the way up the track and the court; never the net, the
+    // water or the wall, and never right beside me.
+    #expect(Set(StageLayout.of(.track).floor.map(\.y)) == [626, 556, 486, 416, 346])
+    #expect(Set(StageLayout.of(.tennis).floor.map(\.y)) == [626, 556, 486, 346])
     #expect(Set(StageLayout.of(.pool).floor.map(\.y)) == [626, 556, 486])
+    #expect(!StageLayout.of(.track).floor.contains(point(195, 626)))
 }
 
-@Test func everySceneHasRoomForTheWholeSquadOnItsFloor() {
+@Test func everySceneHasRoomForTheWholeSquad() {
     for scene in SceneTheme.allCases {
         #expect(StageLayout.of(scene).floor.count >= 7, "\(scene)")
     }
 }
 
-@Test func nobodyIsDrawnOverAnotherOnTheFloorOrThePlayingArea() {
-    // Some floor spots sit near playing-area spots, which fill while the equipment is idle.
+@Test func nobodyIsDrawnOverAnotherOrStandsOnALaneSomeoneIsRunning() {
+    let sports: [SceneTheme: Sport] = [
+        .track: .run, .pool: .swim, .gym: .strength, .tennis: .tennis, .climbing: .climb,
+    ]
     for scene in SceneTheme.allCases {
-        for trainers in 0...7 {
+        for trainers in 0...4 {
             var stage = SquadStage(layout: .of(scene))
             stage.arrange(
                 (1...7).map { number in
                     number <= trainers
-                        ? member(number, .trained(nil), Int64(number))
+                        ? member(number, .trained(.sport(sports[scene] ?? .run)), Int64(number))
                         : member(number, .notYet, shy: number.isMultiple(of: 2))
                 })
             let spots = stage.placements.values.compactMap { placement -> StagePoint? in
-                switch placement {
-                case .field(let spot), .floor(let spot): spot
-                case .station: nil
-                }
+                if case .floor(let spot) = placement { spot } else { nil }
             }
-            #expect(spots.count == 7, "\(scene) \(trainers)")
+            #expect(spots.count == 7 - min(trainers, 7), "\(scene) \(trainers)")
             for (index, spot) in spots.enumerated() {
                 for other in spots[(index + 1)...] {
                     #expect(!StageLayout.crowds(spot, other), "\(scene) \(trainers): \(spot) \(other)")
                 }
             }
+            // Runners fill lane 1 (354), then lane 2 (405); nobody's feet are in their way.
+            let lanes = scene == .track ? [354.0, 405].prefix(trainers > 2 ? 2 : trainers > 0 ? 1 : 0) : []
+            for spot in spots {
+                #expect(!lanes.contains { spot.y > $0 - 46 && spot.y < $0 + 30 }, "\(scene) \(trainers): \(spot)")
+            }
         }
     }
 }
 
-@Test func theEarliestCheckInGetsTheBestSpotAndNotCheckedInComeLast() {
+@Test func theSquadScattersOverTheSceneEarliestCheckInsPickingFirst() {
     var stage = SquadStage(layout: .of(.track))
     stage.arrange([
         member(1, .notYet),
@@ -105,17 +97,35 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
         member(3, .restDay),
         member(4, .disclaimer, 10),
     ])
-    #expect(stage.placements[id(4)] == .floor(point(119, 626)))
-    #expect(stage.placements[id(2)] == .floor(point(271, 626)))
-    #expect(stage.placements[id(1)] == .floor(point(43, 626)))
-    #expect(stage.placements[id(3)] == .floor(point(347, 626)))
+    // Each takes the free spot that keeps everyone, me included, well apart: up the track as
+    // well as on the floor in front of it.
+    #expect(stage.placements[id(4)] == .floor(point(81, 556)))
+    #expect(stage.placements[id(2)] == .floor(point(309, 556)))
+    #expect(stage.placements[id(1)] == .floor(point(157, 416)))
+    #expect(stage.placements[id(3)] == .floor(point(347, 346)))
 }
 
-@Test func theShyTakeTheLastFreeSpot() {
+@Test func theShyTakeTheFreeSpotFurthestBack() {
     var stage = SquadStage(layout: .of(.track))
     stage.arrange([member(1, .notYet, shy: true), member(2, .notYet)])
-    #expect(stage.placements[id(1)] == .floor(StageLayout.of(.track).floor.last ?? point(0, 0)))
-    #expect(stage.placements[id(2)] == .floor(point(119, 626)))
+    #expect(stage.placements[id(1)] == .floor(point(195, 346)))
+    #expect(stage.placements[id(2)] == .floor(point(81, 556)))
+}
+
+@Test func whoeverStandsOnALaneSomeoneStartsRunningStepsOffEveryoneElseStays() {
+    var stage = SquadStage(layout: .of(.track))
+    let squad = (1...5).map { member($0, .notYet) }
+    stage.arrange(squad)
+    #expect(stage.placements[id(4)] == .floor(point(347, 346)))
+    #expect(stage.placements[id(5)] == .floor(point(43, 346)))
+
+    stage.arrange(squad + [member(6, .trained(.sport(.run)), 1)])
+    #expect(stage.placements[id(6)] == .station(.jogging, slot: 0))
+    #expect(stage.placements[id(1)] == .floor(point(81, 556)))
+    #expect(stage.placements[id(2)] == .floor(point(309, 556)))
+    #expect(stage.placements[id(3)] == .floor(point(157, 416)))
+    #expect(stage.placements[id(4)] == .floor(point(309, 416)))
+    #expect(stage.placements[id(5)] == .floor(point(43, 626)))
 }
 
 @Test func aMatchingSportUsesTheScenesEquipmentInCheckInOrder() {
@@ -133,37 +143,22 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.placements[id(4)] == .station(.yogaMat, slot: 0))
 }
 
-@Test func whileTheEquipmentIsIdleOtherSportsTrainOnThePlayingArea() {
-    var stage = SquadStage(layout: .of(.track))
-    stage.arrange([member(1, .trained(.sport(.yoga)), 1), member(2, .trained(nil), 2)])
-    #expect(stage.placements[id(1)] == .field(point(175, 438)))
-    #expect(stage.placements[id(2)] == .field(point(255, 438)))
-
-    // Once a runner is on the track, the yogi trains on the open floor instead.
-    stage.arrange([
-        member(1, .trained(.sport(.yoga)), 1), member(2, .trained(nil), 2), member(3, .trained(.sport(.run)), 3),
-    ])
-    #expect(stage.placements[id(3)] == .station(.jogging, slot: 0))
-    #expect(stage.placements[id(1)] == .floor(point(119, 626)))
-    #expect(stage.placements[id(2)] == .floor(point(271, 626)))
-}
-
 @Test func peopleKeepTheirSpotWhenTheirStatusChanges() {
     var stage = SquadStage(layout: .of(.pool))
     stage.arrange([member(1, .notYet), member(2, .notYet), member(3, .notYet)])
-    #expect(stage.placements[id(3)] == .floor(point(43, 626)))
+    #expect(stage.placements[id(3)] == .floor(point(195, 486)))
 
     // Teammate 3 checks in first; nobody moves to make room for them.
     stage.arrange([member(1, .notYet), member(2, .notYet), member(3, .disclaimer, 1)])
-    #expect(stage.placements[id(1)] == .floor(point(119, 626)))
-    #expect(stage.placements[id(2)] == .floor(point(271, 626)))
-    #expect(stage.placements[id(3)] == .floor(point(43, 626)))
+    #expect(stage.placements[id(1)] == .floor(point(81, 556)))
+    #expect(stage.placements[id(2)] == .floor(point(309, 556)))
+    #expect(stage.placements[id(3)] == .floor(point(195, 486)))
 
     // A swimmer goes to the water; the others stay put.
     stage.arrange([member(1, .trained(.sport(.swim)), 2), member(2, .notYet), member(3, .disclaimer, 1)])
     #expect(stage.placements[id(1)] == .station(.swimming, slot: 0))
-    #expect(stage.placements[id(2)] == .floor(point(271, 626)))
-    #expect(stage.placements[id(3)] == .floor(point(43, 626)))
+    #expect(stage.placements[id(2)] == .floor(point(309, 556)))
+    #expect(stage.placements[id(3)] == .floor(point(195, 486)))
 }
 
 @Test func someoneOnEquipmentKeepsTheirSlotWhenAnEarlierTeammateArrives() {
@@ -230,47 +225,4 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     // Swimmers and the runner keep going.
     #expect(stage.cheerers(people, at: .day) == [id(2), id(3), id(5)])
     #expect(stage.cheerers(people, at: .night) == [])
-}
-
-@Test func someoneTrainingOnTheFloorKeepsTheirSpotWhenOthersCheckIn() {
-    var stage = SquadStage(layout: .of(.pool))
-    stage.arrange([member(1, .notYet), member(2, .notYet), member(3, .trained(.sport(.run)), 5)])
-    #expect(stage.placements[id(3)] == .floor(point(119, 626)))
-    // The pool has no playing area, so starting to train or a teammate arriving moves nobody.
-    stage.arrange([
-        member(1, .trained(.sport(.yoga)), 2), member(2, .disclaimer, 3), member(3, .trained(.sport(.run)), 5),
-    ])
-    #expect(stage.placements[id(1)] == .floor(point(271, 626)))
-    #expect(stage.placements[id(2)] == .floor(point(43, 626)))
-    #expect(stage.placements[id(3)] == .floor(point(119, 626)))
-}
-
-@Test func onlyStartingToTrainMovesSomeoneOntoThePlayingArea() {
-    var stage = SquadStage(layout: .of(.climbing))
-    let trainers = (1...5).map { member($0, .trained(.sport(.yoga)), Int64($0)) }
-    stage.arrange(trainers)
-    // Four spots at the foot of the wall; the fifth trains on the floor.
-    #expect(stage.placements[id(5)] == .floor(point(119, 626)))
-
-    // A spot on the playing area frees up; the one already training on the floor stays put.
-    stage.arrange([member(1, .disclaimer, 1)] + trainers.dropFirst())
-    #expect(stage.placements[id(5)] == .floor(point(119, 626)))
-
-    // Someone who starts training now takes it.
-    stage.arrange([member(1, .disclaimer, 1)] + trainers.dropFirst() + [member(6, .trained(nil), 6)])
-    if case .field = stage.placements[id(6)] {
-    } else {
-        Issue.record("expected the playing area, got \(String(describing: stage.placements[id(6)]))")
-    }
-}
-
-@Test func someoneWhoStartsTrainingKeepsTheirFloorSpotWhileThePlayingAreaIsFull() {
-    var stage = SquadStage(layout: .of(.climbing))
-    let yogis = (1...4).map { member($0, .trained(.sport(.yoga)), Int64(10 + $0)) }
-    stage.arrange(yogis + [member(5, .notYet)])
-    #expect(stage.placements[id(5)] == .floor(point(119, 626)))
-    // A newcomer who checked in earlier arrives as 5 starts training; 5 keeps their spot.
-    stage.arrange([member(0, .disclaimer, 1)] + yogis + [member(5, .trained(nil), 20)])
-    #expect(stage.placements[id(5)] == .floor(point(119, 626)))
-    #expect(stage.placements[id(0)] == .floor(point(271, 626)))
 }
