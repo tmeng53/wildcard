@@ -36,10 +36,10 @@ public struct MeDestinations {
 public struct MeView: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
-    @State private var isDeleting = false
     @State private var isSigningOut = false
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(model: MeModel, destinations: MeDestinations) {
         self.model = model
@@ -47,14 +47,15 @@ public struct MeView: View {
     }
 
     public var body: some View {
-        NavigationStack {
-            content
-                .navigationDestination(isPresented: $isDeleting) {
-                    DeleteAccountView(model: model) { isDeleting = false }
-                        .hidesNavigationBar()
-                }
-                .hidesNavigationBar()
+        ZStack {
+            if model.isDeletionOpen {
+                DeleteAccountView(model: model) { model.closeDeletion() }
+                    .transition(.move(edge: .trailing))
+            } else {
+                content
+            }
         }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.isDeletionOpen)
         .task { await model.reload() }
     }
 
@@ -180,23 +181,10 @@ public struct MeView: View {
             }
             ListRow(Text("注销账号", bundle: .module), systemImage: "person.crop.circle.badge.xmark", showsDivider: false) {
                 model.openDeletion()
-                isDeleting = true
             }
             .accessibilityIdentifier("me.deleteAccount")
         }
         .card()
-    }
-}
-
-extension View {
-    /// 我 and the 注销 page draw their own headers; macOS, where `swift test` builds this, has no
-    /// navigation bar to hide.
-    fileprivate func hidesNavigationBar() -> some View {
-        #if os(iOS)
-        toolbar(.hidden, for: .navigationBar)
-        #else
-        self
-        #endif
     }
 }
 

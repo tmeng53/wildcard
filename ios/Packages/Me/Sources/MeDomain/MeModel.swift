@@ -13,6 +13,8 @@ public enum MeLoad: Hashable, Sendable {
 public final class MeModel {
     public private(set) var load: MeLoad = .loading
     public private(set) var deletion: DeletionPhase = .reading
+    /// The 注销账号 page is open; it takes the whole screen, tab bar included.
+    public private(set) var isDeletionOpen = false
     /// The last change didn't save (the switch flipped back, or the edited character stayed as
     /// it was); the screen says so until the next change.
     public private(set) var saveFailed = false
@@ -61,8 +63,11 @@ public final class MeModel {
         do {
             try await service.setDailyPush(isOn)
         } catch {
-            overview.dailyPushOn = !isOn
-            load = .loaded(overview)
+            // Flip back only the switch: anything saved meanwhile (an edited character) stays.
+            if case .loaded(var latest) = load {
+                latest.dailyPushOn = !isOn
+                load = .loaded(latest)
+            }
             saveFailed = true
         }
     }
@@ -88,6 +93,13 @@ public final class MeModel {
     /// The 注销账号 page opens fresh each time.
     public func openDeletion() {
         deletion = .reading
+        isDeletionOpen = true
+    }
+
+    /// Back to 我, unless the account is being deleted right now.
+    public func closeDeletion() {
+        guard deletion != .deleting else { return }
+        isDeletionOpen = false
     }
 
     /// Confirms with Apple, then deletes the account. On success the account is gone, so this

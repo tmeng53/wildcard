@@ -26,7 +26,8 @@ final class MeUITests: XCTestCase {
 
         // 退出登录 asks first; the in-memory member has nothing to sign out of, so 我 stays.
         app.buttons["me.signOut"].tap()
-        let signOut = app.buttons["me.signOut.confirm"]
+        // The system sheet nests the button, so the identifier matches twice.
+        let signOut = app.buttons.matching(identifier: "me.signOut.confirm").firstMatch
         XCTAssertTrue(signOut.waitForExistence(timeout: 30), "退出登录 didn't ask first")
         signOut.tap()
         waitFor(signOut, "exists == false", "the sign-out confirm stayed open")
@@ -36,22 +37,20 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(delete.waitForExistence(timeout: 30), "the 注销账号 page never opened")
         XCTAssertTrue(app.staticTexts["你会离开周三不练腿俱乐部"].exists)
         XCTAssertTrue(app.staticTexts["给 AI 的同意也一起撤回"].exists)
+        XCTAssertFalse(app.buttons["tab.me"].exists, "the tab bar stayed over the 注销账号 page")
         settle()
         keepScreenshot(named: "42-delete-account")
 
         app.buttons["delete.cancel"].tap()
         XCTAssertTrue(page.waitForExistence(timeout: 30), "先不注销 didn't go back to 我")
+        XCTAssertTrue(app.buttons["tab.me"].waitForExistence(timeout: 30), "the tab bar didn't come back")
 
         app.buttons["me.deleteAccount"].tap()
         let confirm = app.buttons["delete.confirm"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 30))
         confirm.tap()
+        // The in-memory member has nothing to sign out of, so the page stays, done.
         waitFor(confirm, "isEnabled == false", "the confirm button still takes taps after deleting")
-
-        app.buttons["tab.today"].tap()
-        XCTAssertTrue(
-            app.descendants(matching: .any).matching(identifier: "today.card").firstMatch.waitForExistence(timeout: 30),
-            "the 今天 tab didn't open")
     }
 
     /// A change that can't be saved flips back and says so; a delete that fails can be tried again.

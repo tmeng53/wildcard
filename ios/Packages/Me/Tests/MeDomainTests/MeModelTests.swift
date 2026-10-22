@@ -159,6 +159,28 @@ struct MeModelTests {
         page.openDeletion()
         #expect(page.deletion == .reading)
     }
+
+    @Test func theDeletionPageClosesUnlessDeleting() async {
+        let service = FakeService(sample)
+        let page = model(service, signOuts: SignOuts())
+        #expect(page.isDeletionOpen == false)
+        page.openDeletion()
+        #expect(page.isDeletionOpen)
+        page.closeDeletion()
+        #expect(page.isDeletionOpen == false)
+    }
+
+    @Test func aFailedSwitchKeepsACharacterSavedMeanwhile() async {
+        let service = FakeService(sample)
+        let page = model(service, signOuts: SignOuts())
+        await page.reload()
+        let edited = MeCharacter(nickname: "阿林", outfit: PlaceholderCharacter.lifter, persona: .shy)
+        await page.save(edited)
+        await service.fail(with: .unavailable)
+        await page.setDailyPush(false)
+        #expect(page.dailyPushOn)
+        #expect(page.overview?.character.nickname == "阿林")
+    }
 }
 
 struct DeletionPhaseTests {

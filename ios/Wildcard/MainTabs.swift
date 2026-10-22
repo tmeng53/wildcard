@@ -61,9 +61,13 @@ struct MainTabs: View {
             look: character.outfit, persona: character.persona, nickname: character.nickname)
     }
 
-    /// A tab's full-screen step (writing a check-in) covers the bar.
+    /// A tab's full-screen step (writing a check-in, the 注销账号 page) covers the bar.
     private var showsTabBar: Bool {
-        selection != .today || today.showsTabBar
+        switch selection {
+        case .today: today.showsTabBar
+        case .profile: !profile.isDeletionOpen
+        case .feed, .schedule: true
+        }
     }
 
     /// Coming back to 今天 shows the home the store kept at once, then reads the server's again
