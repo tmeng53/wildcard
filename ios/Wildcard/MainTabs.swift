@@ -1,6 +1,9 @@
+import CharacterEditorUI
 import CheckInUI
 import DesignSystem
 import DesignSystemUI
+import MeDomain
+import MeUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -12,8 +15,11 @@ struct MainTabs: View {
     }
 
     let today: TodayModel
+    let profile: MeModel
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The character editor, open from 我 over everything.
+    @State private var editor: CharacterEditorModel?
 
     var body: some View {
         GeometryReader { proxy in
@@ -33,11 +39,35 @@ struct MainTabs: View {
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         }
+        .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
+            if let editor {
+                CharacterEditorView(
+                    model: editor, context: .profile, onBack: { self.editor = nil },
+                    onDone: { edited in
+                        self.editor = nil
+                        Task {
+                            await profile.save(
+                                MeCharacter(nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona))
+                        }
+                    })
+            }
+        }
     }
 
-    /// A tab's full-screen step (writing a check-in) covers the bar.
+    /// Opens the editor on the member's own character.
+    private func editCharacter() {
+        guard let character = profile.overview?.character else { return }
+        editor = try? CharacterEditorModel.placeholder(
+            look: character.outfit, persona: character.persona, nickname: character.nickname)
+    }
+
+    /// A tab's full-screen step (writing a check-in, the 注销账号 page) covers the bar.
     private var showsTabBar: Bool {
-        selection != .today || today.showsTabBar
+        switch selection {
+        case .today: today.showsTabBar
+        case .profile: !profile.isDeletionOpen
+        case .feed, .schedule: true
+        }
     }
 
     /// Coming back to 今天 shows the home the store kept at once, then reads the server's again
@@ -51,7 +81,14 @@ struct MainTabs: View {
         case .schedule:
             UpcomingTab(title: Text("出赛表"))
         case .profile:
-            UpcomingTab(title: Text("我"))
+            MeView(
+                model: profile,
+                destinations: MeDestinations(
+                    // The squad lives on 今天 and past 战报 in 动态 until each has a page of its own.
+                    squad: { selection = .today },
+                    pastRecaps: { selection = .feed },
+                    editCharacter: editCharacter,
+                    privacyPolicy: nil, terms: nil))
         }
     }
 
