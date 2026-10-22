@@ -22,6 +22,7 @@ public enum RingStatus: Sendable, Hashable {
 public struct StatusRing<Avatar: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
     private let status: RingStatus
     private let avatarSize: Double
     private let playsHaptics: Bool
@@ -53,7 +54,7 @@ public struct StatusRing<Avatar: View>: View {
             Circle()
                 .trim(from: 0, to: drawn)
                 .stroke(
-                    Color(role: .ring, in: theme),
+                    Color(role: .ring, in: theme, contrast: contrast),
                     style: StrokeStyle(lineWidth: Sizing.ringWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
