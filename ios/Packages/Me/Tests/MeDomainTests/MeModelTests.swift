@@ -9,10 +9,22 @@ private actor FakeService: MeService {
     var failing: MeError?
     private(set) var deletedWith: DeletionConfirmation?
     private(set) var pushSaves: [Bool] = []
+    /// While set, a delete waits until `release()`.
+    private var holdsDeletes = false
+    private var heldDelete: CheckedContinuation<Void, Never>?
 
     init(_ overview: MeOverview) { current = overview }
 
     func fail(with error: MeError?) { failing = error }
+
+    func holdDeletes() { holdsDeletes = true }
+
+    var isHoldingADelete: Bool { heldDelete != nil }
+
+    func release() {
+        heldDelete?.resume()
+        heldDelete = nil
+    }
 
     func overview() async throws(MeError) -> MeOverview {
         if let failing { throw failing }
@@ -31,6 +43,7 @@ private actor FakeService: MeService {
     }
 
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
+        if holdsDeletes { await withCheckedContinuation { heldDelete = $0 } }
         if let failing { throw failing }
         deletedWith = confirmation
     }
@@ -168,6 +181,17 @@ struct MeModelTests {
         #expect(page.isDeletionOpen)
         page.closeDeletion()
         #expect(page.isDeletionOpen == false)
+
+        await service.holdDeletes()
+        page.openDeletion()
+        let deleting = Task { await page.deleteAccount() }
+        while await !service.isHoldingADelete { await Task.yield() }
+        #expect(page.deletion == .deleting)
+        page.closeDeletion()
+        #expect(page.isDeletionOpen, "the page closed while the account was being deleted")
+        await service.release()
+        await deleting.value
+        #expect(page.deletion == .deleted)
     }
 
     @Test func aFailedSwitchKeepsACharacterSavedMeanwhile() async {
