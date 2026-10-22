@@ -4,7 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # With no arguments it runs every check. CI's jobs name the parts their runner can run:
-# swift and web on macOS, supabase, api and backend on Linux (macOS runners have no Docker).
+# swift and web on macOS (on Linux for a PR that leaves ios/ alone), supabase, api and backend on
+# Linux (macOS runners have no Docker).
 parts="${*:-swift web supabase api backend}"
 want() { [[ " $parts " == *" $1 "* ]]; }
 
