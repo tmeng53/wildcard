@@ -6,7 +6,6 @@ import MeDomain
 public actor InMemoryMeService: MeService {
     private var current: MeOverview
     private let failsSaving: Bool
-    public private(set) var deleted = false
 
     /// `failsSaving` refuses every switch, so UI tests can see one flip back.
     public init(overview: MeOverview, failsSaving: Bool = false) {
@@ -43,6 +42,5 @@ public actor InMemoryMeService: MeService {
 
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if failsSaving { throw .unavailable }
-        deleted = true
     }
 }

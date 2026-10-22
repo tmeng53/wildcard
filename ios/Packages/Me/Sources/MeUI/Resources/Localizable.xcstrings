@@ -207,6 +207,16 @@
         }
       }
     },
+    "Apple 那边没确认上，再试一次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple didn't confirm. Try again"
+          }
+        }
+      }
+    },
     "网络开小差了，再试一次": {
       "localizations": {
         "en": {

@@ -47,6 +47,7 @@ public final class MeModel {
         } catch {
             // Keep what is on screen when a refresh fails; say so only when there is nothing.
             if overview == nil { load = .failed(error) }
+            await signOutIfEnded(error)
         }
     }
 
@@ -69,6 +70,7 @@ public final class MeModel {
                 load = .loaded(latest)
             }
             saveFailed = true
+            await signOutIfEnded(error)
         }
     }
 
@@ -79,6 +81,7 @@ public final class MeModel {
             try await service.save(character)
         } catch {
             saveFailed = true
+            await signOutIfEnded(error)
             return
         }
         guard case .loaded(var overview) = load else { return }
@@ -114,8 +117,14 @@ public final class MeModel {
             deletion = .deleted
         } catch {
             deletion = .after(error)
+            await signOutIfEnded(error)
             return
         }
         await signOutHere()
+    }
+
+    /// A session that ended can't be renewed here: sign out, and the app asks to sign in again.
+    private func signOutIfEnded(_ error: MeError) async {
+        if error == .signedOut { await signOutHere() }
     }
 }

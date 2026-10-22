@@ -173,6 +173,19 @@ struct MeModelTests {
         #expect(page.deletion == .reading)
     }
 
+    @Test func anEndedSessionSignsOut() async {
+        let service = FakeService(sample)
+        let signOuts = SignOuts()
+        let page = model(service, signOuts: signOuts)
+        await page.reload()
+        await service.fail(with: .signedOut)
+        await page.deleteAccount()
+        #expect(page.deletion == .failed(.signedOut))
+        #expect(signOuts.count == 1)
+        await page.setDailyPush(false)
+        #expect(signOuts.count == 2)
+    }
+
     @Test func theDeletionPageClosesUnlessDeleting() async {
         let service = FakeService(sample)
         let page = model(service, signOuts: SignOuts())

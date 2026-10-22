@@ -39,11 +39,17 @@ struct DeleteAccountView: View {
             }
             Spacer(minLength: 0)
             VStack(spacing: Space.xs) {
-                if case .failed = model.deletion {
-                    Text("网络开小差了，再试一次", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .accessibilityIdentifier("delete.failed")
+                if case .failed(let error) = model.deletion {
+                    Group {
+                        if error == .confirmationFailed {
+                            Text("Apple 那边没确认上，再试一次", bundle: .module)
+                        } else {
+                            Text("网络开小差了，再试一次", bundle: .module)
+                        }
+                    }
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .accessibilityIdentifier("delete.failed")
                 }
                 Button {
                     Task { await model.deleteAccount() }
