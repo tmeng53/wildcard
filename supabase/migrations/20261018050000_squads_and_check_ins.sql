@@ -32,8 +32,8 @@ create index squad_members_member_id_idx on public.squad_members (member_id);
 
 -- Every time someone joins or leaves a squad, as an append-only log kept for our own
 -- records (Tracy, 2026-10-22); no feature or yearly stat reads it. Rows are only ever added:
--- the trigger below refuses any update, and any delete except the cascade when the account
--- (or the squad) goes, so deleting an account still takes that person's rows with it.
+-- the triggers below refuse any update or truncate, and any delete except the cascade when
+-- the account (or the squad) goes, so deleting an account still takes that person's rows with it.
 create table public.squad_membership_events (
   id bigint generated always as identity primary key,
   squad_id uuid not null references public.squads (id) on delete cascade,
@@ -47,8 +47,12 @@ create index squad_membership_events_member_id_idx on public.squad_membership_ev
 create function public.squad_membership_events_append_only() returns trigger
 language plpgsql as $$
 begin
-  -- Depth 1 is a statement on this table; a cascade from auth.users or squads runs deeper.
-  if tg_op = 'DELETE' and pg_trigger_depth() > 1 then
+  -- A delete goes through only once its account or squad is gone: the cascade that takes
+  -- the person's or the squad's rows with it.
+  if tg_op = 'DELETE' and (
+    not exists (select 1 from auth.users where id = old.member_id)
+    or not exists (select 1 from public.squads where id = old.squad_id)
+  ) then
     return old;
   end if;
   raise exception 'squad_membership_events is append-only' using errcode = '42501';
@@ -58,6 +62,10 @@ $$;
 create trigger squad_membership_events_append_only
   before update or delete on public.squad_membership_events
   for each row execute function public.squad_membership_events_append_only();
+
+create trigger squad_membership_events_no_truncate
+  before truncate on public.squad_membership_events
+  for each statement execute function public.squad_membership_events_append_only();
 
 -- Members ----------------------------------------------------------------------
 

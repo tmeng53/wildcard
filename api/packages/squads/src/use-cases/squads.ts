@@ -29,8 +29,8 @@ export interface Squads {
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**
-   * Takes the member out of the squad; nothing happens if they aren't in it. A squad is never deleted, even when its last member leaves:
-   * check-ins sent to it still point at it.
+   * Takes the member out of the squad; nothing happens if they aren't in it. A squad is never
+   * deleted, even when its last member leaves: check-ins sent to it still point at it.
    */
   leave(input: { squad: SquadId; member: MemberId }): Promise<void>;
 }
