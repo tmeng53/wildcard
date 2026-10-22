@@ -45,7 +45,7 @@ struct MainTabs: View {
     @ViewBuilder private var screen: some View {
         switch selection {
         case .today:
-            TodayView(model: today)
+            TodayView(model: today) { selection = .feed }
         case .feed:
             UpcomingTab(title: Text("动态"))
         case .schedule:
