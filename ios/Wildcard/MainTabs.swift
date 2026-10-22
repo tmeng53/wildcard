@@ -4,6 +4,7 @@ import DesignSystem
 import DesignSystemUI
 import MeDomain
 import MeUI
+import ScheduleUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -16,6 +17,7 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
+    let schedule: ScheduleModel
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
@@ -79,7 +81,7 @@ struct MainTabs: View {
         case .feed:
             UpcomingTab(title: Text("动态"))
         case .schedule:
-            UpcomingTab(title: Text("出赛表"))
+            ScheduleView(model: schedule)
         case .profile:
             MeView(
                 model: profile,

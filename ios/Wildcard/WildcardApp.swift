@@ -6,6 +6,8 @@ import Foundation
 import MeDomain
 import MeUI
 import OnboardingUI
+import ScheduleDomain
+import ScheduleUI
 import SwiftUI
 
 /// The app target only wires packages together. It opens on 今天 under the tab bar, backed by an
@@ -17,13 +19,14 @@ import SwiftUI
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
+    @State private var schedule: ScheduleModel
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
 
     // An init, not property initializers: those run outside the main actor, and the post
-    // callback and both models are the main actor's.
+    // callback and the models are the main actor's.
     init() {
         _today = State(
             initialValue: TodayModel(
@@ -39,6 +42,12 @@ struct WildcardApp: App {
                 service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
                 // The in-memory member has no Apple account to confirm with and nothing to sign out of.
                 confirm: { .signedInSession }, signOut: {}))
+        _schedule = State(
+            initialValue: ScheduleModel(
+                store: ScheduleStore(
+                    backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
+                    now: LaunchOptions.scheduleNow),
+                photos: LaunchOptions.posterSaver))
         if LaunchOptions.showsOnboarding {
             _signUp = State(
                 initialValue: SignUpModel(
@@ -67,7 +76,7 @@ struct WildcardApp: App {
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
             } else {
-                MainTabs(today: today, profile: profile, selection: $tab)
+                MainTabs(today: today, profile: profile, schedule: schedule, selection: $tab)
                     .onAppear {
                         delegate.opened = { [today, $tab] in
                             $tab.wrappedValue = .today

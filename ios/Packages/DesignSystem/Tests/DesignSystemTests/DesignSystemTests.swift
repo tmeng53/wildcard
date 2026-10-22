@@ -272,6 +272,7 @@ struct TypographyTests {
         #expect(Face.text(.regular).postScriptName == "PingFangSC-Regular")
         #expect(Face.scoreboard(.extraBold).postScriptName == "BarlowCondensed-ExtraBold")
         #expect(Face.scoreboard(.semibold).postScriptName == "BarlowCondensed-SemiBold")
+        #expect(Face.scoreboard(.extraBoldItalic).postScriptName == "BarlowCondensed-ExtraBoldItalic")
     }
 
     /// Six text levels, as the design system v4 canvas sets them.
@@ -314,7 +315,14 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
+        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall", "posterWeek"])
+    }
+
+    /// The 出赛表 poster's W42, as the approved design sets it.
+    @Test func posterWeekIsTheItalicNumber() {
+        #expect(TypeRamp.posterWeek.face == .scoreboard(.extraBoldItalic))
+        #expect(TypeRamp.posterWeek.size == 128)
+        #expect(TypeRamp.posterWeek.tracking == -5)
     }
 }
 
