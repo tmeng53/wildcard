@@ -29,7 +29,7 @@ extension StageLayout {
         ],
         stationsBySport: [.run: [.jogging]],
         field: [StageRect(x: 55...335, y: 380...500)],
-        open: [StageRect(x: 0...390, y: 480...650)],
+        open: [StageRect(x: 0...390, y: 528...650)],
         props: [])
 
     private static let poolLanes: [StationPath.Lane] = [328.0, 361, 394, 427].map {
@@ -82,7 +82,7 @@ extension StageLayout {
         field: [StageRect(x: 70...330, y: 346...470)],
         // The net.
         fieldGaps: [StageRect(x: 0...390, y: 375...402)],
-        open: [StageRect(x: 0...390, y: 480...650)],
+        open: [StageRect(x: 0...390, y: 545...650)],
         props: [])
 
     static let climbing = StageLayout(

@@ -48,10 +48,19 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     // The middle of the front row is mine.
     #expect(
         Array(floor.prefix(8)) == [
-            point(103, 626), point(287, 626), point(149, 556), point(241, 556),
-            point(57, 556), point(333, 556), point(195, 486), point(103, 486),
+            point(103, 626), point(287, 626), point(149, 577), point(241, 577),
+            point(57, 577), point(333, 577), point(195, 528), point(103, 528),
         ])
     #expect(!floor.contains(point(195, 626)))
+}
+
+@Test func nobodyStandsOnTheTrackOrTheCourtTheirRowsCloseUpInstead() {
+    // The track's lanes end at 513 and the court at 532 in the scene art.
+    #expect(StageLayout.of(.track).floor.allSatisfy { $0.y >= 528 })
+    #expect(StageLayout.of(.tennis).floor.allSatisfy { $0.y >= 545 })
+    #expect(Set(StageLayout.of(.tennis).floor.map(\.y)) == [626, 585.5, 545])
+    // A floor deep enough keeps its rows 70 apart.
+    #expect(Set(StageLayout.of(.pool).floor.map(\.y)) == [626, 556, 486])
 }
 
 @Test func everySceneHasRoomForTheWholeSquadOnItsFloor() {
@@ -97,8 +106,8 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     ])
     #expect(stage.placements[id(4)] == .floor(point(103, 626)))
     #expect(stage.placements[id(2)] == .floor(point(287, 626)))
-    #expect(stage.placements[id(1)] == .floor(point(149, 556)))
-    #expect(stage.placements[id(3)] == .floor(point(241, 556)))
+    #expect(stage.placements[id(1)] == .floor(point(149, 577)))
+    #expect(stage.placements[id(3)] == .floor(point(241, 577)))
 }
 
 @Test func theShyTakeTheLastFreeSpot() {
