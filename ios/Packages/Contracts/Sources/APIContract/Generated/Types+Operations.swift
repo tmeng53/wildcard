@@ -824,7 +824,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid profile (such as a catchphrase over 10 characters or holding a link), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
+            /// Not a valid profile (such as a catchphrase over 10 characters, a nickname holding a link, or a look with no body), or a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
             ///
             /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)/responses/400`.
             ///
@@ -6680,7 +6680,7 @@ public enum Operations {
     }
     /// The squad an invite code belongs to, for anyone
     ///
-    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size and whether it is full; nothing about who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
+    /// What the web invite page shows before the app is installed: no sign-in, so only the name, the size, whether it is full and the members’ characters; no names or ids, nothing that says who is in it. Limited per client address. Case, spaces and dashes in the code don’t matter.
     ///
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
@@ -6729,14 +6729,14 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/200/headers`.
                 public struct Headers: Sendable, Hashable {
-                    /// `no-store`: the size changes as people join.
+                    /// `no-store`: the size and looks change as people join.
                     ///
                     /// - Remark: Generated from `#/paths/public/squad-invites/{inviteCode}/GET/responses/200/headers/Cache-Control`.
                     public var cacheControl: Swift.String?
                     /// Creates a new `Headers`.
                     ///
                     /// - Parameters:
-                    ///   - cacheControl: `no-store`: the size changes as people join.
+                    ///   - cacheControl: `no-store`: the size and looks change as people join.
                     public init(cacheControl: Swift.String? = nil) {
                         self.cacheControl = cacheControl
                     }

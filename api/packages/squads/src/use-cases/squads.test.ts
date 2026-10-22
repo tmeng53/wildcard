@@ -189,13 +189,15 @@ describe('joining by invite code', () => {
     );
   });
 
-  it('previews the squad to anyone with only its name, size and whether it is full', async () => {
-    const ann = await newMember();
+  it('previews the squad to anyone with its name, size, whether it is full and its members', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann, '周末网球');
+    await squads.join({ inviteCode: squad.inviteCode, member: bo });
     expect(await squads.previewPublicInvite(squad.inviteCode)).toStrictEqual({
       name: '周末网球',
-      memberCount: 1,
+      memberCount: 2,
       full: false,
+      members: [ann, bo],
     });
     await expect(squads.previewPublicInvite(InviteCode.parse('ZZZZZZZZ'))).rejects.toMatchObject({
       reason: 'INVITE_CODE_UNKNOWN',

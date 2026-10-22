@@ -2,7 +2,7 @@
 
 **Status: Ready** since the squad API, driven over HTTP by `scripts/api-journeys.sh squad`; CI's `supabase` job runs it. The app's screens for it come with the sign-up flow and aren't covered here.
 
-A member creates a squad with only a name, a friend joins with its invite code, a newcomer previews and joins by the code typed loosely (lower case, with a dash), then leaves. The web invite page's preview (`GET /public/squad-invites/{code}`) answers without a token. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+A member creates a squad with only a name, a friend joins with its invite code, a newcomer previews and joins by the code typed loosely (lower case, with a dash), then leaves. The web invite page's preview (`GET /public/squad-invites/{code}`) answers without a token, with the members' looks but never names or ids. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
 Code: `api/apps/server/src/routes/squads.ts`, `api/packages/squads`.
 

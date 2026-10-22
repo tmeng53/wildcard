@@ -233,11 +233,12 @@ if want squad; then
     fail "preview should show the name and 2 members only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
-  # The web invite page, before anyone signs in: no token, only the name, size and whether full.
+  # The web invite page, before anyone signs in: no token, only the name, size, whether full
+  # and the members' looks (none here: neither has made a character), never names or ids.
   call GET "/public/squad-invites/$typed" ""
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false}' ] ||
-    fail "public preview should show the name, size and full only: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"looks":[]}' ] ||
+    fail "public preview should show the name, size, full and looks only: $body"
   call GET "/public/squad-invites/ZZZZZZZZ" ""
   expect 404 INVITE_CODE_UNKNOWN
   echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
@@ -369,15 +370,20 @@ if want squad-today; then
     call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
     expect 200
   done
-  # The runner picks a catchphrase (口头禅); the napper's are refused, so theirs stays unset.
-  call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \"}"
+  # The runner picks a catchphrase (口头禅) and makes a character; the napper's catchphrases are
+  # refused, so theirs stays unset.
+  runner_look='{"persona":"energetic","variants":{"body":"shiba","top":"jersey"},"colors":{"top":"#2D5BA0"}}'
+  call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \",\"character\":{\"nickname\":\" 跑跑 \",\"look\":$runner_look}}"
   expect 200
   [ "$(jq -r .catchphrase <<<"$body")" = '冲就完了🔥' ] || fail "the catchphrase should be saved trimmed: $body"
+  # Compared with sorted keys: the database keeps JSON objects in its own key order.
+  [ "$(jq -cS .character <<<"$body")" = "$(jq -cS --argjson look "$runner_look" -n '{nickname: "跑跑", look: $look}')" ] ||
+    fail "the character should be saved with its nickname trimmed: $body"
   call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"今天也是冲冲冲的一天!\"}"
   expect 400 REQUEST_INVALID
   call PUT /me/profile "$napper_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\"看abc.com\"}"
   expect 400 REQUEST_INVALID
-  echo "squad-today: runner's catchphrase 冲就完了🔥 saved; napper's 11 characters and link refused (400)"
+  echo "squad-today: runner's catchphrase 冲就完了🔥 and character 跑跑 saved; napper's 11 characters and link refused (400)"
   squad_of "$runner_token" "$napper_token" "$rester_token"
   plan_of() { jq -cn --arg kind "$1" '{version: 1, days: [range(7) | {kind: $kind}]}'; }
   for token in "$runner_token" "$napper_token"; do
@@ -410,6 +416,9 @@ if want squad-today; then
   [ "$(jq -c '[.members[] | .catchphrase]' <<<"$body")" = '[null,"冲就完了🔥",null]' ] ||
     fail "squadmates should see the runner's catchphrase, and null for the others: $body"
   echo "squad-today: napper sees runner's catchphrase 冲就完了🔥, null for self and rester"
+  [ "$(jq -cS '[.members[] | .character]' <<<"$body")" = "$(jq -cS --argjson look "$runner_look" -n '[null, {nickname: "跑跑", look: $look}, null]')" ] ||
+    fail "squadmates should see the runner's character, and none for the others: $body"
+  echo "squad-today: napper sees runner's character 跑跑 (shiba in a jersey), none for self and rester"
 
   call PUT "/check-ins/$(new_id)" "$napper_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
