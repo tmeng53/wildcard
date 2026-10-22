@@ -2242,18 +2242,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Reaction/member`.
             public var member: Swift.String
-            /// Which reaction. The app shows each with its own copy.
+            /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             ///
-            /// - Remark: Generated from `#/components/schemas/Reaction/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case cheer = "cheer"
-                case highlight = "highlight"
-                case lol = "lol"
-            }
-            /// Which reaction. The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/Reaction/kind`.
-            public var kind: Components.Schemas.Reaction.KindPayload
+            /// - Remark: Generated from `#/components/schemas/Reaction/emoji`.
+            public var emoji: Swift.String
             /// When they reacted, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/Reaction/reactedAt`.
@@ -2263,23 +2255,23 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - member: Who reacted.
-            ///   - kind: Which reaction. The app shows each with its own copy.
+            ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             ///   - reactedAt: When they reacted, in UTC with milliseconds.
             public init(
                 version: Components.Schemas.Reaction.VersionPayload,
                 member: Swift.String,
-                kind: Components.Schemas.Reaction.KindPayload,
+                emoji: Swift.String,
                 reactedAt: Foundation.Date
             ) {
                 self.version = version
                 self.member = member
-                self.kind = kind
+                self.emoji = emoji
                 self.reactedAt = reactedAt
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case member
-                case kind
+                case emoji
                 case reactedAt
             }
             public init(from decoder: any Swift.Decoder) throws {
@@ -2292,9 +2284,9 @@ extension Components {
                     Swift.String.self,
                     forKey: .member
                 )
-                self.kind = try container.decode(
-                    Components.Schemas.Reaction.KindPayload.self,
-                    forKey: .kind
+                self.emoji = try container.decode(
+                    Swift.String.self,
+                    forKey: .emoji
                 )
                 self.reactedAt = try container.decode(
                     Foundation.Date.self,
@@ -2303,7 +2295,7 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "member",
-                    "kind",
+                    "emoji",
                     "reactedAt"
                 ])
             }
@@ -2316,33 +2308,25 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/ReactionDraft/version`.
             public var version: Components.Schemas.ReactionDraft.VersionPayload
-            /// Which reaction. The app shows each with its own copy.
+            /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             ///
-            /// - Remark: Generated from `#/components/schemas/ReactionDraft/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case cheer = "cheer"
-                case highlight = "highlight"
-                case lol = "lol"
-            }
-            /// Which reaction. The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReactionDraft/kind`.
-            public var kind: Components.Schemas.ReactionDraft.KindPayload
+            /// - Remark: Generated from `#/components/schemas/ReactionDraft/emoji`.
+            public var emoji: Swift.String
             /// Creates a new `ReactionDraft`.
             ///
             /// - Parameters:
             ///   - version:
-            ///   - kind: Which reaction. The app shows each with its own copy.
+            ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             public init(
                 version: Components.Schemas.ReactionDraft.VersionPayload,
-                kind: Components.Schemas.ReactionDraft.KindPayload
+                emoji: Swift.String
             ) {
                 self.version = version
-                self.kind = kind
+                self.emoji = emoji
             }
             public enum CodingKeys: String, CodingKey {
                 case version
-                case kind
+                case emoji
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -2350,13 +2334,13 @@ extension Components {
                     Components.Schemas.ReactionDraft.VersionPayload.self,
                     forKey: .version
                 )
-                self.kind = try container.decode(
-                    Components.Schemas.ReactionDraft.KindPayload.self,
-                    forKey: .kind
+                self.emoji = try container.decode(
+                    Swift.String.self,
+                    forKey: .emoji
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
-                    "kind"
+                    "emoji"
                 ])
             }
         }
@@ -2374,18 +2358,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/member`.
                 public var member: Swift.String
-                /// Which reaction. The app shows each with its own copy.
+                /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
                 ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/kind`.
-                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case cheer = "cheer"
-                    case highlight = "highlight"
-                    case lol = "lol"
-                }
-                /// Which reaction. The app shows each with its own copy.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/kind`.
-                public var kind: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload
+                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/emoji`.
+                public var emoji: Swift.String
                 /// When they reacted, in UTC with milliseconds.
                 ///
                 /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/reactedAt`.
@@ -2394,20 +2370,20 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - member: Who reacted.
-                ///   - kind: Which reaction. The app shows each with its own copy.
+                ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
                 ///   - reactedAt: When they reacted, in UTC with milliseconds.
                 public init(
                     member: Swift.String,
-                    kind: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload,
+                    emoji: Swift.String,
                     reactedAt: Foundation.Date
                 ) {
                     self.member = member
-                    self.kind = kind
+                    self.emoji = emoji
                     self.reactedAt = reactedAt
                 }
                 public enum CodingKeys: String, CodingKey {
                     case member
-                    case kind
+                    case emoji
                     case reactedAt
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -2416,9 +2392,9 @@ extension Components {
                         Swift.String.self,
                         forKey: .member
                     )
-                    self.kind = try container.decode(
-                        Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload.self,
-                        forKey: .kind
+                    self.emoji = try container.decode(
+                        Swift.String.self,
+                        forKey: .emoji
                     )
                     self.reactedAt = try container.decode(
                         Foundation.Date.self,
@@ -2426,7 +2402,7 @@ extension Components {
                     )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "member",
-                        "kind",
+                        "emoji",
                         "reactedAt"
                     ])
                 }
@@ -3774,64 +3750,51 @@ extension Components {
                 public var stats: [Components.Schemas.WeekStat]
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload`.
                 public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                    /// Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    /// Any one emoji.
                     ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/kind`.
-                    public var kind: Swift.String
-                    /// Its name, in the language asked for.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/label`.
-                    public var label: Swift.String
-                    /// Reactions of this kind.
+                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/emoji`.
+                    public var emoji: Swift.String
+                    /// Reactions with this emoji.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/count`.
                     public var count: Swift.Int
                     /// Creates a new `ReactionsPayloadPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind: Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
-                    ///   - label: Its name, in the language asked for.
-                    ///   - count: Reactions of this kind.
+                    ///   - emoji: Any one emoji.
+                    ///   - count: Reactions with this emoji.
                     public init(
-                        kind: Swift.String,
-                        label: Swift.String,
+                        emoji: Swift.String,
                         count: Swift.Int
                     ) {
-                        self.kind = kind
-                        self.label = label
+                        self.emoji = emoji
                         self.count = count
                     }
                     public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case label
+                        case emoji
                         case count
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
+                        self.emoji = try container.decode(
                             Swift.String.self,
-                            forKey: .kind
-                        )
-                        self.label = try container.decode(
-                            Swift.String.self,
-                            forKey: .label
+                            forKey: .emoji
                         )
                         self.count = try container.decode(
                             Swift.Int.self,
                             forKey: .count
                         )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind",
-                            "label",
+                            "emoji",
                             "count"
                         ])
                     }
                 }
-                /// Teammates’ reactions on the week’s check-ins, one entry a kind.
+                /// Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/reactions`.
                 public typealias ReactionsPayload = [Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayloadPayload]
-                /// Teammates’ reactions on the week’s check-ins, one entry a kind.
+                /// Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/reactions`.
                 public var reactions: Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayload
@@ -3839,7 +3802,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - stats: Each count added up over the members.
-                ///   - reactions: Teammates’ reactions on the week’s check-ins, one entry a kind.
+                ///   - reactions: Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 public init(
                     stats: [Components.Schemas.WeekStat],
                     reactions: Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayload
@@ -3877,55 +3840,43 @@ extension Components {
                 public var stats: [Components.Schemas.WeekStat]
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload`.
                 public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                    /// Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    /// Any one emoji.
                     ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/kind`.
-                    public var kind: Swift.String
-                    /// Its name, in the language asked for.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/label`.
-                    public var label: Swift.String
-                    /// Reactions of this kind on their check-ins.
+                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/emoji`.
+                    public var emoji: Swift.String
+                    /// Reactions with this emoji on their check-ins.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/received`.
                     public var received: Swift.Int
-                    /// Reactions of this kind they left on teammates’ check-ins.
+                    /// Reactions with this emoji they left on teammates’ check-ins.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/given`.
                     public var given: Swift.Int
                     /// Creates a new `ReactionsPayloadPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind: Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
-                    ///   - label: Its name, in the language asked for.
-                    ///   - received: Reactions of this kind on their check-ins.
-                    ///   - given: Reactions of this kind they left on teammates’ check-ins.
+                    ///   - emoji: Any one emoji.
+                    ///   - received: Reactions with this emoji on their check-ins.
+                    ///   - given: Reactions with this emoji they left on teammates’ check-ins.
                     public init(
-                        kind: Swift.String,
-                        label: Swift.String,
+                        emoji: Swift.String,
                         received: Swift.Int,
                         given: Swift.Int
                     ) {
-                        self.kind = kind
-                        self.label = label
+                        self.emoji = emoji
                         self.received = received
                         self.given = given
                     }
                     public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case label
+                        case emoji
                         case received
                         case given
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
+                        self.emoji = try container.decode(
                             Swift.String.self,
-                            forKey: .kind
-                        )
-                        self.label = try container.decode(
-                            Swift.String.self,
-                            forKey: .label
+                            forKey: .emoji
                         )
                         self.received = try container.decode(
                             Swift.Int.self,
@@ -3936,18 +3887,17 @@ extension Components {
                             forKey: .given
                         )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind",
-                            "label",
+                            "emoji",
                             "received",
                             "given"
                         ])
                     }
                 }
-                /// One entry a reaction kind.
+                /// One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/reactions`.
                 public typealias ReactionsPayload = [Components.Schemas.WeekSummary.MePayload.ReactionsPayloadPayload]
-                /// One entry a reaction kind.
+                /// One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/reactions`.
                 public var reactions: Components.Schemas.WeekSummary.MePayload.ReactionsPayload
@@ -3955,7 +3905,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - stats: The signed-in member’s own counts.
-                ///   - reactions: One entry a reaction kind.
+                ///   - reactions: One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 public init(
                     stats: [Components.Schemas.WeekStat],
                     reactions: Components.Schemas.WeekSummary.MePayload.ReactionsPayload
@@ -4931,10 +4881,6 @@ extension Components {
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/version`.
                 public var version: Components.Schemas.WeekStory.Case1Payload.VersionPayload
-                /// The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/language`.
-                public var language: Swift.String
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
                 public struct SquadPayload: Codable, Hashable, Sendable {
                     /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/id`.
@@ -5075,7 +5021,6 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - version:
-                ///   - language: The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese.
                 ///   - squad:
                 ///   - week:
                 ///   - hottest:
@@ -5083,7 +5028,6 @@ extension Components {
                 ///   - titles: Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
                 public init(
                     version: Components.Schemas.WeekStory.Case1Payload.VersionPayload,
-                    language: Swift.String,
                     squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload,
                     week: Components.Schemas.WeekStory.Case1Payload.WeekPayload,
                     hottest: Components.Schemas.StoryHottest? = nil,
@@ -5091,7 +5035,6 @@ extension Components {
                     titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
                 ) {
                     self.version = version
-                    self.language = language
                     self.squad = squad
                     self.week = week
                     self.hottest = hottest
@@ -5100,7 +5043,6 @@ extension Components {
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
-                    case language
                     case squad
                     case week
                     case hottest
@@ -5112,10 +5054,6 @@ extension Components {
                     self.version = try container.decode(
                         Components.Schemas.WeekStory.Case1Payload.VersionPayload.self,
                         forKey: .version
-                    )
-                    self.language = try container.decode(
-                        Swift.String.self,
-                        forKey: .language
                     )
                     self.squad = try container.decode(
                         Components.Schemas.WeekStory.Case1Payload.SquadPayload.self,
@@ -5139,7 +5077,6 @@ extension Components {
                     )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "version",
-                        "language",
                         "squad",
                         "week",
                         "hottest",
@@ -5162,10 +5099,6 @@ extension Components {
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/version`.
                 public var version: Components.Schemas.WeekStory.Case2Payload.VersionPayload
-                /// The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/language`.
-                public var language: Swift.String
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
                 public struct SquadPayload: Codable, Hashable, Sendable {
                     /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/id`.
@@ -5258,21 +5191,18 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - version:
-                ///   - language: The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese.
                 ///   - squad:
                 ///   - week:
                 ///   - hottest:
                 ///   - status:
                 public init(
                     version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
-                    language: Swift.String,
                     squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload,
                     week: Components.Schemas.WeekStory.Case2Payload.WeekPayload,
                     hottest: Components.Schemas.StoryHottest? = nil,
                     status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
                 ) {
                     self.version = version
-                    self.language = language
                     self.squad = squad
                     self.week = week
                     self.hottest = hottest
@@ -5280,7 +5210,6 @@ extension Components {
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
-                    case language
                     case squad
                     case week
                     case hottest
@@ -5291,10 +5220,6 @@ extension Components {
                     self.version = try container.decode(
                         Components.Schemas.WeekStory.Case2Payload.VersionPayload.self,
                         forKey: .version
-                    )
-                    self.language = try container.decode(
-                        Swift.String.self,
-                        forKey: .language
                     )
                     self.squad = try container.decode(
                         Components.Schemas.WeekStory.Case2Payload.SquadPayload.self,
@@ -5314,7 +5239,6 @@ extension Components {
                     )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "version",
-                        "language",
                         "squad",
                         "week",
                         "hottest",
@@ -5388,62 +5312,49 @@ extension Components {
             public var photos: [Components.Schemas.StoryPhoto]
             /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload`.
             public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                /// Today `cheer`, `highlight` or `lol`; show any kind from its label.
+                /// Any one emoji.
                 ///
-                /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload/kind`.
-                public var kind: Swift.String
-                /// Its name, in the language asked for.
-                ///
-                /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload/label`.
-                public var label: Swift.String
+                /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload/emoji`.
+                public var emoji: Swift.String
                 /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload/count`.
                 public var count: Swift.Int
                 /// Creates a new `ReactionsPayloadPayload`.
                 ///
                 /// - Parameters:
-                ///   - kind: Today `cheer`, `highlight` or `lol`; show any kind from its label.
-                ///   - label: Its name, in the language asked for.
+                ///   - emoji: Any one emoji.
                 ///   - count:
                 public init(
-                    kind: Swift.String,
-                    label: Swift.String,
+                    emoji: Swift.String,
                     count: Swift.Int
                 ) {
-                    self.kind = kind
-                    self.label = label
+                    self.emoji = emoji
                     self.count = count
                 }
                 public enum CodingKeys: String, CodingKey {
-                    case kind
-                    case label
+                    case emoji
                     case count
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.kind = try container.decode(
+                    self.emoji = try container.decode(
                         Swift.String.self,
-                        forKey: .kind
-                    )
-                    self.label = try container.decode(
-                        Swift.String.self,
-                        forKey: .label
+                        forKey: .emoji
                     )
                     self.count = try container.decode(
                         Swift.Int.self,
                         forKey: .count
                     )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "kind",
-                        "label",
+                        "emoji",
                         "count"
                     ])
                 }
             }
-            /// Teammates’ reactions on it by kind, as they stood at the awards.
+            /// Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryHottest/reactions`.
             public typealias ReactionsPayload = [Components.Schemas.StoryHottest.ReactionsPayloadPayload]
-            /// Teammates’ reactions on it by kind, as they stood at the awards.
+            /// Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryHottest/reactions`.
             public var reactions: Components.Schemas.StoryHottest.ReactionsPayload
@@ -5457,7 +5368,7 @@ extension Components {
             ///   - caption:
             ///   - text: For a 请假条: its text.
             ///   - photos: Up to 3 photos, the cover first; empty when there are none.
-            ///   - reactions: Teammates’ reactions on it by kind, as they stood at the awards.
+            ///   - reactions: Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
             public init(
                 checkIn: Swift.String,
                 day: Swift.String,

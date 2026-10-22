@@ -2,7 +2,7 @@
 
 **Status: Ready** since 请假条 replies, driven over HTTP by `scripts/api-journeys.sh replies`; CI's `supabase` job runs it. The app's screens for it aren't covered here.
 
-A member posts a 今日请假条; a teammate replies 准了 (`approved`), repeats it, changes it to 抱抱 (`hug`) and also leaves a 笑死 reaction, which is kept apart; the author sees the one reply. A 练了 takes no replies, the author can't reply to their own 请假条, and someone outside the squad can't see it at all. Taking the reply off leaves the reaction. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+A member posts a 今日请假条; a teammate replies 准了 (`approved`), repeats it, changes it to 抱抱 (`hug`) and also leaves a 😂 reaction, which is kept apart; the author sees the one reply. A 练了 takes no replies, the author can't reply to their own 请假条, and someone outside the squad can't see it at all. Taking the reply off leaves the reaction. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
 Code: `api/apps/server/src/routes/replies.ts`, `api/packages/check-ins/src/use-cases/check-ins/reply-to-disclaimer.ts`.
 
@@ -32,7 +32,7 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 ## Evidence
 
-- `psql "$DB_URL" -c "select * from public.disclaimer_replies where check_in_id = '<excuse>'"`: no rows at the end, while `check_in_reactions` still holds the mate's `lol` (the script checks both).
+- `psql "$DB_URL" -c "select * from public.disclaimer_replies where check_in_id = '<excuse>'"`: no rows at the end, while `check_in_reactions` still holds the mate's 😂 (the script checks both).
 
 ## Worth probing
 

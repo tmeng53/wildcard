@@ -29,7 +29,7 @@ export interface WeekCheckIn {
   readonly text?: string | undefined;
   /** Its photos' paths, the cover first. */
   readonly photos: readonly string[];
-  /** Teammates' reactions on it, by kind; a kind nobody left is left out. */
+  /** Teammates' reactions on it, by emoji; an emoji nobody left is left out. */
   readonly reactions: Readonly<Record<string, number>>;
 }
 

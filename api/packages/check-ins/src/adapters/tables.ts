@@ -33,7 +33,7 @@ export interface CheckInPhotos {
 
 export interface CheckInReactions {
   check_in_id: string;
-  kind: string;
+  emoji: string;
   member_id: string;
   reacted_at: Timestamp;
 }
