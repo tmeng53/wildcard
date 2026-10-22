@@ -8,7 +8,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
@@ -17,7 +16,7 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
-import { aiConsentOn } from './test-kit/local-supabase.js';
+import { aiConsentOn, noJobs, pushOn } from './test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
 
 describe('openapi.json', () => {
@@ -62,7 +61,7 @@ describe('openapi.json', () => {
         clock: () => new Date(),
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
-      push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+      push: pushOn(db),
       squads: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
@@ -70,6 +69,7 @@ describe('openapi.json', () => {
       }),
       aiConsent: aiConsentOn(db),
       log: createLog(() => undefined),
+      jobs: noJobs,
       admin: {
         admins: () => ({
           requireAdmin: () => Promise.reject(new Error('unused')),

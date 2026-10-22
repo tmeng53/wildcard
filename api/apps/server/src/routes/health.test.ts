@@ -6,7 +6,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 
@@ -15,7 +14,7 @@ import { createApp } from '../app.js';
 import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
-import { adminOn, aiConsentOn } from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn, noJobs, pushOn } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 const config = readConfig(process.env);
@@ -58,7 +57,7 @@ async function getHealth(db: Database) {
       clock: () => new Date(),
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
-    push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+    push: pushOn(db),
     squads: createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: randomInviteCodes,
@@ -66,6 +65,7 @@ async function getHealth(db: Database) {
     }),
     aiConsent: aiConsentOn(db),
     log: createLog((line) => lines.push(line)),
+    jobs: noJobs,
     admin: adminOn(),
   });
   try {
@@ -140,7 +140,7 @@ describe('an unknown route', () => {
         clock: () => new Date(),
       }),
       members: createMembers({ store: createPostgresProfileStore(db) }),
-      push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+      push: pushOn(db),
       squads: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
@@ -148,6 +148,7 @@ describe('an unknown route', () => {
       }),
       aiConsent: aiConsentOn(db),
       log: createLog(() => undefined),
+      jobs: noJobs,
       admin: adminOn(),
     });
     const response = await app.request('/nope', { method: 'POST' });

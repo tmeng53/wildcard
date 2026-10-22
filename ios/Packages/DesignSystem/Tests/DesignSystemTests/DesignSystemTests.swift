@@ -185,6 +185,23 @@ struct SceneThemeTests {
         #expect(ColorRole.bgKindOnScene.color(in: theme) == Palette.white)
         #expect(ColorRole.ring.color(in: theme) == ColorRole.bgAccent.color(in: theme))
     }
+
+    /// With Increase Contrast on, every scene's closed ring stands out from a white card (WCAG 1.4.11).
+    @Test(arguments: SceneTheme.allCases)
+    func ringsStandOutWithIncreasedContrast(theme: SceneTheme) {
+        let ring = ColorRole.ring.color(in: theme, contrast: .increased)
+        #expect(ring.contrastRatio(with: ColorRole.bgCanvas.color(in: theme)) >= 3)
+    }
+
+    @Test func onlyTheGymRingChangesWithIncreasedContrast() {
+        #expect(ColorRole.ring.color(in: .gym).hex == "#C6F432")
+        #expect(ColorRole.ring.color(in: .gym, contrast: .increased) == Palette.graphite)
+        for role in ColorRole.allCases where role != .ring {
+            for theme in SceneTheme.allCases {
+                #expect(role.color(in: theme, contrast: .increased) == role.color(in: theme))
+            }
+        }
+    }
 }
 
 struct ClothesTests {
@@ -220,6 +237,7 @@ struct LayoutTests {
         #expect([Sizing.primaryControl, Sizing.control, Sizing.compactControl] == [52, 44, 36])
         #expect(Sizing.pickRow == 52)
         #expect([Sizing.checkBadge, Sizing.selectionStroke, Sizing.hairline, Sizing.swatch] == [20, 1.5, 1, 32])
+        #expect([Sizing.switchWidth, Sizing.switchHeight, Sizing.switchKnobInset] == [51, 31, 2])
     }
 
     /// Compact controls draw smaller than a finger; their views pad out to the tap target.

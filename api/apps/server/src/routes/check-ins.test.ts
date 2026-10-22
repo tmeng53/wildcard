@@ -8,7 +8,6 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createOffSender, createPostgresDeviceStore, createPush } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -18,7 +17,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, signUp, aiConsentOn } from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -57,7 +56,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members: createMembers({ store: createPostgresProfileStore(db) }),
-  push: createPush({ store: createPostgresDeviceStore(db), sender: createOffSender() }),
+  push: pushOn(db),
   squads: createSquads({
     store: createPostgresSquadStore(db),
     inviteCodes: randomInviteCodes,
@@ -65,6 +64,7 @@ const app = createApp({
   }),
   aiConsent: aiConsentOn(db),
   log: createLog(() => undefined),
+  jobs: noJobs,
   admin: adminOn(),
 });
 

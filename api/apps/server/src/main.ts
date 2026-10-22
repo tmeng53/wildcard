@@ -24,7 +24,9 @@ import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import {
   createApnsSender,
   createOffSender,
+  createPostgresDailyPushStore,
   createPostgresDeviceStore,
+  createPostgresSettingsStore,
   createPush,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -41,6 +43,7 @@ import {
 } from './adapters/supabase-auth.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -78,6 +81,8 @@ if (config.appleSignInKey === undefined) {
 const members = createMembers({ store: createPostgresProfileStore(db) });
 const push = createPush({
   store: createPostgresDeviceStore(db),
+  settings: createPostgresSettingsStore(db),
+  daily: createPostgresDailyPushStore(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
@@ -92,10 +97,21 @@ const aiConsent = createAiConsent({
   clock: () => new Date(),
 });
 const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
+if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
+});
+const checkIns = createCheckIns({
+  store: createPostgresCheckInStore(db),
+  // Who is in which squad is the squads module's to keep: check-ins ask it.
+  membership: squads,
+  reactions: createPostgresReactionStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
+  photos,
+  calendarOf: memberCalendar(members),
+  clock: () => new Date(),
 });
 const app = createApp({
   db,
@@ -108,16 +124,7 @@ const app = createApp({
     config.appleSignInKey === undefined
       ? undefined
       : createAppleSignInRevoker(config.appleSignInKey),
-  checkIns: createCheckIns({
-    store: createPostgresCheckInStore(db),
-    // Who is in which squad is the squads module's to keep: check-ins ask it.
-    membership: squads,
-    reactions: createPostgresReactionStore(db),
-    plans: createPostgresWeeklyPlanStore(db),
-    photos,
-    calendarOf: memberCalendar(members),
-    clock: () => new Date(),
-  }),
+  checkIns,
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
@@ -154,6 +161,12 @@ const app = createApp({
   }),
   push,
   log,
+  jobs: {
+    token: config.jobsToken,
+    // Each kind of interaction the daily push counts comes from one of these.
+    interactions: [reactionInteractions(checkIns)],
+    clock: () => new Date(),
+  },
   admin: {
     admins: adminsOn,
     tools: (scope) => [

@@ -107,6 +107,18 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /me/devices/remove`.
     /// - Remark: Generated from `#/paths//me/devices/remove/post(removeMyDevice)`.
     func removeMyDevice(_ input: Operations.RemoveMyDevice.Input) async throws -> Operations.RemoveMyDevice.Output
+    /// Which kinds of push the member gets
+    ///
+    /// - Remark: HTTP `GET /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/get(getMyPushSettings)`.
+    func getMyPushSettings(_ input: Operations.GetMyPushSettings.Input) async throws -> Operations.GetMyPushSettings.Output
+    /// Turn kinds of push on or off
+    ///
+    /// Takes every switch at once. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
+    func saveMyPushSettings(_ input: Operations.SaveMyPushSettings.Input) async throws -> Operations.SaveMyPushSettings.Output
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -392,6 +404,28 @@ extension APIProtocol {
         body: Operations.RemoveMyDevice.Input.Body
     ) async throws -> Operations.RemoveMyDevice.Output {
         try await removeMyDevice(Operations.RemoveMyDevice.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Which kinds of push the member gets
+    ///
+    /// - Remark: HTTP `GET /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/get(getMyPushSettings)`.
+    public func getMyPushSettings(headers: Operations.GetMyPushSettings.Input.Headers = .init()) async throws -> Operations.GetMyPushSettings.Output {
+        try await getMyPushSettings(Operations.GetMyPushSettings.Input(headers: headers))
+    }
+    /// Turn kinds of push on or off
+    ///
+    /// Takes every switch at once. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/push-settings`.
+    /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
+    public func saveMyPushSettings(
+        headers: Operations.SaveMyPushSettings.Input.Headers = .init(),
+        body: Operations.SaveMyPushSettings.Input.Body
+    ) async throws -> Operations.SaveMyPushSettings.Output {
+        try await saveMyPushSettings(Operations.SaveMyPushSettings.Input(
             headers: headers,
             body: body
         ))

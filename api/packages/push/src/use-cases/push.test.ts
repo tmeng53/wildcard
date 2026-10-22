@@ -5,7 +5,9 @@ import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { createPostgresDailyPushStore } from '../adapters/postgres-daily-push-store.js';
 import { createPostgresDeviceStore, type PushTables } from '../adapters/postgres-device-store.js';
+import { createPostgresSettingsStore } from '../adapters/postgres-settings-store.js';
 import { DeviceToken, MemberId, type Device } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
 import { PushRejectedError } from '../errors.js';
@@ -51,13 +53,18 @@ function scriptedSender(answers: ReadonlyMap<string, SendOutcome | Error> = new 
 }
 
 const store = createPostgresDeviceStore(db);
+const stores = {
+  store,
+  settings: createPostgresSettingsStore(db),
+  daily: createPostgresDailyPushStore(db),
+};
 
 describe('push devices', () => {
   it('sends to every phone a member registered, and only theirs', async () => {
     const [tracy, friend] = [await newMember(), await newMember()];
     const [phone, ipad, friendsPhone] = [newToken(), newToken(), newToken()];
     const { sender, got } = scriptedSender();
-    const push = createPush({ store, sender });
+    const push = createPush({ ...stores, sender });
     await push.registerDevice({
       member: tracy,
       device: { token: phone, environment: 'production' },
@@ -85,7 +92,7 @@ describe('push devices', () => {
   it('keeps one row for a repeated registration, and moves a phone to whoever signs in on it', async () => {
     const [tracy, friend] = [await newMember(), await newMember()];
     const phone = newToken();
-    const push = createPush({ store, sender: scriptedSender().sender });
+    const push = createPush({ ...stores, sender: scriptedSender().sender });
     await push.registerDevice({ member: tracy, device: { token: phone, environment: 'sandbox' } });
     await push.registerDevice({ member: tracy, device: { token: phone, environment: 'sandbox' } });
     await push.registerDevice({
@@ -102,7 +109,7 @@ describe('push devices', () => {
   it('takes a token in either case as the same phone', async () => {
     const tracy = await newMember();
     const hex = randomBytes(32).toString('hex');
-    const push = createPush({ store, sender: scriptedSender().sender });
+    const push = createPush({ ...stores, sender: scriptedSender().sender });
     await push.registerDevice({
       member: tracy,
       device: { token: DeviceToken.parse(hex.toUpperCase()), environment: 'sandbox' },
@@ -117,7 +124,7 @@ describe('push devices', () => {
   it('stops sending to a phone its member signed out on, and ignores anyone else asking', async () => {
     const [tracy, friend] = [await newMember(), await newMember()];
     const [phone, other] = [newToken(), newToken()];
-    const push = createPush({ store, sender: scriptedSender().sender });
+    const push = createPush({ ...stores, sender: scriptedSender().sender });
     await push.registerDevice({ member: tracy, device: { token: phone, environment: 'sandbox' } });
     await push.registerDevice({ member: tracy, device: { token: other, environment: 'sandbox' } });
 
@@ -139,7 +146,7 @@ describe('push devices', () => {
         [failing, refused],
       ]),
     );
-    const push = createPush({ store, sender });
+    const push = createPush({ ...stores, sender });
     for (const token of [dead, failing, fine]) {
       await push.registerDevice({ member: tracy, device: { token, environment: 'production' } });
     }
@@ -162,7 +169,7 @@ describe('push devices', () => {
   it('counts phones it didn’t send to while sending is off', async () => {
     const tracy = await newMember();
     const push = createPush({
-      store,
+      ...stores,
       sender: { send: () => Promise.resolve('off') },
     });
     await push.registerDevice({
@@ -179,7 +186,7 @@ describe('push devices', () => {
 
   it('sends nothing to no one', async () => {
     const { sender, got } = scriptedSender();
-    const push = createPush({ store, sender });
+    const push = createPush({ ...stores, sender });
     expect(await push.notifyMembers({ members: [], notification })).toStrictEqual({
       sent: 0,
       gone: 0,

@@ -52,6 +52,9 @@ const Environment = z.object({
     .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
     .optional(),
   APNS_TOPIC: z.string().min(1).optional(),
+  // What the scheduler sends to start jobs such as the daily progress push. Without it no job
+  // runs. Long and random, like any secret.
+  JOBS_TOKEN: z.string().min(32).optional(),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
@@ -85,6 +88,8 @@ export interface Config {
         readonly clientId: string;
       }
     | undefined;
+  /** The token that starts jobs; undefined until a scheduler is set up. */
+  readonly jobsToken: string | undefined;
   /** Undefined until there is an APNs key: then no pushes are sent. */
   readonly apns:
     | {
@@ -144,6 +149,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
         ? undefined
         : { provider: LLM_PROVIDER, apiKey: llmKey, model: LLM_MODEL },
     appleSignInKey,
+    jobsToken: result.data.JOBS_TOKEN,
     apns:
       APNS_KEY_ID === undefined ||
       APNS_TEAM_ID === undefined ||

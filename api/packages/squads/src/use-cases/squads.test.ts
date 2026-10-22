@@ -141,6 +141,15 @@ describe('joining by invite code', () => {
     expect((await squads.membersOf(squad.id)).includes(member)).toBe(false);
   });
 
+  it('answers a repeat join as before once their consent is to an older copy', async () => {
+    const squad = await newSquad(await newMember());
+    const member = await newMember();
+    await squads.join({ inviteCode: squad.inviteCode, member });
+    consented.delete(member);
+    const again = await squads.join({ inviteCode: squad.inviteCode, member });
+    expect(again.joined).toBe(false);
+  });
+
   it('refuses a code no squad has', async () => {
     await expect(
       squads.join({ inviteCode: InviteCode.parse('ZZZZZZZZ'), member: await newMember() }),
