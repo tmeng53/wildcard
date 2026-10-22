@@ -27,7 +27,7 @@ export type SaveOutcome = 'created' | 'changed' | 'unchanged';
  * shown to them, so a reaction never reveals a squad they aren't in.
  */
 export function sharedSquads(
-  checkIn: CheckInRecord,
+  checkIn: Pick<CheckInRecord, 'audience'>,
   {
     viewerSquads,
     authorSquads,

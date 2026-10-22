@@ -11,6 +11,13 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface DailyPushes {
+  day: string;
+  handled_at: Generated<Timestamp>;
+  member_id: string;
+  quiet: boolean;
+}
+
 export interface PushDevices {
   environment: string;
   member_id: string;
@@ -18,6 +25,15 @@ export interface PushDevices {
   token: string;
 }
 
+export interface PushSettings {
+  enabled: boolean;
+  member_id: string;
+  topic: string;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface DB {
+  daily_pushes: DailyPushes;
   push_devices: PushDevices;
+  push_settings: PushSettings;
 }

@@ -2571,6 +2571,67 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PushSettings`.
+        public struct PushSettings: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
+            public var version: Components.Schemas.PushSettings.VersionPayload
+            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
+            public struct SettingsPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PushSettings/settings/dailyProgress`.
+                public var dailyProgress: Swift.Bool?
+                /// Creates a new `SettingsPayload`.
+                ///
+                /// - Parameters:
+                ///   - dailyProgress:
+                public init(dailyProgress: Swift.Bool? = nil) {
+                    self.dailyProgress = dailyProgress
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case dailyProgress
+                }
+            }
+            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
+            public var settings: Components.Schemas.PushSettings.SettingsPayload
+            /// Creates a new `PushSettings`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - settings: Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            public init(
+                version: Components.Schemas.PushSettings.VersionPayload,
+                settings: Components.Schemas.PushSettings.SettingsPayload
+            ) {
+                self.version = version
+                self.settings = settings
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case settings
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.PushSettings.VersionPayload.self,
+                    forKey: .version
+                )
+                self.settings = try container.decode(
+                    Components.Schemas.PushSettings.SettingsPayload.self,
+                    forKey: .settings
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "settings"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
         public struct SquadList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.

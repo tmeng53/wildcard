@@ -13,6 +13,7 @@ import { adminMcp } from './admin-mcp/admin-mcp.js';
 import type { AdminTool } from './admin-mcp/admin-tool.js';
 import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
+import type { InteractionSource } from './flows/daily-progress-push.js';
 import type { Log } from './log.js';
 import type {
   Accounts,
@@ -27,8 +28,10 @@ import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
 import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
+import { jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
 import { photoUploads } from './routes/photo-uploads.js';
+import { pushSettings } from './routes/push-settings.js';
 import { reactions } from './routes/reactions.js';
 import { replies } from './routes/replies.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
@@ -52,6 +55,14 @@ export interface AppDependencies {
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
   readonly log: Log;
+  /** The daily progress push and other work a scheduler starts. */
+  readonly jobs: {
+    /** What the scheduler sends; undefined until one is set up, and then no job runs. */
+    readonly token: string | undefined;
+    /** Where the daily push finds what teammates did for a member. */
+    readonly interactions: readonly InteractionSource[];
+    readonly clock: () => Date;
+  };
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
     /** The admin list and log, working on the database or on a transaction of it. */
@@ -91,11 +102,22 @@ export function createApp(deps: AppDependencies) {
   app.route('/', reactions(deps));
   app.route('/', replies(deps));
   app.route('/', devices(deps));
+  app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
   app.route('/', weekSummary(deps));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
+  // Not part of the app's contract, so not in openapi.json: a scheduler calls it.
+  app.route(
+    '/',
+    jobs({
+      ...deps,
+      jobsToken: deps.jobs.token,
+      interactions: deps.jobs.interactions,
+      clock: deps.jobs.clock,
+    }),
+  );
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
   app.route(
     '/',

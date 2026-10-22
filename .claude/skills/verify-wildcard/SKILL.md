@@ -89,6 +89,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | [Reactions through the API](features/reactions-api.md): react, change, take off, refusals | **Ready** (API only; CI runs it) |
 | [请假条 replies through the API](features/replies-api.md): reply, change, take off, apart from reactions, refusals | **Ready** (API only; CI runs it) |
 | [Push devices through the API](features/devices-api.md): register, move to another member, remove | **Ready** (API only, no APNs key; CI runs it) |
+| [Daily progress push through the API](features/daily-push-api.md): the push switch, the scheduler's job, once a day | **Ready** (API only, no APNs key; CI runs it) |
 | [Profile and account deletion through the API](features/account-api.md): save a profile, delete everything | **Ready** (API only, no Apple key; CI runs it) |
 | [Admin MCP server](features/admin-mcp-api.md): sign an admin in with OAuth, manage memes, read the log | **Ready** (API only, consent approved through Supabase's API; CI runs it) |
 | Daily check-in in the app: pick 练了 / 健康餐 / 坦白放纵餐 / 今日请假条 and see it on the squad track | Screen on main against an in-memory squad; no feature file yet |

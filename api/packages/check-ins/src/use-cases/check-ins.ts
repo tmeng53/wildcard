@@ -1,7 +1,7 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
-import type { Reaction } from '../domain/reaction.js';
+import type { Reaction, ReactionKind } from '../domain/reaction.js';
 import type { Reply } from '../domain/reply.js';
 import type {
   CheckInStore,
@@ -30,6 +30,7 @@ import {
   type ReplyToDisclaimerInput,
 } from './check-ins/reply-to-disclaimer.js';
 import { listResponses, removeResponse } from './check-ins/responses.js';
+import { reactionsReceived } from './check-ins/reactions-received.js';
 import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summary.js';
 import {
   saveCheckIn,
@@ -48,6 +49,15 @@ export interface CheckIns {
     readonly checkIn: CheckInId;
     readonly viewer: MemberId;
   }): Promise<Reaction[]>;
+  /**
+   * Teammates who reacted to the member's check-ins in `[since, until)`, by kind, each once per
+   * kind.
+   */
+  reactionsReceived(input: {
+    readonly member: MemberId;
+    readonly since: Date;
+    readonly until: Date;
+  }): Promise<ReadonlyMap<ReactionKind, ReadonlySet<MemberId>>>;
   /** Replies are for 请假条 only, apart from reactions: a teammate may leave both. */
   reply(input: ReplyToDisclaimerInput): Promise<Replied>;
   removeReply(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
@@ -86,6 +96,7 @@ export function createCheckIns(deps: {
       removeResponse({ ...deps, remove: (...at) => deps.replies.remove(...at) }, input),
     listReplies: (input) =>
       listResponses({ ...deps, list: (checkIn) => deps.replies.list(checkIn) }, input),
+    reactionsReceived: (input) => reactionsReceived(deps, input),
     squadToday: (input) => squadToday(deps, input),
     weekSummary: (input) => squadWeekSummary(deps, input),
   };
