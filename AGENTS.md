@@ -32,7 +32,7 @@ Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud mach
 
 ## CI
 
-The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` (job `verify`), `scripts/ios-test.sh` (job `ios`) and `scripts/avatar-preview.sh` (job `avatar-preview`) on `macos-26`, and the database and API checks (job `supabase`) on Linux, for ready (not draft) PRs and pushes to `main` (on a PR, `ios` and `avatar-preview` run only when it changes what they build, else they're skipped, which counts as passing), and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Keep CI fast: a job runs only for the paths it checks, anything that can run on Linux doesn't run on macOS, and fixes are checked locally and batched into one push, since every push queues for the few macOS runners. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
+The repo is public until launch, so GitHub-hosted runners are free, macOS included. `.github/workflows/verify.yml` runs `scripts/verify.sh` (job `verify`), `scripts/ios-test.sh` (job `ios`) and `scripts/avatar-preview.sh` (job `avatar-preview`) on `macos-26`, and the database and API checks (job `supabase`) on Linux, for ready (not draft) PRs and pushes to `main` (on a PR, `ios` and `avatar-preview` run only when it changes what they build, else they're skipped, which counts as passing), and cancels a PR's run when a newer push to it replaces it (each commit on `main` keeps its own run); "green" means that check passed on the PR's head. Run `scripts/verify.sh` in your session before every push too; where a toolchain is missing there, CI's result is the evidence. Keep CI fast: a job should run only for the paths it checks (today only `ios` and `avatar-preview` are gated), anything that can run on Linux doesn't run on macOS, and fixes are checked locally and batched into one push, since every push queues for the few macOS runners. Never add a self-hosted runner while the repo is public: a fork's PR could run code on that machine. Never commit secrets, keys or private data; anything pushed while public stays public. Before launch the repo goes private, and the macOS builds move to Xcode Cloud.
 
 ## Skills
 
@@ -137,6 +137,7 @@ Flag only real problems: bugs, broken rules, missing evidence. Formatting and an
 - A hard-coded user-facing string outside the String Catalog (other than the 战报 words the API sends).
 - A UI change without screenshots, a test that can't fail, or a mocked database.
 - A PR based on another open PR, or one that mixes unrelated changes.
+- A verification tier lower than the diff warrants (`raise-pr`, Independent verification).
 - Code the change leaves dead or duplicated (an old rule kept after it moved, a second type for the same thing), or an old name after a rename.
 
 ## Keeping this file current

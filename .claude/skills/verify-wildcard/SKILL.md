@@ -35,7 +35,7 @@ git merge-base --is-ancestor origin/main HEAD || echo "behind main"
 
 If the branch is behind main, say so in Notes: the author merges main in, and a new verdict follows if the diff changed.
 
-Read the PR description (if there is no PR, the request that asked for the verdict) and the diff to decide which journeys in `features/` it touches. Always run every journey marked **Ready**.
+Read the PR description (if there is no PR, the request that asked for the verdict) and the diff to decide which journeys in `features/` it touches. Drive the journeys it touches. CI runs every **Ready** journey on the head (`scripts/api-journeys.sh`), so quote its result for those instead of running them again.
 
 Keep evidence in one folder outside the repo, so it survives cleanup. Shell variables don't survive between an agent's separate commands, so write the literal path, with the real short sha, in every command (below: `/tmp/verify-wildcard/<short sha>`):
 
