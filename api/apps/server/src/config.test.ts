@@ -13,7 +13,7 @@ const apple = {
   APPLE_TEAM_ID: 'TEAM123456',
   APPLE_KEY_ID: 'KEY1234567',
   APPLE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nMIGT\\n-----END PRIVATE KEY-----',
-  APPLE_CLIENT_ID: 'app.wildcard.ios',
+  APPLE_CLIENT_ID: 'com.wildcardsquad.wildcard',
 };
 const privateKey = generateKeyPairSync('ec', { namedCurve: 'P-256' })
   .privateKey.export({ type: 'pkcs8', format: 'pem' })
@@ -22,7 +22,7 @@ const apns = {
   APNS_KEY_ID: 'ABC123DEFG',
   APNS_TEAM_ID: 'TEAM123456',
   APNS_PRIVATE_KEY: privateKey,
-  APNS_TOPIC: 'app.wildcard.ios',
+  APNS_TOPIC: 'com.wildcardsquad.wildcard',
 };
 
 describe('readConfig', () => {
@@ -86,7 +86,7 @@ describe('readConfig', () => {
       teamId: 'TEAM123456',
       keyId: 'KEY1234567',
       privateKey: '-----BEGIN PRIVATE KEY-----\nMIGT\n-----END PRIVATE KEY-----',
-      clientId: 'app.wildcard.ios',
+      clientId: 'com.wildcardsquad.wildcard',
     });
   });
 
@@ -103,7 +103,7 @@ describe('readConfig', () => {
       keyId: 'ABC123DEFG',
       teamId: 'TEAM123456',
       privateKey,
-      topic: 'app.wildcard.ios',
+      topic: 'com.wildcardsquad.wildcard',
     });
   });
 

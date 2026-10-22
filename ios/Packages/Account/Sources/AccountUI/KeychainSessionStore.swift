@@ -11,7 +11,7 @@ public struct KeychainSessionStore: SessionStore {
 
     /// - Parameter service: the item's service name; tests pass their own so they never touch
     ///   the app's.
-    public init(service: String = "app.wildcard.session") {
+    public init(service: String = "com.wildcardsquad.wildcard.session") {
         self.service = service
     }
 
