@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
 import AvatarDomain
 import AvatarUI
@@ -83,9 +83,9 @@ struct EntranceScreen: View {
     }
 
     /// My week as the card's second page shows it: the plan just made, nothing done yet.
-    private var myWeek: MyWeek {
+    private var myWeek: DesignSystemUI.MyWeek {
         let days = model.week?.days ?? Array(repeating: .rest, count: WeeklyPlan.dayCount)
-        return MyWeek(
+        return DesignSystemUI.MyWeek(
             summary: "", done: 0, planned: model.week?.trainingDays ?? 0,
             days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone, healthyMeals: 0,
             cheatMeals: 0, lifetimeTrained: 0)

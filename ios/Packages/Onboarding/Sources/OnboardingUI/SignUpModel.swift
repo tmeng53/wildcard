@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
 import AvatarDomain
 import CharacterEditorDomain
@@ -126,7 +126,7 @@ public final class SignUpModel {
             squad.typedName = Self.suggestedName(for: nickname.text)
         }
         self.nickname = nickname.text
-        perform {
+        perform { () async throws(SignUpError) in
             try await self.service.save(made)
             self.character = made
             if self.myCharacter?.look != made.outfit || self.myCharacter?.persona != made.persona {
@@ -205,7 +205,7 @@ public final class SignUpModel {
         let choice = squad.choice
         let code = squad.code
         let name = squad.name
-        perform {
+        perform { () async throws(SignUpError) in
             if self.asksForAIConsent { try await self.service.agreeToAI() }
             let squad: JoinedSquad
             switch choice {
@@ -261,7 +261,7 @@ public final class SignUpModel {
 
     func finishWeek() {
         guard let days = week?.days else { return }
-        perform {
+        perform { () async throws(SignUpError) in
             try await self.service.savePlan(days)
             self.show(.entrance)
         }

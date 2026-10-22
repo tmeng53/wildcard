@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarUI
 import DesignSystem
 import DesignSystemUI
