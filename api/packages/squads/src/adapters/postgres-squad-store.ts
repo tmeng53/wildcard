@@ -157,6 +157,10 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
             .insertInto('squad_members')
             .values({ squad_id: id, member_id: creator })
             .execute();
+          await trx
+            .insertInto('squad_membership_events')
+            .values({ squad_id: id, member_id: creator, kind: 'joined' })
+            .execute();
           return { created: true };
         });
       } catch (error) {
@@ -190,23 +194,29 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .insertInto('squad_members')
           .values({ squad_id: squad, member_id: member })
           .execute();
+        await trx
+          .insertInto('squad_membership_events')
+          .values({ squad_id: squad, member_id: member, kind: 'joined' })
+          .execute();
         return 'joined';
       });
     },
 
     async leave(squad, member) {
-      // One statement, so the membership is never gone without its record, or kept twice.
+      // One statement, so a membership never goes without its entry in the log, or twice.
       await db
         .with('left', (eb) =>
           eb
             .deleteFrom('squad_members')
             .where('squad_id', '=', squad)
             .where('member_id', '=', member)
-            .returning(['squad_id', 'member_id', 'joined_at']),
+            .returning(['squad_id', 'member_id']),
         )
-        .insertInto('squad_leaves')
-        .columns(['squad_id', 'member_id', 'joined_at'])
-        .expression((eb) => eb.selectFrom('left').select(['squad_id', 'member_id', 'joined_at']))
+        .insertInto('squad_membership_events')
+        .columns(['squad_id', 'member_id', 'kind'])
+        .expression((eb) =>
+          eb.selectFrom('left').select(['squad_id', 'member_id', sql.lit('left').as('kind')]),
+        )
         .execute();
     },
   };

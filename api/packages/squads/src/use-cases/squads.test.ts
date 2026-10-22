@@ -235,27 +235,42 @@ describe('leaving and listing', () => {
     expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['二']);
   });
 
-  it('keeps a record of each time a member left, with when they had joined', async () => {
+  it('logs each join and leave, in order, and never a leave that changed nothing', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(bo);
-    const stints = () =>
-      sql<{
-        joined: boolean;
-        left: boolean;
-      }>`select joined_at < left_at as joined, left_at <= now() as left
-        from public.squad_leaves where squad_id = ${squad.id} and member_id = ${ann}
-        order by left_at`.execute(db);
+    const log = async () =>
+      (
+        await sql<{ member: string; kind: string }>`select member_id as member, kind
+          from public.squad_membership_events where squad_id = ${squad.id} order by id`.execute(db)
+      ).rows;
     await squads.join({ inviteCode: squad.inviteCode, member: ann });
     await squads.leave({ squad: squad.id, member: ann });
-    // Leaving a squad you aren't in leaves no record.
     await squads.leave({ squad: squad.id, member: ann });
     await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    // Joining again while in it changes nothing, so it logs nothing.
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
     await squads.leave({ squad: squad.id, member: ann });
-    expect((await stints()).rows).toStrictEqual([
-      { joined: true, left: true },
-      { joined: true, left: true },
+    expect(await log()).toStrictEqual([
+      { member: bo, kind: 'joined' },
+      { member: ann, kind: 'joined' },
+      { member: ann, kind: 'left' },
+      { member: ann, kind: 'joined' },
+      { member: ann, kind: 'left' },
     ]);
     expect(await squads.membersOf(squad.id)).toStrictEqual([bo]);
+  });
+
+  it('keeps the log append-only', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann);
+    await expect(
+      sql`update public.squad_membership_events set kind = 'left' where squad_id = ${squad.id}`.execute(
+        db,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      sql`delete from public.squad_membership_events where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
   });
 
   it('shows a squad only to its members, the same way whether or not it exists', async () => {

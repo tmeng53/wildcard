@@ -9,17 +9,20 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export interface SquadLeaves {
-  joined_at: Timestamp;
-  left_at: Generated<Timestamp>;
+export interface SquadMembers {
+  joined_at: Generated<Timestamp>;
   member_id: string;
   squad_id: string;
 }
 
-export interface SquadMembers {
-  joined_at: Generated<Timestamp>;
+export interface SquadMembershipEvents {
+  at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  kind: string;
   member_id: string;
   squad_id: string;
 }
@@ -33,7 +36,7 @@ export interface Squads {
 }
 
 export interface DB {
-  squad_leaves: SquadLeaves;
   squad_members: SquadMembers;
+  squad_membership_events: SquadMembershipEvents;
   squads: Squads;
 }

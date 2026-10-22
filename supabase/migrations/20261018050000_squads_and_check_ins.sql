@@ -30,18 +30,34 @@ create table public.squad_members (
 
 create index squad_members_member_id_idx on public.squad_members (member_id);
 
--- Who left a squad, and when, kept for our own records (Tracy, 2026-10-22); no feature or
--- yearly stat reads it. Leaving moves the membership here, so a member who rejoins has a
--- row per stint. Deleting the account still takes these with it.
-create table public.squad_leaves (
+-- Every time someone joins or leaves a squad, as an append-only log kept for our own
+-- records (Tracy, 2026-10-22); no feature or yearly stat reads it. Rows are only ever added:
+-- the trigger below refuses any update, and any delete except the cascade when the account
+-- (or the squad) goes, so deleting an account still takes that person's rows with it.
+create table public.squad_membership_events (
+  id bigint generated always as identity primary key,
   squad_id uuid not null references public.squads (id) on delete cascade,
   member_id uuid not null references auth.users (id) on delete cascade,
-  joined_at timestamptz not null,
-  left_at timestamptz not null default now(),
-  primary key (squad_id, member_id, left_at)
+  kind text not null check (kind in ('joined', 'left')),
+  at timestamptz not null default now()
 );
 
-create index squad_leaves_member_id_idx on public.squad_leaves (member_id);
+create index squad_membership_events_member_id_idx on public.squad_membership_events (member_id);
+
+create function public.squad_membership_events_append_only() returns trigger
+language plpgsql as $$
+begin
+  -- Depth 1 is a statement on this table; a cascade from auth.users or squads runs deeper.
+  if tg_op = 'DELETE' and pg_trigger_depth() > 1 then
+    return old;
+  end if;
+  raise exception 'squad_membership_events is append-only' using errcode = '42501';
+end;
+$$;
+
+create trigger squad_membership_events_append_only
+  before update or delete on public.squad_membership_events
+  for each row execute function public.squad_membership_events_append_only();
 
 -- Members ----------------------------------------------------------------------
 
@@ -151,7 +167,7 @@ revoke usage on schema public from public, anon, authenticated;
 
 alter table public.squads enable row level security;
 alter table public.squad_members enable row level security;
-alter table public.squad_leaves enable row level security;
+alter table public.squad_membership_events enable row level security;
 alter table public.profiles enable row level security;
 alter table public.check_ins enable row level security;
 alter table public.check_in_squads enable row level security;
