@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [devices] [daily-push] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [replies] [devices] [daily-push] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices daily-push account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions replies devices daily-push account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | daily-push | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, daily-push, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | replies | devices | daily-push | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, replies, devices, daily-push, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -478,6 +478,49 @@ if want reactions; then
   rows="$(psql "$DB_URL" -tAc "select count(*) from public.check_in_reactions where check_in_id = '$post'")"
   [ "$rows" = 0 ] || fail "the reaction should be gone: $rows rows"
   echo "reactions: mate took it off (204, again 204), no row left"
+fi
+
+if want replies; then
+  excuse="$(new_id)"
+  call PUT "/check-ins/$excuse" "$me_token" "$(check_in_of "$squad" "$day" disclaimer '"disclaimer":{"text":"今天加班到很晚"}')"
+  expect 201
+  reply() { echo "{\"version\":1,\"kind\":\"$1\"}"; }
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply approved)"
+  expect 201
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply approved)"
+  expect 200
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply hug)"
+  expect 200
+  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"kind":"lol"}'
+  expect 201
+  echo "replies: mate replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too"
+
+  call GET "/check-ins/$excuse/replies" "$me_token"
+  expect 200
+  [ "$(jq -c '[.replies[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"hug"]]')" ] ||
+    fail "the author should see one reply, mate's hug: $body"
+  echo "replies: the author sees one reply, mate's 抱抱, apart from the reaction"
+
+  run="$(new_id)"
+  call PUT "/check-ins/$run" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
+  expect 201
+  call PUT "/check-ins/$run/replies/mine" "$mate_token" "$(reply approved)"
+  expect 400 NOT_A_DISCLAIMER
+  call PUT "/check-ins/$excuse/replies/mine" "$me_token" "$(reply approved)"
+  expect 400 OWN_DISCLAIMER_REPLY
+  call PUT "/check-ins/$excuse/replies/mine" "$outsider_token" "$(reply approved)"
+  expect 404 CHECK_IN_NOT_FOUND
+  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply cheer)"
+  expect 400 REQUEST_INVALID
+  echo "replies: a 练了 refused (400 NOT_A_DISCLAIMER), own 请假条 refused (400 OWN_DISCLAIMER_REPLY), outsider sees nothing (404), unknown kind refused (400)"
+
+  call DELETE "/check-ins/$excuse/replies/mine" "$mate_token"
+  expect 204
+  call DELETE "/check-ins/$excuse/replies/mine" "$mate_token"
+  expect 204
+  rows="$(psql "$DB_URL" -tAc "select (select count(*) from public.disclaimer_replies where check_in_id = '$excuse') || ' ' || (select count(*) from public.check_in_reactions where check_in_id = '$excuse')")"
+  [ "$rows" = "0 1" ] || fail "the reply should be gone and the reaction kept: $rows"
+  echo "replies: mate took it off (204, again 204), no reply row left, the reaction kept"
 fi
 
 if want devices; then
