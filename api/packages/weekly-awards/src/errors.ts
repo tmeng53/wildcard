@@ -2,8 +2,8 @@ import { AppError } from '@wildcard/errors';
 
 /**
  * Thrown when a squad's awards couldn't be written: the model can't be reached, declined, or
- * answered twice with something that failed the checks. Nothing is saved, so the story says the
- * organisers are working late and the next hourly run tries again.
+ * answered twice naming the wrong members. Nothing is saved, so the story says the organisers
+ * are working late and the next hourly run tries again.
  */
 export class AwardsWriterUnavailableError extends AppError {
   override readonly name = 'AwardsWriterUnavailableError';
@@ -12,6 +12,20 @@ export class AwardsWriterUnavailableError extends AppError {
 
   constructor(options?: ErrorOptions) {
     super('The awards can’t be written right now. The next run tries again.', options);
+  }
+}
+
+/**
+ * The cause of every failed try on a server with no key for the awards model: kept by name as
+ * the week's last error, so the admins' nudge says the key is missing rather than just `Error`.
+ */
+export class AwardsModelMissingError extends AppError {
+  override readonly name = 'AwardsModelMissingError';
+  readonly reason = 'AWARDS_MODEL_MISSING';
+  readonly status = 'UNAVAILABLE';
+
+  constructor() {
+    super('No API key is set for AWARDS_LLM_PROVIDER.');
   }
 }
 

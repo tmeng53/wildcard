@@ -122,10 +122,9 @@ export function createApp(deps: AppDependencies) {
   app.route(
     '/',
     jobs({
-      ...deps,
       jobsToken: deps.jobs.token,
-      interactions: deps.jobs.interactions,
-      clock: deps.jobs.clock,
+      dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
+      weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
     }),
   );
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.

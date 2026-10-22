@@ -32,6 +32,7 @@ import {
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
+  AwardsModelMissingError,
   AwardsWriterUnavailableError,
   createPostgresAwardsStore,
   createWeeklyAwards,
@@ -90,9 +91,7 @@ const awardsModel: AwardsModel =
     ? {
         answer: () =>
           Promise.reject(
-            new AwardsWriterUnavailableError({
-              cause: new Error('No API key is set for AWARDS_LLM_PROVIDER'),
-            }),
+            new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
           ),
       }
     : awardsLlm.provider === 'openai'
@@ -123,7 +122,8 @@ const aiConsent = createAiConsent({
   clock: () => new Date(),
 });
 const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
-if (config.jobsToken === undefined) log.info('no JOBS_TOKEN: the daily progress push is off');
+if (config.jobsToken === undefined)
+  log.info('no JOBS_TOKEN: the daily progress push and weekly awards are off');
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,

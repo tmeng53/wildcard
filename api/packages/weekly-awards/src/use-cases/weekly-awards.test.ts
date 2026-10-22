@@ -12,6 +12,7 @@ import {
 } from '../adapters/postgres-awards-store.js';
 import { MemberId, SquadId, type MemberWeek, type ModelReply } from '../domain/awards.js';
 import { WeekStart } from '../domain/schedule.js';
+import { AwardsModelMissingError, AwardsWriterUnavailableError } from '../errors.js';
 import type { LanguageModel } from '../ports.js';
 import { createWeeklyAwards } from './weekly-awards.js';
 
@@ -226,6 +227,20 @@ describe('createWeeklyAwards', () => {
     const alone = setup([() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })]);
     const given = await alone.awards.give({ squad, weekStart: week, members: fresh });
     expect(given.members.map((each) => each.member)).toStrictEqual([ana]);
+  });
+
+  it('keeps a missing model key by name, so the admins know to set it', async () => {
+    const off = setup([
+      () =>
+        Promise.reject(new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() })),
+    ]);
+    const squad = await newSquad();
+    const members = weekOf([await member(), await member(), await member()]);
+    await reasonOf(off.awards.give({ squad, weekStart: week, members }));
+    expect(await off.awards.claimNudge({ squad, weekStart: week })).toStrictEqual({
+      count: 1,
+      lastError: 'AwardsModelMissingError',
+    });
   });
 
   it('hands out a nudge once per failed try, and once before the first, never once given', async () => {
