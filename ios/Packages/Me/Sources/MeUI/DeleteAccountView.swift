@@ -72,6 +72,8 @@ struct DeleteAccountView: View {
         .padding(.top, Space.xs)
         .padding(.bottom, Space.l)
         .background(Color(role: .bgCanvas, in: theme))
+        // A container, so the page's identifier doesn't replace its buttons' own.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("delete.page")
     }
 
