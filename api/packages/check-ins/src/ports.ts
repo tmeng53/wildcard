@@ -2,7 +2,8 @@ import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check
 import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
-import type { Reaction, ReactionKind, ReactOutcome } from './domain/reaction.js';
+import type { Reaction, ReactionKind, SaveOutcome } from './domain/reaction.js';
+import type { Reply, ReplyKind } from './domain/reply.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
@@ -47,7 +48,7 @@ export interface ReactionStore {
   save(
     checkIn: CheckInId,
     reaction: { readonly member: MemberId; readonly kind: ReactionKind; readonly reactedAt: Date },
-  ): Promise<ReactOutcome>;
+  ): Promise<SaveOutcome>;
   /** Takes the member's reaction off a check-in, if there is one. */
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
   /** A check-in's reactions, oldest first. */
@@ -63,6 +64,19 @@ export interface ReactionStore {
     readonly since: Date;
     readonly until: Date;
   }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
+}
+
+/** Where teammates' replies to 请假条 are kept. */
+export interface ReplyStore {
+  /** Saves the member's reply to a 请假条, in place of any they left before. */
+  save(
+    checkIn: CheckInId,
+    reply: { readonly member: MemberId; readonly kind: ReplyKind; readonly repliedAt: Date },
+  ): Promise<SaveOutcome>;
+  /** Takes the member's reply off a 请假条, if there is one. */
+  remove(checkIn: CheckInId, member: MemberId): Promise<void>;
+  /** A 请假条's replies, oldest first. */
+  list(checkIn: CheckInId): Promise<Reply[]>;
 }
 
 /** Where uploaded photo files are kept. */
