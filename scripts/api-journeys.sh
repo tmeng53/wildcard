@@ -292,9 +292,8 @@ if want disclaimer-drafts; then
   echo "disclaimer-drafts: no key, so 503 DISCLAIMER_WRITER_UNAVAILABLE (the app shows its dice), no error logged"
 
   call POST /disclaimer-drafts "$me_token" "$(ask 我不想活了 funny)"
-  expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"kind":"care"}' ] || fail "expected the care line: $body"
-  echo "disclaimer-drafts: a self-harm reason gets the care line (200), with or without a key"
+  expect 503 DISCLAIMER_WRITER_UNAVAILABLE
+  echo "disclaimer-drafts: a self-harm reason is the model's to judge, so with no key it is 503 too"
 
   call POST /disclaimer-drafts "$outsider_token" "$(ask 早上没起来 funny)"
   expect 400 AI_CONSENT_REQUIRED

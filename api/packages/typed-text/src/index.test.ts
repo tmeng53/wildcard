@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { containsLink, graphemeCount } from './index.js';
+import { containsLink, graphemeCount, mentionsSelfHarm } from './index.js';
 
 describe('graphemeCount', () => {
   it.each([
@@ -37,6 +37,30 @@ describe('containsLink', () => {
     'finds no link in %j',
     (text) => {
       expect(containsLink(text)).toBe(false);
+    },
+  );
+});
+
+describe('mentionsSelfHarm', () => {
+  it.each(['想自杀', '不想活了', '我不想活', '活不下去', '想自残', '想轻生'])(
+    'catches 「%s」',
+    (reason) => {
+      expect(mentionsSelfHarm(reason)).toBe(true);
+    },
+  );
+
+  it('catches plain words in English, whatever the case', () => {
+    expect(mentionsSelfHarm('I want to KILL MYSELF')).toBe(true);
+  });
+
+  it('leaves everyday exaggeration to the model', () => {
+    expect(mentionsSelfHarm('加班累得想死')).toBe(false);
+  });
+
+  it.each(['今天不想活动', '不想活动筋骨'])(
+    'leaves 「%s」 alone: it means not wanting to move',
+    (reason) => {
+      expect(mentionsSelfHarm(reason)).toBe(false);
     },
   );
 });
