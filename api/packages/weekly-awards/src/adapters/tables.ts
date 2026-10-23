@@ -9,6 +9,8 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Json = JsonValue;
 
 export type JsonArray = JsonValue[];
@@ -34,6 +36,20 @@ export interface WeeklyAwards {
   week_start: string;
 }
 
+export interface WeeklyAwardSettingEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  id: Generated<Int8>;
+  settings: Json;
+}
+
+export interface WeeklyAwardSettings {
+  instructions: string;
+  model: string;
+  moves: Json;
+  only_row: Generated<boolean>;
+}
+
 export interface WeeklyAwardWinners {
   award: Json;
   member_id: string;
@@ -43,6 +59,8 @@ export interface WeeklyAwardWinners {
 }
 
 export interface DB {
+  weekly_award_setting_events: WeeklyAwardSettingEvents;
+  weekly_award_settings: WeeklyAwardSettings;
   weekly_award_winners: WeeklyAwardWinners;
   weekly_awards: WeeklyAwards;
 }

@@ -9,6 +9,20 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface DisclaimerDraftRequests {
@@ -17,6 +31,24 @@ export interface DisclaimerDraftRequests {
   requested_at: Timestamp;
 }
 
+export interface DisclaimerDraftSettingEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  id: Generated<Int8>;
+  settings: Json;
+}
+
+export interface DisclaimerDraftSettings {
+  batches_per_day: number;
+  instructions: string;
+  meme_chance: number;
+  model: string;
+  only_row: Generated<boolean>;
+  writing: boolean;
+}
+
 export interface DB {
   disclaimer_draft_requests: DisclaimerDraftRequests;
+  disclaimer_draft_setting_events: DisclaimerDraftSettingEvents;
+  disclaimer_draft_settings: DisclaimerDraftSettings;
 }
