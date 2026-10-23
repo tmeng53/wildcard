@@ -10,7 +10,7 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 
 - `ios/` — the app. `Wildcard.xcodeproj` is a thin app target; all logic lives in local Swift packages under `ios/Packages/`.
 - `api/` — the HTTP API (TypeScript: Node, Hono, Zod, Kysely), the only way into the data. Supabase is its Postgres, Auth and Storage.
-- `web/` — the invite landing page (Next.js) that opens the App Clip or App Store.
+- `web/` — the invite landing page (Next.js) that opens the App Clip or App Store. `web/public/{,zh/,zh-hant/}{privacy,terms}` are the static privacy policy and terms in English, Simplified and Traditional Chinese (wildcardsquad.com/privacy, /zh/privacy, /zh-hant/privacy, and the same for /terms; the URLs App Store Connect and the app link to). `web/public/wildcard.css` holds the design system v4 tokens for every public page (the invite page reuses it); change all three language versions together; when the policy changes in substance, bump the AI consent copy version too.
 - `supabase/` — migrations, row-level security policies, edge functions (TypeScript).
 
 ## Commands
