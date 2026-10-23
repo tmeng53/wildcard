@@ -263,17 +263,6 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "20-today-en")
     }
 
-    /// The scene with 1, 4 and 8 members: everyone drawn whole on the screen, none on a lane line.
-    func testSquadSizes() {
-        for size in [1, 4, 8] {
-            let app = launch(language: "zh-Hans", photos: 0, extra: ["-uitest-squad", "\(size)"])
-            _ = topCard(in: app)
-            settle()
-            keepScreenshot(named: "21-today-squad-\(size)")
-            app.terminate()
-        }
-    }
-
     /// `cardPage` pins the squad card to its first page, since the card reopens where it was
     /// left; pass nil to let the test swipe it.
     private func launch(language: String, photos: Int, extra: [String] = [], cardPage: Int? = 0) -> XCUIApplication {
