@@ -43,6 +43,8 @@ public final class ScheduleStore {
     private var drafts: [LocalDay: WeekSheet] = [:]
     /// Weeks with a save on its way.
     private var saving: Set<LocalDay> = []
+    /// Counts each week's changes, so a load that began before one never replaces it.
+    private var changes: [LocalDay: Int] = [:]
 
     private let backend: any ScheduleBackend
     private let now: @Sendable () -> Date
@@ -120,10 +122,12 @@ public final class ScheduleStore {
             shownWeek = weekStart
             board = (drafts[weekStart] ?? sheets[weekStart]).flatMap(makeBoard)
         }
+        let changesBefore = changes[weekStart]
         do {
             let fresh = try await backend.week(starting: weekStart)
-            // While a save is on its way it keeps the server's copy; the next load has it.
-            guard !saving.contains(weekStart) else { return }
+            // A change since it was asked for makes it stale, and while a save is on its way it
+            // keeps the server's copy; the next load has it.
+            guard changes[weekStart] == changesBefore, !saving.contains(weekStart) else { return }
             sheets[weekStart] = fresh
             // A change made while it loaded stays; it is on its way to the server.
             guard shownWeek == weekStart, drafts[weekStart] == nil else { return }
@@ -204,7 +208,7 @@ public final class ScheduleStore {
     /// characters.
     public func addFuel(typed text: String) async throws(ScheduleError) {
         let goal = try FuelGoal.own(typed: text)
-        guard let week = shownWeek, sheet?.fuel.contains(goal) == false else { return }
+        guard shownWeek != nil, sheet?.fuel.contains(goal) == false else { return }
         await toggleFuel(goal)
     }
 
@@ -214,6 +218,7 @@ public final class ScheduleStore {
     /// already on its way sends the rest once it answers. A part the server refuses goes back
     /// to the server's.
     private func save(_ week: LocalDay) async {
+        changes[week, default: 0] += 1
         guard !saving.contains(week) else { return }
         saving.insert(week)
         defer { saving.remove(week) }
@@ -224,7 +229,10 @@ public final class ScheduleStore {
                     let plan = try await backend.savePlan(draft.plan, weekStart: week)
                     sheets[week]?.plan = plan
                     // The server's answer stands unless the member changed the plan meanwhile.
-                    if drafts[week]?.plan == draft.plan { drafts[week]?.plan = plan }
+                    if drafts[week]?.plan == draft.plan {
+                        drafts[week]?.plan = plan
+                        if plan != draft.plan, board?.weekStart == week { board?.reset(to: plan) }
+                    }
                 } catch {
                     failure = error
                     refused = true

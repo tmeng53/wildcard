@@ -199,6 +199,35 @@ struct ScheduleStoreTests {
         #expect(store.board?.days[1] == .train(.sport(.yoga)))
     }
 
+    @Test func aLoadAskedForBeforeAChangeDoesNotUndoIt() async {
+        let backend = FakeBackend()
+        let store = store(backend)
+        let nextWeek = thisWeek.adding(days: 7)
+        await store.load()
+        await store.show(nextWeek)
+        await backend.holdLoads()
+        let reload = Task { await store.show(nextWeek) }
+        while await backend.loadsWaiting == 0 { await Task.yield() }
+        await store.tap(0)
+        await store.pick(.sport(.swim))
+        await backend.finishLoad()
+        await reload.value
+        #expect(store.board?.days[0] == .train(.sport(.swim)))
+        #expect(store.sheet?.plan[0] == .train(.sport(.swim)))
+    }
+
+    @Test func thePosterShowsThePlanTheServerKept() async {
+        let backend = FakeBackend()
+        let store = store(backend)
+        await store.load()
+        await store.show(thisWeek.adding(days: 7))
+        await backend.keepPlans { days in days.map { $0 == .train(.sport(.swim)) ? .train(.sport(.run)) : $0 } }
+        await store.tap(0)
+        await store.pick(.sport(.swim))
+        #expect(store.board?.days[0] == .train(.sport(.run)))
+        #expect(store.sheet?.plan[0] == .train(.sport(.run)))
+    }
+
     @Test func aPastWeekCantChange() async {
         let backend = FakeBackend()
         let store = store(backend)

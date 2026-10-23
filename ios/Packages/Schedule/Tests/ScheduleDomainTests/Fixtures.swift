@@ -39,6 +39,12 @@ actor FakeBackend: ScheduleBackend {
     /// While set, a save waits until `finishSave()`.
     private var holdsSaves = false
     private var held: [CheckedContinuation<Void, Never>] = []
+    /// While set, a week's load answers with the copy it had when asked, after `finishLoad()`.
+    private var holdsLoads = false
+    private var heldLoads: [CheckedContinuation<Void, Never>] = []
+    private(set) var loadsWaiting = 0
+    /// What the server keeps of a saved plan; the plan as sent when nil.
+    var keeps: (@Sendable ([PlanDay]) -> [PlanDay])?
 
     init(firstWeek: LocalDay = Fixtures.day("2026-09-07")) {
         profileResult = .success(
@@ -52,6 +58,14 @@ actor FakeBackend: ScheduleBackend {
     }
     func failProfile(with error: ScheduleError) { profileResult = .failure(error) }
     func holdSaves() { holdsSaves = true }
+    func holdLoads() { holdsLoads = true }
+    func keepPlans(_ keeps: @escaping @Sendable ([PlanDay]) -> [PlanDay]) { self.keeps = keeps }
+
+    func finishLoad() {
+        holdsLoads = false
+        heldLoads.forEach { $0.resume() }
+        heldLoads = []
+    }
 
     func finishSave() {
         holdsSaves = false
@@ -62,6 +76,15 @@ actor FakeBackend: ScheduleBackend {
     func profile() async throws(ScheduleError) -> ScheduleProfile { try profileResult.get() }
 
     func week(starting weekStart: LocalDay) async throws(ScheduleError) -> WeekSheet {
+        let sheet = try stored(weekStart)
+        if holdsLoads {
+            loadsWaiting += 1
+            await withCheckedContinuation { heldLoads.append($0) }
+        }
+        return sheet
+    }
+
+    private func stored(_ weekStart: LocalDay) throws(ScheduleError) -> WeekSheet {
         if let sheet = sheets[weekStart] { return sheet }
         return try WeekSheet(weekStart: weekStart, plan: Fixtures.plan, marks: Array(repeating: .none, count: 7))
     }
@@ -70,17 +93,17 @@ actor FakeBackend: ScheduleBackend {
         savedPlans.append(days)
         if holdsSaves { await withCheckedContinuation { held.append($0) } }
         if let saveError, savedPlans.count > (savesBeforeError ?? 0) { throw saveError }
-        var sheet = try await week(starting: weekStart)
-        sheet.plan = days
+        var sheet = try stored(weekStart)
+        sheet.plan = keeps?(days) ?? days
         sheets[weekStart] = sheet
-        return days
+        return sheet.plan
     }
 
     func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
         savedFuel.append(goals)
         if holdsSaves { await withCheckedContinuation { held.append($0) } }
         if let saveError, savesBeforeError == nil { throw saveError }
-        var sheet = try await week(starting: weekStart)
+        var sheet = try stored(weekStart)
         sheet.fuel = goals
         sheets[weekStart] = sheet
     }

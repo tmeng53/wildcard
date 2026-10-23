@@ -35,7 +35,6 @@ public struct ScheduleView: View {
         ScrollViewReader { scroller in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.l) {
-                    topBar
                     if let sheet = store.sheet {
                         poster(sheet)
                             .id(Self.posterID)
@@ -46,7 +45,7 @@ public struct ScheduleView: View {
                     }
                 }
                 .padding(.horizontal, Space.pageMargin)
-                .padding(.top, Space.xs)
+                .padding(.top, Space.s)
                 .padding(.bottom, Space.l)
                 .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.panel)
             }
@@ -68,6 +67,14 @@ public struct ScheduleView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
+        // The weeks and 存图 stay put while the poster scrolls, so nothing slides under the
+        // status bar.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            topBar
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.top, Space.xs)
+                .background(Color(role: .bgCanvas, in: theme))
+        }
         .safeAreaInset(edge: .bottom) {
             if model.writingFuel {
                 fuelField

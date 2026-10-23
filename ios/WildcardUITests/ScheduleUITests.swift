@@ -131,9 +131,12 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertFalse(find(app, "schedule.count.squad").exists, "a past week still shows its counts")
         settle()
         keepScreenshot(named: "67-schedule-past-week-award")
-        // Scrolled up, the 颁奖词 read whole above the tab bar.
+        // Scrolled up, the 颁奖词 read whole above the tab bar, and the weeks and 存图 stay put
+        // rather than sliding under the status bar.
+        let saveTop = app.buttons["schedule.save"].frame.minY
         app.swipeUp()
         settle()
+        XCTAssertEqual(app.buttons["schedule.save"].frame.minY, saveTop, accuracy: 1, "the top bar scrolled away")
         XCTAssertLessThanOrEqual(
             award.frame.maxY, app.buttons["tab.schedule"].frame.minY, "the award sits under the tab bar")
         keepScreenshot(named: "67-schedule-past-week-award-words")
