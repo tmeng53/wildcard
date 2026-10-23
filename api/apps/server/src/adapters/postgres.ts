@@ -9,12 +9,21 @@ import type { Database, Tables } from '../ports.js';
  * `'error'`; with no listener Node would crash the process, so `onIdleError` hears it and the
  * pool opens a fresh connection on the next query.
  * https://node-postgres.com/apis/pool#error
+ * With `ca` (a PEM), every connection is TLS and the server's certificate must chain to it.
+ * https://node-postgres.com/features/ssl
  */
 export function createDatabase(
   url: string,
-  { onIdleError = () => undefined }: { readonly onIdleError?: (error: Error) => void } = {},
+  {
+    ca,
+    onIdleError = () => undefined,
+  }: { readonly ca?: string; readonly onIdleError?: (error: Error) => void } = {},
 ): Database {
-  const pool = new pg.Pool({ connectionString: url, connectionTimeoutMillis: 5_000 });
+  const pool = new pg.Pool({
+    connectionString: url,
+    connectionTimeoutMillis: 5_000,
+    ...(ca === undefined ? {} : { ssl: { ca } }),
+  });
   pool.on('error', onIdleError);
   // A client checked out of the pool (a transaction between two queries) has none of the pool's
   // listeners, so a drop then would crash the process too. Its next query fails ("not queryable"),

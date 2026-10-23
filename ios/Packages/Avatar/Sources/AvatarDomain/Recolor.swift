@@ -81,6 +81,15 @@ extension RGBAColor {
         self.init(red: UInt8(value >> 16 & 0xFF), green: UInt8(value >> 8 & 0xFF), blue: UInt8(value & 0xFF))
     }
 
+    /// `#RRGGBB` in capitals, whatever the opacity.
+    public var hex: String {
+        "#"
+            + [red, green, blue].map { byte in
+                let digits = String(byte, radix: 16, uppercase: true)
+                return digits.count == 1 ? "0" + digits : digits
+            }.joined()
+    }
+
     /// The same red, green and blue, whatever the opacity.
     func sameRGB(as other: RGBAColor) -> Bool {
         (red, green, blue) == (other.red, other.green, other.blue)

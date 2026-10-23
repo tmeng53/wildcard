@@ -6,6 +6,7 @@ import {
   PlanDayStartedError,
   RestDaysFixedError,
   WeekOverError,
+  WeekStartedError,
   WeekTooFarAheadError,
 } from '../errors.js';
 import { LocalDay } from './check-in.js';
@@ -173,4 +174,20 @@ export function checkPlanChange({
   }
   const kept = restDays(current.days.slice(first));
   if (restDays(next.slice(first)) !== kept) throw new RestDaysFixedError(kept);
+}
+
+/**
+ * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: only
+ * before the week starts, and at most `WEEKS_AHEAD` weeks ahead, as for the plan.
+ */
+export function checkFuelGoalsChange({
+  weekStart,
+  today,
+}: {
+  readonly weekStart: WeekStart;
+  readonly today: LocalDay;
+}): void {
+  const thisWeek = weekStartOf(today);
+  if (weekStart <= thisWeek) throw new WeekStartedError(weekStart);
+  if (weekStart > addDays(thisWeek, 7 * WEEKS_AHEAD)) throw new WeekTooFarAheadError(weekStart);
 }
