@@ -219,8 +219,9 @@ private struct SignCard: View {
 }
 
 /// The venue's art, exported from the approved home design (`SceneArt/render.mjs`).
-struct SceneArt: View {
-    enum Layer {
+/// Public so 上场 plays on the same art the squad's home shows next.
+public struct SceneArt: View {
+    public enum Layer: Sendable {
         case day
         /// The dark tint and the lamps, over everything on the scene.
         case night
@@ -239,7 +240,15 @@ struct SceneArt: View {
     let scene: SceneTheme
     let layer: Layer
 
-    var body: some View {
+    public init(scene: SceneTheme, layer: Layer) {
+        self.scene = scene
+        self.layer = layer
+    }
+
+    /// The art's height on the design's 390-point-wide stage (`StageLayout.width`).
+    public static var designHeight: Double { Stage.height }
+
+    public var body: some View {
         Image(uiImage: UIImage(named: "\(scene.rawValue)-\(layer.name)", in: .module, with: nil) ?? UIImage())
             .resizable()
             .accessibilityHidden(true)

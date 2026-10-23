@@ -101,7 +101,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     /// Frames of 上场 as fast as the simulator takes them, for the MP4; the squad card has
-    /// dropped in by three seconds, and home takes over at the end.
+    /// dropped in by four seconds, and home takes over at the end.
     private func watchTheEntrance(in app: XCUIApplication) {
         let entrance = app.descendants(matching: .any)["entrance"]
         XCTAssertTrue(entrance.waitForExistence(timeout: Self.wait), "上场 never started")
@@ -111,7 +111,7 @@ final class SignUpUITests: XCTestCase {
         while Date.now.timeIntervalSince(start) < 7 {
             keepScreenshot(named: String(format: "47-signup-entrance-%02d", frame))
             frame += 1
-            if !checkedCard, Date.now.timeIntervalSince(start) > 3.5 {
+            if !checkedCard, Date.now.timeIntervalSince(start) > 4 {
                 XCTAssertTrue(
                     app.descendants(matching: .any)["entrance.card"].exists, "the squad card never dropped in")
                 checkedCard = true

@@ -18,11 +18,14 @@ public struct EntranceScript: Hashable, Sendable {
 
     /// The squad turns to look at where the new member comes in.
     public static let look = 0.25
-    /// The entrance clip starts: the run in from off screen.
-    public static let run = 0.45
+    /// The entrance clip starts: the run in from off screen, which reaches the screen's edge
+    /// about 0.3 seconds in, just after the squad turns.
+    public static let run = 0.0
+    /// Into the entrance clip, the feet leave the floor for the jump (its root starts to rise).
+    public static let takeoffInClip = 1.7
     /// Into the entrance clip, the feet touch the spot (its root comes back to the floor).
-    public static let landingInClip = 1.65
-    /// The feet touch the spot: the haptic, the ring, the confetti.
+    public static let landingInClip = 2.2
+    /// The feet touch the spot: the haptic, the ring, the shockwave, the confetti.
     public static let land = run + landingInClip
     /// The new member's own cheer and line follow the landing by this much.
     public static let myLineDelay = 0.2
@@ -33,8 +36,12 @@ public struct EntranceScript: Hashable, Sendable {
     public static let lineDuration = 4.2
     /// Home's card drops in once the moment has landed.
     public static let cardDrop = land + 0.45
+    /// The 打卡 button and the tab bar rise from the bottom.
+    public static let chromeRise = land + 0.6
     /// The squad's week count turns over to include the new member's plan.
     public static let countFlip = land + 0.95
+    /// The new member's head pops into the card's last ring.
+    public static let myHeadPop = land + 1.05
 
     public let spot: Point
     public let teammates: [Teammate]

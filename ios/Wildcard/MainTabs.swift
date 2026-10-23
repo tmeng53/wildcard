@@ -92,6 +92,11 @@ struct MainTabs: View {
         }
     }
 
+    /// The bar as home opens with it, for the end of 上场, which hands over to home.
+    static var entranceTabBar: some View {
+        TabBar(tabs, selection: .constant(Tab.today))
+    }
+
     private static let tabs: [TabBarItem<Tab>] = [
         TabBarItem(id: .today, title: Text("今天"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
         TabBarItem(

@@ -107,8 +107,9 @@ public final class TodayModel {
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
     private static let scoreDelay = 1.7
 
-    /// Each squad picks its scene once squad settings land; 跑道 until then.
-    private static let scene = SceneTheme.track
+    /// Each squad picks its scene once squad settings land; 跑道 until then. Public for 上场,
+    /// which plays on the scene home opens on.
+    public static let scene = SceneTheme.track
 
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
