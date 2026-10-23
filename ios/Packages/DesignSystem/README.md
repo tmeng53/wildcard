@@ -12,7 +12,7 @@ Like Material 3's reference, system and component tokens, and Atlassian's `color
 | Semantic | `ColorRole` (`bg*`, `fg*`, `border*`, per scene through `SceneTheme`), `TypeRamp`, `Space`, `Radius`, `Sizing`, `Motion`, `Haptic` | Screens and components |
 | Component | Each component's own choice of semantic tokens, and sizes that belong to one view | That component |
 
-A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), and the scene decides the color. With Increase Contrast on, the gym's volt ring turns graphite (`Color(role:in:contrast:)`). Check-in kinds have no colors of their own; they use the scene's.
+A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), and the scene decides the color. Check-in kinds have no colors of their own; they use the scene's.
 
 Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand` and `Palette.onBrand`) is its own value and never follows the scene, so it can change in one place. Brand screens (opening, sign-up, 我, the tab bar, writing a post, 请假条, the feed) set `.accentTone(.brand)` once at their root, and the primary button, selection marks, switches and text cursor inside wear the brand. The squad's own turf (home, the check-in burst, the 出赛表 poster, 战报) keeps the default `.scene`; the feed's kind tag still uses the scene's wash (`bgAccentSubtle`, `fgAccent`).
 
@@ -25,7 +25,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button; a sign-up step's back button and ink segments |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |
-| `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone |
+| `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |
 | `InputField`, `SearchField` | Text entry |
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |

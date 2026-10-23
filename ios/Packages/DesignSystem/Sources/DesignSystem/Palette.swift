@@ -24,6 +24,11 @@ public enum Palette {
     public static let brand = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
     /// Labels and icons on `brand`.
     public static let onBrand = SRGBColor(red: 0xFF, green: 0xFF, blue: 0xFF)
+    /// The brand's light gym, where the open screen and the website stand (`--brand-sky`,
+    /// `--brand-floor` and `--brand-tile` in `web/public/wildcard.css`).
+    public static let brandSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
+    public static let brandFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
+    public static let brandTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
 
     // MARK: Pool scene
 
@@ -42,19 +47,12 @@ public enum Palette {
     public static let trackText = SRGBColor(red: 0xB8, green: 0x33, blue: 0x25)
     public static let trackFloor = SRGBColor(red: 0xF8, green: 0xDD, blue: 0xD9)
 
-    // MARK: Gym scene: the one dark scene
+    // MARK: Gym scene (steel)
 
-    public static let graphite = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
-    public static let gymWash = SRGBColor(red: 0xEE, green: 0xF0, blue: 0xF2)
-    /// Text, icons and progress on graphite. Never a large background.
-    public static let volt = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
-    /// The check-in kind buttons on the gym's dark floor: graphite with a hint of volt.
-    public static let gymKind = SRGBColor(red: 0x2E, green: 0x33, blue: 0x24)
-    /// The brand's light gym, where the open screen and the website stand (`--gym-sky`,
-    /// `--gym-floor` and `--gym-tile` in `web/public/wildcard.css`).
-    public static let gymSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
-    public static let gymLightFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
-    public static let gymTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
+    public static let gymSignature = SRGBColor(red: 0x4A, green: 0x6C, blue: 0x8C)
+    public static let gymWash = SRGBColor(red: 0xED, green: 0xF0, blue: 0xF4)
+    public static let gymText = SRGBColor(red: 0x3E, green: 0x5C, blue: 0x78)
+    public static let gymFloor = SRGBColor(red: 0xDB, green: 0xE2, blue: 0xE8)
 
     // MARK: Tennis scene (grass, not blue hard court)
 
@@ -94,6 +92,7 @@ public enum Palette {
     public static let mint = SRGBColor(red: 0x27, green: 0x8C, blue: 0x5E)
     public static let honey = SRGBColor(red: 0xA0, green: 0x76, blue: 0x0E)
     public static let lavender = SRGBColor(red: 0x90, green: 0x62, blue: 0xDE)
+    public static let graphite = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
 
     // MARK: Character tones: the avatar's skin, fur and hair swatches. Never UI color.
     /// Skin, light to deep.
