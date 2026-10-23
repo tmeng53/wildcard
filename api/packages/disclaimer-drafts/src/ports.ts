@@ -23,7 +23,11 @@ export interface LanguageModel {
 
 /** Where the draft settings are kept: one value, and a log of every change to it. */
 export interface DraftSettingsStore {
-  current(): Promise<DraftSettings>;
+  /**
+   * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two
+   * admins changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<DraftSettings>;
   /**
    * Saves `settings` with `by` as who changed them, unless they are the settings already: then
    * nothing is saved or logged. Says whether anything changed.

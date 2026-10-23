@@ -18,7 +18,7 @@ import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 import { adminOn, aiConsentOn, noJobs, pushOn } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 const config = readConfig(process.env);
 const notCalled = () => Promise.reject(new Error('no route here verifies tokens or uses photos'));
@@ -71,6 +71,7 @@ async function getHealth(db: Database) {
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    weekSummaryWords: unusedWeekSummaryWords,
     aiConsent: aiConsentOn(db),
     log: createLog((line) => lines.push(line)),
     jobs: noJobs,
@@ -157,6 +158,7 @@ describe('an unknown route', () => {
         aiConsent: () => Promise.resolve(true),
       }),
       weeklyAwards: unusedWeeklyAwards,
+      weekSummaryWords: unusedWeekSummaryWords,
       aiConsent: aiConsentOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,

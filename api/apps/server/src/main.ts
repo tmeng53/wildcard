@@ -13,7 +13,9 @@ import {
   createPostgresCheckInStore,
   createPostgresReactionStore,
   createPostgresReplyStore,
+  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
+  createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import {
@@ -58,6 +60,7 @@ import {
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
@@ -214,6 +217,7 @@ const app = createApp({
     random: Math.random,
   }),
   push,
+  weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   log,
   jobs: {
@@ -233,6 +237,9 @@ const app = createApp({
       ...aiWritingTools({
         drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
         awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
+      }),
+      ...weekSummaryWordTools({
+        words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
     ],
     publicUrl: config.publicUrl,

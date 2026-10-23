@@ -30,7 +30,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 async function send(
   path: string,
@@ -76,6 +76,7 @@ async function send(
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    weekSummaryWords: unusedWeekSummaryWords,
     aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,

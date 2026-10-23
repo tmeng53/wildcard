@@ -5,6 +5,7 @@ import {
   createPostgresCheckInStore,
   createPostgresReactionStore,
   createPostgresReplyStore,
+  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -80,6 +81,7 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,

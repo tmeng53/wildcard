@@ -29,6 +29,25 @@ struct CharacterRenderTests {
         #expect(matches(try bear.render(bear.figure.restPose).color(atColumn: 193, row: 255), Self.white))
     }
 
+    /// A ring shows the face, not just ears or hair: every body's head has both pupils and
+    /// the mouth inside it.
+    @Test func everyHeadShowsTheFace() throws {
+        let idle = try PlaceholderCharacter.clip("idle", persona: .deadpan)
+        let pupil = (0x0E, 0x0F, 0x14)
+        let ink = (0x22, 0x25, 0x2E)
+        for body in PlaceholderCharacter.variants(for: "body") {
+            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "tee"]))
+            // 160 points square draws the head's crop one to one: canvas (x, y) is (x - 40, y - 74).
+            let view = CharacterHead(player: try CharacterPlayer(figure: figure, idle: idle))
+                .frame(width: 160, height: 160)
+                .background(.white)
+            let image = try Bitmap(try #require(ImageRenderer(content: view).cgImage))
+            #expect(matches(image.color(atColumn: 49, row: 87), pupil), "\(body): left pupil")
+            #expect(matches(image.color(atColumn: 111, row: 87), pupil), "\(body): right pupil")
+            #expect(matches(image.color(atColumn: 80, row: 113), ink), "\(body): mouth")
+        }
+    }
+
     @Test func theCheerCarriesTheDumbbellUpWithTheArm() throws {
         let lifter = try Frame(outfit: PlaceholderCharacter.lifter)
         let cheer = try lifter.figure.bind(PlaceholderCharacter.clip("cheer", persona: .energetic))
