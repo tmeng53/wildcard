@@ -64,7 +64,7 @@ struct MainTabs: View {
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
         .onChange(of: recap.picks) {
-            if let scene = recap.pickedScene { land(on: scene) }
+            if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
@@ -82,12 +82,12 @@ struct MainTabs: View {
         .fullScreenCover(isPresented: $showsSquad) {
             SquadSettingsView(
                 model: squad, close: { showsSquad = false },
-                picked: { scene in
+                picked: { scene, coveredAt in
                     // The page goes at once: its reveal's last frame is the scene home draws.
                     var instant = Transaction()
                     instant.disablesAnimations = true
                     withTransaction(instant) { showsSquad = false }
-                    land(on: scene)
+                    land(on: scene, coveredAt: coveredAt)
                 }
             )
             .environment(\.sceneTheme, squad.scene)
@@ -102,11 +102,11 @@ struct MainTabs: View {
     /// Whether the squad is dropping onto a newly picked scene, which brings the tab bar back.
     private var arriving: Bool { today.isArriving && !reduceMotion }
 
-    /// Every scene pick ends on home: the picked scene has filled the screen, and the squad drops
-    /// onto it.
-    private func land(on scene: SceneTheme) {
+    /// Every scene pick ends on home: the picked scene filled the screen at `coveredAt`, and the
+    /// squad drops onto it.
+    private func land(on scene: SceneTheme, coveredAt: Date) {
         selection = .today
-        today.dropIn(on: scene)
+        today.dropIn(on: scene, coveredAt: coveredAt)
     }
 
     /// Opens the editor on the member's own character.

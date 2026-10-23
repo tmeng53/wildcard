@@ -23,7 +23,7 @@ import UIKit
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
     private let close: () -> Void
-    private let picked: (SceneTheme) -> Void
+    private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
     @State private var renaming: String?
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
@@ -32,7 +32,8 @@ public struct SquadSettingsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
-        model: SquadSettingsModel, close: @escaping () -> Void, picked: @escaping (SceneTheme) -> Void = { _ in }
+        model: SquadSettingsModel, close: @escaping () -> Void,
+        picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void = { _, _ in }
     ) {
         self.model = model
         self.close = close
@@ -53,8 +54,8 @@ public struct SquadSettingsView: View {
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
-                    onFinished: {
-                        picked(reveal.scene)
+                    onFinished: { coveredAt in
+                        picked(reveal.scene, coveredAt)
                         self.reveal = nil
                         Task { await model.picked() }
                     },

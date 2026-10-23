@@ -187,7 +187,8 @@ public final class TodayModel {
 
     /// Puts everyone where they belong after the home changed.
     func placeSquad() {
-        guard let home else { return }
+        // The squad is placed again once it has dropped in.
+        guard let home, arrival == nil else { return }
         if let character = home.mine?.character {
             let (look, persona) = (Outfit(character.look), Persona(character.look))
             if look != myLook || persona != myPersona {
@@ -249,6 +250,7 @@ public final class TodayModel {
         let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
         guard let latest = fresh.last, let first = patters.first else { return }
         try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
+        await untilArrived()
         guard pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
         else { return }
         defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))

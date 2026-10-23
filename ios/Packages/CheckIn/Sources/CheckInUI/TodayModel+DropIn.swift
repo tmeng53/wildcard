@@ -32,8 +32,10 @@ extension TodayModel {
 
     /// The end of every scene pick: the picked scene has just filled the screen, and the squad
     /// drops onto it one after another, me last, then the card, 打卡 and the tab bar come back
-    /// (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」).
-    public func dropIn(on scene: SceneTheme) {
+    /// (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」). The drop's
+    /// moments count from `coveredAt`, when the scene filled the screen: a boxed reveal hands
+    /// over after its confetti, a moment later.
+    public func dropIn(on scene: SceneTheme, coveredAt: Date) {
         self.scene = scene
         isBurstOpen = false
         pats.dismissBubble()
@@ -41,7 +43,7 @@ extension TodayModel {
         let depth = { (mate: SquadCast.Mate) in self.cast.stage.position(of: mate.id, at: 0)?.point.y ?? 0 }
         let mates = cast.mates.sorted { depth($0) < depth($1) }
         // Real time, not the injected clock: the drop plays against the display's frames.
-        let start = Date.now
+        let start = coveredAt
         let drop = DropIn(count: mates.count + 1)
         // Unblended, so nobody slides up out of where they stood; each waits above the screen
         // until their turn.
@@ -52,8 +54,18 @@ extension TodayModel {
         arrival = Arrival(drop: drop, start: start, order: mates.map(\.id))
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(drop.finished))
-            if arrival?.start == start { arrival = nil }
+            guard arrival?.start == start else { return }
+            arrival = nil
+            placeSquad()
         }
+    }
+
+    /// Waits for the squad to finish dropping in, if it is: a pat or a new pose meanwhile would
+    /// take a falling figure's clip from it mid-air.
+    func untilArrived() async {
+        guard let arrival else { return }
+        let left = arrival.drop.finished - arrival.elapsed(at: .now)
+        if left > 0 { try? await Task.sleep(for: .seconds(left)) }
     }
 }
 #endif

@@ -39,8 +39,8 @@ public final class RecapShelf {
     /// the screen: the app goes home onto the scene, the same one as last time or not, and the
     /// squad drops in.
     public private(set) var picks = 0
-    /// The scene picked last.
-    public private(set) var pickedScene: SceneTheme?
+    /// The scene picked last, and when it filled the screen.
+    public private(set) var picked: (scene: SceneTheme, coveredAt: Date)?
 
     @ObservationIgnored private let service: any WeekStoryService
     @ObservationIgnored private let readSquad: @MainActor () -> Squad?
@@ -108,12 +108,12 @@ public final class RecapShelf {
                 self?.open = nil
                 self?.planNextWeek()
             },
-            scenePicked: { [weak self] scene in
+            scenePicked: { [weak self] scene, coveredAt in
                 // The story goes at once: the reveal's last frame is the scene home draws.
                 var instant = Transaction()
                 instant.disablesAnimations = true
                 withTransaction(instant) { self?.open = nil }
-                self?.pickedScene = scene
+                self?.picked = (scene, coveredAt)
                 self?.picks += 1
                 self?.scenePicked(scene)
             })

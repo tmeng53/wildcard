@@ -1,4 +1,5 @@
 import AvatarArt
+import AvatarDomain
 import CheckInDomain
 import Testing
 
@@ -7,4 +8,6 @@ import Testing
     #expect(DropIn.land == PlaceholderCharacter.dropLands)
     let clip = try PlaceholderCharacter.drop()
     #expect(clip.duration == DropIn.dropLength)
+    let fall = clip.tracks.first { $0.part.rawValue == "root" && $0.channel == .y }
+    #expect(fall?.value(at: 0) == -PlaceholderCharacter.dropHeight)
 }
