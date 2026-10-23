@@ -7,8 +7,9 @@ import Foundation
 public struct DayRecap: Hashable, Sendable {
     /// What a member's line says.
     public enum RowKind: Hashable, Sendable {
-        /// Their latest 练了, and the latest meal they logged today.
-        case trained(Activity, meal: MealKind?)
+        /// Their latest 练了's sport, the minutes of all their 练了 today where they gave any, and
+        /// the latest meal they logged today.
+        case trained(Activity, minutes: Int?, meal: MealKind?)
         /// Their 请假条, word for word.
         case disclaimer(String)
         /// A rest day in their plan, with no check-in.
@@ -51,13 +52,22 @@ extension Home {
             let posts = recapPosts(of: mate, pending: pending)
             healthy += posts.count { $0.post == .healthyMeal }
             cheat += posts.count { $0.post == .cheatMeal }
-            let sports = posts.compactMap { if case .trained(let activity) = $0.post { activity } else { nil } }
+            let sports = posts.compactMap { if case .trained(let activity, _) = $0.post { activity } else { nil } }
+            let minutes = posts.compactMap {
+                if case .trained(_, let minutes) = $0.post { minutes?.value } else { nil }
+            }
             let notes = posts.compactMap { if case .disclaimer(let note) = $0.post { note } else { nil } }
             if let first = posts.first(where: { if case .trained = $0.post { true } else { false } }),
                 let sport = sports.last
             {
                 let meal = posts.reversed().lazy.compactMap(\.post.meal).first
-                trained.append((first.at, .init(member: mate.member, kind: .trained(sport, meal: meal))))
+                trained.append(
+                    (
+                        first.at,
+                        .init(
+                            member: mate.member,
+                            kind: .trained(sport, minutes: minutes.isEmpty ? nil : minutes.reduce(0, +), meal: meal))
+                    ))
             } else if let posted = posts.first(where: { if case .disclaimer = $0.post { true } else { false } }),
                 let note = notes.last
             {
@@ -77,7 +87,7 @@ extension Home {
     private func recapPosts(of mate: SquadmateToday, pending: [PendingCheckIn]) -> [(at: Timestamp, post: RecapPost)] {
         let saved = todaysCheckIns(of: mate.member).map { checkIn -> (at: Timestamp, post: RecapPost) in
             switch checkIn.entry {
-            case .trained(let training): (checkIn.createdAt, .trained(training.activity))
+            case .trained(let training): (checkIn.createdAt, .trained(training.activity, training.minutes))
             case .healthyMeal: (checkIn.createdAt, .healthyMeal)
             case .cheatMeal: (checkIn.createdAt, .cheatMeal)
             case .disclaimer(let note): (checkIn.createdAt, .disclaimer(note.text))
@@ -89,7 +99,7 @@ extension Home {
         }
         .map { post -> (at: Timestamp, post: RecapPost) in
             switch post.draft {
-            case .trained(let activity, _): (post.createdAt, .trained(activity))
+            case .trained(let activity, let minutes, _): (post.createdAt, .trained(activity, minutes))
             case .healthyMeal: (post.createdAt, .healthyMeal)
             case .cheatMeal: (post.createdAt, .cheatMeal)
             case .disclaimer(let note): (post.createdAt, .disclaimer(note.text))
@@ -114,7 +124,7 @@ extension Home {
 
 /// What a post says on 今日赛况, saved or still waiting to go out.
 private enum RecapPost: Equatable {
-    case trained(Activity)
+    case trained(Activity, WorkoutMinutes?)
     case healthyMeal
     case cheatMeal
     case disclaimer(String)

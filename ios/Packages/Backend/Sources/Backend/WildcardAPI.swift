@@ -220,6 +220,15 @@ public struct WildcardAPI: Sendable {
 
     // MARK: - Photos
 
+    /// A check-in's photo from the URL the API signed for it, or nil when it can't be had now
+    /// (offline, or the URL ran out: listing again signs fresh ones).
+    public func photo(at url: URL) async -> Data? {
+        guard let (data, response) = try? await http.data(from: url),
+            (response as? HTTPURLResponse)?.statusCode == 200
+        else { return nil }
+        return data
+    }
+
     /// Uploads a photo straight to storage, never through the API, and returns it for a
     /// check-in to list. Each upload is used by one check-in only.
     public func upload(_ photo: Data, as type: PhotoType) async throws(APIError) -> PhotoRef {

@@ -7,8 +7,8 @@ import SportsUI
 import SwiftUI
 
 /// One page like a social app's new post (spec rev 186, section 1): 取消 / title / 发布, the
-/// photos with their cover, the sport for a 练了, and a line up to 60 characters. No minutes,
-/// no meal type.
+/// photos with their cover, the sport and minutes for a 练了, and a line up to 60 characters.
+/// Minutes are optional; no meal type.
 struct ComposeView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -18,6 +18,8 @@ struct ComposeView: View {
     @FocusState private var isWriting: Bool
     @State private var activity: Activity?
     @State private var isPickingSport = false
+    @State private var minutes: WorkoutMinutes?
+    @State private var isWritingMinutes = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,6 +30,8 @@ struct ComposeView: View {
                         MediaBlock(model: model)
                         if kind == .trained {
                             SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
+                            MinutesRow(minutes: $minutes) { isWritingMinutes = $0 }
+                                .id(Self.minutesID)
                         }
                         captionField.id(Self.captionID)
                         if model.sendFailed {
@@ -48,6 +52,13 @@ struct ComposeView: View {
                         proxy.scrollTo(Self.captionID, anchor: .bottom)
                     }
                 }
+                // And the minutes being typed under 其他.
+                .onChange(of: isWritingMinutes) { _, writing in
+                    guard writing else { return }
+                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                        proxy.scrollTo(Self.minutesID, anchor: .bottom)
+                    }
+                }
             }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
@@ -57,10 +68,12 @@ struct ComposeView: View {
                 isPickingSport = false
             }
             .environment(\.sceneTheme, theme)
+            .accentTone(.brand)
         }
     }
 
     private static let captionID = "caption"
+    private static let minutesID = "minutes"
 
     /// The board's last sport until the member picks one; detection from the cover comes later.
     private var currentActivity: Activity {
@@ -87,7 +100,7 @@ struct ComposeView: View {
                 } else {
                     Text("发布", bundle: .module)
                         .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgAccent, in: theme))
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
                 }
             }
             .frame(minHeight: Sizing.minimumTapTarget)
@@ -138,7 +151,7 @@ struct ComposeView: View {
     private var draft: CheckInDraft {
         let body = PostBody(photos: model.photos, caption: caption)
         return switch kind {
-        case .trained: .trained(currentActivity, body)
+        case .trained: .trained(currentActivity, minutes, body)
         case .healthyMeal: .healthyMeal(body)
         case .cheatMeal, .disclaimer: .cheatMeal(body)
         }
@@ -193,16 +206,16 @@ private struct CoverChoice: View {
                 .overlay {
                     if isCover {
                         RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-                            .strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                            .strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: Sizing.selectionStroke)
                     }
                 }
                 .overlay(alignment: .bottom) {
                     if isCover {
                         Text("封面", bundle: .module)
                             .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgOnAccent, in: theme))
+                            .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                             .padding(.horizontal, Space.xs)
-                            .background(Color(role: .bgAccent, in: theme), in: Capsule())
+                            .background(Color(role: .bgBrand, in: theme), in: Capsule())
                             .padding(.bottom, Space.xxs)
                     }
                 }
@@ -228,7 +241,9 @@ private struct SportRow: View {
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(choices, id: \.key) { activity in
-                        PickPill(activity.name, systemImage: activity.symbol, isSelected: activity == selected) {
+                        PickPill(
+                            activity.name, systemImage: activity.symbol, look: .solid, isSelected: activity == selected
+                        ) {
                             pick(activity)
                         }
                         .accessibilityIdentifier("compose.sport.\(activity.key)")
@@ -247,5 +262,59 @@ private struct SportRow: View {
     private var choices: [Activity] {
         [selected] + Sport.quickPicks.map(Activity.sport).filter { $0 != selected }
     }
+}
+
+/// How long it took, if the member wants to say: the usual lengths one tap each (tap again to
+/// clear), and 其他 for any other number of minutes, held to `WorkoutMinutes.range`.
+private struct MinutesRow: View {
+    @Binding var minutes: WorkoutMinutes?
+    let onWriting: (Bool) -> Void
+    @State private var isTyping = false
+    @State private var typed = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.xxs) {
+            SectionLabel(Text("时长 · 分钟", bundle: .module))
+            ScrollView(.horizontal) {
+                HStack(spacing: Space.xs) {
+                    ForEach(Self.quickPicks, id: \.self) { value in
+                        let isPicked = !isTyping && minutes?.value == value
+                        PickPill(Text(verbatim: "\(value)"), isSelected: isPicked) {
+                            isTyping = false
+                            minutes = isPicked ? nil : try? WorkoutMinutes(value)
+                        }
+                        .accessibilityLabel(Text("\(value) 分钟", bundle: .module))
+                        .accessibilityIdentifier("compose.minutes.\(value)")
+                    }
+                    PickPill(Text("其他", bundle: .module), isSelected: isTyping) {
+                        isTyping.toggle()
+                        typed = ""
+                        minutes = nil
+                    }
+                    .accessibilityIdentifier("compose.minutes.other")
+                }
+            }
+            .scrollIndicators(.hidden)
+            .horizontalScrollFade()
+            if isTyping {
+                InputField(text: $typed, label: Text("分钟", bundle: .module), onFocusChange: onWriting)
+                    .keyboardType(.numberPad)
+                    .onChange(of: typed) { _, text in
+                        // Digits only, and never past the most the API takes.
+                        let digits = text.filter { ("0"..."9").contains($0) }
+                        let fitted = Int(digits).map { String(min($0, WorkoutMinutes.range.upperBound)) } ?? ""
+                        if fitted != text { typed = fitted }
+                        minutes = Int(fitted).flatMap { try? WorkoutMinutes($0) }
+                    }
+                    .accessibilityIdentifier("compose.minutes.field")
+            }
+        }
+        // A field closed by picking a pill never says it stopped being typed in.
+        .onChange(of: isTyping) { _, typing in
+            if !typing { onWriting(false) }
+        }
+    }
+
+    private static let quickPicks = [15, 30, 45, 60, 90]
 }
 #endif

@@ -23,18 +23,18 @@ private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: Tra
         checkIns: [
             try post(1, by: mate, .healthyMeal(Meal())),
             try post(2, by: resting, .disclaimer(try Disclaimer("腰说今天不行"))),
-            try post(3, by: myID, .trained(Training(activity: .sport(.run)))),
+            try post(3, by: myID, .trained(Training(activity: .sport(.run), minutes: try WorkoutMinutes(30)))),
             try post(4, by: mate, .trained(Training(activity: .sport(.swim)))),
             try post(5, by: myID, .cheatMeal(Meal())),
-            try post(6, by: myID, .trained(Training(activity: .sport(.yoga)))),
+            try post(6, by: myID, .trained(Training(activity: .sport(.yoga), minutes: try WorkoutMinutes(15)))),
         ])
     let recap = home.recap()
     #expect(recap.showedUp == 3)
     #expect(recap.members == 3)
     #expect(
         recap.rows == [
-            .init(member: myID, kind: .trained(.sport(.yoga), meal: .cheatMeal)),
-            .init(member: mate, kind: .trained(.sport(.swim), meal: .healthyMeal)),
+            .init(member: myID, kind: .trained(.sport(.yoga), minutes: 45, meal: .cheatMeal)),
+            .init(member: mate, kind: .trained(.sport(.swim), minutes: nil, meal: .healthyMeal)),
             .init(member: resting, kind: .disclaimer("腰说今天不行")),
         ])
     #expect(recap.healthyMeals == 1)
@@ -58,7 +58,7 @@ private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: Tra
         PendingCheckIn(
             id: CheckInID(id(7)), member: myID, day: tuesday,
             createdAt: Timestamp(millisecondsSince1970: 1_792_500_000_007), audience: try Audience([squadID]),
-            draft: .trained(.sport(.run), PostBody(photos: [], caption: ""))),
+            draft: .trained(.sport(.run), try WorkoutMinutes(40), PostBody(photos: [], caption: ""))),
         PendingCheckIn(
             id: CheckInID(id(8)), member: myID, day: tuesday,
             createdAt: Timestamp(millisecondsSince1970: 1_792_500_000_008), audience: try Audience([squadID]),
@@ -68,7 +68,7 @@ private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: Tra
     #expect(recap.showedUp == 1)
     #expect(
         recap.rows == [
-            .init(member: myID, kind: .trained(.sport(.run), meal: .healthyMeal)),
+            .init(member: myID, kind: .trained(.sport(.run), minutes: 40, meal: .healthyMeal)),
             .init(member: resting, kind: .restDay),
         ])
     #expect(recap.healthyMeals == 1)

@@ -145,9 +145,10 @@ struct DayRecapCard: View {
 
     @ViewBuilder private func what(_ kind: DayRecap.RowKind) -> some View {
         switch kind {
-        case .trained(let activity, let meal):
+        case .trained(let activity, let minutes, let meal):
             HStack(spacing: Space.xs) {
-                Text(verbatim: activity.localizedName)
+                // The design's 跑步 45′: minutes as a sports page writes them, the same in any language.
+                Text(verbatim: minutes.map { "\(activity.localizedName) \($0)′" } ?? activity.localizedName)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .lineLimit(1)

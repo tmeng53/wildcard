@@ -54,7 +54,8 @@ extension CheckIn {
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .trained,
                     training: .init(
                         sport: training.activity.wireSport, customSport: training.activity.wireCustomSport,
-                        caption: training.caption?.text, photos: training.photos?.wire)))
+                        minutes: training.minutes?.value, caption: training.caption?.text,
+                        photos: training.photos?.wire)))
         case .healthyMeal(let meal):
             .healthyMeal(
                 .init(
@@ -78,7 +79,8 @@ extension Training {
     init(_ wire: Components.Schemas.TrainingView) throws(ContractsError) {
         self.init(
             activity: try Activity(sport: wire.sport, customSport: wire.customSport),
-            photos: try Photos(wire: wire.photos), caption: try wire.caption.map(Caption.init))
+            minutes: try wire.minutes.map(WorkoutMinutes.init), photos: try Photos(wire: wire.photos),
+            caption: try wire.caption.map(Caption.init))
     }
 }
 

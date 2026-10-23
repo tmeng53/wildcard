@@ -54,6 +54,14 @@ custom_rules:
     excluded: '.*/(Packages/DesignSystem|Packages/Avatar|Tests)/.*'
     regex: '(\bPalette\.|\bColor\.(red|orange|yellow|green|mint|teal|cyan|blue|indigo|purple|pink|brown|white|gray|black|primary|secondary)\b|\.(foregroundStyle|foregroundColor|fill|stroke|tint|background)\(\s*\.(red|orange|yellow|green|mint|teal|cyan|blue|indigo|purple|pink|brown|white|gray|black|primary|secondary|tertiary)\b|\bColor\((red|white|hue|uiColor):|\.sRGB\b)'
     severity: error
+  # Brand screens wear the brand's colour whatever scene the squad picked (AGENTS.md, Brand vs
+  # scene in ios/Packages/DesignSystem/README.md). Add a screen's files here when it turns brand.
+  scene_role_on_brand_screen:
+    name: "Scene colour on a brand screen"
+    message: "Brand screens use bgBrand/fgOnBrand, neutrals and .accentTone(.brand), never the scene's roles."
+    included: '.*/(Packages/Me/Sources/.*|Packages/CheckIn/Sources/CheckInUI/(ComposeView|DisclaimerComposer|PhotoStep|SportPicker)\.swift|Packages/DesignSystem/Sources/DesignSystemUI/TabBar\.swift)$'
+    regex: '\.(bgAccent|bgAccentSubtle|fgOnAccent|fgAccent|bgScene|fgOnScene|ring|bgKind|bgKindOnScene|fgKind)\b'
+    severity: error
   raw_corner_radius:
     name: "Raw corner radius"
     message: "AGENTS.md: take radii from Radius (pick, card, thumbnail, capsule), never a number."
