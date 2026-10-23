@@ -1,3 +1,4 @@
+import AccountDomain
 import Contracts
 import Foundation
 import ScheduleDomain
@@ -28,6 +29,7 @@ private var thisWeek: LocalDay {
     #expect(profile.nickname == "小林")
     #expect(profile.timeZone.identifier == "UTC")
     #expect(profile.firstWeek == (try thisWeek))
+    #expect(profile.look == CharacterLook(persona: "shy", variants: ["body": "calico"], colors: [:]))
 }
 
 @Test func thisWeekShowsTheDaysCheckedInAndTheSquadsCount() async throws {
@@ -86,4 +88,40 @@ private var thisWeek: LocalDay {
     await #expect(throws: ScheduleError.weekOver) {
         try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek)
     }
+}
+
+// The adapter's own rules, with no stack.
+
+private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn {
+    CheckIn(
+        id: CheckInID(UUID()), member: MemberID(UUID()), day: day, createdAt: Timestamp(Date()),
+        audience: try Audience([SquadID(UUID())]), entry: entry)
+}
+
+@Test func aDayWithATrainingAndAnExcuseCountsAsTrained() throws {
+    let monday = try LocalDay(year: 2026, month: 10, day: 19)
+    let checkIns = [
+        try posted(.disclaimer(try Disclaimer("下雨")), on: monday),
+        try posted(.trained(Training(activity: .sport(.run))), on: monday),
+        try posted(.disclaimer(try Disclaimer("加班")), on: monday.adding(days: 2)),
+        try posted(.healthyMeal(Meal()), on: monday.adding(days: 3)),
+        try posted(.trained(Training(activity: .sport(.swim))), on: monday.adding(days: 7)),
+    ]
+
+    #expect(
+        APIScheduleBackend.marks(of: checkIns, weekStart: monday) == [
+            .trained, .none, .disclaimer, .none, .none, .none, .none,
+        ])
+}
+
+@Test func eachRefusalMeansSomethingOnTheSchedule() {
+    #expect(ScheduleError(.refused(.weekClosed)) == .weekOver)
+    #expect(ScheduleError(.refused(.planDayStarted)) == .dayStarted)
+    #expect(ScheduleError(.refused(.restDaysFixed)) == .restDaysFixed)
+    #expect(ScheduleError(.refused(.squadFull)) == .refused)
+    #expect(ScheduleError(.unreadableResponse) == .refused)
+    #expect(ScheduleError(.unavailable) == .notSent)
+    #expect(ScheduleError(.account(.signedOut)) == .signedOut)
+    #expect(ScheduleError(.account(.credentialRejected)) == .signedOut)
+    #expect(ScheduleError(.account(.unavailable)) == .notSent)
 }

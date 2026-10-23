@@ -22,7 +22,8 @@ public struct APIScheduleBackend: ScheduleBackend {
             let plan = try await api.weeklyPlanWire(weekStart: thisWeek)
             let firstWeek = try plan.firstWeek.map { text throws(APIError) in try day(text) } ?? thisWeek
             return ScheduleProfile(
-                nickname: profile?.character?.nickname.text ?? "", timeZone: timeZone, firstWeek: firstWeek)
+                nickname: profile?.character?.nickname.text ?? "", timeZone: timeZone, firstWeek: firstWeek,
+                look: profile?.character?.look)
         }
     }
 
@@ -75,14 +76,18 @@ public struct APIScheduleBackend: ScheduleBackend {
 
     // MARK: - Private
 
-    /// The member's titles in the squad's story of a week; none until they are written.
+    /// The member's titles in the squad's story of a week; none until they are written. The
+    /// titles only decorate the poster, so a story that can't be read leaves them off rather
+    /// than the week; a signed-out member still fails.
     private func titles(of member: MemberID, in squad: SquadID, weekStart: LocalDay) async throws(APIError)
         -> [AwardTitle]
     {
         let story: Components.Schemas.WeekStory
         do {
             story = try await api.weekStoryWire(of: squad, weekStart: weekStart)
-        } catch .refused(.weekStoryNotReady) {
+        } catch .account(let error) {
+            throw .account(error)
+        } catch {
             return []
         }
         guard case .case1(let ready) = story else { return [] }
