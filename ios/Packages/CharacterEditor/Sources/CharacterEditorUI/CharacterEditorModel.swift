@@ -16,7 +16,7 @@ public enum EditorTab: String, CaseIterable, Hashable, Sendable {
 
 /// The one move a change plays: the look's (the held prop's move, else the persona's cheer),
 /// or the persona's cheer when the persona changes.
-private enum Move {
+private enum StageMove {
     case look, cheer
 }
 
@@ -167,7 +167,7 @@ public final class CharacterEditorModel {
 
     /// Dresses the stage in the draft's outfit and idle, then plays one move if asked. The
     /// figure is built off the main actor, since it reads and parses art.
-    private func restyle(move: Move?) {
+    private func restyle(move: StageMove?) {
         request += 1
         let ticket = request
         let outfit = draft.outfit
@@ -182,7 +182,7 @@ public final class CharacterEditorModel {
         }
     }
 
-    private func show(_ figure: Figure, wearing outfit: Outfit, ticket: Int, move: Move?) {
+    private func show(_ figure: Figure, wearing outfit: Outfit, ticket: Int, move: StageMove?) {
         guard ticket == request else { return }
         outfitOnStage = outfit
         let idle = (tab == .persona ? clip("idle") : nil) ?? .still

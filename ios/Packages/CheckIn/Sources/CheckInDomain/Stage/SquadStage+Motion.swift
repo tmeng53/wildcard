@@ -73,13 +73,6 @@ extension SquadStage {
         let point: StagePoint
         let facing: Double
         switch station.path {
-        case .loop(let start, let end, let lanes):
-            let perLane = (station.capacity + lanes.count - 1) / lanes.count
-            let lap = station.lap(ofSlot: slot) ?? lanes[0]
-            let width = end - start
-            let offset = Double(slot % perLane) / Double(perLane) * width
-            point = StagePoint(x: start + wrap(offset + seconds * lap.speed * lap.direction, width), y: lap.y)
-            facing = lap.direction
         case .lanes(let lanes, let speed):
             let lane = lanes[slot % lanes.count]
             let width = lane.to - lane.from
