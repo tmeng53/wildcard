@@ -1,12 +1,8 @@
-import { DisclaimerWriterUnavailableError, type LanguageModel } from '@wildcard/disclaimer-drafts';
+import { DisclaimerWriterUnavailableError } from '@wildcard/disclaimer-drafts';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
-/**
- * GPT-6 Luna: the model the weekly awards use (Tracy's pick after a side-by-side test), and
- * Tracy chose it for the drafts too (2026-10-23); it costs a fraction of GPT-5.4 mini.
- */
-export const OPENAI_MODEL = 'gpt-6-luna';
+import type { ProviderModels } from './language-models.js';
 
 /**
  * A member is waiting with the button pressed: past this, the app's dice are the better answer.
@@ -20,8 +16,6 @@ const MAX_OUTPUT_TOKENS = 4_096;
 /** The language model on OpenAI's Responses API, with structured output. */
 export function createOpenAILanguageModel(options: {
   readonly apiKey: string;
-  /** Which OpenAI model answers; `OPENAI_MODEL` unless the config names another. */
-  readonly model?: string;
   /**
    * How long one attempt may take, and how many tokens its answer may use (reasoning
    * included). A member waiting on drafts gets the defaults; a job writing a squad's awards
@@ -33,7 +27,7 @@ export function createOpenAILanguageModel(options: {
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
   readonly fetch?: typeof fetch;
-}): LanguageModel {
+}): ProviderModels {
   const client = new OpenAI({
     apiKey: options.apiKey,
     // Never the environment's: an OPENAI_BASE_URL meant for another tool must not redirect
@@ -47,11 +41,11 @@ export function createOpenAILanguageModel(options: {
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
   });
   return {
-    answer: async ({ instructions, prompt, reply }) => {
+    answer: async ({ model, instructions, prompt, reply }) => {
       let response;
       try {
         response = await client.responses.parse({
-          model: options.model ?? OPENAI_MODEL,
+          model,
           instructions,
           input: prompt,
           max_output_tokens: options.maxOutputTokens ?? MAX_OUTPUT_TOKENS,

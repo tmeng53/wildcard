@@ -131,7 +131,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          # --update-* keeps what was set by hand in the console (APPLE_*, LLM_PROVIDER...).
+          # --update-* keeps what was set by hand in the console (such as APPLE_*).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
           env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=$PUBLIC_URL,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
           absent=""

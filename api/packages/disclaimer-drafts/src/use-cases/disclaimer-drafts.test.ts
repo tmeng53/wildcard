@@ -10,14 +10,17 @@ import {
   createPostgresDraftAllowance,
   type DisclaimerDraftTables,
 } from '../adapters/postgres-draft-allowance.js';
+import { createPostgresDraftSettings } from '../adapters/postgres-draft-settings.js';
 import { DraftReason, MemberId, type PromptMeme } from '../domain/draft-request.js';
+import type { DraftSettings } from '../domain/settings.js';
 import type { ModelReply } from '../domain/drafts.js';
 import { DisclaimerWriterUnavailableError } from '../errors.js';
 import type { LanguageModel } from '../ports.js';
 import { createDisclaimerDrafts } from './disclaimer-drafts.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database. The
-// model is the port's: it answers what each test sets and remembers what it was asked.
+// model is the port's: it answers what each test sets and remembers what it was asked. The
+// settings are the database's, as the migration first saved them, with what a test changes on top.
 const db = new Kysely<DisclaimerDraftTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
@@ -43,20 +46,28 @@ function setup(
     rolls?: number[];
     now?: Date;
     consentsToAi?: boolean;
+    settings?: Partial<DraftSettings>;
   } = {},
 ) {
   const rolls = options.rolls ?? [0.99];
   let drawn = 0;
   const prompts: string[] = [];
+  const asked: { model: string; instructions: string }[] = [];
   const model: LanguageModel = {
-    answer: async ({ prompt, reply }) => {
+    answer: async ({ model, instructions, prompt, reply }) => {
       prompts.push(prompt);
+      asked.push({ model, instructions });
       return reply.parse(await (options.answer ?? (() => Promise.resolve(good)))());
     },
   };
   let now = options.now ?? new Date('2026-10-19T04:00:00.000Z');
+  const saved = createPostgresDraftSettings(db);
   const drafts = createDisclaimerDrafts({
     model,
+    settings: {
+      ...saved,
+      current: async () => ({ ...(await saved.current()), ...options.settings }),
+    },
     memes: () => Promise.resolve(options.memes ?? []),
     allowance: createPostgresDraftAllowance(db),
     aiConsent: () => Promise.resolve(options.consentsToAi ?? true),
@@ -66,6 +77,7 @@ function setup(
   return {
     drafts,
     prompts,
+    asked,
     later: (ms: number) => {
       now = new Date(now.getTime() + ms);
     },
@@ -99,6 +111,37 @@ describe('createDisclaimerDrafts', () => {
     const member = await newMember();
     expect(await drafts.write(request(member))).toEqual({ kind: 'drafts', drafts: good.drafts });
     expect(prompts).toEqual(['原因：早上没起来\n风格：搞笑']);
+  });
+
+  it('asks the model the settings name, with their instructions', async () => {
+    const { drafts, asked } = setup();
+    await drafts.write(request(await newMember()));
+    expect(asked).toHaveLength(1);
+    expect(asked[0]?.model).toBe('openai/gpt-6-luna');
+    expect(asked[0]?.instructions).toMatch(/^你在帮一个朋友运动打卡 App 的用户写「请假条」/u);
+    expect(asked[0]?.instructions).toContain('"outcome":"selfHarm"');
+  });
+
+  it('refuses while the settings turn drafts off, without asking the model or counting', async () => {
+    const member = await newMember();
+    const off = setup({ settings: { writing: false } });
+    expect(await reasonOf(off.drafts.write(request(member)))).toBe('DISCLAIMER_WRITER_UNAVAILABLE');
+    expect(off.prompts).toStrictEqual([]);
+    expect(
+      await db
+        .selectFrom('disclaimer_draft_requests')
+        .select('id')
+        .where('member_id', '=', member)
+        .execute(),
+    ).toStrictEqual([]);
+  });
+
+  it('gives each member as many batches as the settings say', async () => {
+    const { drafts } = setup({ settings: { batchesPerDay: 2 } });
+    const member = await newMember();
+    expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
+    expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
+    expect(await reasonOf(drafts.write(request(member)))).toBe('DISCLAIMER_DRAFTS_USED_UP');
   });
 
   it('gives each member 6 batches a day, then refuses until a day has passed', async () => {
@@ -197,6 +240,15 @@ describe('createDisclaimerDrafts', () => {
     const { drafts, prompts } = setup({ memes, rolls: [roll, 0] });
     await drafts.write(request(await newMember()));
     expect(prompts[0]).toBe('原因：早上没起来\n风格：搞笑');
+  });
+
+  it('sends a meme as often as the settings say', async () => {
+    const always = setup({ memes, rolls: [0.99, 0], settings: { memeChance: 1 } });
+    await always.drafts.write(request(await newMember()));
+    expect(always.prompts[0]).toContain('本周梗：班味');
+    const never = setup({ memes, rolls: [0, 0], settings: { memeChance: 0 } });
+    await never.drafts.write(request(await newMember()));
+    expect(never.prompts[0]).toBe('原因：早上没起来\n风格：搞笑');
   });
 
   it('sends no meme when none suits the style', async () => {

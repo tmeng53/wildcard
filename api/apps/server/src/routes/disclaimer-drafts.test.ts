@@ -8,8 +8,10 @@ import {
 } from '@wildcard/check-ins';
 import {
   DisclaimerWriterOffError,
+  ModelName,
   createDisclaimerDrafts,
   createPostgresDraftAllowance,
+  createPostgresDraftSettings,
   type LanguageModel,
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
@@ -18,6 +20,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createAnthropicLanguageModel } from '../adapters/anthropic-language-model.js';
+import { byProvider } from '../adapters/language-models.js';
 import { createOpenAILanguageModel } from '../adapters/openai-language-model.js';
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
@@ -36,23 +39,31 @@ import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
-// The whole server as main.ts wires it: local Supabase's Auth and database, and each provider's
-// adapter answering from recorded responses instead of the provider.
+// The whole server as main.ts wires it: local Supabase's Auth and database (the draft settings
+// included), and each provider's adapter answering from recorded responses instead of the
+// provider.
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
+
+const settings = createPostgresDraftSettings(db);
 
 function appAnswering(provider: Provider, ...fixtures: [Fixture, ...Fixture[]]) {
   const recorded = recordedModel(provider, ...fixtures);
   const options = { baseURL: `http://${provider}.test`, fetch: recorded.fetch };
-  const model =
+  const model = byProvider(
     provider === 'openai'
-      ? createOpenAILanguageModel({ apiKey: 'sk-openai-test', ...options })
-      : createAnthropicLanguageModel({ apiKey: 'sk-ant-test', ...options });
-  return { ...appWith(model), requests: recorded.requests };
+      ? { openai: createOpenAILanguageModel({ apiKey: 'sk-openai-test', ...options }) }
+      : { anthropic: createAnthropicLanguageModel({ apiKey: 'sk-ant-test', ...options }) },
+    () => new DisclaimerWriterOffError(),
+  );
+  return { ...appWith(model, `${provider}/recorded`), requests: recorded.requests };
 }
 
-/** The server with this model, and what it logs (one parsed entry per line). */
-function appWith(model: LanguageModel) {
+/**
+ * The server with this model, the settings as saved but naming `modelName` when given, and what
+ * it logs (one parsed entry per line).
+ */
+function appWith(model: LanguageModel, modelName?: string) {
   const logged: unknown[] = [];
   const photos = createSupabasePhotoStorage({
     supabaseUrl: config.supabaseUrl,
@@ -84,6 +95,16 @@ function appWith(model: LanguageModel) {
     photos,
     disclaimerDrafts: createDisclaimerDrafts({
       model,
+      settings:
+        modelName === undefined
+          ? settings
+          : {
+              ...settings,
+              current: async () => ({
+                ...(await settings.current()),
+                model: ModelName.parse(modelName),
+              }),
+            },
       memes: () => Promise.resolve([]),
       allowance: createPostgresDraftAllowance(db),
       aiConsent: () => Promise.resolve(true),
@@ -149,8 +170,10 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
         '经核实，早上那句「再眯五分钟」实际时长为两小时，特此通报。',
       ],
     });
-    // Only the reason and the style reach the model.
+    // Only the reason and the style reach the model, with the settings' instructions.
     expect(JSON.stringify(requests)).toContain('原因：早上没起来\\n风格：搞笑');
+    expect(JSON.stringify(requests)).toContain('recorded');
+    expect(JSON.stringify(requests)).toContain('你在帮一个朋友运动打卡 App 的用户写「请假条」');
   });
 
   it.each<[Fixture, string]>([
@@ -173,6 +196,17 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
       expect(answer.body.reason).toBe('DISCLAIMER_WRITER_UNAVAILABLE');
     },
   );
+
+  it('answers 503 without an error log when the model’s provider has no key', async () => {
+    const { app, logged } = appWith(
+      byProvider({}, () => new DisclaimerWriterOffError()),
+      `${provider}/recorded`,
+    );
+    const { token } = await signUp();
+    const answer = await ask(app, { token });
+    expect([answer.status, answer.body.reason]).toEqual([503, 'DISCLAIMER_WRITER_UNAVAILABLE']);
+    expect(logged).toStrictEqual([]);
+  });
 
   it('answers 503 without an error log while drafts are off', async () => {
     const { app, logged } = appWith({
