@@ -32,7 +32,7 @@ public struct SquadLineup: View {
 }
 
 /// One frame of the lineup: where `Lineup` puts each member at `time`, in the pose its player
-/// has at `date`, or everyone at rest in their row's or queue's first spots when `still`.
+/// has at `date`, or everyone standing still (`Lineup.rest`) when `still`.
 struct LineupFrame: View {
     let players: [CharacterPlayer]
     let size: CGSize
@@ -45,7 +45,7 @@ struct LineupFrame: View {
 
     var body: some View {
         let lineup = Lineup(count: players.count, width: size.width).scaled(by: size.height / Self.designHeight)
-        let spots = lineup.spots(at: still ? 0 : time)
+        let spots = still ? lineup.rest : lineup.spots(at: time)
         ZStack(alignment: .topLeading) {
             ForEach(Array(zip(players, spots).enumerated()), id: \.offset) { item in
                 let (player, spot) = item.element

@@ -33,5 +33,21 @@ import Testing
     let big = Lineup(count: 8, width: 390).scaled(by: 2)
     #expect(big.figureWidth == 144)
     #expect(big.spots(at: 1.3)[1].left == -78)
-    #expect(big.spots(at: 0).map(\.lift).max() ?? 0 <= 10)
+    // The first walker's hop peaks 1/4.8 s in: twice the design's 5.
+    #expect(abs(big.spots(at: 1 / 4.8)[0].lift - 10) < 1e-9)
+}
+
+@Test func onAWidePhoneSixWalkersComeBackInPastTheEdge() {
+    let queue = Lineup(count: 6, width: 440)
+    // The loop is the strip and one walker long, so nobody appears inside the right edge.
+    #expect(queue.spots(at: 0).map(\.left) == [-78, 0, 78, 156, 234, 312])
+    // The first walker, just off the left edge at 0, comes back in from 440 a moment later.
+    #expect(abs(queue.spots(at: 0.1)[0].left - 437) < 1e-9)
+    #expect(queue.spots(at: 3).map(\.left) == [350, 428, -12, 66, 144, 222])
+}
+
+@Test func standingStillTheQueueShowsTheWalkersWhoFit() {
+    #expect(Lineup(count: 8, width: 390).rest.map(\.left) == [3, 81, 159, 237, 315, 393, 471, 549])
+    #expect(Lineup(count: 8, width: 390).rest.allSatisfy { $0.lift == 0 })
+    #expect(Lineup(count: 5, width: 390).rest.map(\.left) == [15, 87, 159, 231, 303])
 }

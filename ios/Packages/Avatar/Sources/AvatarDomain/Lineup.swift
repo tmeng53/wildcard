@@ -59,7 +59,9 @@ public struct Lineup: Hashable, Sendable {
                 Spot(left: width / 2 - figureWidth / 2 + (Double(index) - middle) * figureWidth, lift: 0)
             }
         }
-        let loop = Double(count) * gap
+        // At least a strip and a walker long, so a walker always comes back in past the right
+        // edge, however wide the screen.
+        let loop = max(Double(count) * gap, width + gap)
         return (0..<count).map { index in
             let along = Double(index) * gap - time * pace
             let wrapped = (along.truncatingRemainder(dividingBy: loop) + loop).truncatingRemainder(dividingBy: loop)
@@ -67,5 +69,14 @@ public struct Lineup: Hashable, Sendable {
             let lift = abs(sin((time + Double(index) * 0.37) * .pi * 2.4)) * hop
             return Spot(left: wrapped - gap, lift: lift)
         }
+    }
+
+    /// Everyone standing still, for Reduce Motion: the row as it stands, or the queue stopped
+    /// with as many walkers as fit on the strip centered on it and the rest past its right edge.
+    public var rest: [Spot] {
+        guard walks else { return spots(at: 0) }
+        let fits = max(1, Int(((width - figureWidth) / gap).rounded(.down)) + 1)
+        let start = (width - (Double(fits - 1) * gap + figureWidth)) / 2
+        return (0..<count).map { Spot(left: start + Double($0) * gap, lift: 0) }
     }
 }
