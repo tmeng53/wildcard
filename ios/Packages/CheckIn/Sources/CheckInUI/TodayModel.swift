@@ -295,7 +295,7 @@ public final class TodayModel {
     ) {
         let line: String?
         switch draft {
-        case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body):
+        case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body):
             line = body.caption
         case .disclaimer(let disclaimer):
             line = disclaimer.text

@@ -87,10 +87,7 @@ describe('CheckInDraft', () => {
     ).toStrictEqual(['audience']);
   });
 
-  it('refuses minutes and meal types, which v1 doesn’t have', () => {
-    expect(issues({ ...trained, training: { sport: 'run', minutes: 30 } })).toStrictEqual([
-      'training',
-    ]);
+  it('refuses meal types, which v1 doesn’t have', () => {
     expect(issues({ ...base, kind: 'healthyMeal', meal: { slot: 'lunch' } })).toStrictEqual([
       'meal',
     ]);
@@ -105,6 +102,20 @@ describe('CheckInDraft', () => {
     expect(training({ sport: 'custom', customSport: '   ' })).toStrictEqual([
       'training.customSport',
     ]);
+  });
+
+  it('takes whole minutes from 1 to 600 on a 练了, or none', () => {
+    const minutes = (value: unknown) =>
+      issues({ ...trained, training: { sport: 'run', minutes: value } });
+    expect(issues({ ...trained, training: { sport: 'run' } })).toBe('ok');
+    expect(minutes(1)).toBe('ok');
+    expect(minutes(600)).toBe('ok');
+    expect(minutes(0)).toStrictEqual(['training.minutes']);
+    expect(minutes(601)).toStrictEqual(['training.minutes']);
+    expect(minutes(45.5)).toStrictEqual(['training.minutes']);
+    expect(minutes('45')).toStrictEqual(['training.minutes']);
+    expect(minutes(null)).toStrictEqual(['training.minutes']);
+    expect(issues({ ...base, kind: 'healthyMeal', meal: { minutes: 30 } })).toStrictEqual(['meal']);
   });
 
   it('takes 1 to 3 different squads', () => {
@@ -189,6 +200,17 @@ describe('a saved check-in', () => {
     expect(
       entryFromStored({ kind: 'trained', payload: storedPayload(record), photos: [] }),
     ).toStrictEqual({ kind: 'trained', training: { sport: 'run' } });
+  });
+
+  it('stores minutes with the sport, and reads them back', () => {
+    const timed = recordFromDraft(
+      CheckInDraft.parse({ ...trained, training: { sport: 'run', minutes: 45 } }),
+      ids,
+    );
+    expect(storedPayload(timed)).toStrictEqual({ version: 1, sport: 'run', minutes: 45 });
+    expect(
+      entryFromStored({ kind: 'trained', payload: storedPayload(timed), photos: [] }),
+    ).toStrictEqual({ kind: 'trained', training: { sport: 'run', minutes: 45 } });
   });
 
   it('keeps photos out of the stored fields, and reads them back from their rows', () => {
