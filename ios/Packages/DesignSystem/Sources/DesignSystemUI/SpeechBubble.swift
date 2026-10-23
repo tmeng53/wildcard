@@ -9,11 +9,32 @@ import SwiftUI
 /// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest. White on the scene, light grey on a page.
 /// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
 /// Given an `action`, it is a button that opens what it says (a caption opens its post) and
-/// shrinks while held like every other control.
+/// shrinks while held like every other control. `.status` is a teammate's status with one thing
+/// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
+/// accent capsule under them; once done, the capsule turns grey and does nothing.
 public struct SpeechBubble: View {
     public enum Kind {
         case line
         case info(title: Text?)
+        case status(detail: Text?, button: StatusButton)
+    }
+
+    /// The capsule under a `.status` bubble's words.
+    public struct StatusButton {
+        let label: Text
+        let isDone: Bool
+        let identifier: String?
+        let action: () -> Void
+
+        /// - Parameters:
+        ///   - isDone: already done: grey, and a tap does nothing.
+        ///   - identifier: the button's accessibility identifier, for UI tests.
+        public init(_ label: Text, isDone: Bool, identifier: String? = nil, action: @escaping () -> Void) {
+            self.label = label
+            self.isDone = isDone
+            self.identifier = identifier
+            self.action = action
+        }
     }
 
     @Environment(\.sceneTheme) private var theme
@@ -46,8 +67,8 @@ public struct SpeechBubble: View {
 
     private var bubble: some View {
         content
-            .padding(.vertical, Self.verticalPadding)
-            .padding(.horizontal, Self.horizontalPadding)
+            .padding(.vertical, isStatus ? Space.s - Space.xxs / 2 : Self.verticalPadding)
+            .padding(.horizontal, isStatus ? Space.s : Self.horizontalPadding)
             .background(fill, in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
             .padding(.bottom, Self.tail.height)
             .background(alignment: .bottom) {
@@ -79,11 +100,64 @@ public struct SpeechBubble: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding, alignment: .leading)
+        case .status(let detail, let button):
+            VStack(spacing: Space.xxs / 2) {
+                text
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                if let detail {
+                    detail
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                StatusCapsule(button: button)
+                    .padding(.top, Space.xs - Space.xxs / 2)
+            }
+            .frame(minWidth: Self.statusMinWidth - 2 * Space.s)
+            .frame(maxWidth: Self.statusWidth - 2 * Space.s)
         }
     }
 
+    private var isStatus: Bool {
+        if case .status = kind { true } else { false }
+    }
+
+    /// A `.status` bubble's narrowest and widest, from the approved home 拍一拍.
+    private static let statusMinWidth: Double = 120
+    private static let statusWidth: Double = 220
+
     private var fill: Color {
         Color(role: surface == .scene ? .bgCanvas : .bgSubtle, in: theme)
+    }
+}
+
+/// The accent capsule in a `.status` bubble, `compactControl` tall; grey once done.
+private struct StatusCapsule: View {
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
+    let button: SpeechBubble.StatusButton
+
+    var body: some View {
+        Button {
+            if !button.isDone { button.action() }
+        } label: {
+            button.label
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .lineLimit(1)
+                .foregroundStyle(Color(role: button.isDone ? .fgSubtle : tone.onFill, in: theme))
+                .padding(.horizontal, Space.m)
+                .frame(height: Sizing.compactControl)
+                .background(Color(role: button.isDone ? .bgSubtle : tone.fill, in: theme), in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .allowsHitTesting(!button.isDone)
+        .accessibilityIdentifier(button.identifier ?? "")
+        .accessibilityAddTraits(button.isDone ? [.isStaticText] : [])
+        .accessibilityRemoveTraits(button.isDone ? [.isButton] : [])
     }
 }
 

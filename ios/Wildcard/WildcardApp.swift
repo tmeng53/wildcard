@@ -11,28 +11,35 @@ import Foundation
 import MeDomain
 import MeUI
 import OnboardingUI
+import ScheduleDomain
+import ScheduleUI
+import SquadDomain
+import SquadUI
 import SwiftUI
 
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
 /// build launched with `-local-backend`) it follows the account: sign-up until the member is in a
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
-/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide and
-/// `-character-editor` the character editor instead. After the first check-in it asks for
-/// notifications; a tapped one brings the member back to 今天 with the home loaded again.
+/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
+/// `-character-editor` the character editor and `-scene-pick` the scene pick instead. After the
+/// first check-in it asks for notifications; a tapped one brings the member back to 今天 with the
+/// home loaded again.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
+    @State private var schedule: ScheduleModel
     @State private var feed: FeedModel
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
+    @State private var squad: SquadSettingsModel
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
     @State private var app: AppModel?
 
     // An init, not property initializers: those run outside the main actor, and the post
-    // callback and both models are the main actor's.
+    // callback and the models are the main actor's.
     init() {
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
@@ -40,19 +47,31 @@ struct WildcardApp: App {
             initialValue: TodayModel(
                 store: TodayStore(
                     backend: InMemoryCheckInBackend.sampleSquad(
-                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad),
+                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
+                        patted: LaunchOptions.pattedMe),
                     outbox: InMemoryOutbox(),
                     now: LaunchOptions.now, newID: { UUID() }),
                 writer: LaunchOptions.disclaimerWriter,
                 photoSource: LaunchOptions.photoSource,
                 scene: LaunchOptions.scene,
                 now: LaunchOptions.now,
+                defaults: LaunchOptions.todayDefaults,
                 posted: Self.askForNotifications))
         _profile = State(
             initialValue: MeModel(
                 service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
                 // The in-memory member has no Apple account to confirm with and nothing to sign out of.
                 confirm: { .signedInSession }, signOut: {}))
+        _squad = State(
+            initialValue: SquadSettingsModel(
+                service: InMemorySquadSettingsService.sample(
+                    seat: LaunchOptions.squadSeat, longNames: LaunchOptions.longNames)))
+        _schedule = State(
+            initialValue: ScheduleModel(
+                store: ScheduleStore(
+                    backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
+                    now: LaunchOptions.scheduleNow),
+                photos: LaunchOptions.posterSaver))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
         #else
@@ -99,6 +118,8 @@ struct WildcardApp: App {
         WindowGroup {
             if let editor {
                 CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
+            } else if ScenePickDemo.isOn {
+                ScenePickDemoView()
             } else if let signUp, signUp.finished == nil {
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     StandInSignIn { signUp.signedIn(name: nil) }
@@ -108,7 +129,7 @@ struct WildcardApp: App {
             } else if let app {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
-                MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
+                MainTabs(today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, selection: $tab)
                     .onAppear {
                         delegate.opened = { [today, $tab] in
                             $tab.wrappedValue = .today
@@ -139,8 +160,11 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
-            case .tabs(let today, let profile):
-                MainTabs(today: today, profile: profile, feed: nil, selection: $tab)
+            case .tabs(let today, let profile, let feed, let squad):
+                // 出赛表 shows its placeholder here until its API adapter lands.
+                MainTabs(today: today, profile: profile, schedule: nil, feed: feed, squad: squad, selection: $tab) {
+                    Task { await app.leftSquad() }
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

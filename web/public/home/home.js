@@ -158,7 +158,7 @@
     if (!reduce) word.style.opacity = 1;
     const floor = document.querySelector('.floor').getBoundingClientRect();
     window.playWordmarkB(word, {
-      tapeColor: getComputedStyle(document.documentElement).getPropertyValue('--graphite').trim(),
+      tapeColor: getComputedStyle(document.documentElement).getPropertyValue('--brand').trim(),
       floorY: floor.bottom + window.scrollY - 2,
       onSettle: () =>
         rest.forEach((el, i) => {

@@ -3032,6 +3032,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Squad/createdAt`.
             public var createdAt: Foundation.Date
+            /// The captain (队长), who renames the squad, removes members and hands the captaincy on: the creator at first; when the captain leaves, the earliest member to join. Null only once everyone has left.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Squad/captain`.
+            public var captain: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Squad/MembersPayload`.
             public struct MembersPayloadPayload: Codable, Hashable, Sendable {
                 /// The member’s Supabase Auth user id.
@@ -3090,6 +3094,7 @@ extension Components {
             ///   - name: The squad’s name, as its creator typed it, trimmed.
             ///   - inviteCode: Members share it to invite friends; an invite link carries it. 8 letters and digits, without 0, O, 1, I or L.
             ///   - createdAt: When it was created, in UTC.
+            ///   - captain: The captain (队长), who renames the squad, removes members and hands the captaincy on: the creator at first; when the captain leaves, the earliest member to join. Null only once everyone has left.
             ///   - members: Who is in it now, the earliest to join first: 1 to 8.
             public init(
                 version: Components.Schemas.Squad.VersionPayload,
@@ -3097,6 +3102,7 @@ extension Components {
                 name: Swift.String,
                 inviteCode: Swift.String,
                 createdAt: Foundation.Date,
+                captain: Swift.String? = nil,
                 members: Components.Schemas.Squad.MembersPayload
             ) {
                 self.version = version
@@ -3104,6 +3110,7 @@ extension Components {
                 self.name = name
                 self.inviteCode = inviteCode
                 self.createdAt = createdAt
+                self.captain = captain
                 self.members = members
             }
             public enum CodingKeys: String, CodingKey {
@@ -3112,6 +3119,7 @@ extension Components {
                 case name
                 case inviteCode
                 case createdAt
+                case captain
                 case members
             }
             public init(from decoder: any Swift.Decoder) throws {
@@ -3136,6 +3144,10 @@ extension Components {
                     Foundation.Date.self,
                     forKey: .createdAt
                 )
+                self.captain = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .captain
+                )
                 self.members = try container.decode(
                     Components.Schemas.Squad.MembersPayload.self,
                     forKey: .members
@@ -3146,6 +3158,7 @@ extension Components {
                     "name",
                     "inviteCode",
                     "createdAt",
+                    "captain",
                     "members"
                 ])
             }
@@ -3191,6 +3204,94 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "name"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadNameChange`.
+        public struct SquadNameChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadNameChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadNameChange/version`.
+            public var version: Components.Schemas.SquadNameChange.VersionPayload
+            /// Trimmed, then 1 to 20 characters as people see them, on one line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNameChange/name`.
+            public var name: Swift.String
+            /// Creates a new `SquadNameChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: Trimmed, then 1 to 20 characters as people see them, on one line.
+            public init(
+                version: Components.Schemas.SquadNameChange.VersionPayload,
+                name: Swift.String
+            ) {
+                self.version = version
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadNameChange.VersionPayload.self,
+                    forKey: .version
+                )
+                self.name = try container.decode(
+                    Swift.String.self,
+                    forKey: .name
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "name"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadCaptainChange`.
+        public struct SquadCaptainChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadCaptainChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadCaptainChange/version`.
+            public var version: Components.Schemas.SquadCaptainChange.VersionPayload
+            /// The member to hand the captaincy to.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadCaptainChange/member`.
+            public var member: Swift.String
+            /// Creates a new `SquadCaptainChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - member: The member to hand the captaincy to.
+            public init(
+                version: Components.Schemas.SquadCaptainChange.VersionPayload,
+                member: Swift.String
+            ) {
+                self.version = version
+                self.member = member
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case member
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadCaptainChange.VersionPayload.self,
+                    forKey: .version
+                )
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "member"
                 ])
             }
         }
@@ -3794,6 +3895,473 @@ extension Components {
                     "today",
                     "me",
                     "squadWeek"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadScene`.
+        public struct SquadScene: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadScene/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadScene/version`.
+            public var version: Components.Schemas.SquadScene.VersionPayload
+            /// The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/week`.
+            public var week: Swift.String
+            /// The squad’s scene this week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/scene`.
+            @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case track = "track"
+                case pool = "pool"
+                case gym = "gym"
+                case tennis = "tennis"
+                case climbing = "climbing"
+            }
+            /// The squad’s scene this week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/scene`.
+            public var scene: Components.Schemas.SquadScene.ScenePayload
+            /// Who picks this week’s scene, once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/pickers`.
+            public struct PickersPayload: Codable, Hashable, Sendable {
+                /// `crown`: last week’s crown winners (皇冠) pick; `captain`: nobody won it, so the captain picks.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/pickers/by`.
+                @frozen public enum ByPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case crown = "crown"
+                    case captain = "captain"
+                }
+                /// `crown`: last week’s crown winners (皇冠) pick; `captain`: nobody won it, so the captain picks.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/pickers/by`.
+                public var by: Components.Schemas.SquadScene.PickersPayload.ByPayload
+                /// Who may pick, in the order they joined.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/pickers/members`.
+                public var members: [Swift.String]
+                /// Creates a new `PickersPayload`.
+                ///
+                /// - Parameters:
+                ///   - by: `crown`: last week’s crown winners (皇冠) pick; `captain`: nobody won it, so the captain picks.
+                ///   - members: Who may pick, in the order they joined.
+                public init(
+                    by: Components.Schemas.SquadScene.PickersPayload.ByPayload,
+                    members: [Swift.String]
+                ) {
+                    self.by = by
+                    self.members = members
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case by
+                    case members
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.by = try container.decode(
+                        Components.Schemas.SquadScene.PickersPayload.ByPayload.self,
+                        forKey: .by
+                    )
+                    self.members = try container.decode(
+                        [Swift.String].self,
+                        forKey: .members
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "by",
+                        "members"
+                    ])
+                }
+            }
+            /// Who picks this week’s scene, once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/pickers`.
+            public var pickers: Components.Schemas.SquadScene.PickersPayload
+            /// This week’s pick, once made; it can’t be changed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/picked`.
+            public struct PickedPayload: Codable, Hashable, Sendable {
+                /// One of the scenes the app draws. More may come with an app release.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/picked/scene`.
+                @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case track = "track"
+                    case pool = "pool"
+                    case gym = "gym"
+                    case tennis = "tennis"
+                    case climbing = "climbing"
+                }
+                /// One of the scenes the app draws. More may come with an app release.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/picked/scene`.
+                public var scene: Components.Schemas.SquadScene.PickedPayload.ScenePayload
+                /// Null once the picker deleted their account.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/picked/by`.
+                public var by: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/SquadScene/picked/at`.
+                public var at: Foundation.Date
+                /// Creates a new `PickedPayload`.
+                ///
+                /// - Parameters:
+                ///   - scene: One of the scenes the app draws. More may come with an app release.
+                ///   - by: Null once the picker deleted their account.
+                ///   - at:
+                public init(
+                    scene: Components.Schemas.SquadScene.PickedPayload.ScenePayload,
+                    by: Swift.String? = nil,
+                    at: Foundation.Date
+                ) {
+                    self.scene = scene
+                    self.by = by
+                    self.at = at
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case scene
+                    case by
+                    case at
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.scene = try container.decode(
+                        Components.Schemas.SquadScene.PickedPayload.ScenePayload.self,
+                        forKey: .scene
+                    )
+                    self.by = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .by
+                    )
+                    self.at = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .at
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "scene",
+                        "by",
+                        "at"
+                    ])
+                }
+            }
+            /// This week’s pick, once made; it can’t be changed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/picked`.
+            public var picked: Components.Schemas.SquadScene.PickedPayload?
+            /// True when the caller may pick now: one of the pickers, and nothing picked yet.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/canPick`.
+            public var canPick: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload`.
+            public struct ScenesPayloadPayload: Codable, Hashable, Sendable {
+                /// One of the scenes the app draws. More may come with an app release.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload/scene`.
+                @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case track = "track"
+                    case pool = "pool"
+                    case gym = "gym"
+                    case tennis = "tennis"
+                    case climbing = "climbing"
+                }
+                /// One of the scenes the app draws. More may come with an app release.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload/scene`.
+                public var scene: Components.Schemas.SquadScene.ScenesPayloadPayload.ScenePayload
+                /// How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton).
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload/weeksAgo`.
+                public var weeksAgo: Swift.Int?
+                /// Creates a new `ScenesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - scene: One of the scenes the app draws. More may come with an app release.
+                ///   - weeksAgo: How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton).
+                public init(
+                    scene: Components.Schemas.SquadScene.ScenesPayloadPayload.ScenePayload,
+                    weeksAgo: Swift.Int? = nil
+                ) {
+                    self.scene = scene
+                    self.weeksAgo = weeksAgo
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case scene
+                    case weeksAgo
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.scene = try container.decode(
+                        Components.Schemas.SquadScene.ScenesPayloadPayload.ScenePayload.self,
+                        forKey: .scene
+                    )
+                    self.weeksAgo = try container.decodeIfPresent(
+                        Swift.Int.self,
+                        forKey: .weeksAgo
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "scene",
+                        "weeksAgo"
+                    ])
+                }
+            }
+            /// Every scene, in the order the picker shows them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/scenes`.
+            public typealias ScenesPayload = [Components.Schemas.SquadScene.ScenesPayloadPayload]
+            /// Every scene, in the order the picker shows them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/scenes`.
+            public var scenes: Components.Schemas.SquadScene.ScenesPayload
+            /// Creates a new `SquadScene`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - week: The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
+            ///   - scene: The squad’s scene this week.
+            ///   - pickers: Who picks this week’s scene, once.
+            ///   - picked: This week’s pick, once made; it can’t be changed.
+            ///   - canPick: True when the caller may pick now: one of the pickers, and nothing picked yet.
+            ///   - scenes: Every scene, in the order the picker shows them.
+            public init(
+                version: Components.Schemas.SquadScene.VersionPayload,
+                week: Swift.String,
+                scene: Components.Schemas.SquadScene.ScenePayload,
+                pickers: Components.Schemas.SquadScene.PickersPayload,
+                picked: Components.Schemas.SquadScene.PickedPayload? = nil,
+                canPick: Swift.Bool,
+                scenes: Components.Schemas.SquadScene.ScenesPayload
+            ) {
+                self.version = version
+                self.week = week
+                self.scene = scene
+                self.pickers = pickers
+                self.picked = picked
+                self.canPick = canPick
+                self.scenes = scenes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case week
+                case scene
+                case pickers
+                case picked
+                case canPick
+                case scenes
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadScene.VersionPayload.self,
+                    forKey: .version
+                )
+                self.week = try container.decode(
+                    Swift.String.self,
+                    forKey: .week
+                )
+                self.scene = try container.decode(
+                    Components.Schemas.SquadScene.ScenePayload.self,
+                    forKey: .scene
+                )
+                self.pickers = try container.decode(
+                    Components.Schemas.SquadScene.PickersPayload.self,
+                    forKey: .pickers
+                )
+                self.picked = try container.decodeIfPresent(
+                    Components.Schemas.SquadScene.PickedPayload.self,
+                    forKey: .picked
+                )
+                self.canPick = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .canPick
+                )
+                self.scenes = try container.decode(
+                    Components.Schemas.SquadScene.ScenesPayload.self,
+                    forKey: .scenes
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "week",
+                    "scene",
+                    "pickers",
+                    "picked",
+                    "canPick",
+                    "scenes"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ScenePick`.
+        public struct ScenePick: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ScenePick/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ScenePick/version`.
+            public var version: Components.Schemas.ScenePick.VersionPayload
+            /// One of the scenes the app draws. More may come with an app release.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ScenePick/scene`.
+            @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case track = "track"
+                case pool = "pool"
+                case gym = "gym"
+                case tennis = "tennis"
+                case climbing = "climbing"
+            }
+            /// One of the scenes the app draws. More may come with an app release.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ScenePick/scene`.
+            public var scene: Components.Schemas.ScenePick.ScenePayload
+            /// Creates a new `ScenePick`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - scene: One of the scenes the app draws. More may come with an app release.
+            public init(
+                version: Components.Schemas.ScenePick.VersionPayload,
+                scene: Components.Schemas.ScenePick.ScenePayload
+            ) {
+                self.version = version
+                self.scene = scene
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case scene
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ScenePick.VersionPayload.self,
+                    forKey: .version
+                )
+                self.scene = try container.decode(
+                    Components.Schemas.ScenePick.ScenePayload.self,
+                    forKey: .scene
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "scene"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadNudges`.
+        public struct SquadNudges: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
+            public var version: Components.Schemas.SquadNudges.VersionPayload
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case poke = "poke"
+            }
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/kind`.
+            public var kind: Components.Schemas.SquadNudges.KindPayload
+            /// The squadmates the caller sent one to today, on the caller’s clock.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/sent`.
+            public var sent: [Swift.String]
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/ReceivedPayload`.
+            public struct ReceivedPayloadPayload: Codable, Hashable, Sendable {
+                /// The squadmate who sent it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadNudges/ReceivedPayload/from`.
+                public var from: Swift.String
+                /// When they sent it, in UTC.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadNudges/ReceivedPayload/at`.
+                public var at: Foundation.Date
+                /// Creates a new `ReceivedPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - from: The squadmate who sent it.
+                ///   - at: When they sent it, in UTC.
+                public init(
+                    from: Swift.String,
+                    at: Foundation.Date
+                ) {
+                    self.from = from
+                    self.at = at
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case from
+                    case at
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.from = try container.decode(
+                        Swift.String.self,
+                        forKey: .from
+                    )
+                    self.at = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .at
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "from",
+                        "at"
+                    ])
+                }
+            }
+            /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/received`.
+            public typealias ReceivedPayload = [Components.Schemas.SquadNudges.ReceivedPayloadPayload]
+            /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/received`.
+            public var received: Components.Schemas.SquadNudges.ReceivedPayload
+            /// Creates a new `SquadNudges`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind: A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///   - sent: The squadmates the caller sent one to today, on the caller’s clock.
+            ///   - received: Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
+            public init(
+                version: Components.Schemas.SquadNudges.VersionPayload,
+                kind: Components.Schemas.SquadNudges.KindPayload,
+                sent: [Swift.String],
+                received: Components.Schemas.SquadNudges.ReceivedPayload
+            ) {
+                self.version = version
+                self.kind = kind
+                self.sent = sent
+                self.received = received
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case sent
+                case received
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadNudges.VersionPayload.self,
+                    forKey: .version
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.SquadNudges.KindPayload.self,
+                    forKey: .kind
+                )
+                self.sent = try container.decode(
+                    [Swift.String].self,
+                    forKey: .sent
+                )
+                self.received = try container.decode(
+                    Components.Schemas.SquadNudges.ReceivedPayload.self,
+                    forKey: .received
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "kind",
+                    "sent",
+                    "received"
                 ])
             }
         }

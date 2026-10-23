@@ -5,7 +5,7 @@ const f1 = n => (+n).toFixed(1);
 const THEMES = {
   track:  { name: '跑道',   sig: '#E65345', shade: '#C23B2E', wash: '#FCEDEB', text: '#B83325', on: '#FFFFFF' },
   pool:   { name: '泳池',   sig: '#079BB8', shade: '#067C93', wash: '#E2F5F9', text: '#066E83', on: '#FFFFFF' },
-  gym:    { name: '健身房', sig: '#1F2128', shade: '#000000', wash: '#EEF0F2', text: '#1F2128', on: '#C6F432' },
+  gym:    { name: '健身房', sig: '#4A6C8C', shade: '#3B5670', wash: '#EDF0F4', text: '#3E5C78', on: '#FFFFFF' },
   tennis: { name: '网球场', sig: '#4F6B22', shade: '#3B5119', wash: '#EEF2E4', text: '#41591B', on: '#FFFFFF' },
   climb:  { name: '攀岩馆', sig: '#8E4A2C', shade: '#6F3820', wash: '#F6EDE8', text: '#7A3E24', on: '#FFFFFF' },
 };
@@ -130,27 +130,27 @@ const SCENES = {
     };
   },
   gym() {
-    const G1 = '#2B2E36', G2 = '#3D414B', V = '#C6F432';
-    let s = `<rect width="390" height="844" fill="#F2F3F5"/>`;
+    const G1 = '#2C3540', G2 = '#3E4955', V = '#4A6C8C', V2 = '#A9C2DA';
+    let s = `<rect width="390" height="844" fill="#EDF0F4"/>`;
     // the wall above the floor, seen full screen when the scene is unboxed: mirrors, a speaker, and a kettlebell rack under the wall line
-    [[150, 120], [276, 120]].forEach(([x, w]) => s += `<rect x="${x - w / 2}" y="60" width="${w}" height="150" rx="6" fill="#E6EAEE" stroke="#D3D7DD" stroke-width="2"/><path d="M${x - w / 2 + 18} 190 L${x - w / 2 + 58} 80 M${x - w / 2 + 38} 190 L${x - w / 2 + 66} 112" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".8"/>`);
-    s += `<rect x="40" y="296" width="96" height="4" rx="2" fill="#C9CED6"/>${[54, 76, 98, 122].map((x, i) => { const r = 6 + Math.min(i, 2), cy = 294 - r; return `<path d="M${x - .6 * r} ${cy - .5 * r} C${x - .6 * r} ${cy - 1.8 * r} ${x + .6 * r} ${cy - 1.8 * r} ${x + .6 * r} ${cy - .5 * r}" stroke="#2B2E36" stroke-width="2.6" fill="none"/><circle cx="${x}" cy="${cy}" r="${r}" fill="#2B2E36"/>`; }).join('')}`;
-    s += `<rect x="350" y="66" width="22" height="32" rx="4" fill="#2B2E36"/><circle cx="361" cy="87" r="6" fill="#3D414B"/><circle cx="361" cy="74" r="2.5" fill="#C6F432"/>`;
-    s += `<rect x="0" y="248" width="390" height="4" fill="#1F2128"/><rect x="0" y="252" width="390" height="3" fill="${V}"/>`;
-    s += tiles(310, 846, '#ECEEF1', '#DEE1E6') + `<rect x="0" y="310" width="390" height="4" fill="#D3D7DD"/>`;
+    [[150, 120], [276, 120]].forEach(([x, w]) => s += `<rect x="${x - w / 2}" y="60" width="${w}" height="150" rx="6" fill="#E3E8EE" stroke="#CDD6DF" stroke-width="2"/><path d="M${x - w / 2 + 18} 190 L${x - w / 2 + 58} 80 M${x - w / 2 + 38} 190 L${x - w / 2 + 66} 112" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".8"/>`);
+    s += `<rect x="40" y="296" width="96" height="4" rx="2" fill="#C3CDD7"/>${[54, 76, 98, 122].map((x, i) => { const r = 6 + Math.min(i, 2), cy = 294 - r; return `<path d="M${x - .6 * r} ${cy - .5 * r} C${x - .6 * r} ${cy - 1.8 * r} ${x + .6 * r} ${cy - 1.8 * r} ${x + .6 * r} ${cy - .5 * r}" stroke="${G1}" stroke-width="2.6" fill="none"/><circle cx="${x}" cy="${cy}" r="${r}" fill="${G1}"/>`; }).join('')}`;
+    s += `<rect x="350" y="66" width="22" height="32" rx="4" fill="${G1}"/><circle cx="361" cy="87" r="6" fill="${G2}"/><circle cx="361" cy="74" r="2.5" fill="${V2}"/>`;
+    s += `<rect x="0" y="246" width="390" height="6" fill="${V}"/><rect x="0" y="252" width="390" height="3" fill="${V2}"/>`;
+    s += tiles(310, 846, '#DBE2E8', '#CCD5DE') + `<rect x="0" y="310" width="390" height="4" fill="#C3CDD7"/>`;
     // dark rubber platforms only under the machines
-    s += `<rect x="30" y="384" width="160" height="40" rx="8" fill="${G1}"/><rect x="206" y="384" width="160" height="40" rx="8" fill="${G1}"/>`;
-    s += `<rect x="40" y="474" width="138" height="5" rx="2.5" fill="#C9CED6"/>`;
-    for (let i = 0; i < 6; i++) s += `<rect x="${46 + i * 22}" y="465" width="6" height="11" rx="2" fill="${G1}"/><rect x="${56 + i * 22}" y="465" width="6" height="11" rx="2" fill="${G1}"/><rect x="${51 + i * 22}" y="469" width="6" height="3" fill="#A3A8B2"/>`;
+    s += `<rect x="30" y="384" width="160" height="40" rx="8" fill="#3B5670"/><rect x="206" y="384" width="160" height="40" rx="8" fill="#3B5670"/>`;
+    s += `<rect x="40" y="474" width="138" height="5" rx="2.5" fill="#B9C5D1"/>`;
+    for (let i = 0; i < 6; i++) s += `<rect x="${46 + i * 22}" y="465" width="6" height="11" rx="2" fill="${G1}"/><rect x="${56 + i * 22}" y="465" width="6" height="11" rx="2" fill="${G1}"/><rect x="${51 + i * 22}" y="469" width="6" height="3" fill="#9AA8B6"/>`;
     // station furniture
-    const tread = x => `<g transform="translate(${x} 412)"><rect x="-26" y="-4" width="52" height="10" rx="3" fill="${G2}"/><rect x="-24" y="-3" width="48" height="5" rx="2" fill="#1A1C21"/><rect x="18" y="-40" width="4" height="38" rx="2" fill="#70757F"/><rect x="10" y="-46" width="20" height="9" rx="2" fill="${G2}"/><rect x="13" y="-44" width="9" height="4" fill="${V}"/></g>`;
+    const tread = x => `<g transform="translate(${x} 412)"><rect x="-26" y="-4" width="52" height="10" rx="3" fill="${G2}"/><rect x="-24" y="-3" width="48" height="5" rx="2" fill="#1A1C21"/><rect x="18" y="-40" width="4" height="38" rx="2" fill="#70757F"/><rect x="10" y="-46" width="20" height="9" rx="2" fill="${G2}"/><rect x="13" y="-44" width="9" height="4" fill="${V2}"/></g>`;
     const rack = x => `<g transform="translate(${x} 412)"><rect x="-26" y="-60" width="5" height="62" fill="#4A4E58"/><rect x="21" y="-60" width="5" height="62" fill="#4A4E58"/><rect x="-30" y="-2" width="60" height="4" rx="2" fill="#1A1C21"/></g>`;
-    const mat = x => `<path d="M${x - 28} 516 L${x + 28} 516 L${x + 33} 532 L${x - 33} 532 Z" fill="#3D414B"/><path d="M${x + 24} 516 L${x + 28} 516 L${x + 33} 532 L${x + 28} 532 Z" fill="${V}"/>`;
+    const mat = x => `<path d="M${x - 28} 516 L${x + 28} 516 L${x + 33} 532 L${x - 33} 532 Z" fill="${V}"/><path d="M${x + 24} 516 L${x + 28} 516 L${x + 33} 532 L${x + 28} 532 Z" fill="${V2}"/>`;
     s += tread(70) + tread(146) + rack(246) + rack(322) + mat(250) + mat(326);
-    s += benchBack(Z.leave, '#FFFFFF', '#D3D7DD');
-    const bar = x => ({ y: 412.6, svg: `<rect x="${x - 32}" y="364" width="64" height="3" rx="1.5" fill="#A3A8B2"/>` });
+    s += benchBack(Z.leave, '#FFFFFF', '#C3CDD7');
+    const bar = x => ({ y: 412.6, svg: `<rect x="${x - 32}" y="364" width="64" height="3" rx="1.5" fill="#9AA8B6"/>` });
     // open: where anyone not on a station may stand; avoid: props on that floor nobody stands on, in screen coordinates after the lift (never on walls, in water or on the court).
-    return { field: [{ x0: 75, x1: 315, y0: 420, y1: 500 }], avoid: [{ x0: 40, x1: 350, y0: 350, y1: 392 }, { x0: 40, x1: 178, y0: 440, y1: 456 }], open: [{ x0: 0, x1: 390, y0: 440, y1: 650 }], lift: 24, floor: '#ECEEF1',
+    return { field: [{ x0: 75, x1: 315, y0: 420, y1: 500 }], avoid: [{ x0: 40, x1: 350, y0: 350, y1: 392 }, { x0: 40, x1: 178, y0: 440, y1: 456 }], open: [{ x0: 0, x1: 390, y0: 440, y1: 650 }], lift: 24, floor: '#DBE2E8',
       bg: s, fronts: [],
       lamps: `<g fill="#FFE9A8" fill-opacity=".1"><ellipse cx="110" cy="440" rx="150" ry="60"/><ellipse cx="290" cy="460" rx="150" ry="60"/></g>`,
       lampsTop: `<g fill="#FFF3C4"><rect x="60" y="180" width="90" height="4" rx="2"/><rect x="240" y="180" width="90" height="4" rx="2"/></g>`,

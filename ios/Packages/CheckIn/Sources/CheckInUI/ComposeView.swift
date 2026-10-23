@@ -68,6 +68,7 @@ struct ComposeView: View {
                 isPickingSport = false
             }
             .environment(\.sceneTheme, theme)
+            .accentTone(.brand)
         }
     }
 
@@ -99,7 +100,7 @@ struct ComposeView: View {
                 } else {
                     Text("发布", bundle: .module)
                         .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgAccent, in: theme))
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
                 }
             }
             .frame(minHeight: Sizing.minimumTapTarget)
@@ -205,16 +206,16 @@ private struct CoverChoice: View {
                 .overlay {
                     if isCover {
                         RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-                            .strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                            .strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: Sizing.selectionStroke)
                     }
                 }
                 .overlay(alignment: .bottom) {
                     if isCover {
                         Text("封面", bundle: .module)
                             .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgOnAccent, in: theme))
+                            .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                             .padding(.horizontal, Space.xs)
-                            .background(Color(role: .bgAccent, in: theme), in: Capsule())
+                            .background(Color(role: .bgBrand, in: theme), in: Capsule())
                             .padding(.bottom, Space.xxs)
                     }
                 }
@@ -240,7 +241,9 @@ private struct SportRow: View {
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(choices, id: \.key) { activity in
-                        PickPill(activity.name, systemImage: activity.symbol, isSelected: activity == selected) {
+                        PickPill(
+                            activity.name, systemImage: activity.symbol, look: .solid, isSelected: activity == selected
+                        ) {
                             pick(activity)
                         }
                         .accessibilityIdentifier("compose.sport.\(activity.key)")

@@ -16,6 +16,10 @@ import PackageDescription
 //   character and the first week's plan saved through the API.
 // - `APIMeService`, the adapter behind `MeDomain`'s `MeService`: 我's overview, the daily push
 //   switch and deleting the account.
+// - `APIFeedSource`, the adapter behind `FeedDomain`'s `FeedSource`: 动态's posts with their
+//   reactions, the squad's characters and the photos.
+// - `APISquadSettingsService`, behind `SquadDomain`'s `SquadSettingsService`: 小队设置; and
+//   `APIScenePickService`, behind `ScenePickDomain`'s `ScenePickService`: the 战报's scene pick.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -25,9 +29,13 @@ let package = Package(
         .package(path: "../Avatar"),
         .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
+        .package(path: "../Feed"),
+        .package(path: "../DesignSystem"),
         .package(path: "../Me"),
         .package(path: "../Notifications"),
         .package(path: "../Onboarding"),
+        .package(path: "../ScenePick"),
+        .package(path: "../Squad"),
         .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.2.0"),
@@ -40,9 +48,13 @@ let package = Package(
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
+                .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "OnboardingDomain", package: "Onboarding"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "ScenePickDomain", package: "ScenePick"),
+                .product(name: "SquadDomain", package: "Squad"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
@@ -53,9 +65,13 @@ let package = Package(
                 "Backend", .product(name: "AccountDomain", package: "Account"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
+                .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "OnboardingDomain", package: "Onboarding"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "ScenePickDomain", package: "ScenePick"),
+                .product(name: "SquadDomain", package: "Squad"),
             ]),
     ]
 )

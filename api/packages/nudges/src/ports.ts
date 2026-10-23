@@ -1,14 +1,22 @@
-import type { MemberId, Nudge, SquadId } from './domain/nudge.js';
+import type { LocalDay, MemberId, Nudge, NudgeKind, SquadId } from './domain/nudge.js';
 
 /** Where nudges are kept. They are never changed once sent. */
 export interface NudgeStore {
   /** Saves a nudge, unless the same one (sender, receiver, kind and day) is there already. */
   add(nudge: Nudge): Promise<'created' | 'unchanged'>;
-  /** The nudges `member` got in `[since, until)`, oldest first. */
+  /** The nudges `member` got in `[since, until)`, of `kind` when given, oldest first. */
   receivedBy(query: {
     readonly member: MemberId;
     readonly since: Date;
     readonly until: Date;
+    readonly kind?: NudgeKind;
+  }): Promise<Nudge[]>;
+  /** The nudges of `kind` `member` sent in `squad` on `day` (their own clock), oldest first. */
+  sentBy(query: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+    readonly day: LocalDay;
+    readonly kind: NudgeKind;
   }): Promise<Nudge[]>;
 }
 
