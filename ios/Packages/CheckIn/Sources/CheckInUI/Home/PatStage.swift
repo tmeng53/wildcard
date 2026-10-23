@@ -8,7 +8,7 @@ import Foundation
 import Observation
 
 /// 拍一拍 on the home scene (the approved C, 隔空拍). Tapping a teammate hops them and shows
-/// what they're up to in a bubble with 「拍一拍」; patting jabs from where I stand, a dot in the scene's accent
+/// what they're up to in a bubble with 「拍一拍」; patting jabs from where I stand, a graphite (brand) dot
 /// flies over, a 「!」 pops over them and they take it their persona's way. On opening the home,
 /// whoever patted me does the same to me from where they stand, once, and their bubble offers
 /// one back.
