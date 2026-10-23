@@ -47,6 +47,10 @@ public struct RecapView: View {
         .environment(\.sceneTheme, model.cast.scene)
         .statusBarHidden()
         .task { picture = await renderPicture() }
+        // Drawn again on the ending if the first try came back empty.
+        .task(id: model.onLastPage) {
+            if model.onLastPage, picture == nil { picture = await renderPicture() }
+        }
     }
 
     /// One touch does it all, as a phone story: touching pauses the page; a quick tap on the
@@ -130,8 +134,10 @@ public struct RecapView: View {
         .environment(\.sceneTheme, model.cast.scene)
         .frame(width: Self.pictureSize.width, height: Self.pictureSize.height)
         let renderer = ImageRenderer(content: card)
+        renderer.proposedSize = ProposedViewSize(Self.pictureSize)
         renderer.scale = Self.pictureScale
-        return renderer.uiImage.map { Image(uiImage: $0) }
+        if let image = renderer.uiImage { return Image(uiImage: image) }
+        return renderer.cgImage.map { Image(decorative: $0, scale: Self.pictureScale) }
     }
 
     /// Room for the segments and the header above each page.

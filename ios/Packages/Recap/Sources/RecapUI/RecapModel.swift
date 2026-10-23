@@ -51,6 +51,9 @@ public final class RecapModel {
         return (copy.index, copy.elapsed(at: now))
     }
 
+    /// The ending is on screen, as of the last page change.
+    var onLastPage: Bool { playback.index == pages.count - 1 }
+
     func segments(at date: Date) -> [Double] {
         var copy = playback
         copy.advance(to: seconds(date))
