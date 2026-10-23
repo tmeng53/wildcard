@@ -182,7 +182,7 @@ final class AppModel {
                 scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
             // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
             // from now rather than from when the scene covered the screen.
-            if let scene { today.dropIn(on: scene, coveredAt: .now) }
+            if let scene { await today.dropIn(on: scene, coveredAt: .now) }
             screen = .tabs(
                 today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
                 recap: recap)

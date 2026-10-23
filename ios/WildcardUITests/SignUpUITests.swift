@@ -211,7 +211,13 @@ final class SignUpUITests: XCTestCase {
         // The carton opens, then home takes over on the pool and the member drops onto it.
         let today = app.buttons["tab.today"]
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "home never took over")
-        keepScreenshot(named: "52-signup-scene-dropping")
+        // Frames a few times a second, to review the drop against the mockup.
+        let start = Date()
+        for frame in 0..<12 {
+            keepScreenshot(
+                named: String(
+                    format: "52-signup-scene-dropping-%02d-%04dms", frame, Int(Date().timeIntervalSince(start) * 1000)))
+        }
         XCTAssertFalse(app.descendants(matching: .any)["entrance"].exists, "上场 played for whoever made the squad")
         settle()
         keepScreenshot(named: "53-signup-scene-home")
