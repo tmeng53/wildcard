@@ -364,10 +364,10 @@ struct MotionTests {
 }
 
 struct BrandTests {
-    /// Graphite with a volt label until Tracy picks the brand's own colour.
-    @Test func brandIsGraphiteWithVoltOnIt() {
+    /// Graphite with white on it (Tracy, 2026-10-23).
+    @Test func brandIsGraphiteWithWhiteOnIt() {
         #expect(ColorRole.bgBrand.color(in: .pool).hex == "#1F2128")
-        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#C6F432")
+        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#FFFFFF")
     }
 
     /// Brand screens look the same whatever scene the squad picked.

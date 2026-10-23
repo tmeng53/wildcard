@@ -23,7 +23,7 @@ public enum Palette {
     /// so the brand can change without touching a scene.
     public static let brand = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
     /// Labels and icons on `brand`.
-    public static let onBrand = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
+    public static let onBrand = SRGBColor(red: 0xFF, green: 0xFF, blue: 0xFF)
 
     // MARK: Pool scene
 
