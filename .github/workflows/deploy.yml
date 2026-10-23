@@ -133,7 +133,8 @@ jobs:
         run: |
           # --update-* keeps what was set by hand in the console (such as APPLE_*).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
-          env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=$PUBLIC_URL,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
+          # Jobs start only with Cloud Scheduler's ID token for this account (scripts/gcp-setup.sh).
+          env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=$PUBLIC_URL,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt,JOBS_SCHEDULER_ACCOUNT=wildcard-scheduler@$GCP_PROJECT_ID.iam.gserviceaccount.com"
           absent=""
           # Whether a secret exists. Only one that doesn't turns its feature off; any other error
           # stops the deploy.

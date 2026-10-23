@@ -21,6 +21,7 @@ import type { Log } from './log.js';
 import type {
   Accounts,
   Database,
+  IsScheduler,
   OAuthConsent,
   PhotoStorage,
   RevokeAppleSignIn,
@@ -71,8 +72,8 @@ export interface AppDependencies {
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {
-    /** What the scheduler sends; undefined until one is set up, and then no job runs. */
-    readonly token: string | undefined;
+    /** Tells the scheduler's token; undefined until one is set up, and then no job runs. */
+    readonly isScheduler: IsScheduler | undefined;
     /** Where the daily push finds what teammates did for a member. */
     readonly interactions: readonly InteractionSource[];
     readonly clock: () => Date;
@@ -129,7 +130,7 @@ export function createApp(deps: AppDependencies) {
   app.route(
     '/',
     jobs({
-      jobsToken: deps.jobs.token,
+      isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
     }),

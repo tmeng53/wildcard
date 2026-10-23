@@ -20,6 +20,7 @@ import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
+import { jobsTokenScheduler } from '../adapters/scheduler.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
@@ -103,7 +104,7 @@ const deps = {
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
   log,
-  jobs: { token: JOBS_TOKEN, interactions, clock: () => new Date() },
+  jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
@@ -548,7 +549,7 @@ describe('POST /jobs/daily-progress-push', () => {
   });
 
   it('runs nothing on a server with no jobs token', async () => {
-    const off = createApp({ ...deps, jobs: { ...deps.jobs, token: undefined } });
+    const off = createApp({ ...deps, jobs: { ...deps.jobs, isScheduler: undefined } });
     const ran = await off.request('/jobs/daily-progress-push', {
       method: 'POST',
       headers: { authorization: `Bearer ${JOBS_TOKEN}` },

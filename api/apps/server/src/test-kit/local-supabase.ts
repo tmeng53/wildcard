@@ -121,4 +121,4 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
 }
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */
-export const noJobs = { token: undefined, interactions: [], clock: () => new Date() };
+export const noJobs = { isScheduler: undefined, interactions: [], clock: () => new Date() };
