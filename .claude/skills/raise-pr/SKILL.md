@@ -128,7 +128,7 @@ Steps 1 to 8 apply to tiers 2 and 3.
 
 ## After opening
 
-If other work in progress is affected, link the PR from its issue.
+If other work in progress is affected, link the PR from its issue. After each merge, merge `main` into your other open PRs, and land small shared PRs first so others build on them. Before removing public code, check the other open branches for users of it.
 
 **Every PR but tier 1 gets a Claude code review first.** A tier 1 PR (docs only, tests only, a typo, or a small fix with its test; see Independent verification) skips it: CI is its check. Otherwise, once the head is green (every CI job passed on it), start a fresh Claude agent that did not write the PR as the reviewer, on Sonnet (`model: "sonnet"`). Give it only the diff, `AGENTS.md` (Code Review Rules) and the skills they point to. It posts one PR comment naming the head commit, with each P0/P1 finding or "No findings", and opens a review thread per finding. One Claude review per head. It is a review, not a verdict: on tier 2 or 3 the verifier still runs. It also checks the tier the description names and raises it when the diff warrants more.
 

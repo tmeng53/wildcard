@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { serve } from '@hono/node-server';
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
@@ -64,6 +66,7 @@ import type { Database } from './ports.js';
 const config = readConfig(process.env);
 const log = createLog((line) => process.stdout.write(line));
 const db = createDatabase(config.databaseUrl, {
+  ca: config.databaseCaFile === undefined ? undefined : readFileSync(config.databaseCaFile, 'utf8'),
   onIdleError: (error) => {
     log.warn('the database dropped an idle connection', { error });
   },

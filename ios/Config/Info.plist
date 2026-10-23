@@ -22,5 +22,9 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- The app uses only the encryption built into iOS (HTTPS), which is exempt, so App Store
+	     Connect doesn't ask about export compliance on every upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

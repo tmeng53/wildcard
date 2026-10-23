@@ -54,7 +54,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
 @Test func aWeeklyPlanReads() throws {
     let wire = try decode(
         Components.Schemas.WeeklyPlan.self,
-        #"{"version":1,"member":"\#(myID)","weekStart":"2026-10-19","source":"saved","days":["#
+        #"{"version":1,"member":"\#(myID)","weekStart":"2026-10-19","source":"saved","fuelGoals":[],"days":["#
             + #"{"kind":"train","sport":"run"},{"kind":"train"},{"kind":"rest"},"#
             + #"{"kind":"train","sport":"custom","customSport":"飞盘"},{"kind":"train"},{"kind":"train"},{"kind":"rest"}]}"#
     )
