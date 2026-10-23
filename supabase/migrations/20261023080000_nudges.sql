@@ -1,4 +1,4 @@
--- Nudges between squadmates: 催你练 (`train`) and 好好休息 (`rest`). They aren't pushed one by
+-- Nudges between squadmates: pokes (`poke`, 戳一下) for now. They aren't pushed one by
 -- one; the 6pm daily push counts them and names who sent them.
 -- As with every table, only our API reads and writes it.
 

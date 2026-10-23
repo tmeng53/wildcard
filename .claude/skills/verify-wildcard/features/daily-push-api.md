@@ -1,8 +1,8 @@
 # Daily progress push through the API
 
-**Status: Ready** since the daily progress push (#78), with nudges (催你练, 好好休息) since #198, driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
+**Status: Ready** since the daily progress push (#78), with pokes (戳一下) since #198, driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
 
-Four members in a time zone where it is about 8pm, each with a phone. Runner, cheerer and resting are in a squad; loner has none. Resting turns the daily push off. Runner trains and cheerer leaves it a ❤️; resting says 催你练 to runner, twice (one is kept), and loner, outside the squad, can't. The scheduler's job then handles runner and cheerer (something to tell them), loner quietly (no squad, so nothing to tell), and resting not at all; a second run handles no one again. No push is sent: CI has no APNs key, so the two with news count as `unsent`. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+Four members in a time zone where it is about 8pm, each with a phone. Runner, cheerer and resting are in a squad; loner has none. Resting turns the daily push off. Runner trains and cheerer leaves it a ❤️; resting pokes runner twice (one is kept), and loner, outside the squad, can't. The scheduler's job then handles runner and cheerer (something to tell them), loner quietly (no squad, so nothing to tell), and resting not at all; a second run handles no one again. No push is sent: CI has no APNs key, so the two with news count as `unsent`. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
 Code: `api/apps/server/src/flows/daily-progress-push.ts`, `api/packages/nudges`, `api/apps/server/src/routes/nudges.ts`, `api/apps/server/src/routes/jobs.ts`, `api/apps/server/src/routes/push-settings.ts`.
 
@@ -23,7 +23,7 @@ server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 daily-push: on until turned off, then off (200); a missing switch refused (400)
 daily-push: in Etc/GMT, runner trained and cheerer left them a ❤️
-daily-push: resting said 催你练 to runner once (201, then 200); loner, not in the squad, refused (403)
+daily-push: resting poked runner once (201, then 200); loner, not in the squad, refused (403)
 daily-push: a member's token refused (401); the job handled runner and cheerer, loner quietly, resting not at all
 daily-push: a second run handled no one again
 api-journeys: ok (daily-push)
@@ -34,7 +34,7 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 ## Evidence
 
 - `psql "$DB_URL" -c "select * from public.daily_pushes where day = '<their day>'"`: one row per handled member, `quiet` true only for loner.
-- `psql "$DB_URL" -c "select * from public.nudges where to_member_id = '<runner>'"`: one `train` row from resting, on resting's day.
+- `psql "$DB_URL" -c "select * from public.nudges where to_member_id = '<runner>'"`: one `poke` row from resting, on resting's day.
 - The server log has one `daily progress push run` line per run, with `due`, `sent`, `unsent`, `quiet`, `skipped` and `failed`. Other members in a shared local database can add to those counts; the rows for the journey's own members are the check.
 
 ## Worth probing
@@ -42,4 +42,4 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 - The server without `JOBS_TOKEN`: the job answers 503 `JOBS_OFF`.
 - Several runs at once: each member is still handled once (`daily_pushes`' primary key), the others count them as `skipped`.
 - A member before 6pm on their clock, or without a phone: not due.
-- What the push says (`push.dailyProgress.train` naming the sender, `.train.more` with others): the Vitest tests in `daily-progress-push.test.ts` record each phone's payload; this journey has no APNs key to see it.
+- What the push says (`push.dailyProgress.poke` naming the poker, `.poke.more` with others): the Vitest tests in `daily-progress-push.test.ts` record each phone's payload; this journey has no APNs key to see it.

@@ -73,20 +73,19 @@ const rowsTo = (member: MemberId) =>
     .execute();
 
 describe('sending a nudge', () => {
-  it('saves one of each kind a day from one member to another', async () => {
+  it('saves one poke a day from one member to another', async () => {
     const rosters = new Map<SquadId, MemberId[]>();
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await squadOf(rosters, [ann, bo]);
     const { nudges, at } = nudgesAt(rosters, { start: '2026-10-23T14:00:00.000Z' });
-    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'train' })).toBe('created');
-    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'train' })).toBe('unchanged');
-    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'rest' })).toBe('created');
+    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'poke' })).toBe('created');
+    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'poke' })).toBe('unchanged');
+    expect(await nudges.send({ from: bo, to: ann, squad, kind: 'poke' })).toBe('created');
     at('2026-10-24T14:00:00.000Z');
-    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'train' })).toBe('created');
+    expect(await nudges.send({ from: ann, to: bo, squad, kind: 'poke' })).toBe('created');
     expect(await rowsTo(bo)).toStrictEqual([
-      { from_member_id: ann, kind: 'train', day: '2026-10-23' },
-      { from_member_id: ann, kind: 'rest', day: '2026-10-23' },
-      { from_member_id: ann, kind: 'train', day: '2026-10-24' },
+      { from_member_id: ann, kind: 'poke', day: '2026-10-23' },
+      { from_member_id: ann, kind: 'poke', day: '2026-10-24' },
     ]);
   });
 
@@ -96,7 +95,7 @@ describe('sending a nudge', () => {
     const squad = await squadOf(rosters, [ann, bo]);
     const { nudges } = nudgesAt(rosters, { start: '2026-10-23T14:00:00.000Z' });
     const sent = await Promise.all(
-      [1, 2, 3].map(() => nudges.send({ from: ann, to: bo, squad, kind: 'train' })),
+      [1, 2, 3].map(() => nudges.send({ from: ann, to: bo, squad, kind: 'poke' })),
     );
     expect(sent.filter((outcome) => outcome === 'created')).toHaveLength(1);
     expect(await rowsTo(bo)).toHaveLength(1);
@@ -111,9 +110,9 @@ describe('sending a nudge', () => {
       start: '2026-10-23T06:00:00.000Z',
       zones: new Map([[ann, 'America/Los_Angeles']]),
     });
-    await nudges.send({ from: ann, to: bo, squad, kind: 'train' });
+    await nudges.send({ from: ann, to: bo, squad, kind: 'poke' });
     at('2026-10-23T08:00:00.000Z');
-    await nudges.send({ from: ann, to: bo, squad, kind: 'train' });
+    await nudges.send({ from: ann, to: bo, squad, kind: 'poke' });
     expect((await rowsTo(bo)).map(({ day }) => day)).toStrictEqual(['2026-10-22', '2026-10-23']);
   });
 
@@ -122,13 +121,13 @@ describe('sending a nudge', () => {
     const [ann, bo, cy] = [await newMember(), await newMember(), await newMember()];
     const squad = await squadOf(rosters, [ann, bo]);
     const { nudges } = nudgesAt(rosters, { start: '2026-10-23T14:00:00.000Z' });
-    await expect(nudges.send({ from: ann, to: ann, squad, kind: 'train' })).rejects.toThrow(
+    await expect(nudges.send({ from: ann, to: ann, squad, kind: 'poke' })).rejects.toThrow(
       OwnNudgeError,
     );
-    await expect(nudges.send({ from: cy, to: bo, squad, kind: 'train' })).rejects.toThrow(
+    await expect(nudges.send({ from: cy, to: bo, squad, kind: 'poke' })).rejects.toThrow(
       SquadNotJoinedError,
     );
-    await expect(nudges.send({ from: ann, to: cy, squad, kind: 'rest' })).rejects.toThrow(
+    await expect(nudges.send({ from: ann, to: cy, squad, kind: 'poke' })).rejects.toThrow(
       NotASquadmateError,
     );
     expect(await rowsTo(bo)).toStrictEqual([]);
@@ -140,9 +139,9 @@ describe('sending a nudge', () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await squadOf(rosters, [ann, bo]);
     const { nudges } = nudgesAt(rosters, { start: '2026-10-23T14:00:00.000Z' });
-    await nudges.send({ from: ann, to: bo, squad, kind: 'train' });
+    await nudges.send({ from: ann, to: bo, squad, kind: 'poke' });
     await expect(
-      sql`update public.nudges set kind = 'rest' where to_member_id = ${bo}`.execute(db),
+      sql`update public.nudges set day = day + 1 where to_member_id = ${bo}`.execute(db),
     ).rejects.toThrow(/append-only/);
     await expect(
       sql`delete from public.nudges where to_member_id = ${bo}`.execute(db),
@@ -163,12 +162,11 @@ describe('nudges received', () => {
     ];
     const squad = await squadOf(rosters, [ann, bo, cy, di]);
     const { nudges, at } = nudgesAt(rosters, { start: '2026-10-22T14:00:00.000Z' });
-    await nudges.send({ from: bo, to: ann, squad, kind: 'train' });
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
     at('2026-10-23T14:00:00.000Z');
-    await nudges.send({ from: bo, to: ann, squad, kind: 'train' });
-    await nudges.send({ from: cy, to: ann, squad, kind: 'train' });
-    await nudges.send({ from: cy, to: ann, squad, kind: 'rest' });
-    await nudges.send({ from: di, to: ann, squad, kind: 'rest' });
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
+    await nudges.send({ from: cy, to: ann, squad, kind: 'poke' });
+    await nudges.send({ from: di, to: ann, squad, kind: 'poke' });
     // Di leaves: their nudge no longer counts.
     rosters.set(squad, [ann, bo, cy]);
     const received = await nudges.received({
@@ -176,12 +174,7 @@ describe('nudges received', () => {
       since: new Date('2026-10-22T22:00:00.000Z'),
       until: new Date('2026-10-23T22:00:00.000Z'),
     });
-    expect(received).toStrictEqual(
-      new Map([
-        ['train', new Set([bo, cy])],
-        ['rest', new Set([cy])],
-      ]),
-    );
+    expect(received).toStrictEqual(new Map([['poke', new Set([bo, cy])]]));
   });
 
   it('is empty after the member leaves the squad they were nudged in', async () => {
@@ -189,7 +182,7 @@ describe('nudges received', () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await squadOf(rosters, [ann, bo]);
     const { nudges } = nudgesAt(rosters, { start: '2026-10-23T14:00:00.000Z' });
-    await nudges.send({ from: bo, to: ann, squad, kind: 'train' });
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
     rosters.set(squad, [bo]);
     const received = await nudges.received({
       member: ann,

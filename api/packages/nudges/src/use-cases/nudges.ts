@@ -15,7 +15,7 @@ export interface SendNudgeInput {
   readonly kind: NudgeKind;
 }
 
-/** Squadmates nudging each other: 催你练 and 好好休息, counted in the daily push. */
+/** Squadmates nudging each other: pokes for now, counted in the daily push. */
 export interface Nudges {
   /**
    * Sends a nudge to a squadmate. One of each kind a day from one member to another: a second

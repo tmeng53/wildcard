@@ -7,11 +7,11 @@ export const SquadId = z.uuid().brand<'SquadId'>();
 export type SquadId = z.infer<typeof SquadId>;
 
 /**
- * What a nudge asks: 催你练 (`train`) or 好好休息 (`rest`). The kind is also the name the app's
- * String Catalog keys its copy by, so each reads as its own thing: only `train` is a push to
- * work out; `rest` is care.
+ * What a nudge is: a `poke` (戳一下, the home screen's poke that names the poker). The kind is
+ * also the name the app's String Catalog keys its copy by, so another kind is one more value
+ * here, not another table.
  */
-export const NudgeKind = z.enum(['train', 'rest']);
+export const NudgeKind = z.enum(['poke']);
 export type NudgeKind = z.infer<typeof NudgeKind>;
 
 /** A local day, `YYYY-MM-DD`. */

@@ -55,7 +55,7 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
-  /** Squadmates' 催你练 and 好好休息, which the daily push counts. */
+  /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;

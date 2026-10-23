@@ -3783,14 +3783,13 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Nudge/to`.
             public var to: Swift.String
-            /// 催你练 (`train`) or 好好休息 (`rest`). The app shows each with its own copy: only `train` asks someone to work out.
+            /// A poke (戳一下, `poke`). The app shows each kind with its own copy.
             ///
             /// - Remark: Generated from `#/components/schemas/Nudge/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case train = "train"
-                case rest = "rest"
+                case poke = "poke"
             }
-            /// 催你练 (`train`) or 好好休息 (`rest`). The app shows each with its own copy: only `train` asks someone to work out.
+            /// A poke (戳一下, `poke`). The app shows each kind with its own copy.
             ///
             /// - Remark: Generated from `#/components/schemas/Nudge/kind`.
             public var kind: Components.Schemas.Nudge.KindPayload
@@ -3799,7 +3798,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - to: The squadmate to nudge.
-            ///   - kind: 催你练 (`train`) or 好好休息 (`rest`). The app shows each with its own copy: only `train` asks someone to work out.
+            ///   - kind: A poke (戳一下, `poke`). The app shows each kind with its own copy.
             public init(
                 version: Components.Schemas.Nudge.VersionPayload,
                 to: Swift.String,
@@ -3847,14 +3846,13 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NudgeDraft/to`.
             public var to: Swift.String
-            /// 催你练 (`train`) or 好好休息 (`rest`). The app shows each with its own copy: only `train` asks someone to work out.
+            /// A poke (戳一下, `poke`). The app shows each kind with its own copy.
             ///
             /// - Remark: Generated from `#/components/schemas/NudgeDraft/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case train = "train"
-                case rest = "rest"
+                case poke = "poke"
             }
-            /// 催你练 (`train`) or 好好休息 (`rest`). The app shows each with its own copy: only `train` asks someone to work out.
+            /// A poke (戳一下, `poke`). The app shows each kind with its own copy.
             ///
             /// - Remark: Generated from `#/components/schemas/NudgeDraft/kind`.
             public var kind: Components.Schemas.NudgeDraft.KindPayload
@@ -3863,7 +3861,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - to: The squadmate to nudge.
-            ///   - kind: 催你练 (`train`) or 好好休息 (`rest`). The app shows each with its own copy: only `train` asks someone to work out.
+            ///   - kind: A poke (戳一下, `poke`). The app shows each kind with its own copy.
             public init(
                 version: Components.Schemas.NudgeDraft.VersionPayload,
                 to: Swift.String,

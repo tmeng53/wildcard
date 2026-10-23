@@ -19,8 +19,8 @@ export const DAILY_PUSH_HOUR = 18;
 const AT_ONCE = 4;
 
 /**
- * Teammates who did something for a member, by kind (`reaction`, a nudge's `train` or `rest`):
- * each person once per kind. The kind is the name the app's String Catalog keys the copy by.
+ * Teammates who did something for a member, by kind (`reaction`, a nudge's `poke`): each
+ * person once per kind. The kind is the name the app's String Catalog keys the copy by.
  */
 export type Interactions = ReadonlyMap<string, ReadonlySet<string>>;
 
@@ -47,17 +47,17 @@ export function reactionInteractions(checkIns: CheckIns): InteractionSource {
   };
 }
 
-/** The interactions source built on nudges: 催你练 (`train`) and 好好休息 (`rest`). */
+/** The interactions source built on nudges: pokes (`poke`). */
 export function nudgeInteractions(nudges: Nudges): InteractionSource {
   return async ({ member, since, until }) =>
     nudges.received({ member: NudgeMember.parse(member), since, until });
 }
 
 /**
- * The kinds whose sender the push names, most telling first: someone asking you to train, then
- * someone telling you to rest. The first kind someone sent is the one named.
+ * The kinds whose sender the push names (a poke names the poker), most telling first. The first
+ * kind someone sent is the one named.
  */
-const NAMED_KINDS = ['train', 'rest'] as const;
+const NAMED_KINDS = ['poke'] as const;
 
 export interface DailyProgressDependencies {
   readonly members: Members;
@@ -195,17 +195,19 @@ async function compose(
   });
 }
 
-/** Who the push names: the first sender of the most telling kind, if they have a nickname. */
+/** Who the push names: the first sender of the most telling kind who has a nickname. */
 async function namedSender(
   members: Members,
   received: Interactions,
 ): Promise<{ readonly kind: string; readonly nickname: string } | undefined> {
   for (const kind of NAMED_KINDS) {
-    const [first] = received.get(kind) ?? [];
-    if (first === undefined) continue;
-    const sender = ProfileMember.parse(first);
-    const nickname = (await members.squadmates([sender])).get(sender)?.character?.nickname;
-    return nickname === undefined ? undefined : { kind, nickname };
+    const senders = [...(received.get(kind) ?? [])].map((each) => ProfileMember.parse(each));
+    if (senders.length === 0) continue;
+    const profiles = await members.squadmates(senders);
+    for (const sender of senders) {
+      const nickname = profiles.get(sender)?.character?.nickname;
+      if (nickname !== undefined) return { kind, nickname };
+    }
   }
   return undefined;
 }
@@ -225,7 +227,7 @@ function mergeInteractions(all: readonly Interactions[]): Map<string, Set<string
 /**
  * The daily push, without its words: the alert names a String Catalog key with the squad's week
  * and how many teammates did something for the member. When someone nudged them, it names that
- * person instead (「小美催你练了」), with how many others did something too; the key says which
+ * person instead (「小美戳了你」), with how many others did something too; the key says which
  * kind. `event` carries the people per kind, for the app to say more.
  */
 export function dailyProgressNotification({
