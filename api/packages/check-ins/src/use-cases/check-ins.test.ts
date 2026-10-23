@@ -429,7 +429,7 @@ describe('listing check-ins', () => {
       squad,
       days: { from: '2026-10-17', to: '2026-10-18' },
     });
-    expect(listed.map(({ id, audience }) => ({ id, audience }))).toStrictEqual([
+    expect(listed.map(({ checkIn: { id, audience } }) => ({ id, audience }))).toStrictEqual([
       // The friend's other squad is hidden from me.
       { id: theirs, audience: [squad] },
       { id: mine, audience: [squad] },
@@ -443,7 +443,7 @@ describe('listing check-ins', () => {
     const today = await save(me, { audience: [squad] });
     const days = { from: '2026-10-18', to: '2026-10-18' };
     expect(
-      (await checkIns.listForSquad({ viewer: me, squad, days })).map(({ id }) => id),
+      (await checkIns.listForSquad({ viewer: me, squad, days })).map(({ checkIn }) => checkIn.id),
     ).toStrictEqual([today]);
     expect((await checkIns.listMine({ member: me, days })).map(({ id }) => id)).toStrictEqual([
       today,
@@ -477,9 +477,8 @@ describe('listing check-ins', () => {
       { id: withPhoto, photos: [cover] },
       { id: without, photos: [] },
     ];
-    expect(photosIn(await checkIns.listForSquad({ viewer: me, squad, days }))).toStrictEqual(
-      expected,
-    );
+    const posts = await checkIns.listForSquad({ viewer: me, squad, days });
+    expect(photosIn(posts.map(({ checkIn }) => checkIn))).toStrictEqual(expected);
     expect(photosIn(await checkIns.listMine({ member: me, days }))).toStrictEqual(expected);
   });
 
