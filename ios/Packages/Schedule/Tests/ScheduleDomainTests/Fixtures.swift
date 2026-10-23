@@ -70,13 +70,19 @@ actor FakeBackend: ScheduleBackend {
         savedPlans.append(days)
         if holdsSaves { await withCheckedContinuation { held.append($0) } }
         if let saveError, savedPlans.count > (savesBeforeError ?? 0) { throw saveError }
-        sheets[weekStart]?.plan = days
+        var sheet = try await week(starting: weekStart)
+        sheet.plan = days
+        sheets[weekStart] = sheet
         return days
     }
 
     func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
         savedFuel.append(goals)
+        if holdsSaves { await withCheckedContinuation { held.append($0) } }
         if let saveError, savesBeforeError == nil { throw saveError }
+        var sheet = try await week(starting: weekStart)
+        sheet.fuel = goals
+        sheets[weekStart] = sheet
     }
 
     func trainedDays() async throws(ScheduleError) -> Int { 46 }

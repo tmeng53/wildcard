@@ -160,6 +160,45 @@ struct ScheduleStoreTests {
         #expect(store.sheet?.fuel == [.suggested(.water)])
     }
 
+    @Test func aFoodGoalTappedWhileOneSavesGoesOutAfterIt() async {
+        let backend = FakeBackend()
+        let store = store(backend)
+        await store.load()
+        await store.show(thisWeek.adding(days: 7))
+        await backend.holdSaves()
+        let first = Task { await store.toggleFuel(.suggested(.water)) }
+        while await backend.savedFuel.isEmpty { await Task.yield() }
+        await store.toggleFuel(.suggested(.veggies))
+        #expect(await backend.savedFuel.count == 1)
+        await backend.finishSave()
+        await first.value
+        #expect(await backend.savedFuel == [[.suggested(.water)], [.suggested(.water), .suggested(.veggies)]])
+        #expect(store.sheet?.fuel == [.suggested(.water), .suggested(.veggies)])
+        #expect(store.failure == nil)
+    }
+
+    @Test func aChangeWaitingOnASaveGoesOutAfterTheMemberOpensAnotherWeek() async {
+        let backend = FakeBackend()
+        let store = store(backend)
+        let nextWeek = thisWeek.adding(days: 7)
+        await store.load()
+        await store.show(nextWeek)
+        await backend.holdSaves()
+        await store.tap(0)
+        let first = Task { await store.pick(.sport(.swim)) }
+        while await backend.savedPlans.isEmpty { await Task.yield() }
+        await store.tap(1)
+        await store.pick(.sport(.yoga))
+        await store.show(thisWeek)
+        await backend.finishSave()
+        await first.value
+        #expect(await backend.savedPlans.count == 2)
+        #expect(await backend.savedPlans.last?[1] == .train(.sport(.yoga)))
+        await store.show(nextWeek)
+        #expect(store.board?.days[0] == .train(.sport(.swim)))
+        #expect(store.board?.days[1] == .train(.sport(.yoga)))
+    }
+
     @Test func aPastWeekCantChange() async {
         let backend = FakeBackend()
         let store = store(backend)

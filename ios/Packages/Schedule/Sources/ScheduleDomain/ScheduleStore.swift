@@ -6,9 +6,10 @@ import Observation
 /// change saved as it is made. Screens bind to it; it never reads the clock itself, so tests
 /// pass one.
 ///
-/// A change shows at once and is saved right after; one made while a save is on its way goes
-/// out once that save answers, so the server ends on the last change. When a save fails the
-/// week goes back to what the server has, and `failure` says why.
+/// A change shows at once and is saved right after. Each week saves one thing at a time: a
+/// change made while a save is on its way goes out once it answers, whichever week is shown by
+/// then, so the server ends on the last change. When a save fails that part of the week (its
+/// plan or its 饮食小目标) goes back to what the server has, and `failure` says why.
 @MainActor @Observable
 public final class ScheduleStore {
     /// Where loading stands.
@@ -34,21 +35,14 @@ public final class ScheduleStore {
     public private(set) var board: WeekBoard?
     /// Every day the member ever trained, once loaded.
     public private(set) var lifetimeTrainedDays: Int?
-    /// Why the last save didn't go through; nil once one does.
+    /// Why a part of the last change didn't go through; nil once a change goes through whole.
     public private(set) var failure: ScheduleError?
-    /// Weeks as the server last sent them, with every plan save it answered folded in; the
-    /// plan being edited lives on `board` until its save goes through. The 饮食小目标 show here at
-    /// once, before their save answers.
+    /// Weeks as the server holds them: as last sent, with every save it took folded in.
     private var sheets: [LocalDay: WeekSheet] = [:]
-    /// Each week's 饮食小目标 as the server holds them, for a failed save to go back to.
-    private var savedFuel: [LocalDay: [FuelGoal]] = [:]
-    /// Weeks with a change waiting while a save of theirs is on its way.
-    private var planSaves: [LocalDay: SaveState] = [:]
-
-    private enum SaveState {
-        case running
-        case runningWithMore
-    }
+    /// Weeks with changes the server hasn't taken yet, as the member sees them.
+    private var drafts: [LocalDay: WeekSheet] = [:]
+    /// Weeks with a save on its way.
+    private var saving: Set<LocalDay> = []
 
     private let backend: any ScheduleBackend
     private let now: @Sendable () -> Date
@@ -76,7 +70,7 @@ public final class ScheduleStore {
 
     /// The week shown, with the board's days; nil until it has loaded.
     public var sheet: WeekSheet? {
-        guard let shownWeek, var sheet = sheets[shownWeek] else { return nil }
+        guard let shownWeek, var sheet = drafts[shownWeek] ?? sheets[shownWeek] else { return nil }
         if let board { sheet.plan = board.days }
         return sheet
     }
@@ -124,14 +118,15 @@ public final class ScheduleStore {
     public func show(_ weekStart: LocalDay) async {
         if shownWeek != weekStart {
             shownWeek = weekStart
-            board = sheets[weekStart].flatMap(makeBoard)
+            board = (drafts[weekStart] ?? sheets[weekStart]).flatMap(makeBoard)
         }
         do {
             let fresh = try await backend.week(starting: weekStart)
+            // While a save is on its way it keeps the server's copy; the next load has it.
+            guard !saving.contains(weekStart) else { return }
             sheets[weekStart] = fresh
-            savedFuel[weekStart] = fresh.fuel
             // A change made while it loaded stays; it is on its way to the server.
-            guard shownWeek == weekStart, planSaves[weekStart] == nil else { return }
+            guard shownWeek == weekStart, drafts[weekStart] == nil else { return }
             board = makeBoard(fresh)
             phase = .ready
         } catch .signedOut {
@@ -178,34 +173,12 @@ public final class ScheduleStore {
         await savePlan()
     }
 
-    /// Saves the board's days; while a save of the week is on its way, the next goes out once
-    /// it answers, with the days as they are then.
+    /// Takes the board's days into the week's draft and saves it.
     private func savePlan() async {
-        guard let week = board?.weekStart, let sheet = sheets[week] else { return }
-        if planSaves[week] != nil {
-            planSaves[week] = .runningWithMore
-            return
-        }
-        planSaves[week] = .running
-        defer { planSaves[week] = nil }
-        var sending = board?.days ?? sheet.plan
-        while true {
-            do {
-                let plan = try await backend.savePlan(sending, weekStart: week)
-                sheets[week]?.plan = plan
-                failure = nil
-            } catch {
-                failure = error
-                // Back to the last plan the server took; nothing else on the week moves.
-                if board?.weekStart == week, let held = sheets[week]?.plan { board?.reset(to: held) }
-                return
-            }
-            guard planSaves[week] == .runningWithMore, let days = board?.days, board?.weekStart == week else {
-                return
-            }
-            planSaves[week] = .running
-            sending = days
-        }
+        guard let board, var draft = drafts[board.weekStart] ?? sheets[board.weekStart] else { return }
+        draft.plan = board.days
+        drafts[board.weekStart] = draft
+        await save(board.weekStart)
     }
 
     // MARK: - 饮食小目标
@@ -215,35 +188,62 @@ public final class ScheduleStore {
 
     /// Adds a goal to the shown week, or takes it off; a fourth is ignored. Saved at once.
     public func toggleFuel(_ goal: FuelGoal) async {
-        guard canEditFuel, let week = shownWeek, var sheet = sheets[week] else { return }
-        if let index = sheet.fuel.firstIndex(of: goal) {
-            sheet.fuel.remove(at: index)
-        } else if sheet.fuel.count < FuelGoal.maxCount {
-            sheet.fuel.append(goal)
+        guard canEditFuel, let week = shownWeek, var draft = drafts[week] ?? sheets[week] else { return }
+        if let index = draft.fuel.firstIndex(of: goal) {
+            draft.fuel.remove(at: index)
+        } else if draft.fuel.count < FuelGoal.maxCount {
+            draft.fuel.append(goal)
         } else {
             return
         }
-        await saveFuel(sheet)
+        drafts[week] = draft
+        await save(week)
     }
 
     /// Adds a goal in the member's own words; throws when it isn't one line of 1 to 8
     /// characters.
     public func addFuel(typed text: String) async throws(ScheduleError) {
         let goal = try FuelGoal.own(typed: text)
-        guard let week = shownWeek, sheets[week]?.fuel.contains(goal) == false else { return }
+        guard let week = shownWeek, sheet?.fuel.contains(goal) == false else { return }
         await toggleFuel(goal)
     }
 
-    private func saveFuel(_ sheet: WeekSheet) async {
-        let week = sheet.weekStart
-        sheets[week]?.fuel = sheet.fuel
-        do {
-            try await backend.saveFuel(sheet.fuel, weekStart: week)
-            savedFuel[week] = sheet.fuel
-            failure = nil
-        } catch {
-            failure = error
-            sheets[week]?.fuel = savedFuel[week] ?? []
+    // MARK: - Saving
+
+    /// Sends the week's draft, one part at a time, until the server holds all of it; a save
+    /// already on its way sends the rest once it answers. A part the server refuses goes back
+    /// to the server's.
+    private func save(_ week: LocalDay) async {
+        guard !saving.contains(week) else { return }
+        saving.insert(week)
+        defer { saving.remove(week) }
+        var refused = false
+        while let draft = drafts[week], let held = sheets[week] {
+            if draft.plan != held.plan {
+                do {
+                    let plan = try await backend.savePlan(draft.plan, weekStart: week)
+                    sheets[week]?.plan = plan
+                    // The server's answer stands unless the member changed the plan meanwhile.
+                    if drafts[week]?.plan == draft.plan { drafts[week]?.plan = plan }
+                } catch {
+                    failure = error
+                    refused = true
+                    drafts[week]?.plan = held.plan
+                    if board?.weekStart == week { board?.reset(to: held.plan) }
+                }
+            } else if draft.fuel != held.fuel {
+                do {
+                    try await backend.saveFuel(draft.fuel, weekStart: week)
+                    sheets[week]?.fuel = draft.fuel
+                } catch {
+                    failure = error
+                    refused = true
+                    drafts[week]?.fuel = held.fuel
+                }
+            } else {
+                drafts[week] = nil
+                if !refused { failure = nil }
+            }
         }
     }
 }
