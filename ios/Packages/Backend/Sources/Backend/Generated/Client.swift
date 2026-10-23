@@ -4633,7 +4633,7 @@ internal struct Client: APIProtocol {
     }
     /// A squad’s scene this week, and who picks it
     ///
-    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the track before its first. Only for its members.
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.

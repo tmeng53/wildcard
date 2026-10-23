@@ -291,7 +291,7 @@ if want squad; then
   call GET "/squads/$squad/scene" "$me_token"
   expect 200
   week="$(jq -r .week <<<"$body")"
-  [ "$(jq -r '.scene + " " + (.canPick | tostring)' <<<"$body")" = "track true" ] || fail "scene: $body"
+  [ "$(jq -r '.scene + " " + (.canPick | tostring)' <<<"$body")" = "gym true" ] || fail "scene: $body"
   call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"pool"}'
   expect 201
   call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"gym"}'

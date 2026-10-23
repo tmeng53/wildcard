@@ -11,32 +11,32 @@ const pick = (day: string, scene: Scene): ScenePick => ({
 });
 
 describe('a squad’s scene', () => {
-  it('is the track before any pick, then the latest pick', () => {
-    const picks = [pick('2026-10-12', 'pool'), pick('2026-10-26', 'gym')];
-    expect(sceneIn([], week('2026-10-26'))).toBe('track');
-    expect(sceneIn(picks, week('2026-10-05'))).toBe('track');
+  it('is the gym before any pick, then the latest pick', () => {
+    const picks = [pick('2026-10-12', 'pool'), pick('2026-10-26', 'tennis')];
+    expect(sceneIn([], week('2026-10-26'))).toBe('gym');
+    expect(sceneIn(picks, week('2026-10-05'))).toBe('gym');
     expect(sceneIn(picks, week('2026-10-19'))).toBe('pool');
-    expect(sceneIn(picks, week('2026-11-09'))).toBe('gym');
+    expect(sceneIn(picks, week('2026-11-09'))).toBe('tennis');
   });
 
   it('says how many weeks ago the squad last trained on each scene', () => {
-    const picks = [pick('2026-10-12', 'pool'), pick('2026-10-26', 'gym')];
+    const picks = [pick('2026-10-12', 'pool'), pick('2026-10-26', 'tennis')];
     const last = lastTrained(picks, { firstWeek: week('2026-09-28'), current: week('2026-11-09') });
     expect(Object.fromEntries(last)).toStrictEqual({
-      track: 5,
+      track: null,
       pool: 3,
-      gym: 0,
-      tennis: null,
+      gym: 5,
+      tennis: 0,
       climbing: null,
     });
   });
 
-  it('never counts the track for a squad whose first week was picked', () => {
+  it('never counts the gym for a squad whose first week was picked', () => {
     const last = lastTrained([pick('2026-10-26', 'pool')], {
       firstWeek: week('2026-10-26'),
       current: week('2026-10-26'),
     });
-    expect([last.get('track'), last.get('pool')]).toStrictEqual([null, 0]);
+    expect([last.get('gym'), last.get('pool')]).toStrictEqual([null, 0]);
   });
 
   it('keeps the latest stint when a scene comes back', () => {

@@ -6,8 +6,8 @@ import type { MemberId } from './squad.js';
 export const Scene = z.enum(['track', 'pool', 'gym', 'tennis', 'climbing']);
 export type Scene = z.infer<typeof Scene>;
 
-/** Where every squad starts, before anyone picks. */
-export const FIRST_SCENE: Scene = 'track';
+/** Where every squad starts, before anyone picks: the gym, the scene the designs are drawn on. */
+export const FIRST_SCENE: Scene = 'gym';
 
 /** A week's Monday, `YYYY-MM-DD`. */
 export const SceneWeek = z.iso
@@ -39,7 +39,7 @@ export interface ScenePick {
 /**
  * Each scene and how many weeks ago the squad last trained on it: 0 for the scene of `current`,
  * null for one it never has. A squad trains on its latest pick until the next one, and on the
- * track from the week it was made until its first pick.
+ * gym from the week it was made until its first pick.
  */
 export function lastTrained(
   picks: readonly ScenePick[],
@@ -63,7 +63,7 @@ export function lastTrained(
   return last;
 }
 
-/** The squad's scene in `current`: its latest pick up to then, else the track. */
+/** The squad's scene in `current`: its latest pick up to then, else the gym. */
 export function sceneIn(picks: readonly ScenePick[], current: SceneWeek): Scene {
   let latest: ScenePick | undefined;
   for (const pick of picks) {

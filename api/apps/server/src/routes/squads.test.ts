@@ -429,7 +429,7 @@ describe('the squad’s scene', () => {
     scenes: z.array(z.object({ scene: z.string(), weeksAgo: z.int().nullable() })),
   });
 
-  it('starts on the track, and lets the captain pick once when nobody won the crown', async () => {
+  it('starts on the gym, and lets the captain pick once when nobody won the crown', async () => {
     const [ann, bo] = [await signUp(), await signUp()];
     const squad = await newSquad(ann.token);
     await call({
@@ -445,14 +445,14 @@ describe('the squad’s scene', () => {
     });
     const scene = SceneBody.parse(first.body);
     expect(scene).toMatchObject({
-      scene: 'track',
+      scene: 'gym',
       pickers: { by: 'captain', members: [ann.userId] },
       picked: null,
       canPick: true,
       scenes: [
-        { scene: 'track', weeksAgo: 0 },
+        { scene: 'track', weeksAgo: null },
         { scene: 'pool', weeksAgo: null },
-        { scene: 'gym', weeksAgo: null },
+        { scene: 'gym', weeksAgo: 0 },
         { scene: 'tennis', weeksAgo: null },
         { scene: 'climbing', weeksAgo: null },
       ],
