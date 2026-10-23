@@ -16,6 +16,12 @@ public struct TodayView: View {
     @State private var model: TodayModel
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
+    /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
+    /// shows a dot until then.
+    @AppStorage("today.recapSeen") private var recapSeen = ""
+    /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
+    /// end, it doesn't reopen by itself the next evening.
+    @State private var openRecapDay: LocalDay?
 
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
@@ -35,11 +41,13 @@ public struct TodayView: View {
         ZStack {
             if model.step == .disclaimer {
                 DisclaimerComposer(model: model)
+                    .accentTone(.brand)
                     .transition(.opacity)
             }
 
             if case .composing(let kind) = model.step {
                 ComposeView(model: model, kind: kind)
+                    .accentTone(.brand)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
             }
@@ -55,9 +63,13 @@ public struct TodayView: View {
         .sheet(isPresented: isPickingPhotos) {
             PhotoStep(model: model)
                 .environment(\.sceneTheme, theme)
+                .accentTone(.brand)
         }
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
+        // 拍一拍 landing: mine on a teammate, or a teammate's on me.
+        .haptic(.poke, trigger: model.pats.landed)
+        .haptic(.reaction, trigger: model.pats.landedOnMe)
         .task { await model.load() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
@@ -70,7 +82,8 @@ public struct TodayView: View {
         ZStack {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
-                celebration: model.celebrations
+                celebration: model.celebrations, pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
+                patMate: model.patMate
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -79,32 +92,28 @@ public struct TodayView: View {
 
             VStack(spacing: 0) {
                 if let home = model.home, let week = model.cardWeek, let day = home.mine?.day {
-                    SquadCard(
-                        squad: SquadWeek(
-                            name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
-                            members: home.today.members.map { mate in
-                                SquadMember(
-                                    id: mate.member.description,
-                                    status: StageStatus(
-                                        training: mate.training, activity: nil, plannedRest: mate.plannedRest
-                                    ).ring,
-                                    isMe: mate.member == home.member,
-                                    accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
-                            }),
-                        mine: myWeek(home: home, day: day, week: week.mine),
-                        page: $cardPage
-                    ) { member in
-                        if let player = model.head(of: member.id) { CharacterHead(player: player) }
+                    // Read again each minute, so 今日赛况 arrives at 21:00 with the app open.
+                    TimelineView(.everyMinute) { _ in
+                        topCard(home: home, week: week, day: day, recap: model.recap)
                     }
                     .padding(.top, Space.xs)
                     .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
                     // Out of the way while the 请假条 composer is up.
                     .opacity(model.step == .disclaimer ? 0 : 1)
                     .offset(y: model.step == .disclaimer ? -Space.s : 0)
-                    .accessibilityIdentifier("today.card")
                 }
                 Spacer()
             }
+
+            // A tapped teammate's bubble, over the card like the approved design's, laid out on
+            // the scene's own stage.
+            GeometryReader { proxy in
+                PatOverlay(
+                    layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
+                    canPat: model.canPat, pat: model.patMate)
+            }
+            .ignoresSafeArea()
+            .opacity(model.step == .disclaimer ? 0 : 1)
 
             if model.isBurstOpen {
                 // A tap anywhere outside the capsules closes the burst.
@@ -136,6 +145,56 @@ public struct TodayView: View {
                 .transition(.opacity)
             }
         }
+    }
+
+    /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening
+    /// on, or the evening's box score once the tag is tapped (the approved 今日赛况, version 4).
+    @ViewBuilder
+    private func topCard(
+        home: Home, week: (squad: WeekCount, mine: WeekCount), day: LocalDay, recap: DayRecap?
+    ) -> some View {
+        if let recap, openRecapDay == day {
+            DayRecapCard(
+                recap: recap, day: model.dayDate ?? .now, timeZone: home.timeZone, member: { model.recapMember($0) },
+                close: { withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { openRecapDay = nil } }
+            )
+            .transition(.opacity)
+        } else {
+            let squad = SquadWeek(
+                name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
+                members: home.today.members.map { mate in
+                    SquadMember(
+                        id: mate.member.description,
+                        status: StageStatus(training: mate.training, activity: nil, plannedRest: mate.plannedRest).ring,
+                        isMe: mate.member == home.member,
+                        accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
+                })
+            let mine = myWeek(home: home, day: day, week: week.mine)
+            Group {
+                if let recap {
+                    SquadCard(
+                        squad: squad, mine: mine, page: $cardPage, avatar: { head($0) },
+                        footer: {
+                            RecapTag(recap: recap, isSeen: recapSeen == day.description) {
+                                recapSeen = day.description
+                                withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
+                                    openRecapDay = day
+                                }
+                            }
+                        })
+                } else {
+                    SquadCard(squad: squad, mine: mine, page: $cardPage) { head($0) }
+                }
+            }
+            .accessibilityIdentifier("today.card")
+            .transition(.opacity)
+        }
+    }
+
+    /// A teammate's head in the squad card's ring.
+    @ViewBuilder
+    private func head(_ member: SquadMember) -> some View {
+        if let player = model.head(of: member.id) { CharacterHead(player: player) }
     }
 
     /// My week for the card's second page: this week's days, what I trained and my meals, with

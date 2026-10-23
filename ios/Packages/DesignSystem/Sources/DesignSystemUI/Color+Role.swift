@@ -14,8 +14,8 @@ extension Color {
     }
 
     /// A role's color in a scene. Neutral roles ignore the scene.
-    public init(role: ColorRole, in theme: SceneTheme, contrast: ColorSchemeContrast = .standard) {
-        self.init(role.color(in: theme, contrast: contrast == .increased ? .increased : .standard))
+    public init(role: ColorRole, in theme: SceneTheme) {
+        self.init(role.color(in: theme))
     }
 }
 

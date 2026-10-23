@@ -37,16 +37,31 @@ public struct CheckIn: Hashable, Sendable {
     }
 }
 
-/// 练了: what was trained, with optional photos and a line. No duration: a 练了 is a 练了.
+/// 练了: what was trained, with optional minutes, photos and a line.
 public struct Training: Hashable, Sendable {
     public let activity: Activity
+    public let minutes: WorkoutMinutes?
     public let photos: Photos?
     public let caption: Caption?
 
-    public init(activity: Activity, photos: Photos? = nil, caption: Caption? = nil) {
+    public init(activity: Activity, minutes: WorkoutMinutes? = nil, photos: Photos? = nil, caption: Caption? = nil) {
         self.activity = activity
+        self.minutes = minutes
         self.photos = photos
         self.caption = caption
+    }
+}
+
+/// How long a 练了 took, in whole minutes. Never asked for: a 练了 without it is just as much a 练了.
+public struct WorkoutMinutes: Hashable, Sendable {
+    /// The API's range; `APIContract`'s tests fail when the two differ.
+    public static let range = 1...600
+
+    public let value: Int
+
+    public init(_ value: Int) throws(ContractsError) {
+        guard Self.range.contains(value) else { throw .workoutMinutes(value) }
+        self.value = value
     }
 }
 

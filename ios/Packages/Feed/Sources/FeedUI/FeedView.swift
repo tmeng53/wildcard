@@ -6,7 +6,7 @@ import FeedDomain
 import SwiftUI
 
 /// The 动态 tab: the squad's posts by day, newest first, each a card with the author's character
-/// and the teammates' emoji (the approved feed, version 20). The app's tab bar floats over it;
+/// and the teammates' emoji (the approved feed, version 20, with the approved reaction bar). The app's tab bar floats over it;
 /// the safe area the app gives it already leaves room. Pull to load again; the end loads the
 /// week before.
 public struct FeedView: View {
@@ -16,12 +16,16 @@ public struct FeedView: View {
     @State private var model: FeedModel
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
+    /// What the app shows under the title, before the posts: the squad's latest 战报.
+    private let header: AnyView?
 
-    /// The coordinate space the emoji bar is placed in: the whole tab.
+    /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
+    /// fly.
     static let space = "feed"
 
-    public init(model: FeedModel, checkIn: @escaping () -> Void) {
+    public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
+        self.header = header
         self.checkIn = checkIn
     }
 
@@ -34,6 +38,8 @@ public struct FeedView: View {
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("feed.title")
+                        .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    header
                     content
                 }
                 .padding(.horizontal, Space.pageMargin)
@@ -57,10 +63,16 @@ public struct FeedView: View {
                 }
             }
         }
+        .overlayPreferenceValue(FeedAnchors.self) { anchors in
+            FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)
+        }
         .coordinateSpace(.named(Self.space))
-        .overlay { EmojiBarLayer(model: model) }
         .background(Color(role: .bgCanvas, in: theme))
-        .haptic(.reaction, trigger: model.responses)
+        // A brand screen: buttons and selection wear the brand; only the kind tags keep the scene.
+        .accentTone(.brand)
+        .haptic(.pick, trigger: model.picks)
+        .haptic(.appear, trigger: model.lifts)
+        .haptic(.reaction, trigger: model.arrivals)
         .task { await model.load() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
@@ -84,6 +96,7 @@ public struct FeedView: View {
                 } header: {
                     SectionLabel(section.heading.title)
                         .padding(.top, section.id == sections.first?.id ? 0 : Space.xs)
+                        .blur(radius: model.lifted ? Scrim.blurRadius : 0)
                 }
             }
             if model.store.hasEarlier {

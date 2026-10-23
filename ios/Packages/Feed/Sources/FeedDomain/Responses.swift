@@ -58,13 +58,11 @@ public struct Responses<Kind: Hashable & Sendable>: Hashable, Sendable {
         .map(\.element)
     }
 
-    /// The kinds shown at the start of the row: the most left, at most `limit`.
-    public func topKinds(_ limit: Int) -> [Kind] { Array(groups.prefix(limit).map(\.kind)) }
+    /// The heads on the row, each wearing what that member left: the latest, newest first.
+    public func newest(_ limit: Int) -> [Response] { Array(all.reversed().prefix(limit)) }
 
-    /// The faces at the end of the row: the latest members to respond, newest first.
-    public func latestMembers(_ limit: Int) -> [MemberID] {
-        Array(all.reversed().prefix(limit).map(\.member))
-    }
+    /// How many more responded than the row shows heads for: its +n.
+    public func more(than shown: Int) -> Int { max(all.count - shown, 0) }
 
     /// The same responses with `member`'s set to `kind`, or taken back when nil.
     public func setting(_ kind: Kind?, for member: MemberID, at moment: Timestamp) -> Self {

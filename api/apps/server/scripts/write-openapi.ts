@@ -58,7 +58,7 @@ const app = createApp({
     calendarOf: unused,
     clock: unused,
   }),
-  nudges: { send: unused, received: unused },
+  nudges: { send: unused, received: unused, inSquad: unused },
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),

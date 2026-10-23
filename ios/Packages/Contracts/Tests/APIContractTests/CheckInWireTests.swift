@@ -67,6 +67,18 @@ private func saved(_ kindAndFields: String) -> String {
             .hasSuffix(#""disclaimer":{"text":"下雨了，跑道在哭"},"kind":"disclaimer","version":1}"#))
 }
 
+@Test func minutesGoWithTheSportBothWays() throws {
+    let training = Training(activity: .sport(.run), minutes: try WorkoutMinutes(45))
+    #expect(
+        try encode(try checkIn(.trained(training)).draft)
+            .hasSuffix(#""kind":"trained","training":{"minutes":45,"sport":"run"},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":45}"#)) == checkIn(.trained(training)))
+    #expect(throws: ContractsError.workoutMinutes(0)) {
+        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":0}"#))
+    }
+}
+
 @Test func savedTrainingReadsWithItsPhotoURLs() throws {
     let json = saved(
         #""kind":"trained","training":{"sport":"swim","caption":"一千米","photos":[{"path":"\#(photoA)","url":"https://storage.example.com/a?token=1"}]}"#
@@ -136,7 +148,7 @@ private func saved(_ kindAndFields: String) -> String {
     }
     #expect(throws: DecodingError.self) { try decode(saved(#""kind":"trained","training":{"sport":"padel"}"#)) }
     #expect(throws: DecodingError.self) {
-        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":30}"#))
+        try decode(saved(#""kind":"trained","training":{"sport":"run","calories":300}"#))
     }
 }
 

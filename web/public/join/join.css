@@ -9,7 +9,7 @@
 @container site (min-width: 720px) { .wrap { padding-left: max(48px, env(safe-area-inset-left, 0px)); padding-right: max(48px, env(safe-area-inset-right, 0px)); } }
 
 /* --fh is a figure's height: five side by side fit the width; --gh the floor band's, so the squad's feet stand on it */
-.floor { --fh: max(64px, min(calc((100cqw - 32px) / 3.75), 200px, 26svh)); --gh: calc(var(--fh) * .3 + 28px); position: relative; flex: 1; background: var(--gym-sky); display: flex; flex-direction: column; }
+.floor { --fh: max(64px, min(calc((100cqw - 32px) / 3.75), 200px, 26svh)); --gh: calc(var(--fh) * .3 + 28px); position: relative; flex: 1; background: var(--brand-sky); display: flex; flex-direction: column; }
 .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
 
 .main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 32px; padding-top: 32px; }

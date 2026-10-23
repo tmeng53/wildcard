@@ -1,0 +1,123 @@
+#if os(iOS)
+import AvatarArt
+import AvatarDomain
+import Contracts
+import DesignSystem
+import Foundation
+import RecapDomain
+
+/// A filled-in week for the demo squad, as the weekly AI run would store it: what the app plays
+/// until the API's story route is wired, and what the UI tests screenshot. Its words stand in
+/// for the API's, which arrive already in the reader's language.
+public enum RecapSample {
+    /// - Parameters:
+    ///   - pending: the AI run hasn't succeeded yet: the titles wait and no page has AI words.
+    ///   - missed: the squad fell short of its plans, for the other ending.
+    public static func story(pending: Bool = false, missed: Bool = false) -> WeekStory {
+        let ready = !pending
+        return WeekStory(
+            status: pending ? .pending : .ready, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
+            week: Week(monday: day(12), sunday: day(18)),
+            order: [.podium, .titles, .myWeek, .hottest, .meals, .bestDisclaimer, .ending],
+            podium: Podium(
+                champion: coco, sides: [lin, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
+                championMove: ready ? .pose : nil, sideMove: ready ? .pump : nil),
+            titles: ready
+                ? [
+                    title(coco, "早八战神", "七天五天八点前打卡，闹钟都怕她", .pose),
+                    title(lin, "网球场钉子户", "三次打卡都在同一块场地，球场该发他会员卡", .pump),
+                    title(mia, "雨中狠人", "周三下雨照跑 5 公里，伞都没带", .stretch),
+                    title(jay, "请假条文豪", "两张请假条，篇篇有人笑死", .laugh),
+                    title(reader, "稳定输出", "4 天，不多不少，比上班打卡还准", .wave),
+                ] : [],
+            myWeek: RecapDomain.MyWeek(
+                plan: 5,
+                days: [
+                    .init(day: day(12), kind: .trained(.run)), .init(day: day(13), kind: .trained(.tennis)),
+                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained(.strength)),
+                    .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained(.yoga)),
+                    .init(day: day(18), kind: .rest),
+                ], line: ready ? "周二那场网球最有灵魂" : nil, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),
+            hottest: Hottest(
+                checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: .run, words: "晨跑 8 公里，腿还在",
+                reactions: [
+                    ReactionCount(emoji: "💪", count: 5),
+                    ReactionCount(emoji: "😂", count: 3),
+                    ReactionCount(emoji: "❤️", count: 2),
+                ], line: ready ? "五个人给你加油，腿替你谢谢大家" : nil, move: ready ? .pose : nil),
+            meals: Meals(
+                healthy: 14, cheat: 5,
+                eaters: [
+                    .init(member: lin, more: .healthy), .init(member: mia, more: .cheat),
+                    .init(member: coco, more: .healthy), .init(member: jay, more: .cheat),
+                    .init(member: reader, more: .healthy),
+                ], line: ready ? "健康餐赢了，汉堡不服" : nil),
+            bestDisclaimer: BestDisclaimer(
+                checkIn: CheckInID(uuid(21)), author: jay, text: "教练说要循序渐进，我今天进的是被窝。", reactions: 6,
+                authorMove: ready ? .flat : nil, squadMove: ready ? .laugh : nil),
+            ending: missed
+                ? Ending(
+                    done: 19, plan: 22, headline: ready ? "差一点" : nil, line: ready ? "还差 3 天。下周的腿已经在热身了" : nil,
+                    move: ready ? .warmup : nil)
+                : Ending(
+                    done: 23, plan: 22, headline: ready ? "稳了" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,
+                    move: ready ? .stack : nil))
+    }
+
+    /// The demo squad on the pool scene, read by 我.
+    public static let cast = StoryCast(
+        members: [
+            member(
+                coco, "Coco", .energetic, "person",
+                [
+                    "body": "peach", "hair": "curls", "eyes": "happy", "brows": "arched", "mouth": "grin",
+                    "cheeks": "flushed",
+                    "top": "jersey", "bottom": "shorts",
+                ]),
+            member(
+                lin, "小林", .showoff, "person",
+                [
+                    "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk", "top": "tank",
+                    "bottom": "shorts",
+                ]),
+            member(mia, "Mia", .drama, "cat", ["body": "tuxedo", "top": "tee", "bottom": "shorts", "hat": "headband"]),
+            member(jay, "阿杰", .shy, "dog", ["body": "shiba", "top": "tee", "bottom": "greenshorts", "hat": "cap"]),
+            member(
+                reader, "我", .deadpan, "person",
+                [
+                    "body": "peach", "hair": "long", "eyes": "sleepy", "brows": "soft", "mouth": "smile",
+                    "cheeks": "rosy",
+                    "glasses": "square", "top": "hoodie", "bottom": "leggings",
+                ]),
+        ], viewer: reader, scene: .pool)
+
+    private static let coco = MemberID(uuid(1))
+    private static let lin = MemberID(uuid(2))
+    private static let mia = MemberID(uuid(3))
+    private static let jay = MemberID(uuid(4))
+    private static let reader = MemberID(uuid(5))
+
+    private static func member(
+        _ id: MemberID, _ nickname: String, _ persona: Persona, _ species: String, _ look: [Slot: String]
+    ) -> StoryMember {
+        StoryMember(id: id, nickname: nickname, look: Outfit(look), persona: persona, species: species)
+    }
+
+    private static func title(_ member: MemberID, _ title: String, _ speech: String, _ move: AwardMove) -> MemberTitles
+    {
+        MemberTitles(member: member, titles: [.init(title: title, speech: speech, move: move)])
+    }
+
+    private static func uuid(_ number: Int) -> UUID {
+        UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", number)) ?? UUID()
+    }
+
+    /// A day of the sample week, 2026-10-12 to 18.
+    private static func day(_ number: Int) -> LocalDay {
+        guard let day = try? LocalDay(year: 2026, month: 10, day: number) else {
+            fatalError("The sample week's days are valid dates")
+        }
+        return day
+    }
+}
+#endif

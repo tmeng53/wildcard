@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, NudgeKind, SquadId } from '../domain/nudge.js';
+import { MemberId, NudgeKind, SquadId, type Nudge } from '../domain/nudge.js';
 import type { NudgeStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -23,31 +23,57 @@ export function createPostgresNudgeStore(db: Kysely<NudgeTables>): NudgeStore {
       return inserted === undefined ? 'unchanged' : 'created';
     },
 
-    async receivedBy({ member, since, until }) {
-      const rows = await db
-        .selectFrom('nudges')
-        .select([
-          'from_member_id',
-          'to_member_id',
-          'squad_id',
-          'kind',
-          sql<string>`day::text`.as('day'),
-          'at',
-        ])
+    async receivedBy({ member, since, until, kind }) {
+      let query = selectNudges()
         .where('to_member_id', '=', member)
         .where('at', '>=', since)
-        .where('at', '<', until)
-        .orderBy('at')
-        .orderBy('id')
-        .execute();
-      return rows.map((row) => ({
-        from: MemberId.parse(row.from_member_id),
-        to: MemberId.parse(row.to_member_id),
-        squad: SquadId.parse(row.squad_id),
-        kind: NudgeKind.parse(row.kind),
-        day: row.day,
-        at: new Date(row.at),
-      }));
+        .where('at', '<', until);
+      if (kind !== undefined) query = query.where('kind', '=', kind);
+      const rows = await query.execute();
+      return rows.map(toNudge);
     },
+
+    async sentBy({ member, squad, day, kind }) {
+      const rows = await selectNudges()
+        .where('from_member_id', '=', member)
+        .where('squad_id', '=', squad)
+        .where('day', '=', day)
+        .where('kind', '=', kind)
+        .execute();
+      return rows.map(toNudge);
+    },
+  };
+
+  function selectNudges() {
+    return db
+      .selectFrom('nudges')
+      .select([
+        'from_member_id',
+        'to_member_id',
+        'squad_id',
+        'kind',
+        sql<string>`day::text`.as('day'),
+        'at',
+      ])
+      .orderBy('at')
+      .orderBy('id');
+  }
+}
+
+function toNudge(row: {
+  readonly from_member_id: string;
+  readonly to_member_id: string;
+  readonly squad_id: string;
+  readonly kind: string;
+  readonly day: string;
+  readonly at: Date | string;
+}): Nudge {
+  return {
+    from: MemberId.parse(row.from_member_id),
+    to: MemberId.parse(row.to_member_id),
+    squad: SquadId.parse(row.squad_id),
+    kind: NudgeKind.parse(row.kind),
+    day: row.day,
+    at: new Date(row.at),
   };
 }

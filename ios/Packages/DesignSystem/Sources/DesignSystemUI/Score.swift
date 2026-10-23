@@ -6,6 +6,8 @@ import SwiftUI
 /// the size and in subtle ink. One `.hero` score per screen.
 public struct Score: View {
     public enum Size: Sendable {
+        /// A 战报 page's one number, full screen.
+        case story
         case hero
         case card
         case inline
@@ -14,6 +16,7 @@ public struct Score: View {
 
         var style: TypeStyle {
             switch self {
+            case .story: TypeRamp.scoreStory
             case .hero: TypeRamp.scoreHero
             case .card: TypeRamp.scoreCard
             case .inline: TypeRamp.scoreInline
