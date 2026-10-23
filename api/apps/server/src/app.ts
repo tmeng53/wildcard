@@ -5,6 +5,7 @@ import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-in
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
@@ -33,6 +34,7 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
+import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
 import { reactions } from './routes/reactions.js';
@@ -54,6 +56,8 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
+  /** Squadmates' pokes, which the daily push counts. */
+  readonly nudges: Nudges;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** Rate limits for the routes anyone can call without signing in. */
@@ -118,6 +122,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
   app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
+  app.route('/', nudges(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));

@@ -58,6 +58,7 @@ const app = createApp({
     calendarOf: unused,
     clock: unused,
   }),
+  nudges: { send: unused, received: unused },
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
