@@ -129,7 +129,7 @@ private struct AppRoot: View {
         ZStack {
             switch app.screen {
             case .starting:
-                EmptyView()
+                ProgressView()
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
