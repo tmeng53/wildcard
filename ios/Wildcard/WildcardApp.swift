@@ -3,7 +3,10 @@ import AccountUI
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
+import Contracts
 import DesignSystemUI
+import FeedDomain
+import FeedUI
 import Foundation
 import MeDomain
 import MeUI
@@ -21,6 +24,7 @@ import SwiftUI
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
+    @State private var feed: FeedModel
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
     @State private var editor = CharacterEditorDemo.model()
@@ -30,11 +34,14 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and both models are the main actor's.
     init() {
+        // The two screens' samples share the member and the squad, so my post opens in 动态.
+        let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         _today = State(
             initialValue: TodayModel(
                 store: TodayStore(
                     backend: InMemoryCheckInBackend.sampleSquad(
-                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, patted: LaunchOptions.pattedMe),
+                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
+                        patted: LaunchOptions.pattedMe),
                     outbox: InMemoryOutbox(),
                     now: LaunchOptions.now, newID: { UUID() }),
                 writer: LaunchOptions.disclaimerWriter,
@@ -63,6 +70,22 @@ struct WildcardApp: App {
                     service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "",
                     now: LaunchOptions.signUpTime))
         }
+        _feed = State(initialValue: Self.feed(viewer: member, squad: squad))
+    }
+
+    /// 动态 on the sample squad's week, or with no posts at all (`-uitest-empty-feed`).
+    private static func feed(viewer: MemberID, squad: SquadID) -> FeedModel {
+        let zone = TimeZone.current
+        let source =
+            LaunchOptions.showsEmptyFeed
+            ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:])
+            : InMemoryFeedSource.sample(
+                viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: zone,
+                photos: InMemoryFeedSource.renderSamplePhotos())
+        let store = FeedStore(
+            source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
+            now: { Timestamp(LaunchOptions.now()) })
+        return FeedModel(store: store, viewer: viewer, now: LaunchOptions.now)
     }
 
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
@@ -87,7 +110,7 @@ struct WildcardApp: App {
             } else if let app {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
-                MainTabs(today: today, profile: profile, selection: $tab)
+                MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
                     .onAppear {
                         delegate.opened = { [today, $tab] in
                             $tab.wrappedValue = .today
@@ -119,7 +142,7 @@ private struct AppRoot: View {
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
             case .tabs(let today, let profile):
-                MainTabs(today: today, profile: profile, selection: $tab)
+                MainTabs(today: today, profile: profile, feed: nil, selection: $tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

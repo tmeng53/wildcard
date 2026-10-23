@@ -17,11 +17,11 @@ public struct TodayView: View {
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
 
-    /// Opens the post my caption's bubble is from: for now the 动态 tab, which will scroll to it
-    /// once the feed is built.
-    private let openPost: () -> Void
+    /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
+    /// out, which opens 动态 at the top.
+    private let openPost: (CheckIn?) -> Void
 
-    public init(model: TodayModel, openPost: @escaping () -> Void = {}) {
+    public init(model: TodayModel, openPost: @escaping (CheckIn?) -> Void = { _ in }) {
         _model = State(initialValue: model)
         self.openPost = openPost
     }
@@ -178,7 +178,7 @@ public struct TodayView: View {
 /// on my head.
 private struct MyPayoff: View {
     let model: TodayModel
-    let openPost: () -> Void
+    let openPost: (CheckIn?) -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -190,7 +190,8 @@ private struct MyPayoff: View {
             // 「+1」 sit above it, centred.
             ZStack {
                 Self.anchor(width: Self.bubbleWidth, at: head, alignment: .bottom) {
-                    PayoffBubble(line: model.payoff?.line, open: openPost).fixedSize(horizontal: false, vertical: true)
+                    PayoffBubble(line: model.payoff?.line) { openPost(model.payoff?.post) }.fixedSize(
+                        horizontal: false, vertical: true)
                 }
                 Self.anchor(width: 0, at: CGPoint(x: head.x, y: head.y - Space.l), alignment: .bottom) {
                     PlusOne(trigger: model.celebrations).fixedSize()

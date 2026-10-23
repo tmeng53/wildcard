@@ -292,6 +292,8 @@ describe('the daily progress push', () => {
           squadTrainedDays: 1,
           squadPlannedDays: 15,
           received: { reaction: 2 },
+          // Eve's own posts aren't in her push.
+          today: { members: [{ id: eve.userId }], posts: [], more: 0 },
         },
       },
     ]);
@@ -345,7 +347,15 @@ describe('the daily progress push', () => {
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
         alert: { key: 'push.dailyProgress.poke', args: ['0', '10', '小美'] },
-        event: { received: { poke: 1 } },
+        // The push's view shows who patted, by their character and nickname.
+        event: {
+          received: { poke: 1 },
+          today: {
+            members: [{ id: eve.userId }, { id: mate.userId, name: '小美' }],
+            posts: [],
+            pokedBy: [1],
+          },
+        },
       },
     ]);
   });
@@ -432,6 +442,99 @@ describe('the daily progress push', () => {
     ]);
   });
 
+  it('carries teammates’ posts today, newest first, with their reactions and names', async () => {
+    const [eve, mate, third] = [
+      await member(evening),
+      await member(evening),
+      await member(morning),
+    ];
+    const squad = await squadOf(eve, mate, third);
+    await call('PUT', {
+      path: '/me/profile',
+      token: mate.token,
+      body: {
+        version: 1,
+        timeZone: evening.zone,
+        character: {
+          nickname: '小米',
+          look: { persona: 'deadpan', variants: { body: 'peach' }, colors: {} },
+        },
+      },
+    });
+    const older = await trained(mate, squad);
+    const id = randomUUID();
+    const long =
+      '腿说今天它请假，我尊重它的决定，明天再说。腿说今天它请假，我尊重它的决定，明天再说。';
+    expect(
+      (
+        await call('PUT', {
+          path: `/check-ins/${id}`,
+          token: mate.token,
+          body: {
+            version: 1,
+            day: dayAt(mate.offset),
+            createdAt: new Date(Date.now() - 30_000).toISOString(),
+            audience: [squad],
+            kind: 'disclaimer',
+            disclaimer: { text: long },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    await react({ token: third.token, checkIn: older, emoji: '💪' });
+    await react({ token: eve.token, checkIn: older, emoji: '😂' });
+    // The morning teammate's post is on their own today, and in it too.
+    const theirs = await trained(third, squad);
+    const anyTime: unknown = expect.any(String);
+    await run();
+    const [sent] = sentTo.get(eve.phone) ?? [];
+    expect(sent?.event.today).toStrictEqual({
+      members: [{ id: eve.userId }, { id: mate.userId, name: '小米' }, { id: third.userId }],
+      posts: [
+        {
+          id,
+          by: 1,
+          kind: 'disclaimer',
+          at: anyTime,
+          text: `${Array.from(long).slice(0, 39).join('')}…`,
+          reactions: [],
+          reactionCount: 0,
+        },
+        {
+          id: theirs,
+          by: 2,
+          kind: 'trained',
+          sport: 'run',
+          at: anyTime,
+          reactions: [],
+          reactionCount: 0,
+        },
+        {
+          id: older,
+          by: 1,
+          kind: 'trained',
+          sport: 'run',
+          at: anyTime,
+          reactions: [
+            [0, '😂'],
+            [2, '💪'],
+          ],
+          reactionCount: 2,
+        },
+      ],
+      more: 0,
+    });
+  });
+
+  it('carries at most 4 posts and counts the rest', async () => {
+    const [eve, mate] = [await member(evening), await member(evening)];
+    const squad = await squadOf(eve, mate);
+    for (let each = 0; each < 6; each += 1) await trained(mate, squad);
+    await run();
+    const [sent] = sentTo.get(eve.phone) ?? [];
+    expect(sent?.event.today).toMatchObject({ posts: [{}, {}, {}, {}], more: 2 });
+  });
+
   it('sends nothing to a member who turned it off', async () => {
     const eve = await member(evening);
     const mate = await member(morning);
@@ -460,6 +563,7 @@ describe('the daily progress push', () => {
         squad: 'squad',
         squadWeek: { trainedDays: 14, plannedDays: 22 },
         received: new Map([['reaction', new Set<string>()]]),
+        today: { members: [{ id: 'me' }], posts: [], more: 0 },
       }),
     ).toMatchObject({
       alert: { key: 'push.dailyProgress', args: ['14', '22'] },
