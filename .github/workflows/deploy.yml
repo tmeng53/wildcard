@@ -60,23 +60,30 @@ jobs:
         run: |
           # A failed psql inside a pipe or a test must stop the step, never pass the guard.
           set -o pipefail
+          # A mask covers one line, so a value is masked line by line, before anything checks it.
+          mask() {
+            while IFS= read -r line; do
+              if [ -n "$line" ]; then echo "::add-mask::$line"; fi
+            done <<<"$1"
+          }
           database_url="$(gcloud secrets versions access latest --secret database-url)"
-          echo "::add-mask::$database_url"
+          mask "$database_url"
+          userinfo="${database_url#*://}"
+          userinfo="${userinfo%@*}"
+          password="${userinfo#*:}"
+          mask "$password"
+          # A raw @, / or : splits the URL somewhere else, and psql would print the rest of it.
+          # Checked before decoding, which would turn a backslash into an escape.
+          if [[ ! "$password" =~ ^[A-Za-z0-9%._~-]+$ ]]; then
+            echo "::error::Percent-encode the database-url password, or reset it to letters and digits"
+            exit 1
+          fi
+          mask "$(printf '%b' "${password//%/\\x}")"
           case "$database_url" in
             *\?*) echo "::error::database-url should have no query string" && exit 1 ;;
             *:6543/*) ;;
             *) echo "::error::database-url should be Supabase's transaction pooler (port 6543)" && exit 1 ;;
           esac
-          userinfo="${database_url#*://}"
-          userinfo="${userinfo%@*}"
-          password="${userinfo#*:}"
-          echo "::add-mask::$password"
-          echo "::add-mask::$(printf '%b' "${password//%/\\x}")"
-          # A raw @, / or : splits the URL somewhere else, and psql would print the rest of it.
-          if [[ ! "$password" =~ ^[A-Za-z0-9%._~-]+$ ]]; then
-            echo "::error::Percent-encode the database-url password, or reset it to letters and digits"
-            exit 1
-          fi
           ca="$PWD/api/apps/server/certs/supabase-root-2021.crt"
           url="${database_url/:6543\//:5432/}?sslmode=verify-full&sslrootcert=$ca"
           command -v psql >/dev/null || sudo apt-get install -y -qq postgresql-client
