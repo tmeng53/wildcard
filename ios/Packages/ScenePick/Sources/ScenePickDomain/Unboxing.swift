@@ -32,6 +32,8 @@ public struct Unboxing: Hashable, Sendable {
 
     // The prototype's moments, in seconds from 「就它了」.
     static let land = 0.6
+    /// When the flaps open and fly off: the moment for the reveal's one haptic.
+    public static let flapsOpen = 1.65
     static let burst = 1.66
     static let cardRise = 1.75
     static let cardFull = 2.8
@@ -82,7 +84,7 @@ public struct Unboxing: Hashable, Sendable {
         }
         let sink = Tween.quadIn(progress(1.95, 0.4))
         lift += 200 * sink
-        let open = Tween.cubicOut(progress(1.65, 0.38))
+        let open = Tween.cubicOut(progress(Self.flapsOpen, 0.38))
         return CartonPose(
             offsetY: lift, rotation: rotation, scaleX: scaleX, scaleY: scaleY, opacity: 1 - sink,
             leftFlap: FlapPose(x: -40 * open, y: -150 * open, rotation: -130 * open),

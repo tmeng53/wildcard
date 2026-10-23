@@ -23,9 +23,6 @@ public struct UnboxRevealView<Page: View, Backdrop: View>: View {
     private let page: Page
     private let backdrop: Backdrop
 
-    /// When the flaps fly, and the haptic plays.
-    private static var flapsFly: Double { 1.65 }
-
     /// `frozenAt` holds the reveal on one moment, for screenshots and previews.
     public init(
         _ unboxing: Unboxing, scene: SceneTheme, startedAt: Date, frozenAt: Double? = nil,
@@ -54,9 +51,10 @@ public struct UnboxRevealView<Page: View, Backdrop: View>: View {
         .haptic(.unbox, trigger: burst) { _, burst in burst }
         .task {
             guard frozenAt == nil else { return }
-            if unboxing.boxed, !reduceMotion { await wait(until: Self.flapsFly) { burst = true } }
+            if unboxing.boxed, !reduceMotion { await wait(until: Unboxing.flapsOpen) { burst = true } }
             await wait(until: shown(unboxing.covered)) { onCovered() }
-            await wait(until: shown(unboxing.finished)) { onFinished() }
+            // Reduce Motion holds the covered moment, so it ends there rather than on still confetti.
+            await wait(until: shown(reduceMotion ? unboxing.covered : unboxing.finished)) { onFinished() }
         }
         .accessibilityHidden(true)
     }

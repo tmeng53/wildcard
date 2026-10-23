@@ -37,6 +37,7 @@ final class ScenePickUITests: XCTestCase {
         // The reveal hides the page from VoiceOver as it starts, and ends on the scene by 3 s.
         waitFor(confirm, "exists == false", "the reveal didn't start")
         Thread.sleep(forTimeInterval: 3.5)
+        XCTAssertFalse(confirm.exists, "the page came back after the reveal")
         keepScreenshot(named: "53-scenepick-landed")
     }
 
@@ -78,6 +79,7 @@ final class ScenePickUITests: XCTestCase {
         let app = launch(language: "zh-Hans", extra: ["-scene-pick-reveal", scene, time])
         // The reveal is hidden from VoiceOver, so there's nothing to wait for but the launch.
         Thread.sleep(forTimeInterval: 1.5)
+        XCTAssertFalse(app.buttons["scenePick.confirm"].exists, "the page shows instead of the reveal")
         keepScreenshot(named: "56-scenepick-reveal-\(scene)-\(time)s")
         app.terminate()
     }
