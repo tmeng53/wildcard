@@ -29,8 +29,11 @@ const keyPair = () => {
 };
 const google = keyPair();
 const stranger = keyPair();
+let keyFetches = 0;
 const keys = createServer((_, response) => {
+  keyFetches += 1;
   response.setHeader('content-type', 'application/json');
+  response.setHeader('cache-control', 'public, max-age=600');
   response.end(JSON.stringify({ keys: [google.publicJwk] }));
 });
 let keysUrl = '';
@@ -102,5 +105,32 @@ describe('the Google scheduler', () => {
       keysUrl: 'http://127.0.0.1:9/certs',
     });
     expect(await offline(await idToken())).toBe(false);
+  });
+
+  it('keeps Google’s keys as long as Google says, and fetches early only for a new key id', async () => {
+    let clock = 1_000_000;
+    const cached = googleScheduler({
+      serviceAccount: account,
+      audience,
+      keysUrl,
+      now: () => clock,
+    });
+    const before = keyFetches;
+    expect(await cached(await idToken())).toBe(true);
+    expect(await cached(await idToken())).toBe(true);
+    expect(keyFetches - before).toBe(1);
+
+    const unknown = await idToken({}, { key: { ...stranger.privateJwk, kid: 'rotated' } });
+    expect(await cached(unknown)).toBe(false);
+    expect(keyFetches - before).toBe(1);
+    clock += 61_000;
+    expect(await cached(unknown)).toBe(false);
+    expect(keyFetches - before).toBe(2);
+    expect(await cached(unknown)).toBe(false);
+    expect(keyFetches - before).toBe(2);
+
+    clock += 600_000;
+    expect(await cached(await idToken())).toBe(true);
+    expect(keyFetches - before).toBe(3);
   });
 });

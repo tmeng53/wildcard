@@ -25,6 +25,9 @@ set -euo pipefail
 project="${1:?usage: gcp-setup.sh PROJECT_ID [REGION] [API_URL]}"
 region="${2:-us-east4}"
 api_url="${3:-https://api.wildcardsquad.com}"
+# The jobs' audience must be the API's origin exactly as the server compares it: no trailing slash.
+api_url="${api_url%/}"
+[[ "$api_url" =~ ^https://[^/]+$ ]] || { echo "API_URL must be an https origin, like https://api.wildcardsquad.com" >&2; exit 1; }
 # GitHub's id for tmeng53/wildcard: a repository renamed or recreated under the name can't deploy.
 repo_id=1423871728
 
