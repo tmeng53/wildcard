@@ -39,8 +39,9 @@ final class ScenePickUITests: XCTestCase {
         confirm.tap()
         // The reveal hides the page from VoiceOver as it starts, and ends on the scene by 3 s.
         waitFor(confirm, "exists == false", "the reveal didn't start")
-        // The scene's card filling the screen, just before the story closes onto home.
-        Thread.sleep(forTimeInterval: 2.4)
+        // The scene's card filling the screen, just before the story closes onto home (the
+        // reveal ends at 2.96 s, and the page is gone a moment after the tap).
+        Thread.sleep(forTimeInterval: 1.6)
         keepScreenshot(named: "53-scenepick-covering")
         // Once the scene fills the screen the story is done.
         XCTAssertTrue(app.buttons["recap.entry"].waitForExistence(timeout: Self.wait), "the story didn't close")
@@ -71,23 +72,25 @@ final class ScenePickUITests: XCTestCase {
     /// A carton opening, held at the prototype's frames: the shake, the flaps flying, the card
     /// rising and filling the screen.
     func testCartonRevealFrames() {
-        for time in ["0.6", "1.3", "1.8", "2.4"] {
+        for time in [0.6, 1.3, 1.8, 2.4] {
             holdReveal(of: "tennis", at: time)
         }
     }
 
     /// A scene the squad knows has no carton: its card rises straight away.
     func testUsedSceneRevealFrames() {
-        for time in ["0.4", "0.8"] {
+        for time in [0.4, 0.8] {
             holdReveal(of: "pool", at: time)
         }
     }
 
-    private func holdReveal(of scene: String, at time: String) {
-        let app = launch(language: "zh-Hans", extra: ["-recap-reveal", scene, time])
+    private func holdReveal(of scene: String, at time: Double) {
+        let app = launch(language: "zh-Hans", extra: ["-recap-reveal", scene, String(time)])
         // The reveal is hidden from VoiceOver, so there's nothing to wait for but the launch.
         Thread.sleep(forTimeInterval: 1.5)
-        keepScreenshot(named: "56-scenepick-reveal-\(scene)-\(time)s")
+        // In milliseconds: CI keeps only names without a dot before the extension.
+        let millis = String(format: "%04d", Int((time * 1000).rounded()))
+        keepScreenshot(named: "56-scenepick-reveal-\(scene)-\(millis)ms")
         app.terminate()
     }
 
