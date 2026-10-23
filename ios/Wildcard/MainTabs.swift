@@ -21,9 +21,7 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
-    /// Nil on the real backend until 出赛表's API adapter lands: the tab shows its placeholder
-    /// there rather than the in-memory sample member's week.
-    let schedule: ScheduleModel?
+    let schedule: ScheduleModel
     let feed: FeedModel
     let squad: SquadSettingsModel
     let recap: RecapShelf
@@ -114,12 +112,8 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
                 .task { await recap.refresh() }
         case .schedule:
-            if let schedule {
-                ScheduleView(model: schedule)
-                    .environment(\.sceneTheme, today.scene)
-            } else {
-                UpcomingTab(title: Text("出赛表"))
-            }
+            ScheduleView(model: schedule)
+                .environment(\.sceneTheme, today.scene)
         case .profile:
             MeView(
                 model: profile,
@@ -157,22 +151,5 @@ private struct RecapTile: View {
             RecapEntryTile(
                 week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
         }
-    }
-}
-
-/// A tab whose screen is still being built: its name on a white page.
-private struct UpcomingTab: View {
-    let title: Text
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        title
-            .typeStyle(TypeRamp.largeTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.l)
-            .background(Color(role: .bgCanvas, in: theme))
-            .accessibilityIdentifier("tab.upcoming")
     }
 }

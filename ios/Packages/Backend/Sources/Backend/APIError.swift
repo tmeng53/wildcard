@@ -63,6 +63,12 @@ public enum Refusal: Equatable, Sendable {
     case sceneAlreadyPicked
     /// The week named isn't the one open for picking: a new week started meanwhile.
     case sceneWeekClosed
+    /// The week is over (a plan), or has started (its 饮食小目标): it stays as it is.
+    case weekClosed
+    /// A day of this week that has started keeps its plan.
+    case planDayStarted
+    /// This week keeps its number of rest days; they only move.
+    case restDaysFixed
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -95,5 +101,9 @@ public enum Refusal: Equatable, Sendable {
         "NOT_SCENE_PICKER": .notScenePicker,
         "SCENE_ALREADY_PICKED": .sceneAlreadyPicked,
         "SCENE_WEEK_CLOSED": .sceneWeekClosed,
+        "WEEK_OVER": .weekClosed,
+        "WEEK_STARTED": .weekClosed,
+        "PLAN_DAY_STARTED": .planDayStarted,
+        "REST_DAYS_FIXED": .restDaysFixed,
     ]
 }
