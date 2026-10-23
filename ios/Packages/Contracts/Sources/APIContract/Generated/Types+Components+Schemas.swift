@@ -4217,6 +4217,128 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadNudges`.
+        public struct SquadNudges: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
+            public var version: Components.Schemas.SquadNudges.VersionPayload
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case poke = "poke"
+            }
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/kind`.
+            public var kind: Components.Schemas.SquadNudges.KindPayload
+            /// The squadmates the caller sent one to today, on the caller’s clock.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/sent`.
+            public var sent: [Swift.String]
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/ReceivedPayload`.
+            public struct ReceivedPayloadPayload: Codable, Hashable, Sendable {
+                /// The squadmate who sent it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadNudges/ReceivedPayload/from`.
+                public var from: Swift.String
+                /// When they sent it, in UTC.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadNudges/ReceivedPayload/at`.
+                public var at: Foundation.Date
+                /// Creates a new `ReceivedPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - from: The squadmate who sent it.
+                ///   - at: When they sent it, in UTC.
+                public init(
+                    from: Swift.String,
+                    at: Foundation.Date
+                ) {
+                    self.from = from
+                    self.at = at
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case from
+                    case at
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.from = try container.decode(
+                        Swift.String.self,
+                        forKey: .from
+                    )
+                    self.at = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .at
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "from",
+                        "at"
+                    ])
+                }
+            }
+            /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/received`.
+            public typealias ReceivedPayload = [Components.Schemas.SquadNudges.ReceivedPayloadPayload]
+            /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadNudges/received`.
+            public var received: Components.Schemas.SquadNudges.ReceivedPayload
+            /// Creates a new `SquadNudges`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind: A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///   - sent: The squadmates the caller sent one to today, on the caller’s clock.
+            ///   - received: Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
+            public init(
+                version: Components.Schemas.SquadNudges.VersionPayload,
+                kind: Components.Schemas.SquadNudges.KindPayload,
+                sent: [Swift.String],
+                received: Components.Schemas.SquadNudges.ReceivedPayload
+            ) {
+                self.version = version
+                self.kind = kind
+                self.sent = sent
+                self.received = received
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case sent
+                case received
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadNudges.VersionPayload.self,
+                    forKey: .version
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.SquadNudges.KindPayload.self,
+                    forKey: .kind
+                )
+                self.sent = try container.decode(
+                    [Swift.String].self,
+                    forKey: .sent
+                )
+                self.received = try container.decode(
+                    Components.Schemas.SquadNudges.ReceivedPayload.self,
+                    forKey: .received
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "kind",
+                    "sent",
+                    "received"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Nudge`.
         public struct Nudge: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Nudge/version`.

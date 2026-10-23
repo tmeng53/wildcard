@@ -112,12 +112,17 @@ public struct SceneSticker: View {
     }
 }
 
-/// When the squad last trained at the chosen scene, the number in Barlow.
-struct LastTrainedLine: View {
+/// When the squad last trained at the chosen scene, the number in Barlow: on the sticker, and
+/// on squad settings' picker.
+public struct LastTrainedLine: View {
     @Environment(\.sceneTheme) private var theme
     let last: LastTrained
 
-    var body: some View {
+    public init(last: LastTrained) {
+        self.last = last
+    }
+
+    public var body: some View {
         Group {
             switch last {
             case .thisWeek: Text("这周就在这儿练", bundle: .module)

@@ -3,6 +3,7 @@ import CheckInUI
 import DesignSystem
 import Foundation
 import ScheduleUI
+import SquadUI
 import UIKit
 
 /// Launch arguments the UI tests pass in.
@@ -56,6 +57,19 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-empty-feed")
     }
 
+    /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
+    /// `winner`, `member`, `noWinner`); the captain by default.
+    static var squadSeat: InMemorySquadSettingsService.Seat {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return .captain }
+        return InMemorySquadSettingsService.Seat(rawValue: arguments[flag + 1]) ?? .captain
+    }
+
+    /// `-uitest-long-names`: the in-memory squad's names are as long as the rules allow.
+    static var longNames: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-long-names")
+    }
+
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
     /// tests check after a post. Only the notification UI test leaves it out.
     static var asksForNotifications: Bool {
@@ -103,6 +117,22 @@ enum LaunchOptions {
             let size = Int(arguments[flag + 1])
         else { return 8 }
         return size
+    }
+
+    /// `-uitest-patted`: on the sample squad, 小米 and 阿杰 patted me an hour ago, so the home
+    /// plays their pats on opening. It plays on every launch: what was shown is kept apart from
+    /// the app's own settings and forgotten each time.
+    static var pattedMe: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-patted")
+    }
+
+    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
+    /// suite emptied at launch.
+    static var todayDefaults: UserDefaults {
+        let suite = "uitest-today"
+        guard pattedMe, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
     }
 
     /// `-uitest-scene track`: the sample squad's home on another scene than the gym.

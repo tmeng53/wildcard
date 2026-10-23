@@ -7,6 +7,8 @@ import MeDomain
 import MeUI
 import RecapUI
 import ScheduleUI
+import SquadDomain
+import SquadUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -23,11 +25,16 @@ struct MainTabs: View {
     /// there rather than the in-memory sample member's week.
     let schedule: ScheduleModel?
     let feed: FeedModel
+    let squad: SquadSettingsModel
     let recap: RecapShelf
     @Binding var selection: Tab
+    /// The member left the squad on 小队设置.
+    var leftSquad: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
     @State private var editor: CharacterEditorModel?
+    /// 小队设置, open from 我 over everything.
+    @State private var showsSquad = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -65,6 +72,15 @@ struct MainTabs: View {
                         }
                     })
             }
+        }
+        .fullScreenCover(isPresented: $showsSquad) {
+            SquadSettingsView(model: squad) { showsSquad = false }
+                .environment(\.sceneTheme, squad.scene)
+        }
+        .onChange(of: squad.hasLeft) { _, left in
+            guard left else { return }
+            showsSquad = false
+            leftSquad()
         }
     }
 
@@ -108,8 +124,8 @@ struct MainTabs: View {
             MeView(
                 model: profile,
                 destinations: MeDestinations(
-                    // The squad lives on 今天 and past 战报 in 动态 until each has a page of its own.
-                    squad: { selection = .today },
+                    // Past 战报 live in 动态 until they have a page of their own.
+                    squad: { showsSquad = true },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)

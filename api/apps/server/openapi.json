@@ -2063,6 +2063,63 @@
         ],
         "additionalProperties": false
       },
+      "SquadNudges": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "poke"
+            ],
+            "description": "A poke (拍一拍, `poke`). The app shows each kind with its own copy."
+          },
+          "sent": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The squadmates the caller sent one to today, on the caller’s clock."
+          },
+          "received": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The squadmate who sent it."
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When they sent it, in UTC."
+                }
+              },
+              "required": [
+                "from",
+                "at"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Who sent the caller one in the last 24 hours, each once at their latest, oldest first."
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "sent",
+          "received"
+        ],
+        "additionalProperties": false
+      },
       "Nudge": {
         "type": "object",
         "properties": {
@@ -5429,6 +5486,92 @@
       }
     },
     "/squads/{squadId}/nudges": {
+      "get": {
+        "operationId": "listSquadNudges",
+        "summary": "The caller’s pokes in a squad (拍一拍)",
+        "description": "What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "poke"
+              ],
+              "description": "A poke (拍一拍, `poke`). The app shows each kind with its own copy."
+            },
+            "required": true,
+            "description": "A poke (拍一拍, `poke`). The app shows each kind with its own copy.",
+            "name": "kind",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller’s nudges of that kind",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadNudges"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid kind",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "nudgeSquadmate",
         "summary": "Poke a squadmate (拍一拍)",

@@ -78,6 +78,14 @@ public struct APICheckInBackend: CheckInBackend {
         do { try await api.removeReaction(from: checkIn) } catch { throw CheckInError(error) }
     }
 
+    public func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
+        do { return try await api.pokes(in: squad) } catch { throw CheckInError(error) }
+    }
+
+    public func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
+        do { try await api.pat(member, in: squad) } catch { throw CheckInError(error) }
+    }
+
     /// Deletes the copy, when the member signs out or deletes their account.
     public func forget() {
         try? FileManager.default.removeItem(at: saved)

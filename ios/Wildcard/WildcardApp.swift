@@ -14,6 +14,8 @@ import OnboardingUI
 import RecapUI
 import ScheduleDomain
 import ScheduleUI
+import SquadDomain
+import SquadUI
 import SwiftUI
 
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
@@ -33,6 +35,7 @@ struct WildcardApp: App {
     @State private var feed: FeedModel
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
+    @State private var squad: SquadSettingsModel
     @State private var recap: RecapShelf
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
@@ -47,19 +50,25 @@ struct WildcardApp: App {
             initialValue: TodayModel(
                 store: TodayStore(
                     backend: InMemoryCheckInBackend.sampleSquad(
-                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad),
+                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
+                        patted: LaunchOptions.pattedMe),
                     outbox: InMemoryOutbox(),
                     now: LaunchOptions.now, newID: { UUID() }),
                 writer: LaunchOptions.disclaimerWriter,
                 photoSource: LaunchOptions.photoSource,
                 scene: LaunchOptions.scene,
                 now: LaunchOptions.now,
+                defaults: LaunchOptions.todayDefaults,
                 posted: Self.askForNotifications))
         _profile = State(
             initialValue: MeModel(
                 service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
                 // The in-memory member has no Apple account to confirm with and nothing to sign out of.
                 confirm: { .signedInSession }, signOut: {}))
+        _squad = State(
+            initialValue: SquadSettingsModel(
+                service: InMemorySquadSettingsService.sample(
+                    seat: LaunchOptions.squadSeat, longNames: LaunchOptions.longNames)))
         _schedule = State(
             initialValue: ScheduleModel(
                 store: ScheduleStore(
@@ -131,7 +140,8 @@ struct WildcardApp: App {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
                 MainTabs(
-                    today: today, profile: profile, schedule: schedule, feed: feed, recap: recap, selection: $tab
+                    today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
+                    selection: $tab
                 )
                 .onAppear {
                     delegate.opened = { [today, $tab] _ in
@@ -163,9 +173,14 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
-            case .tabs(let today, let profile, let feed, let recap):
+            case .tabs(let today, let profile, let feed, let squad, let recap):
                 // 出赛表 shows its placeholder here until its API adapter lands.
-                MainTabs(today: today, profile: profile, schedule: nil, feed: feed, recap: recap, selection: $tab)
+                MainTabs(
+                    today: today, profile: profile, schedule: nil, feed: feed, squad: squad, recap: recap,
+                    selection: $tab
+                ) {
+                    Task { await app.leftSquad() }
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
