@@ -44,6 +44,7 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
+        LaunchOptions.forgetSeenRecapIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(
@@ -177,10 +178,9 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
-            case .tabs(let today, let profile, let feed, let squad, let recap):
-                // 出赛表 shows its placeholder here until its API adapter lands.
+            case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
-                    today: today, profile: profile, schedule: nil, feed: feed, squad: squad, recap: recap,
+                    today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
                     selection: $tab
                 ) {
                     Task { await app.leftSquad() }

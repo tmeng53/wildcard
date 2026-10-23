@@ -30,7 +30,6 @@ final class TabsUITests: XCTestCase {
         waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: 30), "动态 shows another screen")
         XCTAssertFalse(checkIn.exists, "今天 still shows under 动态")
-        let upcoming = app.staticTexts["tab.upcoming"]
         app.buttons["tab.schedule"].tap()
         waitFor(app.buttons["tab.schedule"], "isSelected == true", "出赛表 didn't open")
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 shows another tab's screen")
@@ -39,7 +38,7 @@ final class TabsUITests: XCTestCase {
         waitFor(app.buttons["tab.me"], "isSelected == true", "tab.me didn't open")
         let mePage = app.descendants(matching: .any).matching(identifier: "me.page").firstMatch
         XCTAssertTrue(mePage.waitForExistence(timeout: 30), "我 didn't show its page")
-        XCTAssertFalse(upcoming.exists, "我 shows another tab's screen")
+        XCTAssertFalse(app.buttons["schedule.save"].exists, "我 shows 出赛表 under it")
         XCTAssertFalse(checkIn.exists, "今天 still shows under tab.me")
         app.buttons["tab.today"].tap()
         waitFor(today, "isSelected == true", "今天 didn't open again")

@@ -38,10 +38,19 @@ export const Audience = z
     message: 'Must not list a squad twice',
   });
 
+/** How long a 练了 took, in whole minutes: 1 to 600. Optional; never asked for. */
+export const WorkoutMinutes = z
+  .int()
+  .min(1)
+  .max(600)
+  .meta({ description: 'How long the workout took, in whole minutes.' });
+export type WorkoutMinutes = z.infer<typeof WorkoutMinutes>;
+
 // The fields kept in `check_ins.payload`, and with photos, the fields the app sends.
 export const storedTrainingFields = {
   sport: SportKey,
   customSport: CustomSportName.optional(),
+  minutes: WorkoutMinutes.optional(),
   caption: Caption.optional(),
 };
 const trainingFields = { ...storedTrainingFields, photos: Photos.optional() };
@@ -68,7 +77,7 @@ const mealFields = { ...storedMealFields, photos: Photos.optional() };
 export const storedDisclaimerFields = { text: DisclaimerText };
 const disclaimerFields = { ...storedDisclaimerFields, photos: Photos.optional() };
 
-/** 练了: what was trained, with optional photos and a line. */
+/** 练了: what was trained, with optional minutes, photos and a line. */
 export const Training = z
   .strictObject(trainingFields)
   .superRefine(customSportMatches)

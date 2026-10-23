@@ -48,7 +48,7 @@ let package = Package(
         .testTarget(
             name: "RecapDomainTests",
             dependencies: ["RecapDomain", "Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
-        // The String Catalog read as a file; runs on Linux too.
+        // The String Catalog read as a file, and the story's clips and award parts; runs on Linux too.
         .testTarget(name: "RecapUITests", dependencies: ["RecapUI"]),
     ]
 )

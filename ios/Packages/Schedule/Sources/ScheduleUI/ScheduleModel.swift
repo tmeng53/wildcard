@@ -33,7 +33,9 @@ public final class ScheduleModel {
 
     public let store: ScheduleStore
     /// The member's character, cheering in the poster's corner.
-    let player: CharacterPlayer?
+    private(set) var player: CharacterPlayer?
+    /// The look `player` wears: the stand-in until the profile brings the member's own.
+    private var look: CharacterLook?
     private(set) var fuelOpen = false
     /// Typing a 饮食小目标 of their own.
     var writingFuel = false
@@ -47,15 +49,22 @@ public final class ScheduleModel {
     public init(store: ScheduleStore, photos: any PosterSaver = PhotoLibrarySaver()) {
         self.store = store
         self.photos = photos
-        player = try? CharacterPlayer(
-            figure: PlaceholderCharacter.figure(wearing: Self.look),
-            idle: PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species))
+        player = Self.player(wearing: PlaceholderCharacter.lifter, persona: .energetic)
     }
 
-    /// The member's look and persona until they come with the profile, as on 今天.
-    private static let look = PlaceholderCharacter.lifter
-    private static let persona = Persona.energetic
-    private static let species = "person"
+    private static func player(wearing outfit: Outfit, persona: Persona) -> CharacterPlayer? {
+        try? CharacterPlayer(
+            figure: PlaceholderCharacter.figure(wearing: outfit),
+            idle: PlaceholderCharacter.clip(
+                "cheer", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
+    }
+
+    /// Dresses the poster's character in the member's own look once the profile has one.
+    private func dressPlayer() {
+        guard let mine = store.profile?.look, mine != look else { return }
+        look = mine
+        player = Self.player(wearing: Outfit(mine), persona: Persona(mine))
+    }
 
     var panel: Panel {
         if fuelOpen, store.canEditFuel { return .fuel }
@@ -67,6 +76,7 @@ public final class ScheduleModel {
 
     func load() async {
         await store.load()
+        dressPlayer()
     }
 
     func show(_ week: LocalDay) {
