@@ -10,6 +10,7 @@ import {
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
 
 import type { Log } from '../log.js';
+import { pushToday, type PushToday } from './daily-push-today.js';
 
 /** How many members' pushes are put together at once. */
 const AT_ONCE = 4;
@@ -164,11 +165,9 @@ async function compose(
   const [squad] = await deps.squads.listMine(SquadMember.parse(member));
   if (squad === undefined) return undefined;
   const window = { member, since, until };
+  const squadId = SquadId.parse(squad.id);
   const [today, ...received] = await Promise.all([
-    deps.checkIns.squadToday({
-      viewer: CheckInMember.parse(member),
-      squad: SquadId.parse(squad.id),
-    }),
+    deps.checkIns.squadToday({ viewer: CheckInMember.parse(member), squad: squadId }),
     ...deps.interactions.map((source) => source(window)),
   ]);
   const byKind = mergeInteractions(received);
@@ -179,6 +178,7 @@ async function compose(
     squad: squad.id,
     squadWeek: today.squadWeek,
     received: byKind,
+    today: await pushToday(deps, { viewer: member, squad: squadId, today }),
   });
 }
 
@@ -205,11 +205,14 @@ export function dailyProgressNotification({
   squad,
   squadWeek,
   received,
+  today,
 }: {
   readonly day: string;
   readonly squad: string;
   readonly squadWeek: { readonly trainedDays: number; readonly plannedDays: number };
   readonly received: Interactions;
+  /** Teammates' check-ins today, for the push's long-press view. */
+  readonly today: PushToday;
 }): PushNotification {
   const people = new Set([...received.values()].flatMap((each) => [...each])).size;
   const week = [String(squadWeek.trainedDays), String(squadWeek.plannedDays)];
@@ -230,6 +233,7 @@ export function dailyProgressNotification({
       squadTrainedDays: squadWeek.trainedDays,
       squadPlannedDays: squadWeek.plannedDays,
       received: Object.fromEntries([...received].map(([kind, each]) => [kind, each.size])),
+      today,
     },
   };
 }
