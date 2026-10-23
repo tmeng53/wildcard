@@ -1,0 +1,97 @@
+# Builds the app, signs it and uploads it to TestFlight. Run it by hand from `main`
+# (Actions → testflight → Run workflow); it never runs on its own, since macOS minutes are scarce.
+# Signing is automatic and Apple-managed: xcodebuild signs in to App Store Connect with an API key
+# and Apple's cloud-managed distribution certificate signs the export, so no certificate or
+# profile is kept anywhere. The key must have the Admin role: App Manager keys get "Cloud signing
+# permission error". Its Key ID and .p8 are the repository secrets ASC_KEY_ID and ASC_PRIVATE_KEY
+# (the whole .p8 file, BEGIN and END lines included); the issuer and team ids below are not secret.
+# The build number is this workflow's run number and attempt (12.1, 13.1, 13.2…), which only grows,
+# so every upload is new to App Store Connect; the version is MARKETING_VERSION in the project.
+# https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases
+# https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api
+name: testflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+# None of these is secret.
+env:
+  ASC_ISSUER_ID: c1d7ff41-22e2-482b-95e2-fd4f71b5efb1
+  TEAM_ID: WFY3YV6SPP
+
+jobs:
+  upload:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - name: Write the API key
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_PRIVATE_KEY" ]; then
+            echo "::error::Set the ASC_KEY_ID and ASC_PRIVATE_KEY repository secrets first."
+            exit 1
+          fi
+          key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$key"
+          chmod 600 "$key"
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+      - name: Archive
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project ios/Wildcard.xcodeproj \
+            -scheme Wildcard \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/testflight/Wildcard.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            2>&1 | tee build-archive.log
+      - name: Export and upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath build/testflight/Wildcard.xcarchive \
+            -exportOptionsPlist ios/Config/ExportOptions.plist \
+            -exportPath build/testflight/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee build-export.log
+          version="$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' build/testflight/Wildcard.xcarchive/Info.plist)"
+          build="$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' build/testflight/Wildcard.xcarchive/Info.plist)"
+          echo "Uploaded Wildcard $version ($build). App Store Connect processes it before it shows in TestFlight." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove the API key
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testflight-logs-${{ github.run_number }}.${{ github.run_attempt }}
+          path: build-*.log
+          if-no-files-found: ignore
