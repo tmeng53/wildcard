@@ -131,7 +131,7 @@ struct FeedLayer: View {
 }
 
 /// The six quick emoji and ＋, which opens our emoji grid for any other: a glass capsule over the
-/// card. Mine is on the scene's wash; picking it again takes it back. While a finger holds and
+/// card. Mine sits on a grey circle; picking it again takes it back. While a finger holds and
 /// slides along it, the slot under the finger grows.
 struct EmojiBar: View {
     @Environment(\.sceneTheme) private var theme
@@ -165,7 +165,7 @@ struct EmojiBar: View {
                         .font(.system(size: Self.emojiSize))
                         .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
                         .background {
-                            if emoji == mine { Circle().fill(Color(role: .bgAccentSubtle, in: theme)) }
+                            if emoji == mine { Circle().fill(Color(role: .bgSubtle, in: theme)) }
                         }
                         .scaleEffect(hovered ? Self.hoverScale : (shown || reduceMotion ? 1 : 0.4))
                         .offset(y: hovered ? -Self.hoverRise : 0)

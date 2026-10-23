@@ -64,6 +64,8 @@ public struct FeedView: View {
         }
         .coordinateSpace(.named(Self.space))
         .background(Color(role: .bgCanvas, in: theme))
+        // A brand screen: buttons and selection wear the brand; only the kind tags keep the scene.
+        .accentTone(.brand)
         .haptic(.pick, trigger: model.picks)
         .haptic(.appear, trigger: model.lifts)
         .haptic(.reaction, trigger: model.arrivals)

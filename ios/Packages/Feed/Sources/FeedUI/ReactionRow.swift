@@ -8,7 +8,7 @@ import SwiftUI
 
 /// The emoji row at the bottom of a card: up to four heads, newest first, each wearing that
 /// person's emoji, then +n for the rest; tapping them opens who reacted. At the right, my button:
-/// a smiley that opens the emoji bar, or my emoji on the scene's wash once I reacted. My own
+/// a smiley that opens the emoji bar, or my emoji, outlined, once I reacted. My own
 /// posts have no button, and no row until someone reacts.
 struct ReactionRow: View {
     @Environment(\.sceneTheme) private var theme
@@ -22,6 +22,7 @@ struct ReactionRow: View {
     private static let buttonSize = CGSize(width: 44, height: 34)
     private static let buttonEmojiSize: Double = 20
     private static let buttonPop: Double = 1.18
+    private static let mineStroke: Double = 1.5
 
     private var canRespond: Bool { post.canRespond(model.viewer) }
 
@@ -103,7 +104,13 @@ struct ReactionRow: View {
                 }
             }
             .frame(width: Self.buttonSize.width, height: Self.buttonSize.height)
-            .background(Color(role: mine == nil ? .bgCanvas : .bgAccentSubtle, in: theme), in: Capsule())
+            .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+            // Once I reacted, a dark outline: 动态 is a brand screen, so no scene colour.
+            .overlay {
+                if mine != nil {
+                    Capsule().strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Self.mineStroke)
+                }
+            }
             .keyframeAnimator(initialValue: 1.0, trigger: mine) { button, scale in
                 button.scaleEffect(reduceMotion ? 1 : scale)
             } keyframes: { _ in
