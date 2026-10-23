@@ -4,6 +4,7 @@ import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
 import Contracts
+import DailyPushDomain
 import DesignSystemUI
 import FeedDomain
 import FeedUI
@@ -23,10 +24,10 @@ import SwiftUI
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
-/// instead. After the first check-in it asks for notifications; a tapped one
-/// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
-/// about.
+/// `-character-editor` the character editor, `-recap` the 战报's tile and sample story and
+/// `-daily-push` the 6pm push's view instead. After the first check-in it asks for notifications;
+/// a tapped one brings the member back to 今天 with the home loaded again, opens the 战报 its
+/// awards push is about, or goes where the 6pm push's view asked.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
@@ -120,6 +121,20 @@ struct WildcardApp: App {
         return FeedModel(store: store, viewer: viewer, now: LaunchOptions.now)
     }
 
+    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
+    /// the check-in kinds open).
+    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        switch destination {
+        case .feed:
+            tab.wrappedValue = .feed
+        case .checkIn:
+            tab.wrappedValue = .today
+            today.openCheckIn()
+        case nil:
+            tab.wrappedValue = .today
+        }
+    }
+
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
     private static func askForNotifications() {
         guard LaunchOptions.asksForNotifications else { return }
@@ -143,6 +158,8 @@ struct WildcardApp: App {
                 StyleGuideView()
             } else if LaunchOptions.showsRecap {
                 RecapDemo()
+            } else if let day = LaunchOptions.dailyPush {
+                DailyPushPreview(day: day, now: LaunchOptions.now())
             } else if let app {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
@@ -151,9 +168,12 @@ struct WildcardApp: App {
                     selection: $tab
                 )
                 .onAppear {
-                    delegate.opened = { [today, $tab] _ in
-                        $tab.wrappedValue = .today
+                    delegate.opened = { [delegate, today, $tab] _ in
+                        Self.open(delegate.takeDestination(), today: today, tab: $tab)
                         Task { await today.load() }
+                    }
+                    if let destination = delegate.takeDestination() {
+                        Self.open(destination, today: today, tab: $tab)
                     }
                 }
             }
@@ -189,18 +209,27 @@ private struct AppRoot: View {
                 ) {
                     Task { await app.leftSquad() }
                 }
+                .onAppear {
+                    // A tap that launched the app came before the tabs.
+                    if let destination = delegate.takeDestination() {
+                        WildcardApp.open(destination, today: today, tab: $tab)
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
         .onAppear {
-            delegate.opened = { [app, $tab] opened in
+            delegate.opened = { [app, delegate, $tab] opened in
                 switch opened {
                 case .weeklyAwards(let squad, let week):
                     $tab.wrappedValue = .feed
                     Task { await app.openRecap(squad: squad, week: week) }
                 case .other:
-                    $tab.wrappedValue = .today
+                    // Before the tabs are up, they take the 6pm push's destination when they appear.
+                    if case .tabs(let today, _, _, _, _, _) = app.screen {
+                        WildcardApp.open(delegate.takeDestination(), today: today, tab: $tab)
+                    }
                     Task { await app.reloadToday() }
                 }
             }

@@ -49,6 +49,12 @@ public struct MoveID: Hashable, Sendable, CustomStringConvertible {
     public var description: String { id }
 }
 
+extension Emoji {
+    /// The emoji bar's six, in the approved order, wherever a member reacts (动态, the 6pm push);
+    /// ＋ offers any other.
+    public static let quick: [Emoji] = ["❤️", "💪", "😂", "🤤", "😮", "😡"].compactMap { try? Emoji($0) }
+}
+
 /// How a member reacted.
 public enum ReactionGesture: Hashable, Sendable {
     /// Picked an emoji from the bar or the keyboard: the same one again takes it back.

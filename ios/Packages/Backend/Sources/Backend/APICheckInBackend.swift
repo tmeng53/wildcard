@@ -9,13 +9,18 @@ import OpenAPIRuntime
 public struct APICheckInBackend: CheckInBackend {
     private let api: WildcardAPI
     private let saved: URL
+    private let shared: SharedSquad?
     private let now: @Sendable () -> Date
 
     /// - Parameters:
     ///   - directory: where the copy is kept, such as Application Support.
-    public init(api: WildcardAPI, directory: URL, now: @escaping @Sendable () -> Date = { Date() }) {
+    ///   - shared: where the squad's looks are kept for the 6pm push view.
+    public init(
+        api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.api = api
         saved = directory.appending(path: "home.json")
+        self.shared = shared
         self.now = now
     }
 
@@ -35,7 +40,7 @@ public struct APICheckInBackend: CheckInBackend {
                 signedIn = try await api.meWire()
             }
             guard let squad = try await api.mySquadsWire().squads.first else {
-                try? FileManager.default.removeItem(at: saved)
+                forget()
                 return nil
             }
             let zone = signedIn.profile.flatMap { TimeZone(identifier: $0.timeZone) } ?? .current
@@ -50,6 +55,7 @@ public struct APICheckInBackend: CheckInBackend {
                 checkIns: try await checkIns, week: try await week)
             let home = try copy.home(api: api)
             try? DeviceJSON.write(try DeviceJSON.encoder.encode(copy), to: saved)
+            shared?.save(home.today.members)
             return home
         } catch let error as APIError {
             throw CheckInError(error)
@@ -86,9 +92,10 @@ public struct APICheckInBackend: CheckInBackend {
         do { try await api.pat(member, in: squad) } catch { throw CheckInError(error) }
     }
 
-    /// Deletes the copy, when the member signs out or deletes their account.
+    /// Deletes the copy and the squad's looks, when the member signs out or deletes their account.
     public func forget() {
         try? FileManager.default.removeItem(at: saved)
+        shared?.forget()
     }
 }
 
