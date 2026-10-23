@@ -862,6 +862,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/customSport`.
             public var customSport: Swift.String?
+            /// How long the workout took, in whole minutes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingView/minutes`.
+            public var minutes: Swift.Int?
             /// Trimmed, then 1 to 60 characters as people see them, on one line.
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/caption`.
@@ -875,22 +879,26 @@ extension Components {
             /// - Parameters:
             ///   - sport:
             ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
+            ///   - minutes: How long the workout took, in whole minutes.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             public init(
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
+                minutes: Swift.Int? = nil,
                 caption: Swift.String? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil
             ) {
                 self.sport = sport
                 self.customSport = customSport
+                self.minutes = minutes
                 self.caption = caption
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case sport
                 case customSport
+                case minutes
                 case caption
                 case photos
             }
@@ -904,6 +912,10 @@ extension Components {
                     Swift.String.self,
                     forKey: .customSport
                 )
+                self.minutes = try container.decodeIfPresent(
+                    Swift.Int.self,
+                    forKey: .minutes
+                )
                 self.caption = try container.decodeIfPresent(
                     Swift.String.self,
                     forKey: .caption
@@ -915,6 +927,7 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "sport",
                     "customSport",
+                    "minutes",
                     "caption",
                     "photos"
                 ])
@@ -1611,6 +1624,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/customSport`.
             public var customSport: Swift.String?
+            /// How long the workout took, in whole minutes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Training/minutes`.
+            public var minutes: Swift.Int?
             /// Trimmed, then 1 to 60 characters as people see them, on one line.
             ///
             /// - Remark: Generated from `#/components/schemas/Training/caption`.
@@ -1624,22 +1641,26 @@ extension Components {
             /// - Parameters:
             ///   - sport:
             ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
+            ///   - minutes: How long the workout took, in whole minutes.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             public init(
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
+                minutes: Swift.Int? = nil,
                 caption: Swift.String? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil
             ) {
                 self.sport = sport
                 self.customSport = customSport
+                self.minutes = minutes
                 self.caption = caption
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case sport
                 case customSport
+                case minutes
                 case caption
                 case photos
             }
@@ -1653,6 +1674,10 @@ extension Components {
                     Swift.String.self,
                     forKey: .customSport
                 )
+                self.minutes = try container.decodeIfPresent(
+                    Swift.Int.self,
+                    forKey: .minutes
+                )
                 self.caption = try container.decodeIfPresent(
                     Swift.String.self,
                     forKey: .caption
@@ -1664,6 +1689,7 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "sport",
                     "customSport",
+                    "minutes",
                     "caption",
                     "photos"
                 ])

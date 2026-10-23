@@ -152,7 +152,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(today.phase == .current)
     #expect(today.home?.squad.id == squad.id)
     #expect(today.home?.today.members.map(\.character?.nickname.text) == ["小林"])
-    guard case .posted = try await today.post(.trained(.sport(.run), PostBody(photos: [], caption: "")))
+    guard case .posted = try await today.post(.trained(.sport(.run), nil, PostBody(photos: [], caption: "")))
     else { Issue.record("the post was queued, not saved"); return }
     #expect(today.myStatus == .trained)
 }

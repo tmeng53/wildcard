@@ -8,6 +8,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case disclaimerLength(Int)
     /// A caption that is empty or longer than `Caption.maxLength` characters.
     case captionLength(Int)
+    /// Workout minutes outside `WorkoutMinutes.range`.
+    case workoutMinutes(Int)
     /// A caption with a line break; it is one line.
     case multilineCaption
     /// A check-in sent to no squads, or more than `Audience.maxSquads`.
