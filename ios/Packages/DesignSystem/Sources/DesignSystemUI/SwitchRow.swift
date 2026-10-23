@@ -4,7 +4,7 @@ import SwiftUI
 
 /// A 52-point row that turns a setting on or off (每日提醒): an icon, the title and a switch, in
 /// the same list as `ListRow`. The whole row is the tap target. On, the switch fills with the
-/// scene's accent; off, the hairline grey (muted ink with Increase Contrast on, so it stands out
+/// scene's accent (or ink, with `tint: .ink`); off, the hairline grey (muted ink with Increase Contrast on, so it stands out
 /// on a white card); the knob is white with no shadow. VoiceOver reads it as a switch.
 public struct SwitchRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -13,12 +13,17 @@ public struct SwitchRow: View {
     @Binding private var isOn: Bool
     @State private var taps = 0
     private let showsDivider: Bool
+    private let tint: ControlTint
 
-    public init(_ title: Text, systemImage: String? = nil, isOn: Binding<Bool>, showsDivider: Bool = true) {
+    public init(
+        _ title: Text, systemImage: String? = nil, isOn: Binding<Bool>, showsDivider: Bool = true,
+        tint: ControlTint = .scene
+    ) {
         self.title = title
         self.systemImage = systemImage
         _isOn = isOn
         self.showsDivider = showsDivider
+        self.tint = tint
     }
 
     public var body: some View {
@@ -27,7 +32,7 @@ public struct SwitchRow: View {
             withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { isOn.toggle() }
         } label: {
             RowShell(title: title, systemImage: systemImage, showsDivider: showsDivider) {
-                SwitchTrack(isOn: isOn)
+                SwitchTrack(isOn: isOn, tint: tint)
             }
         }
         .buttonStyle(.plain)
@@ -44,10 +49,11 @@ private struct SwitchTrack: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.colorSchemeContrast) private var contrast
     let isOn: Bool
+    let tint: ControlTint
 
     var body: some View {
         Capsule()
-            .fill(Color(role: isOn ? .bgAccent : offTrack, in: theme))
+            .fill(Color(role: isOn ? tint.fill : offTrack, in: theme))
             .frame(width: Sizing.switchWidth, height: Sizing.switchHeight)
             .overlay(alignment: isOn ? .trailing : .leading) {
                 Circle()

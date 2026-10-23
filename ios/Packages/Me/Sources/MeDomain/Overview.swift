@@ -1,5 +1,6 @@
 import AvatarArt
 import AvatarDomain
+import Contracts
 
 /// Everything the member ever checked in, by kind. Counts only go up.
 public struct LifetimeCounts: Hashable, Sendable {
@@ -28,18 +29,24 @@ public struct MeCharacter: Hashable, Sendable {
     }
 }
 
-/// What 我 shows: the character, the lifetime counts, the squad and the notification switch.
+/// What 我 shows: the character, the lifetime counts, this week, the squad and the notification
+/// switch.
 public struct MeOverview: Hashable, Sendable {
     public var character: MeCharacter
     public var counts: LifetimeCounts
+    /// 本周 x/y; nil while the member has no plan for the week.
+    public var week: WeekCount?
     /// Nil before the member is in a squad. The app shows one squad, though the API allows three.
     public var squadName: String?
     /// The one daily push at 6pm with the squad's progress.
     public var dailyPushOn: Bool
 
-    public init(character: MeCharacter, counts: LifetimeCounts, squadName: String?, dailyPushOn: Bool) {
+    public init(
+        character: MeCharacter, counts: LifetimeCounts, week: WeekCount?, squadName: String?, dailyPushOn: Bool
+    ) {
         self.character = character
         self.counts = counts
+        self.week = week
         self.squadName = squadName
         self.dailyPushOn = dailyPushOn
     }

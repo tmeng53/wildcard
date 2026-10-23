@@ -2,8 +2,18 @@
 import DesignSystem
 import SwiftUI
 
+/// What fills a primary or switched-on control: the scene's accent, or ink on the pages that stay
+/// out of the scene's colours (我, 设置, 注销账号).
+public enum ControlTint: Sendable {
+    case scene
+    case ink
+
+    var fill: ColorRole { self == .scene ? .bgAccent : .fgDefault }
+    var onFill: ColorRole { self == .scene ? .fgOnAccent : .bgCanvas }
+}
+
 /// The one primary action on a screen (下一步, 打卡, 发布): a solid capsule in the scene's
-/// accent, flat, that shrinks while held. `.large` is 52 points tall and fills its width when the
+/// accent (or ink, with `tint: .ink`), flat, that shrinks while held. `.large` is 52 points tall and fills its width when the
 /// label asks for it; `.regular` is 44, for an action inside content (去打卡). Disabled, it turns a
 /// quiet grey.
 public struct PrimaryButtonStyle: ButtonStyle {
@@ -15,19 +25,21 @@ public struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.isEnabled) private var isEnabled
     private let size: Size
+    private let tint: ControlTint
 
-    public init(_ size: Size = .large) {
+    public init(_ size: Size = .large, tint: ControlTint = .scene) {
         self.size = size
+        self.tint = tint
     }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .typeStyle(size == .large ? TypeRamp.action : TypeRamp.calloutEmphasis)
             .lineLimit(1)
-            .foregroundStyle(Color(role: isEnabled ? .fgOnAccent : .fgSubtle, in: theme))
+            .foregroundStyle(Color(role: isEnabled ? tint.onFill : .fgSubtle, in: theme))
             .padding(.horizontal, size == .large ? Space.l : Space.m + Space.xxs)
             .frame(minHeight: size == .large ? Sizing.primaryControl : Sizing.control)
-            .background(Color(role: isEnabled ? .bgAccent : .borderDefault, in: theme), in: Capsule())
+            .background(Color(role: isEnabled ? tint.fill : .borderDefault, in: theme), in: Capsule())
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }
@@ -52,25 +64,53 @@ public struct SecondaryButtonStyle: ButtonStyle {
     }
 }
 
-/// Confirming with Apple (用 Apple 确认注销): Apple's black capsule with its logo, 52 tall and
-/// full width, drawn in Apple's black rather than our ink, as Apple's button guidelines ask.
-/// Disabled, it turns a quiet grey.
+/// Confirming with Apple (用 Apple 确认注销), in Apple's own black as its button guidelines ask.
+/// `.filled` is Apple's black capsule, 52 tall and full width; `.outlined` is Apple's white button
+/// with a black outline, 44 tall and as wide as its label, for when a gentler action is the
+/// page's main one. Disabled, either turns a quiet grey.
 public struct AppleButtonStyle: ButtonStyle {
+    public enum Look: Sendable {
+        case filled
+        case outlined
+    }
+
     @Environment(\.sceneTheme) private var theme
     @Environment(\.isEnabled) private var isEnabled
+    private let look: Look
 
-    public init() {}
+    public init(_ look: Look = .filled) {
+        self.look = look
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .typeStyle(TypeRamp.headline)
-            .lineLimit(1)
-            .foregroundStyle(isEnabled ? Color(Palette.white) : Color(role: .fgSubtle, in: theme))
-            .padding(.horizontal, Space.l)
-            .frame(maxWidth: .infinity, minHeight: Sizing.primaryControl)
-            .background(isEnabled ? Color(Palette.appleBlack) : Color(role: .borderDefault, in: theme), in: Capsule())
-            .contentShape(Capsule())
-            .modifier(PressFeedback(isPressed: configuration.isPressed))
+        Group {
+            switch look {
+            case .filled:
+                configuration.label
+                    .typeStyle(TypeRamp.headline)
+                    .lineLimit(1)
+                    .foregroundStyle(isEnabled ? Color(Palette.white) : Color(role: .fgSubtle, in: theme))
+                    .padding(.horizontal, Space.l)
+                    .frame(maxWidth: .infinity, minHeight: Sizing.primaryControl)
+                    .background(
+                        isEnabled ? Color(Palette.appleBlack) : Color(role: .borderDefault, in: theme), in: Capsule())
+            case .outlined:
+                configuration.label
+                    .typeStyle(TypeRamp.calloutEmphasis)
+                    .lineLimit(1)
+                    .foregroundStyle(isEnabled ? Color(Palette.appleBlack) : Color(role: .fgSubtle, in: theme))
+                    .padding(.horizontal, Space.m + Space.xxs)
+                    .frame(minHeight: Sizing.control)
+                    .background(Color(Palette.white), in: Capsule())
+                    .overlay {
+                        Capsule().strokeBorder(
+                            isEnabled ? Color(Palette.appleBlack) : Color(role: .borderDefault, in: theme),
+                            lineWidth: Sizing.hairline)
+                    }
+            }
+        }
+        .contentShape(Capsule())
+        .modifier(PressFeedback(isPressed: configuration.isPressed))
     }
 }
 

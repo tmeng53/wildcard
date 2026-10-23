@@ -5,9 +5,6 @@ import DesignSystem
 import DesignSystemUI
 import MeDomain
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
 
 /// Where 我's rows lead outside the tab. The app decides: the squad and past 战报 open their
 /// tabs until they have pages of their own.
@@ -31,13 +28,13 @@ public struct MeDestinations {
     }
 }
 
-/// 我: the member's character (tap it to edit), how much they ever checked in, their squad, and
-/// their settings, with signing out and deleting the account at the bottom.
+/// 我: the member's player card (tap it to turn it over) and 编辑角色, with a small 设置 button
+/// that opens the settings menu, and from there 注销账号. Each page replaces the last in place.
+/// These pages keep out of the scene's colours: ink and white only.
 public struct MeView: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
-    @State private var isSigningOut = false
-    @Environment(\.openURL) private var openURL
+    @State private var isSettingsOpen = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -51,11 +48,15 @@ public struct MeView: View {
             if model.isDeletionOpen {
                 DeleteAccountView(model: model) { model.closeDeletion() }
                     .transition(.move(edge: .trailing))
+            } else if isSettingsOpen {
+                SettingsView(model: model, destinations: destinations) { isSettingsOpen = false }
+                    .transition(.move(edge: .trailing))
             } else {
                 content
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.isDeletionOpen)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isSettingsOpen)
         .task { await model.reload() }
     }
 
@@ -68,150 +69,68 @@ public struct MeView: View {
         case .loaded(let overview):
             ScrollView {
                 VStack(spacing: Space.l) {
-                    header(overview)
-                    LifetimeCard(counts: overview.counts)
-                    rows(overview)
+                    HStack {
+                        Spacer()
+                        Button {
+                            isSettingsOpen = true
+                        } label: {
+                            Text("设置", bundle: .module)
+                        }
+                        .buttonStyle(SecondaryButtonStyle())
+                        .accessibilityIdentifier("me.settings")
+                    }
+                    PlayerCard(overview: overview)
+                    VStack(spacing: Space.xs) {
+                        Button(action: destinations.editCharacter) {
+                            Text("编辑角色", bundle: .module)
+                        }
+                        .buttonStyle(SecondaryButtonStyle())
+                        .accessibilityIdentifier("me.editCharacter")
+                        if model.saveFailed {
+                            SaveFailed()
+                        }
+                    }
                 }
                 .padding(.horizontal, Space.pageMargin)
-                .padding(.vertical, Space.l)
+                .padding(.top, Space.xs)
+                .padding(.bottom, Space.l)
             }
             .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
             .background(Color(role: .bgCanvas, in: theme))
             .refreshable { await model.reload() }
             .accessibilityIdentifier("me.page")
         }
     }
+}
 
-    private func header(_ overview: MeOverview) -> some View {
-        VStack(spacing: Space.xs) {
-            Button(action: destinations.editCharacter) {
-                MeStage(character: overview.character)
-            }
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel(Text("编辑角色", bundle: .module))
-            Text(overview.character.nickname)
-                .typeStyle(TypeRamp.title)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-                .accessibilityIdentifier("me.nickname")
-            Button(action: destinations.editCharacter) {
-                Text("编辑角色", bundle: .module)
-            }
-            .buttonStyle(SecondaryButtonStyle())
-            .accessibilityIdentifier("me.editCharacter")
-            if model.saveFailed {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .accessibilityIdentifier("me.saveFailed")
-            }
-        }
-    }
+/// The last change didn't save; says so until the next one.
+struct SaveFailed: View {
+    @Environment(\.sceneTheme) private var theme
 
-    private func rows(_ overview: MeOverview) -> some View {
-        VStack(spacing: Space.cardGap) {
-            squadRows(overview)
-            settingRows
-            accountRows
-        }
-    }
-
-    private func squadRows(_ overview: MeOverview) -> some View {
-        VStack(spacing: 0) {
-            if let squad = overview.squadName {
-                ListRow(
-                    Text("我的小队", bundle: .module), systemImage: "person.3", value: Text(squad),
-                    action: destinations.squad
-                )
-                .accessibilityIdentifier("me.squad")
-            }
-            ListRow(
-                Text("往期战报", bundle: .module), systemImage: "trophy", showsDivider: false,
-                action: destinations.pastRecaps)
-        }
-        .card()
-    }
-
-    private var settingRows: some View {
-        VStack(spacing: 0) {
-            SwitchRow(
-                Text("通知", bundle: .module), systemImage: "bell",
-                isOn: Binding(
-                    get: { model.dailyPushOn },
-                    set: { isOn in Task { await model.setDailyPush(isOn) } })
-            )
-            .accessibilityIdentifier("me.notifications")
-            ListRow(
-                Text("语言", bundle: .module), systemImage: "globe",
-                value: Text("language.current", bundle: .module),
-                showsDivider: destinations.privacyPolicy != nil || destinations.terms != nil
-            ) {
-                // iOS keeps each app's language in Settings; the app follows it.
-                if let settings = Self.appSettings { openURL(settings) }
-            }
-            if let privacy = destinations.privacyPolicy {
-                ListRow(
-                    Text("隐私政策", bundle: .module), systemImage: "hand.raised",
-                    showsDivider: destinations.terms != nil
-                ) { openURL(privacy) }
-            }
-            if let terms = destinations.terms {
-                ListRow(Text("用户条款", bundle: .module), systemImage: "doc.text", showsDivider: false) {
-                    openURL(terms)
-                }
-            }
-        }
-        .card()
-    }
-
-    private var accountRows: some View {
-        VStack(spacing: 0) {
-            ListRow(Text("退出登录", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right") {
-                isSigningOut = true
-            }
-            .accessibilityIdentifier("me.signOut")
-            // The system's own confirm, as the design asks: signing out is one tap from undoable.
-            .confirmationDialog(Text("退出登录？", bundle: .module), isPresented: $isSigningOut, titleVisibility: .visible) {
-                Button(role: .destructive) {
-                    Task { await model.signOut() }
-                } label: {
-                    Text("退出登录", bundle: .module)
-                }
-                .accessibilityIdentifier("me.signOut.confirm")
-            }
-            ListRow(Text("注销账号", bundle: .module), systemImage: "person.crop.circle.badge.xmark", showsDivider: false) {
-                model.openDeletion()
-            }
-            .accessibilityIdentifier("me.deleteAccount")
-        }
-        .card()
+    var body: some View {
+        Text("网络开小差了，没存上", bundle: .module)
+            .typeStyle(TypeRamp.footnote)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+            .accessibilityIdentifier("me.saveFailed")
     }
 }
 
-extension MeView {
-    /// This app's page in the Settings app.
-    @MainActor static var appSettings: URL? {
-        #if canImport(UIKit)
-        URL(string: UIApplication.openSettingsURLString)
-        #else
-        nil
-        #endif
-    }
-}
-
-/// The member's character on a little floor shadow, as large as the page's hero. It plays its
-/// persona's idle and changes clothes in place when the character is edited.
+/// The member's character on a little floor shadow. It plays its persona's idle and changes
+/// clothes in place when the character is edited.
 struct MeStage: View {
     let character: MeCharacter?
+    var size = CGSize(width: 160, height: 200)
+    /// The shadow's colour, so it shows on the page and in the card's window alike.
+    var floor: ColorRole = .bgSubtle
     @State private var player: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
-    static let size = CGSize(width: 180, height: 240)
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Ellipse()
-                .fill(Color(role: .bgSubtle, in: theme))
-                .frame(width: Self.size.width * 0.7, height: Space.s)
+                .fill(Color(role: floor, in: theme))
+                .frame(width: size.width * 0.6, height: Space.xs)
             Group {
                 if let player {
                     CharacterView(player: player)
@@ -219,11 +138,10 @@ struct MeStage: View {
                     Color.clear
                 }
             }
-            .frame(width: Self.size.width, height: Self.size.height - Space.xxs)
+            .frame(width: size.width, height: size.height - Space.xxs)
             .padding(.bottom, Space.xxs)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
-        .contentShape(Rectangle())
+        .frame(width: size.width, height: size.height)
         .task(id: character) { dress() }
     }
 
@@ -241,40 +159,6 @@ struct MeStage: View {
             // Art that doesn't build leaves the stage empty; the rest of 我 still works.
             player = nil
         }
-    }
-}
-
-/// 一共练了 128 次, then the other kinds in a line. Scoreboard digits, as on the home card.
-struct LifetimeCard: View {
-    let counts: LifetimeCounts
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
-            Text("一共练了", bundle: .module)
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-            HStack(alignment: .lastTextBaseline, spacing: Space.xxs) {
-                Text(counts.trainedDays, format: .number)
-                    .typeStyle(TypeRamp.scoreHero)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .contentTransition(.numericText())
-                    .accessibilityIdentifier("me.trainedDays")
-                Text("次", bundle: .module)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-            }
-            Text(
-                "健康餐 \(counts.healthyMeals) · 放纵餐 \(counts.cheatMeals) · 请假条 \(counts.disclaimers)",
-                bundle: .module
-            )
-            .typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .fgMuted, in: theme))
-            .accessibilityIdentifier("me.otherCounts")
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card()
-        .accessibilityElement(children: .combine)
     }
 }
 #endif
