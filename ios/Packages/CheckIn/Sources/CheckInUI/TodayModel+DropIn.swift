@@ -40,7 +40,8 @@ extension TodayModel {
         guard let clip = try? PlaceholderCharacter.drop() else { return }
         let depth = { (mate: SquadCast.Mate) in self.cast.stage.position(of: mate.id, at: 0)?.point.y ?? 0 }
         let mates = cast.mates.sorted { depth($0) < depth($1) }
-        let start = now()
+        // Real time, not the injected clock: the drop plays against the display's frames.
+        let start = Date.now
         let drop = DropIn(count: mates.count + 1)
         // Unblended, so nobody slides up out of where they stood; each waits above the screen
         // until their turn.

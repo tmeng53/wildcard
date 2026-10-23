@@ -240,12 +240,11 @@ private struct Arriving: ViewModifier {
     let offset: (DropIn, Double) -> Double
 
     func body(content: Content) -> some View {
-        if let arrival, !reduceMotion {
-            TimelineView(.animation) { timeline in
-                content.offset(y: offset(arrival.drop, arrival.elapsed(at: timeline.date)))
-            }
-        } else {
-            content
+        // One TimelineView either way, so the card and 打卡 keep their state as the drop
+        // starts and ends.
+        let moving = arrival != nil && !reduceMotion
+        TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
+            content.offset(y: moving ? arrival.map { offset($0.drop, $0.elapsed(at: timeline.date)) } ?? 0 : 0)
         }
     }
 }
