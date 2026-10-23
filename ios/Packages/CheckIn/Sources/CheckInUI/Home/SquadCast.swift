@@ -36,7 +36,16 @@ final class SquadCast {
         var order: [MemberID]
     }
 
-    private var players: [MemberID: (look: Outfit, persona: Persona, player: CharacterPlayer)] = [:]
+    /// A teammate's character and what it was made from.
+    private struct Made {
+        let look: Outfit
+        let persona: Persona
+        /// The name of the loop it plays in its pose.
+        var idle: String
+        let player: CharacterPlayer
+    }
+
+    private var players: [MemberID: Made] = [:]
 
     /// Places the squad from the store's home: everyone but `me`.
     func update(home: Home, scene: SceneTheme, phase: DayPhase) {
@@ -56,7 +65,8 @@ final class SquadCast {
             let persona = Self.persona(of: mate)
             let look = Self.look(of: mate)
             let species = PlaceholderCharacter.species(of: look)
-            guard let player = player(for: member.id, wearing: look, persona: persona, species: species)
+            let pose = stage.pose(of: member, at: phase)
+            guard let player = player(for: member.id, wearing: look, persona: persona, species: species, in: pose)
             else { return nil }
             return Mate(
                 member: member, persona: persona, species: species, player: player,
@@ -93,21 +103,36 @@ final class SquadCast {
         }
     }
 
-    /// The member's character, made again when their look or persona changes.
-    private func player(for member: MemberID, wearing look: Outfit, persona: Persona, species: String?)
-        -> CharacterPlayer?
-    {
+    /// The member's character, made again when their look or persona changes; when only their
+    /// pose does, it carries on from the pose on screen into the new loop.
+    private func player(
+        for member: MemberID, wearing look: Outfit, persona: Persona, species: String?, in pose: StagePose
+    ) -> CharacterPlayer? {
+        guard let idle = try? Self.idle(in: pose, persona: persona, species: species) else { return nil }
         if let existing = players[member], existing.look == look, existing.persona == persona {
+            if existing.idle != idle.name {
+                try? existing.player.wear(existing.player.figure, idle: idle)
+                players[member]?.idle = idle.name
+            }
             return existing.player
         }
-        // The persona's idle, which everyone plays until the sport, sitting, sign and sleeping
-        // moves land; the scene adds the sign and the sleep.
         guard let figure = try? PlaceholderCharacter.figure(wearing: look),
-            let clip = try? PlaceholderCharacter.clip("idle", persona: persona, species: species),
-            let player = try? CharacterPlayer(figure: figure, idle: clip)
+            let player = try? CharacterPlayer(figure: figure, idle: idle)
         else { return nil }
-        players[member] = (look, persona, player)
+        players[member] = Made(look: look, persona: persona, idle: idle.name, player: player)
         return player
+    }
+
+    /// What a teammate loops in `pose`: sitting on a rest day, holding up their 请假条, asleep at
+    /// night, and otherwise the persona's idle, until the sport moves land. The scene draws the
+    /// card and the "z z".
+    static func idle(in pose: StagePose, persona: Persona, species: String?) throws(AvatarError) -> Clip {
+        switch pose {
+        case .sitting: try PlaceholderCharacter.sitting(persona: persona)
+        case .holdingSign: try PlaceholderCharacter.holdingSign(persona: persona)
+        case .asleep: try PlaceholderCharacter.sleeping(persona: persona)
+        case .station, .inPlace, .standing: try PlaceholderCharacter.clip("idle", persona: persona, species: species)
+        }
     }
 
     /// The persona the member picked, or a stand-in before they made their character.
