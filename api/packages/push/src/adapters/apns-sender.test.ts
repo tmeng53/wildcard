@@ -50,7 +50,7 @@ const pem = (key: typeof privateKey) => key.export({ type: 'pkcs8', format: 'pem
 // Production signs with `privateKey`, sandbox with its own.
 const account = {
   teamId: 'TEAM123456',
-  topic: 'app.wildcard.ios',
+  topic: 'com.wildcardsquad.wildcard',
   keys: {
     production: { keyId: 'ABC123DEFG', privateKey: pem(privateKey) },
     sandbox: { keyId: 'SBX123DEFG', privateKey: pem(other.privateKey) },
@@ -91,7 +91,7 @@ describe('the APNs sender', () => {
     const [request] = received;
     expect(request?.headers[':method']).toBe('POST');
     expect(request?.headers[':path']).toBe(`/3/device/${'a1'.repeat(32)}`);
-    expect(request?.headers['apns-topic']).toBe('app.wildcard.ios');
+    expect(request?.headers['apns-topic']).toBe('com.wildcardsquad.wildcard');
     expect(request?.headers['apns-push-type']).toBe('alert');
     expect(request?.headers['apns-priority']).toBe('10');
     expect(request?.headers['apns-collapse-id']).toBe('reactions:1');
