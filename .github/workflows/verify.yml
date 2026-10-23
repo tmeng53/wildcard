@@ -31,12 +31,12 @@ permissions:
   contents: read
 
 concurrency:
-  # A PR's newer push cancels its older run. On main a run in progress is never cancelled, so
-  # the few macOS runners finish a run for main; commits that pile up behind it wait as one
-  # queued run (GitHub keeps only the newest pending), which then checks the newest commit.
+  # A PR's newer push cancels its older run. A run for main has a group of its own (its commit),
+  # so it is never cancelled and never replaces a waiting one: GitHub keeps only one pending run
+  # per group, which dropped every main run but the newest while the few Macs were busy.
   # Adding a label other than `ios-ci` gets its own group, so it never cancels the PR's real run.
   group: >-
-    verify-${{ github.event.pull_request.number || 'main' }}${{
+    verify-${{ github.event.pull_request.number || github.sha }}${{
     github.event.action == 'labeled' && github.event.label.name != 'ios-ci' && '-label' || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
