@@ -5,8 +5,10 @@ import CharacterEditorDomain
 import CharacterEditorUI
 import Contracts
 import Foundation
+import DesignSystem
 import Observation
 import OnboardingDomain
+import ScenePickDomain
 
 /// Sign-up on screen: which step is showing, each step's draft, and the calls to the backend.
 /// Each step's button saves what it needs before the next step shows, so going back and forth
@@ -34,6 +36,16 @@ public final class SignUpModel {
 
     private(set) var sports = SportPicks()
     private(set) var week: WeekDraft?
+
+    /// Whether the member made the squad they are in, rather than joined one: they pick its scene.
+    private(set) var madeTheSquad = false
+    /// 这周在哪练？'s five cartons, once the squad is made.
+    private(set) var scenePicker: ScenePicker?
+    /// The picked carton opening over 这周在哪练？.
+    var reveal: SceneReveal?
+    /// The scene picked on 这周在哪练？, which the member drops onto at home rather than playing
+    /// 上场; nil for whoever joined a squad.
+    public private(set) var landing: SceneTheme?
 
     /// A call under way: the step's button shows it's busy and can't be tapped twice.
     private(set) var isWorking = false
@@ -96,7 +108,7 @@ public final class SignUpModel {
     /// Back a step, but not while a save is on its way: it would move the member on again when
     /// it lands, after they chose to go back.
     func back() {
-        guard !isWorking, let previous = step.previous else { return }
+        guard !isWorking, reveal == nil, let previous = step.previous else { return }
         failure = nil
         show(previous, forward: false)
     }
@@ -108,6 +120,9 @@ public final class SignUpModel {
         }
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, daysGone: daysGone).choices {
             week = WeekDraft(sports: sports.picked, daysGone: daysGone)
+        }
+        if next == .scene, scenePicker == nil, let joined {
+            scenePicker = .newSquad(service: SignUpScenePick(service: service, squad: joined.id))
         }
         step = next
     }
@@ -218,6 +233,7 @@ public final class SignUpModel {
                 squad = try await self.service.create(named: name)
             }
             self.joined = squad
+            self.madeTheSquad = choice == .create
             self.teammates = squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
             self.show(.sports)
         }
@@ -264,14 +280,39 @@ public final class SignUpModel {
         guard let days = week?.days else { return }
         perform { () async throws(SignUpError) in
             try await self.service.savePlan(days)
-            self.show(.entrance)
+            self.show(.afterWeek(madeTheSquad: self.madeTheSquad))
         }
     }
 
     /// 跳过: no plan this week; 本周 counts against nothing until one is set.
     func skipWeek() {
         week = nil
-        show(.entrance)
+        show(.afterWeek(madeTheSquad: madeTheSquad))
+    }
+
+    // MARK: 这周在哪练？
+
+    /// 「就它了」: saves the pick, then its carton opens.
+    func confirmScene() {
+        guard let picker = scenePicker, picker.canConfirm else { return }
+        failure = nil
+        Task {
+            guard let unboxing = await picker.confirm(), let scene = picker.selection else {
+                if case .failed(let error) = picker.phase { failure = error == .unavailable ? .unavailable : .rejected }
+                return
+            }
+            reveal = SceneReveal(unboxing: unboxing, scene: scene, startedAt: .now)
+        }
+    }
+
+    /// Whether the pick is on its way.
+    var isPickingScene: Bool { scenePicker?.phase == .saving }
+
+    /// The picked scene fills the screen: sign-up is over, and home takes over on it.
+    func sceneRevealed() {
+        guard finished == nil, let reveal else { return }
+        landing = reveal.scene
+        finished = joined
     }
 
     // MARK: 上场
@@ -282,7 +323,8 @@ public final class SignUpModel {
         return (before, before + (week?.trainingDays ?? 0))
     }
 
-    /// The squad the member is in once 上场 has played, when home takes over.
+    /// The squad the member is in once 上场 has played, or the scene picked has filled the
+    /// screen, when home takes over.
     public private(set) var finished: JoinedSquad?
 
     func finishEntrance() {
@@ -304,6 +346,27 @@ public final class SignUpModel {
             } catch {
                 failure = error
             }
+        }
+    }
+}
+/// The carton opening on 这周在哪练？.
+struct SceneReveal {
+    let unboxing: Unboxing
+    let scene: SceneTheme
+    let startedAt: Date
+}
+
+/// 这周在哪练？'s pick, saved through sign-up's backend for the squad just made.
+private struct SignUpScenePick: ScenePickService {
+    let service: any SignUpService
+    let squad: SquadID
+
+    func pick(_ scene: SceneTheme) async throws(ScenePickError) {
+        guard let id = SceneID(rawValue: scene.rawValue) else { throw .notAllowed }
+        do throws(SignUpError) {
+            try await service.pickScene(id, for: squad)
+        } catch {
+            throw error == .unavailable ? .unavailable : .notAllowed
         }
     }
 }

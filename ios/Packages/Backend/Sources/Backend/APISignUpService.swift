@@ -5,7 +5,7 @@ import Foundation
 import OnboardingDomain
 
 /// Sign-up over our API: the squad step makes or joins a squad, 角色和昵称 saves the character
-/// on the profile and 一周练几天？ saves this week's plan.
+/// on the profile, 一周练几天？ saves this week's plan and 这周在哪练？ the squad's first scene.
 public struct APISignUpService: SignUpService {
     private let api: WildcardAPI
     private let now: @Sendable () -> Date
@@ -62,6 +62,15 @@ public struct APISignUpService: SignUpService {
         try await signUp { () throws(APIError) in
             let zone = try await api.me().profile?.timeZone ?? .current
             _ = try await api.save(days, weekStart: LocalDay(at: now(), in: zone).weekStart)
+        }
+    }
+
+    /// Picks the scene for the week open for picking now, which a squad made today trains on at
+    /// once.
+    public func pickScene(_ scene: SceneID, for squad: SquadID) async throws(SignUpError) {
+        try await signUp { () throws(APIError) in
+            let week = try await api.scene(of: squad).week
+            _ = try await api.pick(scene, for: squad, week: week)
         }
     }
 

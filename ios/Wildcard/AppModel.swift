@@ -104,9 +104,10 @@ final class AppModel {
         await openHome(continuing: signUp, name: name)
     }
 
-    /// 上场 has played: the squad's home takes over.
-    func finishSignUp() async {
-        await openHome()
+    /// 上场 has played, or the scene the member's new squad picked has filled the screen: the
+    /// squad's home takes over, and on a picked scene the member drops onto it.
+    func finishSignUp(landingOn scene: SceneTheme?) async {
+        await openHome(landingOn: scene)
     }
 
     /// A tapped notification: back on 今天 with the home loaded again.
@@ -134,7 +135,9 @@ final class AppModel {
     }
 
     /// Loads the member's home and opens 今天 on it, or sign-up when they are in no squad.
-    private func openHome(continuing signUp: SignUpModel? = nil, name: String? = nil) async {
+    private func openHome(
+        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
+    ) async {
         let store = TodayStore(
             backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
             now: { Date() }, newID: { UUID() })
@@ -177,6 +180,9 @@ final class AppModel {
                 service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
                 scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
                 scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
+            // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
+            // from now rather than from when the scene covered the screen.
+            if let scene { today.dropIn(on: scene, coveredAt: .now) }
             screen = .tabs(
                 today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
                 recap: recap)
