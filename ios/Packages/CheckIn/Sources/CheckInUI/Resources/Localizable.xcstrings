@@ -281,16 +281,6 @@
         }
       }
     },
-    "搜索运动": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search sports"
-          }
-        }
-      }
-    },
     "搞笑": {
       "localizations": {
         "en": {
@@ -554,6 +544,176 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$lld"
+          }
+        }
+      }
+    },
+    "拍一拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pat"
+          }
+        }
+      }
+    },
+    "拍过了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Patted"
+          }
+        }
+      }
+    },
+    "队友": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teammate"
+          }
+        }
+      }
+    },
+    "%@拍了拍你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ patted you"
+          }
+        }
+      }
+    },
+    "%@ 也拍了拍你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ patted you too"
+          }
+        }
+      }
+    },
+    "%@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "睡着了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asleep"
+          }
+        }
+      }
+    },
+    "%@ 中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ now"
+          }
+        }
+      }
+    },
+    "今天练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained today"
+          }
+        }
+      }
+    },
+    "今天休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting today"
+          }
+        }
+      }
+    },
+    "今天是休息日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest day"
+          }
+        }
+      }
+    },
+    "按计划休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting, as planned"
+          }
+        }
+      }
+    },
+    "今天还没打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not checked in yet"
+          }
+        }
+      }
+    },
+    "小米": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millie"
+          }
+        }
+      }
+    },
+    "豆豆": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bean"
+          }
+        }
+      }
+    },
+    "大卫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "David"
+          }
+        }
+      }
+    },
+    "阿杰": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jay"
           }
         }
       }

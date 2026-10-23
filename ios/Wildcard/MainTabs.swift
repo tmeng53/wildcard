@@ -2,8 +2,13 @@ import CharacterEditorUI
 import CheckInUI
 import DesignSystem
 import DesignSystemUI
+import FeedUI
 import MeDomain
 import MeUI
+import RecapUI
+import ScheduleUI
+import SquadDomain
+import SquadUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -16,10 +21,20 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
+    /// Nil on the real backend until 出赛表's API adapter lands: the tab shows its placeholder
+    /// there rather than the in-memory sample member's week.
+    let schedule: ScheduleModel?
+    let feed: FeedModel
+    let squad: SquadSettingsModel
+    let recap: RecapShelf
     @Binding var selection: Tab
+    /// The member left the squad on 小队设置.
+    var leftSquad: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
     @State private var editor: CharacterEditorModel?
+    /// 小队设置, open from 我 over everything.
+    @State private var showsSquad = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -39,6 +54,12 @@ struct MainTabs: View {
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         }
+        // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
+        // 今天 opens 动态 on doesn't move down under it.
+        .task { await recap.refresh() }
+        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
+            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
+        }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
                 CharacterEditorView(
@@ -51,6 +72,15 @@ struct MainTabs: View {
                         }
                     })
             }
+        }
+        .fullScreenCover(isPresented: $showsSquad) {
+            SquadSettingsView(model: squad) { showsSquad = false }
+                .environment(\.sceneTheme, squad.scene)
+        }
+        .onChange(of: squad.hasLeft) { _, left in
+            guard left else { return }
+            showsSquad = false
+            leftSquad()
         }
     }
 
@@ -75,20 +105,32 @@ struct MainTabs: View {
     @ViewBuilder private var screen: some View {
         switch selection {
         case .today:
-            TodayView(model: today) { selection = .feed }
+            TodayView(model: today) { post in
+                feed.open(post)
+                selection = .feed
+            }
         case .feed:
-            UpcomingTab(title: Text("动态"))
+            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
+                .environment(\.sceneTheme, today.scene)
+                .task { await recap.refresh() }
         case .schedule:
-            UpcomingTab(title: Text("出赛表"))
+            if let schedule {
+                ScheduleView(model: schedule)
+                    .environment(\.sceneTheme, today.scene)
+            } else {
+                UpcomingTab(title: Text("出赛表"))
+            }
         case .profile:
             MeView(
                 model: profile,
                 destinations: MeDestinations(
-                    // The squad lives on 今天 and past 战报 in 动态 until each has a page of its own.
-                    squad: { selection = .today },
+                    // Past 战报 live in 动态 until they have a page of their own.
+                    squad: { showsSquad = true },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+            )
+            .accentTone(.brand)
         }
     }
 
@@ -104,6 +146,18 @@ struct MainTabs: View {
         TabBarItem(
             id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
     ]
+}
+
+/// The squad's newest 战报, once there is one, opening it.
+private struct RecapTile: View {
+    let recap: RecapShelf
+
+    var body: some View {
+        if let story = recap.latest {
+            RecapEntryTile(
+                week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
+        }
+    }
 }
 
 /// A tab whose screen is still being built: its name on a white page.

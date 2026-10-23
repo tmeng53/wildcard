@@ -17,11 +17,11 @@ public struct TodayView: View {
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
 
-    /// Opens the post my caption's bubble is from: for now the 动态 tab, which will scroll to it
-    /// once the feed is built.
-    private let openPost: () -> Void
+    /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
+    /// out, which opens 动态 at the top.
+    private let openPost: (CheckIn?) -> Void
 
-    public init(model: TodayModel, openPost: @escaping () -> Void = {}) {
+    public init(model: TodayModel, openPost: @escaping (CheckIn?) -> Void = { _ in }) {
         _model = State(initialValue: model)
         self.openPost = openPost
     }
@@ -35,11 +35,13 @@ public struct TodayView: View {
         ZStack {
             if model.step == .disclaimer {
                 DisclaimerComposer(model: model)
+                    .accentTone(.brand)
                     .transition(.opacity)
             }
 
             if case .composing(let kind) = model.step {
                 ComposeView(model: model, kind: kind)
+                    .accentTone(.brand)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
             }
@@ -55,9 +57,13 @@ public struct TodayView: View {
         .sheet(isPresented: isPickingPhotos) {
             PhotoStep(model: model)
                 .environment(\.sceneTheme, theme)
+                .accentTone(.brand)
         }
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
+        // 拍一拍 landing: mine on a teammate, or a teammate's on me.
+        .haptic(.poke, trigger: model.pats.landed)
+        .haptic(.reaction, trigger: model.pats.landedOnMe)
         .task { await model.load() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
@@ -70,7 +76,8 @@ public struct TodayView: View {
         ZStack {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
-                celebration: model.celebrations
+                celebration: model.celebrations, pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
+                patMate: model.patMate
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -105,6 +112,16 @@ public struct TodayView: View {
                 }
                 Spacer()
             }
+
+            // A tapped teammate's bubble, over the card like the approved design's, laid out on
+            // the scene's own stage.
+            GeometryReader { proxy in
+                PatOverlay(
+                    layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
+                    canPat: model.canPat, pat: model.patMate)
+            }
+            .ignoresSafeArea()
+            .opacity(model.step == .disclaimer ? 0 : 1)
 
             if model.isBurstOpen {
                 // A tap anywhere outside the capsules closes the burst.
@@ -174,7 +191,7 @@ public struct TodayView: View {
 /// on my head.
 private struct MyPayoff: View {
     let model: TodayModel
-    let openPost: () -> Void
+    let openPost: (CheckIn?) -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -186,7 +203,8 @@ private struct MyPayoff: View {
             // 「+1」 sit above it, centred.
             ZStack {
                 Self.anchor(width: Self.bubbleWidth, at: head, alignment: .bottom) {
-                    PayoffBubble(line: model.payoff?.line, open: openPost).fixedSize(horizontal: false, vertical: true)
+                    PayoffBubble(line: model.payoff?.line) { openPost(model.payoff?.post) }.fixedSize(
+                        horizontal: false, vertical: true)
                 }
                 Self.anchor(width: 0, at: CGPoint(x: head.x, y: head.y - Space.l), alignment: .bottom) {
                     PlusOne(trigger: model.celebrations).fixedSize()

@@ -26,13 +26,15 @@ final class TabsUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "30-tabs-today")
 
+        app.buttons["tab.feed"].tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
+        XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: 30), "动态 shows another screen")
+        XCTAssertFalse(checkIn.exists, "今天 still shows under 动态")
         let upcoming = app.staticTexts["tab.upcoming"]
-        for (tab, title) in [("tab.feed", "动态"), ("tab.schedule", "出赛表")] {
-            app.buttons[tab].tap()
-            waitFor(app.buttons[tab], "isSelected == true", "\(tab) didn't open")
-            XCTAssertEqual(upcoming.label, title, "\(tab) shows another tab's screen")
-            XCTAssertFalse(checkIn.exists, "今天 still shows under \(tab)")
-        }
+        app.buttons["tab.schedule"].tap()
+        waitFor(app.buttons["tab.schedule"], "isSelected == true", "出赛表 didn't open")
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 shows another tab's screen")
+        XCTAssertFalse(checkIn.exists, "今天 still shows under 出赛表")
         app.buttons["tab.me"].tap()
         waitFor(app.buttons["tab.me"], "isSelected == true", "tab.me didn't open")
         let mePage = app.descendants(matching: .any).matching(identifier: "me.page").firstMatch
@@ -66,7 +68,7 @@ final class TabsUITests: XCTestCase {
         let schedule = app.buttons["tab.schedule"]
         XCTAssertTrue(schedule.waitForExistence(timeout: 30), "no tab bar")
         XCTAssertTrue(schedule.isSelected, "-tab schedule didn't open on 出赛表")
-        XCTAssertEqual(app.staticTexts["tab.upcoming"].label, "出赛表")
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "-tab schedule didn't show 出赛表")
     }
 
     private func keepScreenshot(named name: String) {

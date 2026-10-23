@@ -20,6 +20,7 @@ import {
   createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import { createDailyPushSettings, createPostgresDailyPushSettings } from '@wildcard/push';
 import { createDraftSettings, createPostgresDraftSettings } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
@@ -39,12 +40,14 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
+import { dailyPushTools } from './tools/daily-push.js';
 import { memeTools } from './tools/memes.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -117,6 +120,7 @@ beforeAll(async () => {
           push: pushOn(db),
           photos,
           aiConsent: aiConsentOn(db),
+          nudges: nudgesOn(db),
           weeklyAwards: unusedWeeklyAwards,
           weekSummaryWords: unusedWeekSummaryWords,
           log: createLog(() => undefined),
@@ -148,6 +152,11 @@ beforeAll(async () => {
               ...aiWritingTools({
                 drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
                 awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
+              }),
+              ...dailyPushTools({
+                settings: createDailyPushSettings({
+                  store: createPostgresDailyPushSettings(scope),
+                }),
               }),
               ...weekSummaryWordTools({
                 words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
@@ -309,6 +318,8 @@ describe('the admin MCP server', () => {
       ['change_disclaimer_draft_settings', false],
       ['get_weekly_award_settings', true],
       ['change_weekly_award_settings', false],
+      ['get_daily_push_settings', true],
+      ['change_daily_push_settings', false],
       ['get_week_summary_words', true],
       ['change_week_summary_words', false],
       ['rename_thing', false],

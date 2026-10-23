@@ -16,6 +16,20 @@ public enum Palette {
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
+    // MARK: Brand: the app's own colour, the same in every scene
+
+    /// The brand's one solid colour: primary buttons and selection on brand screens (opening,
+    /// sign-up, 我, the tab bar, writing a post, 请假条, the feed). Its own value, not the gym's,
+    /// so the brand can change without touching a scene.
+    public static let brand = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
+    /// Labels and icons on `brand`.
+    public static let onBrand = SRGBColor(red: 0xFF, green: 0xFF, blue: 0xFF)
+    /// The brand's light gym, where the open screen and the website stand (`--brand-sky`,
+    /// `--brand-floor` and `--brand-tile` in `web/public/wildcard.css`).
+    public static let brandSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
+    public static let brandFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
+    public static let brandTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
+
     // MARK: Pool scene
 
     public static let poolSignature = SRGBColor(red: 0x07, green: 0x9B, blue: 0xB8)
@@ -33,14 +47,12 @@ public enum Palette {
     public static let trackText = SRGBColor(red: 0xB8, green: 0x33, blue: 0x25)
     public static let trackFloor = SRGBColor(red: 0xF8, green: 0xDD, blue: 0xD9)
 
-    // MARK: Gym scene: the one dark scene
+    // MARK: Gym scene (steel)
 
-    public static let graphite = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
-    public static let gymWash = SRGBColor(red: 0xEE, green: 0xF0, blue: 0xF2)
-    /// Text, icons and progress on graphite. Never a large background.
-    public static let volt = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
-    /// The check-in kind buttons on the gym's dark floor: graphite with a hint of volt.
-    public static let gymKind = SRGBColor(red: 0x2E, green: 0x33, blue: 0x24)
+    public static let gymSignature = SRGBColor(red: 0x4A, green: 0x6C, blue: 0x8C)
+    public static let gymWash = SRGBColor(red: 0xED, green: 0xF0, blue: 0xF4)
+    public static let gymText = SRGBColor(red: 0x3E, green: 0x5C, blue: 0x78)
+    public static let gymFloor = SRGBColor(red: 0xDB, green: 0xE2, blue: 0xE8)
 
     // MARK: Tennis scene (grass, not blue hard court)
 
@@ -57,12 +69,30 @@ public enum Palette {
     public static let climbingText = SRGBColor(red: 0x7A, green: 0x3E, blue: 0x24)
     public static let climbingFloor = SRGBColor(red: 0xEB, green: 0xDD, blue: 0xD5)
 
+    // MARK: Kraft: the carton a scene nobody in the squad has opened comes in (scene pick)
+
+    /// The carton's sides.
+    public static let kraft = SRGBColor(red: 0xD2, green: 0xAE, blue: 0x80)
+    /// Its base edge and the tile's band line.
+    public static let kraftShade = SRGBColor(red: 0xC3, green: 0x9C, blue: 0x6C)
+    public static let kraftBandLine = SRGBColor(red: 0xB8, green: 0x8E, blue: 0x5E)
+    /// The closed flaps: the left one, the right one in shadow.
+    public static let kraftFlap = SRGBColor(red: 0xC7, green: 0x9E, blue: 0x6D)
+    public static let kraftFlapShade = SRGBColor(red: 0xBE, green: 0x95, blue: 0x63)
+    /// Packing tape across the flaps.
+    public static let kraftTape = SRGBColor(red: 0xE6, green: 0xCD, blue: 0xA4)
+    /// The printed "this way up" arrows and handle.
+    public static let kraftInk = SRGBColor(red: 0x9E, green: 0x78, blue: 0x49)
+    /// The ink over a page while a carton is opened on it.
+    public static let dusk = SRGBColor(red: 0x1A, green: 0x1C, blue: 0x22)
+
     // MARK: Clothes: outfit swatches for the character only, never UI color
 
     public static let cobalt = SRGBColor(red: 0x2D, green: 0x5B, blue: 0xA0)
     public static let mint = SRGBColor(red: 0x27, green: 0x8C, blue: 0x5E)
     public static let honey = SRGBColor(red: 0xA0, green: 0x76, blue: 0x0E)
     public static let lavender = SRGBColor(red: 0x90, green: 0x62, blue: 0xDE)
+    public static let graphite = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
 
     // MARK: Character tones: the avatar's skin, fur and hair swatches. Never UI color.
     /// Skin, light to deep.
