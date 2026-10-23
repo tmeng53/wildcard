@@ -1,10 +1,11 @@
 import { sql, type Kysely } from 'kysely';
 
+import { StoredFuelGoals } from '../domain/fuel-goal.js';
 import { StoredPlan, WeekStart } from '../domain/weekly-plan.js';
 import type { WeeklyPlanStore } from '../ports.js';
 import type { DB } from './tables.js';
 
-/** The weekly plan store on Postgres (`supabase/migrations`). */
+/** The weekly plan and 饮食小目标 store on Postgres (`supabase/migrations`). */
 export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
   return {
     async latestFrom(member, weekStart) {
@@ -42,6 +43,47 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
             .returning(['member_id', 'week_start', 'payload']),
         )
         .insertInto('weekly_plan_events')
+        .columns(['member_id', 'week_start', 'payload'])
+        .expression((eb) => eb.selectFrom('saved').select(['member_id', 'week_start', 'payload']))
+        .execute();
+    },
+
+    async fuelGoals(member, weekStart) {
+      const row = await db
+        .selectFrom('fuel_goals')
+        .select('payload')
+        .where('member_id', '=', member)
+        .where('week_start', '=', weekStart)
+        .executeTakeFirst();
+      return row === undefined ? undefined : StoredFuelGoals.parse(row.payload).goals;
+    },
+
+    async saveFuelGoals({ member, weekStart, goals }) {
+      const payload = JSON.stringify({ version: 1, goals });
+      // As with the plan: one statement, and a save that changes nothing writes neither. No row
+      // already means no goals, so clearing a week that has none only updates a row that exists.
+      await db
+        .with('saved', (cte) =>
+          goals.length === 0
+            ? cte
+                .updateTable('fuel_goals')
+                .set({ payload })
+                .where('member_id', '=', member)
+                .where('week_start', '=', weekStart)
+                .where(sql<boolean>`fuel_goals.payload is distinct from ${payload}::jsonb`)
+                .returning(['member_id', 'week_start', 'payload'])
+            : cte
+                .insertInto('fuel_goals')
+                .values({ member_id: member, week_start: weekStart, payload })
+                .onConflict((conflict) =>
+                  conflict
+                    .columns(['member_id', 'week_start'])
+                    .doUpdateSet({ payload })
+                    .where(sql<boolean>`fuel_goals.payload is distinct from excluded.payload`),
+                )
+                .returning(['member_id', 'week_start', 'payload']),
+        )
+        .insertInto('fuel_goal_events')
         .columns(['member_id', 'week_start', 'payload'])
         .expression((eb) => eb.selectFrom('saved').select(['member_id', 'week_start', 'payload']))
         .execute();
