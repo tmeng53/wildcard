@@ -86,8 +86,8 @@ public final class TodayModel {
     private let now: () -> Date
 
     /// - Parameters:
-    ///   - scene: the squad's scene. Each squad picks its own once squad settings land; until
-    ///     then every home is the gym, the scene the designs are drawn on.
+    ///   - scene: the squad's scene this week; the gym, the scene the designs are drawn on, until
+    ///     the app has read it.
     ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
     ///     notifications after the first.
     public init(
@@ -116,8 +116,11 @@ public final class TodayModel {
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
 
-    /// The squad's scene.
-    public let scene: SceneTheme
+    /// The squad's scene this week, which the app reads with the squad: the gym until then, and
+    /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
+    public var scene: SceneTheme {
+        didSet { if scene != oldValue { placeSquad() } }
+    }
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }

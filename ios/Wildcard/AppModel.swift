@@ -4,12 +4,14 @@ import Backend
 import CheckInDomain
 import CheckInUI
 import Contracts
+import DesignSystem
 import FeedDomain
 import FeedUI
 import Foundation
 import MeDomain
 import Observation
 import OnboardingUI
+import SquadDomain
 
 /// The app on the real backend: who is signed in decides between sign-up and the tabs. A member
 /// signed out, or signed in with no squad yet, goes through sign-up; one with a squad opens on
@@ -20,7 +22,7 @@ final class AppModel {
         /// Reading the stored session, and the member's home once signed in.
         case starting
         case signUp(SignUpModel)
-        case tabs(today: TodayModel, profile: MeModel, feed: FeedModel)
+        case tabs(today: TodayModel, profile: MeModel, feed: FeedModel, squad: SquadSettingsModel)
     }
 
     private(set) var screen = Screen.starting
@@ -100,7 +102,12 @@ final class AppModel {
 
     /// A tapped notification: back on 今天 with the home loaded again.
     func reloadToday() async {
-        if case .tabs(let today, _, _) = screen { await today.load() }
+        if case .tabs(let today, _, _, _) = screen { await today.load() }
+    }
+
+    /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
+    func leftSquad() async {
+        await openHome()
     }
 
     func signOut() async {
@@ -138,15 +145,32 @@ final class AppModel {
         case .loading, .current, .offline:
             // The case above has every load without a home.
             guard let home = store.home else { return }
-            screen = .tabs(
-                today: TodayModel(
-                    store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
-                    posted: posted),
-                profile: MeModel(
-                    service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-                    confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() }),
-                feed: Self.feed(api: api, home: home))
+            let today = TodayModel(
+                store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
+            let profile = MeModel(
+                service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
+                confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
+            let squad = SquadSettingsModel(
+                service: APISquadSettingsService(api: api),
+                changed: { [weak self] in Task { await self?.squadChanged() } },
+                signOut: { [weak self] in await self?.signOut() })
+            screen = .tabs(today: today, profile: profile, feed: Self.feed(api: api, home: home), squad: squad)
+            await readScene(of: home.squad.id, into: today)
         }
+    }
+
+    /// The squad's name or scene changed on 小队设置: 今天 and 我 read them again.
+    private func squadChanged() async {
+        guard case .tabs(let today, let profile, _, let squad) = screen else { return }
+        await readScene(of: squad.settings?.squad.id, into: today)
+        await today.load()
+        await profile.reload()
+    }
+
+    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
+    private func readScene(of squad: SquadID?, into today: TodayModel) async {
+        guard let squad, let scene = try? await api.scene(of: squad) else { return }
+        today.scene = SceneTheme(rawValue: scene.scene.rawValue) ?? .gym
     }
 
     /// 动态 on the member's squad, its days by the member's own clock.

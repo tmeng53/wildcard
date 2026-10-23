@@ -57,7 +57,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     squad: Squad(
                         id: squadID,
                         name: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
-                        inviteCode: "K7M2QX9P", members: mates + [member]),
+                        inviteCode: "K7M2QX9P", members: mates + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
                         today: counts(of: members),
