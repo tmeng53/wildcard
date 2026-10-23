@@ -138,7 +138,7 @@ const pages = [
     slogan: '人人都是運動員',
     button: '領取外卡',
     legal: '/zh-hant/',
-    privacy: '隱私政策',
+    privacy: '隱私權政策',
     terms: '使用條款',
   },
 ];
