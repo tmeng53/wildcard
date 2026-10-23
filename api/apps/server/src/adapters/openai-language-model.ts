@@ -2,8 +2,11 @@ import { DisclaimerWriterUnavailableError, type LanguageModel } from '@wildcard/
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
-/** GPT-5.4 mini: OpenAI's newest small model, good enough at playful Chinese where nano isn't. */
-export const OPENAI_MODEL = 'gpt-5.4-mini';
+/**
+ * GPT-6 Luna: the model the weekly awards use (Tracy's pick after a side-by-side test), and
+ * Tracy chose it for the drafts too (2026-10-23); it costs a fraction of GPT-5.4 mini.
+ */
+export const OPENAI_MODEL = 'gpt-6-luna';
 
 /**
  * A member is waiting with the button pressed: past this, the app's dice are the better answer.

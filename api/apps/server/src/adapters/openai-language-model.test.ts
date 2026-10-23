@@ -40,15 +40,15 @@ const Request = z.object({
 });
 
 describe('createOpenAILanguageModel', () => {
-  it('asks GPT-5.4 mini for the reply’s shape and returns the parsed reply', async () => {
+  it('asks GPT-6 Luna for the reply’s shape and returns the parsed reply', async () => {
     const { answer, requests } = modelAnswering(['drafts']);
     const reply = await answer();
     expect(reply.outcome).toBe('drafts');
     expect(reply.drafts).toHaveLength(3);
     expect(requests).toHaveLength(1);
     const request = Request.parse(requests[0]);
-    expect(request.model).toBe('gpt-5.4-mini');
-    expect(OPENAI_MODEL).toBe('gpt-5.4-mini');
+    expect(request.model).toBe('gpt-6-luna');
+    expect(OPENAI_MODEL).toBe('gpt-6-luna');
     expect(request.instructions).toBe('system');
     expect(request.input).toBe('user');
     expect(request.store).toBe(false);
