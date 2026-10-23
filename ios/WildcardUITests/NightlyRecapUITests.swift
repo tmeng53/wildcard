@@ -13,7 +13,7 @@ final class NightlyRecapUITests: XCTestCase {
         continueAfterFailure = false
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-evening",
-            "-today.cardPage", "0", "-today.recapSeen", "none",
+            "-today.cardPage", "0", "-uitest-recap-unseen",
         ]
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch

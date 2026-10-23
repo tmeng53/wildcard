@@ -108,6 +108,14 @@ enum LaunchOptions {
         return { started.addingTimeInterval(Date().timeIntervalSince(launched)) }
     }()
 
+    /// `-uitest-recap-unseen`: forget which day's 今日赛况 this phone opened, so a UI test starts
+    /// with the tag unseen. Passing `-today.recapSeen` instead would pin the value: launch
+    /// arguments win over what the app writes once the recap is opened.
+    static func forgetSeenRecapIfAsked() {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-recap-unseen") else { return }
+        UserDefaults.standard.removeObject(forKey: "today.recapSeen")
+    }
+
     /// `-uitest-photos N`: hand N generated photos to every check-in instead of the system photo
     /// picker, which UI tests can't drive reliably.
     static var photoSource: PhotoSource {

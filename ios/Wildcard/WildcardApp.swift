@@ -30,6 +30,7 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and both models are the main actor's.
     init() {
+        LaunchOptions.forgetSeenRecapIfAsked()
         _today = State(
             initialValue: TodayModel(
                 store: TodayStore(
