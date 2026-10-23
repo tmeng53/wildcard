@@ -24,7 +24,7 @@ struct WelcomeScreen<SignIn: View>: View {
         GeometryReader { proxy in
             let unit = proxy.size.width / WelcomeCrowd.designWidth
             ZStack(alignment: .top) {
-                floor(height: proxy.size.height)
+                floor(unit: unit)
                 VStack(spacing: Space.xs) {
                     Text("WILDCARD", bundle: .module)
                         .typeStyle(TypeRamp.scoreHero)
@@ -37,7 +37,7 @@ struct WelcomeScreen<SignIn: View>: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isHeader)
                 ForEach(crowd.spots.indices, id: \.self) { index in
-                    crowdMember(index, unit: unit)
+                    crowdMember(index, unit: unit, bottom: proxy.size.height)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
@@ -65,17 +65,18 @@ struct WelcomeScreen<SignIn: View>: View {
     }
 
     /// The scene's floor across the lower part of the screen, under the characters' feet.
-    private func floor(height: Double) -> some View {
+    private func floor(unit: Double) -> some View {
         SceneFloor()
-            .frame(height: height * (1 - WelcomeCrowd.floorTop))
+            .frame(height: WelcomeCrowd.floorAbove * unit)
             .frame(maxHeight: .infinity, alignment: .bottom)
             .ignoresSafeArea(edges: .bottom)
     }
 
-    private func crowdMember(_ index: Int, unit: Double) -> some View {
+    private func crowdMember(_ index: Int, unit: Double, bottom: Double) -> some View {
         let spot = crowd.spots[index]
         let width = spot.width * unit
         let height = width * WelcomeCrowd.aspect
+        let feet = bottom - spot.feetAbove * unit
         return Button {
             crowd.swap(index)
         } label: {
@@ -92,10 +93,11 @@ struct WelcomeScreen<SignIn: View>: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(Text("换一个小人", bundle: .module))
+        .accessibilityIdentifier("signup.crowd")
         .haptic(.pick, trigger: crowd.taps[index])
         // Feet on the floor: the canvas's feet sit near its bottom.
-        .position(x: spot.centerX * unit, y: spot.feet * unit - height * WelcomeCrowd.feetInCanvas + height / 2)
-        .zIndex(spot.feet)
+        .position(x: spot.centerX * unit, y: feet - height * WelcomeCrowd.feetInCanvas + height / 2)
+        .zIndex(-spot.feetAbove)
     }
 }
 
@@ -104,16 +106,18 @@ struct WelcomeScreen<SignIn: View>: View {
 final class WelcomeCrowd {
     struct Spot {
         let centerX: Double
-        let feet: Double
+        /// How far above the bottom of the screen's free area, over the sign-in button.
+        let feetAbove: Double
         let width: Double
     }
 
-    /// The design's points, on a 390-point-wide screen: two back, three in front.
+    /// The design's points, on a 390-point-wide screen: two back, three in front, standing up
+    /// from the sign-in button so it never covers their feet, however tall the phone is.
     static let designWidth = 390.0
     let spots = [
-        Spot(centerX: 122, feet: 600, width: 96), Spot(centerX: 268, feet: 600, width: 96),
-        Spot(centerX: 62, feet: 676, width: 112), Spot(centerX: 195, feet: 690, width: 132),
-        Spot(centerX: 328, feet: 676, width: 112),
+        Spot(centerX: 122, feetAbove: 106, width: 96), Spot(centerX: 268, feetAbove: 106, width: 96),
+        Spot(centerX: 62, feetAbove: 30, width: 112), Spot(centerX: 195, feetAbove: 16, width: 132),
+        Spot(centerX: 328, feetAbove: 30, width: 112),
     ]
     /// The middle one, whose look 角色和昵称 starts from.
     static let middle = 3
@@ -125,9 +129,10 @@ final class WelcomeCrowd {
     /// The canvas is 240 by 320; its feet stand at 96% of its height.
     static let aspect = 320.0 / 240.0
     static let feetInCanvas = 0.957
-    /// The title's top and the floor's top, as fractions of the screen's height.
+    /// The title's top, as a fraction of the screen's height.
     static let titleTop = 0.12
-    static let floorTop = 0.66
+    /// The floor's top, in design points above the bottom of the free area: above the back row.
+    static let floorAbove = 146.0
 
     private(set) var players: [CharacterPlayer?] = Array(repeating: nil, count: 5)
     /// Bumped on every change, so the new look pops in.
@@ -146,7 +151,11 @@ final class WelcomeCrowd {
         var generator = SystemRandomNumberGenerator()
         var looks: [Outfit] = []
         while looks.count < Self.looks {
-            let look = CharacterDraft.randomLook(from: catalog, using: &generator)
+            // What a draft of it wears: an animal leaves out a person's hair and face.
+            let look = CharacterDraft(
+                catalog: catalog, look: CharacterDraft.randomLook(from: catalog, using: &generator),
+                persona: .energetic, nickname: ""
+            ).outfit
             if !looks.contains(look) { looks.append(look) }
         }
         for look in looks {

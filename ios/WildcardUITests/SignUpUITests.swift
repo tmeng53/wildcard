@@ -15,6 +15,12 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
         settle()
         keepScreenshot(named: "40-signup-open")
+        // The whole crowd stands above the sign-in button, feet included.
+        let crowd = app.buttons.matching(identifier: "signup.crowd").allElementsBoundByIndex
+        XCTAssertEqual(crowd.count, 5, "the open screen shows five characters")
+        for member in crowd {
+            XCTAssertLessThanOrEqual(member.frame.maxY, signIn.frame.minY, "the sign-in button covers a character")
+        }
         signIn.tap()
         makeCharacter(in: app)
         joinBySquadCode(in: app)
