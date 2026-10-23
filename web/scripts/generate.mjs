@@ -1,12 +1,15 @@
-// Writes the home page's generated files. The site and the app share one character art and one
+// Writes the site's generated files. The site and the app share one character art and one
 // wordmark font, so those come from the app's own sources:
 //   public/home/characters.js       the rig, the five looks drawn from the app's SVG parts, the clips
+//   public/join/characters.js       the rig, all of the app's art and the idles, for the invite page
+//                                   to dress each member's look as the API sends it
 //   public/fonts/                   Barlow Condensed ExtraBold and its license, from DesignSystemUI
 //   public/{,zh/,zh-hant/}index.html  the home page in each language, from pages/home.html
 // `node scripts/generate.mjs --verify` fails while a written file is stale.
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dress } from '../public/character/dress.js';
 
 const web = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ios = join(web, '..', 'ios', 'Packages');
@@ -19,51 +22,35 @@ const svgInner = (path) =>
   readFileSync(path, 'utf8')
     .replace(/<\/?svg[^>]*>/g, '')
     .trim();
-const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const replaceAllCaseless = (text, from, to) => text.replace(new RegExp(escape(from), 'gi'), to);
-
-// A shade keeps its relation to the base color: each channel scales by shade/base.
-const channels = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-function shadeTo(base, shade, color) {
-  const [b, s, c] = [channels(base), channels(shade), channels(color)];
-  return (
-    '#' +
-    c
-      .map((n, i) => Math.max(0, Math.min(255, Math.round(n * (s[i] / Math.max(b[i], 1))))))
-      .map((n) => n.toString(16).toUpperCase().padStart(2, '0'))
-      .join('')
-  );
-}
+const list = (dir) => readdirSync(dir).sort();
 
 const rig = json(join(art, 'rig.json'));
 
-// One look's art: a string of SVG per rig part, back to front, as the app's player draws it.
-function draw(member) {
-  const look = { ...rig.defaults, ...member.look };
-  return rig.parts.map((part) =>
-    (part.layers ?? [])
-      .map(({ slot, art: name }) => {
-        if (slot !== undefined && !look[slot]) return '';
-        const path =
-          slot === undefined
-            ? join(art, 'art', 'base', `${name}.svg`)
-            : join(art, 'art', slot, look[slot], `${name}.svg`);
-        if (!existsSync(path)) return '';
-        let svg = svgInner(path);
-        if (slot === 'shoes') {
-          for (const [from, to] of member.shoes) svg = svg.replaceAll(from, to);
-        } else if (slot in member.colors) {
-          const tones = json(join(art, 'art', slot, look[slot], 'tones.json'));
-          const color = member.colors[slot];
-          for (const shade of tones.shades ?? [])
-            svg = replaceAllCaseless(svg, shade, shadeTo(tones.base, shade, color));
-          svg = replaceAllCaseless(svg, tones.base, color);
-        }
-        return svg;
-      })
-      .join(''),
-  );
+// All of the app's art, as public/character/dress.js takes it.
+const wardrobe = { parts: rig.parts, defaults: rig.defaults, variants: {}, art: {}, tones: {} };
+for (const file of list(join(art, 'art', 'base')).filter((f) => f.endsWith('.svg')))
+  wardrobe.art[`base/${basename(file, '.svg')}`] = svgInner(join(art, 'art', 'base', file));
+for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
+  wardrobe.variants[slot] = list(join(art, 'art', slot));
+  for (const variant of wardrobe.variants[slot]) {
+    const dir = join(art, 'art', slot, variant);
+    for (const file of list(dir).filter((f) => f.endsWith('.svg')))
+      wardrobe.art[`${slot}/${variant}/${basename(file, '.svg')}`] = svgInner(join(dir, file));
+    if (existsSync(join(dir, 'tones.json'))) {
+      const { base, shades } = json(join(dir, 'tones.json'));
+      wardrobe.tones[`${slot}/${variant}`] = { base, shades: shades ?? [] };
+    }
+  }
 }
+
+const rigParts = rig.parts.map(({ id, parent, pivot, opacity }) => ({
+  id,
+  parent: parent ?? null,
+  pivot,
+  opacity: opacity ?? 1,
+}));
+const idles = (personas) =>
+  Object.fromEntries(personas.map((p) => [p, json(join(art, 'clips', p, 'idle.json'))]));
 
 const { cast } = json(join(web, 'character', 'cast.json'));
 const personas = [...new Set(cast.map((m) => m.persona))].sort();
@@ -72,27 +59,36 @@ const moves = ['warmup', 'stretch', 'pump', 'wave'];
 
 const bundle = {
   version: 1,
-  parts: rig.parts.map(({ id, parent, pivot, opacity }) => ({
-    id,
-    parent: parent ?? null,
-    pivot,
-    opacity: opacity ?? 1,
-  })),
-  cast: cast.map(({ id, zh, zhHant, en, persona, ...member }) => ({
+  parts: rigParts,
+  cast: cast.map(({ id, zh, zhHant, en, persona, look, colors, shoes }) => ({
     id,
     zh,
     zhHant,
     en,
     persona,
-    art: draw(member),
+    art: dress(wardrobe, look, colors, shoes),
   })),
-  idle: Object.fromEntries(personas.map((p) => [p, clip(join(art, 'clips', p, 'idle.json'))])),
+  idle: idles(personas),
   cheer: Object.fromEntries(personas.map((p) => [p, clip(join(art, 'clips', p, 'cheer.json'))])),
   moves: Object.fromEntries(
     moves.map((m) => [m, clip(join(web, 'character', 'moves', `${m}.json`))]),
   ),
   dumbbell: svgInner(join(art, 'art', 'prop', 'dumbbell', 'propR.svg')),
 };
+
+// The invite page dresses any look the API sends, so it gets the whole wardrobe and every idle.
+const allPersonas = list(join(art, 'clips'));
+const joinBundle = {
+  version: 1,
+  ...wardrobe,
+  parts: rig.parts.map((part, i) => ({ ...rigParts[i], layers: part.layers ?? [] })),
+  personas: allPersonas,
+  idle: idles(allPersonas),
+};
+
+// Apple's logo on the button that opens the App Store (the same glyph the invite page draws).
+const APPLE_LOGO =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
 
 // The home page's words per language; the template marks each slot {{name}}.
 const pages = [
@@ -147,6 +143,7 @@ function page(words) {
   const current = (lang) => (words.lang === lang ? ' aria-current="page"' : '');
   const slots = {
     ...words,
+    apple: APPLE_LOGO,
     currentHans: current('zh-Hans'),
     currentHant: current('zh-Hant'),
     currentEn: current('en'),
@@ -169,6 +166,11 @@ const outputs = [
     join(web, 'public', 'home', 'characters.js'),
     "// Written by `pnpm --dir web generate` from the app's art; never edit by hand.\n" +
       `window.WILDCARD_CHARACTERS = ${JSON.stringify(bundle)};\n`,
+  ],
+  [
+    join(web, 'public', 'join', 'characters.js'),
+    "// Written by `pnpm --dir web generate` from the app's art; never edit by hand.\n" +
+      `window.WILDCARD_CHARACTERS = ${JSON.stringify(joinBundle)};\n`,
   ],
   [
     join(web, 'public', 'fonts', 'BarlowCondensed-ExtraBold.ttf'),

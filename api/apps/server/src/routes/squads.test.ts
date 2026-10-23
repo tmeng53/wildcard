@@ -378,6 +378,23 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
     }
   });
 
+  it('lets the website read the answer from the browser, refusals included, and no other site', async () => {
+    const from = (origin: string) =>
+      app.request('/public/squad-invites/ZZZZZZZZ', {
+        headers: { origin, 'x-forwarded-for': '203.0.113.14' },
+      });
+    const site = await from('https://wildcardsquad.com');
+    expect([site.status, site.headers.get('access-control-allow-origin')]).toStrictEqual([
+      404,
+      'https://wildcardsquad.com',
+    ]);
+    const other = await from('https://example.com');
+    expect([other.status, other.headers.get('access-control-allow-origin')]).toStrictEqual([
+      404,
+      null,
+    ]);
+  });
+
   it('refuses a client after 3 lookups, whatever it claims to be, and lets others through', async () => {
     const statuses = [];
     for (let attempt = 0; attempt < 4; attempt += 1) {
