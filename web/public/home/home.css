@@ -29,7 +29,9 @@ h1 { margin: 0; display: flex; flex-wrap: nowrap; align-items: baseline; column-
 /* optical alignment: the W's side bearing pulled back to the slogan's and button's edge */
 #word { display: inline-block; margin-left: -.018em; line-height: 1; will-change: transform; }
 /* 外卡's ink sits on WILDCARD's baseline */
-h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight: 600; font-size: .3em; color: var(--ink-2); letter-spacing: 0; line-height: 1; }
+h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight: 600; font-size: .5em; color: var(--ink); letter-spacing: 0; line-height: 1; }
+/* with 外卡 on the line, the headline shrinks so both still fit one line (WILDCARD is about 4.5em, 外卡 about 1.1em) */
+h1:has(.cn) { font-size: clamp(32px, calc((100cqw - 40px) / 5.7), 120px); }
 .sub { margin: 14px 0 0; font-size: 22px; line-height: 30px; font-weight: 600; text-wrap: balance; }
 .btn { margin-top: 32px; height: 56px; padding: 0 30px; border-radius: 28px; background: var(--sig); color: var(--on-sig); font-size: 18px; font-weight: 600; display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; transition: transform .15s; }
 .btn:active { transform: scale(.97); }
@@ -54,21 +56,34 @@ h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight:
 
 @container site (min-width: 720px) {
   h1 { font-size: min(176px, calc((100cqw - 96px) / 4.6)); }
+  h1:has(.cn) { font-size: min(176px, calc((100cqw - 96px) / 5.7)); }
   .sub { font-size: 30px; line-height: 38px; margin-top: 20px; }
   .main { padding-block: 72px 0; }
 }
-/* desktop: one row on the right, overlapping the hero's lower right */
+footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
+
+/* desktop: the 1440×900 composition Tracy picked, scaled by --u (1px at 1440 wide) and centred past it:
+   headline left; the squad stands on a 200-unit floor to the right, with depth (middle and ends in front,
+   2 and 4 a step back); the page grows rather than letting the squad reach the hero on a short window */
 @container site (min-width: 1100px) {
-  .main { grid-template-rows: none; padding-block: 56px 0; }
-  .hero { align-self: auto; }
-  .squad { display: flex; justify-content: flex-end; align-items: flex-end; gap: 4px; height: auto; margin-top: -220px; }
-  .c:nth-child(n) { position: relative; left: auto; bottom: auto; width: min(212px, 15vw, 32svh); }
-  .floor { --gh: 132px; }
-  h1 { font-size: 224px; }
-  .sub { font-size: 34px; line-height: 42px; }
+  .floor { --u: calc(min(100cqw, 1440px) / 1440); --gh: calc(200 * var(--u)); min-height: calc(840 * var(--u)); }
+  .wrap { max-width: 1440px; padding-left: max(64px, env(safe-area-inset-left, 0px)); padding-right: max(64px, env(safe-area-inset-right, 0px)); }
+  .nav { height: 76px; }
+  .main { display: block; padding-block: calc(42 * var(--u)) 0; }
+  h1, h1:has(.cn) { font-size: calc(200 * var(--u)); column-gap: .14em; }
+  h1 .cn { top: 0; }
+  .sub { font-size: 34px; line-height: 42px; margin-top: 22px; }
+  .btn { height: 60px; padding: 0 34px; border-radius: 30px; font-size: 19px; }
+  .squad { position: absolute; inset: 0; height: auto; margin: 0; }
+  .c:nth-child(n) { left: calc(50% + var(--x) * var(--u)); bottom: calc(var(--y) * var(--u)); width: calc(var(--w) * var(--u)); }
+  .c:nth-child(1) { --x: -178; --y: 86.8; --w: 196; z-index: 2; }
+  .c:nth-child(2) { --x: -6; --y: 130.1; --w: 172; z-index: 1; }
+  .c:nth-child(3) { --x: 141; --y: 76.1; --w: 208; z-index: 3; }
+  .c:nth-child(4) { --x: 324; --y: 130.1; --w: 172; z-index: 1; }
+  .c:nth-child(5) { --x: 472; --y: 86.8; --w: 196; z-index: 2; }
+  footer .wrap { padding-block: 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
 }
 
-footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
 .mail { user-select: all; }
 
 @media (prefers-reduced-motion: reduce) { .home * { transition: none !important; } }
