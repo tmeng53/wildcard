@@ -44,7 +44,7 @@ final class AppModel {
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
-                do {
+                do throws(AccountError) {
                     return .apple(authorizationCode: try await AppleConfirmation.authorizationCode())
                 } catch .canceled {
                     throw .confirmationCanceled
