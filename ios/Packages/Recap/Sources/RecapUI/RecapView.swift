@@ -49,7 +49,7 @@ public struct RecapView: View {
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt, frozenAt: reveal.heldAt,
-                    onFinished: { model.revealed(reveal.scene) },
+                    onFinished: { model.revealed(reveal.scene, coveredAt: $0) },
                     page: { endingStill(actions: true) },
                     backdrop: { SceneBackdrop(scene: reveal.scene) })
             }

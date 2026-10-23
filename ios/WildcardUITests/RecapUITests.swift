@@ -12,7 +12,7 @@ final class RecapUITests: XCTestCase {
         let tile = app.buttons["recap.entry"]
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
         XCTAssertTrue(tile.label.contains("本周战报"))
-        keepScreenshot(named: "recap-00-tile")
+        keepScreenshot(named: "70-recap-tile")
         tile.tap()
 
         let pages = [
@@ -23,7 +23,7 @@ final class RecapUITests: XCTestCase {
             show(page, in: app)
             // Let the page's animation play out before the shot.
             Thread.sleep(forTimeInterval: settle)
-            keepScreenshot(named: "recap-\(String(format: "%02d", index + 1))-\(page)")
+            keepScreenshot(named: "7\(index + 1)-recap-\(page)")
             if page != "ending" { next(in: app) }
         }
         let save = app.buttons["recap.save"]
@@ -42,12 +42,12 @@ final class RecapUITests: XCTestCase {
         next(in: app)
         show("pending", in: app)
         Thread.sleep(forTimeInterval: 1.5)
-        keepScreenshot(named: "recap-10-pending")
+        keepScreenshot(named: "78-recap-pending")
         let nudge = app.buttons["recap.nudge"]
         XCTAssertTrue(nudge.waitForExistence(timeout: Self.wait), "no 催一下主办方")
         nudge.tap()
         XCTAssertTrue(app.staticTexts["已催主办方充值 token"].waitForExistence(timeout: Self.wait), "the nudge didn't land")
-        keepScreenshot(named: "recap-11-pending-nudged")
+        keepScreenshot(named: "79-recap-pending-nudged")
         next(in: app)
         show("myWeek", in: app)
     }
@@ -64,7 +64,7 @@ final class RecapUITests: XCTestCase {
         }
         show("ending", in: app)
         Thread.sleep(forTimeInterval: 3)
-        keepScreenshot(named: "recap-12-ending-missed-en")
+        keepScreenshot(named: "80-recap-ending-missed-en")
         XCTAssertEqual(app.buttons["recap.planNextWeek"].label, "Plan next week")
     }
 
@@ -77,7 +77,7 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(bar.isSelected, "-tab feed didn't open on 动态")
         XCTAssertLessThan(tile.frame.maxY, bar.frame.minY, "the tile runs under the tab bar")
         Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "recap-20-feed-tile")
+        keepScreenshot(named: "81-recap-feed-tile")
         tile.tap()
         show("podium", in: app)
         app.buttons["recap.close"].tap()

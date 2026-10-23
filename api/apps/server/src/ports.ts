@@ -35,6 +35,12 @@ export interface Caller {
  */
 export type VerifyToken = (token: string) => Promise<Caller>;
 
+/**
+ * Whether a bearer token is the scheduler's, which alone may start jobs such as the daily push.
+ * Never throws for a wrong token: it answers false.
+ */
+export type IsScheduler = (token: string) => Promise<boolean>;
+
 /** The sign-in provider's own records of its users, for what a token alone can't settle. */
 export interface Accounts {
   /**

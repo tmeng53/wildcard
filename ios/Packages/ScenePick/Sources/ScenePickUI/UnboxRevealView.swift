@@ -19,14 +19,14 @@ public struct UnboxRevealView<Page: View, Backdrop: View>: View {
     private let startedAt: Date
     private let frozenAt: Double?
     private let onCovered: () -> Void
-    private let onFinished: () -> Void
+    private let onFinished: (_ coveredAt: Date) -> Void
     private let page: Page
     private let backdrop: Backdrop
 
     /// `frozenAt` holds the reveal on one moment, for screenshots and previews.
     public init(
         _ unboxing: Unboxing, scene: SceneTheme, startedAt: Date, frozenAt: Double? = nil,
-        onCovered: @escaping () -> Void = {}, onFinished: @escaping () -> Void = {},
+        onCovered: @escaping () -> Void = {}, onFinished: @escaping (_ coveredAt: Date) -> Void = { _ in },
         @ViewBuilder page: () -> Page, @ViewBuilder backdrop: () -> Backdrop
     ) {
         self.unboxing = unboxing
@@ -54,7 +54,10 @@ public struct UnboxRevealView<Page: View, Backdrop: View>: View {
             if unboxing.boxed, !reduceMotion { await wait(until: Unboxing.flapsOpen) { burst = true } }
             await wait(until: shown(unboxing.covered)) { onCovered() }
             // Reduce Motion holds the covered moment, so it ends there rather than on still confetti.
-            await wait(until: shown(reduceMotion ? unboxing.covered : unboxing.finished)) { onFinished() }
+            // The home's drop counts from the covered screen, not from here.
+            await wait(until: shown(reduceMotion ? unboxing.covered : unboxing.finished)) {
+                onFinished(startedAt.addingTimeInterval(shown(unboxing.covered)))
+            }
         }
         .accessibilityHidden(true)
     }

@@ -219,7 +219,7 @@ describe('joining by invite code', () => {
     });
     expect([preview.status, preview.body]).toStrictEqual([
       200,
-      { version: 1, name: '周末网球', memberCount: 1, full: false, joined: false },
+      { version: 1, name: '周末网球', memberCount: 1, full: false, joined: false, looks: [] },
     ]);
 
     const joined = await call({
@@ -565,6 +565,17 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
       retryAfter: null,
       body: { version: 1, name: '周末网球', memberCount: 3, full: false, looks },
     });
+    // A signed-in newcomer's join screen gets the same looks, before joining.
+    const newcomer = await signUp();
+    const preview = await call({
+      method: 'GET',
+      path: `/squad-invites/${typed}`,
+      token: newcomer.token,
+    });
+    expect([preview.status, preview.body]).toStrictEqual([
+      200,
+      { version: 1, name: '周末网球', memberCount: 3, full: false, joined: false, looks },
+    ]);
   });
 
   it('answers an unknown code and one that can’t be a code alike', async () => {

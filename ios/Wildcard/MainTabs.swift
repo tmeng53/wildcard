@@ -44,10 +44,14 @@ struct MainTabs: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay(alignment: .bottom) {
                     if showsTabBar {
-                        TabBar(Self.tabs, selection: $selection)
-                            .padding(.horizontal, Space.pageMargin)
-                            .offset(y: proxy.safeAreaInsets.bottom - Sizing.tabBarBottom)
-                            .transition(.opacity)
+                        TimelineView(.animation(minimumInterval: nil, paused: !arriving)) { timeline in
+                            TabBar(Self.tabs, selection: $selection)
+                                .padding(.horizontal, Space.pageMargin)
+                                .offset(
+                                    y: proxy.safeAreaInsets.bottom - Sizing.tabBarBottom
+                                        + (arriving ? today.tabBarOffset(at: timeline.date) : 0))
+                        }
+                        .transition(.opacity)
                     }
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
@@ -59,7 +63,9 @@ struct MainTabs: View {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
-        .onChange(of: recap.picks) { selection = .today }
+        .onChange(of: recap.picks) {
+            if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
+        }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
                 CharacterEditorView(
@@ -74,14 +80,33 @@ struct MainTabs: View {
             }
         }
         .fullScreenCover(isPresented: $showsSquad) {
-            SquadSettingsView(model: squad) { showsSquad = false }
-                .environment(\.sceneTheme, squad.scene)
+            SquadSettingsView(
+                model: squad, close: { showsSquad = false },
+                picked: { scene, coveredAt in
+                    // The page goes at once: its reveal's last frame is the scene home draws.
+                    var instant = Transaction()
+                    instant.disablesAnimations = true
+                    withTransaction(instant) { showsSquad = false }
+                    land(on: scene, coveredAt: coveredAt)
+                }
+            )
+            .environment(\.sceneTheme, squad.scene)
         }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             showsSquad = false
             leftSquad()
         }
+    }
+
+    /// Whether the squad is dropping onto a newly picked scene, which brings the tab bar back.
+    private var arriving: Bool { today.isArriving && !reduceMotion }
+
+    /// Every scene pick ends on home: the picked scene filled the screen at `coveredAt`, and the
+    /// squad drops onto it.
+    private func land(on scene: SceneTheme, coveredAt: Date) {
+        selection = .today
+        today.dropIn(on: scene, coveredAt: coveredAt)
     }
 
     /// Opens the editor on the member's own character.
@@ -128,6 +153,11 @@ struct MainTabs: View {
             )
             .accentTone(.brand)
         }
+    }
+
+    /// The bar as home opens with it, for the end of 上场, which hands over to home.
+    static var entranceTabBar: some View {
+        TabBar(tabs, selection: .constant(Tab.today))
     }
 
     private static let tabs: [TabBarItem<Tab>] = [
