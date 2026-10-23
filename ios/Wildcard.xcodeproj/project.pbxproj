@@ -473,6 +473,7 @@
 		A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Avatar;
+		};
 		A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Onboarding;
@@ -566,6 +567,7 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */;
 			productName = AvatarUI;
+		};
 		A1C0DE000000000000000073 /* AccountDomain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
