@@ -18,9 +18,9 @@
   .legal td::before { content: attr(data-label); display: block; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-2); }
 }
 
-/* Header, floor edge and footer shared with the home page (gym theme). */
+/* Header and footer shared with the home page (gym theme, calm grey). */
 @font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-display: swap; src: url('/fonts/BarlowCondensed-ExtraBold.ttf') format('truetype'); }
-.legal-chrome { --sky: #F2F3F5; --graphite: #1F2128; --volt: #C6F432; --num: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+.legal-chrome { --sky: #F2F3F5; --num: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
 .legal-chrome .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
 header.legal-chrome { background: var(--sky); }
 header.legal-chrome .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
@@ -28,7 +28,6 @@ header.legal-chrome .nav { height: 72px; display: flex; align-items: center; jus
 .lang { display: flex; gap: 2px; }
 .lang a { height: 36px; padding: 0 12px; border-radius: 18px; color: var(--ink-2); font-size: 15px; line-height: 36px; font-weight: 500; text-decoration: none; }
 .lang a[aria-current="page"] { color: var(--ink); font-weight: 600; background: rgba(34, 37, 46, .07); }
-.edge { height: 7px; background: linear-gradient(#1F2128, #1F2128) 0 0 / 100% 4px no-repeat, linear-gradient(#C6F432, #C6F432) 0 4px / 100% 3px no-repeat; }
 footer.legal-chrome { background: var(--white); }
 footer.legal-chrome .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--ink-2); }
 footer.legal-chrome a { color: var(--ink-2); text-decoration: none; }
