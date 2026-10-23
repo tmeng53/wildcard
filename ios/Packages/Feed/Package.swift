@@ -39,6 +39,8 @@ let package = Package(
         ),
         .testTarget(name: "FeedDomainTests", dependencies: ["FeedDomain", "Contracts"]),
         // The screen's non-visual parts, and its String Catalog read as a file; runs on Linux too.
-        .testTarget(name: "FeedUITests", dependencies: ["FeedUI", "FeedDomain", "Contracts"]),
+        .testTarget(
+            name: "FeedUITests",
+            dependencies: ["FeedUI", "FeedDomain", "Contracts", .product(name: "AvatarArt", package: "Avatar")]),
     ]
 )

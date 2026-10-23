@@ -96,7 +96,7 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     let source = FakeSource([jaysRun])
     let feed = store(source, viewer: mia)
     await feed.load()
-    #expect(try feed.react(.doubleTap, on: jaysRun.id) == .happyHop)
+    #expect(try feed.react(.doubleTap, on: jaysRun.id) == MoveID("heart"))
     await feed.sendResponses()
     #expect(await source.calls.count == 1)
 }

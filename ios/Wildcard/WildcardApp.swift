@@ -39,11 +39,13 @@ struct WildcardApp: App {
         _today = State(
             initialValue: TodayModel(
                 store: TodayStore(
-                    backend: InMemoryCheckInBackend.sampleSquad(now: LaunchOptions.now(), member: member, squad: squad),
+                    backend: InMemoryCheckInBackend.sampleSquad(
+                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad),
                     outbox: InMemoryOutbox(),
                     now: LaunchOptions.now, newID: { UUID() }),
                 writer: LaunchOptions.disclaimerWriter,
                 photoSource: LaunchOptions.photoSource,
+                scene: LaunchOptions.scene,
                 now: LaunchOptions.now,
                 posted: Self.askForNotifications))
         _profile = State(

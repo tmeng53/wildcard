@@ -78,13 +78,13 @@ let doudou = member(5)
     #expect(throws: FeedError.ownPost) { try post.reacting(.doubleTap, by: author, at: at(1)) }
 }
 
-@Test func eachBarEmojiPlaysItsMoveAndAnyOtherHops() {
-    let moves = ["❤️", "💪", "🤣", "😋", "😱", "💩", "🎉", "👑", "😭", "🤔", "☺️", "👋", "🦖", "💪🏽", "👋🏿"].map {
+@Test func eachApprovedEmojiPlaysItsMoveAndAnyOtherCheers() {
+    let moves = ["❤️", "💪", "😎", "🏆", "👑", "😂", "🤤", "😮", "😡", "🤣", "🔥", "🦖", "💪🏽"].map {
         MoveID(emoji($0)).id
     }
     #expect(
         moves == [
-            "happy-hop", "pump", "laugh-bend", "drool", "shocked", "pout", "clap", "chin-up", "touched", "confused",
-            "shy", "wave", "happy-hop", "pump", "wave",
+            "heart", "flex", "chin-up", "chin-up", "chin-up", "laugh-bend", "drool", "shocked", "pout", "cheer",
+            "cheer", "cheer", "flex",
         ])
 }

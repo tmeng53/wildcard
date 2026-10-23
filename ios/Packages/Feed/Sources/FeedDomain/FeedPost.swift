@@ -18,25 +18,21 @@ public struct FeedPost: Hashable, Sendable, Identifiable {
 }
 
 /// A move from the character's move library, by id, which the author's character plays when a
-/// teammate reacts. A player that doesn't know an id plays `happyHop`.
+/// teammate reacts. A player that doesn't know an id plays the persona's cheer.
 public struct MoveID: Hashable, Sendable, CustomStringConvertible {
-    /// A small hop, arms up: ❤️, and any emoji without a move of its own.
-    public static let happyHop = MoveID("happy-hop")
+    /// The persona's own cheer: any emoji without a move of its own.
+    public static let cheer = MoveID("cheer")
 
-    /// The emoji that have a move of their own; the rest hop. 第一期's fixed table, from the feed
-    /// design; 第二期's coach picks moves and falls back to it.
+    /// The emoji that have a move of their own; the rest cheer. 第一期's approved table;
+    /// 第二期's coach picks moves and falls back to it.
     static let byEmoji: [String: MoveID] = [
-        "😂": MoveID("laugh-bend"), "🤣": MoveID("laugh-bend"),
-        "💪": MoveID("pump"),
-        "🤤": MoveID("drool"), "😋": MoveID("drool"),
-        "😮": MoveID("shocked"), "😱": MoveID("shocked"), "😳": MoveID("shocked"),
-        "😡": MoveID("pout"), "😤": MoveID("pout"), "💩": MoveID("pout"),
-        "🔥": MoveID("clap"), "👏": MoveID("clap"), "🎉": MoveID("clap"),
+        "❤️": MoveID("heart"),
+        "💪": MoveID("flex"),
         "😎": MoveID("chin-up"), "🏆": MoveID("chin-up"), "👑": MoveID("chin-up"),
-        "🥹": MoveID("touched"), "🥲": MoveID("touched"), "😭": MoveID("touched"),
-        "🤔": MoveID("confused"),
-        "🙈": MoveID("shy"), "☺️": MoveID("shy"),
-        "👋": MoveID("wave"),
+        "😂": MoveID("laugh-bend"),
+        "🤤": MoveID("drool"),
+        "😮": MoveID("shocked"),
+        "😡": MoveID("pout"),
     ]
 
     public let id: String
@@ -47,7 +43,7 @@ public struct MoveID: Hashable, Sendable, CustomStringConvertible {
     public init(_ emoji: Emoji) {
         var plain = String.UnicodeScalarView()
         plain.append(contentsOf: emoji.text.unicodeScalars.filter { !(0x1F3FB...0x1F3FF).contains($0.value) })
-        self = Self.byEmoji[String(plain)] ?? .happyHop
+        self = Self.byEmoji[String(plain)] ?? .cheer
     }
 
     public var description: String { id }

@@ -1,8 +1,9 @@
+import AvatarArt
 import Contracts
-import FeedDomain
 import Foundation
 import Testing
 
+@testable import FeedDomain
 @testable import FeedUI
 
 private let viewer = MemberID(UUID())
@@ -70,4 +71,14 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
         loaded.append(try #require(String(bytes: data, encoding: .utf8)))
     }
     #expect(Set(loaded) == Set(InMemoryFeedSource.samplePhotoNames))
+}
+
+/// Every move an emoji asks for is drawn, for every persona; the rest cheer.
+@Test func everyEmojiMoveIsDrawnForEveryPersona() {
+    let moves = Set(MoveID.byEmoji.values.map(\.id))
+    #expect(moves.isSubset(of: PlaceholderCharacter.reactionMoves))
+    for persona in Persona.allCases {
+        #expect(moves.allSatisfy { PlaceholderCharacter.reactionMove($0, persona: persona) != nil }, "\(persona)")
+    }
+    #expect(PlaceholderCharacter.reactionMove(MoveID.cheer.id) == nil)
 }

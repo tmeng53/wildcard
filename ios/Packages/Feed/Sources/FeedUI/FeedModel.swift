@@ -126,7 +126,7 @@ public final class FeedModel {
         let persona = store.characters[post.author]?.look.moves ?? .energetic
         let species = store.characters[post.author]?.look.species
         guard
-            let clip = PlaceholderCharacter.reactionMove(move.id)
+            let clip = PlaceholderCharacter.reactionMove(move.id, persona: persona)
                 ?? (try? PlaceholderCharacter.clip("cheer", persona: persona, species: species))
         else { return }
         let start = now()

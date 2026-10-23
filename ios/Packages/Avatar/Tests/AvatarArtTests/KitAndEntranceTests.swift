@@ -178,6 +178,7 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     clips += PlaceholderCharacter.reactionMoves.compactMap(PlaceholderCharacter.reactionMove)
     for persona in Persona.allCases {
         clips += [try PlaceholderCharacter.typing(persona: persona), try PlaceholderCharacter.teary(persona: persona)]
+        clips += try Move.allCases.map { try PlaceholderCharacter.clip(for: $0, persona: persona) }
         clips += try ["idle", "cheer", "welcome"].map { try PlaceholderCharacter.clip($0, persona: persona) }
         clips += try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: persona) }
     }
@@ -198,7 +199,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
 /// one drawn plays once on every look, stays on the canvas and ends at rest, so the character
 /// holds still again until the next reaction.
 @Test func reactionMovesPlayOnceAndEndAtRest() throws {
-    #expect(PlaceholderCharacter.reactionMoves == ["pump", "wave"])
+    #expect(
+        PlaceholderCharacter.reactionMoves == ["chin-up", "drool", "flex", "heart", "laugh-bend", "pout", "shocked"])
     #expect(PlaceholderCharacter.reactionMove("happy-hop") == nil)
     #expect(PlaceholderCharacter.reactionMove("../moves/entrance") == nil)
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
