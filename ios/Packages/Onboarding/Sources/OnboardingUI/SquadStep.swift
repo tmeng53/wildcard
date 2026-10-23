@@ -109,6 +109,7 @@ private struct CodeBox: View {
     let letter: Character?
     let isNext: Bool
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     private let height: Double = 52
 
     var body: some View {
@@ -121,7 +122,7 @@ private struct CodeBox: View {
             .background(Color(role: .bgSubtle, in: theme), in: shape)
             .overlay {
                 if isNext {
-                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                    shape.strokeBorder(Color(role: tone.fill, in: theme), lineWidth: Sizing.selectionStroke)
                 }
             }
     }

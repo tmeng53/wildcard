@@ -38,13 +38,14 @@ struct WeekStep: View {
     }
 }
 
-/// The week on an accent card, laid out as the approved board draws it: who and which dates,
+/// The week on a card in the accent tone (the brand's, in sign-up), laid out as the approved board draws it: who and which dates,
 /// the week's number in italic, a row a day, the character in the corner and 每周训练 N/7 天
 /// along the bottom. A picture with a fixed layout, like the 出赛表 poster.
 private struct WeekPoster: View {
     let model: SignUpModel
     let week: WeekDraft
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Positions from the approved board, in poster points.
@@ -66,12 +67,12 @@ private struct WeekPoster: View {
     private let characterInset = CGSize(width: 30, height: 56)
     /// Days that are 休息 fade back, so the training days read first.
     private let restOpacity = 0.55
-    /// The selected day's row: white over the accent, faintly.
+    /// The selected day's row: the ink over the card, faintly.
     private let selectedFill = 0.22
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Color(role: .bgAccent, in: theme)
+            Color(role: tone.fill, in: theme)
             Text(verbatim: "\(model.nickname) · \(dates)")
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .lineLimit(1)
@@ -106,7 +107,7 @@ private struct WeekPoster: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
-        .foregroundStyle(Color(role: .fgOnAccent, in: theme))
+        .foregroundStyle(Color(role: tone.onFill, in: theme))
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         // A picture with a fixed layout: its type doesn't grow with Dynamic Type.
         .dynamicTypeSize(.large)
@@ -135,7 +136,7 @@ private struct WeekPoster: View {
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-                        .fill(Color(role: .fgOnAccent, in: theme).opacity(selectedFill))
+                        .fill(Color(role: tone.onFill, in: theme).opacity(selectedFill))
                 }
             }
             .opacity(day == .rest ? restOpacity : 1)
@@ -238,6 +239,7 @@ private struct DayChip: View {
     let isSelected: Bool
     let action: () -> Void
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
 
     /// The chip's drawn height in the design.
     private let height = 34.0
@@ -262,7 +264,7 @@ private struct DayChip: View {
             .background(Color(role: .bgSubtle, in: theme), in: shape)
             .overlay {
                 if isSelected {
-                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                    shape.strokeBorder(Color(role: tone.fill, in: theme), lineWidth: Sizing.selectionStroke)
                 }
             }
             .frame(minHeight: Sizing.minimumTapTarget)
