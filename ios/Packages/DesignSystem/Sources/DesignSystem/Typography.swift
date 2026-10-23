@@ -87,6 +87,8 @@ public enum TypeRamp {
     /// A tab bar item's name; the selected one uses `tabSelected`.
     public static let tab = TypeStyle(face: .text(.medium), size: 12, anchor: .caption)
     public static let tabSelected = TypeStyle(face: .text(.semibold), size: 12, anchor: .caption)
+    /// A small name under a tile (跑道 under its scene): 12, regular; picked, `tabSelected`.
+    public static let caption = TypeStyle(face: .text(.regular), size: 12, anchor: .caption)
     /// Secondary and text buttons, and the selected switch or pill: `callout`, one weight heavier.
     public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
 
@@ -98,6 +100,8 @@ public enum TypeRamp {
     public static let scoreInline = TypeStyle(face: .scoreboard(.extraBold), size: 22, anchor: .title3)
     /// A count beside its label in a row of counts (健康餐 3): 18.
     public static let scoreSmall = TypeStyle(face: .scoreboard(.extraBold), size: 18, anchor: .body)
+    /// A number inside a line of small text (小队 5 周前…): 14, semibold.
+    public static let scoreCaption = TypeStyle(face: .scoreboard(.semibold), size: 14, anchor: .caption)
 
     /// The week's number across the 出赛表 poster (W42), italic and set tight. The poster is a
     /// picture saved at a fixed size, so it doesn't scale with Dynamic Type.
@@ -113,8 +117,10 @@ public enum TypeRamp {
         ("largeTitle", largeTitle), ("taskTitle", taskTitle), ("title", title), ("headline", headline),
         ("body", body), ("field", field), ("pick", pick), ("footnote", footnote),
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
-        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreHero", scoreHero),
+        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("caption", caption),
+        ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
-        ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("posterWeek", posterWeek),
+        ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
+        ("posterWeek", posterWeek),
     ]
 }

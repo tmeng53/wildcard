@@ -1528,6 +1528,14 @@
             "format": "date-time",
             "description": "When it was created, in UTC."
           },
+          "captain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The captain (队长), who renames the squad, removes members and hands the captaincy on: the creator at first; when the captain leaves, the earliest member to join. Null only once everyone has left."
+          },
           "members": {
             "type": "array",
             "items": {
@@ -1559,6 +1567,7 @@
           "name",
           "inviteCode",
           "createdAt",
+          "captain",
           "members"
         ],
         "additionalProperties": false
@@ -1582,6 +1591,49 @@
         "required": [
           "version",
           "name"
+        ],
+        "additionalProperties": false
+      },
+      "SquadNameChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+            "x-max-characters": 20
+          }
+        },
+        "required": [
+          "version",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "SquadCaptainChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member to hand the captaincy to."
+          }
+        },
+        "required": [
+          "version",
+          "member"
         ],
         "additionalProperties": false
       },
@@ -1845,6 +1897,177 @@
           "today",
           "me",
           "squadWeek"
+        ],
+        "additionalProperties": false
+      },
+      "SquadScene": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "week": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.",
+            "example": "2026-10-26"
+          },
+          "scene": {
+            "type": "string",
+            "enum": [
+              "track",
+              "pool",
+              "gym",
+              "tennis",
+              "climbing"
+            ],
+            "description": "The squad’s scene this week.",
+            "example": "pool"
+          },
+          "pickers": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string",
+                "enum": [
+                  "crown",
+                  "captain"
+                ],
+                "description": "`crown`: last week’s crown winners (皇冠) pick; `captain`: nobody won it, so the captain picks."
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "Who may pick, in the order they joined."
+              }
+            },
+            "required": [
+              "by",
+              "members"
+            ],
+            "additionalProperties": false,
+            "description": "Who picks this week’s scene, once."
+          },
+          "picked": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "scene": {
+                "type": "string",
+                "enum": [
+                  "track",
+                  "pool",
+                  "gym",
+                  "tennis",
+                  "climbing"
+                ],
+                "description": "One of the scenes the app draws. More may come with an app release.",
+                "example": "pool"
+              },
+              "by": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "Null once the picker deleted their account."
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "scene",
+              "by",
+              "at"
+            ],
+            "additionalProperties": false,
+            "description": "This week’s pick, once made; it can’t be changed."
+          },
+          "canPick": {
+            "type": "boolean",
+            "description": "True when the caller may pick now: one of the pickers, and nothing picked yet."
+          },
+          "scenes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "scene": {
+                  "type": "string",
+                  "enum": [
+                    "track",
+                    "pool",
+                    "gym",
+                    "tennis",
+                    "climbing"
+                  ],
+                  "description": "One of the scenes the app draws. More may come with an app release.",
+                  "example": "pool"
+                },
+                "weeksAgo": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton)."
+                }
+              },
+              "required": [
+                "scene",
+                "weeksAgo"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Every scene, in the order the picker shows them."
+          }
+        },
+        "required": [
+          "version",
+          "week",
+          "scene",
+          "pickers",
+          "picked",
+          "canPick",
+          "scenes"
+        ],
+        "additionalProperties": false
+      },
+      "ScenePick": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "scene": {
+            "type": "string",
+            "enum": [
+              "track",
+              "pool",
+              "gym",
+              "tennis",
+              "climbing"
+            ],
+            "description": "One of the scenes the app draws. More may come with an app release.",
+            "example": "pool"
+          }
+        },
+        "required": [
+          "version",
+          "scene"
         ],
         "additionalProperties": false
       },
@@ -4443,11 +4666,11 @@
         }
       }
     },
-    "/squads/{squadId}/members/me": {
-      "delete": {
-        "operationId": "leaveSquad",
-        "summary": "Leave a squad",
-        "description": "Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the member isn’t in changes nothing.",
+    "/squads/{squadId}/name": {
+      "put": {
+        "operationId": "renameSquad",
+        "summary": "Rename a squad",
+        "description": "Only its captain. The same name again changes nothing.",
         "security": [
           {
             "bearer": []
@@ -4464,12 +4687,29 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadNameChange"
+              }
+            }
+          }
+        },
         "responses": {
-          "204": {
-            "description": "Not in the squad any more"
+          "200": {
+            "description": "The squad, renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Not a valid squad id",
+            "description": "Not a valid squad id or name",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4480,6 +4720,208 @@
           },
           "401": {
             "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t the squad’s captain (`NOT_SQUAD_CAPTAIN`), or isn’t in it (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/captain": {
+      "put": {
+        "operationId": "handSquadCaptaincy",
+        "summary": "Hand the captaincy to another member",
+        "description": "Only the captain. Naming the captain again changes nothing.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadCaptainChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The squad, with its new captain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t the squad’s captain (`NOT_SQUAD_CAPTAIN`), or isn’t in it (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The member isn’t in the squad (`SQUAD_MEMBER_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/members/{memberId}": {
+      "delete": {
+        "operationId": "removeSquadMember",
+        "summary": "Leave a squad, or remove a member from it",
+        "description": "Anyone may take themselves out (leaving); only the captain may take out someone else. A captain who leaves hands the captaincy to the earliest member left. Their check-ins leave the squad’s list with them. Safe to repeat: someone not in the squad changes nothing.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Not in the squad any more"
+          },
+          "400": {
+            "description": "Not a valid squad id or member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t the squad’s captain (`NOT_SQUAD_CAPTAIN`), or isn’t in it (`SQUAD_NOT_JOINED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4771,6 +5213,208 @@
           },
           "403": {
             "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/scene": {
+      "get": {
+        "operationId": "getSquadScene",
+        "summary": "A squad’s scene this week, and who picks it",
+        "description": "Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The scene",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadScene"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/scene": {
+      "put": {
+        "operationId": "pickSquadScene",
+        "summary": "Pick the squad’s scene for the week",
+        "description": "Once a week, by one of `pickers` (`GET /squads/{squadId}/scene`), for the week open now. The pick takes effect at once and can’t be changed. Safe to repeat: the same pick by the same member again answers 200.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-26"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenePick"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already picked: this was a retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadScene"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Picked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadScene"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id, week or scene, or a week that isn’t open for picking (`SCENE_WEEK_CLOSED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t one of this week’s pickers (`NOT_SCENE_PICKER`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Someone already picked this week’s scene (`SCENE_ALREADY_PICKED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

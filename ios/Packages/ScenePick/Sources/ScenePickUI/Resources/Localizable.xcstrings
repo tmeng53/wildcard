@@ -1,0 +1,118 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "%@，还没开过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, still in its box"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，还没开过"
+          }
+        }
+      }
+    },
+    "下周去哪练？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where next week?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下周去哪练？"
+          }
+        }
+      }
+    },
+    "冠军专属": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Champion's pick"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冠军专属"
+          }
+        }
+      }
+    },
+    "小队 %@ 周前在这里练过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad was here %@ wk ago"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队 %@ 周前在这里练过"
+          }
+        }
+      }
+    },
+    "小队还没来过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The squad hasn't been here"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队还没来过"
+          }
+        }
+      }
+    },
+    "就它了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This one"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就它了"
+          }
+        }
+      }
+    },
+    "这周就在这儿练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training here this week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这周就在这儿练"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

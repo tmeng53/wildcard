@@ -1,5 +1,5 @@
 /* The home page: one screen. The gym wall with the headline, slogan and one button; the squad stands
-   on the gym floor; a thin white footer. Tokens from /wildcard.css (design system v4, gym). Light only. */
+   on the gym floor; a thin white footer. Tokens from /wildcard.css (design system v4, brand surface). Light only. */
 /* The body is the size container, not .site: a container is a stacking context, and the headline's
    tape canvas (on the body, z-index 3) has to pass under the squad (z-index 4). */
 .home { container: site / inline-size; }
@@ -18,7 +18,7 @@
 .floor:has(.cn) { --h: min(clamp(32px, calc((100cqw - 40px) / 5.7), 120px), 18svh); }
 /* --cw also fits the height left under the hero (nav, padding, the hero at about 2.4 × --h, the gap), so the
    front row's feet stay on screen; the squad is about 2.2 × --cw tall */
-.floor { --cw: max(72px, min(29cqw, 230px, calc((100svh - 176px - var(--h) * 2.4) / 2.2))); --gh: calc(var(--cw) * .62 + 40px); position: relative; overflow-x: clip; flex: 1; background: var(--gym-sky); display: flex; flex-direction: column; }
+.floor { --cw: max(72px, min(29cqw, 230px, calc((100svh - 176px - var(--h) * 2.4) / 2.2))); --gh: calc(var(--cw) * .62 + 40px); position: relative; overflow-x: clip; flex: 1; background: var(--brand-sky); display: flex; flex-direction: column; }
 .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
 /* phones and tablets: the hero sits centred in the space above the squad */
 .main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 40px; padding-block: 40px 0; }

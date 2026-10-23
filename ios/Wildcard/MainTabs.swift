@@ -5,6 +5,7 @@ import DesignSystemUI
 import FeedUI
 import MeDomain
 import MeUI
+import ScheduleUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -17,8 +18,10 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
-    /// Nil on the real backend until 动态 has its API adapter: the tab says it is coming.
-    let feed: FeedModel?
+    /// Nil on the real backend until 出赛表's API adapter lands: the tab shows its placeholder
+    /// there rather than the in-memory sample member's week.
+    let schedule: ScheduleModel?
+    let feed: FeedModel
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
@@ -79,18 +82,19 @@ struct MainTabs: View {
         switch selection {
         case .today:
             TodayView(model: today) { post in
-                feed?.open(post)
+                feed.open(post)
                 selection = .feed
             }
         case .feed:
-            if let feed {
-                FeedView(model: feed) { selection = .today }
+            FeedView(model: feed) { selection = .today }
+                .environment(\.sceneTheme, today.scene)
+        case .schedule:
+            if let schedule {
+                ScheduleView(model: schedule)
                     .environment(\.sceneTheme, today.scene)
             } else {
-                UpcomingTab(title: Text("动态"))
+                UpcomingTab(title: Text("出赛表"))
             }
-        case .schedule:
-            UpcomingTab(title: Text("出赛表"))
         case .profile:
             MeView(
                 model: profile,
@@ -99,7 +103,9 @@ struct MainTabs: View {
                     squad: { selection = .today },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+            )
+            .accentTone(.brand)
         }
     }
 
