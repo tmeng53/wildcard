@@ -1,3 +1,4 @@
+import type { DailyPushSettings } from './domain/daily-push-settings.js';
 import type { DailyCandidate, DuePush, LocalDay } from './domain/daily.js';
 import type { Device, DeviceToken, MemberId } from './domain/device.js';
 import type { PushNotification } from './domain/notification.js';
@@ -51,4 +52,18 @@ export interface DailyPushStore {
     readonly quiet: boolean;
     readonly at: Date;
   }): Promise<boolean>;
+}
+
+/** Where the daily push's settings for everyone are kept: one value, and a log of every change. */
+export interface DailyPushSettingsStore {
+  /**
+   * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two
+   * admins changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<DailyPushSettings>;
+  /**
+   * Saves `settings` with `by` as who changed them, unless they are the settings already: then
+   * nothing is saved or logged. Says whether anything changed.
+   */
+  save(settings: DailyPushSettings, by: MemberId): Promise<boolean>;
 }

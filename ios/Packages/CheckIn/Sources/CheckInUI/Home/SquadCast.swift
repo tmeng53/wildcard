@@ -26,7 +26,7 @@ final class SquadCast {
         var id: MemberID { member.id }
     }
 
-    private(set) var stage = SquadStage(layout: .of(.track))
+    private(set) var stage = SquadStage(layout: .of(.gym))
     private(set) var mates: [Mate] = []
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])

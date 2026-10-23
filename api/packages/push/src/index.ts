@@ -9,10 +9,12 @@ export {
   type ApnsKey,
 } from './adapters/apns-sender.js';
 export { createOffSender } from './adapters/off-sender.js';
+export { createPostgresDailyPushSettings } from './adapters/postgres-daily-push-settings.js';
 export { createPostgresDailyPushStore } from './adapters/postgres-daily-push-store.js';
 export { createPostgresDeviceStore, type PushTables } from './adapters/postgres-device-store.js';
 export { createPostgresSettingsStore } from './adapters/postgres-settings-store.js';
 export { LocalDay, type DailyCandidate, type DuePush } from './domain/daily.js';
+export { DailyPushSettings, DailyPushSettingsChange } from './domain/daily-push-settings.js';
 export { DeviceToken, MemberId, PushEnvironment, type Device } from './domain/device.js';
 export { apnsPayload, type EventValue, type PushNotification } from './domain/notification.js';
 export { DEFAULT_PUSH_SETTINGS, PushTopic, type PushSettings } from './domain/topic.js';
@@ -25,4 +27,8 @@ export type {
   SettingsStore,
 } from './ports.js';
 export { createPush, type Push } from './use-cases/push.js';
+export {
+  createDailyPushSettings,
+  type DailyPushSettingsAdmin,
+} from './use-cases/daily-push-settings.js';
 export type { NotifyOutcome } from './use-cases/push/notify-members.js';
