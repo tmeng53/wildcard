@@ -19,17 +19,6 @@ struct Act: Hashable {
     var seed: Double = 0
 }
 
-/// The award a character wears: the medal on the chest, the crown dropping onto the head. The
-/// rig has no award art yet, so both are drawn over the character, following its torso and head
-/// through every move.
-struct Regalia: Hashable {
-    var medal = false
-    /// How far the crown has fallen, from 0 (out of sight above) to 1 (on the head); nil for none.
-    var crown: Double?
-
-    static let none = Regalia()
-}
-
 /// The figures and clips a story plays, built once per member and outfit and kept while the
 /// story is open, so a frame only poses and draws.
 @MainActor
@@ -37,6 +26,7 @@ final class StoryWardrobe {
     private struct Key: Hashable {
         let member: MemberID
         let kit: String?
+        let clip: StoryClip?
     }
 
     private struct Dressed {
@@ -50,8 +40,13 @@ final class StoryWardrobe {
     private let cast: StoryCast
     private let kits = try? PlaceholderCharacter.sportKits()
 
+    /// The medal's ribbon: the scene's accent.
+    private let ribbon: RGBAColor
+
     init(cast: StoryCast) {
         self.cast = cast
+        let accent = ColorRole.bgAccent.color(in: cast.scene)
+        ribbon = RGBAColor(red: accent.red, green: accent.green, blue: accent.blue)
     }
 
     /// What a trained day's sport puts on, as the editor and 上场 dress it; none for a sport the
@@ -61,20 +56,21 @@ final class StoryWardrobe {
         return kits?.kit(for: .sport(sport))
     }
 
-    /// Where every part of `member` lands at `time` on the page, the drawing to fill in, and
-    /// where its award goes.
-    func frame(of member: MemberID, act: Act, kit: SportKit?, at time: Double) -> CharacterFrame? {
-        guard let look = cast[member], let dressed = dress(look, kit: kit) else { return nil }
-        let placements = dressed.figure.layout(pose(of: look, dressed, act: act, at: time))
-        return CharacterFrame(
-            drawing: dressed.drawing, placements: placements,
-            crown: Self.anchor(.crown, on: dressed.figure, placements),
-            medal: Self.anchor(.medal, on: dressed.figure, placements))
+    /// Where every part of `member` lands at `time` on the page, wearing `regalia`, and the
+    /// drawing to fill in.
+    func frame(
+        of member: MemberID, act: Act, regalia: Regalia, kit: SportKit?, at time: Double
+    ) -> (drawing: FigureDrawing, placements: [Placement])? {
+        guard let look = cast[member], let dressed = dress(look, for: act.clip, kit: kit) else { return nil }
+        var posed = pose(of: look, dressed, act: act, at: time)
+        regalia.dress(&posed, on: dressed.figure)
+        return (dressed.drawing, dressed.figure.layout(posed))
     }
 
     private func pose(of member: StoryMember, _ dressed: Dressed, act: Act, at time: Double) -> Pose {
         let idleTime = time + act.seed
-        guard let clip = act.clip, time >= act.start, let move = bound(clip, for: member, on: dressed.figure) else {
+        guard let clip = act.clip, time >= act.start, let move = bound(clip, for: member, on: dressed.figure)
+        else {
             return dressed.figure.pose(dressed.idle, at: idleTime)
         }
         if let hold = act.hold, time - act.start >= hold {
@@ -85,10 +81,15 @@ final class StoryWardrobe {
         return performance.pose(at: time)
     }
 
-    private func dress(_ member: StoryMember, kit: SportKit?) -> Dressed? {
-        let key = Key(member: member.id, kit: kit?.id)
+    /// `member` dressed for the page: the kit for a sport, the food for a meal, and the medal's
+    /// ribbon in the scene's accent.
+    private func dress(_ member: StoryMember, for clip: StoryClip?, kit: SportKit?) -> Dressed? {
+        // Only a meal changes what the look holds, so the rest share one figure.
+        let holding: StoryClip? = if case .eat? = clip { clip } else { nil }
+        let key = Key(member: member.id, kit: kit?.id, clip: holding)
         if let ready = dressed[key] { return ready }
-        let look = kit?.dress(member.look) ?? member.look
+        var look = holding?.dressing(member.look) ?? kit?.dress(member.look) ?? member.look
+        look.colors["medal"] = ribbon
         guard let figure = try? PlaceholderCharacter.figure(wearing: look),
             let clip = try? PlaceholderCharacter.clip("idle", persona: member.persona, species: member.species),
             let idle = try? figure.bind(clip)
@@ -98,19 +99,15 @@ final class StoryWardrobe {
         return ready
     }
 
-    /// The clip bound to this figure. The art has only the sports' moves so far, so the story's
-    /// own (the toss, the stack, eating, dozing, lying flat) play the persona's cheer for now.
+    /// The clip bound to this figure: a sport's kit move, or the story's own (`StoryClip.art`).
     private func bound(_ clip: StoryClip, for member: StoryMember, on figure: Figure) -> BoundClip? {
         let kit = kit(for: clip)
         let key = "\(member.id)/\(clip.name)/\(kit?.id ?? "")"
         if let ready = clips[key] { return ready }
         let persona = member.persona
-        let cheer = { try? PlaceholderCharacter.clip("cheer", persona: persona, species: member.species) }
-        let loaded: Clip? =
-            switch clip {
-            case .sport: kit.flatMap { try? PlaceholderCharacter.move(for: $0, persona: persona) } ?? cheer()
-            default: cheer()
-            }
+        let loaded =
+            kit.flatMap { try? PlaceholderCharacter.move(for: $0, persona: persona) }
+            ?? (try? clip.art(persona: persona, species: member.species))
         guard let loaded, let ready = try? figure.bind(loaded) else { return nil }
         clips[key] = ready
         return ready
@@ -130,38 +127,6 @@ final class StoryWardrobe {
         }
         return (FigureDrawing(figure), figure.layout(pose))
     }
-
-    /// Where an award sits, in the canvas: the crown's bottom on top of the head, the medal on
-    /// the chest, each with the part's turn.
-    private enum Award {
-        case crown, medal
-
-        var part: PartID { self == .crown ? "head" : "torso" }
-        /// The spot on the part at rest, in canvas points (the head's art tops out at 78).
-        var spot: Point { self == .crown ? Point(x: 120, y: 78) : Point(x: 120, y: 232) }
-    }
-
-    private static func anchor(_ award: Award, on figure: Figure, _ placements: [Placement]) -> CharacterFrame.Anchor? {
-        guard let index = figure.parts.firstIndex(where: { $0.id == award.part }), index < placements.count else {
-            return nil
-        }
-        let transform = placements[index].transform
-        return CharacterFrame.Anchor(
-            point: transform.apply(to: award.spot), degrees: atan2(transform.b, transform.a) * 180 / .pi)
-    }
-}
-
-/// One character's drawing posed for a moment, and where its crown and medal go.
-struct CharacterFrame {
-    struct Anchor {
-        let point: Point
-        let degrees: Double
-    }
-
-    let drawing: FigureDrawing
-    let placements: [Placement]
-    let crown: Anchor?
-    let medal: Anchor?
 }
 
 /// One character on a page, posed for `time`. Its feet stand on the bottom of the frame's
@@ -175,45 +140,32 @@ struct StoryCharacter: View {
     var kit: SportKit?
     let time: Double
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         if let frame = wardrobe.frame(
-            of: member, act: reduceMotion ? Act() : act, kit: kit, at: reduceMotion ? 0 : time)
+            of: member, act: reduceMotion ? Act() : act, regalia: reduceMotion ? settled : regalia, kit: kit,
+            at: reduceMotion ? 0 : time)
         {
-            let worn = reduceMotion ? settled : regalia
-            CharacterCanvas(drawing: frame.drawing, placements: frame.placements)
+            Color.clear
                 .aspectRatio(frame.drawing.width / frame.drawing.height, contentMode: .fit)
-                .overlay {
+                .overlay(alignment: .topLeading) {
                     GeometryReader { proxy in
                         let scale = Double(proxy.size.width) / frame.drawing.width
-                        if worn.medal, let medal = frame.medal {
-                            award("medal.fill", size: Self.medalSize * scale, at: medal, scale: scale)
-                                .offset(y: Self.medalSize * scale / 2)
-                        }
-                        if let fallen = worn.crown, let crown = frame.crown {
-                            award("crown.fill", size: Self.crownSize * scale, at: crown, scale: scale)
-                                .offset(y: -Self.crownSize * scale / 2 - Self.crownDropHeight * scale * (1 - fallen))
-                                .opacity(min(fallen * 6, 1))
-                        }
+                        // Drawn with room around the canvas, so a toss, the stack's jump, lying
+                        // flat and the falling crown aren't cut off.
+                        CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.room)
+                            .frame(width: Self.room.width * scale, height: Self.room.height * scale)
+                            .offset(x: Self.room.minX * scale, y: Self.room.minY * scale)
                     }
                 }
                 .accessibilityHidden(true)
         }
     }
 
-    private func award(_ symbol: String, size: Double, at anchor: CharacterFrame.Anchor, scale: Double) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: size))
-            .foregroundStyle(Color(role: .fgAccent, in: theme))
-            .rotationEffect(.degrees(anchor.degrees))
-            .position(x: anchor.point.x * scale, y: anchor.point.y * scale)
-    }
-
-    /// The awards' size, and how far above the head the crown starts, in canvas points.
-    private static let crownSize = 56.0
-    private static let medalSize = 34.0
-    private static let crownDropHeight = 260.0
+    /// The area drawn, in canvas points (`StoryRoom`).
+    private static let room = CGRect(
+        x: StoryRoom.minX, y: StoryRoom.minY, width: StoryRoom.maxX - StoryRoom.minX,
+        height: StoryRoom.maxY - StoryRoom.minY)
 
     /// With Reduce Motion the award is simply on.
     private var settled: Regalia {
