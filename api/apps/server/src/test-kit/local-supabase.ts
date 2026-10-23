@@ -7,6 +7,12 @@ import {
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
 import {
+  createMembers,
+  createPostgresProfileStore,
+  MemberId as ProfileMember,
+} from '@wildcard/members';
+import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import {
   createOffSender,
   createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
@@ -15,6 +21,7 @@ import {
   createPush,
   type PushSender,
 } from '@wildcard/push';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
@@ -82,6 +89,22 @@ export function aiConsentOn(db: Database) {
   return createAiConsent({
     store: createPostgresConsentStore(db),
     copyVersion: AI_CONSENT_COPY_VERSION,
+    clock: () => new Date(),
+  });
+}
+
+/** Nudges on local Supabase, between squadmates as the squads module keeps them. */
+export function nudgesOn(db: Database) {
+  const members = createMembers({ store: createPostgresProfileStore(db) });
+  return createNudges({
+    store: createPostgresNudgeStore(db),
+    membership: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
+    timeZoneOf: async (member) =>
+      (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
     clock: () => new Date(),
   });
 }

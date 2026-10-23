@@ -8,6 +8,7 @@ import SwiftUI
 /// can keep the field above the keyboard.
 public struct InputField: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Binding private var text: String
     @FocusState private var isFocused: Bool
     private let label: Text
@@ -35,7 +36,7 @@ public struct InputField: View {
             }
             .typeStyle(TypeRamp.field)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .tint(Color(role: .bgAccent, in: theme))
+            .tint(Color(role: tone.fill, in: theme))
             .focused($isFocused)
             if let limit {
                 Text(verbatim: "\(text.count)/\(limit)")
@@ -60,6 +61,7 @@ public struct InputField: View {
 /// is text.
 public struct SearchField: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Binding private var text: String
     @FocusState private var isFocused: Bool
     private let prompt: Text
@@ -80,7 +82,7 @@ public struct SearchField: View {
             }
             .typeStyle(TypeRamp.field)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .tint(Color(role: .bgAccent, in: theme))
+            .tint(Color(role: tone.fill, in: theme))
             .autocorrectionDisabled()
             .submitLabel(.search)
             .focused($isFocused)

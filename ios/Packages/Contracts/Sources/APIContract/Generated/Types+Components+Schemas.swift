@@ -3797,6 +3797,132 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/Nudge`.
+        public struct Nudge: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Nudge/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Nudge/version`.
+            public var version: Components.Schemas.Nudge.VersionPayload
+            /// The squadmate to nudge.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Nudge/to`.
+            public var to: Swift.String
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Nudge/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case poke = "poke"
+            }
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Nudge/kind`.
+            public var kind: Components.Schemas.Nudge.KindPayload
+            /// Creates a new `Nudge`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - to: The squadmate to nudge.
+            ///   - kind: A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            public init(
+                version: Components.Schemas.Nudge.VersionPayload,
+                to: Swift.String,
+                kind: Components.Schemas.Nudge.KindPayload
+            ) {
+                self.version = version
+                self.to = to
+                self.kind = kind
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case to
+                case kind
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Nudge.VersionPayload.self,
+                    forKey: .version
+                )
+                self.to = try container.decode(
+                    Swift.String.self,
+                    forKey: .to
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.Nudge.KindPayload.self,
+                    forKey: .kind
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "to",
+                    "kind"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NudgeDraft`.
+        public struct NudgeDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NudgeDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/NudgeDraft/version`.
+            public var version: Components.Schemas.NudgeDraft.VersionPayload
+            /// The squadmate to nudge.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NudgeDraft/to`.
+            public var to: Swift.String
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NudgeDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case poke = "poke"
+            }
+            /// A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NudgeDraft/kind`.
+            public var kind: Components.Schemas.NudgeDraft.KindPayload
+            /// Creates a new `NudgeDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - to: The squadmate to nudge.
+            ///   - kind: A poke (拍一拍, `poke`). The app shows each kind with its own copy.
+            public init(
+                version: Components.Schemas.NudgeDraft.VersionPayload,
+                to: Swift.String,
+                kind: Components.Schemas.NudgeDraft.KindPayload
+            ) {
+                self.version = version
+                self.to = to
+                self.kind = kind
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case to
+                case kind
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.NudgeDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.to = try container.decode(
+                    Swift.String.self,
+                    forKey: .to
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.NudgeDraft.KindPayload.self,
+                    forKey: .kind
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "to",
+                    "kind"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WeekSummary`.
         public struct WeekSummary: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WeekSummary/version`.

@@ -25,8 +25,13 @@ import {
   createPostgresDraftAllowance,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
-import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import {
+  createMembers,
+  createPostgresProfileStore,
+  MemberId as ProfileMember,
+} from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createApnsSender,
   createOffSender,
@@ -63,7 +68,7 @@ import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
-import { reactionInteractions } from './flows/daily-progress-push.js';
+import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -158,6 +163,13 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+const nudges = createNudges({
+  store: createPostgresNudgeStore(db),
+  // Who is in which squad is the squads module's to keep: nudges ask it.
+  membership: squads,
+  timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
+  clock: () => new Date(),
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -177,6 +189,7 @@ const app = createApp({
   }),
   members,
   squads,
+  nudges,
   aiConsent,
   publicRoutes: {
     proxyHops: config.proxyHops,
@@ -212,7 +225,7 @@ const app = createApp({
   jobs: {
     token: config.jobsToken,
     // Each kind of interaction the daily push counts comes from one of these.
-    interactions: [reactionInteractions(checkIns)],
+    interactions: [reactionInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
   },
   admin: {

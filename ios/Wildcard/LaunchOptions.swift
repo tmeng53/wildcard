@@ -29,6 +29,11 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-me-fails")
     }
 
+    /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.
+    static var showsEmptyFeed: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-empty-feed")
+    }
+
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
     /// tests check after a post. Only the notification UI test leaves it out.
     static var asksForNotifications: Bool {
