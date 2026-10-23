@@ -37,7 +37,7 @@ export interface Reaction {
   readonly reactedAt: Date;
 }
 
-/** What saving a reaction or reply did: a new one, a different one in place of the member's last, or nothing. */
+/** What saving a reaction did: a new one, a different one in place of the member's last, or nothing. */
 export type SaveOutcome = 'created' | 'changed' | 'unchanged';
 
 /**

@@ -16,7 +16,6 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
-import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import {
   CheckInDraft,
@@ -52,7 +51,6 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
-  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf,
@@ -210,7 +208,6 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
-      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf,
@@ -279,7 +276,6 @@ describe('saving a check-in', () => {
         },
         membership,
         reactions: createPostgresReactionStore(db),
-        replies: createPostgresReplyStore(db),
         plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf,
@@ -379,7 +375,6 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
-      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: (who) =>

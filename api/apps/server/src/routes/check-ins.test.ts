@@ -4,7 +4,6 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
-  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -53,7 +52,6 @@ const app = createApp({
       aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
-    replies: createPostgresReplyStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
@@ -327,7 +325,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
     expect(reacted.status).toBe(201);
     const { reactedAt } = z.object({ reactedAt: z.string() }).parse(reacted.body);
 
-    // The feed: each post with its reactions and, on a 请假条, its replies.
+    // The feed: each post with its reactions.
     expect(
       await call({ method: 'GET', path: `/squads/${squad}/check-ins?${range}`, token: me.token }),
     ).toStrictEqual({
@@ -339,7 +337,6 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
           {
             checkIn: { ...saved, audience: [squad] },
             reactions: [{ member: me.userId, emoji: '🤤', reactedAt }],
-            replies: [],
           },
         ],
       },

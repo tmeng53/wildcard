@@ -1,12 +1,11 @@
 // @wildcard/check-ins: daily check-ins (练了, 健康餐, 坦白放纵餐, 今日请假条), teammates'
-// reactions and 请假条 replies, the weekly plans 本周 counts them against, their rules and their tables.
+// reactions, the weekly plans 本周 counts them against, their rules and their tables.
 
 export {
   createPostgresCheckInStore,
   type CheckInTables,
 } from './adapters/postgres-check-in-store.js';
 export { createPostgresReactionStore } from './adapters/postgres-reaction-store.js';
-export { createPostgresReplyStore } from './adapters/postgres-reply-store.js';
 export {
   Audience,
   CheckInDraft,
@@ -29,7 +28,6 @@ export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-s
 export { DayRange } from './domain/day-range.js';
 export type { CheckInTotals } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
-export { ReplyKind, type Reply } from './domain/reply.js';
 export {
   DEFAULT_PLAN_DAYS,
   PlanDay,
@@ -47,9 +45,7 @@ export {
   CheckInNotFoundError,
   CheckInTooOldError,
   DisclaimerAlreadyPostedError,
-  NotADisclaimerError,
   OwnCheckInReactionError,
-  OwnDisclaimerReplyError,
   PhotoInUseError,
   PhotoNotUploadedError,
   PhotoNotYoursError,
@@ -69,12 +65,10 @@ export type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
-  ReplyStore,
   SquadMembership,
   WeeklyPlanStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';
-export type { Replied } from './use-cases/check-ins/reply-to-disclaimer.js';
 export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadPost } from './use-cases/check-ins/list-squad-check-ins.js';
