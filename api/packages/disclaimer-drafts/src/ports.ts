@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 
 import type { MemberId, PromptMeme } from './domain/draft-request.js';
+import type { DraftSettings, ModelName } from './domain/settings.js';
 
 /**
  * A language model that answers in a set JSON shape, whoever provides it. Throws
@@ -9,6 +10,8 @@ import type { MemberId, PromptMeme } from './domain/draft-request.js';
  */
 export interface LanguageModel {
   answer<Reply>(request: {
+    /** Which model answers, as provider/model. */
+    readonly model: ModelName;
     /** The standing instructions (a system prompt). */
     readonly instructions: string;
     /** What to answer. */
@@ -16,6 +19,16 @@ export interface LanguageModel {
     /** The shape of the answer. */
     readonly reply: z.ZodType<Reply>;
   }): Promise<Reply>;
+}
+
+/** Where the draft settings are kept: one value, and a log of every change to it. */
+export interface DraftSettingsStore {
+  current(): Promise<DraftSettings>;
+  /**
+   * Saves `settings` with `by` as who changed them, unless they are the settings already: then
+   * nothing is saved or logged. Says whether anything changed.
+   */
+  save(settings: DraftSettings, by: MemberId): Promise<boolean>;
 }
 
 /** This week's memes, from the meme library. */

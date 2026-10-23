@@ -850,7 +850,8 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme" ] || fail "tools: $body"
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings" ] ||
+    fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
   # tool NAME ARGUMENTS: calls a tool; sets $result (the text it answered) and $is_error.
@@ -880,6 +881,21 @@ if want admin-mcp; then
   logged="$(psql "$DB_URL" -tAc "select string_agg(action->>'tool', ',' order by id) from public.admin_actions where admin_id = '$admin'")"
   [ "$logged" = "add_memes,turn_off_meme" ] || fail "admin_actions should hold the two changes, not the reads or the refusal: $logged"
   echo "admin-mcp: the log holds the two changes, newest first, and no reads ($logged)"
+
+  tool get_disclaimer_draft_settings '{}'
+  [ "$(jq -r '"\(.model) \(.writing) \(.batchesPerDay)"' <<<"$result")" = "openai/gpt-6-luna true 6" ] ||
+    fail "get_disclaimer_draft_settings: $result"
+  tool change_disclaimer_draft_settings '{"writing":false}'
+  [ "$(jq -r .writing <<<"$result")" = false ] || fail "change_disclaimer_draft_settings: $result"
+  tool change_disclaimer_draft_settings '{"writing":false}'
+  tool change_disclaimer_draft_settings '{"writing":true}'
+  tool change_disclaimer_draft_settings '{"model":"gemini/flash"}'
+  [ "$is_error" = true ] || fail "a provider the server doesn't know: $result"
+  changes="$(psql "$DB_URL" -tAc "select string_agg(settings->>'writing', ',' order by id) from public.disclaimer_draft_setting_events where changed_by = '$admin'")"
+  [ "$changes" = "false,true" ] || fail "the settings log should hold the two changes, not the repeat or the refusal: $changes"
+  tool get_weekly_award_settings '{}'
+  [ "$(jq -r .model <<<"$result")" = openai/gpt-6-luna ] || fail "get_weekly_award_settings: $result"
+  echo "admin-mcp: read the AI settings (openai/gpt-6-luna), turned drafts off and on, logged once each ($changes); an unknown provider refused"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED

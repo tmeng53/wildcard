@@ -19,8 +19,9 @@ import {
 import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
+  createDraftSettings,
   createPostgresDraftAllowance,
-  type LanguageModel,
+  createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
 import {
   createMembers,
@@ -41,12 +42,14 @@ import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wild
 import {
   AwardsModelMissingError,
   AwardsWriterUnavailableError,
+  createAwardSettings,
+  createPostgresAwardSettings,
   createPostgresAwardsStore,
   createWeeklyAwards,
-  type LanguageModel as AwardsModel,
 } from '@wildcard/weekly-awards';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
+import { byProvider } from './adapters/language-models.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
 import { createDatabase } from './adapters/postgres.js';
@@ -58,6 +61,7 @@ import {
 } from './adapters/supabase-auth.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
@@ -80,32 +84,30 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
-// The provider LLM_PROVIDER names writes drafts. Without its key every request for drafts
-// fails, so the app shows its dice.
-const llm = config.languageModel;
-const model: LanguageModel =
-  llm === undefined
-    ? { answer: () => Promise.reject(new DisclaimerWriterOffError()) }
-    : llm.provider === 'openai'
-      ? createOpenAILanguageModel({ apiKey: llm.apiKey, model: llm.model })
-      : createAnthropicLanguageModel({ apiKey: llm.apiKey, model: llm.model });
-if (llm === undefined) log.info('no key for LLM_PROVIDER: AI drafts are off');
-// AWARDS_LLM_PROVIDER writes each squad's weekly awards, in a job nobody waits on: a longer
-// answer, given more time. Without its key the awards stay pending.
-const awardsLlm = config.awardsModel;
-const awardsOptions = { timeoutMs: 120_000, maxOutputTokens: 16_384 };
-const awardsModel: AwardsModel =
-  awardsLlm === undefined
-    ? {
-        answer: () =>
-          Promise.reject(
-            new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
-          ),
-      }
-    : awardsLlm.provider === 'openai'
-      ? createOpenAILanguageModel({ ...awardsLlm, ...awardsOptions })
-      : createAnthropicLanguageModel({ ...awardsLlm, ...awardsOptions });
-if (awardsLlm === undefined) log.info('no key for AWARDS_LLM_PROVIDER: weekly awards stay pending');
+// Each module's settings (in the database) name the model that writes for it; it goes to that
+// model's provider, if the server has its key. Without one, drafts are off (the app shows its
+// dice) and the weekly awards stay pending.
+const { openai: openaiKey, anthropic: anthropicKey } = config.languageModelKeys;
+const providers = (options: {
+  readonly timeoutMs?: number;
+  readonly maxOutputTokens?: number;
+}) => ({
+  ...(openaiKey === undefined
+    ? {}
+    : { openai: createOpenAILanguageModel({ apiKey: openaiKey, ...options }) }),
+  ...(anthropicKey === undefined
+    ? {}
+    : { anthropic: createAnthropicLanguageModel({ apiKey: anthropicKey, ...options }) }),
+});
+const model = byProvider(providers({}), () => new DisclaimerWriterOffError());
+// The awards are written in a job nobody waits on: a longer answer, given more time.
+const awardsModel = byProvider(
+  providers({ timeoutMs: 120_000, maxOutputTokens: 16_384 }),
+  () => new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
+);
+if (openaiKey === undefined && anthropicKey === undefined) {
+  log.info('no language model key: AI drafts are off and weekly awards stay pending');
+}
 const memes = createMemes({ store: createPostgresMemeStore(db), clock: () => new Date() });
 if (config.appleSignInKey === undefined) {
   log.warn('No Sign in with Apple key: deleted accounts keep their Apple sign-in grant');
@@ -131,6 +133,7 @@ const aiConsent = createAiConsent({
 const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
 const awards = createWeeklyAwards({
   model: awardsModel,
+  settings: createPostgresAwardSettings(db),
   store: createPostgresAwardsStore(db),
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
@@ -194,6 +197,7 @@ const app = createApp({
   photos,
   disclaimerDrafts: createDisclaimerDrafts({
     model,
+    settings: createPostgresDraftSettings(db),
     // Only what the prompt needs: a meme's source and approval stay out of it.
     memes: async () =>
       (await memes.listInUse()).map(({ phrase, meaning, background, styles }) => ({
@@ -223,6 +227,10 @@ const app = createApp({
       ...memeTools({
         memes: createMemes({ store: createPostgresMemeStore(scope), clock: () => new Date() }),
         clock: () => new Date(),
+      }),
+      ...aiWritingTools({
+        drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
+        awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
       }),
     ],
     publicUrl: config.publicUrl,
