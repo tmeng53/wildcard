@@ -53,9 +53,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)`.
     func saveCheckIn(_ input: Operations.SaveCheckIn.Input) async throws -> Operations.SaveCheckIn.Output
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -334,9 +334,9 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.

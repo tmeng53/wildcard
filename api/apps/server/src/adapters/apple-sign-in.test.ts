@@ -14,7 +14,7 @@ const key = {
   teamId: 'TEAM123456',
   keyId: 'KEY1234567',
   privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
-  clientId: 'app.wildcard.ios',
+  clientId: 'com.wildcardsquad.wildcard',
 };
 const NOW = 1_800_000_000_000;
 
@@ -86,14 +86,14 @@ describe('createAppleSignInRevoker', () => {
     expect(seen.map(({ path, form }) => ({ path, ...form, client_secret: '…' }))).toStrictEqual([
       {
         path: '/auth/token',
-        client_id: 'app.wildcard.ios',
+        client_id: 'com.wildcardsquad.wildcard',
         client_secret: '…',
         code: 'c0de',
         grant_type: 'authorization_code',
       },
       {
         path: '/auth/revoke',
-        client_id: 'app.wildcard.ios',
+        client_id: 'com.wildcardsquad.wildcard',
         client_secret: '…',
         token: 'r3fresh',
         token_type_hint: 'refresh_token',
@@ -108,7 +108,7 @@ describe('createAppleSignInRevoker', () => {
         iat: 1_800_000_000,
         exp: 1_800_000_300,
         aud: 'https://appleid.apple.com',
-        sub: 'app.wildcard.ios',
+        sub: 'com.wildcardsquad.wildcard',
       },
     });
   });

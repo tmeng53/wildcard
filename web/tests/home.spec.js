@@ -9,7 +9,9 @@ const sizes = [
   [320, 568],
   [390, 844],
   [820, 1180],
+  [1024, 700],
   [1100, 800],
+  [1280, 600],
   [1440, 900],
 ];
 
@@ -52,9 +54,12 @@ for (const { path, slogan, button, legal } of pages) {
       }
       for (const text of hero) for (const c of squad) expect(overlaps(text, c)).toBe(false);
 
-      // Feet on the floor: no character reaches into the white footer.
+      // Feet on the floor and on screen: no character reaches into the white footer or below the fold.
       const footer = await page.locator('footer').boundingBox();
-      for (const c of squad) expect(c.y + c.height).toBeLessThanOrEqual(footer.y + 4);
+      for (const c of squad) {
+        expect(c.y + c.height).toBeLessThanOrEqual(footer.y + 4);
+        expect(c.y + c.height).toBeLessThanOrEqual(height);
+      }
     });
   }
 }
@@ -107,8 +112,10 @@ test('with reduced motion there is no tape and the squad stands still', async ({
   expect(await frame()).toBe(before);
 });
 
-test('the legal pages keep their URLs', async ({ request }) => {
+test('the legal pages keep their URLs and lead home in their own language', async ({ page }) => {
   for (const lang of ['', 'zh/', 'zh-hant/'])
-    for (const doc of ['privacy', 'terms'])
-      expect((await request.get(`/${lang}${doc}`)).status()).toBe(200);
+    for (const doc of ['privacy', 'terms']) {
+      expect((await page.goto(`/${lang}${doc}`)).status()).toBe(200);
+      await expect(page.locator('.mark')).toHaveAttribute('href', `/${lang}`);
+    }
 });

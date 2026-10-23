@@ -238,4 +238,54 @@ describe('who sees which reactions', () => {
       annsReaction,
     ]);
   });
+
+  it('lists each post in a squad’s feed with the reactions its viewer may see', async () => {
+    const [tracy, ann, bo] = [await newMember(), await newMember(), await newMember()];
+    const runners = await newSquad(tracy, ann);
+    const climbers = await newSquad(tracy, bo);
+    const run = await trained(tracy, runners, climbers);
+    const quiet = await trained(ann, runners);
+    now = new Date('2026-10-18T20:05:00.000Z');
+    await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
+    now = new Date('2026-10-18T20:06:00.000Z');
+    await checkIns.react({ checkIn: run.id, member: bo, emoji: laughing });
+    const days = { from: '2026-10-18', to: '2026-10-18' };
+    const feed = async (viewer: MemberId, squad: SquadId) =>
+      (await checkIns.listForSquad({ viewer, squad, days })).map(
+        ({ checkIn, reactions, replies }) => ({
+          id: checkIn.id,
+          emoji: reactions.map(({ member, emoji }) => [member, emoji]),
+          replies,
+        }),
+      );
+
+    // Ann sees the runners' feed, so only her own heart on Tracy's run; Tracy sees both.
+    const annSees = [
+      { id: run.id, emoji: [[ann, heart]], replies: [] },
+      { id: quiet.id, emoji: [], replies: [] },
+    ];
+    expect(new Set(await feed(ann, runners))).toStrictEqual(new Set(annSees));
+    expect(await feed(tracy, climbers)).toStrictEqual([
+      {
+        id: run.id,
+        emoji: [
+          [ann, heart],
+          [bo, laughing],
+        ],
+        replies: [],
+      },
+    ]);
+    // Each post's reactions are the same as reading them one post at a time.
+    for (const viewer of [tracy, ann]) {
+      for (const { checkIn, reactions } of await checkIns.listForSquad({
+        viewer,
+        squad: runners,
+        days,
+      })) {
+        expect(reactions).toStrictEqual(
+          await checkIns.listReactions({ checkIn: checkIn.id, viewer }),
+        );
+      }
+    }
+  });
 });

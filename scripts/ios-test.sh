@@ -36,8 +36,8 @@ xcrun simctl bootstatus "$udid" -b
 
 # Start from a fresh install: iOS remembers the notification prompt's answer for as long as the
 # app stays installed, and NotificationPromptUITests needs an app that was never asked.
-if xcrun simctl get_app_container "$udid" app.wildcard.ios >/dev/null 2>&1; then
-  xcrun simctl uninstall "$udid" app.wildcard.ios
+if xcrun simctl get_app_container "$udid" com.wildcardsquad.wildcard >/dev/null 2>&1; then
+  xcrun simctl uninstall "$udid" com.wildcardsquad.wildcard
 fi
 
 # A UI test that fails runs once more: a busy CI simulator sometimes times out a screenshot, a UI

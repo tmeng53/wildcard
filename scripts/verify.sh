@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # With no arguments it runs every check. CI's jobs name the parts their runner can run:
-# swift and web on macOS (on Linux for a PR that leaves ios/ and the Swift build and lint setup
-# alone), supabase, api and backend on Linux (macOS runners have no Docker).
+# swift on macOS (on Linux for a PR that leaves ios/ and the Swift build and lint setup alone),
+# web, supabase, api and backend on Linux (macOS runners have no Docker).
 parts="${*:-swift web supabase api backend}"
 want() { [[ " $parts " == *" $1 "* ]]; }
 
@@ -62,7 +62,10 @@ fi
 if want web && [ -f web/package.json ]; then
   echo "==> web"
   pnpm --dir web install --frozen-lockfile
+  # The generated pages, squad and font must be current (`pnpm --dir web generate`), then ESLint and Prettier.
   pnpm --dir web lint
+  # The home page's layout and behavior tests run in Chromium. Cloud sessions ship it; CI installs it.
+  if [ "${CI:-}" = "true" ]; then pnpm --dir web exec playwright install --with-deps chromium; fi
   pnpm --dir web test
   ran=1
 fi

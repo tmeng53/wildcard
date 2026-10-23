@@ -92,7 +92,7 @@ struct SavedHome: Codable {
     let today: Components.Schemas.SquadToday
     let plan: Components.Schemas.WeeklyPlan
     /// The squad's, from two days before the member's day to two days after.
-    let checkIns: Components.Schemas.CheckInList
+    let checkIns: Components.Schemas.SquadPostList
     /// The member's own, since Monday.
     let week: Components.Schemas.CheckInList
 
@@ -107,11 +107,11 @@ struct SavedHome: Codable {
     }
 
     /// Both lists as one, each check-in once, oldest first.
-    private static func merged(_ squad: Components.Schemas.CheckInList, _ mine: Components.Schemas.CheckInList)
+    private static func merged(_ squad: Components.Schemas.SquadPostList, _ mine: Components.Schemas.CheckInList)
         throws(ContractsError) -> [CheckIn]
     {
         var byID: [CheckInID: CheckIn] = [:]
-        for wire in squad.checkIns + mine.checkIns {
+        for wire in squad.posts.map(\.checkIn) + mine.checkIns {
             let checkIn = try CheckIn(wire)
             byID[checkIn.id] = checkIn
         }
