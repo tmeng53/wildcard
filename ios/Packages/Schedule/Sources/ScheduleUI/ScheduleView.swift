@@ -20,8 +20,9 @@ public struct ScheduleView: View {
     @FocusState private var typingFuel: Bool
 
     private static let panelID = "schedule.panel"
-    /// How long 存好了 stays before it goes.
-    private let savedNoteHold: Duration = .seconds(2.4)
+    /// How long 存好了 stays before it goes: long enough to read after looking up from the tap,
+    /// and for a UI test to find it after a slow render.
+    private let savedNoteHold: Duration = .seconds(5)
 
     public init(model: ScheduleModel) {
         self.model = model
