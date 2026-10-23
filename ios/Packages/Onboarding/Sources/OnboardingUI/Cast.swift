@@ -76,16 +76,10 @@ final class CastMember {
 
     /// The persona's clip with the moves of the outfit's species on top.
     private func clip(_ name: String) -> Clip? {
-        let species = outfit.variants["body"].flatMap(Self.species(of:))
-        return try? PlaceholderCharacter.clip(name, persona: persona, species: species)
+        try? PlaceholderCharacter.clip(name, persona: persona, species: PlaceholderCharacter.species(of: outfit))
     }
 
-    private static let choices = try? PlaceholderCharacter.editorChoices()
     private static let kits = try? PlaceholderCharacter.sportKits()
-
-    private static func species(of body: String) -> String? {
-        choices?.species.first { $0.bodies.contains(body) }?.id
-    }
 
     /// Reads and parses the art for an outfit away from the main actor.
     nonisolated static func figure(wearing outfit: Outfit) async throws -> Figure {
