@@ -108,7 +108,7 @@ struct TilePattern: View {
         }
     }
 
-    /// The card's colour: the scene's signature.
+    /// The card's colour: the scene's signature, the gym's graphite.
     static func base(of scene: SceneTheme) -> SRGBColor {
         switch scene {
         case .track: Palette.trackSignature
