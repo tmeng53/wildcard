@@ -83,7 +83,7 @@ Tick one box. If the PR changes `ios/Packages/Contracts`, the database schema or
 
 ### 9. Screenshots
 
-For anything users can see: simulator screenshots or a recording, before and after. Delete the section only when nothing visible changed. Put each next to its entry in the Approved designs collection (an export or capture of the approved board) and list every difference: one the owner agreed to (link where), or one that can't match yet, which the owner hears about before merge. Scene colours from the squad's theme are not differences. Check each image for clipped, cut-off, covered or overlapping content before attaching it; fix it first.
+For anything users can see: simulator screenshots or a recording, before and after. Delete the section only when nothing visible changed. Put each next to its entry in the Approved designs collection (an export or capture of the approved board) and list every difference: one the owner agreed to (link where), or one that can't match yet, which the owner hears about before merge. Scene colours from the squad's theme are not differences; take screenshots on the gym theme, the default. Check each image for clipped, cut-off, covered or overlapping content before attaching it; fix it first.
 
 ### 10. Verifier verdict
 
