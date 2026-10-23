@@ -45,10 +45,13 @@ a:hover { text-decoration-color: var(--ink); }
 /* page frame */
 .wc-page { max-width: 680px; margin: 0 auto; padding: var(--s-6) var(--s-4) 64px; }
 
-/* language pills on the gym surface (home, and the legal pages' header): the current one is a faint ink capsule */
+/* language pills on the gym surface (home, and the legal pages' header): the current one is a faint ink capsule.
+   Each link is a 44px tap target around a 36px capsule; the grey is a shade darker than --ink-2 so it keeps 4.5:1 on the grey wall. */
 .wc-lang { display: flex; gap: 2px; }
-.wc-lang a { height: 36px; padding: 0 12px; border-radius: 18px; color: var(--ink-2); font-size: 15px; line-height: 36px; font-weight: 500; text-decoration: none; white-space: nowrap; }
-.wc-lang a[aria-current="page"] { color: var(--ink); font-weight: 600; background: rgba(34, 37, 46, .07); }
+.wc-lang a { position: relative; isolation: isolate; height: 44px; padding: 0 12px; color: #646978; font-size: 15px; line-height: 44px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.wc-lang a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+.wc-lang a[aria-current="page"]::before { content: ""; position: absolute; inset: 4px 0; z-index: -1; border-radius: 18px; background: rgba(34, 37, 46, .07); }
+.wc-lang a:focus-visible { outline-offset: -2px; }
 
 /* the white site footer */
 .wc-footer { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--ink-2); }

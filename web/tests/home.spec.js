@@ -26,6 +26,9 @@ for (const { path, slogan, button, legal } of pages) {
     await expect(page.locator('footer a').nth(0)).toHaveAttribute('href', `${legal}privacy`);
     await expect(page.locator('footer a').nth(1)).toHaveAttribute('href', `${legal}terms`);
     await expect(page.locator('.wc-lang [aria-current="page"]')).toHaveAttribute('href', path);
+    // Each language link is at least Apple's 44pt tap target.
+    for (const link of await page.locator('.wc-lang a').all())
+      expect((await link.boundingBox()).height).toBeGreaterThanOrEqual(44);
   });
 
   for (const [width, height] of sizes) {
