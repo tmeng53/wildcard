@@ -4,6 +4,7 @@ import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
 import Contracts
+import DailyPushDomain
 import DesignSystemUI
 import FeedDomain
 import FeedUI
@@ -17,9 +18,10 @@ import SwiftUI
 /// build launched with `-local-backend`) it follows the account: sign-up until the member is in a
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
-/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide and
-/// `-character-editor` the character editor instead. After the first check-in it asks for
-/// notifications; a tapped one brings the member back to 今天 with the home loaded again.
+/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
+/// `-character-editor` the character editor and `-daily-push` the 6pm push's view instead. After
+/// the first check-in it asks for notifications; a tapped one brings the member back to 今天
+/// with the home loaded again, or to where the 6pm push's view asked to go.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
@@ -86,6 +88,20 @@ struct WildcardApp: App {
         return FeedModel(store: store, viewer: viewer, now: LaunchOptions.now)
     }
 
+    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
+    /// the check-in kinds open).
+    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        switch destination {
+        case .feed:
+            tab.wrappedValue = .feed
+        case .checkIn:
+            tab.wrappedValue = .today
+            today.openCheckIn()
+        case nil:
+            tab.wrappedValue = .today
+        }
+    }
+
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
     private static func askForNotifications() {
         guard LaunchOptions.asksForNotifications else { return }
@@ -105,13 +121,15 @@ struct WildcardApp: App {
                 }
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
+            } else if let day = LaunchOptions.dailyPush {
+                DailyPushPreview(day: day, now: LaunchOptions.now())
             } else if let app {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
                 MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
                     .onAppear {
-                        delegate.opened = { [today, $tab] in
-                            $tab.wrappedValue = .today
+                        delegate.opened = { [today, $tab] destination in
+                            Self.open(destination, today: today, tab: $tab)
                             Task { await today.load() }
                         }
                     }
@@ -146,8 +164,8 @@ private struct AppRoot: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
         .onAppear {
-            delegate.opened = { [app, $tab] in
-                $tab.wrappedValue = .today
+            delegate.opened = { [app, $tab] destination in
+                if case .tabs(let today, _) = app.screen { WildcardApp.open(destination, today: today, tab: $tab) }
                 Task { await app.reloadToday() }
             }
         }

@@ -5,14 +5,19 @@ import Security
 
 /// Keeps the session in the Keychain, as one generic-password item holding `StoredSession`'s
 /// JSON. It stays on this device only (never in backups or iCloud Keychain) and is readable
-/// after the first unlock, so a background refresh can renew the session.
+/// after the first unlock, so a background refresh can renew the session. In an access group,
+/// the app's extensions share it (the 6pm push reacts as the member).
 public struct KeychainSessionStore: SessionStore {
     private let service: String
+    private let accessGroup: String?
 
-    /// - Parameter service: the item's service name; tests pass their own so they never touch
-    ///   the app's.
-    public init(service: String = "com.wildcardsquad.wildcard.session") {
+    /// - Parameters:
+    ///   - service: the item's service name; tests pass their own so they never touch the app's.
+    ///   - accessGroup: the Keychain access group the app and its extensions share, or nil for
+    ///     the app's own.
+    public init(service: String = "com.wildcardsquad.wildcard.session", accessGroup: String? = nil) {
         self.service = service
+        self.accessGroup = accessGroup
     }
 
     public func load() async throws(AccountError) -> Session? {
@@ -37,14 +42,22 @@ public struct KeychainSessionStore: SessionStore {
     public func save(_ session: Session) async throws(AccountError) {
         let data = try StoredSession.encode(session)
         let update: [CFString: Any] = [kSecValueData: data]
-        switch SecItemUpdate(baseQuery as CFDictionary, update as CFDictionary) {
+        switch SecItemUpdate(groupQuery as CFDictionary, update as CFDictionary) {
         case errSecSuccess:
             return
         case errSecItemNotFound:
-            var add = baseQuery
+            // One kept before the group was shared moves into it.
+            SecItemDelete(baseQuery as CFDictionary)
+            var add = groupQuery
             add[kSecValueData] = data
             add[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            guard SecItemAdd(add as CFDictionary, nil) == errSecSuccess else { throw .storeFailed }
+            var added = SecItemAdd(add as CFDictionary, nil)
+            // A build not signed into the group (a test run) keeps it to itself.
+            if added == errSecMissingEntitlement {
+                add[kSecAttrAccessGroup] = nil
+                added = SecItemAdd(add as CFDictionary, nil)
+            }
+            guard added == errSecSuccess else { throw .storeFailed }
         case errSecInteractionNotAllowed:
             throw .storeLocked
         default:
@@ -59,12 +72,20 @@ public struct KeychainSessionStore: SessionStore {
         }
     }
 
+    /// The item in any group this process can read: loading and clearing.
     private var baseQuery: [CFString: Any] {
         [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
             kSecAttrAccount: "current",
         ]
+    }
+
+    /// The item in its group: saving.
+    private var groupQuery: [CFString: Any] {
+        var query = baseQuery
+        if let accessGroup { query[kSecAttrAccessGroup] = accessGroup }
+        return query
     }
 }
 #endif

@@ -58,7 +58,7 @@ struct EmojiBar: View {
     static var width: Double { Double(common.count + 1) * Sizing.minimumTapTarget + 2 * inset }
 
     /// The bar's emoji, in the approved order.
-    static let common: [Emoji] = ["❤️", "💪", "😂", "🤤", "😮", "😡"].compactMap { try? Emoji($0) }
+    static let common = Emoji.quick
 
     var body: some View {
         HStack(spacing: 0) {

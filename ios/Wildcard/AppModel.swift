@@ -27,6 +27,8 @@ final class AppModel {
     @ObservationIgnored private let api: WildcardAPI
     /// Where the home's copy and the posts still to go out are kept.
     @ObservationIgnored private let directory: URL
+    /// The squad's looks, kept for the 6pm push view.
+    @ObservationIgnored private let shared = AppGroup.directory.map(SharedSquad.init)
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
     /// with the session alone.
     @ObservationIgnored private let confirmDeletion: @MainActor () async throws(MeError) -> DeletionConfirmation
@@ -34,11 +36,11 @@ final class AppModel {
     @ObservationIgnored private let posted: @MainActor () -> Void
 
     init(
-        config: AppConfig, usesApple: Bool = true, posted: @escaping @MainActor () -> Void
+        config: BackendAddress, usesApple: Bool = true, posted: @escaping @MainActor () -> Void
     ) {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
-            store: KeychainSessionStore(), now: { Date() })
+            store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
         api = WildcardAPI(url: config.apiURL, account: account)
         directory = URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory)
         self.posted = posted
@@ -109,7 +111,8 @@ final class AppModel {
     /// Loads the member's home and opens 今天 on it, or sign-up when they are in no squad.
     private func openHome(continuing signUp: SignUpModel? = nil, name: String? = nil) async {
         let store = TodayStore(
-            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
+            backend: APICheckInBackend(api: api, directory: directory, shared: shared),
+            outbox: DeviceOutbox(directory: directory),
             now: { Date() }, newID: { UUID() })
         await store.load()
         switch store.phase {
@@ -149,7 +152,7 @@ final class AppModel {
     }
 
     private func signedOut() async {
-        APICheckInBackend(api: api, directory: directory).forget()
+        APICheckInBackend(api: api, directory: directory, shared: shared).forget()
         await DeviceOutbox(directory: directory).forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
