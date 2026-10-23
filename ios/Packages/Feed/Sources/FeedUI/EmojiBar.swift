@@ -8,14 +8,14 @@ import UIKit
 
 /// Where the open emoji bar belongs: over the button of the post it is for.
 struct EmojiBarAnchor: PreferenceKey {
-    struct Value {
+    struct Target {
         let post: CheckInID
         let button: Anchor<CGRect>
     }
 
-    static var defaultValue: Value? { nil }
+    static var defaultValue: Target? { nil }
 
-    static func reduce(value: inout Value?, nextValue: () -> Value?) {
+    static func reduce(value: inout Target?, nextValue: () -> Target?) {
         value = value ?? nextValue()
     }
 }
@@ -24,7 +24,7 @@ struct EmojiBarAnchor: PreferenceKey {
 struct EmojiBarLayer: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
-    let anchor: EmojiBarAnchor.Value?
+    let anchor: EmojiBarAnchor.Target?
 
     var body: some View {
         GeometryReader { proxy in

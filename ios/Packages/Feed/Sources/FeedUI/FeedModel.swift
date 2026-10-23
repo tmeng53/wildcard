@@ -91,7 +91,7 @@ public final class FeedModel {
             outfit = kits.kit(for: training.activity).dress(outfit)
         }
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: Self.still, now: now())
+            let player = try? CharacterPlayer(figure: figure, idle: .still, now: now())
         else { return nil }
         players[post.id] = player
         return player
@@ -102,7 +102,7 @@ public final class FeedModel {
         if let player = heads[member] { return player }
         let outfit = store.characters[member]?.look.outfit ?? PlaceholderCharacter.lifter
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: Self.still, now: now())
+            let player = try? CharacterPlayer(figure: figure, idle: .still, now: now())
         else { return nil }
         heads[member] = player
         return player
@@ -131,12 +131,5 @@ public final class FeedModel {
         played[post.id] = Played(
             count: (played[post.id]?.count ?? 0) + 1, until: start.addingTimeInterval(clip.duration))
     }
-
-    /// A character standing still: the feed's characters move only when someone reacts.
-    private static let still: Clip = {
-        let json = #"{"version": 1, "name": "still", "duration": 1, "loops": true, "tracks": []}"#
-        guard let clip = try? Clip.decode(Data(json.utf8)) else { fatalError("the still clip is malformed") }
-        return clip
-    }()
 }
 #endif

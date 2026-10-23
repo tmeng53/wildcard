@@ -109,7 +109,7 @@ struct ReactionRow: View {
         }
         .buttonStyle(PressableButtonStyle())
         .anchorPreference(key: EmojiBarAnchor.self, value: .bounds) { bounds in
-            model.picking == post.id ? EmojiBarAnchor.Value(post: post.id, button: bounds) : nil
+            model.picking == post.id ? EmojiBarAnchor.Target(post: post.id, button: bounds) : nil
         }
         .accessibilityLabel(
             mine.map { Text("我的回应：\($0.text)", bundle: .module) } ?? Text("回应", bundle: .module)
