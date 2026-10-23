@@ -50,10 +50,12 @@ struct WelcomeScreen<SignIn: View>: View {
                     .frame(height: Sizing.primaryControl)
                     .clipShape(Capsule())
                     .accessibilityIdentifier("signup.signIn")
+                // On the floor, so in the floor's ink: the gym's is graphite, and grey or ink on it
+                // can't be read.
                 Text(termsLine)
                     .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .tint(Color(role: .fgDefault, in: theme))
+                    .foregroundStyle(Color(role: .fgOnScene, in: theme).opacity(termsOpacity))
+                    .tint(Color(role: .fgOnScene, in: theme))
                     .multilineTextAlignment(.center)
                     .accessibilityIdentifier("signup.terms")
             }
@@ -65,6 +67,9 @@ struct WelcomeScreen<SignIn: View>: View {
         .onDisappear { crowd.stop() }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
     }
+
+    /// The terms line's words, a step back from its links.
+    private let termsOpacity = 0.7
 
     /// 继续即表示同意用户协议和隐私政策, with 用户协议 and 隐私政策 underlined links to their pages.
     /// The catalog marks them `terms:` and `privacy:`, which become the pages the app passes.

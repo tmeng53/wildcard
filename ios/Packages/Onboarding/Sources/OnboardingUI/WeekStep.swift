@@ -167,6 +167,7 @@ private struct WeekTotal: View {
         .padding(.horizontal, Space.m)
         .padding(.vertical, Space.xs)
         .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isStaticText)
         .accessibilityLabel(Text("每周训练 \(trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module))
         .accessibilityIdentifier("week.count")
     }

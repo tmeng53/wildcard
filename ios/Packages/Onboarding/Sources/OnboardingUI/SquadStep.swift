@@ -98,6 +98,10 @@ private struct JoinPanel: View {
         }
         .padding(.vertical, Space.xs)
         .onAppear { if model.squad.code == nil { isTyping = true } }
+        // A whole code puts the keyboard away, so the squad it finds shows above the button.
+        .onChange(of: model.squad.codeLetters.count) { _, count in
+            if count == InviteCode.length { isTyping = false }
+        }
     }
 }
 

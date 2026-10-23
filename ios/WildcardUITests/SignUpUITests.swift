@@ -58,9 +58,11 @@ final class SignUpUITests: XCTestCase {
         code.tap()
         code.typeText("k7q2m9xd")
         // The found squad is one combined element, which reads as text rather than a group.
-        XCTAssertTrue(
-            app.descendants(matching: .any)["squad.found"].waitForExistence(timeout: Self.wait),
-            "the squad wasn't found")
+        let found = app.descendants(matching: .any)["squad.found"]
+        XCTAssertTrue(found.waitForExistence(timeout: Self.wait), "the squad wasn't found")
+        settle()
+        XCTAssertLessThanOrEqual(
+            found.frame.maxY, app.buttons["squad.aiConsent"].frame.minY, "the found squad is covered by the button")
         let squadDone = app.buttons["squad.done"]
         XCTAssertFalse(squadDone.isEnabled, "加入小队 is on before agreeing to AI")
         XCTAssertTrue(
@@ -85,7 +87,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     private func planTheWeek(in app: XCUIApplication) {
-        let count = app.staticTexts["week.count"]
+        let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "一周练几天？ never appeared")
         settle()
         keepScreenshot(named: "45-signup-week")
@@ -156,7 +158,7 @@ final class SignUpUITests: XCTestCase {
         squadDone.tap()
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the squad step didn't carry on to sports")
         skip.tap()
-        let count = app.staticTexts["week.count"]
+        let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "Training 5/7 days a week")
         settle()
