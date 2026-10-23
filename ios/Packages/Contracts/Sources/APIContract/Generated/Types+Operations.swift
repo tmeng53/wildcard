@@ -2092,9 +2092,9 @@ public enum Operations {
             }
         }
     }
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -2167,12 +2167,12 @@ public enum Operations {
                 /// - Remark: Generated from `#/paths/squads/{squadId}/check-ins/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
                     /// - Remark: Generated from `#/paths/squads/{squadId}/check-ins/GET/responses/200/content/application\/json`.
-                    case json(Components.Schemas.CheckInList)
+                    case json(Components.Schemas.SquadPostList)
                     /// The associated value of the enum case if `self` is `.json`.
                     ///
                     /// - Throws: An error if `self` is not `.json`.
                     /// - SeeAlso: `.json`.
-                    public var json: Components.Schemas.CheckInList {
+                    public var json: Components.Schemas.SquadPostList {
                         get throws {
                             switch self {
                             case let .json(body):

@@ -153,9 +153,9 @@ if want check-in; then
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
   expect 200
-  [ "$(jq -c '[.checkIns[].id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
+  [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
     fail "squad list should hold exactly $id and $first: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.checkIns | length' <<<"$body") check-ins)"
+  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins)"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
@@ -196,7 +196,7 @@ if want photo-upload; then
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
   expect 200
-  view_url="$(jq -r --arg id "$id" '.checkIns[] | select(.id == $id) | .meal.photos[0].url' <<<"$body")"
+  view_url="$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .meal.photos[0].url' <<<"$body")"
   [ -n "$view_url" ] && [ "$view_url" != null ] || fail "mate's list has no photo URL for $id: $body"
   curl -sf "$view_url" -o "$tmp/viewed.jpg" || fail "the view URL didn't serve the photo"
   cmp -s "$tmp/photo.jpg" "$tmp/viewed.jpg" || fail "the photo served differs from the one uploaded"
@@ -547,6 +547,13 @@ if want replies; then
   [ "$(jq -c '[.replies[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"hug"]]')" ] ||
     fail "the author should see one reply, mate's hug: $body"
   echo "replies: the author sees one reply, mate's 抱抱, apart from the reaction"
+
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$me_token"
+  expect 200
+  [ "$(jq -c --arg e "$excuse" '.posts[] | select(.checkIn.id == $e) | [[.reactions[] | [.member, .emoji]], [.replies[] | [.member, .kind]]]' <<<"$body")" = \
+    "$(jq -cn --arg m "$mate" '[[[$m,"😂"]],[[$m,"hug"]]]')" ] ||
+    fail "the feed should list the 请假条 with mate's 😂 and 抱抱: $body"
+  echo "replies: the squad's feed lists the 请假条 with mate's 😂 and 抱抱 in one call"
 
   run="$(new_id)"
   call PUT "/check-ins/$run" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"

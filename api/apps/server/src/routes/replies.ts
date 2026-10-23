@@ -29,11 +29,13 @@ const replyFields = {
 
 export const ReplyDraft = z.strictObject({ version: bodyVersion(1), kind }).openapi('ReplyDraft');
 export const Reply = z.strictObject({ version: bodyVersion(1), ...replyFields }).openapi('Reply');
+/** A reply in a list, which carries the version. */
+export const ReplyEntry = z.strictObject(replyFields).openapi('ReplyEntry');
 const ReplyList = z
-  .strictObject({ version: bodyVersion(1), replies: z.array(z.strictObject(replyFields)) })
+  .strictObject({ version: bodyVersion(1), replies: z.array(ReplyEntry) })
   .openapi('ReplyList');
 
-const wire = ({ member, kind, repliedAt }: ReplyRecord) => ({
+export const wireReply = ({ member, kind, repliedAt }: ReplyRecord) => ({
   member,
   kind,
   repliedAt: repliedAt.toISOString(),
@@ -121,7 +123,7 @@ export function replies(deps: { readonly verifyToken: VerifyToken; readonly chec
         member: MemberId.parse(c.var.caller.userId),
         kind: c.req.valid('json').kind,
       });
-      const body = { version: 1 as const, ...wire(replied.reply) };
+      const body = { version: 1 as const, ...wireReply(replied.reply) };
       return replied.outcome === 'created' ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(remove, async (c) => {
@@ -136,6 +138,6 @@ export function replies(deps: { readonly verifyToken: VerifyToken; readonly chec
         checkIn: c.req.valid('param').checkInId,
         viewer: MemberId.parse(c.var.caller.userId),
       });
-      return c.json({ version: 1 as const, replies: found.map(wire) }, 200);
+      return c.json({ version: 1 as const, replies: found.map(wireReply) }, 200);
     });
 }

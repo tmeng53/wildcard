@@ -1012,9 +1012,9 @@ internal struct Client: APIProtocol {
             }
         )
     }
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -1068,7 +1068,7 @@ internal struct Client: APIProtocol {
                     switch chosenContentType {
                     case "application/json":
                         body = try await converter.getResponseBodyAsJSON(
-                            Components.Schemas.CheckInList.self,
+                            Components.Schemas.SquadPostList.self,
                             from: responseBody,
                             transforming: { value in
                                 .json(value)

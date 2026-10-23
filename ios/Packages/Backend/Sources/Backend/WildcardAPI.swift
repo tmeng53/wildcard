@@ -198,7 +198,7 @@ public struct WildcardAPI: Sendable {
     }
 
     func checkInsWire(of squad: SquadID, from: LocalDay, through last: LocalDay) async throws(APIError)
-        -> Components.Schemas.CheckInList
+        -> Components.Schemas.SquadPostList
     {
         try await call {
             try await client.listSquadCheckIns(
@@ -287,6 +287,12 @@ public struct WildcardAPI: Sendable {
 
     func read(_ list: Components.Schemas.CheckInList) throws(APIError) -> [CheckIn] {
         try read { () throws(ContractsError) in try list.checkIns.map(CheckIn.init) }
+    }
+
+    func read(_ list: Components.Schemas.SquadPostList) throws(APIError) -> [CheckIn] {
+        try read { () throws(ContractsError) in
+            try list.posts.map { post throws(ContractsError) in try CheckIn(post.checkIn) }
+        }
     }
 }
 

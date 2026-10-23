@@ -64,7 +64,7 @@ const device: Device = {
   environment: 'production',
 };
 const reaction: PushNotification = {
-  alert: { key: 'push.reaction.cheer', args: ['3'] },
+  alert: { key: 'push.dailyProgress.received', args: ['3'] },
   category: 'reaction',
   thread: 'check-in:1',
   collapseId: 'reactions:1',
@@ -93,7 +93,7 @@ describe('the APNs sender', () => {
     expect(JSON.parse(request?.body ?? '')).toStrictEqual({
       version: 1,
       aps: {
-        alert: { 'loc-key': 'push.reaction.cheer', 'loc-args': ['3'] },
+        alert: { 'loc-key': 'push.dailyProgress.received', 'loc-args': ['3'] },
         category: 'reaction',
         'thread-id': 'check-in:1',
         'interruption-level': 'active',
@@ -130,7 +130,7 @@ describe('the APNs sender', () => {
     expect(
       z.looseObject({ aps: z.looseObject({}) }).parse(JSON.parse(request?.body ?? '')).aps,
     ).toStrictEqual({
-      alert: { 'loc-key': 'push.reaction.cheer', 'loc-args': ['3'] },
+      alert: { 'loc-key': 'push.dailyProgress.received', 'loc-args': ['3'] },
       category: 'reaction',
       'thread-id': 'check-in:1',
       'interruption-level': 'passive',

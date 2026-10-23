@@ -249,4 +249,23 @@ describe('replying to a 请假条', () => {
       annsReply,
     ]);
   });
+
+  it('lists a 请假条 in the squad’s feed with its replies, apart from its reactions', async () => {
+    const [tracy, ann] = [await newMember(), await newMember()];
+    const squad = await newSquad(tracy, ann);
+    const slip = await posted('disclaimer', { member: tracy, audience: [squad] });
+    now = new Date('2026-10-18T20:05:00.000Z');
+    await checkIns.reply({ checkIn: slip.id, member: ann, kind: 'hug' });
+    await checkIns.react({ checkIn: slip.id, member: ann, emoji: Emoji.parse('🥹') });
+    const [post] = await checkIns.listForSquad({
+      viewer: tracy,
+      squad,
+      days: { from: '2026-10-18', to: '2026-10-18' },
+    });
+    expect(post).toMatchObject({
+      checkIn: { id: slip.id },
+      reactions: [{ member: ann, emoji: '🥹', reactedAt: new Date('2026-10-18T20:05:00.000Z') }],
+      replies: [{ member: ann, kind: 'hug', repliedAt: new Date('2026-10-18T20:05:00.000Z') }],
+    });
+  });
 });

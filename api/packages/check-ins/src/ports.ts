@@ -77,6 +77,8 @@ export interface ReplyStore {
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
   /** A 请假条's replies, oldest first. */
   list(checkIn: CheckInId): Promise<Reply[]>;
+  /** The replies to each of these check-ins, oldest first; a check-in without any is left out. */
+  listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Reply[]>>;
 }
 
 /** Where uploaded photo files are kept. */
