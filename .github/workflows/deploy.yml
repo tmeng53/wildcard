@@ -29,6 +29,8 @@ env:
   SERVICE: wildcard-api
   # The app's bundle id, which APNs calls the topic.
   APNS_TOPIC: com.wildcardsquad.wildcard
+  # Cloud Run's domain mapping for the service; the app and Supabase Auth use this address.
+  PUBLIC_URL: https://api.wildcardsquad.com
 
 jobs:
   deploy:
@@ -131,7 +133,7 @@ jobs:
         run: |
           # --update-* keeps what was set by hand in the console (APPLE_*, LLM_PROVIDER...).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
-          env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
+          env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=$PUBLIC_URL,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
           absent=""
           # Whether a secret exists. Only one that doesn't turns its feature off; any other error
           # stops the deploy.
@@ -184,5 +186,4 @@ jobs:
 
       - name: Check it answers
         run: |
-          url="https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app"
-          curl -fsS --retry 5 --retry-all-errors "$url/health"
+          curl -fsS --retry 5 --retry-all-errors "$PUBLIC_URL/health"
