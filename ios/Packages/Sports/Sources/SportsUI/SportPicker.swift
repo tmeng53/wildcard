@@ -2,18 +2,23 @@
 import Contracts
 import DesignSystem
 import DesignSystemUI
-import SportsUI
 import SwiftUI
 
-/// Every sport, by category with search (spec P4). One pick closes it.
-struct SportPicker: View {
+/// Every sport, by category with search (spec P4), for a sheet. One pick closes it: the caller
+/// dismisses the sheet in `pick`.
+public struct SportPicker: View {
     @Environment(\.sceneTheme) private var theme
     let selected: Activity
     let pick: (Activity) -> Void
     @State private var query = ""
     @State private var category = SportCategory.runWalk
 
-    var body: some View {
+    public init(selected: Activity, pick: @escaping (Activity) -> Void) {
+        self.selected = selected
+        self.pick = pick
+    }
+
+    public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.m) {
                 SearchField(text: $query, prompt: Text("搜索运动", bundle: .module))

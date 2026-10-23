@@ -10,11 +10,11 @@ struct ScoreboardFontTests {
         ScoreboardFont.register()
         #expect(
             ScoreboardFont.registeredNames == [
-                "BarlowCondensed-ExtraBold", "BarlowCondensed-SemiBold",
+                "BarlowCondensed-ExtraBold", "BarlowCondensed-ExtraBoldItalic", "BarlowCondensed-SemiBold",
             ])
     }
 
-    @Test(arguments: [ScoreboardWeight.semibold, .extraBold])
+    @Test(arguments: [ScoreboardWeight.semibold, .extraBold, .extraBoldItalic])
     func everyScoreboardFaceResolvesToABundledFont(weight: ScoreboardWeight) {
         ScoreboardFont.register()
         let name = Face.scoreboard(weight).postScriptName
