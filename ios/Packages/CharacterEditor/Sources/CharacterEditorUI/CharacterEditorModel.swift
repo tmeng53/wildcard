@@ -14,6 +14,12 @@ public enum EditorTab: String, CaseIterable, Hashable, Sendable {
     var isForPeople: Bool { self == .hair || self == .face }
 }
 
+/// The one move a change plays: the look's (the held prop's move, else the persona's cheer),
+/// or the persona's cheer when the persona changes.
+private enum Move {
+    case look, cheer
+}
+
 /// Where the editor is open: as a step of sign-up, or from 我 to change the character.
 public enum EditorContext: Hashable, Sendable {
     case signUp(step: Int, total: Int)
@@ -29,12 +35,19 @@ public struct EditedCharacter: Hashable, Sendable {
 
 /// The editor's state on screen: the draft, the open tab and the character playing on the
 /// stage. While the person dresses the character it stands still, and every change plays one
-/// move; on the 性格 tab it plays the persona's idle, so the persona shows.
+/// move: the held prop's own (a dumbbell's lift, a racket's swing), else the persona's cheer.
+/// On the 性格 tab it plays the persona's idle, so the persona shows; picking a persona plays
+/// its cheer, and a held prop gets its move again after `propEvery` idle seconds.
 @MainActor @Observable
 public final class CharacterEditorModel {
     public private(set) var draft: CharacterDraft
     public var tab: EditorTab {
-        didSet { if tab != oldValue { restyle(move: false) } }
+        didSet {
+            guard tab != oldValue else { return }
+            // The 性格 tab counts its idle seconds from when it opens.
+            if tab == .persona { moveEnds = .now }
+            restyle(move: nil)
+        }
     }
     /// Nil until the first figure is built.
     public private(set) var player: CharacterPlayer?
@@ -43,7 +56,13 @@ public final class CharacterEditorModel {
     /// Bumped by every change, so a slower figure build never replaces a newer look.
     @ObservationIgnored private var request = 0
     @ObservationIgnored private var clips: [String: Clip] = [:]
+    @ObservationIgnored private var propMoves: [String: Clip?] = [:]
     @ObservationIgnored private var outfitOnStage: Outfit?
+    /// When the last one-off move ends, from which the 性格 tab counts its idle seconds.
+    @ObservationIgnored private(set) var moveEnds = Date.distantPast
+
+    /// Idle seconds on the 性格 tab before a held prop plays its move again.
+    static let propEvery: Double = 12
 
     public init(draft: CharacterDraft, tab: EditorTab = .look) {
         self.draft = draft
@@ -85,36 +104,36 @@ public final class CharacterEditorModel {
     /// Builds the first figure. The stage stays empty for the moment this takes.
     func start() {
         guard player == nil else { return }
-        restyle(move: false)
+        restyle(move: nil)
     }
 
     func pick(_ variant: String?, for slot: Slot) {
         guard draft.pick(variant, for: slot) else { return }
         leaveTabsForPeople()
-        restyle(move: true)
+        restyle(move: .look)
     }
 
     func pickColor(_ color: RGBAColor?, for slot: Slot) {
         guard draft.pickColor(color, for: slot) else { return }
-        restyle(move: true)
+        restyle(move: .look)
     }
 
     func choose(_ persona: Persona) {
         guard draft.choose(persona) else { return }
-        restyle(move: true)
+        restyle(move: .cheer)
     }
 
     func undo() {
         guard draft.undo() else { return }
         leaveTabsForPeople()
-        restyle(move: true)
+        restyle(move: .look)
     }
 
     func shuffle() {
         var generator = SystemRandomNumberGenerator()
         draft.shuffle(using: &generator)
         leaveTabsForPeople()
-        restyle(move: true)
+        restyle(move: .look)
     }
 
     /// Back to 样子 when the character became an animal on 发型 or 脸, which it no longer has.
@@ -124,8 +143,17 @@ public final class CharacterEditorModel {
 
     /// The persona's cheer, for a tap on the character.
     func cheer() {
-        guard let player, let cheer = clip("cheer") else { return }
-        try? player.play(cheer)
+        guard let cheer = clip("cheer") else { return }
+        play(cheer)
+    }
+
+    /// The held prop's move, once the character has stood idle on the 性格 tab for
+    /// `propEvery` seconds since its last move; the stage calls it while that tab is open.
+    func propMoveIfIdle(now: Date = .now) {
+        guard tab == .persona, now >= moveEnds.addingTimeInterval(Self.propEvery),
+            let move = propMove()
+        else { return }
+        play(move, now: now)
     }
 
     /// The persona one step along, for a swipe across the stage on the 性格 tab.
@@ -137,9 +165,9 @@ public final class CharacterEditorModel {
         choose(all[next])
     }
 
-    /// Dresses the stage in the draft's outfit and idle, then plays one move if asked: the
-    /// persona's cheer. The figure is built off the main actor, since it reads and parses art.
-    private func restyle(move: Bool) {
+    /// Dresses the stage in the draft's outfit and idle, then plays one move if asked. The
+    /// figure is built off the main actor, since it reads and parses art.
+    private func restyle(move: Move?) {
         request += 1
         let ticket = request
         let outfit = draft.outfit
@@ -154,7 +182,7 @@ public final class CharacterEditorModel {
         }
     }
 
-    private func show(_ figure: Figure, wearing outfit: Outfit, ticket: Int, move: Bool) {
+    private func show(_ figure: Figure, wearing outfit: Outfit, ticket: Int, move: Move?) {
         guard ticket == request else { return }
         outfitOnStage = outfit
         let idle = (tab == .persona ? clip("idle") : nil) ?? .still
@@ -163,9 +191,33 @@ public final class CharacterEditorModel {
         } else {
             player = try? CharacterPlayer(figure: figure, idle: idle)
         }
-        if move, let cheer = clip("cheer") {
-            try? player?.play(cheer)
+        let chosen: Clip? =
+            switch move {
+            case .look?: propMove() ?? clip("cheer")
+            case .cheer?: clip("cheer")
+            case nil: nil
+            }
+        if let chosen { play(chosen) }
+    }
+
+    private func play(_ clip: Clip, now: Date = .now) {
+        guard let player else { return }
+        do {
+            try player.play(clip, now: now)
+            moveEnds = now.addingTimeInterval(clip.duration)
+        } catch {
+            // A clip that doesn't fit the figure plays nothing; the character stays as it was.
         }
+    }
+
+    /// The move of the prop the draft holds, if it has one.
+    private func propMove() -> Clip? {
+        let outfit = draft.outfit
+        let prop = outfit.variants["prop"] ?? ""
+        if let cached = propMoves[prop] { return cached }
+        let move = try? PlaceholderCharacter.propMove(for: outfit)
+        propMoves[prop] = move
+        return move
     }
 
     /// The persona's clip with the moves of the draft's species on top.
