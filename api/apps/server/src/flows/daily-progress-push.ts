@@ -1,5 +1,6 @@
 import { MemberId as CheckInMember, SquadId, type CheckIns } from '@wildcard/check-ins';
-import type { Members } from '@wildcard/members';
+import { MemberId as ProfileMember, type Members } from '@wildcard/members';
+import { MemberId as NudgeMember, type Nudges } from '@wildcard/nudges';
 import {
   LocalDay,
   MemberId as PushMember,
@@ -15,13 +16,13 @@ import type { Log } from '../log.js';
 const AT_ONCE = 4;
 
 /**
- * Teammates who did something for a member, by kind (`reaction`, and later a poke): each person
- * once per kind. The kind is the name the app's String Catalog keys the copy by.
+ * Teammates who did something for a member, by kind (`reaction`, a nudge's `poke`): each
+ * person once per kind. The kind is the name the app's String Catalog keys the copy by.
  */
 export type Interactions = ReadonlyMap<string, ReadonlySet<string>>;
 
 /**
- * Where one sort of interaction comes from: reactions now, pokes and others as they land. A new
+ * Where one sort of interaction comes from: reactions and nudges now, others as they land. A new
  * kind of interaction is one more source, or one more kind from an existing one; nothing else
  * in the daily push changes.
  */
@@ -42,6 +43,18 @@ export function reactionInteractions(checkIns: CheckIns): InteractionSource {
     return new Map([['reaction', people]]);
   };
 }
+
+/** The interactions source built on nudges: pokes (`poke`). */
+export function nudgeInteractions(nudges: Nudges): InteractionSource {
+  return async ({ member, since, until }) =>
+    nudges.received({ member: NudgeMember.parse(member), since, until });
+}
+
+/**
+ * The kinds whose sender the push names (a poke names the poker), most telling first. The first
+ * kind someone sent is the one named.
+ */
+const NAMED_KINDS = ['poke'] as const;
 
 export interface DailyProgressDependencies {
   readonly members: Members;
@@ -179,7 +192,25 @@ async function compose(
     squad: squad.id,
     squadWeek: today.squadWeek,
     received: byKind,
+    named: await namedSender(deps.members, byKind),
   });
+}
+
+/** Who the push names: the first sender of the most telling kind who has a nickname. */
+async function namedSender(
+  members: Members,
+  received: Interactions,
+): Promise<{ readonly kind: string; readonly nickname: string } | undefined> {
+  for (const kind of NAMED_KINDS) {
+    const senders = [...(received.get(kind) ?? [])].map((each) => ProfileMember.parse(each));
+    if (senders.length === 0) continue;
+    const profiles = await members.squadmates(senders);
+    for (const sender of senders) {
+      const nickname = profiles.get(sender)?.character?.nickname;
+      if (nickname !== undefined) return { kind, nickname };
+    }
+  }
+  return undefined;
 }
 
 /** One set of people per kind, from every source. */
@@ -196,28 +227,40 @@ function mergeInteractions(all: readonly Interactions[]): Map<string, Set<string
 
 /**
  * The daily push, without its words: the alert names a String Catalog key with the squad's week
- * (and how many teammates did something for the member), and `event` carries the people per
- * kind, for the app's notification service extension to write one line per kind, such as
- * 「3 人给你点了表情，2 人催你练了」.
+ * and how many teammates did something for the member. When someone nudged them, it names that
+ * person instead (「小美拍了拍你」), with how many others sent the same kind (「小美和另外 2 人拍了拍
+ * 你」); the key says which kind. `event` carries the people per kind, for the app to say more.
  */
 export function dailyProgressNotification({
   day,
   squad,
   squadWeek,
   received,
+  named,
 }: {
   readonly day: string;
   readonly squad: string;
   readonly squadWeek: { readonly trainedDays: number; readonly plannedDays: number };
   readonly received: Interactions;
+  /** The nudge's sender to name, and its kind. */
+  readonly named?: { readonly kind: string; readonly nickname: string } | undefined;
 }): PushNotification {
   const people = new Set([...received.values()].flatMap((each) => [...each])).size;
   const week = [String(squadWeek.trainedDays), String(squadWeek.plannedDays)];
-  return {
-    alert:
-      people === 0
+  const others = named === undefined ? 0 : (received.get(named.kind)?.size ?? 1) - 1;
+  const alert =
+    named !== undefined
+      ? others > 0
+        ? {
+            key: `push.dailyProgress.${named.kind}.more`,
+            args: [...week, named.nickname, String(others)],
+          }
+        : { key: `push.dailyProgress.${named.kind}`, args: [...week, named.nickname] }
+      : people === 0
         ? { key: 'push.dailyProgress', args: week }
-        : { key: 'push.dailyProgress.received', args: [...week, String(people)] },
+        : { key: 'push.dailyProgress.received', args: [...week, String(people)] };
+  return {
+    alert,
     category: 'dailyProgress',
     thread: 'dailyProgress',
     collapseId: `dailyProgress-${day}`,
