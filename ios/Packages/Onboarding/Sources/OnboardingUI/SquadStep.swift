@@ -218,7 +218,7 @@ private struct AIConsentRow: View {
                     }
                 }
                 .frame(width: Sizing.checkBadge, height: Sizing.checkBadge)
-                Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖和编请假条，不发照片。", bundle: .module)
+                Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖，不发照片。", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .multilineTextAlignment(.leading)

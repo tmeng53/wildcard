@@ -166,8 +166,8 @@ public final class SignUpModel {
         }
     }
 
-    /// The consent row above the button: AI writes the squad's weekly awards and 请假条 from
-    /// its captions and words. Off until the member ticks it; no squad without it. Consent is the
+    /// The consent row above the button: AI writes the squad's weekly awards from its captions
+    /// and 请假条 words. Off until the member ticks it; no squad without it. Consent is the
     /// account's, given once: an account that already gave it never sees the row.
     private(set) var agreesToAI: Bool
     /// Whether 你的小队 asks for consent: only until the account has given it.
