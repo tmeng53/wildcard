@@ -33,6 +33,18 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(figure.restPose.parts[1].rotation == 0)
 }
 
+/// Mid-change, standing still already shows where the change ends up: the new outfit's idle.
+@Test func standingStillMidChangeHoldsTheNewIdlesFirstFrame() throws {
+    let (figure, idle, cheer) = try setUp()
+    var performance = Performance(figure: figure, idle: idle)
+    let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
+    let raised = try dressed.bind(
+        clip("idle", duration: 2, loops: true, [track("arm", .rotation, [(0, 30), (2, 30)])]))
+    performance.change(into: dressed, idle: raised, leaving: cheer, arriving: try dressed.bind(cheer.clip), at: 1)
+    #expect(performance.stillPose.parts[1].rotation == 30)
+    #expect(performance.stillPose.parts.count == dressed.parts.count)
+}
+
 @Test func changesBlendFromWhatIsOnScreen() throws {
     let (figure, idle, cheer) = try setUp()
     var performance = Performance(figure: figure, idle: idle, blendDuration: 0.2)
