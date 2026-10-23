@@ -20,7 +20,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     let wire = try decode(
         Components.Schemas.SquadToday.self,
         #"{"version":1,"squad":"\#(squad)","members":["#
-            + #"{"member":"\#(mate)","catchphrase":"冲就完了","day":"2026-10-19","training":"trained","latestMeal":"cheatMeal","plannedRest":false,"firstCheckInAt":"2026-10-19T15:00:00.250Z"},"#
+            + #"{"member":"\#(mate)","catchphrase":"冲就完了","character":{"nickname":"阿杰","look":{"persona":"energetic","variants":{"body":"shiba"},"colors":{}}},"day":"2026-10-19","training":"trained","latestMeal":"cheatMeal","plannedRest":false,"firstCheckInAt":"2026-10-19T15:00:00.250Z"},"#
             + #"{"member":"\#(myID)","catchphrase":null,"day":"2026-10-19","training":"notCheckedIn","plannedRest":true}],"#
             + #""today":{"trained":1,"disclaimer":0,"resting":1,"everyoneTrained":true},"#
             + #""me":{"week":{"from":"2026-10-19","to":"2026-10-25","trainedDays":2,"plannedDays":5},"lifetimeTrainedDays":40},"#
@@ -34,11 +34,15 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                 members: [
                     SquadmateToday(
                         member: MemberID(try #require(UUID(uuidString: mate))), catchphrase: try Catchphrase("冲就完了"),
+                        character: MemberCharacter(
+                            nickname: try Nickname("阿杰"),
+                            look: CharacterLook(
+                                persona: "energetic", variants: ["body": "shiba"])),
                         day: day, training: .trained, latestMeal: .cheatMeal, plannedRest: false,
                         firstCheckInAt: Timestamp(millisecondsSince1970: 1_792_422_000_250)),
                     SquadmateToday(
-                        member: MemberID(try #require(UUID(uuidString: myID))), catchphrase: nil, day: day,
-                        training: .notCheckedIn, latestMeal: nil, plannedRest: true, firstCheckInAt: nil),
+                        member: MemberID(try #require(UUID(uuidString: myID))), catchphrase: nil, character: nil,
+                        day: day, training: .notCheckedIn, latestMeal: nil, plannedRest: true, firstCheckInAt: nil),
                 ],
                 today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: true),
                 myWeek: MyWeek(
