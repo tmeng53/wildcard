@@ -44,6 +44,9 @@ struct MainTabs: View {
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         }
+        // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
+        // 今天 opens 动态 on doesn't move down under it.
+        .task { await recap.refresh() }
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
