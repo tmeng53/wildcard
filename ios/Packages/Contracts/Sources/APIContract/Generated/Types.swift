@@ -201,6 +201,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
+    /// The caller’s pokes in a squad (拍一拍)
+    ///
+    /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/get(listSquadNudges)`.
+    func listSquadNudges(_ input: Operations.ListSquadNudges.Input) async throws -> Operations.ListSquadNudges.Output
     /// Poke a squadmate (拍一拍)
     ///
     /// At most one of each kind a day (on the caller’s clock) to each squadmate: the same nudge again the same day changes nothing, so it is safe to repeat. Not pushed at once: the squadmate’s 6pm daily push names who nudged them.
@@ -653,6 +660,23 @@ extension APIProtocol {
     ) async throws -> Operations.GetSquadToday.Output {
         try await getSquadToday(Operations.GetSquadToday.Input(
             path: path,
+            headers: headers
+        ))
+    }
+    /// The caller’s pokes in a squad (拍一拍)
+    ///
+    /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/get(listSquadNudges)`.
+    public func listSquadNudges(
+        path: Operations.ListSquadNudges.Input.Path,
+        query: Operations.ListSquadNudges.Input.Query,
+        headers: Operations.ListSquadNudges.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadNudges.Output {
+        try await listSquadNudges(Operations.ListSquadNudges.Input(
+            path: path,
+            query: query,
             headers: headers
         ))
     }

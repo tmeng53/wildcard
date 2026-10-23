@@ -17,6 +17,25 @@ export const NudgeDraft = z
   .strictObject({ version: bodyVersion(1), ...fields })
   .openapi('NudgeDraft');
 export const Nudge = z.strictObject({ version: bodyVersion(1), ...fields }).openapi('Nudge');
+export const SquadNudges = z
+  .strictObject({
+    version: bodyVersion(1),
+    kind: fields.kind,
+    sent: z.array(z.uuid()).meta({
+      description: 'The squadmates the caller sent one to today, on the caller’s clock.',
+    }),
+    received: z
+      .array(
+        z.strictObject({
+          from: z.uuid().meta({ description: 'The squadmate who sent it.' }),
+          at: z.iso.datetime().meta({ description: 'When they sent it, in UTC.' }),
+        }),
+      )
+      .meta({
+        description: 'Who sent the caller one in the last 24 hours, each once, oldest first.',
+      }),
+  })
+  .openapi('SquadNudges');
 
 /**
  * Squadmates nudging each other: `POST /squads/{squadId}/nudges`. A nudge isn't pushed on its
@@ -53,15 +72,60 @@ export function nudges(deps: { readonly verifyToken: VerifyToken; readonly nudge
     },
   });
 
-  return new OpenAPIHono<SignedIn>().openapi(send, async (c) => {
-    const { to, kind } = c.req.valid('json');
-    const outcome = await deps.nudges.send({
-      from: MemberId.parse(c.var.caller.userId),
-      to: MemberId.parse(to),
-      squad: c.req.valid('param').squadId,
-      kind,
-    });
-    const body = { version: 1 as const, to, kind };
-    return outcome === 'created' ? c.json(body, 201) : c.json(body, 200);
+  const list = createRoute({
+    method: 'get',
+    path: '/squads/{squadId}/nudges',
+    operationId: 'listSquadNudges',
+    summary: 'The caller’s pokes in a squad (拍一拍)',
+    description:
+      'What the home shows: whom the caller sent one to today (so it can’t be sent again), ' +
+      'and who sent the caller one in the last 24 hours (they pat the caller on the home). ' +
+      'Only current squadmates count.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({ squadId: SquadId }),
+      query: z.strictObject({ kind: fields.kind }),
+    },
+    responses: {
+      200: {
+        description: 'The caller’s nudges of that kind',
+        content: { 'application/json': { schema: SquadNudges } },
+      },
+      400: problem('Not a valid kind'),
+      401: problem('No bearer token, or not a valid one'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
   });
+
+  return new OpenAPIHono<SignedIn>()
+    .openapi(list, async (c) => {
+      const { kind } = c.req.valid('query');
+      const { sent, received } = await deps.nudges.inSquad({
+        member: MemberId.parse(c.var.caller.userId),
+        squad: c.req.valid('param').squadId,
+        kind,
+      });
+      return c.json(
+        {
+          version: 1 as const,
+          kind,
+          sent: [...sent],
+          received: received.map(({ from, at }) => ({ from, at: at.toISOString() })),
+        },
+        200,
+      );
+    })
+    .openapi(send, async (c) => {
+      const { to, kind } = c.req.valid('json');
+      const outcome = await deps.nudges.send({
+        from: MemberId.parse(c.var.caller.userId),
+        to: MemberId.parse(to),
+        squad: c.req.valid('param').squadId,
+        kind,
+      });
+      const body = { version: 1 as const, to, kind };
+      return outcome === 'created' ? c.json(body, 201) : c.json(body, 200);
+    });
 }

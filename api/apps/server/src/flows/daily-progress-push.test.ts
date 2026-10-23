@@ -520,6 +520,40 @@ describe('POST /squads/{squadId}/nudges', () => {
   });
 });
 
+describe('GET /squads/{squadId}/nudges', () => {
+  it('says whom the caller poked today and who poked them', async () => {
+    const [ann, bo, cy, outsider] = [
+      await member(morning),
+      await member(morning),
+      await member(morning),
+      await member(morning),
+    ];
+    const squad = await squadOf(ann, bo, cy);
+    await nudge(ann, { squad, to: bo, kind: 'poke' });
+    await nudge(cy, { squad, to: ann, kind: 'poke' });
+    const path = `/squads/${squad}/nudges?kind=poke`;
+    const aTime: unknown = expect.any(String);
+    const mine = await call('GET', { path, token: ann.token });
+    expect(mine).toStrictEqual({
+      status: 200,
+      body: {
+        version: 1,
+        kind: 'poke',
+        sent: [bo.userId],
+        received: [{ from: cy.userId, at: aTime }],
+      },
+    });
+    expect(await call('GET', { path, token: outsider.token })).toMatchObject({
+      status: 403,
+      body: { reason: 'SQUAD_NOT_JOINED' },
+    });
+    expect(
+      await call('GET', { path: `/squads/${squad}/nudges?kind=rest`, token: ann.token }),
+    ).toMatchObject({ status: 400 });
+    expect(await app.request(path)).toMatchObject({ status: 401 });
+  });
+});
+
 describe('POST /jobs/daily-progress-push', () => {
   const aCount: unknown = expect.any(Number);
   const start = (authorization?: string) =>

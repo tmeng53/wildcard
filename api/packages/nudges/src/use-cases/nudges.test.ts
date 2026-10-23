@@ -192,3 +192,57 @@ describe('nudges received', () => {
     expect(received).toStrictEqual(new Map());
   });
 });
+
+describe('a member’s nudges in a squad', () => {
+  it('lists whom they poked today and who poked them in the last day, each once', async () => {
+    const rosters = new Map<SquadId, MemberId[]>();
+    const [ann, bo, cy, di] = [
+      await newMember(),
+      await newMember(),
+      await newMember(),
+      await newMember(),
+    ];
+    const squad = await squadOf(rosters, [ann, bo, cy, di]);
+    const other = await squadOf(rosters, [ann, bo]);
+    // 8pm on the 22nd in New York: Ann's yesterday by the read, but within the last day.
+    const { nudges, at } = nudgesAt(rosters, {
+      start: '2026-10-23T00:00:00.000Z',
+      zones: new Map([[ann, 'America/New_York']]),
+    });
+    await nudges.send({ from: cy, to: ann, squad, kind: 'poke' });
+    await nudges.send({ from: ann, to: bo, squad, kind: 'poke' });
+    // Over a day before the read: too old.
+    at('2026-10-22T12:00:00.000Z');
+    await nudges.send({ from: di, to: ann, squad, kind: 'poke' });
+    at('2026-10-23T14:00:00.000Z');
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
+    await nudges.send({ from: bo, to: ann, squad: other, kind: 'poke' });
+    await nudges.send({ from: ann, to: cy, squad, kind: 'poke' });
+    await nudges.send({ from: ann, to: bo, squad: other, kind: 'poke' });
+    at('2026-10-23T16:00:00.000Z');
+    expect(await nudges.inSquad({ member: ann, squad, kind: 'poke' })).toStrictEqual({
+      sent: [cy],
+      received: [
+        { from: cy, at: new Date('2026-10-23T00:00:00.000Z') },
+        { from: bo, at: new Date('2026-10-23T14:00:00.000Z') },
+      ],
+    });
+  });
+
+  it('leaves out someone who left, and refuses a squad the member isn’t in', async () => {
+    const rosters = new Map<SquadId, MemberId[]>();
+    const [ann, bo, cy] = [await newMember(), await newMember(), await newMember()];
+    const squad = await squadOf(rosters, [ann, bo]);
+    const { nudges } = nudgesAt(rosters, { start: '2026-10-23T14:00:00.000Z' });
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
+    await nudges.send({ from: ann, to: bo, squad, kind: 'poke' });
+    rosters.set(squad, [ann]);
+    expect(await nudges.inSquad({ member: ann, squad, kind: 'poke' })).toStrictEqual({
+      sent: [],
+      received: [],
+    });
+    await expect(nudges.inSquad({ member: cy, squad, kind: 'poke' })).rejects.toThrow(
+      SquadNotJoinedError,
+    );
+  });
+});

@@ -109,3 +109,13 @@ extension Emoji {
     /// The body of `PUT /check-ins/{id}/reactions/mine`.
     public var draft: Components.Schemas.ReactionDraft { .init(version: ._1, emoji: text) }
 }
+
+extension SquadPokes {
+    public init(_ wire: Components.Schemas.SquadNudges) throws(ContractsError) {
+        self.init(
+            sent: Set(try wire.sent.map(MemberID.init(wire:))),
+            received: try wire.received.map { received throws(ContractsError) in
+                ReceivedPoke(from: try MemberID(wire: received.from), patAt: Timestamp(wire: received.at))
+            })
+    }
+}

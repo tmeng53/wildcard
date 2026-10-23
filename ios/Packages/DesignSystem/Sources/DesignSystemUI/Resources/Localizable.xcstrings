@@ -1430,6 +1430,66 @@
           }
         }
       }
+    },
+    "点队友：状态和拍一拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a teammate: status and a pat"
+          }
+        }
+      }
+    },
+    "小米 · 跑步 中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mia · Running"
+          }
+        }
+      }
+    },
+    "今天练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained today"
+          }
+        }
+      }
+    },
+    "拍一拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pat"
+          }
+        }
+      }
+    },
+    "阿杰 · 今天还没打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jay · Not checked in yet"
+          }
+        }
+      }
+    },
+    "拍过了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Patted"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

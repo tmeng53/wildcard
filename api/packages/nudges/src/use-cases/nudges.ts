@@ -32,7 +32,27 @@ export interface Nudges {
     readonly since: Date;
     readonly until: Date;
   }): Promise<ReadonlyMap<NudgeKind, ReadonlySet<MemberId>>>;
+  /**
+   * The member's nudges of `kind` in `squad`, as the home shows them: whom they sent one to
+   * today (on their own clock), and who sent them one in the 24 hours up to now, each sender
+   * once, oldest first. Only current squadmates count. Throws `SquadNotJoinedError` when the
+   * member isn't in the squad.
+   */
+  inSquad(input: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+    readonly kind: NudgeKind;
+  }): Promise<SquadNudges>;
 }
+
+/** A member's nudges of one kind in one squad: see `Nudges.inSquad`. */
+export interface SquadNudges {
+  readonly sent: readonly MemberId[];
+  readonly received: readonly { readonly from: MemberId; readonly at: Date }[];
+}
+
+/** How far back the home looks for nudges a member got. */
+const RECEIVED_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export function createNudges(deps: {
   readonly store: NudgeStore;
@@ -71,6 +91,26 @@ export function createNudges(deps: {
         byKind.set(kind, (byKind.get(kind) ?? new Set()).add(from));
       }
       return byKind;
+    },
+
+    async inSquad({ member, squad, kind }) {
+      const members = new Set(await deps.membership.membersOf(squad));
+      if (!members.has(member)) throw new SquadNotJoinedError(squad);
+      const until = deps.clock();
+      const since = new Date(until.getTime() - RECEIVED_WINDOW_MS);
+      const day = localDay(until, (await deps.timeZoneOf(member)) ?? 'UTC');
+      const [sentRows, receivedRows] = await Promise.all([
+        deps.store.sentBy({ member, squad, day, kind }),
+        deps.store.receivedBy({ member, since, until, kind }),
+      ]);
+      const sent = [...new Set(sentRows.filter((n) => members.has(n.to)).map((n) => n.to))];
+      const received: { from: MemberId; at: Date }[] = [];
+      for (const nudge of receivedRows) {
+        if (nudge.squad !== squad || !members.has(nudge.from)) continue;
+        if (received.some(({ from }) => from === nudge.from)) continue;
+        received.push({ from: nudge.from, at: nudge.at });
+      }
+      return { sent, received };
     },
   };
 }

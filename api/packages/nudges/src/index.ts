@@ -5,4 +5,9 @@ export { createPostgresNudgeStore, type NudgeTables } from './adapters/postgres-
 export { MemberId, NudgeKind, SquadId, type Nudge } from './domain/nudge.js';
 export { NotASquadmateError, OwnNudgeError, SquadNotJoinedError } from './errors.js';
 export type { Clock, NudgeStore, SquadMembership, TimeZoneOf } from './ports.js';
-export { createNudges, type Nudges, type SendNudgeInput } from './use-cases/nudges.js';
+export {
+  createNudges,
+  type Nudges,
+  type SendNudgeInput,
+  type SquadNudges,
+} from './use-cases/nudges.js';

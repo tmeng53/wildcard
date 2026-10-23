@@ -20,6 +20,8 @@ public enum Haptic: String, CaseIterable, Sendable {
     case land
     /// A teammate's reaction arriving on your check-in: a soft tap.
     case reaction
+    /// A pat landing on a teammate (拍一拍): a short, light tap at the moment of contact.
+    case poke
 
     /// How many ticks a status ring plays while it draws itself closed.
     public static let ringTicks = 3
