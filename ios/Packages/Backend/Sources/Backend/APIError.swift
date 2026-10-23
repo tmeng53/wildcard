@@ -39,6 +39,18 @@ public enum Refusal: Equatable, Sendable {
     case checkInNotFound
     /// Today's AI 请假条 drafts are used up.
     case disclaimerDraftsUsedUp
+    /// No squad has this invite code.
+    case inviteCodeUnknown
+    /// The squad has its 8 members.
+    case squadFull
+    /// The member is in as many squads as they may be.
+    case squadLimitReached
+    /// The squad id is already another squad's.
+    case squadIDConflict
+    /// The member hasn't agreed to the AI consent copy, which squads and AI drafts need.
+    case aiConsentRequired
+    /// The AI consent copy this build shows is older than the API's: the app is out of date.
+    case aiConsentCopyOutdated
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -59,5 +71,11 @@ public enum Refusal: Equatable, Sendable {
         "TIME_ZONE_UNKNOWN": .timeZoneUnknown,
         "CHECK_IN_NOT_FOUND": .checkInNotFound,
         "DISCLAIMER_DRAFTS_USED_UP": .disclaimerDraftsUsedUp,
+        "INVITE_CODE_UNKNOWN": .inviteCodeUnknown,
+        "SQUAD_FULL": .squadFull,
+        "SQUAD_LIMIT_REACHED": .squadLimitReached,
+        "SQUAD_ID_CONFLICT": .squadIDConflict,
+        "AI_CONSENT_REQUIRED": .aiConsentRequired,
+        "AI_CONSENT_COPY_OUTDATED": .aiConsentCopyOutdated,
     ]
 }

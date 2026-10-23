@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -43,6 +45,14 @@ describe('createDatabase', () => {
 
     const { rows } = await sql<{ one: number }>`select 1 as one`.execute(db);
     expect(rows).toStrictEqual([{ one: 1 }]);
+    await db.destroy();
+  });
+
+  it('insists on TLS once given a CA, never falling back to a plain connection', async () => {
+    // Local Supabase's database has no TLS, so a connection that must use it is refused.
+    const ca = readFileSync(new URL('../../certs/supabase-root-2021.crt', import.meta.url), 'utf8');
+    const db = createDatabase(config.databaseUrl, { ca });
+    await expect(sql`select 1`.execute(db)).rejects.toThrow(/does not support SSL/);
     await db.destroy();
   });
 });
