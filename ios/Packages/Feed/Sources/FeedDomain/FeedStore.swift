@@ -80,12 +80,17 @@ public final class FeedStore {
 
     // MARK: - Loading
 
-    /// Loads the latest week, in place of what was loaded for those days, and who is who.
+    /// Loads the latest week, in place of what was loaded for those days, and who is who. A
+    /// squad that was quiet all week goes back until it finds its last posts, so the feed is
+    /// empty only for a squad that never posted.
     public func load() async {
         if let characters = try? await source.characters(in: squad) { self.characters = characters }
         let latest = FeedRange.latest(today: today())
         if await load(latest) {
             range = range.map { FeedRange(first: min($0.first, latest.first), last: latest.last) } ?? latest
+        }
+        for _ in 0..<Self.emptyWeeksBeforeTheStart where loaded.isEmpty && hasEarlier {
+            await loadEarlier()
         }
     }
 

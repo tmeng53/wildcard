@@ -115,6 +115,23 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     #expect(await source.calls.count == loads)
 }
 
+@MainActor @Test func aQuietWeekStillShowsTheSquadsLastPosts() async throws {
+    let old = FeedPost(checkIn: checkIn(9, by: mia, on: "2026-09-20"))
+    let source = FakeSource([old])
+    let feed = store(source)
+    await feed.load()
+    #expect(feed.post(old.id) != nil)
+}
+
+@MainActor @Test func aSquadThatNeverPostedStopsLookingBack() async {
+    let source = FakeSource([])
+    let feed = store(source)
+    await feed.load()
+    #expect(feed.sections.isEmpty)
+    #expect(!feed.hasEarlier)
+    #expect(await source.calls.count == 1 + FeedStore.emptyWeeksBeforeTheStart)
+}
+
 @MainActor @Test func aFailedFirstLoadIsOfflineAndALaterOneKeepsThePosts() async {
     let source = FakeSource([jaysRun], failing: .notSent)
     let feed = store(source)

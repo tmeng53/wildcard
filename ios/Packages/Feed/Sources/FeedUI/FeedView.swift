@@ -69,10 +69,8 @@ public struct FeedView: View {
     @ViewBuilder private var content: some View {
         let sections = model.store.sections
         if sections.isEmpty {
-            switch model.store.phase {
-            case .loading:
-                EmptyView()
-            case .current, .offline, .notInSquad, .signedOut:
+            // Only a squad the server says never posted is empty; offline, pull to try again.
+            if model.store.phase == .current {
                 EmptyFeed(model: model, checkIn: checkIn)
             }
         } else {
