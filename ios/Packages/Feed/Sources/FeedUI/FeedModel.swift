@@ -106,6 +106,9 @@ public final class FeedModel {
         let latest = store.arrivals(since: Timestamp(millisecondsSince1970: .min))
         if let newest = latest.first?.moment, seen.map({ newest > $0 }) ?? true {
             defaults.set(Double(newest.millisecondsSince1970), forKey: key)
+        } else if seen == nil {
+            // Opened with nothing yet: the first reaction to come is news.
+            defaults.set(0.0, forKey: key)
         }
         // The first time 动态 opens on this phone, what was there before isn't news.
         guard let seen else { return }
