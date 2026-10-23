@@ -209,10 +209,11 @@ public final class SquadSettingsModel {
     }
 
     /// The pick was refused: someone else picked this week first, or the week moved on. The
-    /// page closes the picker and reads the squad's scene again.
+    /// page closes the picker and reads the squad's scene again, and so does the app.
     public func pickRefused() async {
         picker = nil
         await reload()
+        changed()
     }
 
     private func update(_ edit: (inout SquadSettings) -> Void) {

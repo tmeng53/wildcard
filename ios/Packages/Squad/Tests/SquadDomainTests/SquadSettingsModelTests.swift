@@ -175,7 +175,8 @@ private actor Squad3: SquadSettingsService {
 
     @Test func aRefusedPickClosesThePickerAndReadsTheSceneAgain() async throws {
         let service = try Squad3(viewer: coco, scene: try scene(pickers: .crown([coco]), canPick: true))
-        let model = SquadSettingsModel(service: service)
+        var changes = 0
+        let model = SquadSettingsModel(service: service, changed: { changes += 1 })
         await model.reload()
         model.openPicker()
         let picker = try #require(model.picker)
@@ -186,6 +187,7 @@ private actor Squad3: SquadSettingsService {
         await service.fail(with: nil)
         await model.pickRefused()
         #expect(model.picker == nil)
+        #expect(changes == 1)
         #expect(await service.picks.isEmpty)
     }
 }
