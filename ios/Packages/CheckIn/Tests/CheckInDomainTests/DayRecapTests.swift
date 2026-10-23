@@ -10,15 +10,14 @@ private func post(_ number: Int, by member: MemberID, _ entry: CheckIn.Entry) th
         audience: try Audience([squadID]), entry: entry)
 }
 
-private func today(_ mine: TrainingStatus, _ mates: TrainingStatus, _ third: TrainingStatus) -> SquadToday {
+/// Mate, me, and the third member, whose plan rests today.
+private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: TrainingStatus) -> SquadToday {
     var today = sampleToday()
-    today.members = [
-        entry(mate, mates), entry(myID, mine), entry(resting, third, plannedRest: true),
-    ]
+    today.members = [entry(mate, mates), entry(myID, mine), entry(resting, third, plannedRest: true)]
     return today
 }
 
-@Test func theRecapNamesWhoWentFirstTheDisclaimerAndTheMealsOnly() throws {
+@Test func theBoxScoreListsTrainingByWhoWentFirstThenDisclaimers() throws {
     let home = sampleHome(
         today: today(.trained, .trained, .disclaimer),
         checkIns: [
@@ -27,33 +26,29 @@ private func today(_ mine: TrainingStatus, _ mates: TrainingStatus, _ third: Tra
             try post(3, by: myID, .trained(Training(activity: .sport(.run)))),
             try post(4, by: mate, .trained(Training(activity: .sport(.swim)))),
             try post(5, by: myID, .cheatMeal(Meal())),
+            try post(6, by: myID, .trained(Training(activity: .sport(.yoga)))),
         ])
     let recap = home.recap
     #expect(recap.showedUp == 3)
     #expect(recap.members == 3)
     #expect(
-        recap.highlights == [
-            .everyoneShowedUp(members: 3), .firstIn(myID, .sport(.run)), .disclaimer(resting, "腰说今天不行"),
+        recap.rows == [
+            .init(member: myID, kind: .trained(.sport(.yoga), meal: .cheatMeal)),
+            .init(member: mate, kind: .trained(.sport(.swim), meal: .healthyMeal)),
+            .init(member: resting, kind: .disclaimer("腰说今天不行")),
         ])
+    #expect(recap.healthyMeals == 1)
+    #expect(recap.cheatMeals == 1)
 }
 
-@Test func withoutAFullSquadTheMealsMakeTheThirdLine() throws {
+@Test func whoeverHasntCheckedInHasNoRowAndARestDayHasOne() throws {
     let home = sampleHome(
-        today: today(.notCheckedIn, .trained, .notCheckedIn),
-        checkIns: [
-            try post(1, by: mate, .trained(Training(activity: .sport(.yoga)))),
-            try post(2, by: mate, .healthyMeal(Meal())),
-            try post(3, by: myID, .healthyMeal(Meal())),
-        ])
-    #expect(home.recap.showedUp == 1)
-    #expect(home.recap.highlights == [.firstIn(mate, .sport(.yoga)), .meals(healthy: 2, cheat: 0)])
-}
-
-@Test func aDayWithoutTrainingIsAQuietDay() throws {
-    let home = sampleHome(
-        today: today(.notCheckedIn, .disclaimer, .notCheckedIn),
-        checkIns: [try post(1, by: mate, .disclaimer(try Disclaimer("加班")))])
-    #expect(home.recap.highlights == [.disclaimer(mate, "加班"), .quietDay])
+        today: today(.notCheckedIn, .notCheckedIn, .notCheckedIn),
+        checkIns: [try post(1, by: mate, .healthyMeal(Meal()))])
+    let recap = home.recap
+    #expect(recap.showedUp == 0)
+    #expect(recap.rows == [.init(member: resting, kind: .restDay)])
+    #expect(recap.healthyMeals == 1)
 }
 
 @Test func theRecapShowsFromNineInTheEveningUntilTheDayEnds() {
