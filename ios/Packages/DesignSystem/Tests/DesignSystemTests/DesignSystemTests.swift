@@ -397,3 +397,30 @@ struct MotionTests {
         #expect(rounded == [[-121.7, -39.6], [-60.1, -113.0], [60.1, -113.0], [121.7, -39.6]])
     }
 }
+
+struct BrandTests {
+    /// Graphite with a volt label until Tracy picks the brand's own colour.
+    @Test func brandIsGraphiteWithVoltOnIt() {
+        #expect(ColorRole.bgBrand.color(in: .pool).hex == "#1F2128")
+        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#C6F432")
+    }
+
+    /// Brand screens look the same whatever scene the squad picked.
+    @Test(arguments: [ColorRole.bgBrand, .fgOnBrand])
+    func brandNeverFollowsTheScene(role: ColorRole) {
+        let colors = SceneTheme.allCases.flatMap { theme in
+            [role.color(in: theme), role.color(in: theme, contrast: .increased)]
+        }
+        #expect(Set(colors).count == 1)
+    }
+
+    /// A brand button's label can be small regular text, not only the 19-point action.
+    @Test func labelsOnTheBrandAreReadable() {
+        #expect(ColorRole.fgOnBrand.color(in: .pool).contrastRatio(with: ColorRole.bgBrand.color(in: .pool)) >= 4.5)
+    }
+
+    @Test func eachToneUsesItsOwnPair() {
+        #expect([AccentTone.scene.fill, AccentTone.scene.onFill] == [.bgAccent, .fgOnAccent])
+        #expect([AccentTone.brand.fill, AccentTone.brand.onFill] == [.bgBrand, .fgOnBrand])
+    }
+}

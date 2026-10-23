@@ -22,6 +22,8 @@
 		A1C0DE0000000000000000B8 /* AvatarArt in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B7 /* AvatarArt */; };
 		A1C0DE0000000000000000BA /* AvatarUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B9 /* AvatarUI */; };
 		A1C0DE000000000000000062 /* OnboardingUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000061 /* OnboardingUI */; };
+		A1C0DE000000000000000082 /* FeedDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000081 /* FeedDomain */; };
+		A1C0DE000000000000000084 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000083 /* FeedUI */; };
 		A1C0DE000000000000000077 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* AccountDomain */; };
 		A1C0DE000000000000000078 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000074 /* AccountUI */; };
 		A1C0DE000000000000000079 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000075 /* Backend */; };
@@ -76,6 +78,8 @@
 				A1C0DE0000000000000000B8 /* AvatarArt in Frameworks */,
 				A1C0DE0000000000000000BA /* AvatarUI in Frameworks */,
 				A1C0DE000000000000000062 /* OnboardingUI in Frameworks */,
+				A1C0DE000000000000000082 /* FeedDomain in Frameworks */,
+				A1C0DE000000000000000084 /* FeedUI in Frameworks */,
 				A1C0DE000000000000000077 /* AccountDomain in Frameworks */,
 				A1C0DE000000000000000078 /* AccountUI in Frameworks */,
 				A1C0DE000000000000000079 /* Backend in Frameworks */,
@@ -146,6 +150,8 @@
 				A1C0DE0000000000000000B7 /* AvatarArt */,
 				A1C0DE0000000000000000B9 /* AvatarUI */,
 				A1C0DE000000000000000061 /* OnboardingUI */,
+				A1C0DE000000000000000081 /* FeedDomain */,
+				A1C0DE000000000000000083 /* FeedUI */,
 				A1C0DE000000000000000073 /* AccountDomain */,
 				A1C0DE000000000000000074 /* AccountUI */,
 				A1C0DE000000000000000075 /* Backend */,
@@ -214,6 +220,7 @@
 				A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */,
 				A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
+				A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */,
 				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */,
 				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
 				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
@@ -478,6 +485,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Onboarding;
 		};
+		A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Feed;
+		};
 		A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Account;
@@ -493,6 +504,16 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A1C0DE000000000000000081 /* FeedDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			productName = FeedDomain;
+		};
+		A1C0DE000000000000000083 /* FeedUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			productName = FeedUI;
+		};
 		A1C0DE00000000000000001C /* DesignSystemUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;

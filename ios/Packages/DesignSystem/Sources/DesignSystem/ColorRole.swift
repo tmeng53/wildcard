@@ -100,7 +100,12 @@ public enum ColorRole: String, CaseIterable, Sendable {
     /// Placeholders, denominators and chevrons: large type and decoration only.
     case fgSubtle
 
-    /// The scene's accent: primary buttons and selection, nothing else.
+    /// The brand's colour: primary buttons and selection on brand screens. Never changes with the scene.
+    case bgBrand
+    /// Labels and icons on `bgBrand`.
+    case fgOnBrand
+
+    /// The scene's accent: primary buttons and selection on scene screens, nothing else.
     case bgAccent
     /// The scene's wash: tags.
     case bgAccentSubtle
@@ -143,6 +148,8 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgDefault: .fixed(Palette.ink)
         case .fgMuted: .fixed(Palette.inkSecondary)
         case .fgSubtle: .fixed(Palette.inkTertiary)
+        case .bgBrand: .fixed(Palette.brand)
+        case .fgOnBrand: .fixed(Palette.onBrand)
         case .bgAccent: .scene(\.accent)
         case .bgAccentSubtle: .scene(\.accentSubtle)
         case .fgOnAccent: .scene(\.onAccent)
@@ -161,4 +168,28 @@ public enum ColorRole: String, CaseIterable, Sendable {
 public enum ColorContrast: Sendable {
     case standard
     case increased
+}
+
+/// Whose colour a screen's primary button and selection marks wear. Brand screens (opening,
+/// sign-up, 我, the tab bar, writing a post, 请假条, the feed) use `.brand`; the squad's own turf
+/// (home, the check-in burst, the 出赛表 poster, 战报) uses `.scene`.
+public enum AccentTone: Sendable {
+    case scene
+    case brand
+
+    /// The solid fill: a primary button, a check badge, a picked border, a switch that is on.
+    public var fill: ColorRole {
+        switch self {
+        case .scene: .bgAccent
+        case .brand: .bgBrand
+        }
+    }
+
+    /// Labels and icons on `fill`.
+    public var onFill: ColorRole {
+        switch self {
+        case .scene: .fgOnAccent
+        case .brand: .fgOnBrand
+        }
+    }
 }

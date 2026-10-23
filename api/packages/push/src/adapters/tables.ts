@@ -11,6 +11,18 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface DailyPushes {
@@ -18,6 +30,19 @@ export interface DailyPushes {
   handled_at: Generated<Timestamp>;
   member_id: string;
   quiet: boolean;
+}
+
+export interface DailyPushSettingEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  id: Generated<Int8>;
+  settings: Json;
+}
+
+export interface DailyPushSettings {
+  hour: number;
+  only_row: Generated<boolean>;
+  sending: boolean;
 }
 
 export interface PushDevices {
@@ -42,6 +67,8 @@ export interface PushSettings {
 }
 
 export interface DB {
+  daily_push_setting_events: DailyPushSettingEvents;
+  daily_push_settings: DailyPushSettings;
   daily_pushes: DailyPushes;
   push_devices: PushDevices;
   push_setting_events: PushSettingEvents;

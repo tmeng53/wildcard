@@ -441,6 +441,36 @@
         }
       }
     },
+    "品牌色上的字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text on brand"
+          }
+        }
+      }
+    },
+    "品牌色：主操作、选中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brand: primary actions, selection"
+          }
+        }
+      }
+    },
+    "品牌：开场、注册、我、发动态、请假条、动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brand: opening, sign-up, Me, posting, excuse notes, feed"
+          }
+        }
+      }
+    },
     "四": {
       "localizations": {
         "en": {

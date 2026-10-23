@@ -1,8 +1,15 @@
 import type { DailyCandidate, DuePush, LocalDay } from '../domain/daily.js';
+import type { DailyPushSettings } from '../domain/daily-push-settings.js';
 import type { Device, DeviceToken, MemberId } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
 import type { PushSettings } from '../domain/topic.js';
-import type { DailyPushStore, DeviceStore, PushSender, SettingsStore } from '../ports.js';
+import type {
+  DailyPushSettingsStore,
+  DailyPushStore,
+  DeviceStore,
+  PushSender,
+  SettingsStore,
+} from '../ports.js';
 import { notifyMembers, type NotifyOutcome } from './push/notify-members.js';
 import { pushSettings } from './push/push-settings.js';
 import { registerDevice } from './push/register-device.js';
@@ -33,6 +40,8 @@ export interface Push {
    * haven't turned it off, and today's hasn't been handled.
    */
   dailyDue(candidates: readonly DailyCandidate[]): Promise<DuePush[]>;
+  /** Whether the daily push goes out at all, and at which hour on members' clocks. */
+  dailySettings(): Promise<DailyPushSettings>;
   /**
    * Marks the member's daily push for `day` handled `at` that moment, `quiet` when there's nothing
    * to send. False when another run already did, and then this one must not send it.
@@ -49,6 +58,7 @@ export function createPush(deps: {
   readonly store: DeviceStore;
   readonly settings: SettingsStore;
   readonly daily: DailyPushStore;
+  readonly dailySettings: DailyPushSettingsStore;
   readonly sender: PushSender;
 }): Push {
   return {
@@ -61,6 +71,7 @@ export function createPush(deps: {
       return settings;
     },
     dailyDue: (candidates) => deps.daily.due(candidates),
+    dailySettings: () => deps.dailySettings.current(),
     claimDaily: (handled) => deps.daily.claim(handled),
   };
 }
