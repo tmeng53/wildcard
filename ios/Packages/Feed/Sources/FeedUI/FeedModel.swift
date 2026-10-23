@@ -114,7 +114,7 @@ public final class FeedModel {
         }
         arrivals += 1
         let who = name(of: newest.member) ?? Self.teammate
-        announce(Text("\(who)回应了你：\(newest.emoji.text)", bundle: .module))
+        announce(String(localized: "\(who)回应了你：\(newest.emoji.text)", bundle: .module))
     }
 
     /// The bubble has shown long enough.
@@ -186,7 +186,7 @@ public final class FeedModel {
                     play(move, on: post)
                 }
                 let author = name(of: post.author) ?? Self.teammate
-                announce(Text("\(author)收到了\(mine.text)", bundle: .module))
+                announce(String(localized: "\(author)收到了\(mine.text)", bundle: .module))
             }
             picks += 1
         } catch {
@@ -200,8 +200,8 @@ public final class FeedModel {
         defaults.set(recent.map(\.text), forKey: Self.recentKey)
     }
 
-    private func announce(_ text: Text) {
-        AccessibilityNotification.Announcement(text).post()
+    private func announce(_ text: String) {
+        AccessibilityNotification.Announcement(AttributedString(text)).post()
     }
 
     private static var teammate: String { String(localized: "队友", bundle: .module) }
