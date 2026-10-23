@@ -7,7 +7,12 @@ import globals from 'globals';
 
 export default defineConfig(
   // Written by `pnpm generate` from the app's art.
-  globalIgnores(['public/home/characters.js', 'test-results/', 'playwright-report/']),
+  globalIgnores([
+    'public/home/characters.js',
+    'public/join/characters.js',
+    'test-results/',
+    'playwright-report/',
+  ]),
 
   { linterOptions: { reportUnusedDisableDirectives: 'error' } },
 
@@ -15,6 +20,11 @@ export default defineConfig(
   {
     files: ['public/**/*.js'],
     languageOptions: { sourceType: 'script', globals: globals.browser },
+  },
+  // The character modules are shared with scripts/generate.mjs; the invite page loads them as modules.
+  {
+    files: ['public/character/*.js', 'public/join/join.js'],
+    languageOptions: { sourceType: 'module' },
   },
   {
     files: ['scripts/**/*.mjs', 'tests/**/*.js', '*.js'],

@@ -2,6 +2,7 @@ import type { z } from 'zod';
 
 import type { Awards, AwardsState, Failures, MemberId, SquadId } from './domain/awards.js';
 import type { WeekStart } from './domain/schedule.js';
+import type { AwardSettings, ModelName } from './domain/settings.js';
 
 /**
  * A language model that answers in a set JSON shape, whoever provides it. Throws when it can't
@@ -9,6 +10,8 @@ import type { WeekStart } from './domain/schedule.js';
  */
 export interface LanguageModel {
   answer<Reply>(request: {
+    /** Which model answers, as provider/model. */
+    readonly model: ModelName;
     /** The standing instructions (a system prompt). */
     readonly instructions: string;
     /** What to answer. */
@@ -16,6 +19,20 @@ export interface LanguageModel {
     /** The shape of the answer. */
     readonly reply: z.ZodType<Reply>;
   }): Promise<Reply>;
+}
+
+/** Where the award settings are kept: one value, and a log of every change to it. */
+export interface AwardSettingsStore {
+  /**
+   * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two
+   * admins changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<AwardSettings>;
+  /**
+   * Saves `settings` with `by` as who changed them, unless they are the settings already: then
+   * nothing is saved or logged. Says whether anything changed.
+   */
+  save(settings: AwardSettings, by: MemberId): Promise<boolean>;
 }
 
 /** Where each squad's awards are kept: once a week, never rewritten, and the tries before. */

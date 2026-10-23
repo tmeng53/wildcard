@@ -1,11 +1,20 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { Emoji, LocalDay, MemberId, SquadId, WeekStart, type CheckIns } from '@wildcard/check-ins';
+import {
+  Emoji,
+  LocalDay,
+  MemberId,
+  SquadId,
+  WeekStart,
+  winnerText,
+  type CheckIns,
+  type WeekSummaryWords,
+} from '@wildcard/check-ins';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
-import { AWARD_COPY, languageOf, STAT_COPY } from './week-summary-copy.js';
+import { languageOf } from './week-summary-language.js';
 
 const count = (description: string) => z.int().min(0).meta({ description });
 
@@ -114,6 +123,8 @@ export const WeekSummaryBody = z
 export function weekSummary(deps: {
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
+  /** The summary's words now, which admins change without a deploy. */
+  readonly words: () => Promise<WeekSummaryWords>;
 }) {
   const route = createRoute({
     method: 'get',
@@ -157,8 +168,9 @@ export function weekSummary(deps: {
       squad,
       weekStart,
     });
+    const words = await deps.words();
     const statsOf = (stats: typeof summary.me.stats) =>
-      stats.map(({ kind, value }) => ({ kind, label: STAT_COPY[kind][language], value }));
+      stats.map(({ kind, value }) => ({ kind, label: words.stats[kind][language], value }));
     return c.json(
       {
         version: 1 as const,
@@ -168,12 +180,12 @@ export function weekSummary(deps: {
         final: summary.final,
         awards: summary.awards.map(({ kind, winners }) => ({
           kind,
-          title: AWARD_COPY[kind].title[language],
-          symbol: AWARD_COPY[kind].symbol,
+          title: words.awards[kind].title[language],
+          symbol: words.awards[kind].symbol,
           winners: winners.map(({ member, value, checkIn }) => ({
             member,
             value,
-            text: AWARD_COPY[kind].winner(value)[language],
+            text: winnerText(words, { kind, value, language }),
             ...(checkIn === undefined ? {} : { checkIn }),
           })),
         })),

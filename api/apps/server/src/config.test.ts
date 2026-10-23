@@ -38,50 +38,27 @@ describe('readConfig', () => {
       publicUrl: new URL('http://localhost:8080'),
       adminPasswordSignIn: false,
       proxyHops: 1,
-      languageModel: undefined,
-      awardsModel: undefined,
+      languageModelKeys: { openai: undefined, anthropic: undefined },
       appleSignInKey: undefined,
       jobsToken: undefined,
       apns: undefined,
     });
   });
 
-  it('picks OpenAI for drafts unless told otherwise, with the adapter’s default model', () => {
+  it('keeps each provider’s key, and no longer reads which model writes what', () => {
     const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
-    expect(readConfig({ ...base, ...keys }).languageModel).toStrictEqual({
-      provider: 'openai',
-      apiKey: 'sk-openai',
-      model: undefined,
+    expect(readConfig({ ...base, ...keys }).languageModelKeys).toStrictEqual({
+      openai: 'sk-openai',
+      anthropic: 'sk-ant',
     });
+    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModelKeys).toStrictEqual({
+      openai: undefined,
+      anthropic: 'sk-ant',
+    });
+    // The model is a setting in the database now: a leftover variable changes nothing.
     expect(
-      readConfig({ ...base, ...keys, LLM_PROVIDER: 'anthropic', LLM_MODEL: 'claude-sonnet-5-5' })
-        .languageModel,
-    ).toStrictEqual({ provider: 'anthropic', apiKey: 'sk-ant', model: 'claude-sonnet-5-5' });
-  });
-
-  it('turns drafts off while the chosen provider has no key, and refuses an unknown one', () => {
-    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModel).toBeUndefined();
-    expect(() => readConfig({ ...base, LLM_PROVIDER: 'gemini' })).toThrow('LLM_PROVIDER');
-  });
-
-  it('writes the weekly awards with GPT-6 Luna unless told otherwise, apart from drafts', () => {
-    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
-    expect(readConfig({ ...base, ...keys, LLM_PROVIDER: 'anthropic' }).awardsModel).toStrictEqual({
-      provider: 'openai',
-      apiKey: 'sk-openai',
-      model: 'gpt-6-luna',
-    });
-    expect(
-      readConfig({ ...base, ...keys, AWARDS_LLM_PROVIDER: 'anthropic' }).awardsModel,
-    ).toStrictEqual({
-      provider: 'anthropic',
-      apiKey: 'sk-ant',
-      model: 'claude-sonnet-5-5',
-    });
-    expect(readConfig({ ...base, ...keys, AWARDS_LLM_MODEL: 'gpt-6' }).awardsModel?.model).toBe(
-      'gpt-6',
-    );
-    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).awardsModel).toBeUndefined();
+      readConfig({ ...base, LLM_PROVIDER: 'gemini' }).languageModelKeys.openai,
+    ).toBeUndefined();
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {

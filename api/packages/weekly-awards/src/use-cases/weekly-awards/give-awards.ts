@@ -8,10 +8,11 @@ import {
   type SquadId,
   type Title,
 } from '../../domain/awards.js';
-import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
+import { promptFor } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
+import type { AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
-import type { AiConsented, AwardsStore, LanguageModel } from '../../ports.js';
+import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
 const ATTEMPTS = 2;
@@ -32,6 +33,7 @@ export interface GiveAwardsInput {
 export async function giveAwards(
   deps: {
     readonly model: LanguageModel;
+    readonly settings: AwardSettingsStore;
     readonly store: AwardsStore;
     readonly aiConsented: AiConsented;
   },
@@ -48,7 +50,11 @@ export async function giveAwards(
   let titles: Titles = new Map<MemberId, Title[]>();
   if (winners.length > 0) {
     try {
-      titles = await writeTitles(deps.model, { weekStart, winners });
+      titles = await writeTitles(deps.model, {
+        settings: await deps.settings.current(),
+        weekStart,
+        winners,
+      });
     } catch (error) {
       await deps.store.recordFailure({ squad, weekStart, error: reasonOf(error) });
       throw error;
@@ -103,19 +109,32 @@ export function reasonOf(error: unknown): string {
 
 type Titles = NonNullable<ReturnType<typeof titlesOf>>;
 
-/** Titles for every winner, asking the model up to twice for an answer that passes the checks. */
+/**
+ * Titles for every winner, asking the model the settings name up to twice for an answer that
+ * passes the checks.
+ */
 async function writeTitles(
   model: LanguageModel,
   {
+    settings,
     weekStart,
     winners,
-  }: { readonly weekStart: WeekStart; readonly winners: readonly MemberWeek[] },
+  }: {
+    readonly settings: AwardSettings;
+    readonly weekStart: WeekStart;
+    readonly winners: readonly MemberWeek[];
+  },
 ): Promise<Titles> {
-  const prompt = promptFor({ weekStart, members: winners });
+  const prompt = promptFor({ weekStart, members: winners, moves: settings.moves });
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {
-      const reply = await model.answer({ instructions: INSTRUCTIONS, prompt, reply: ModelReply });
+      const reply = await model.answer({
+        model: settings.model,
+        instructions: settings.instructions,
+        prompt,
+        reply: ModelReply,
+      });
       const titles = titlesOf(
         reply,
         winners.map(({ member }) => member),

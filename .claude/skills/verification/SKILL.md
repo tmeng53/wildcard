@@ -13,6 +13,7 @@ Every claim that something works comes with evidence from the real thing, not a 
 - Every PR's **Verification** section lists each command you ran and the key line it printed. If a check couldn't run, write "inconclusive" and why.
 - Each commit and PR ends in a state you can check, ordered so the sequence proves itself (for example a failing test, then the fix).
 
+- **Match the approved design.** Where the project keeps approved designs, put the approved design and the actual screen side by side for every UI change. A difference the owner didn't agree to is a failure, not a note; anything that can't match is raised with the owner before merge, never left as a silent placeholder. Differences that come from a theme the design says varies (such as scene colours) are not differences.
 - **Look at every screenshot yourself.** Before sending screenshots or calling a UI change verified, check each one (smallest supported phone, long text where the screen has any) for content that is clipped, cut off, covered by buttons, keyboard or tab bar, or overlapping. Any such flaw is a failure, not a note. Where layout is at risk, add a UI test asserting the content's frames stay inside the visible area and clear of the controls over it.
 
 ## Tests that can fail

@@ -246,11 +246,11 @@ if want squad; then
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 400 AI_CONSENT_REQUIRED
   call GET /me/ai-consent "$newcomer_token"
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":1,"current":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":2,"current":false}' ] ||
     fail "newcomer should have no consent yet: $body"
   call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
   expect 400 REQUEST_INVALID
-  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":2}'
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":1}'
   expect 400 AI_CONSENT_COPY_OUTDATED
   echo "squad: joining before agreeing refused (400 AI_CONSENT_REQUIRED); another copy version refused (400 AI_CONSENT_COPY_OUTDATED)"
   agree_to_ai "$newcomer_token"
@@ -864,7 +864,8 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme" ] || fail "tools: $body"
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_week_summary_words,change_week_summary_words" ] ||
+    fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
   # tool NAME ARGUMENTS: calls a tool; sets $result (the text it answered) and $is_error.
@@ -894,6 +895,32 @@ if want admin-mcp; then
   logged="$(psql "$DB_URL" -tAc "select string_agg(action->>'tool', ',' order by id) from public.admin_actions where admin_id = '$admin'")"
   [ "$logged" = "add_memes,turn_off_meme" ] || fail "admin_actions should hold the two changes, not the reads or the refusal: $logged"
   echo "admin-mcp: the log holds the two changes, newest first, and no reads ($logged)"
+
+  tool get_disclaimer_draft_settings '{}'
+  [ "$(jq -r '"\(.model) \(.writing) \(.batchesPerDay)"' <<<"$result")" = "openai/gpt-6-luna true 6" ] ||
+    fail "get_disclaimer_draft_settings: $result"
+  tool change_disclaimer_draft_settings '{"writing":false}'
+  [ "$(jq -r .writing <<<"$result")" = false ] || fail "change_disclaimer_draft_settings: $result"
+  tool change_disclaimer_draft_settings '{"writing":false}'
+  tool change_disclaimer_draft_settings '{"writing":true}'
+  tool change_disclaimer_draft_settings '{"model":"gemini/flash"}'
+  [ "$is_error" = true ] || fail "a provider the server doesn't know: $result"
+  changes="$(psql "$DB_URL" -tAc "select string_agg(settings->>'writing', ',' order by id) from public.disclaimer_draft_setting_events where changed_by = '$admin'")"
+  [ "$changes" = "false,true" ] || fail "the settings log should hold the two changes, not the repeat or the refusal: $changes"
+  tool get_weekly_award_settings '{}'
+  [ "$(jq -r .model <<<"$result")" = openai/gpt-6-luna ] || fail "get_weekly_award_settings: $result"
+  echo "admin-mcp: read the AI settings (openai/gpt-6-luna), turned drafts off and on, logged once each ($changes); an unknown provider refused"
+
+  tool get_week_summary_words '{}'
+  [ "$(jq -r '.awards.crown.title["zh-Hans"]' <<<"$result")" = 皇冠 ] || fail "get_week_summary_words: $result"
+  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡次数","en":"Check-ins"}}}'
+  [ "$(jq -r '.stats.checkIns["zh-Hans"]' <<<"$result")" = 打卡次数 ] || fail "change_week_summary_words: $result"
+  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡","en":"Check-ins"}}}'
+  tool change_week_summary_words '{"awards":{"medal":{"symbol":"medal","title":{"zh-Hans":"奖牌","en":"Medal"},"winner":{"zh-Hans":{"one":"{n}","other":"{n}"},"en":{"one":"{n}","other":"{n}"}}}}}'
+  [ "$is_error" = true ] || fail "an award the API doesn't have: $result"
+  words="$(psql "$DB_URL" -tAc "select string_agg(words#>>'{stats,checkIns,zh-Hans}', ',' order by id) from public.week_summary_word_events where changed_by = '$admin'")"
+  [ "$words" = "打卡次数,打卡" ] || fail "the words log should hold the two changes, not the refusal: $words"
+  echo "admin-mcp: renamed a 战报 count and back, logged once each ($words); an unknown award refused"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED
