@@ -116,8 +116,11 @@ public final class TodayModel {
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
 
-    /// The squad's scene.
-    public let scene: SceneTheme
+    /// The squad's scene this week, which the app reads with the squad: the gym until then, and
+    /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
+    public var scene: SceneTheme {
+        didSet { if scene != oldValue { placeSquad() } }
+    }
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }

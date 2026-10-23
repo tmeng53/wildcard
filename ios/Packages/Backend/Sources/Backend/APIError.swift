@@ -51,6 +51,16 @@ public enum Refusal: Equatable, Sendable {
     case aiConsentRequired
     /// The AI consent copy this build shows is older than the API's: the app is out of date.
     case aiConsentCopyOutdated
+    /// Only the squad's captain may do this; someone else is captain now.
+    case notSquadCaptain
+    /// The member named isn't in the squad (any more).
+    case squadMemberUnknown
+    /// Only last week's crown winners, or the captain when nobody won, pick the week's scene.
+    case notScenePicker
+    /// Someone already picked this week's scene.
+    case sceneAlreadyPicked
+    /// The week named isn't the one open for picking: a new week started meanwhile.
+    case sceneWeekClosed
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -77,5 +87,10 @@ public enum Refusal: Equatable, Sendable {
         "SQUAD_ID_CONFLICT": .squadIDConflict,
         "AI_CONSENT_REQUIRED": .aiConsentRequired,
         "AI_CONSENT_COPY_OUTDATED": .aiConsentCopyOutdated,
+        "NOT_SQUAD_CAPTAIN": .notSquadCaptain,
+        "SQUAD_MEMBER_UNKNOWN": .squadMemberUnknown,
+        "NOT_SCENE_PICKER": .notScenePicker,
+        "SCENE_ALREADY_PICKED": .sceneAlreadyPicked,
+        "SCENE_WEEK_CLOSED": .sceneWeekClosed,
     ]
 }

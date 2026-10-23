@@ -18,6 +18,8 @@
 		A1C0DE000000000000000054 /* MeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000053 /* MeUI */; };
 		A1C0DE0000000000000000B2 /* ScenePickDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B1 /* ScenePickDomain */; };
 		A1C0DE0000000000000000B4 /* ScenePickUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B3 /* ScenePickUI */; };
+		A1C0DE0000000000000000A2 /* SquadDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000A1 /* SquadDomain */; };
+		A1C0DE0000000000000000A4 /* SquadUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000A3 /* SquadUI */; };
 		A1C0DE0000000000000000B6 /* AvatarDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B5 /* AvatarDomain */; };
 		A1C0DE0000000000000000B8 /* AvatarArt in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B7 /* AvatarArt */; };
 		A1C0DE0000000000000000BA /* AvatarUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B9 /* AvatarUI */; };
@@ -76,6 +78,8 @@
 				A1C0DE000000000000000054 /* MeUI in Frameworks */,
 				A1C0DE0000000000000000B2 /* ScenePickDomain in Frameworks */,
 				A1C0DE0000000000000000B4 /* ScenePickUI in Frameworks */,
+				A1C0DE0000000000000000A2 /* SquadDomain in Frameworks */,
+				A1C0DE0000000000000000A4 /* SquadUI in Frameworks */,
 				A1C0DE0000000000000000B6 /* AvatarDomain in Frameworks */,
 				A1C0DE0000000000000000B8 /* AvatarArt in Frameworks */,
 				A1C0DE0000000000000000BA /* AvatarUI in Frameworks */,
@@ -150,6 +154,8 @@
 				A1C0DE000000000000000053 /* MeUI */,
 				A1C0DE0000000000000000B1 /* ScenePickDomain */,
 				A1C0DE0000000000000000B3 /* ScenePickUI */,
+				A1C0DE0000000000000000A1 /* SquadDomain */,
+				A1C0DE0000000000000000A3 /* SquadUI */,
 				A1C0DE0000000000000000B5 /* AvatarDomain */,
 				A1C0DE0000000000000000B7 /* AvatarArt */,
 				A1C0DE0000000000000000B9 /* AvatarUI */,
@@ -224,6 +230,7 @@
 				A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */,
 				A1C0DE000000000000000050 /* XCLocalSwiftPackageReference "Packages/Me" */,
 				A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */,
+				A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */,
 				A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
 				A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */,
@@ -486,6 +493,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/ScenePick;
 		};
+		A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Squad;
+		};
 		A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Avatar;
@@ -586,6 +597,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */;
 			productName = ScenePickUI;
+		};
+		A1C0DE0000000000000000A1 /* SquadDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */;
+			productName = SquadDomain;
+		};
+		A1C0DE0000000000000000A3 /* SquadUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */;
+			productName = SquadUI;
 		};
 		A1C0DE0000000000000000B5 /* AvatarDomain */ = {
 			isa = XCSwiftPackageProductDependency;

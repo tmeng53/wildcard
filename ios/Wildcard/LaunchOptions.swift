@@ -3,6 +3,7 @@ import CheckInUI
 import DesignSystem
 import Foundation
 import ScheduleUI
+import SquadUI
 import UIKit
 
 /// Launch arguments the UI tests pass in.
@@ -33,6 +34,19 @@ enum LaunchOptions {
     /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.
     static var showsEmptyFeed: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-empty-feed")
+    }
+
+    /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
+    /// `winner`, `member`, `noWinner`); the captain by default.
+    static var squadSeat: InMemorySquadSettingsService.Seat {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return .captain }
+        return InMemorySquadSettingsService.Seat(rawValue: arguments[flag + 1]) ?? .captain
+    }
+
+    /// `-uitest-long-names`: the in-memory squad's names are as long as the rules allow.
+    static var longNames: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-long-names")
     }
 
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
