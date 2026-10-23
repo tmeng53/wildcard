@@ -59,6 +59,8 @@ struct DayRecapCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let recap: DayRecap
     let day: Date
+    /// The member's own zone, which `day` is a day of.
+    let timeZone: TimeZone
     /// Each row's head and name.
     let member: @MainActor (MemberID) -> (head: CharacterPlayer?, name: String)
     let close: () -> Void
@@ -70,7 +72,7 @@ struct DayRecapCard: View {
             HStack(alignment: .bottom, spacing: Space.s) {
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     SectionLabel(Text("今日赛况", bundle: .module))
-                    Text(day, format: .dateTime.month().day().weekday(.abbreviated))
+                    Text(day, format: Date.FormatStyle(timeZone: timeZone).month().day().weekday(.abbreviated))
                         .typeStyle(TypeRamp.headline)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .lineLimit(1)

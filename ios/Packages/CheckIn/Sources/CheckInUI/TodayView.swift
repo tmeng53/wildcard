@@ -19,8 +19,9 @@ public struct TodayView: View {
     /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
     /// shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
-    /// 今日赛况's box score is open in the card's place.
-    @State private var isRecapOpen = false
+    /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
+    /// end, it doesn't reopen by itself the next evening.
+    @State private var openRecapDay: LocalDay?
 
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
@@ -135,10 +136,10 @@ public struct TodayView: View {
     private func topCard(
         home: Home, week: (squad: WeekCount, mine: WeekCount), day: LocalDay, recap: DayRecap?
     ) -> some View {
-        if let recap, isRecapOpen {
+        if let recap, openRecapDay == day {
             DayRecapCard(
-                recap: recap, day: model.dayDate ?? .now, member: { model.recapMember($0) },
-                close: { withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { isRecapOpen = false } }
+                recap: recap, day: model.dayDate ?? .now, timeZone: home.timeZone, member: { model.recapMember($0) },
+                close: { withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { openRecapDay = nil } }
             )
             .transition(.opacity)
         } else {
@@ -160,7 +161,7 @@ public struct TodayView: View {
                             RecapTag(recap: recap, isSeen: recapSeen == day.description) {
                                 recapSeen = day.description
                                 withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
-                                    isRecapOpen = true
+                                    openRecapDay = day
                                 }
                             }
                         })
