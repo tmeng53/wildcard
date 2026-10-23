@@ -163,10 +163,11 @@ function play(looks) {
   });
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const t0 = performance.now();
+  // The strip's size, read when it changes rather than every frame.
+  let row = lineup(members.length, strip.clientWidth, strip.clientHeight);
   const frame = () => {
     const t = (performance.now() - t0) / 1000;
-    const strip0 = lineup(members.length, strip.clientWidth, strip.clientHeight);
-    const spots = reduce ? strip0.rest() : strip0.spots(t);
+    const spots = reduce ? row.rest() : row.spots(t);
     members.forEach((member, i) => {
       const { left, lift } = spots[i];
       figures[i].style.transform = `translate(${left.toFixed(1)}px, ${(-lift).toFixed(1)}px)`;
@@ -174,8 +175,11 @@ function play(looks) {
     });
     if (!reduce) requestAnimationFrame(frame);
   };
+  new ResizeObserver(() => {
+    row = lineup(members.length, strip.clientWidth, strip.clientHeight);
+    if (reduce) frame();
+  }).observe(strip);
   frame();
-  if (reduce) addEventListener('resize', frame);
 }
 
 const { squad, problem } = await lookUp();

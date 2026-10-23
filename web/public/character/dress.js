@@ -30,7 +30,9 @@ const replaceAllCaseless = (text, from, to) => text.replace(new RegExp(escape(fr
 export function dress(wardrobe, variants, colors = {}, shoes = []) {
   const look = { ...wardrobe.defaults };
   for (const [slot, variant] of Object.entries(variants))
-    if (wardrobe.variants[slot]?.includes(variant)) look[slot] = variant;
+    // Own keys only: a slot named like an Object method ("constructor") is no slot.
+    if (Object.hasOwn(wardrobe.variants, slot) && wardrobe.variants[slot].includes(variant))
+      look[slot] = variant;
   return wardrobe.parts.map((part) =>
     (part.layers ?? [])
       .map(({ slot, art: name }) => {

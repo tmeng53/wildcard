@@ -88,11 +88,11 @@ for (const [status, name] of [
   });
 }
 
-test('leaves out a look whose body this art doesn’t have, and dresses an unknown hair as none', async ({
+test('leaves out a look whose body this art doesn’t have, and ignores slots and hair it doesn’t know', async ({
   page,
 }) => {
   const odd = [
-    { persona: 'ninja', variants: { body: 'peach', hair: 'mohawk' }, colors: {} },
+    { persona: 'ninja', variants: { body: 'peach', hair: 'mohawk', constructor: 'x' }, colors: {} },
     { persona: 'shy', variants: { body: 'dragon' }, colors: {} },
   ];
   await stub(page, 200, squad(2, { looks: odd }));
