@@ -30,18 +30,20 @@ struct ReactionRow: View {
         if canRespond || !reactions.isEmpty {
             HStack(spacing: Space.xs) {
                 if !reactions.isEmpty {
-                    summary(reactions)
+                    summary(reactions, open: model.listing == post.id)
                 }
                 Spacer(minLength: 0)
                 if canRespond {
-                    myButton(reactions.kind(of: model.viewer))
+                    myButton(reactions.kind(of: model.viewer), open: model.picking == post.id)
                 }
             }
             .frame(height: Sizing.minimumTapTarget)
         }
     }
 
-    private func summary(_ reactions: Responses<Emoji>) -> some View {
+    // `open` is read in the body, so opening a panel redraws the row: SwiftUI calls an anchor's
+    // transform outside the body, where reading the model isn't observed.
+    private func summary(_ reactions: Responses<Emoji>, open: Bool) -> some View {
         Button {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                 model.closeBar()
@@ -68,7 +70,7 @@ struct ReactionRow: View {
         .buttonStyle(PressableButtonStyle())
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: reactions)
         .anchorPreference(key: FeedAnchors.self, value: .bounds) { bounds in
-            FeedAnchors.Value(who: model.listing == post.id ? FeedAnchor(post: post.id, bounds: bounds) : nil)
+            FeedAnchors.Value(who: open ? FeedAnchor(post: post.id, bounds: bounds) : nil)
         }
         .accessibilityLabel(Self.summaryLabel(reactions))
         .accessibilityHint(Text("看谁回应了", bundle: .module))
@@ -81,7 +83,7 @@ struct ReactionRow: View {
         return Text("\(reactions.all.count) 人回应：\(counts)", bundle: .module)
     }
 
-    private func myButton(_ mine: Emoji?) -> some View {
+    private func myButton(_ mine: Emoji?, open: Bool) -> some View {
         Button {
             withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
                 if model.picking == post.id {
@@ -115,7 +117,7 @@ struct ReactionRow: View {
         }
         .buttonStyle(PressableButtonStyle())
         .anchorPreference(key: FeedAnchors.self, value: .bounds) { bounds in
-            FeedAnchors.Value(bar: model.picking == post.id ? FeedAnchor(post: post.id, bounds: bounds) : nil)
+            FeedAnchors.Value(bar: open ? FeedAnchor(post: post.id, bounds: bounds) : nil)
         }
         .accessibilityLabel(
             mine.map { Text("我的回应：\($0.text)", bundle: .module) } ?? Text("回应", bundle: .module)
