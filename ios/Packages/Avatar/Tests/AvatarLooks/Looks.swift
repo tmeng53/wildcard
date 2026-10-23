@@ -22,7 +22,6 @@ public enum Looks {
 
     /// The species `editor.json` groups a look's body under, whose moves its clips play with.
     public static func species(of look: Outfit) -> String? {
-        let body = look.variants["body"]
-        return (try? PlaceholderCharacter.editorChoices())?.species.first { $0.bodies.contains(body ?? "") }?.id
+        PlaceholderCharacter.species(of: look)
     }
 }

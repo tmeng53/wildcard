@@ -11,6 +11,22 @@ extension PlaceholderCharacter {
         else { return clip }
         return try clip.accented(by: Clip.decode(data), tempo: persona.accentTempo, strength: persona.accentStrength)
     }
+
+    /// The species `editor.json` groups an outfit's body under, whose moves its clips play with;
+    /// nil for a body it doesn't list.
+    public static func species(of outfit: Outfit) -> String? {
+        guard let body = outfit.variants["body"] else { return nil }
+        return speciesByBody[body]
+    }
+
+    private static let speciesByBody: [String: String] = {
+        guard let choices = try? editorChoices() else { return [:] }
+        var byBody: [String: String] = [:]
+        for species in choices.species {
+            for body in species.bodies { byBody[body] = species.id }
+        }
+        return byBody
+    }()
 }
 
 extension Persona {
