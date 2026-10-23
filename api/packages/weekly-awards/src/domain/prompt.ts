@@ -1,5 +1,3 @@
-import { mentionsSelfHarm } from '@wildcard/typed-text';
-
 import { promptKey, type MemberWeek, type WeekCheckIn } from './awards.js';
 import { AWARD_MOVES } from './moves.js';
 import type { WeekStart } from './schedule.js';
@@ -30,6 +28,7 @@ export const INSTRUCTIONS = `你在给一个朋友运动打卡 App 的小队写�
 - 体重、身材、长相、热量、饮食控制。
 - 拿人开涮、比较谁练得少、「垫底」「最懒」这类话。
 - 自责、愧疚、「下周一定」这类压力话。
+- 如果某条文字提到自伤、不想活了或者很严重的痛苦，不要拿它写任何东西。
 - 没有打卡的队员：不要给他们写任何东西。
 - emoji、感叹号连用、「作为一个…」这类 AI 腔。
 
@@ -55,12 +54,6 @@ function timeOfDay(moment: Date, timeZone: string): string {
 }
 
 /**
- * What the model is told of a member's own words (a sport they named included): never words
- * about self-harm, which no award may joke about or quote.
- */
-const told = (text: string) => (mentionsSelfHarm(text) ? '（略）' : text);
-
-/**
  * The user message: the week as JSON, members who checked in by letter in the order given,
  * each day's check-ins, and the moves to pick from.
  */
@@ -77,9 +70,9 @@ export function promptFor(week: {
         day: `${each.day} ${WEEKDAYS[new Date(Date.parse(each.day)).getUTCDay()] ?? ''}`,
         time: timeOfDay(each.createdAt, timeZone),
         kind: KIND_NAMES[each.kind],
-        ...(each.sport === undefined ? {} : { sport: told(each.sport) }),
-        ...(each.text === undefined ? {} : { reason: told(each.text) }),
-        ...(each.caption === undefined ? {} : { caption: told(each.caption) }),
+        ...(each.sport === undefined ? {} : { sport: each.sport }),
+        ...(each.text === undefined ? {} : { reason: each.text }),
+        ...(each.caption === undefined ? {} : { caption: each.caption }),
         ...(each.photos.length === 0 ? {} : { photos: each.photos.length }),
       })),
     })),

@@ -8,6 +8,21 @@
 		<string>zh-Hans</string>
 		<string>en</string>
 	</array>
+	<!-- Where the hosted backend is, from build settings: Release (TestFlight, the App Store)
+	     names it; Debug leaves it empty and runs on the sample squad, as UI tests need, or with
+	     `-local-backend` on this Mac's local one. -->
+	<key>WildcardAPIURL</key>
+	<string>$(WILDCARD_API_URL)</string>
+	<key>WildcardAuthURL</key>
+	<string>$(WILDCARD_AUTH_URL)</string>
+	<key>WildcardAuthPublishableKey</key>
+	<string>$(WILDCARD_AUTH_PUBLISHABLE_KEY)</string>
+	<!-- Plain HTTP to this Mac's local backend from the simulator; every other host stays HTTPS. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<!-- The app uses only the encryption built into iOS (HTTPS), which is exempt, so App Store
 	     Connect doesn't ask about export compliance on every upload. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
