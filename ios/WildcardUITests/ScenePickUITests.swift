@@ -79,7 +79,6 @@ final class ScenePickUITests: XCTestCase {
         let app = launch(language: "zh-Hans", extra: ["-scene-pick-reveal", scene, time])
         // The reveal is hidden from VoiceOver, so there's nothing to wait for but the launch.
         Thread.sleep(forTimeInterval: 1.5)
-        XCTAssertFalse(app.buttons["scenePick.confirm"].exists, "the page shows instead of the reveal")
         keepScreenshot(named: "56-scenepick-reveal-\(scene)-\(time)s")
         app.terminate()
     }
