@@ -1,6 +1,6 @@
 # Daily progress push through the API
 
-**Status: Ready** since the daily progress push (#78), with nudges (催你练, 好好休息) since #NUDGES_PR, driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
+**Status: Ready** since the daily progress push (#78), with nudges (催你练, 好好休息) since #198, driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
 
 Four members in a time zone where it is about 8pm, each with a phone. Runner, cheerer and resting are in a squad; loner has none. Resting turns the daily push off. Runner trains and cheerer leaves it a ❤️; resting says 催你练 to runner, twice (one is kept), and loner, outside the squad, can't. The scheduler's job then handles runner and cheerer (something to tell them), loner quietly (no squad, so nothing to tell), and resting not at all; a second run handles no one again. No push is sent: CI has no APNs key, so the two with news count as `unsent`. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
