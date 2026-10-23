@@ -107,7 +107,7 @@ struct WelcomeScreen<SignIn: View>: View {
             .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: crowd.versions[index])
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(Text("换一个小人", bundle: .module))
+        .accessibilityLabel(Text("换一个外卡运动员", bundle: .module))
         .accessibilityIdentifier("signup.crowd")
         .haptic(.pick, trigger: crowd.taps[index])
         // Feet on the floor: the canvas's feet sit near its bottom.

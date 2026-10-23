@@ -24,7 +24,7 @@ struct DeleteAccountView: View {
                     .typeStyle(TypeRamp.title)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 VStack(alignment: .leading, spacing: Space.s) {
-                    line("person", Text("角色、昵称和口头禅会删掉", bundle: .module))
+                    line("person", Text("外卡运动员、昵称和口头禅会删掉", bundle: .module))
                     line("photo", Text("所有打卡、照片和请假条会删掉", bundle: .module))
                     if let squadName = model.overview?.squadName {
                         line("person.2", Text("你会离开\(squadName)", bundle: .module))

@@ -88,14 +88,14 @@ public struct MeView: View {
                 MeStage(character: overview.character)
             }
             .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel(Text("编辑角色", bundle: .module))
+            .accessibilityLabel(Text("编辑外卡运动员", bundle: .module))
             Text(overview.character.nickname)
                 .typeStyle(TypeRamp.title)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .lineLimit(1)
                 .accessibilityIdentifier("me.nickname")
             Button(action: destinations.editCharacter) {
-                Text("编辑角色", bundle: .module)
+                Text("编辑外卡运动员", bundle: .module)
             }
             .buttonStyle(SecondaryButtonStyle())
             .accessibilityIdentifier("me.editCharacter")

@@ -76,7 +76,7 @@ final class MeUITests: XCTestCase {
     func testMePageInEnglish() {
         let app = launch(language: "en")
         XCTAssertTrue(app.staticTexts["me.nickname"].waitForExistence(timeout: 30))
-        XCTAssertTrue(app.buttons["Edit character"].exists)
+        XCTAssertTrue(app.buttons["Edit your athlete"].exists)
         XCTAssertTrue(app.buttons["tab.me"].label.contains("Me"))
         settle()
         keepScreenshot(named: "44-me-en")

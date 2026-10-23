@@ -187,12 +187,12 @@
         }
       }
     },
-    "编辑角色": {
+    "编辑外卡运动员": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Edit character"
+            "value": "Edit your athlete"
           }
         }
       }
@@ -237,12 +237,12 @@
         }
       }
     },
-    "角色、昵称和口头禅会删掉": {
+    "外卡运动员、昵称和口头禅会删掉": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your character, nickname and catchphrase go"
+            "value": "Your athlete, nickname and catchphrase go"
           }
         }
       }
