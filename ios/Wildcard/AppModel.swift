@@ -11,6 +11,8 @@ import Foundation
 import MeDomain
 import Observation
 import OnboardingUI
+import ScheduleDomain
+import ScheduleUI
 import SquadDomain
 
 /// The app on the real backend: who is signed in decides between sign-up and the tabs. A member
@@ -22,7 +24,8 @@ final class AppModel {
         /// Reading the stored session, and the member's home once signed in.
         case starting
         case signUp(SignUpModel)
-        case tabs(today: TodayModel, profile: MeModel, feed: FeedModel, squad: SquadSettingsModel)
+        case tabs(
+            today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel)
     }
 
     private(set) var screen = Screen.starting
@@ -102,7 +105,7 @@ final class AppModel {
 
     /// A tapped notification: back on 今天 with the home loaded again.
     func reloadToday() async {
-        if case .tabs(let today, _, _, _) = screen { await today.load() }
+        if case .tabs(let today, _, _, _, _) = screen { await today.load() }
     }
 
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
@@ -154,14 +157,16 @@ final class AppModel {
                 service: APISquadSettingsService(api: api),
                 changed: { [weak self] in Task { await self?.squadChanged() } },
                 signOut: { [weak self] in await self?.signOut() })
-            screen = .tabs(today: today, profile: profile, feed: Self.feed(api: api, home: home), squad: squad)
+            let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
+            screen = .tabs(
+                today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad)
             await readScene(of: home.squad.id, into: today)
         }
     }
 
     /// The squad's name or scene changed on 小队设置: 今天 and 我 read them again.
     private func squadChanged() async {
-        guard case .tabs(let today, let profile, _, let squad) = screen else { return }
+        guard case .tabs(let today, let profile, _, _, let squad) = screen else { return }
         await readScene(of: squad.settings?.squad.id, into: today)
         await today.load()
         await profile.reload()

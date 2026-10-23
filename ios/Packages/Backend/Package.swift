@@ -20,6 +20,8 @@ import PackageDescription
 //   reactions, the squad's characters and the photos.
 // - `APISquadSettingsService`, behind `SquadDomain`'s `SquadSettingsService`: 小队设置; and
 //   `APIScenePickService`, behind `ScenePickDomain`'s `ScenePickService`: the 战报's scene pick.
+// - `APIScheduleBackend`, the adapter behind `ScheduleDomain`'s `ScheduleBackend`: 出赛表's weekly
+//   plans and 饮食小目标, the days checked in, the week's titles and the squad's count.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -36,6 +38,7 @@ let package = Package(
         .package(path: "../Onboarding"),
         .package(path: "../ScenePick"),
         .package(path: "../Squad"),
+        .package(path: "../Schedule"),
         .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.2.0"),
@@ -55,6 +58,7 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "ScenePickDomain", package: "ScenePick"),
                 .product(name: "SquadDomain", package: "Squad"),
+                .product(name: "ScheduleDomain", package: "Schedule"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
@@ -72,6 +76,7 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "ScenePickDomain", package: "ScenePick"),
                 .product(name: "SquadDomain", package: "Squad"),
+                .product(name: "ScheduleDomain", package: "Schedule"),
             ]),
     ]
 )
