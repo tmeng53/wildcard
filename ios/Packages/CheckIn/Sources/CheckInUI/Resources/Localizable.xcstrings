@@ -757,6 +757,96 @@
           }
         }
       }
+    },
+    "今日赛况": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tonight's recap"
+          }
+        }
+      }
+    },
+    "今日赛况，还没看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tonight's recap, not seen yet"
+          }
+        }
+      }
+    },
+    "今天小队在养精蓄锐，明天见": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad's recharging today. See you tomorrow"
+          }
+        }
+      }
+    },
+    "健康餐 %lld · 放纵餐 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean meals %lld · Cheat meals %lld"
+          }
+        }
+      }
+    },
+    "健康餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean meal"
+          }
+        }
+      }
+    },
+    "放纵餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheat meal"
+          }
+        }
+      }
+    },
+    "休息日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest day"
+          }
+        }
+      }
+    },
+    "收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide"
+          }
+        }
+      }
+    },
+    "我": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

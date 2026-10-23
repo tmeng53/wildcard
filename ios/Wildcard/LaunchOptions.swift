@@ -157,14 +157,27 @@ enum LaunchOptions {
     }
 
     /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in
-    /// daylight and the squad cheers whatever time CI runs the UI tests.
+    /// daylight and the squad cheers whatever time CI runs the UI tests. `-uitest-evening` starts
+    /// it at 21:30 instead, when 今日赛况 is on the card; it wins over `-uitest-noon`.
     static let now: @Sendable () -> Date = {
-        guard ProcessInfo.processInfo.arguments.contains("-uitest-noon"),
-            let noon = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: Date())
+        let arguments = ProcessInfo.processInfo.arguments
+        let start: (hour: Int, minute: Int)? =
+            arguments.contains("-uitest-evening") ? (21, 30) : arguments.contains("-uitest-noon") ? (12, 0) : nil
+        guard let start,
+            let started = Calendar.current.date(
+                bySettingHour: start.hour, minute: start.minute, second: 0, of: Date())
         else { return { Date() } }
         let launched = Date()
-        return { noon.addingTimeInterval(Date().timeIntervalSince(launched)) }
+        return { started.addingTimeInterval(Date().timeIntervalSince(launched)) }
     }()
+
+    /// `-uitest-recap-unseen`: forget which day's 今日赛况 this phone opened, so a UI test starts
+    /// with the tag unseen. Passing `-today.recapSeen` instead would pin the value: launch
+    /// arguments win over what the app writes once the recap is opened.
+    static func forgetSeenRecapIfAsked() {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-recap-unseen") else { return }
+        UserDefaults.standard.removeObject(forKey: "today.recapSeen")
+    }
 
     /// `-uitest-thursday`: 出赛表's clock starts at noon on this week's Thursday and runs on, so
     /// this week has days behind and ahead whatever day CI runs the UI tests.

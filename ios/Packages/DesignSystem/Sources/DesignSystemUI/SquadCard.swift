@@ -88,30 +88,33 @@ public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
 /// (score, bar, everyone's rings in one row) and my week (my count, Monday to Sunday, counts).
 /// White cards straight on the scene, no shadow, 12 apart while swiping; two dots under them say
 /// which page shows, and tapping one goes there. The caller keeps `page`, so the card reopens on
-/// the page it was left on.
-public struct SquadCard<Avatar: View>: View {
+/// the page it was left on. A `footer` (the evening's 今日赛况 tag) is the squad page's last row;
+/// the page keeps its height by drawing its rows closer.
+public struct SquadCard<Avatar: View, Footer: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let squad: SquadWeek
     private let mine: MyWeek
     @Binding private var page: SquadCardPage
     private let avatar: (SquadMember) -> Avatar
+    private let footer: Footer?
 
     public init(
         squad: SquadWeek, mine: MyWeek, page: Binding<SquadCardPage>,
-        @ViewBuilder avatar: @escaping (SquadMember) -> Avatar
+        @ViewBuilder avatar: @escaping (SquadMember) -> Avatar, @ViewBuilder footer: () -> Footer
     ) {
         self.squad = squad
         self.mine = mine
         _page = page
         self.avatar = avatar
+        self.footer = footer()
     }
 
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: Space.s) {
-                    SquadPage(squad: squad, avatar: avatar)
+                    SquadPage(squad: squad, avatar: avatar, footer: footer)
                         .pageFrame()
                         .id(SquadCardPage.squad)
                     MyWeekPage(mine: mine)
@@ -138,6 +141,19 @@ public struct SquadCard<Avatar: View>: View {
         } set: { newPage in
             if let newPage { page = newPage }
         }
+    }
+}
+
+extension SquadCard where Footer == EmptyView {
+    public init(
+        squad: SquadWeek, mine: MyWeek, page: Binding<SquadCardPage>,
+        @ViewBuilder avatar: @escaping (SquadMember) -> Avatar
+    ) {
+        self.squad = squad
+        self.mine = mine
+        _page = page
+        self.avatar = avatar
+        footer = nil
     }
 }
 
@@ -192,20 +208,27 @@ private struct PageHeader: View {
     }
 }
 
-private struct SquadPage<Avatar: View>: View {
+private struct SquadPage<Avatar: View, Footer: View>: View {
     let squad: SquadWeek
     let avatar: (SquadMember) -> Avatar
+    let footer: Footer?
 
     var body: some View {
+        // With a footer the rows sit 8 apart instead of 12, so the page stays 186 tall.
+        let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
                 label: Text("本周小队训练", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal)
-            Spacer(minLength: Space.s)
+            Spacer(minLength: gap)
             ProgressBar(fraction: squad.goal > 0 ? Double(squad.done) / Double(squad.goal) : 0)
-            Spacer(minLength: Space.s)
+            Spacer(minLength: gap)
             ViewThatFits(in: .horizontal) {
                 rings(avatarSize: Sizing.characterHead, spacing: SquadCardMetrics.ringSpacing)
                 rings(avatarSize: SquadCardMetrics.compactAvatar, spacing: SquadCardMetrics.compactRingSpacing)
+            }
+            if let footer {
+                Spacer(minLength: gap)
+                footer
             }
         }
         .accessibilityElement(children: .contain)
