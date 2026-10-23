@@ -10,8 +10,8 @@
 # they build; otherwise they are skipped, which branch protection counts as passing. Every job
 # runs only when the files a change touches can break what it checks: `verify` for the app's
 # Swift (and the OpenAPI file its generated types come from), `supabase` for the database, the
-# API and the app's Backend adapters, so a docs-only or web-only change runs neither. Pushes to
-# main use the same rule against the commit before the push (the PR already ran the full merge),
+# API and the app's Backend adapters, so a docs-only or web-only change runs neither; the `web`
+# job checks the site, on Linux. Pushes to main use the same rule against the commit before the push (the PR already ran the full merge),
 # so a merge no longer queues the Mac jobs again for a change that doesn't need them.
 name: verify
 
@@ -38,6 +38,7 @@ jobs:
     outputs:
       swift: ${{ steps.diff.outputs.swift }}
       backend: ${{ steps.diff.outputs.backend }}
+      web: ${{ steps.diff.outputs.web }}
       app: ${{ steps.diff.outputs.app }}
       ios: ${{ steps.diff.outputs.ios }}
       avatar: ${{ steps.diff.outputs.avatar }}
@@ -61,6 +62,8 @@ jobs:
           echo "swift=$(touches '^(ios/|api/apps/server/openapi\.json$|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           # backend: the database, the API, and the app's adapters that run against them.
           echo "backend=$(touches '^(supabase/|api/|ios/|scripts/|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
+          # web: the website, and the app art and font its generated files come from.
+          echo "web=$(touches '^(web/|ios/Packages/Avatar/Sources/AvatarArt/|ios/Packages/DesignSystem/Sources/DesignSystemUI/Resources/Fonts/|scripts/verify\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
           echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
@@ -90,7 +93,26 @@ jobs:
         run: |
           scripts/install-swiftlint.sh "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - run: scripts/verify.sh swift web
+      - run: scripts/verify.sh swift
+
+  # The website's checks (generated files current, ESLint, Prettier, the Playwright layout tests),
+  # on Linux, for a change to web/ or to what it is generated from.
+  web:
+    needs: changes
+    if: >-
+      !cancelled() && !github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.web == 'true')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --global pnpm@10.28.0
+      - run: scripts/verify.sh web
 
   supabase:
     needs: changes
