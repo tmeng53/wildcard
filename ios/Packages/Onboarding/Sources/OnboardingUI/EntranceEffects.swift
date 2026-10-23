@@ -7,7 +7,7 @@ import SwiftUI
 
 /// What happens on the floor around the spot, from the clock: the dashed spot breathing while
 /// it waits, the dust, the shockwave and the ring closing on landing.
-private struct SpotEffects: View {
+struct SpotEffects: View {
     let time: Double
     let puffs: [EntranceMotion.Puff]
     let unit: Double
@@ -63,7 +63,7 @@ private struct SpotEffects: View {
 
 /// Paper bits thrown up from the spot on landing, in the accent, ink and white, falling back
 /// under gravity and spinning as they go.
-private struct Confetti: View {
+struct Confetti: View {
     let start: Date?
     let origin: CGPoint
     let unit: Double
