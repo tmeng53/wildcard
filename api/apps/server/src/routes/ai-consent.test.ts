@@ -8,7 +8,11 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
-import { createDisclaimerDrafts, createPostgresDraftAllowance } from '@wildcard/disclaimer-drafts';
+import {
+  createDisclaimerDrafts,
+  createPostgresDraftAllowance,
+  createPostgresDraftSettings,
+} from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -79,6 +83,7 @@ const app = createApp({
         return Promise.reject(new Error('Only members who agreed reach the model'));
       },
     },
+    settings: createPostgresDraftSettings(db),
     memes: () => Promise.resolve([]),
     allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
