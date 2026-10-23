@@ -78,11 +78,15 @@ enum EmojiCatalog {
     static func matching(_ query: String) -> [Emoji] {
         let words = query.trimmingCharacters(in: .whitespaces).lowercased()
         guard !words.isEmpty else { return all }
-        return all.filter { name(of: $0).contains(words) }
+        return named.filter { $0.name.contains(words) }.map(\.emoji)
     }
 
-    private static func name(of emoji: Emoji) -> String {
-        (emoji.text.applyingTransform(.toUnicodeName, reverse: false) ?? "").lowercased()
+    /// Each emoji with its Unicode name, worked out once: the transform writes `\N{GRINNING FACE}`,
+    /// and only the words inside count.
+    private static let named: [(emoji: Emoji, name: String)] = all.map { emoji in
+        let name = (emoji.text.applyingTransform(.toUnicodeName, reverse: false) ?? "")
+            .replacingOccurrences(of: "\\N{", with: " ").replacingOccurrences(of: "}", with: " ").lowercased()
+        return (emoji, name)
     }
 }
 #endif

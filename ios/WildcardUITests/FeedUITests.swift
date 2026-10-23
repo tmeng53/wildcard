@@ -72,6 +72,8 @@ final class FeedUITests: XCTestCase {
         assertOnScreen(grid, in: app)
         settle()
         keepScreenshot(named: "41-feed-emoji-grid")
+        // 全部, as the grid opens on 最近 once this phone has picked before.
+        grid.buttons["全部"].firstMatch.tap()
         grid.buttons["😀"].firstMatch.tap()
         waitFor(react, "label == '我的回应：😀'", "picking from the grid didn't react")
 

@@ -71,8 +71,9 @@ public final class FeedModel {
     /// Bumps when the bar opens by holding a card, for its haptic.
     private(set) var lifts = 0
 
-    @ObservationIgnored private var players: [CheckInID: CharacterPlayer] = [:]
-    @ObservationIgnored private var heads: [MemberID: CharacterPlayer] = [:]
+    /// Each player with the outfit it wears, so a look that changed since builds a new one.
+    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, player: CharacterPlayer)] = [:]
+    @ObservationIgnored private var heads: [MemberID: (outfit: Outfit, player: CharacterPlayer)] = [:]
     @ObservationIgnored private var flightCount = 0
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private let defaults: UserDefaults
@@ -96,15 +97,19 @@ public final class FeedModel {
     }
 
     /// Teammates' reactions on my posts since 动态 last showed them: my character answers each
-    /// with its move, under a bubble with their head and emoji.
+    /// with its move, under a bubble with their head and emoji. What was shown is kept by the
+    /// server's time of the newest reaction, never the phone's clock, which may be off.
     private func answerArrivals() {
         guard store.phase == .current else { return }
         let key = Self.seenKey(viewer)
-        let seen = defaults.object(forKey: key) as? Double
-        defer { defaults.set(Double(Timestamp(now()).millisecondsSince1970), forKey: key) }
+        let seen = (defaults.object(forKey: key) as? Double).map { Timestamp(millisecondsSince1970: Int64($0)) }
+        let latest = store.arrivals(since: Timestamp(millisecondsSince1970: .min))
+        if let newest = latest.first?.moment, seen.map({ newest > $0 }) ?? true {
+            defaults.set(Double(newest.millisecondsSince1970), forKey: key)
+        }
         // The first time 动态 opens on this phone, what was there before isn't news.
         guard let seen else { return }
-        let arrived = store.arrivals(since: Timestamp(millisecondsSince1970: Int64(seen)))
+        let arrived = latest.filter { $0.moment > seen }
         guard let newest = arrived.first else { return }
         for arrival in arrived {
             guard let post = store.post(arrival.post) else { continue }
@@ -214,27 +219,27 @@ public final class FeedModel {
     /// The author's character on a post: their look, in that day's kit on a 练了, holding still
     /// until someone reacts.
     func player(for post: FeedPost) -> CharacterPlayer? {
-        if let player = players[post.id] { return player }
         let character = store.characters[post.author]
         var outfit = character?.look.outfit ?? PlaceholderCharacter.lifter
         if case .trained(let training) = post.checkIn.entry, let kits = try? PlaceholderCharacter.sportKits() {
             outfit = kits.kit(for: training.activity).dress(outfit)
         }
+        if let cached = players[post.id], cached.outfit == outfit { return cached.player }
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
             let player = try? CharacterPlayer(figure: figure, idle: .still, now: now())
         else { return nil }
-        players[post.id] = player
+        players[post.id] = (outfit, player)
         return player
     }
 
     /// The character's head, for the faces in a reaction row.
     func head(of member: MemberID) -> CharacterPlayer? {
-        if let player = heads[member] { return player }
         let outfit = store.characters[member]?.look.outfit ?? PlaceholderCharacter.lifter
+        if let cached = heads[member], cached.outfit == outfit { return cached.player }
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
             let player = try? CharacterPlayer(figure: figure, idle: .still, now: now())
         else { return nil }
-        heads[member] = player
+        heads[member] = (outfit, player)
         return player
     }
 
