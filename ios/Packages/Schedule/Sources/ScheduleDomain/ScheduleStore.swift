@@ -176,7 +176,7 @@ public final class ScheduleStore {
     /// Saves the board's days; while a save of the week is on its way, the next goes out once
     /// it answers, with the days as they are then.
     private func savePlan() async {
-        guard let week = board?.weekStart, let saved = sheets[week] else { return }
+        guard let week = board?.weekStart, var saved = sheets[week] else { return }
         if planSaves[week] != nil {
             planSaves[week] = .runningWithMore
             return
@@ -188,6 +188,8 @@ public final class ScheduleStore {
             do {
                 let plan = try await backend.savePlan(sending, weekStart: week)
                 sheets[week]?.plan = plan
+                // What the server holds now: a later save that fails goes back to this.
+                saved.plan = plan
                 failure = nil
             } catch {
                 failure = error

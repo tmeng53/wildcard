@@ -40,8 +40,8 @@ public final class ScheduleModel {
     /// The title whose 颁奖词 shows over the poster.
     private(set) var openTitle: AwardTitle?
     private(set) var saving = Saving.idle
-    /// Bumps each time the board answers a tap, for its haptic.
-    private(set) var taps = 0
+    /// Bumps when a rest day is lifted off the poster, for its haptic; a plain select has none.
+    private(set) var lifts = 0
     private(set) var swaps = 0
 
     private let photos: any PosterSaver
@@ -86,9 +86,9 @@ public final class ScheduleModel {
         Task {
             let outcome = await store.tap(day)
             switch outcome {
-            case .locked: break
+            case .locked, .selected, .released: break
+            case .lifted: lifts += 1
             case .swapped: swaps += 1
-            case .selected, .lifted, .released: taps += 1
             }
         }
     }
@@ -105,7 +105,6 @@ public final class ScheduleModel {
 
     func toggle(_ title: AwardTitle) {
         openTitle = openTitle == title ? nil : title
-        taps += 1
     }
 
     // MARK: 饮食小目标

@@ -121,6 +121,27 @@ struct ScheduleStoreTests {
         #expect(store.sheet?.plan.first == .train(.sport(.hike)))
     }
 
+    @Test func aFailedSaveAfterOneThatWentThroughKeepsWhatTheServerHolds() async {
+        let backend = FakeBackend()
+        let store = store(backend)
+        await store.load()
+        await store.show(thisWeek.adding(days: 7))
+        await backend.failSaves(with: .notSent, after: 1)
+        await backend.holdSaves()
+        await store.tap(0)
+        let first = Task { await store.pick(.sport(.swim)) }
+        while await backend.savedPlans.isEmpty { await Task.yield() }
+        await store.tap(1)
+        await store.pick(.sport(.yoga))
+        await backend.finishSave()
+        await first.value
+        #expect(store.failure == .notSent)
+        #expect(store.sheet?.plan[0] == .train(.sport(.swim)))
+        #expect(store.sheet?.plan[1] == .train(.sport(.tennis)))
+        #expect(store.board?.days[0] == .train(.sport(.swim)))
+        #expect(store.board?.days[1] == .train(.sport(.tennis)))
+    }
+
     @Test func aPastWeekCantChange() async {
         let backend = FakeBackend()
         let store = store(backend)

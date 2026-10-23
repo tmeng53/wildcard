@@ -31,6 +31,8 @@ actor FakeBackend: ScheduleBackend {
     var profileResult: Result<ScheduleProfile, ScheduleError>
     var sheets: [LocalDay: WeekSheet] = [:]
     var saveError: ScheduleError?
+    /// How many plan saves go through before `saveError` applies; nil applies it to every save.
+    var savesBeforeError: Int?
     private(set) var savedPlans: [[PlanDay]] = []
     private(set) var savedFuel: [[FuelGoal]] = []
     /// While set, a save waits until `finishSave()`.
@@ -43,7 +45,10 @@ actor FakeBackend: ScheduleBackend {
     }
 
     func set(_ sheet: WeekSheet) { sheets[sheet.weekStart] = sheet }
-    func failSaves(with error: ScheduleError?) { saveError = error }
+    func failSaves(with error: ScheduleError?, after count: Int? = nil) {
+        saveError = error
+        savesBeforeError = count
+    }
     func failProfile(with error: ScheduleError) { profileResult = .failure(error) }
     func holdSaves() { holdsSaves = true }
 
@@ -63,7 +68,7 @@ actor FakeBackend: ScheduleBackend {
     func savePlan(_ days: [PlanDay], weekStart: LocalDay) async throws(ScheduleError) -> [PlanDay] {
         savedPlans.append(days)
         if holdsSaves { await withCheckedContinuation { held.append($0) } }
-        if let saveError { throw saveError }
+        if let saveError, savedPlans.count > (savesBeforeError ?? 0) { throw saveError }
         sheets[weekStart]?.plan = days
         return days
     }
