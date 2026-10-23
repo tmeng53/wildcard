@@ -191,13 +191,14 @@ describe('joining by invite code', () => {
     });
   });
 
-  it('previews the squad without its members or id', async () => {
+  it('previews the squad with its members but not its id', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann, '周末网球');
     expect(await squads.previewInvite({ inviteCode: squad.inviteCode, viewer: bo })).toStrictEqual({
       name: '周末网球',
       memberCount: 1,
       full: false,
+      members: [ann],
       joined: false,
     });
     expect(await squads.previewInvite({ inviteCode: squad.inviteCode, viewer: ann })).toMatchObject(
