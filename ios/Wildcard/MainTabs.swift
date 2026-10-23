@@ -61,9 +61,7 @@ struct MainTabs: View {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
-        .onChange(of: recap.picked) { _, picked in
-            if picked != nil { selection = .today }
-        }
+        .onChange(of: recap.picks) { selection = .today }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
                 CharacterEditorView(

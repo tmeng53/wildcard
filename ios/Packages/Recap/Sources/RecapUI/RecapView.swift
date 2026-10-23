@@ -43,6 +43,9 @@ public struct RecapView: View {
     public var body: some View {
         ZStack {
             story
+                // Under the reveal the page is a picture: no taps, nothing for VoiceOver.
+                .allowsHitTesting(reveal == nil)
+                .accessibilityHidden(reveal != nil)
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt, frozenAt: reveal.heldAt,

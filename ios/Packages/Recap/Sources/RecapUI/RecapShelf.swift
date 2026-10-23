@@ -34,9 +34,9 @@ public final class RecapShelf {
     public var open: RecapModel?
     /// Who is in the squad, for the tile's peeking reader.
     public private(set) var cast: StoryCast?
-    /// The scene the reader last picked on a story's last page, once its reveal filled the
-    /// screen: the app goes home onto it.
-    public private(set) var picked: SceneTheme?
+    /// How many scenes the reader picked on a story's last page, counted as each reveal fills
+    /// the screen: the app goes home onto the scene, the same one as last time or not.
+    public private(set) var picks = 0
 
     @ObservationIgnored private let service: any WeekStoryService
     @ObservationIgnored private let readSquad: @MainActor () -> Squad?
@@ -106,7 +106,7 @@ public final class RecapShelf {
             },
             scenePicked: { [weak self] scene in
                 self?.open = nil
-                self?.picked = scene
+                self?.picks += 1
                 self?.scenePicked(scene)
             })
         open = model
