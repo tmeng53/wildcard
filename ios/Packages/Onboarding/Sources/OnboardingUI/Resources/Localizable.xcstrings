@@ -1185,18 +1185,24 @@
         }
       }
     },
-    "同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖，不发照片。": {
+    "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I agree to use AI features: captions and excuse-note text in the squad are sent to third-party AI (currently OpenAI and Anthropic) to write weekly awards. Photos are not sent."
+            "value": "By continuing you agree to send the text you write to third-party AI · [Privacy Policy](privacy:)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖，不发照片。"
+            "value": "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繼續即表示同意把你寫的文字傳給第三方 AI · [隱私權政策](privacy:)"
           }
         }
       }
@@ -1549,22 +1555,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "邀请码"
-          }
-        }
-      }
-    },
-    "隐私政策": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Privacy Policy"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隐私政策"
           }
         }
       }
