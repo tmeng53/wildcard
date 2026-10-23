@@ -9,7 +9,12 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import type { PushNotification, PushSender } from '@wildcard/push';
+import {
+  MemberId as PushMember,
+  createPostgresDailyPushSettings,
+  type PushNotification,
+  type PushSender,
+} from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -270,6 +275,29 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toHaveLength(1);
     expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: false }]);
+  });
+
+  it('follows the push settings: off for everyone, or at another hour', async () => {
+    const [eve, early] = [await member(evening), await member(morning)];
+    const squad = await squadOf(eve, early);
+    await trained(early, squad);
+    const settings = createPostgresDailyPushSettings(db);
+    const by = PushMember.parse(eve.userId);
+    try {
+      await settings.save({ version: 1, sending: false, hour: 18 }, by);
+      await run();
+      expect(sentTo.get(eve.phone)).toBeUndefined();
+      // Nobody's day is marked handled while it is off.
+      expect(await handled(eve.userId)).toStrictEqual([]);
+
+      // At 7am, the morning member's clock is past the hour too.
+      await settings.save({ version: 1, sending: true, hour: 7 }, by);
+      await run();
+      expect(sentTo.get(early.phone)).toHaveLength(1);
+      expect(sentTo.get(eve.phone)).toHaveLength(1);
+    } finally {
+      await settings.save({ version: 1, sending: true, hour: 18 }, by);
+    }
   });
 
   it('stays quiet on a day the squad didn’t check in and nothing came in, even if it does later', async () => {
