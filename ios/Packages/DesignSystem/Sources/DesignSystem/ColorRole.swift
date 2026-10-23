@@ -121,6 +121,12 @@ public enum ColorRole: String, CaseIterable, Sendable {
     /// The icon on a check-in kind button.
     case fgKind
 
+    /// The brand's light gym, the same in every scene: the open screen's page, its floor and
+    /// the floor's tile lines, as on the website.
+    case bgBrand
+    case bgBrandFloor
+    case borderBrandFloor
+
     /// The color this role takes in a scene, and with Increase Contrast on (only the ring changes).
     public func color(in theme: SceneTheme, contrast: ColorContrast = .standard) -> SRGBColor {
         if self == .ring, contrast == .increased { return theme.colors.ringIncreasedContrast }
@@ -153,6 +159,9 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .bgKind: .scene(\.kindFill)
         case .bgKindOnScene: .scene(\.kindFillOnFloor)
         case .fgKind: .scene(\.kindInk)
+        case .bgBrand: .fixed(Palette.gymSky)
+        case .bgBrandFloor: .fixed(Palette.gymLightFloor)
+        case .borderBrandFloor: .fixed(Palette.gymTile)
         }
     }
 }

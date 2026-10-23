@@ -35,11 +35,11 @@ final class WelcomeCrowd {
     /// lift in the middle and a boba (坦白放纵餐).
     static let designWidth = 390.0
     let spots = [
-        Spot(centerX: 122, feetAbove: 106, width: 96, checkIn: .excuse),
-        Spot(centerX: 268, feetAbove: 106, width: 96, checkIn: .workout),
-        Spot(centerX: 62, feetAbove: 30, width: 112, checkIn: .healthyMeal),
-        Spot(centerX: 195, feetAbove: 16, width: 132, checkIn: .workout),
-        Spot(centerX: 328, feetAbove: 30, width: 112, checkIn: .treatMeal),
+        Spot(centerX: 122, feetAbove: 129, width: 96, checkIn: .excuse),
+        Spot(centerX: 268, feetAbove: 129, width: 96, checkIn: .workout),
+        Spot(centerX: 62, feetAbove: 53, width: 112, checkIn: .healthyMeal),
+        Spot(centerX: 195, feetAbove: 39, width: 132, checkIn: .workout),
+        Spot(centerX: 328, feetAbove: 53, width: 112, checkIn: .treatMeal),
     ]
     /// The middle one, whose look 角色和昵称 starts from.
     static let middle = 3
@@ -65,10 +65,12 @@ final class WelcomeCrowd {
     /// The canvas is 240 by 320; its feet stand at 96% of its height.
     static let aspect = 320.0 / 240.0
     static let feetInCanvas = 0.957
-    /// The title's top, as a fraction of the screen's height.
-    static let titleTop = 0.12
+    /// The word's line, 60 points tall, starts this far below the top of the screen's free area
+    /// (101 on a 390 by 844 phone), and the slogan's under it.
+    static let titleTop = 54.0
+    static let wordLine = 60.0
     /// The floor's top, in design points above the bottom of the free area: above the back row.
-    static let floorAbove = 146.0
+    static let floorAbove = 172.0
 
     private(set) var players: [CharacterPlayer?] = Array(repeating: nil, count: 5)
     /// Bumped on every change, so the new look pops in.

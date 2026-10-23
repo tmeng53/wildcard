@@ -26,6 +26,7 @@ struct WelcomeScreen<SignIn: View>: View {
     /// The slogan and the button are up.
     @State private var revealed = false
     @State private var landed = 0
+    @State private var homeIndicator = 0.0
 
     var body: some View {
         GeometryReader { proxy in
@@ -45,7 +46,7 @@ struct WelcomeScreen<SignIn: View>: View {
                 ForEach(crowd.spots.indices, id: \.self) { index in
                     crowdMember(index, unit: unit, bottom: proxy.size.height)
                 }
-                title(top: proxy.size.height * WelcomeCrowd.titleTop)
+                title(top: WelcomeCrowd.titleTop)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .coordinateSpace(.named(Self.space))
@@ -69,10 +70,20 @@ struct WelcomeScreen<SignIn: View>: View {
                     .accessibilityIdentifier("signup.terms")
             }
             .padding(.horizontal, Space.pageMargin)
-            .padding(.bottom, Space.xs)
+            // Phones with a home indicator sit the terms right on it, as the design does.
+            .padding(.bottom, homeIndicator > 0 ? 0 : Space.xs)
             .modifier(Reveal(shown: revealed, delay: WelcomeCrowd.buttonDelay, reduceMotion: reduceMotion))
         }
-        .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+        .background {
+            // Reaching under the home indicator, the page knows how tall it is.
+            Color(role: .bgBrand, in: theme)
+                .ignoresSafeArea()
+                .onGeometryChange(for: Double.self) {
+                    $0.safeAreaInsets.bottom
+                } action: {
+                    homeIndicator = $0
+                }
+        }
         .environment(\.sceneTheme, theme)
         .haptic(.land, trigger: landed)
         .onDisappear { crowd.stop() }
@@ -80,20 +91,28 @@ struct WelcomeScreen<SignIn: View>: View {
     }
 
     private static let space = "welcome"
+    /// The capitals' top and the baseline, from the middle of the word's glyphs.
+    private static let capTop = -21.0
+    private static let baseline = 22.0
 
     /// WILDCARD, then the slogan under it. While the sprint plays the word is drawn where the
     /// sprint has it; its place is measured first, standing still and unseen.
     private func title(top: Double) -> some View {
-        VStack(spacing: Space.xs) {
+        VStack(spacing: Space.s) {
+            // The word's glyphs centered on a 60-point line, as the design sets them.
             Text("WILDCARD", bundle: .module)
                 .typeStyle(TypeRamp.scoreHero)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .fixedSize()
                 .onGeometryChange(for: CGRect.self) {
                     $0.frame(in: .named(Self.space))
                 } action: {
                     word = $0
                 }
-                .modifier(Sprinting(runner: sprint, settled: settled, height: word?.height ?? 0))
+                .modifier(
+                    Sprinting(runner: sprint, settled: settled, baseline: (word?.height ?? 0) / 2 + Self.baseline)
+                )
+                .frame(height: WelcomeCrowd.wordLine)
             Text("人人都是运动员", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -107,8 +126,7 @@ struct WelcomeScreen<SignIn: View>: View {
     /// Where the sprint runs: the word's place and the floor, from the screen's top edge.
     private static func layout(word: CGRect, top: Double, height: Double, unit: Double) -> FinishLineSprint.Layout {
         FinishLineSprint.Layout(
-            wordRight: word.maxX, capTop: top + word.minY + word.height * 0.15,
-            baseline: top + word.minY + word.height * Sprinting.baseline,
+            wordRight: word.maxX, capTop: top + word.midY + capTop, baseline: top + word.midY + baseline,
             floorTop: top + height - WelcomeCrowd.floorAbove * unit)
     }
 
@@ -206,19 +224,17 @@ final class SprintRunner {
 /// The word where the sprint has it: moved, lifted by its stride and leaning about its
 /// baseline. Hidden until the sprint starts; with Reduce Motion it fades in at its place.
 private struct Sprinting: ViewModifier {
-    /// The baseline, as a fraction of the word's height.
-    static let baseline = 0.82
     let runner: SprintRunner?
     let settled: Bool
-    /// The word's height, which its baseline is a fraction of.
-    let height: Double
+    /// How far down the word its baseline is.
+    let baseline: Double
 
     func body(content: Content) -> some View {
         if let runner {
             TimelineView(.animation) { context in
                 let sprint = runner.at(context.date)
                 content
-                    .transformEffect(Self.lean(sprint.lean, baseline: height * Self.baseline))
+                    .transformEffect(Self.lean(sprint.lean, baseline: baseline))
                     .offset(x: sprint.offset, y: sprint.lift)
             }
         } else {
@@ -281,21 +297,23 @@ private struct WelcomeFloor: View {
     let theme: SceneTheme
     /// The tiles' side, in points.
     private static let tile = 65.0
+    /// The first row of tiles, under the floor's stripe.
+    private static let firstRow = 64.0
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color(role: .borderDefault, in: theme)
+            Color(role: .bgBrandFloor, in: theme)
             Canvas { context, size in
                 var path = Path()
                 for column in stride(from: Self.tile, to: size.width, by: Self.tile) {
                     path.move(to: CGPoint(x: column, y: 0))
                     path.addLine(to: CGPoint(x: column, y: size.height))
                 }
-                for row in stride(from: Self.tile - 5, to: size.height, by: Self.tile) {
+                for row in stride(from: Self.firstRow, to: size.height, by: Self.tile) {
                     path.move(to: CGPoint(x: 0, y: row))
                     path.addLine(to: CGPoint(x: size.width, y: row))
                 }
-                context.stroke(path, with: .color(Color(role: .fgSubtle, in: theme).opacity(0.18)), lineWidth: 1.5)
+                context.stroke(path, with: .color(Color(role: .borderBrandFloor, in: theme)), lineWidth: 1.5)
             }
             VStack(spacing: 0) {
                 Color(role: .bgAccent, in: theme).frame(height: 4)

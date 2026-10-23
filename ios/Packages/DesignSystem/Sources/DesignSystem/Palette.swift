@@ -41,6 +41,11 @@ public enum Palette {
     public static let volt = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
     /// The check-in kind buttons on the gym's dark floor: graphite with a hint of volt.
     public static let gymKind = SRGBColor(red: 0x2E, green: 0x33, blue: 0x24)
+    /// The brand's light gym, where the open screen and the website stand (`--gym-sky`,
+    /// `--gym-floor` and `--gym-tile` in `web/public/wildcard.css`).
+    public static let gymSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
+    public static let gymLightFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
+    public static let gymTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
 
     // MARK: Tennis scene (grass, not blue hard court)
 
