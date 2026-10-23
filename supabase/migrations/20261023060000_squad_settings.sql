@@ -11,18 +11,53 @@ alter table public.squads
 
 update public.squads set captain_id = created_by;
 
--- A member the captain removed is logged as `removed`, apart from one who left.
+-- A member the captain removed is logged as `removed`, apart from one who left, and each row
+-- says who made the change: the member themselves, or the captain who removed them. `actor_id`
+-- turns null once that account is deleted, so the row stays in the squad's log.
 alter table public.squad_membership_events drop constraint squad_membership_events_kind_check;
 alter table public.squad_membership_events
   add constraint squad_membership_events_kind_check check (kind in ('joined', 'left', 'removed'));
+alter table public.squad_membership_events
+  add column actor_id uuid references auth.users (id) on delete set null;
+
+update public.squad_membership_events set actor_id = member_id;
+
+create index squad_membership_events_actor_id_idx on public.squad_membership_events (actor_id);
+
+-- The rows only grow: a delete goes through only once its account or squad is gone, and an
+-- update only to clear who made the change once their account is gone.
+create or replace function public.squad_membership_events_append_only() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' and (
+    not exists (select 1 from auth.users where id = old.member_id)
+    or not exists (select 1 from public.squads where id = old.squad_id)
+  ) then
+    return old;
+  end if;
+  if tg_op = 'UPDATE'
+    and new.actor_id is null
+    and old.actor_id is not null
+    and not exists (select 1 from auth.users where id = old.actor_id)
+    and (new.id, new.squad_id, new.member_id, new.kind, new.at)
+      = (old.id, old.squad_id, old.member_id, old.kind, old.at)
+  then
+    return new;
+  end if;
+  raise exception 'squad_membership_events is append-only' using errcode = '42501';
+end;
+$$;
 
 -- Every change to a squad's name or captain, append-only and replayable: one row per change,
--- with who made it and the squad's full settings after it. `captain_id` has no reference so the
--- row outlives that member's account; the row goes with the squad or with the account of who made it.
+-- with who made it and the squad's full settings after it. The rows go only with the squad: once
+-- an account is deleted, `actor_id` turns null. `captain_id` has no reference, so it keeps naming
+-- a captain whose account is gone; members then read the earliest-joined member as captain.
 create table public.squad_events (
   id bigint generated always as identity primary key,
   squad_id uuid not null references public.squads (id) on delete cascade,
-  actor_id uuid not null references auth.users (id) on delete cascade,
+  actor_id uuid references auth.users (id) on delete set null,
   kind text not null check (kind in ('created', 'renamed', 'captainChanged')),
   name text not null,
   captain_id uuid,
@@ -37,11 +72,17 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if tg_op = 'DELETE' and (
-    not exists (select 1 from auth.users where id = old.actor_id)
-    or not exists (select 1 from public.squads where id = old.squad_id)
-  ) then
+  if tg_op = 'DELETE' and not exists (select 1 from public.squads where id = old.squad_id) then
     return old;
+  end if;
+  if tg_op = 'UPDATE'
+    and new.actor_id is null
+    and old.actor_id is not null
+    and not exists (select 1 from auth.users where id = old.actor_id)
+    and (new.id, new.squad_id, new.kind, new.name, new.captain_id, new.at)
+      is not distinct from (old.id, old.squad_id, old.kind, old.name, old.captain_id, old.at)
+  then
+    return new;
   end if;
   raise exception 'squad_events is append-only' using errcode = '42501';
 end;

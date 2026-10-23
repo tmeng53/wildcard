@@ -142,7 +142,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       .execute();
     await trx
       .insertInto('squad_membership_events')
-      .values({ squad_id: squad, member_id: member, kind })
+      .values({ squad_id: squad, member_id: member, kind, actor_id: actor })
       .execute();
     const left = before.members.filter((each) => each.member !== member);
     const captain = captainOf(before.captain === member ? null : before.captain, left);
@@ -201,7 +201,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
         .where('invite_code', '=', code)
         .execute();
       const [squad] = await withMembers(rows);
-      return squad;
+      return squad?.members.length === 0 ? undefined : squad;
     },
 
     async squadsOf(member) {
@@ -274,7 +274,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
             .execute();
           await trx
             .insertInto('squad_membership_events')
-            .values({ squad_id: id, member_id: creator, kind: 'joined' })
+            .values({ squad_id: id, member_id: creator, kind: 'joined', actor_id: creator })
             .execute();
           return { created: true };
         });
@@ -302,6 +302,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .select('member_id')
           .where('squad_id', '=', squad)
           .execute();
+        if (members.length === 0) return 'ended';
         if (members.some((row) => row.member_id === member)) return 'alreadyMember';
         if ((await squadCount(trx, member)) >= SQUADS_PER_MEMBER) return 'squadLimit';
         if (members.length >= SQUAD_MEMBER_LIMIT) return 'squadFull';
@@ -311,7 +312,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .execute();
         await trx
           .insertInto('squad_membership_events')
-          .values({ squad_id: squad, member_id: member, kind: 'joined' })
+          .values({ squad_id: squad, member_id: member, kind: 'joined', actor_id: member })
           .execute();
         return 'joined';
       });

@@ -14,7 +14,7 @@ export type Int8 = ColumnType<string, bigint | number | string, bigint | number 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface SquadEvents {
-  actor_id: string;
+  actor_id: string | null;
   at: Generated<Timestamp>;
   captain_id: string | null;
   id: Generated<Int8>;
@@ -30,6 +30,7 @@ export interface SquadMembers {
 }
 
 export interface SquadMembershipEvents {
+  actor_id: string | null;
   at: Generated<Timestamp>;
   id: Generated<Int8>;
   kind: string;

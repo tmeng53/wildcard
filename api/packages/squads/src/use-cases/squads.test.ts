@@ -296,12 +296,15 @@ describe('leaving and listing', () => {
     });
   });
 
-  it('keeps a squad whose last member leaves, since check-ins may point at it', async () => {
-    const ann = await newMember();
+  it('ends a squad whose last member leaves, keeping it since check-ins may point at it', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann);
     await squads.leave({ squad: squad.id, member: ann });
     const rows = await sql`select 1 from public.squads where id = ${squad.id}`.execute(db);
     expect(rows.rows).toHaveLength(1);
+    await expect(squads.join({ inviteCode: squad.inviteCode, member: bo })).rejects.toMatchObject({
+      reason: 'INVITE_CODE_UNKNOWN',
+    });
   });
 });
 
@@ -317,7 +320,7 @@ describe('the captain', () => {
 
   async function settingsLog(squad: SquadId) {
     const { rows } = await sql<{
-      actor_id: string;
+      actor_id: string | null;
       kind: string;
       name: string;
       captain_id: string | null;
@@ -371,12 +374,13 @@ describe('the captain', () => {
     await squads.removeMember({ squad: squad.id, member: ann, removed: cy });
     await squads.removeMember({ squad: squad.id, member: bo, removed: bo });
     expect(await squads.membersOf(squad.id)).toStrictEqual([ann]);
-    const { rows } = await sql<{ member_id: string; kind: string }>`
-      select member_id, kind from public.squad_membership_events where squad_id = ${squad.id} order by id
+    const { rows } = await sql<{ member_id: string; kind: string; actor_id: string }>`
+      select member_id, kind, actor_id from public.squad_membership_events
+        where squad_id = ${squad.id} order by id
     `.execute(db);
     expect(rows.slice(3)).toStrictEqual([
-      { member_id: cy, kind: 'removed' },
-      { member_id: bo, kind: 'left' },
+      { member_id: cy, kind: 'removed', actor_id: ann },
+      { member_id: bo, kind: 'left', actor_id: bo },
     ]);
   });
 
@@ -396,9 +400,16 @@ describe('the captain', () => {
   it('passes to the earliest member when the captain deletes their account', async () => {
     const { squad, people } = await squadOf(2);
     const [ann, bo] = [nth(people, 0), nth(people, 1)];
+    await squads.rename({ squad: squad.id, member: ann, name: name('夜跑团') });
     await sql`delete from auth.users where id = ${ann}`.execute(db);
     expect((await squads.find({ squad: squad.id, viewer: bo })).captain).toBe(bo);
     await squads.rename({ squad: squad.id, member: bo, name: name('新队名') });
+    // The log outlives the account, without saying who it was.
+    expect(await settingsLog(squad.id)).toStrictEqual([
+      { actor_id: null, kind: 'created', name: '早八跑团', captain_id: ann },
+      { actor_id: null, kind: 'renamed', name: '夜跑团', captain_id: ann },
+      { actor_id: bo, kind: 'renamed', name: '新队名', captain_id: bo },
+    ]);
   });
 
   it('keeps the settings log append-only', async () => {

@@ -46,12 +46,13 @@ export type CaptainOutcome = 'changed' | 'unchanged' | 'notCaptain' | 'notMember
 /** What picking a scene did. `taken`: the week has a pick already. */
 export type PickOutcome = 'picked' | 'taken';
 
-/** What joining a squad did. */
-export type JoinOutcome = 'joined' | 'alreadyMember' | 'squadFull' | 'squadLimit';
+/** What joining a squad did. `ended`: everyone left it, so its invite no longer works. */
+export type JoinOutcome = 'joined' | 'alreadyMember' | 'squadFull' | 'squadLimit' | 'ended';
 
 /** Where squads and their members are kept. */
 export interface SquadStore {
   find(id: SquadId): Promise<Squad | undefined>;
+  /** The squad with this invite code, unless it ended: everyone left it. */
   findByInviteCode(code: InviteCode): Promise<Squad | undefined>;
   /** The squads `member` is in now, the earliest joined first. */
   squadsOf(member: MemberId): Promise<Squad[]>;
