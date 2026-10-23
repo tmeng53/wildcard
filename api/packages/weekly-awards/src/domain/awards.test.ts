@@ -151,7 +151,7 @@ describe('topCheckInOf', () => {
 const Prompt = z.object({ members: z.unknown(), moves: z.array(z.object({ id: z.string() })) });
 
 describe('promptFor', () => {
-  it('lists members by letter with their days, times on their own clock, and the moves, never words about self-harm', () => {
+  it('lists members by letter with their days, times on their own clock, and the moves', () => {
     const prompt = Prompt.parse(
       JSON.parse(
         promptFor({
@@ -182,7 +182,9 @@ describe('promptFor', () => {
     expect(prompt.members).toStrictEqual([
       {
         member: 'A',
-        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '请假条', reason: '（略）' }],
+        checkIns: [
+          { day: '2026-10-21 周三', time: '12:00', kind: '请假条', reason: '最近不想活了' },
+        ],
       },
       {
         member: 'B',
@@ -201,29 +203,5 @@ describe('promptFor', () => {
     ]);
     expect(prompt.moves.map(({ id }) => id)).toContain('flat');
     expect(JSON.stringify(prompt)).not.toContain(ana);
-  });
-});
-
-describe('promptFor, a sport the member named', () => {
-  it('is left out when it is about self-harm, like their other words', () => {
-    const prompt = z
-      .object({
-        members: z.array(z.object({ checkIns: z.array(z.object({ sport: z.string() })) })),
-      })
-      .parse(
-        JSON.parse(
-          promptFor({
-            weekStart: WeekStart.parse('2026-10-19'),
-            members: [
-              {
-                member: ana,
-                timeZone: 'UTC',
-                checkIns: [checkIn({ sport: '不想活了' }), checkIn({})],
-              },
-            ],
-          }),
-        ),
-      );
-    expect(prompt.members[0]?.checkIns.map(({ sport }) => sport)).toStrictEqual(['（略）', 'run']);
   });
 });

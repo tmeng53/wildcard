@@ -17,7 +17,8 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
-    let feed: FeedModel
+    /// Nil on the real backend until 动态 has its API adapter: the tab says it is coming.
+    let feed: FeedModel?
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
@@ -78,12 +79,16 @@ struct MainTabs: View {
         switch selection {
         case .today:
             TodayView(model: today) { post in
-                feed.open(post)
+                feed?.open(post)
                 selection = .feed
             }
         case .feed:
-            FeedView(model: feed) { selection = .today }
-                .environment(\.sceneTheme, today.scene)
+            if let feed {
+                FeedView(model: feed) { selection = .today }
+                    .environment(\.sceneTheme, today.scene)
+            } else {
+                UpcomingTab(title: Text("动态"))
+            }
         case .schedule:
             UpcomingTab(title: Text("出赛表"))
         case .profile:

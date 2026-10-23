@@ -32,6 +32,7 @@ describe('readConfig', () => {
     expect(readConfig(base)).toStrictEqual({
       port: 8080,
       databaseUrl: base.DATABASE_URL,
+      databaseCaFile: undefined,
       supabaseUrl: 'http://127.0.0.1:54321',
       supabaseSecretKey: 'sb_secret_local',
       publicUrl: new URL('http://localhost:8080'),
@@ -90,6 +91,21 @@ describe('readConfig', () => {
       privateKey: '-----BEGIN PRIVATE KEY-----\nMIGT\n-----END PRIVATE KEY-----',
       clientId: 'com.wildcardsquad.wildcard',
     });
+  });
+
+  it('refuses settings in the database URL once a CA file is given', () => {
+    for (const query of ['?sslmode=no-verify', '?ssl=no-verify', '?ssl=0']) {
+      expect(() =>
+        readConfig({
+          ...base,
+          DATABASE_URL: `${base.DATABASE_URL}${query}`,
+          DATABASE_CA_FILE: '/certs/ca.crt',
+        }),
+      ).toThrow('DATABASE_URL has a query string, whose settings would override DATABASE_CA_FILE');
+    }
+    expect(readConfig({ ...base, DATABASE_CA_FILE: '/certs/ca.crt' }).databaseCaFile).toBe(
+      '/certs/ca.crt',
+    );
   });
 
   it('refuses part of the key', () => {

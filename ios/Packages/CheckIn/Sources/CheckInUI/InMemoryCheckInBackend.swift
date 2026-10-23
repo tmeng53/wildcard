@@ -28,7 +28,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             -> SquadmateToday
         {
             SquadmateToday(
-                member: id, catchphrase: nil, day: day, training: training, latestMeal: nil, plannedRest: rest,
+                member: id, catchphrase: nil, character: nil, day: day, training: training, latestMeal: nil,
+                plannedRest: rest,
                 firstCheckInAt: first)
         }
         let members = [

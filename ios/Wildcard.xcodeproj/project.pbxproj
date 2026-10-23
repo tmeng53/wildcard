@@ -17,8 +17,12 @@
 		A1C0DE000000000000000052 /* MeDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000051 /* MeDomain */; };
 		A1C0DE000000000000000054 /* MeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000053 /* MeUI */; };
 		A1C0DE000000000000000062 /* OnboardingUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000061 /* OnboardingUI */; };
-		A1C0DE000000000000000072 /* FeedDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000071 /* FeedDomain */; };
-		A1C0DE000000000000000074 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* FeedUI */; };
+		A1C0DE000000000000000082 /* FeedDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000081 /* FeedDomain */; };
+		A1C0DE000000000000000084 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000083 /* FeedUI */; };
+		A1C0DE000000000000000077 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* AccountDomain */; };
+		A1C0DE000000000000000078 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000074 /* AccountUI */; };
+		A1C0DE000000000000000079 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000075 /* Backend */; };
+		A1C0DE00000000000000007A /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000076 /* Contracts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,8 +68,12 @@
 				A1C0DE000000000000000052 /* MeDomain in Frameworks */,
 				A1C0DE000000000000000054 /* MeUI in Frameworks */,
 				A1C0DE000000000000000062 /* OnboardingUI in Frameworks */,
-				A1C0DE000000000000000072 /* FeedDomain in Frameworks */,
-				A1C0DE000000000000000074 /* FeedUI in Frameworks */,
+				A1C0DE000000000000000082 /* FeedDomain in Frameworks */,
+				A1C0DE000000000000000084 /* FeedUI in Frameworks */,
+				A1C0DE000000000000000077 /* AccountDomain in Frameworks */,
+				A1C0DE000000000000000078 /* AccountUI in Frameworks */,
+				A1C0DE000000000000000079 /* Backend in Frameworks */,
+				A1C0DE00000000000000007A /* Contracts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,8 +135,12 @@
 				A1C0DE000000000000000051 /* MeDomain */,
 				A1C0DE000000000000000053 /* MeUI */,
 				A1C0DE000000000000000061 /* OnboardingUI */,
-				A1C0DE000000000000000071 /* FeedDomain */,
-				A1C0DE000000000000000073 /* FeedUI */,
+				A1C0DE000000000000000081 /* FeedDomain */,
+				A1C0DE000000000000000083 /* FeedUI */,
+				A1C0DE000000000000000073 /* AccountDomain */,
+				A1C0DE000000000000000074 /* AccountUI */,
+				A1C0DE000000000000000075 /* Backend */,
+				A1C0DE000000000000000076 /* Contracts */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -191,7 +203,10 @@
 				A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */,
 				A1C0DE000000000000000050 /* XCLocalSwiftPackageReference "Packages/Me" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
-				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */,
+				A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */,
+				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */,
+				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
+				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -302,6 +317,7 @@
 		A1C0DE000000000000000015 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Config/Wildcard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -330,6 +346,7 @@
 		A1C0DE000000000000000016 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Config/Wildcard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -440,21 +457,33 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Onboarding;
 		};
-		A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */ = {
+		A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Feed;
+		};
+		A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Account;
+		};
+		A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Backend;
+		};
+		A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Contracts;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A1C0DE000000000000000071 /* FeedDomain */ = {
+		A1C0DE000000000000000081 /* FeedDomain */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;
 			productName = FeedDomain;
 		};
-		A1C0DE000000000000000073 /* FeedUI */ = {
+		A1C0DE000000000000000083 /* FeedUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;
 			productName = FeedUI;
 		};
 		A1C0DE00000000000000001C /* DesignSystemUI */ = {
@@ -506,6 +535,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
 			productName = DesignSystem;
+		};
+		A1C0DE000000000000000073 /* AccountDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
+			productName = AccountDomain;
+		};
+		A1C0DE000000000000000074 /* AccountUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
+			productName = AccountUI;
+		};
+		A1C0DE000000000000000075 /* Backend */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */;
+			productName = Backend;
+		};
+		A1C0DE000000000000000076 /* Contracts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
+			productName = Contracts;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

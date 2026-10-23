@@ -62,6 +62,20 @@ export interface DisclaimerReplies {
   replied_at: Timestamp;
 }
 
+export interface FuelGoalEvents {
+  at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  member_id: string;
+  payload: Json;
+  week_start: string;
+}
+
+export interface FuelGoals {
+  member_id: string;
+  payload: Json;
+  week_start: string;
+}
+
 export interface WeeklyPlanEvents {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -82,6 +96,8 @@ export interface DB {
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
   disclaimer_replies: DisclaimerReplies;
+  fuel_goal_events: FuelGoalEvents;
+  fuel_goals: FuelGoals;
   weekly_plan_events: WeeklyPlanEvents;
   weekly_plans: WeeklyPlans;
 }
