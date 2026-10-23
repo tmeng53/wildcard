@@ -1,0 +1,40 @@
+/* Wildcard design system v4, web tokens. Shared by every public page (privacy, terms, and later the invite page).
+   Values follow ios/Packages/DesignSystem and /mnt/project-files/design-system/v4-kit/wildcard-v4.css; they change only on Tracy's word.
+   Scene colour (--sig) is the only accent and does two jobs: the primary action and the selected state. */
+:root {
+  color-scheme: light;
+  --ink: #22252E; --ink-2: #6B7080; --ink-3: #AEB2BC; --line: #E8EBF0; --mist: #F3F5F8; --white: #FFFFFF;
+  --sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'PingFang TC', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --r-s: 6px; --r-m: 10px; --r-l: 12px;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
+  /* default scene: pool */
+  --sig: #079BB8; --on-sig: #FFFFFF; --sig-wash: #E2F5F9; --sig-text: #066E83; --scene-bg: #CDEBF1;
+}
+[data-scene="pool"]     { --sig: #079BB8; --on-sig: #FFFFFF; --sig-wash: #E2F5F9; --sig-text: #066E83; --scene-bg: #CDEBF1; }
+[data-scene="track"]    { --sig: #E65345; --on-sig: #FFFFFF; --sig-wash: #FCEDEB; --sig-text: #B83325; --scene-bg: #F6DCD8; }
+[data-scene="tennis"]   { --sig: #4F6B22; --on-sig: #FFFFFF; --sig-wash: #EEF2E4; --sig-text: #41591B; --scene-bg: #DCE5C8; }
+[data-scene="climbing"] { --sig: #8E4A2C; --on-sig: #FFFFFF; --sig-wash: #F6EDE8; --sig-text: #7A3E24; --scene-bg: #EBD9CF; }
+[data-scene="gym"]      { --sig: #C6F432; --on-sig: #1F2128; --sig-wash: #2E3324; --sig-text: #C6F432; --scene-bg: #1F2128; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--white); color: var(--ink); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--ink); text-decoration-line: underline; text-decoration-color: var(--ink-3); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--ink); }
+
+/* type ramp (size/line-height/weight; Chinese stays at 600 at most) */
+.t-large { font-size: 32px; line-height: 40px; font-weight: 600; }
+.t-title { font-size: 22px; line-height: 30px; font-weight: 600; }
+.t-headline { font-size: 17px; line-height: 24px; font-weight: 600; }
+.t-body { font-size: 16px; line-height: 24px; font-weight: 400; }
+.t-support { font-size: 13px; line-height: 18px; font-weight: 400; color: var(--ink-2); }
+
+/* segmented control: ink capsule on mist (language switch) */
+.wc-seg { display: inline-flex; gap: var(--s-1); padding: var(--s-1); border-radius: 22px; background: var(--mist); }
+.wc-seg a { height: 36px; padding: 0 var(--s-4); border-radius: 18px; color: var(--ink-2); font-size: 15px; line-height: 36px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.wc-seg a[aria-current="page"] { background: var(--ink); color: var(--white); font-weight: 600; }
+
+/* surfaces: mist card, radius 12, no border, no shadow */
+.wc-card { background: var(--mist); border-radius: var(--r-l); padding: var(--s-4); }
+
+/* page frame */
+.wc-page { max-width: 680px; margin: 0 auto; padding: var(--s-6) var(--s-4) 64px; }
