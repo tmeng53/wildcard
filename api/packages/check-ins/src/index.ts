@@ -7,6 +7,7 @@ export {
 } from './adapters/postgres-check-in-store.js';
 export { createPostgresReactionStore } from './adapters/postgres-reaction-store.js';
 export { createPostgresReplyStore } from './adapters/postgres-reply-store.js';
+export { createPostgresWeekSummaryWords } from './adapters/postgres-week-summary-words.js';
 export {
   Audience,
   CheckInDraft,
@@ -72,12 +73,23 @@ export type {
   ReplyStore,
   SquadMembership,
   WeeklyPlanStore,
+  WeekSummaryWordsStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';
 export type { Replied } from './use-cases/check-ins/reply-to-disclaimer.js';
 export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadPost } from './use-cases/check-ins/list-squad-check-ins.js';
+export {
+  Language,
+  WeekSummaryWords,
+  WeekSummaryWordsChange,
+  winnerText,
+} from './domain/week-summary-words.js';
+export {
+  createWeekSummaryWords,
+  type WeekSummaryWordsAdmin,
+} from './use-cases/week-summary-words.js';
 export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
 export { createWeeklyPlans, type PlannedWeek, type WeeklyPlans } from './use-cases/weekly-plans.js';
 export {

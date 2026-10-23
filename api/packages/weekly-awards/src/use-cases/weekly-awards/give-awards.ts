@@ -8,10 +8,11 @@ import {
   type SquadId,
   type SquadPages,
 } from '../../domain/awards.js';
-import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
+import { promptFor } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
+import type { AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
-import type { AiConsented, AwardsStore, LanguageModel } from '../../ports.js';
+import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
 const ATTEMPTS = 2;
@@ -34,6 +35,7 @@ export interface GiveAwardsInput {
 export async function giveAwards(
   deps: {
     readonly model: LanguageModel;
+    readonly settings: AwardSettingsStore;
     readonly store: AwardsStore;
     readonly aiConsented: AiConsented;
   },
@@ -50,7 +52,12 @@ export async function giveAwards(
   let words: Words = { members: new Map(), story: { version: 1, order: [...MiddlePage.options] } };
   if (winners.length > 0) {
     try {
-      words = await writeWords(deps.model, { weekStart, winners, pages });
+      words = await writeWords(deps.model, {
+        settings: await deps.settings.current(),
+        weekStart,
+        winners,
+        pages,
+      });
     } catch (error) {
       await deps.store.recordFailure({ squad, weekStart, error: reasonOf(error) });
       throw error;
@@ -110,26 +117,33 @@ export function reasonOf(error: unknown): string {
 type Words = NonNullable<ReturnType<typeof wordsOf>>;
 
 /**
- * The words for every winner and the squad's pages, asking the model up to twice for an answer
- * that passes the checks.
+ * The words for every winner and the squad's pages, asking the model the settings name up to
+ * twice for an answer that passes the checks.
  */
 async function writeWords(
   model: LanguageModel,
   {
+    settings,
     weekStart,
     winners,
     pages,
   }: {
+    readonly settings: AwardSettings;
     readonly weekStart: WeekStart;
     readonly winners: readonly MemberWeek[];
     readonly pages: SquadPages;
   },
 ): Promise<Words> {
-  const prompt = promptFor({ weekStart, members: winners, pages });
+  const prompt = promptFor({ weekStart, members: winners, pages, moves: settings.moves });
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {
-      const reply = await model.answer({ instructions: INSTRUCTIONS, prompt, reply: ModelReply });
+      const reply = await model.answer({
+        model: settings.model,
+        instructions: settings.instructions,
+        prompt,
+        reply: ModelReply,
+      });
       const words = wordsOf(reply, { members: winners, pages });
       if (words !== undefined) return words;
       cause = FAILED_CHECKS;

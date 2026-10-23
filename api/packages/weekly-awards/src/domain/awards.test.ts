@@ -10,6 +10,7 @@ import {
   type SquadPages,
   type WeekCheckIn,
 } from './awards.js';
+import { AwardMove } from './moves.js';
 import { promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
@@ -251,8 +252,12 @@ describe('topCheckInOf', () => {
 const Prompt = z.object({
   members: z.unknown(),
   pages: z.unknown(),
-  moves: z.array(z.object({ id: z.string() })),
+  moves: z.array(z.object({ id: z.string(), description: z.string() })),
 });
+
+const moves = z
+  .record(AwardMove, z.string())
+  .parse(Object.fromEntries(AwardMove.options.map((move) => [move, `${move} 的样子`])));
 
 describe('promptFor', () => {
   it('lists members by letter with their days, times on their own clock, and the moves', () => {
@@ -260,6 +265,7 @@ describe('promptFor', () => {
       JSON.parse(
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
+          moves,
           members: [
             {
               member: bo,
@@ -326,9 +332,38 @@ describe('promptFor', () => {
         ],
       },
     ]);
-    expect(prompt.moves.map(({ id }) => id)).toContain('flat');
+    expect(prompt.moves).toContainEqual({ id: 'flat', description: 'flat 的样子' });
+    expect(prompt.moves).toHaveLength(AwardMove.options.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
     // Nothing of a member who isn't listed: not their 请假条, not their place on the podium.
     expect(JSON.stringify(prompt)).not.toContain('别人的请假条');
+  });
+
+  it('lists the moves in their own order, whatever order the settings keep them in', () => {
+    const reversed = z
+      .record(AwardMove, z.string())
+      .parse(Object.fromEntries(Object.entries(moves).reverse()));
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves: reversed,
+          members: [],
+          pages: {},
+        }),
+      ),
+    );
+    expect(prompt.moves.map(({ id }) => id)).toStrictEqual([
+      'cheer',
+      'pump',
+      'pose',
+      'warmup',
+      'stretch',
+      'doze',
+      'flat',
+      'laugh',
+      'wave',
+      'fullbelly',
+    ]);
   });
 });

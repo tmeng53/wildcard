@@ -1,6 +1,8 @@
 // @wildcard/weekly-awards: each squad's weekly awards (本周颁奖): the titles, award lines and
-// moves an AI writes from the week every Sunday evening, their checks, and their table.
+// moves an AI writes from the week every Sunday evening, its settings, their checks, and their
+// tables.
 
+export { createPostgresAwardSettings } from './adapters/postgres-award-settings.js';
 export {
   createPostgresAwardsStore,
   type WeeklyAwardTables,
@@ -31,7 +33,7 @@ export {
   type TopCheckIn,
   type WeekCheckIn,
 } from './domain/awards.js';
-export { AWARD_MOVES, AwardMove } from './domain/moves.js';
+export { AwardMove } from './domain/moves.js';
 export {
   AWARDS_HOUR,
   AWARDS_TIME_ZONE,
@@ -39,10 +41,12 @@ export {
   awardsTimeOf,
   latestAwardedWeek,
 } from './domain/schedule.js';
+export { AwardSettings, AwardSettingsChange, ModelName } from './domain/settings.js';
 export {
   AwardsModelMissingError,
   AwardsWriterUnavailableError,
   WeekStoryNotReadyError,
 } from './errors.js';
-export type { AiConsented, AwardsStore, LanguageModel } from './ports.js';
+export type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from './ports.js';
+export { createAwardSettings, type AwardSettingsAdmin } from './use-cases/award-settings.js';
 export { createWeeklyAwards, type WeeklyAwards } from './use-cases/weekly-awards.js';
