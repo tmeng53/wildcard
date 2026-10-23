@@ -25,15 +25,18 @@
 /* phones and tablets: the hero sits centred in the space above the squad */
 .main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 40px; padding-block: 40px 0; }
 .hero { align-self: center; }
-h1 { margin: 0; display: flex; flex-wrap: nowrap; align-items: baseline; column-gap: .08em; font-family: var(--num); font-weight: 800; font-size: clamp(40px, calc((100cqw - 40px) / 4.6), 120px); line-height: .86; letter-spacing: .01em; }
+h1 { margin: 0; display: flex; flex-wrap: nowrap; align-items: baseline; column-gap: .08em; font-family: var(--num); font-weight: 800; font-size: var(--h); line-height: .86; letter-spacing: .01em; }
 /* optical alignment: the W's side bearing pulled back to the slogan's and button's edge */
 #word { display: inline-block; margin-left: -.018em; line-height: 1; will-change: transform; }
 /* 外卡's ink sits on WILDCARD's baseline */
 h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight: 600; font-size: .5em; color: var(--ink); letter-spacing: 0; line-height: 1; }
+/* --h is the headline's size; the slogan and button follow it, so they keep the desktop's proportions
+   on a phone (floored at sizes that stay easy to read and tap) */
+.hero { --h: clamp(40px, calc((100cqw - 40px) / 4.6), 120px); }
 /* with 外卡 on the line, the headline shrinks so both still fit one line (WILDCARD is about 4.5em, 外卡 about 1.1em) */
-h1:has(.cn) { font-size: clamp(32px, calc((100cqw - 40px) / 5.7), 120px); }
-.sub { margin: 14px 0 0; font-size: 22px; line-height: 30px; font-weight: 600; text-wrap: balance; }
-.btn { margin-top: 32px; height: 56px; padding: 0 30px; border-radius: 28px; background: var(--sig); color: var(--on-sig); font-size: 18px; font-weight: 600; display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; transition: transform .15s; }
+.hero:has(.cn) { --h: clamp(32px, calc((100cqw - 40px) / 5.7), 120px); }
+.sub { margin: calc(var(--h) * .16) 0 0; font-size: clamp(17px, calc(var(--h) * .24), 30px); line-height: 1.3; font-weight: 600; text-wrap: balance; }
+.btn { margin-top: clamp(20px, calc(var(--h) * .3), 32px); height: clamp(46px, calc(var(--h) * .5), 56px); padding: 0 1.6em; border-radius: 999px; background: var(--sig); color: var(--on-sig); font-size: clamp(16px, calc(var(--h) * .17), 18px); font-weight: 600; display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; transition: transform .15s; }
 .btn:active { transform: scale(.97); }
 /* an iPhone glyph (a line phone, after lucide's smartphone): it's an iPhone app; Apple's own logo is only allowed in its badge */
 .btn-icon { width: 1.1em; height: 1.1em; margin: 0 8px 0 -4px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -55,9 +58,8 @@ h1:has(.cn) { font-size: clamp(32px, calc((100cqw - 40px) / 5.7), 120px); }
 .bubble.on { opacity: 1; transform: translate(calc(-50% + var(--dx)), 0); }
 
 @container site (min-width: 720px) {
-  h1 { font-size: min(176px, calc((100cqw - 96px) / 4.6)); }
-  h1:has(.cn) { font-size: min(176px, calc((100cqw - 96px) / 5.7)); }
-  .sub { font-size: 30px; line-height: 38px; margin-top: 20px; }
+  .hero { --h: min(176px, calc((100cqw - 96px) / 4.6)); }
+  .hero:has(.cn) { --h: min(176px, calc((100cqw - 96px) / 5.7)); }
   .main { padding-block: 72px 0; }
 }
 footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
@@ -70,7 +72,8 @@ footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px))
   .wrap { max-width: 1440px; padding-left: max(64px, env(safe-area-inset-left, 0px)); padding-right: max(64px, env(safe-area-inset-right, 0px)); }
   .nav { height: 76px; }
   .main { display: block; padding-block: calc(42 * var(--u)) 0; }
-  h1, h1:has(.cn) { font-size: calc(200 * var(--u)); column-gap: .14em; }
+  .hero, .hero:has(.cn) { --h: calc(200 * var(--u)); }
+  h1 { column-gap: .14em; }
   h1 .cn { top: 0; }
   .sub { font-size: 34px; line-height: 42px; margin-top: 22px; }
   .btn { height: 60px; padding: 0 34px; border-radius: 30px; font-size: 19px; }
