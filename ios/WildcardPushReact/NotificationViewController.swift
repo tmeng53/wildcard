@@ -39,10 +39,10 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
         extensionContext?.performNotificationDefaultAction()
     }
 
-    private func show(_ view: AnyView) {
+    private func show(_ content: AnyView) {
         hosting?.view.removeFromSuperview()
         hosting?.removeFromParent()
-        let hosting = UIHostingController(rootView: view)
+        let hosting = UIHostingController(rootView: content)
         hosting.sizingOptions = .preferredContentSize
         hosting.view.backgroundColor = .clear
         addChild(hosting)
