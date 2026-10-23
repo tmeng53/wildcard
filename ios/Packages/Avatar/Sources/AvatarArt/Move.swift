@@ -1,7 +1,7 @@
 import AvatarDomain
 
 /// A move any character can play once, for a moment in the app: cheering a teammate on, a
-/// 名场面, being poked. Each is `moves/<raw value>.json`, the same for every look, played at the
+/// big pose, being poked. Each is `moves/<raw value>.json`, the same for every look, played at the
 /// persona's tempo; it ends at rest, so the idle picks up without a jump. Which moment plays
 /// which move is the screen's call.
 public enum Move: String, CaseIterable, Sendable {
@@ -13,7 +13,7 @@ public enum Move: String, CaseIterable, Sendable {
     case warmup
     /// 加油: fist pumps beside the head.
     case pump
-    /// 名场面: strikes a pose, no spin.
+    /// 摆 pose: strikes a pose, no spin.
     case pose
     /// 笑死: laughs and bends over.
     case laugh

@@ -191,12 +191,12 @@
         }
       }
     },
-    "名场面": {
+    "看我！": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Iconic"
+            "value": "Look at me!"
           }
         }
       }
