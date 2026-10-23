@@ -9178,7 +9178,7 @@ public enum Operations {
             }
         }
     }
-    /// Poke a squadmate (戳一下)
+    /// Poke a squadmate (拍一拍)
     ///
     /// At most one of each kind a day (on the caller’s clock) to each squadmate: the same nudge again the same day changes nothing, so it is safe to repeat. Not pushed at once: the squadmate’s 6pm daily push names who nudged them.
     ///

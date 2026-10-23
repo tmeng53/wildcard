@@ -9,7 +9,7 @@ import { requireCaller, type SignedIn } from '../require-caller.js';
 const fields = {
   to: z.uuid().meta({ description: 'The squadmate to nudge.' }),
   kind: NudgeKind.meta({
-    description: 'A poke (戳一下, `poke`). The app shows each kind with its own copy.',
+    description: 'A poke (拍一拍, `poke`). The app shows each kind with its own copy.',
   }),
 };
 
@@ -27,7 +27,7 @@ export function nudges(deps: { readonly verifyToken: VerifyToken; readonly nudge
     method: 'post',
     path: '/squads/{squadId}/nudges',
     operationId: 'nudgeSquadmate',
-    summary: 'Poke a squadmate (戳一下)',
+    summary: 'Poke a squadmate (拍一拍)',
     description:
       'At most one of each kind a day (on the caller’s clock) to each squadmate: the same ' +
       'nudge again the same day changes nothing, so it is safe to repeat. Not pushed at once: ' +

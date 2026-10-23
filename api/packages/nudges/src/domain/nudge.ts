@@ -7,7 +7,7 @@ export const SquadId = z.uuid().brand<'SquadId'>();
 export type SquadId = z.infer<typeof SquadId>;
 
 /**
- * What a nudge is: a `poke` (戳一下, the home screen's poke that names the poker). The kind is
+ * What a nudge is: a `poke` (拍一拍, the home screen's poke that names the poker). The kind is
  * also the name the app's String Catalog keys its copy by, so another kind is one more value
  * here, not another table.
  */

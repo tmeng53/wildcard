@@ -1,4 +1,4 @@
-// @wildcard/nudges: squadmates nudging each other (a poke, 戳一下), the rule of one of each
+// @wildcard/nudges: squadmates nudging each other (a poke, 拍一拍), the rule of one of each
 // kind a day, and its table.
 
 export { createPostgresNudgeStore, type NudgeTables } from './adapters/postgres-nudge-store.js';

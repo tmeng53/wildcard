@@ -227,8 +227,8 @@ function mergeInteractions(all: readonly Interactions[]): Map<string, Set<string
 /**
  * The daily push, without its words: the alert names a String Catalog key with the squad's week
  * and how many teammates did something for the member. When someone nudged them, it names that
- * person instead (「小美戳了你」), with how many others did something too; the key says which
- * kind. `event` carries the people per kind, for the app to say more.
+ * person instead (「小美拍了拍你」), with how many others sent the same kind (「小美和另外 2 人拍了拍
+ * 你」); the key says which kind. `event` carries the people per kind, for the app to say more.
  */
 export function dailyProgressNotification({
   day,
@@ -246,12 +246,13 @@ export function dailyProgressNotification({
 }): PushNotification {
   const people = new Set([...received.values()].flatMap((each) => [...each])).size;
   const week = [String(squadWeek.trainedDays), String(squadWeek.plannedDays)];
+  const others = named === undefined ? 0 : (received.get(named.kind)?.size ?? 1) - 1;
   const alert =
     named !== undefined
-      ? people > 1
+      ? others > 0
         ? {
             key: `push.dailyProgress.${named.kind}.more`,
-            args: [...week, named.nickname, String(people - 1)],
+            args: [...week, named.nickname, String(others)],
           }
         : { key: `push.dailyProgress.${named.kind}`, args: [...week, named.nickname] }
       : people === 0

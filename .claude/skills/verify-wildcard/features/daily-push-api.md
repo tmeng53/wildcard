@@ -1,6 +1,6 @@
 # Daily progress push through the API
 
-**Status: Ready** since the daily progress push (#78), with pokes (戳一下) since #198, driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
+**Status: Ready** since the daily progress push (#78), with pokes (拍一拍) since #198, driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
 
 Four members in a time zone where it is about 8pm, each with a phone. Runner, cheerer and resting are in a squad; loner has none. Resting turns the daily push off. Runner trains and cheerer leaves it a ❤️; resting pokes runner twice (one is kept), and loner, outside the squad, can't. The scheduler's job then handles runner and cheerer (something to tell them), loner quietly (no squad, so nothing to tell), and resting not at all; a second run handles no one again. No push is sent: CI has no APNs key, so the two with news count as `unsent`. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
@@ -42,4 +42,4 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 - The server without `JOBS_TOKEN`: the job answers 503 `JOBS_OFF`.
 - Several runs at once: each member is still handled once (`daily_pushes`' primary key), the others count them as `skipped`.
 - A member before 6pm on their clock, or without a phone: not due.
-- What the push says (`push.dailyProgress.poke` naming the poker, `.poke.more` with others): the Vitest tests in `daily-progress-push.test.ts` record each phone's payload; this journey has no APNs key to see it.
+- What the push says (`push.dailyProgress.poke` naming the poker, `.poke.more` with how many others poked): the Vitest tests in `daily-progress-push.test.ts` record each phone's payload; this journey has no APNs key to see it.

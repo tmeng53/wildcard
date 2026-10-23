@@ -322,7 +322,7 @@ describe('the daily progress push', () => {
     ]);
   });
 
-  it('names a poker who has a nickname, and counts everyone else who did something', async () => {
+  it('names a poker who has a nickname, and counts the other pokers', async () => {
     const eve = await member(evening);
     const [anonymous, poker, fan] = [
       await member(morning),
@@ -336,7 +336,8 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
-        alert: { key: 'push.dailyProgress.poke.more', args: ['1', '20', '小美', '2'] },
+        // The fan's reaction is in `event`, not the count: 「小美和另外 1 人拍了拍你」.
+        alert: { key: 'push.dailyProgress.poke.more', args: ['1', '20', '小美', '1'] },
         event: { received: { reaction: 1, poke: 2 } },
       },
     ]);
