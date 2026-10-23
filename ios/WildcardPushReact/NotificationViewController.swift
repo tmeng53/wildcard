@@ -4,6 +4,8 @@ import Backend
 import Contracts
 import DailyPushDomain
 import DailyPushUI
+import DesignSystem
+import DesignSystemUI
 import SwiftUI
 import UIKit
 import UserNotifications
@@ -91,9 +93,9 @@ private struct PlainPush: View {
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(verbatim: title).font(.headline)
-            Text(verbatim: text).font(.body)
+        VStack(alignment: .leading, spacing: Space.xxs) {
+            Text(verbatim: title).typeStyle(TypeRamp.headline)
+            Text(verbatim: text).typeStyle(TypeRamp.body)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()

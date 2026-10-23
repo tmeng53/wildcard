@@ -66,7 +66,7 @@ private struct PushHeader: View {
                     Text("本周小队已练", bundle: .module)
                         .typeStyle(TypeRamp.calloutEmphasis)
                         .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                         Text(verbatim: "\(week.trainedDays)")
                             .typeStyle(TypeRamp.scoreHero)
                         Text(verbatim: "/\(week.plannedDays)")
@@ -187,7 +187,7 @@ private struct EmptyDay: View {
 
     var body: some View {
         VStack(spacing: Space.xxs) {
-            HStack(spacing: 2) {
+            HStack(spacing: Space.xxs / 2) {
                 ForEach(model.teammates, id: \.self) { member in
                     if let player = model.standing(member) {
                         Figure(player: player, moving: false)

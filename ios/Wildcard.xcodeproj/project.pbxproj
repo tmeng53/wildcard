@@ -29,6 +29,8 @@
 		A1C0DE0000000000000000A3 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000009D /* AccountDomain */; };
 		A1C0DE0000000000000000A4 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000009E /* AccountUI */; };
 		A1C0DE0000000000000000A5 /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000009F /* Contracts */; };
+		A1C0DE0000000000000000B0 /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B2 /* DesignSystem */; };
+		A1C0DE0000000000000000B1 /* DesignSystemUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B3 /* DesignSystemUI */; };
 		A1C0DE0000000000000000AD /* DailyPushDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000AB /* DailyPushDomain */; };
 		A1C0DE0000000000000000AE /* DailyPushUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000AC /* DailyPushUI */; };
 		A1C0DE0000000000000000A7 /* WildcardPushReact.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000090 /* WildcardPushReact.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -146,6 +148,8 @@
 				A1C0DE0000000000000000A3 /* AccountDomain in Frameworks */,
 				A1C0DE0000000000000000A4 /* AccountUI in Frameworks */,
 				A1C0DE0000000000000000A5 /* Contracts in Frameworks */,
+				A1C0DE0000000000000000B0 /* DesignSystem in Frameworks */,
+				A1C0DE0000000000000000B1 /* DesignSystemUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -261,6 +265,8 @@
 				A1C0DE00000000000000009D /* AccountDomain */,
 				A1C0DE00000000000000009E /* AccountUI */,
 				A1C0DE00000000000000009F /* Contracts */,
+				A1C0DE0000000000000000B2 /* DesignSystem */,
+				A1C0DE0000000000000000B3 /* DesignSystemUI */,
 			);
 			productName = WildcardPushReact;
 			productReference = A1C0DE000000000000000090 /* WildcardPushReact.appex */;
@@ -770,6 +776,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
 			productName = Contracts;
+		};
+		A1C0DE0000000000000000B2 /* DesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystem;
+		};
+		A1C0DE0000000000000000B3 /* DesignSystemUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystemUI;
 		};
 		A1C0DE0000000000000000AB /* DailyPushDomain */ = {
 			isa = XCSwiftPackageProductDependency;
