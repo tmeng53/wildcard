@@ -150,6 +150,7 @@ jobs:
           for key in openai-api-key anthropic-api-key; do
             if present "$key"; then
               secrets="$secrets,$(variable "$key")=$key:latest"
+              echo "$(variable "$key") is mapped"
             else
               absent="${absent:+$absent,}$(variable "$key")"
             fi
@@ -170,6 +171,8 @@ jobs:
             echo "::error::Set all of ${apns[*]} in Secret Manager, or none"
             exit 1
           fi
+          # Names only, never values: which optional features this revision has.
+          echo "Optional secrets absent (feature off): ${absent:-none}"
           remove=()
           if [ -n "$absent" ]; then remove=(--remove-secrets "$absent"); fi
           # The startup probe keeps traffic on the old revision unless the new one reaches the
