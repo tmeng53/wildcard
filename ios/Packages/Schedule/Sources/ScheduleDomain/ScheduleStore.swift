@@ -36,8 +36,12 @@ public final class ScheduleStore {
     public private(set) var lifetimeTrainedDays: Int?
     /// Why the last save didn't go through; nil once one does.
     public private(set) var failure: ScheduleError?
-    /// Weeks as the server last sent them, with every save it answered folded in.
+    /// Weeks as the server last sent them, with every plan save it answered folded in; the
+    /// plan being edited lives on `board` until its save goes through. The 饮食小目标 show here at
+    /// once, before their save answers.
     private var sheets: [LocalDay: WeekSheet] = [:]
+    /// Each week's 饮食小目标 as the server holds them, for a failed save to go back to.
+    private var savedFuel: [LocalDay: [FuelGoal]] = [:]
     /// Weeks with a change waiting while a save of theirs is on its way.
     private var planSaves: [LocalDay: SaveState] = [:]
 
@@ -125,6 +129,7 @@ public final class ScheduleStore {
         do {
             let fresh = try await backend.week(starting: weekStart)
             sheets[weekStart] = fresh
+            savedFuel[weekStart] = fresh.fuel
             // A change made while it loaded stays; it is on its way to the server.
             guard shownWeek == weekStart, planSaves[weekStart] == nil else { return }
             board = makeBoard(fresh)
@@ -176,25 +181,23 @@ public final class ScheduleStore {
     /// Saves the board's days; while a save of the week is on its way, the next goes out once
     /// it answers, with the days as they are then.
     private func savePlan() async {
-        guard let week = board?.weekStart, var saved = sheets[week] else { return }
+        guard let week = board?.weekStart, let sheet = sheets[week] else { return }
         if planSaves[week] != nil {
             planSaves[week] = .runningWithMore
             return
         }
         planSaves[week] = .running
         defer { planSaves[week] = nil }
-        var sending = board?.days ?? saved.plan
+        var sending = board?.days ?? sheet.plan
         while true {
             do {
                 let plan = try await backend.savePlan(sending, weekStart: week)
                 sheets[week]?.plan = plan
-                // What the server holds now: a later save that fails goes back to this.
-                saved.plan = plan
                 failure = nil
             } catch {
                 failure = error
-                sheets[week] = saved
-                if board?.weekStart == week { board?.reset(to: saved.plan) }
+                // Back to the last plan the server took; nothing else on the week moves.
+                if board?.weekStart == week, let held = sheets[week]?.plan { board?.reset(to: held) }
                 return
             }
             guard planSaves[week] == .runningWithMore, let days = board?.days, board?.weekStart == week else {
@@ -232,14 +235,15 @@ public final class ScheduleStore {
     }
 
     private func saveFuel(_ sheet: WeekSheet) async {
-        let before = sheets[sheet.weekStart]
-        sheets[sheet.weekStart]?.fuel = sheet.fuel
+        let week = sheet.weekStart
+        sheets[week]?.fuel = sheet.fuel
         do {
-            try await backend.saveFuel(sheet.fuel, weekStart: sheet.weekStart)
+            try await backend.saveFuel(sheet.fuel, weekStart: week)
+            savedFuel[week] = sheet.fuel
             failure = nil
         } catch {
             failure = error
-            sheets[sheet.weekStart]?.fuel = before?.fuel ?? []
+            sheets[week]?.fuel = savedFuel[week] ?? []
         }
     }
 }

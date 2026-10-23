@@ -142,6 +142,24 @@ struct ScheduleStoreTests {
         #expect(store.board?.days[1] == .train(.sport(.tennis)))
     }
 
+    @Test func aFailedPlanSaveKeepsAFoodGoalTheServerTook() async {
+        let backend = FakeBackend()
+        let store = store(backend)
+        await store.load()
+        await store.show(thisWeek.adding(days: 7))
+        await backend.failSaves(with: .notSent, after: 0)
+        await backend.holdSaves()
+        await store.tap(0)
+        let plan = Task { await store.pick(.sport(.swim)) }
+        while await backend.savedPlans.isEmpty { await Task.yield() }
+        await store.toggleFuel(.suggested(.water))
+        await backend.finishSave()
+        await plan.value
+        #expect(store.failure == .notSent)
+        #expect(store.sheet?.plan[0] == .train(.sport(.run)))
+        #expect(store.sheet?.fuel == [.suggested(.water)])
+    }
+
     @Test func aPastWeekCantChange() async {
         let backend = FakeBackend()
         let store = store(backend)

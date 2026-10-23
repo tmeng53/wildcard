@@ -17,7 +17,9 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
-    let schedule: ScheduleModel
+    /// Nil on the real backend until 出赛表's API adapter lands: the tab shows its placeholder
+    /// there rather than the in-memory sample member's week.
+    let schedule: ScheduleModel?
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
@@ -81,7 +83,11 @@ struct MainTabs: View {
         case .feed:
             UpcomingTab(title: Text("动态"))
         case .schedule:
-            ScheduleView(model: schedule)
+            if let schedule {
+                ScheduleView(model: schedule)
+            } else {
+                UpcomingTab(title: Text("出赛表"))
+            }
         case .profile:
             MeView(
                 model: profile,

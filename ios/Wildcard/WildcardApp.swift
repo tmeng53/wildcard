@@ -90,7 +90,7 @@ struct WildcardApp: App {
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
             } else if let app {
-                AppRoot(app: app, schedule: schedule, tab: $tab, delegate: delegate)
+                AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
                 MainTabs(today: today, profile: profile, schedule: schedule, selection: $tab)
                     .onAppear {
@@ -107,8 +107,6 @@ struct WildcardApp: App {
 /// The app on the real backend: the screen its account is on.
 private struct AppRoot: View {
     let app: AppModel
-    /// 出赛表 stays on its in-memory member until its API adapter lands.
-    let schedule: ScheduleModel
     @Binding var tab: MainTabs.Tab
     let delegate: AppDelegate
 
@@ -126,7 +124,8 @@ private struct AppRoot: View {
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
             case .tabs(let today, let profile):
-                MainTabs(today: today, profile: profile, schedule: schedule, selection: $tab)
+                // 出赛表 shows its placeholder here until its API adapter lands.
+                MainTabs(today: today, profile: profile, schedule: nil, selection: $tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -32,6 +32,7 @@ actor FakeBackend: ScheduleBackend {
     var sheets: [LocalDay: WeekSheet] = [:]
     var saveError: ScheduleError?
     /// How many plan saves go through before `saveError` applies; nil applies it to every save.
+    /// With a count, only plan saves fail.
     var savesBeforeError: Int?
     private(set) var savedPlans: [[PlanDay]] = []
     private(set) var savedFuel: [[FuelGoal]] = []
@@ -75,7 +76,7 @@ actor FakeBackend: ScheduleBackend {
 
     func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
         savedFuel.append(goals)
-        if let saveError { throw saveError }
+        if let saveError, savesBeforeError == nil { throw saveError }
     }
 
     func trainedDays() async throws(ScheduleError) -> Int { 46 }
