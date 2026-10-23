@@ -92,13 +92,12 @@ public struct SceneTile: View {
     }
 }
 
-/// A scene the squad knows: its colour, its pattern in white (volt on the gym's graphite) and
-/// its icon in the middle.
+/// A scene the squad knows: its colour, its pattern in white and its icon in the middle.
 struct TilePattern: View {
     let scene: SceneTheme
 
     var body: some View {
-        let ink = scene == .gym ? Palette.volt : Palette.white
+        let ink = Palette.white
         Canvas { context, size in
             context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(Self.base(of: scene))))
             Self.drawPattern(of: scene, in: &context, size: size, ink: Color(ink))
@@ -109,18 +108,18 @@ struct TilePattern: View {
         }
     }
 
-    /// The card's colour: the scene's signature, the gym's graphite.
+    /// The card's colour: the scene's signature.
     static func base(of scene: SceneTheme) -> SRGBColor {
         switch scene {
         case .track: Palette.trackSignature
         case .pool: Palette.poolSignature
-        case .gym: Palette.graphite
+        case .gym: Palette.gymSignature
         case .tennis: Palette.tennisSignature
         case .climbing: Palette.climbingSignature
         }
     }
 
-    /// The prototype's CSS patterns, drawn: lane lines, a dot grid, diagonal volt stripes, the
+    /// The prototype's CSS patterns, drawn: lane lines, a dot grid, diagonal stripes, the
     /// court's centre lines and a few climbing holds.
     static func drawPattern(of scene: SceneTheme, in context: inout GraphicsContext, size: CGSize, ink: Color) {
         switch scene {
