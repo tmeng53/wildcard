@@ -22,7 +22,10 @@ export function createDraftSettings(deps: {
   return {
     current: () => deps.store.current(),
     change: async (change, by) => {
-      const settings = DraftSettings.parse({ ...(await deps.store.current()), ...change });
+      const settings = DraftSettings.parse({
+        ...(await deps.store.current({ forUpdate: true })),
+        ...change,
+      });
       await deps.store.save(settings, by);
       return settings;
     },

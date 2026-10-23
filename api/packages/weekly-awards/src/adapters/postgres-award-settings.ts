@@ -7,10 +7,11 @@ import type { DB } from './tables.js';
 /** The award settings on Postgres: one row, and its log (`supabase/migrations`). */
 export function createPostgresAwardSettings(db: Kysely<DB>): AwardSettingsStore {
   return {
-    async current() {
+    async current(options) {
       const row = await db
         .selectFrom('weekly_award_settings')
         .selectAll()
+        .$if(options?.forUpdate === true, (query) => query.forUpdate())
         .executeTakeFirstOrThrow();
       return AwardSettings.parse({
         version: 1,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AWARD_COPY, languageOf } from './week-summary-copy.js';
+import { languageOf } from './week-summary-language.js';
 
 describe('languageOf', () => {
   it('takes the language the summary is written in that the client weighs highest, Chinese by default', () => {
@@ -17,15 +17,5 @@ describe('languageOf', () => {
     expect(languageOf('en;q=0.1, zh-Hans;q=1')).toBe('zh-Hans');
     expect(languageOf('fr, en;q=0.5, zh;q=0.5')).toBe('en');
     expect(languageOf('zh;q=abc, en')).toBe('en');
-  });
-});
-
-describe('award copy', () => {
-  it('counts days and reactions in each language', () => {
-    expect(AWARD_COPY.crown.winner(5)).toEqual({ 'zh-Hans': '练了 5 天', en: 'Trained 5 days' });
-    expect(AWARD_COPY.bestDisclaimer.winner(2)).toEqual({
-      'zh-Hans': '2 个回应',
-      en: '2 reactions',
-    });
   });
 });

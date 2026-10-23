@@ -73,7 +73,7 @@ struct LocalStack {
     /// agreeing to the AI consent copy first, through the client as the app does.
     func squad(of creator: SignedInMember, _ others: SignedInMember...) async throws -> SquadID {
         for member in [creator] + others {
-            try await member.api.agreeToAI(copyVersion: 1)
+            try await member.api.agreeToAI(copyVersion: 2)
         }
         let squad = try await creator.api.createSquad(SquadID(UUID()), named: try SquadName("backend tests"))
         for member in others {

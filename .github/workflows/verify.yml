@@ -25,8 +25,9 @@ permissions:
   contents: read
 
 concurrency:
-  # A PR's newer push cancels its older run; each commit on main gets its own run.
-  group: verify-${{ github.event.pull_request.number || github.sha }}
+  # A PR's newer push cancels its older run, and so does a newer commit on main, so the few
+  # macOS runners check the newest main commit instead of a queue of every commit since.
+  group: verify-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: true
 
 jobs:

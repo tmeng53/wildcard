@@ -246,11 +246,11 @@ if want squad; then
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 400 AI_CONSENT_REQUIRED
   call GET /me/ai-consent "$newcomer_token"
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":1,"current":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":2,"current":false}' ] ||
     fail "newcomer should have no consent yet: $body"
   call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
   expect 400 REQUEST_INVALID
-  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":2}'
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":1}'
   expect 400 AI_CONSENT_COPY_OUTDATED
   echo "squad: joining before agreeing refused (400 AI_CONSENT_REQUIRED); another copy version refused (400 AI_CONSENT_COPY_OUTDATED)"
   agree_to_ai "$newcomer_token"
@@ -661,6 +661,16 @@ if want daily-push; then
   call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"emoji":"❤️"}'
   expect 201
   echo "daily-push: in $evening, runner trained and cheerer left them a ❤️"
+  nudge="{\"version\":1,\"to\":\"$runner\",\"kind\":\"poke\"}"
+  call POST "/squads/$squad/nudges" "$resting_token" "$nudge"
+  expect 201
+  call POST "/squads/$squad/nudges" "$resting_token" "$nudge"
+  expect 200
+  call POST "/squads/$squad/nudges" "$loner_token" "$nudge"
+  expect 403 SQUAD_NOT_JOINED
+  [ "$(psql "$DB_URL" -tAc "select count(*) from public.nudges where to_member_id = '$runner'")" = 1 ] ||
+    fail "one poke for runner"
+  echo "daily-push: resting poked runner once (201, then 200); loner, not in the squad, refused (403)"
 
   call POST /jobs/daily-progress-push "$runner_token"
   expect 401 JOB_TOKEN_INVALID
@@ -840,7 +850,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -886,6 +896,27 @@ if want admin-mcp; then
   tool get_weekly_award_settings '{}'
   [ "$(jq -r .model <<<"$result")" = openai/gpt-6-luna ] || fail "get_weekly_award_settings: $result"
   echo "admin-mcp: read the AI settings (openai/gpt-6-luna), turned drafts off and on, logged once each ($changes); an unknown provider refused"
+
+  tool get_week_summary_words '{}'
+  [ "$(jq -r '.awards.crown.title["zh-Hans"]' <<<"$result")" = 皇冠 ] || fail "get_week_summary_words: $result"
+  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡次数","en":"Check-ins"}}}'
+  [ "$(jq -r '.stats.checkIns["zh-Hans"]' <<<"$result")" = 打卡次数 ] || fail "change_week_summary_words: $result"
+  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡","en":"Check-ins"}}}'
+  tool change_week_summary_words '{"awards":{"medal":{"symbol":"medal","title":{"zh-Hans":"奖牌","en":"Medal"},"winner":{"zh-Hans":{"one":"{n}","other":"{n}"},"en":{"one":"{n}","other":"{n}"}}}}}'
+  [ "$is_error" = true ] || fail "an award the API doesn't have: $result"
+  words="$(psql "$DB_URL" -tAc "select string_agg(words#>>'{stats,checkIns,zh-Hans}', ',' order by id) from public.week_summary_word_events where changed_by = '$admin'")"
+  [ "$words" = "打卡次数,打卡" ] || fail "the words log should hold the two changes, not the refusal: $words"
+  echo "admin-mcp: renamed a 战报 count and back, logged once each ($words); an unknown award refused"
+
+  tool get_daily_push_settings '{}'
+  [ "$(jq -r '"\(.sending) \(.hour)"' <<<"$result")" = "true 18" ] || fail "get_daily_push_settings: $result"
+  tool change_daily_push_settings '{"hour":20}'
+  tool change_daily_push_settings '{"hour":18}'
+  tool change_daily_push_settings '{"hour":24}'
+  [ "$is_error" = true ] || fail "an hour past 23: $result"
+  hours="$(psql "$DB_URL" -tAc "select string_agg(settings->>'hour', ',' order by id) from public.daily_push_setting_events where changed_by = '$admin'")"
+  [ "$hours" = "20,18" ] || fail "the daily push log should hold the two changes, not the refusal: $hours"
+  echo "admin-mcp: moved the daily push to 8pm and back, logged once each ($hours); hour 24 refused"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED

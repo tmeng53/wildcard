@@ -35,13 +35,17 @@ export interface PushNotification {
   readonly mutableContent?: boolean;
   /**
    * What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`, or counts by kind
-   * such as `{ received: { reaction: 3 } }`.
+   * such as `{ received: { reaction: 3 } }`. APNs takes 4KB for the whole payload.
    */
   readonly event: Readonly<Record<string, EventValue>>;
 }
 
-/** A value in a notification's `event`: text, a number, or counts by kind. */
-export type EventValue = string | number | Readonly<Record<string, number>>;
+/**
+ * A value in a notification's `event`: any JSON, such as text, a number, counts by kind, or the
+ * squad's posts today for the push's long-press view.
+ */
+export type EventValue =
+  string | number | boolean | readonly EventValue[] | { readonly [key: string]: EventValue };
 
 /** The APNs JSON payload for a notification, with the `version` every wire body carries. */
 export function apnsPayload(notification: PushNotification) {
