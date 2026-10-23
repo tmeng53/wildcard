@@ -57,7 +57,11 @@ export interface SquadPages {
   /** The crown winner, and up to 2 others who finished their plan. */
   readonly podium?: { readonly champion: MemberId; readonly sides: readonly MemberId[] };
   readonly meals?: { readonly healthy: number; readonly cheat: number };
-  readonly bestDisclaimer?: { readonly author: MemberId; readonly text: string };
+  readonly bestDisclaimer?: {
+    readonly checkIn: string;
+    readonly author: MemberId;
+    readonly text: string;
+  };
   /** The squad's days trained against its plans; only when someone trained. */
   readonly ending?: { readonly done: number; readonly plan: number };
 }
@@ -176,13 +180,28 @@ export const StoryWords = z.discriminatedUnion('version', [
     version: z.literal(1),
     /** The middle pages, every one of them once, in the model's order. */
     order: z.array(MiddlePage),
+    // Each page's words keep the fact they were written for (the champion, the note, whether
+    // the squad hit its plan), so a page whose facts change later (a member leaves, a reaction
+    // comes in) drops words that no longer fit it.
     podium: z
-      .strictObject({ speech: z.string().min(1), championMove: AwardMove, sideMove: AwardMove })
+      .strictObject({
+        champion: MemberId,
+        speech: z.string().min(1),
+        championMove: AwardMove,
+        sideMove: AwardMove,
+      })
       .optional(),
     meals: z.strictObject({ line: z.string().min(1) }).optional(),
-    bestDisclaimer: z.strictObject({ authorMove: AwardMove, squadMove: SquadMove }).optional(),
+    bestDisclaimer: z
+      .strictObject({ checkIn: z.uuid(), authorMove: AwardMove, squadMove: SquadMove })
+      .optional(),
     ending: z
-      .strictObject({ headline: z.string().min(1), line: z.string().min(1), move: EndingMove })
+      .strictObject({
+        hit: z.boolean(),
+        headline: z.string().min(1),
+        line: z.string().min(1),
+        move: EndingMove,
+      })
       .optional(),
   }),
 ]);
@@ -277,6 +296,7 @@ export function wordsOf(
       ? {}
       : {
           podium: {
+            champion: pages.podium.champion,
             speech,
             championMove: reply.podium.championMove,
             sideMove: reply.podium.sideMove,
@@ -287,10 +307,17 @@ export function wordsOf(
     pages.bestDisclaimer === undefined ||
     !written.has(pages.bestDisclaimer.author)
       ? {}
-      : { bestDisclaimer: reply.bestDisclaimer }),
+      : { bestDisclaimer: { checkIn: pages.bestDisclaimer.checkIn, ...reply.bestDisclaimer } }),
     ...(reply.ending === null || pages.ending === undefined || headline === '' || endingLine === ''
       ? {}
-      : { ending: { headline, line: endingLine, move: reply.ending.move } }),
+      : {
+          ending: {
+            hit: pages.ending.done >= pages.ending.plan,
+            headline,
+            line: endingLine,
+            move: reply.ending.move,
+          },
+        }),
   };
   return { members: result, story };
 }

@@ -167,8 +167,18 @@ describe('createWeeklyAwards', () => {
       story: {
         version: 1,
         order: ['meals', 'hottest', 'myWeek', 'bestDisclaimer'],
-        podium: { speech: '周三下着雨还去跑了 5 公里。', championMove: 'pose', sideMove: 'pump' },
-        ending: { headline: '差一点', line: '还差 3 天，腿已经在热身了', move: 'warmup' },
+        podium: {
+          champion: ana,
+          speech: '周三下着雨还去跑了 5 公里。',
+          championMove: 'pose',
+          sideMove: 'pump',
+        },
+        ending: {
+          hit: false,
+          headline: '差一点',
+          line: '还差 3 天，腿已经在热身了',
+          move: 'warmup',
+        },
       },
     });
     expect(asked).toHaveLength(1);

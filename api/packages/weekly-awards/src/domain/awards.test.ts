@@ -16,6 +16,7 @@ import { WeekStart } from './schedule.js';
 const ana = MemberId.parse('a0000000-0000-4000-8000-000000000001');
 const bo = MemberId.parse('a0000000-0000-4000-8000-000000000002');
 const cy = MemberId.parse('a0000000-0000-4000-8000-000000000003');
+const NOTE = 'c0000000-0000-4000-8000-0000000000aa';
 
 const none = { line: null, hottest: null };
 const noPages = { podium: null, meals: null, bestDisclaimer: null, ending: null };
@@ -151,7 +152,7 @@ describe('wordsOf', () => {
       weekOf([ana], {
         podium: { champion: ana, sides: [] },
         meals: { healthy: 1, cheat: 2 },
-        bestDisclaimer: { author: ana, text: 'oncall' },
+        bestDisclaimer: { checkIn: NOTE, author: ana, text: 'oncall' },
         ending: { done: 5, plan: 4 },
       }),
     );
@@ -160,13 +161,19 @@ describe('wordsOf', () => {
       line: '四天全勤',
       hottest: { line: '这条火了', move: 'pose' },
     });
+    // Each page's words keep the fact they were written for.
     expect(all?.story).toStrictEqual({
       version: 1,
       order: ['bestDisclaimer', 'meals', 'myWeek', 'hottest'],
-      podium: { speech: '周三下着雨还去跑了 5 公里。', championMove: 'pose', sideMove: 'pump' },
+      podium: {
+        champion: ana,
+        speech: '周三下着雨还去跑了 5 公里。',
+        championMove: 'pose',
+        sideMove: 'pump',
+      },
       meals: { line: '火锅两顿' },
-      bestDisclaimer: { authorMove: 'flat', squadMove: 'laugh' },
-      ending: { headline: '稳了', line: '超额 1 次，多出来那次算利息', move: 'wave' },
+      bestDisclaimer: { checkIn: NOTE, authorMove: 'flat', squadMove: 'laugh' },
+      ending: { hit: true, headline: '稳了', line: '超额 1 次，多出来那次算利息', move: 'wave' },
     });
     // No pages, or a champion and author the model wasn't told about: none of their words.
     expect(wordsOf(reply, weekOf([ana]))?.story).toStrictEqual({
@@ -178,7 +185,7 @@ describe('wordsOf', () => {
         reply,
         weekOf([ana], {
           podium: { champion: bo, sides: [ana] },
-          bestDisclaimer: { author: bo, text: 'oncall' },
+          bestDisclaimer: { checkIn: NOTE, author: bo, text: 'oncall' },
         }),
       )?.story,
     ).toStrictEqual({ version: 1, order: ['bestDisclaimer', 'meals', 'myWeek', 'hottest'] });
@@ -281,7 +288,7 @@ describe('promptFor', () => {
           pages: {
             podium: { champion: ana, sides: [cy, bo] },
             meals: { healthy: 2, cheat: 1 },
-            bestDisclaimer: { author: cy, text: '别人的请假条' },
+            bestDisclaimer: { checkIn: NOTE, author: cy, text: '别人的请假条' },
             ending: { done: 1, plan: 7 },
           },
         }),

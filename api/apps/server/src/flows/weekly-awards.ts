@@ -295,22 +295,70 @@ export async function squadStory(
   const members = state.awards.members.filter(({ member }) => inSquad.has(member));
   const own = members.find(({ member }) => member === MemberId.parse(viewer));
   const words = state.awards.story;
-  return {
+  // The AI's words only on the page they were written for: a member leaving or a later
+  // reaction can change the champion, the best note or whether the squad hit its plan.
+  const podiumWords =
+    words?.podium?.champion === facts.podium?.champion ? words?.podium : undefined;
+  const noteWords =
+    words?.bestDisclaimer?.checkIn === facts.bestDisclaimer?.checkIn
+      ? words?.bestDisclaimer
+      : undefined;
+  const endingWords =
+    facts.ending !== undefined && words?.ending?.hit === facts.ending.done >= facts.ending.plan
+      ? words.ending
+      : undefined;
+  const story: SquadStory = {
     ...facts,
     status: 'ready',
     members,
-    ...(words === undefined ? {} : { order: ['podium', 'titles', ...words.order, 'ending'] }),
-    ...(facts.podium === undefined ? {} : { podium: { ...facts.podium, ...words?.podium } }),
+    ...(facts.podium === undefined || podiumWords === undefined
+      ? {}
+      : {
+          podium: {
+            ...facts.podium,
+            speech: podiumWords.speech,
+            championMove: podiumWords.championMove,
+            sideMove: podiumWords.sideMove,
+          },
+        }),
     ...(facts.myWeek === undefined
       ? {}
       : { myWeek: { ...facts.myWeek, ...(own?.line === undefined ? {} : { line: own.line }) } }),
     ...(own?.topCheckIn === undefined ? {} : { hottest: { ...own.topCheckIn, ...own.hottest } }),
     ...(facts.meals === undefined ? {} : { meals: { ...facts.meals, ...words?.meals } }),
-    ...(facts.bestDisclaimer === undefined
+    ...(facts.bestDisclaimer === undefined || noteWords === undefined
       ? {}
-      : { bestDisclaimer: { ...facts.bestDisclaimer, ...words?.bestDisclaimer } }),
-    ...(facts.ending === undefined ? {} : { ending: { ...facts.ending, ...words?.ending } }),
+      : {
+          bestDisclaimer: {
+            ...facts.bestDisclaimer,
+            authorMove: noteWords.authorMove,
+            squadMove: noteWords.squadMove,
+          },
+        }),
+    ...(facts.ending === undefined || endingWords === undefined
+      ? {}
+      : {
+          ending: {
+            ...facts.ending,
+            headline: endingWords.headline,
+            line: endingWords.line,
+            move: endingWords.move,
+          },
+        }),
   };
+  if (words === undefined) return story;
+  // The AI's order, less the pages this reader's story doesn't have.
+  const has: Record<StoryPage, boolean> = {
+    podium: story.podium !== undefined,
+    titles: members.length > 0,
+    myWeek: story.myWeek !== undefined,
+    hottest: story.hottest !== undefined,
+    meals: story.meals !== undefined,
+    bestDisclaimer: story.bestDisclaimer !== undefined,
+    ending: story.ending !== undefined,
+  };
+  const order: StoryPage[] = ['podium', 'titles', ...words.order, 'ending'];
+  return { ...story, order: order.filter((page) => has[page]) };
 }
 
 /**
@@ -440,6 +488,7 @@ async function memberWeeks(
         ? {}
         : {
             bestDisclaimer: {
+              checkIn: bestDisclaimer.checkIn,
               author: MemberId.parse(bestDisclaimer.author),
               text: bestDisclaimer.text,
             },

@@ -5328,11 +5328,11 @@ extension Components {
                     case bestDisclaimer = "bestDisclaimer"
                     case ending = "ending"
                 }
-                /// The pages in the order the AI picked: `podium` and `titles` first, `ending` last. Skip a page whose data is missing. Missing when the AI picked none.
+                /// The pages this story has, in the order the AI picked: `podium` and `titles` first, `ending` last. Missing when the AI picked none (play the default order).
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/order`.
                 public typealias OrderPayload = [Components.Schemas.WeekStory.Case1Payload.OrderPayloadPayload]
-                /// The pages in the order the AI picked: `podium` and `titles` first, `ending` last. Skip a page whose data is missing. Missing when the AI picked none.
+                /// The pages this story has, in the order the AI picked: `podium` and `titles` first, `ending` last. Missing when the AI picked none (play the default order).
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/order`.
                 public var order: Components.Schemas.WeekStory.Case1Payload.OrderPayload?
@@ -5350,7 +5350,7 @@ extension Components {
                 ///   - ending:
                 ///   - status:
                 ///   - titles: Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
-                ///   - order: The pages in the order the AI picked: `podium` and `titles` first, `ending` last. Skip a page whose data is missing. Missing when the AI picked none.
+                ///   - order: The pages this story has, in the order the AI picked: `podium` and `titles` first, `ending` last. Missing when the AI picked none (play the default order).
                 public init(
                     version: Components.Schemas.WeekStory.Case1Payload.VersionPayload,
                     squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload,

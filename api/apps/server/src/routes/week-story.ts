@@ -258,8 +258,8 @@ export const WeekStoryBody = z
           .optional()
           .meta({
             description:
-              'The pages in the order the AI picked: `podium` and `titles` first, `ending` last. ' +
-              'Skip a page whose data is missing. Missing when the AI picked none.',
+              'The pages this story has, in the order the AI picked: `podium` and `titles` first, ' +
+              '`ending` last. Missing when the AI picked none (play the default order).',
           }),
       })
       .meta({ description: 'The week’s titles are written.' }),

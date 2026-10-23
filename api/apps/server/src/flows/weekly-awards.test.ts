@@ -408,15 +408,8 @@ describe('weekly awards', () => {
     // Cy's only check-in came after the awards: nothing of theirs is hottest, nor their week.
     expect(forCy.hottest).toBeUndefined();
     expect(forCy.myWeek).toBeUndefined();
-    expect(forCy.order).toStrictEqual([
-      'podium',
-      'titles',
-      'hottest',
-      'myWeek',
-      'meals',
-      'bestDisclaimer',
-      'ending',
-    ]);
+    // The AI's order, less the pages Cy's story doesn't have (no week, no hottest, no meals, no note).
+    expect(forCy.order).toStrictEqual(['podium', 'titles', 'ending']);
     expect(forCy.podium).toStrictEqual({
       champion: ana.userId,
       sides: [],
@@ -439,6 +432,7 @@ describe('weekly awards', () => {
     expect(forAna.hottest?.checkIn).toBe(top);
     expect(forAna.hottest?.caption).toBe(caption);
     expect(forAna.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
+    expect(forAna.order).toStrictEqual(['podium', 'titles', 'hottest', 'myWeek', 'ending']);
     expect([forAna.hottest?.line, forAna.hottest?.move]).toStrictEqual(['这条火了', 'pose']);
     expect(forAna.myWeek).toStrictEqual({
       plan: 1,
@@ -613,6 +607,46 @@ describe('weekly awards', () => {
     );
     const left = Story.parse((await read({ token: ana.token, squad })).body);
     expect(left.titles?.map((each) => each.member)).toStrictEqual([ana.userId]);
+  });
+
+  it('drops the AI’s words from a page whose facts changed after the awards', async () => {
+    const { run, read } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    // Both plan one day and train it: Ana takes the crown (the first to join), Bo stands beside.
+    for (const each of [ana, bo]) {
+      await planStore.save({
+        member: CheckInMember.parse(each.userId),
+        weekStart: CheckInWeek.parse(WEEK),
+        days: [rest, rest, train, rest, rest, rest, rest],
+      });
+      await trained(each, { squad });
+    }
+    await run();
+    const before = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(before.podium).toStrictEqual({
+      champion: ana.userId,
+      sides: [bo.userId],
+      speech: '一周练够了计划',
+      championMove: 'pose',
+      sideMove: 'wave',
+    });
+    expect(before.ending?.headline).toBe('差一点');
+
+    // Ana leaves: Bo is the champion now, and the 颁奖词 written for Ana's week isn't his.
+    await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${ana.userId}`.execute(
+      db,
+    );
+    const after = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(after.podium).toStrictEqual({ champion: bo.userId, sides: [] });
+    // The squad still hit its plan, so the ending keeps its words.
+    expect(after.ending).toStrictEqual({
+      done: 1,
+      plan: 1,
+      headline: '差一点',
+      line: '下周的腿已经在热身了',
+      move: 'warmup',
+    });
   });
 
   it('keeps trying a squad still failing into the next week', async () => {
