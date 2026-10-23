@@ -11,13 +11,13 @@ import Testing
 /// typing at the laptop and crying on 注销账号, and the props' moves in the editor.
 extension CharacterPreviewTests {
     /// `09-sport-kits.gif`, `10-entrance.gif`, `11-typing.gif`, `12-teary.gif` and
-    /// `14-prop-moves.gif`.
+    /// `15-prop-moves.gif`.
     func writeMoves(to folder: URL) throws {
         try writeKits(to: folder.appendingPathComponent("09-sport-kits.gif"))
         try writeEntrance(to: folder.appendingPathComponent("10-entrance.gif"))
         try writeMeMove(typing: true, to: folder.appendingPathComponent("11-typing.gif"))
         try writeMeMove(typing: false, to: folder.appendingPathComponent("12-teary.gif"))
-        try writePropMoves(to: folder.appendingPathComponent("14-prop-moves.gif"))
+        try writePropMoves(to: folder.appendingPathComponent("15-prop-moves.gif"))
     }
 
     /// Each prop the editor offers, held by the lifter and the cat, playing its move once every

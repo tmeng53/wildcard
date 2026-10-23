@@ -1,6 +1,5 @@
 /* The home page: one screen. The gym wall with the headline, slogan and one button; the squad stands
    on the gym floor; a thin white footer. Tokens from /wildcard.css (design system v4, gym). Light only. */
-.home { --sig: var(--graphite); --on-sig: var(--volt); }
 /* The body is the size container, not .site: a container is a stacking context, and the headline's
    tape canvas (on the body, z-index 3) has to pass under the squad (z-index 4). */
 .home { container: site / inline-size; }
@@ -20,16 +19,7 @@
 /* --cw also fits the height left under the hero (nav, padding, the hero at about 2.4 × --h, the gap), so the
    front row's feet stay on screen; the squad is about 2.2 × --cw tall */
 .floor { --cw: max(72px, min(29cqw, 230px, calc((100svh - 176px - var(--h) * 2.4) / 2.2))); --gh: calc(var(--cw) * .62 + 40px); position: relative; overflow-x: clip; flex: 1; background: var(--gym-sky); display: flex; flex-direction: column; }
-/* the gym floor, as on the app's welcome screen: graphite skirting, a volt line, faint tiles */
-.ground { position: absolute; left: 0; right: 0; bottom: 0; height: var(--gh); pointer-events: none;
-  background: linear-gradient(var(--graphite), var(--graphite)) 0 0 / 100% 4px no-repeat, linear-gradient(var(--on-sig), var(--on-sig)) 0 4px / 100% 3px no-repeat,
-    repeating-linear-gradient(90deg, var(--gym-tile) 0 2px, transparent 2px 64px) 0 7px / 100% 100% no-repeat,
-    repeating-linear-gradient(180deg, transparent 0 45px, var(--gym-tile) 45px 47px, transparent 47px 64px) 0 7px / 100% 100% no-repeat, var(--gym-floor); }
 .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
-/* the logo, top left: the black-and-white mark, then the brand name as live text */
-.logo { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-family: var(--num); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: .02em; color: var(--ink); text-decoration: none; }
-.logo img { display: block; width: 30px; height: 30px; }
-
 /* phones and tablets: the hero sits centred in the space above the squad */
 .main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 40px; padding-block: 40px 0; }
 .hero { align-self: center; }
@@ -41,19 +31,7 @@ h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight:
 /* --h (on .floor) is the headline's size; the slogan and button follow it, so they keep the desktop's
    proportions on a phone (floored at sizes that stay easy to read and tap) */
 .sub { margin: calc(var(--h) * .16) 0 0; font-size: clamp(17px, calc(var(--h) * .24), 30px); line-height: 1.3; font-weight: 600; text-wrap: balance; }
-.btn { margin-top: clamp(20px, calc(var(--h) * .3), 32px); height: clamp(46px, calc(var(--h) * .5), 56px); padding: 0 1.6em; border-radius: 999px; background: var(--sig); color: var(--on-sig); font-size: clamp(16px, calc(var(--h) * .17), 18px); font-weight: 600; display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; transition: transform .15s; }
-.btn:active { transform: scale(.97); }
-/* a beam of volt light runs round the button's edge (after Magic UI's border beam), with a soft halo:
-   a conic gradient turned by --beam, masked to a 2px ring just outside the pill */
-@property --beam { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-.btn { position: relative; }
-.btn::before { content: ""; position: absolute; inset: -4px; border-radius: inherit; padding: 2px; pointer-events: none;
-  background: conic-gradient(from var(--beam), color-mix(in srgb, var(--volt) 22%, transparent) 0 55%, color-mix(in srgb, var(--volt) 60%, transparent) 75%, var(--volt) 88%, var(--white) 93%, color-mix(in srgb, var(--volt) 22%, transparent) 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--volt) 70%, transparent)); animation: beam 3.2s linear infinite; }
-@keyframes beam { to { --beam: 360deg; } }
-@media (prefers-reduced-motion: reduce) { .btn::before { animation: none; } }
-
+.btn { margin-top: clamp(20px, calc(var(--h) * .3), 32px); height: clamp(46px, calc(var(--h) * .5), 56px); padding: 0 1.6em; font-size: clamp(16px, calc(var(--h) * .17), 18px); }
 /* the squad: two rows with depth (3 back, 2 front), the front row's feet on the floor */
 .squad { position: relative; z-index: 4; pointer-events: none; height: calc(var(--cw) * 4 / 3 * 1.62); margin-bottom: -4px; }
 .c { position: absolute; width: var(--cw); aspect-ratio: 3 / 4; height: auto; border: 0; padding: 0; background: none; flex: none; -webkit-tap-highlight-color: transparent; }
