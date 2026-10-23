@@ -62,11 +62,9 @@ final class SignUpUITests: XCTestCase {
             app.descendants(matching: .any)["squad.found"].waitForExistence(timeout: Self.wait),
             "the squad wasn't found")
         let squadDone = app.buttons["squad.done"]
-        XCTAssertFalse(squadDone.isEnabled, "加入小队 is on before agreeing to AI")
         XCTAssertTrue(
-            app.descendants(matching: .any)["squad.privacyPolicy"].exists, "the AI consent has no privacy policy link")
-        app.buttons["squad.aiConsent"].tap()
-        waitFor(squadDone, "isEnabled == true", "加入小队 stays off with a squad found and consent given")
+            app.descendants(matching: .any)["squad.aiConsent"].exists, "no AI consent line under 加入小队")
+        waitFor(squadDone, "isEnabled == true", "加入小队 stays off with a squad found")
         keepScreenshot(named: "43-signup-squad-join")
         squadDone.tap()
     }
@@ -143,8 +141,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertEqual(app.textFields["squad.name"].value as? String, "Sam's squad")
         XCTAssertEqual(squadDone.label, "Start squad")
         keepScreenshot(named: "49-signup-squad-en")
-        app.buttons["squad.aiConsent"].tap()
-        waitFor(squadDone, "isEnabled == true", "Start squad stays off after agreeing")
+        waitFor(squadDone, "isEnabled == true", "Start squad stays off with a name")
         squadDone.tap()
 
         let skip = app.buttons["sports.skip"]
