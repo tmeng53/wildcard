@@ -22,7 +22,7 @@ export function createAwardSettings(deps: {
   return {
     current: () => deps.store.current(),
     change: async ({ moves, ...change }, by) => {
-      const current = await deps.store.current();
+      const current = await deps.store.current({ forUpdate: true });
       const settings = AwardSettings.parse({
         ...current,
         ...change,

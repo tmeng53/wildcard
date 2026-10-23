@@ -81,8 +81,8 @@ export function disclaimerDrafts(deps: {
     operationId: 'writeDisclaimerDrafts',
     summary: 'Three AI drafts for a disclaimer',
     description:
-      'Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails ' +
-      'doesn’t count. On any failure, show the dice suggestions instead of an error.',
+      'Each member gets a number of batches in any 24 hours, set on the server. A batch that ' +
+      'fails doesn’t count. On any failure, show the dice suggestions instead of an error.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {

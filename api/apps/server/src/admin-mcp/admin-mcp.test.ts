@@ -437,13 +437,30 @@ describe('the admin MCP server', () => {
       const changed = await call('change_disclaimer_draft_settings', {
         model: 'anthropic/claude-haiku-5-5',
         batchesPerDay: 7,
+        // Not exact in a 4-byte float: the row and its log must still agree.
+        memeChance: 0.15,
       });
-      const expected = { ...drafts, model: 'anthropic/claude-haiku-5-5', batchesPerDay: 7 };
+      const expected = {
+        ...drafts,
+        model: 'anthropic/claude-haiku-5-5',
+        batchesPerDay: 7,
+        memeChance: 0.15,
+      };
       expect(JSON.parse(changed.text)).toStrictEqual(expected);
       expect(await read('get_disclaimer_draft_settings')).toStrictEqual(expected);
       // The same change again saves nothing new.
-      await call('change_disclaimer_draft_settings', { batchesPerDay: 7 });
+      await call('change_disclaimer_draft_settings', { batchesPerDay: 7, memeChance: 0.15 });
       expect(await events('disclaimer_draft_setting_events')).toStrictEqual([expected]);
+
+      // Two admins at once, each changing one thing: both changes stand.
+      await Promise.all([
+        call('change_disclaimer_draft_settings', { batchesPerDay: 8 }),
+        call('change_disclaimer_draft_settings', { writing: false }),
+      ]);
+      expect(await read('get_disclaimer_draft_settings')).toMatchObject({
+        batchesPerDay: 8,
+        writing: false,
+      });
 
       const moved = await call('change_weekly_award_settings', {
         moves: { pump: '握拳，跳起来' },
@@ -465,8 +482,10 @@ describe('the admin MCP server', () => {
       expect(await events('weekly_award_setting_events')).toHaveLength(1);
     } finally {
       await call('change_disclaimer_draft_settings', {
+        writing: drafts.writing,
         model: drafts.model,
         batchesPerDay: drafts.batchesPerDay,
+        memeChance: drafts.memeChance,
       });
       await call('change_weekly_award_settings', { moves: awards.moves });
     }

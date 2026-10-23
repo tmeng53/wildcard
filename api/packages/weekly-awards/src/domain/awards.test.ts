@@ -214,4 +214,27 @@ describe('promptFor', () => {
     expect(prompt.moves).toHaveLength(AwardMove.options.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
   });
+
+  it('lists the moves in their own order, whatever order the settings keep them in', () => {
+    const reversed = z
+      .record(AwardMove, z.string())
+      .parse(Object.fromEntries(Object.entries(moves).reverse()));
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({ weekStart: WeekStart.parse('2026-10-19'), moves: reversed, members: [] }),
+      ),
+    );
+    expect(prompt.moves.map(({ id }) => id)).toStrictEqual([
+      'cheer',
+      'pump',
+      'pose',
+      'warmup',
+      'stretch',
+      'doze',
+      'flat',
+      'laugh',
+      'wave',
+      'fullbelly',
+    ]);
+  });
 });
