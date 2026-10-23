@@ -248,6 +248,22 @@ describe('a week’s 饮食小目标', () => {
     ]);
   });
 
+  it('clears a week’s goals, and logs nothing for clearing a week that had none', async () => {
+    const member = await newMember();
+    await plans.saveFuelGoals({ member, weekStart: week('2026-11-02'), goals: [] });
+    await plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [water] });
+    const cleared = await plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [] });
+    expect(cleared).toMatchObject({ fuelGoals: [] });
+    expect(await plans.find({ member, weekStart: nextWeek })).toStrictEqual(cleared);
+    const { rows } = await sql<{ week_start: string; payload: unknown }>`
+      select week_start::text, payload from fuel_goal_events where member_id = ${member} order by id
+    `.execute(db);
+    expect(rows).toStrictEqual([
+      { week_start: '2026-10-26', payload: { version: 1, goals: [water] } },
+      { week_start: '2026-10-26', payload: { version: 1, goals: [] } },
+    ]);
+  });
+
   it('refuses this week’s and past weeks’, and needs the member’s time zone', async () => {
     const member = await newMember();
     await expect(

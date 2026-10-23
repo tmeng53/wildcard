@@ -1,4 +1,4 @@
-import type { MemberId } from '../domain/check-in.js';
+import type { LocalDay, MemberId } from '../domain/check-in.js';
 import type { FuelGoals } from '../domain/fuel-goal.js';
 import {
   DEFAULT_PLAN_DAYS,
@@ -76,37 +76,40 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
     return { today: localDayAt(deps.clock(), timeZone), joinedOn: localDayAt(joinedAt, timeZone) };
   }
 
-  async function plannedWeek(member: MemberId, plan: WeeklyPlan): Promise<PlannedWeek> {
-    const [fuelGoals, calendar] = await Promise.all([
-      deps.store.fuelGoals(member, plan.weekStart),
-      deps.calendarOf(member),
-    ]);
+  async function plannedWeek(
+    { member, joinedOn }: { readonly member: MemberId; readonly joinedOn: LocalDay | undefined },
+    plan: WeeklyPlan,
+  ): Promise<PlannedWeek> {
+    const fuelGoals = await deps.store.fuelGoals(member, plan.weekStart);
     return {
       ...plan,
       fuelGoals: fuelGoals ?? [],
-      firstWeek:
-        calendar === undefined
-          ? undefined
-          : weekStartOf(localDayAt(calendar.joinedAt, calendar.timeZone)),
+      firstWeek: joinedOn === undefined ? undefined : weekStartOf(joinedOn),
     };
   }
 
   return {
     async find(input) {
-      return plannedWeek(input.member, await findWeeklyPlan(deps, input));
+      const [plan, calendar] = await Promise.all([
+        findWeeklyPlan(deps, input),
+        deps.calendarOf(input.member),
+      ]);
+      const joinedOn =
+        calendar === undefined ? undefined : localDayAt(calendar.joinedAt, calendar.timeZone);
+      return plannedWeek({ member: input.member, joinedOn }, plan);
     },
     async save({ member, weekStart, days }) {
       const { today, joinedOn } = await daysOf(member);
       const current = await findWeeklyPlan(deps, { member, weekStart });
       checkPlanChange({ current, next: days, today, joinedOn });
       await deps.store.save({ member, weekStart, days });
-      return plannedWeek(member, { weekStart, days, source: 'saved' });
+      return plannedWeek({ member, joinedOn }, { weekStart, days, source: 'saved' });
     },
     async saveFuelGoals({ member, weekStart, goals }) {
-      const { today } = await daysOf(member);
+      const { today, joinedOn } = await daysOf(member);
       checkFuelGoalsChange({ weekStart, today });
       await deps.store.saveFuelGoals({ member, weekStart, goals });
-      return plannedWeek(member, await findWeeklyPlan(deps, { member, weekStart }));
+      return plannedWeek({ member, joinedOn }, await findWeeklyPlan(deps, { member, weekStart }));
     },
   };
 }

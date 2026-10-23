@@ -1,8 +1,8 @@
 import { typedText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
-// 饮食小目标: up to 3 eating habits a member sets for a week, as the app's 出赛表 has them
-// (`FuelGoal` in ios/Packages/Schedule). Habits only: never a body number, a calorie or a macro.
+// 饮食小目标: up to 3 eating habits a member sets for a week on the app's 出赛表. Habits only:
+// never a body number, a calorie or a macro.
 
 /** How many goals a week holds. */
 export const MAX_FUEL_GOALS = 3;
