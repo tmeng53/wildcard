@@ -94,7 +94,7 @@ public struct TodayView: View {
                         mine: myWeek(home: home, day: day, week: week.mine),
                         page: $cardPage
                     ) { member in
-                        Head(player: model.head(of: member.id))
+                        if let player = model.head(of: member.id) { CharacterHead(player: player) }
                     }
                     .padding(.top, Space.xs)
                     .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
@@ -209,20 +209,6 @@ private struct MyPayoff: View {
 
     /// How far above the feet the top of the head is, in the rig's points.
     private static let headHeight = 250.0
-}
-
-/// A member's head in the card's ring.
-private struct Head: View {
-    let player: CharacterPlayer?
-
-    var body: some View {
-        if let frame = player?.restFrame {
-            CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
-        }
-    }
-
-    /// The face on the rig's 240 by 320 canvas.
-    private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
 }
 
 /// The caption in the character's speech bubble. Nothing until the first post with a line.

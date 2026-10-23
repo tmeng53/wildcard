@@ -3,6 +3,7 @@ test-results/
 playwright-report/
 # Written by `pnpm generate`; `pnpm lint` checks it is current.
 public/home/characters.js
+public/join/characters.js
 # HTML and CSS are laid out by hand, one rule per line, like the legal pages.
 **/*.html
 **/*.css

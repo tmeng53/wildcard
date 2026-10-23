@@ -1,9 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { DisclaimerWriterUnavailableError, type LanguageModel } from '@wildcard/disclaimer-drafts';
+import { DisclaimerWriterUnavailableError } from '@wildcard/disclaimer-drafts';
 
-/** Claude Haiku 5.5: fast and cheap, and it won the blind test for 请假条 copy (2026-10-18). */
-export const ANTHROPIC_MODEL = 'claude-haiku-5-5';
+import type { ProviderModels } from './language-models.js';
 
 /**
  * A member is waiting with the button pressed: past this, the app's dice are the better answer.
@@ -20,8 +19,6 @@ const MAX_TOKENS = 4_096;
 /** The language model on Anthropic's Claude API, with structured output. */
 export function createAnthropicLanguageModel(options: {
   readonly apiKey: string;
-  /** Which Claude model answers; `ANTHROPIC_MODEL` unless the config names another. */
-  readonly model?: string;
   /**
    * How long one attempt may take, and how many tokens its answer may use (reasoning
    * included). A member waiting on drafts gets the defaults; a job writing a squad's awards
@@ -33,7 +30,7 @@ export function createAnthropicLanguageModel(options: {
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
   readonly fetch?: typeof fetch;
-}): LanguageModel {
+}): ProviderModels {
   const client = new Anthropic({
     apiKey: options.apiKey,
     // Never the environment's: an ANTHROPIC_BASE_URL meant for another tool must not redirect
@@ -44,11 +41,11 @@ export function createAnthropicLanguageModel(options: {
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
   });
   return {
-    answer: async ({ instructions, prompt, reply }) => {
+    answer: async ({ model, instructions, prompt, reply }) => {
       let message;
       try {
         message = await client.messages.parse({
-          model: options.model ?? ANTHROPIC_MODEL,
+          model,
           max_tokens: options.maxOutputTokens ?? MAX_TOKENS,
           system: instructions,
           messages: [{ role: 'user', content: prompt }],
