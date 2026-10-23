@@ -42,8 +42,9 @@ public final class RecapShelf {
     /// - Parameters:
     ///   - squad: the squad and its people as the app holds them now; nil before the home loads.
     ///   - planNextWeek: 排下周 on the last page.
-    ///   - pickScene: the crown winner's scene pick (开箱选场地), opened once they finish the
-    ///     story; nil until that screen is wired, so the story just closes.
+    ///   - pickScene: called with the story once the reader closes it, so the scene pick
+    ///     (开箱选场地) can open for whoever picks next week's scene; the API says who that is
+    ///     (last week's crown winner, else the captain). Nil until that screen is wired.
     public init(
         service: any WeekStoryService, squad: @escaping @MainActor () -> Squad?,
         planNextWeek: @escaping @MainActor () -> Void = {}, pickScene: (@MainActor (WeekStory) -> Void)? = nil
@@ -87,12 +88,11 @@ public final class RecapShelf {
     }
 
     private func show(_ story: WeekStory, cast: StoryCast) {
-        let winnerPicks = pickScene != nil && story.podium?.champion == cast.viewer
         open = RecapModel(
             story: story, cast: cast, service: service,
             close: { [weak self] in
                 self?.open = nil
-                if winnerPicks { self?.pickScene?(story) }
+                self?.pickScene?(story)
             },
             planNextWeek: { [weak self] in
                 self?.open = nil
