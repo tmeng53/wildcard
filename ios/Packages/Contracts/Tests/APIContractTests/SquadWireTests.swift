@@ -79,7 +79,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
         ])
 }
 
-@Test func aSquadPostCarriesItsReactionsAndReplies() throws {
+@Test func aSquadPostCarriesItsReactions() throws {
     let checkIn =
         #"{"version":1,"id":"66666666-6666-6666-6666-666666666666","member":"\#(myID)","day":"2026-10-19","#
         + #""createdAt":"2026-10-19T14:00:00.000Z","audience":["\#(squad)"],"kind":"disclaimer","#
@@ -87,8 +87,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     let wire = try decode(
         Components.Schemas.SquadPostList.self,
         #"{"version":1,"posts":[{"checkIn":\#(checkIn),"#
-            + #""reactions":[{"member":"\#(mate)","emoji":"🥹","reactedAt":"2026-10-19T15:00:00.000Z"}],"#
-            + #""replies":[{"member":"\#(mate)","kind":"hug","repliedAt":"2026-10-19T15:00:00.000Z"}]}]}"#)
+            + #""reactions":[{"member":"\#(mate)","emoji":"🥹","reactedAt":"2026-10-19T15:00:00.000Z"}]}]}"#)
     let post = try #require(wire.posts.first)
     #expect(try CheckIn(post.checkIn).member == MemberID(try #require(UUID(uuidString: myID))))
     #expect(
@@ -97,7 +96,6 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                 member: MemberID(try #require(UUID(uuidString: mate))), emoji: try Emoji("🥹"),
                 reactedAt: Timestamp(millisecondsSince1970: 1_792_422_000_000))
         ])
-    #expect(post.replies.map(\.kind) == [.hug])
 }
 
 @Test func aReactionThatIsNotOneEmojiIsRefused() throws {

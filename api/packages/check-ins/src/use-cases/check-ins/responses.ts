@@ -2,8 +2,7 @@ import type { CheckInId, MemberId } from '../../domain/check-in.js';
 import type { CheckInStore, SquadMembership } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
-// What teammates leave on a check-in, one each: reactions on any check-in and replies on a
-// 请假条. Both are read and taken off the same way; only the store differs.
+// What teammates leave on a check-in, one each (reactions): read and taken off by the store given.
 
 interface Deps {
   readonly store: CheckInStore;

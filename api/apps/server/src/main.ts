@@ -12,7 +12,6 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
-  createPostgresReplyStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
   createWeekSummaryWords,
@@ -148,7 +147,6 @@ const checkIns = createCheckIns({
   // Who is in which squad is the squads module's to keep: check-ins ask it.
   membership: squads,
   reactions: createPostgresReactionStore(db),
-  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),

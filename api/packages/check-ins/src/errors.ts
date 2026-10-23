@@ -133,28 +133,6 @@ export class OwnCheckInReactionError extends AppError {
   }
 }
 
-/** Thrown when a member replies to their own 请假条: replies are for teammates. */
-export class OwnDisclaimerReplyError extends AppError {
-  override readonly name = 'OwnDisclaimerReplyError';
-  readonly reason = 'OWN_DISCLAIMER_REPLY';
-  readonly status = 'FAILED_PRECONDITION';
-
-  constructor() {
-    super('You can’t reply to your own 请假条.');
-  }
-}
-
-/** Thrown for a reply to a check-in that isn't a 今日请假条: only a 请假条 takes replies. */
-export class NotADisclaimerError extends AppError {
-  override readonly name = 'NotADisclaimerError';
-  readonly reason = 'NOT_A_DISCLAIMER';
-  readonly status = 'FAILED_PRECONDITION';
-
-  constructor(readonly checkInId: string) {
-    super(`Check-in ${checkInId} isn’t a 请假条, so it takes no replies.`);
-  }
-}
-
 /** Thrown for a change to a past week's plan: past weeks are kept as they were. */
 export class WeekOverError extends AppError {
   override readonly name = 'WeekOverError';
