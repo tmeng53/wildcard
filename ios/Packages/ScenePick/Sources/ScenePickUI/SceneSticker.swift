@@ -20,7 +20,8 @@ public struct SceneSticker: View {
         self.onPicked = onPicked
     }
 
-    // The prototype's sticker: 300 wide, padded 14 (12 at the bottom), its blocks 12 apart.
+    // The prototype's sticker: 300 wide inside its padding of 14 (12 at the bottom), as CSS's
+    // content box measures it, so 328 across; its blocks 12 apart.
     static let width = 300.0
     private static let inset = 14.0
     private static let bottomInset = 12.0
@@ -50,10 +51,10 @@ public struct SceneSticker: View {
             .padding(.top, Space.s)
             .accessibilityIdentifier("scenePick.confirm")
         }
+        .frame(width: Self.width)
         .padding(.horizontal, Self.inset)
         .padding(.top, Self.inset)
         .padding(.bottom, Self.bottomInset)
-        .frame(width: Self.width)
         .background(
             Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Self.corner, style: .continuous)
         )
