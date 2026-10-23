@@ -26,6 +26,8 @@ public final class SignUpModel {
 
     var squad: SquadDraft
     private(set) var preview: Lookup = .none
+    /// The heads of the squad found, under its name: its members' characters, standing still.
+    private(set) var previewHeads: [CastMember] = []
     private(set) var joined: JoinedSquad?
     /// The teammates who welcome the member at 上场, the earliest to join first.
     private(set) var teammates: [CastMember] = []
@@ -159,7 +161,12 @@ public final class SignUpModel {
         Task {
             do throws(SignUpError) {
                 let found = try await service.preview(code)
-                if case .looking(code) = preview { preview = .found(found) }
+                guard case .looking(code) = preview else { return }
+                let heads = found.looks.map { CastMember(outfit: Outfit($0), persona: Persona($0)) }
+                for head in heads { await head.load(idle: false) }
+                guard case .looking(code) = preview else { return }
+                previewHeads = heads
+                preview = .found(found)
             } catch {
                 if case .looking(code) = preview { preview = .failed(code, error) }
             }

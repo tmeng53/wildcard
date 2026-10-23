@@ -67,6 +67,11 @@ const SquadInvite = z
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
     }),
     joined: z.boolean().meta({ description: 'True when the caller is in it already.' }),
+    looks: z.array(LookBody).meta({
+      description:
+        'The members’ characters, the earliest to join first, for the join screen to show the ' +
+        'squad. Members who haven’t made theirs yet are left out. No names or ids.',
+    }),
   })
   .openapi('SquadInvite');
 
@@ -293,6 +298,15 @@ export function squads(deps: {
 
   const caller = (userId: string) => MemberId.parse(userId);
 
+  /** The members' characters, in the order given, leaving out anyone without one yet. */
+  const looksOf = async (members: readonly MemberId[]) => {
+    const squadmates = await deps.members.squadmates(members);
+    return members.flatMap((member) => {
+      const look = squadmates.get(member)?.character?.look;
+      return look === undefined ? [] : [look];
+    });
+  };
+
   const signedInRoutes = new OpenAPIHono<SignedIn>()
     .openapi(listMine, async (c) => {
       const mine = await deps.squads.listMine(caller(c.var.caller.userId));
@@ -321,11 +335,12 @@ export function squads(deps: {
       return c.body(null, 204);
     })
     .openapi(preview, async (c) => {
-      const invite = await deps.squads.previewInvite({
+      const { name, memberCount, full, joined, members } = await deps.squads.previewInvite({
         inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
         viewer: caller(c.var.caller.userId),
       });
-      return c.json({ version: 1 as const, ...invite }, 200);
+      const looks = await looksOf(members);
+      return c.json({ version: 1 as const, name, memberCount, full, joined, looks }, 200);
     })
     .openapi(join, async (c) => {
       const { squad, joined } = await deps.squads.join({
@@ -339,11 +354,7 @@ export function squads(deps: {
     const { name, memberCount, full, members } = await deps.squads.previewPublicInvite(
       inviteCodeOf(c.req.valid('param').inviteCode),
     );
-    const squadmates = await deps.members.squadmates(members);
-    const looks = members.flatMap((member) => {
-      const look = squadmates.get(member)?.character?.look;
-      return look === undefined ? [] : [look];
-    });
+    const looks = await looksOf(members);
     c.header('cache-control', 'no-store');
     return c.json({ version: 1 as const, name, memberCount, full, looks }, 200);
   });

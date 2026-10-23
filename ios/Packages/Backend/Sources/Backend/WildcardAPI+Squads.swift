@@ -23,7 +23,9 @@ extension WildcardAPI {
         let wire = try await call {
             try await client.getSquadInvite(path: .init(inviteCode: code.text)).ok.body.json
         }
-        return SquadInvite(name: wire.name, memberCount: wire.memberCount, isFull: wire.full, joined: wire.joined)
+        return SquadInvite(
+            name: wire.name, memberCount: wire.memberCount, isFull: wire.full, joined: wire.joined,
+            looks: wire.looks.map(CharacterLook.init))
     }
 
     /// Joins the squad an invite code belongs to. Safe to repeat: a member already in it gets
@@ -48,4 +50,6 @@ public struct SquadInvite: Hashable, Sendable {
     public let isFull: Bool
     /// The member is in it already.
     public let joined: Bool
+    /// The members' characters, the earliest to join first; members without one are left out.
+    public let looks: [CharacterLook]
 }

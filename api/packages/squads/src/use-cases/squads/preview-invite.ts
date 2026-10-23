@@ -25,8 +25,11 @@ export interface PublicInvitePreview extends InviteSummary {
   readonly members: readonly MemberId[];
 }
 
-/** What a signed-in member holding an invite sees before joining. */
-export interface InvitePreview extends InviteSummary {
+/**
+ * What a signed-in member holding an invite sees before joining: the same as the web page, so
+ * the join screen can show the squad's characters too, and whether they are in it already.
+ */
+export interface InvitePreview extends PublicInvitePreview {
   /** True when the viewer is in the squad already. */
   readonly joined: boolean;
 }
@@ -38,7 +41,7 @@ export async function previewInvite(
 ): Promise<InvitePreview> {
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
-  return { ...summary(squad), joined: isMemberOf(squad, viewer) };
+  return { ...withMembers(squad), joined: isMemberOf(squad, viewer) };
 }
 
 /** The squad an invite code belongs to, as the web invite page shows it to anyone. */
@@ -48,6 +51,10 @@ export async function previewPublicInvite(
 ): Promise<PublicInvitePreview> {
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
+  return withMembers(squad);
+}
+
+function withMembers(squad: Squad): PublicInvitePreview {
   return { ...summary(squad), members: squad.members.map(({ member }) => member) };
 }
 

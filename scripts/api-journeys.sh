@@ -229,7 +229,7 @@ if want squad; then
   typed="$(tr '[:upper:]' '[:lower:]' <<<"${invite_code:0:4}")-${invite_code:4}"
   call GET "/squad-invites/$typed" "$newcomer_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false,"looks":[]}' ] ||
     fail "preview should show the name and 2 members only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 

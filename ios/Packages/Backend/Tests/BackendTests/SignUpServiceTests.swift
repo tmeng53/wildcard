@@ -55,7 +55,14 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let friend = try await stack.signedInMember()
     let signUp = APISignUpService(api: friend.api)
 
-    #expect(try await signUp.preview(code) == SquadPreview(code: code, name: "早八健身", memberCount: 1, isFull: false))
+    #expect(
+        try await signUp.preview(code)
+            == SquadPreview(
+                code: code, name: "早八健身", memberCount: 1, isFull: false,
+                looks: [
+                    CharacterLook(
+                        persona: "energetic", variants: ["body": "shiba", "top": "tee"], colors: ["top": "#3A7BD5"])
+                ]))
     try await signUp.agreeToAI()
     let joined = try await signUp.join(code)
     #expect(joined.id == made.id)
