@@ -45,6 +45,6 @@ struct RecapDemo: View {
         return RecapModel(
             story: story, cast: RecapSample.cast, service: nil,
             scenePicker: picks ? RecapSample.scenePicker() : nil, heldReveal: heldReveal,
-            close: close, planNextWeek: close, scenePicked: { _ in close() })
+            close: close, planNextWeek: close, scenePicked: { _, _ in close() })
     }
 }

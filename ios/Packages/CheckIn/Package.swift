@@ -38,6 +38,10 @@ let package = Package(
         ),
         .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain", "Contracts"]),
         // The screen's non-visual parts, and its String Catalog read as a file; runs on Linux too.
-        .testTarget(name: "CheckInUITests", dependencies: ["CheckInUI", "CheckInDomain", "Contracts"]),
+        .testTarget(
+            name: "CheckInUITests",
+            dependencies: [
+                "CheckInUI", "CheckInDomain", "Contracts", .product(name: "AvatarArt", package: "Avatar"),
+            ]),
     ]
 )
