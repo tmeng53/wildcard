@@ -14,10 +14,24 @@ struct SettingsView: View {
     let destinations: MeDestinations
     let close: () -> Void
     @State private var isSigningOut = false
+    @State private var isPickingNumber = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
+        ZStack {
+            if isPickingNumber {
+                JerseyNumberView(model: model) { isPickingNumber = false }
+                    .transition(.move(edge: .trailing))
+            } else {
+                menu
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
+    }
+
+    private var menu: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
@@ -53,6 +67,13 @@ struct SettingsView: View {
                 )
                 .accessibilityIdentifier("me.squad")
             }
+            ListRow(
+                Text("球衣号码", bundle: .module), value: Text(verbatim: model.overview?.cardNumber?.text ?? ""),
+                showsChevron: false
+            ) {
+                isPickingNumber = true
+            }
+            .accessibilityIdentifier("me.jerseyNumber")
             ListRow(
                 Text("往期战报", bundle: .module), showsDivider: false, showsChevron: false, action: destinations.pastRecaps
             )
