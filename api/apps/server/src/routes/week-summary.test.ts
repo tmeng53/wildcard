@@ -4,6 +4,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -18,8 +19,16 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -43,8 +52,10 @@ const app = createApp({
     membership: createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
+    replies: createPostgresReplyStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
@@ -56,9 +67,15 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
-  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  squads: createSquads({
+    store: createPostgresSquadStore(db),
+    inviteCodes: randomInviteCodes,
+    aiConsent: () => Promise.resolve(true),
+  }),
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+  aiConsent: aiConsentOn(db),
+  weeklyAwards: unusedWeeklyAwards,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,
@@ -166,7 +183,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
     const reacted = await call('PUT', {
       path: `/check-ins/${excuse}/reactions/mine`,
       token: me.token,
-      body: { version: 1, kind: 'lol' },
+      body: { version: 1, emoji: '😂' },
     });
     expect(reacted.status).toBe(201);
 
@@ -210,11 +227,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
           { kind: 'cheatMeals', label: '放纵餐', value: 0 },
           { kind: 'reactionsReceived', label: '收到的回应', value: 1 },
         ],
-        reactions: [
-          { kind: 'cheer', label: '加油', count: 0 },
-          { kind: 'highlight', label: '名场面', count: 0 },
-          { kind: 'lol', label: '笑死', count: 1 },
-        ],
+        reactions: [{ emoji: '😂', count: 1 }],
       },
       me: {
         stats: [
@@ -226,11 +239,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
           { kind: 'cheatMeals', value: 0 },
           { kind: 'reactionsReceived', value: 0 },
         ],
-        reactions: [
-          { kind: 'cheer', label: '加油', received: 0, given: 0 },
-          { kind: 'highlight', label: '名场面', received: 0, given: 0 },
-          { kind: 'lol', label: '笑死', received: 0, given: 1 },
-        ],
+        reactions: [{ emoji: '😂', received: 0, given: 1 }],
       },
     });
     expect(body).not.toHaveProperty('awards.0.winners.0.checkIn');
@@ -249,7 +258,6 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       ],
     });
     expect(english.body).toHaveProperty('squadTotals.stats.0.label', 'Days trained');
-    expect(english.body).toHaveProperty('me.reactions.2.label', 'LOL');
   });
 
   it('refuses a day that isn’t a Monday, a week not started, and non-members', async () => {

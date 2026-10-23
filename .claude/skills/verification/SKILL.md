@@ -13,6 +13,8 @@ Every claim that something works comes with evidence from the real thing, not a 
 - Every PR's **Verification** section lists each command you ran and the key line it printed. If a check couldn't run, write "inconclusive" and why.
 - Each commit and PR ends in a state you can check, ordered so the sequence proves itself (for example a failing test, then the fix).
 
+- **Look at every screenshot yourself.** Before sending screenshots or calling a UI change verified, check each one (smallest supported phone, long text where the screen has any) for content that is clipped, cut off, covered by buttons, keyboard or tab bar, or overlapping. Any such flaw is a failure, not a note. Where layout is at risk, add a UI test asserting the content's frames stay inside the visible area and clear of the controls over it.
+
 ## Tests that can fail
 
 - **Test behavior, not implementation.** Call the code the way its users do and assert a literal expected value or observable effect.

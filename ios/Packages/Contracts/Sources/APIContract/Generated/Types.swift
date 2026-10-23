@@ -32,6 +32,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/profile`.
     /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)`.
     func putMyProfile(_ input: Operations.PutMyProfile.Input) async throws -> Operations.PutMyProfile.Output
+    /// The signed-in member’s AI consent
+    ///
+    /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
+    ///
+    /// - Remark: HTTP `GET /me/ai-consent`.
+    /// - Remark: Generated from `#/paths//me/ai-consent/get(getMyAiConsent)`.
+    func getMyAiConsent(_ input: Operations.GetMyAiConsent.Input) async throws -> Operations.GetMyAiConsent.Output
+    /// Agree to the AI copy
+    ///
+    /// With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.
+    ///
+    /// - Remark: HTTP `PUT /me/ai-consent`.
+    /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
+    func putMyAiConsent(_ input: Operations.PutMyAiConsent.Input) async throws -> Operations.PutMyAiConsent.Output
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -39,9 +53,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)`.
     func saveCheckIn(_ input: Operations.SaveCheckIn.Input) async throws -> Operations.SaveCheckIn.Output
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -53,6 +67,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
     func listMyCheckIns(_ input: Operations.ListMyCheckIns.Input) async throws -> Operations.ListMyCheckIns.Output
+    /// Everything the signed-in member ever checked in, counted by kind
+    ///
+    /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
+    ///
+    /// - Remark: HTTP `GET /me/check-in-totals`.
+    /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
+    func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
     /// A signed URL to upload one check-in photo to
     ///
     /// - Remark: HTTP `POST /photo-uploads`.
@@ -79,6 +100,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
     func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
+    /// Reply to a teammate’s 请假条
+    ///
+    /// Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/put(replyToDisclaimer)`.
+    func replyToDisclaimer(_ input: Operations.ReplyToDisclaimer.Input) async throws -> Operations.ReplyToDisclaimer.Output
+    /// Take your reply off a 请假条
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/delete(removeMyReply)`.
+    func removeMyReply(_ input: Operations.RemoveMyReply.Input) async throws -> Operations.RemoveMyReply.Output
+    /// A 请假条’s replies
+    ///
+    /// Oldest first, for its author and the teammates who can see it. Empty for any other check-in.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/replies`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/get(listDisclaimerReplies)`.
+    func listDisclaimerReplies(_ input: Operations.ListDisclaimerReplies.Input) async throws -> Operations.ListDisclaimerReplies.Output
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -119,7 +161,7 @@ public protocol APIProtocol: Sendable {
     func getSquad(_ input: Operations.GetSquad.Input) async throws -> Operations.GetSquad.Output
     /// Create a squad
     ///
-    /// With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -140,7 +182,7 @@ public protocol APIProtocol: Sendable {
     func getSquadInvite(_ input: Operations.GetSquadInvite.Input) async throws -> Operations.GetSquadInvite.Output
     /// Join a squad by invite code
     ///
-    /// Safe to repeat: joining a squad the member is in answers 200 with it.
+    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.
     ///
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
@@ -187,6 +229,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
     func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
+    /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
+    ///
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
+    func nudgeSquadWeekStory(_ input: Operations.NudgeSquadWeekStory.Input) async throws -> Operations.NudgeSquadWeekStory.Output
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    func getSquadWeekStory(_ input: Operations.GetSquadWeekStory.Input) async throws -> Operations.GetSquadWeekStory.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -237,6 +293,30 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The signed-in member’s AI consent
+    ///
+    /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
+    ///
+    /// - Remark: HTTP `GET /me/ai-consent`.
+    /// - Remark: Generated from `#/paths//me/ai-consent/get(getMyAiConsent)`.
+    public func getMyAiConsent(headers: Operations.GetMyAiConsent.Input.Headers = .init()) async throws -> Operations.GetMyAiConsent.Output {
+        try await getMyAiConsent(Operations.GetMyAiConsent.Input(headers: headers))
+    }
+    /// Agree to the AI copy
+    ///
+    /// With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.
+    ///
+    /// - Remark: HTTP `PUT /me/ai-consent`.
+    /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
+    public func putMyAiConsent(
+        headers: Operations.PutMyAiConsent.Input.Headers = .init(),
+        body: Operations.PutMyAiConsent.Input.Body
+    ) async throws -> Operations.PutMyAiConsent.Output {
+        try await putMyAiConsent(Operations.PutMyAiConsent.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -254,9 +334,9 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -285,6 +365,15 @@ extension APIProtocol {
             query: query,
             headers: headers
         ))
+    }
+    /// Everything the signed-in member ever checked in, counted by kind
+    ///
+    /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
+    ///
+    /// - Remark: HTTP `GET /me/check-in-totals`.
+    /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
+    public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
+        try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
     }
     /// A signed URL to upload one check-in photo to
     ///
@@ -336,6 +425,53 @@ extension APIProtocol {
         headers: Operations.ListCheckInReactions.Input.Headers = .init()
     ) async throws -> Operations.ListCheckInReactions.Output {
         try await listCheckInReactions(Operations.ListCheckInReactions.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Reply to a teammate’s 请假条
+    ///
+    /// Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/put(replyToDisclaimer)`.
+    public func replyToDisclaimer(
+        path: Operations.ReplyToDisclaimer.Input.Path,
+        headers: Operations.ReplyToDisclaimer.Input.Headers = .init(),
+        body: Operations.ReplyToDisclaimer.Input.Body
+    ) async throws -> Operations.ReplyToDisclaimer.Output {
+        try await replyToDisclaimer(Operations.ReplyToDisclaimer.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your reply off a 请假条
+    ///
+    /// Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/replies/mine`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/mine/delete(removeMyReply)`.
+    public func removeMyReply(
+        path: Operations.RemoveMyReply.Input.Path,
+        headers: Operations.RemoveMyReply.Input.Headers = .init()
+    ) async throws -> Operations.RemoveMyReply.Output {
+        try await removeMyReply(Operations.RemoveMyReply.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A 请假条’s replies
+    ///
+    /// Oldest first, for its author and the teammates who can see it. Empty for any other check-in.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/replies`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/replies/get(listDisclaimerReplies)`.
+    public func listDisclaimerReplies(
+        path: Operations.ListDisclaimerReplies.Input.Path,
+        headers: Operations.ListDisclaimerReplies.Input.Headers = .init()
+    ) async throws -> Operations.ListDisclaimerReplies.Output {
+        try await listDisclaimerReplies(Operations.ListDisclaimerReplies.Input(
             path: path,
             headers: headers
         ))
@@ -416,7 +552,7 @@ extension APIProtocol {
     }
     /// Create a squad
     ///
-    /// With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -463,7 +599,7 @@ extension APIProtocol {
     }
     /// Join a squad by invite code
     ///
-    /// Safe to repeat: joining a squad the member is in answers 200 with it.
+    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.
     ///
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
@@ -566,6 +702,36 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
+    ///
+    /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
+    public func nudgeSquadWeekStory(
+        path: Operations.NudgeSquadWeekStory.Input.Path,
+        headers: Operations.NudgeSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.NudgeSquadWeekStory.Output {
+        try await nudgeSquadWeekStory(Operations.NudgeSquadWeekStory.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    ///
+    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
+    public func getSquadWeekStory(
+        path: Operations.GetSquadWeekStory.Input.Path,
+        headers: Operations.GetSquadWeekStory.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeekStory.Output {
+        try await getSquadWeekStory(Operations.GetSquadWeekStory.Input(
+            path: path,
+            headers: headers
         ))
     }
 }

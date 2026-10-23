@@ -28,22 +28,20 @@ extension StageLayout {
                     ]), scale: nil)
         ],
         stationsBySport: [.run: [.jogging]],
-        field: [StageRect(x: 55...335, y: 380...500)],
-        open: [StageRect(x: 0...390, y: 480...650)],
+        standing: [StageRect(x: 0...390, y: 346...650)],
         props: [])
 
     private static let poolLanes: [StationPath.Lane] = [328.0, 361, 394, 427].map {
         StationPath.Lane(from: 36, to: 354, y: $0)
     }
 
-    // No playing area: the deck in front of the water is the open floor.
+    // Only the deck in front of the water.
     static let pool = StageLayout(
         stations: [
             Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes, speed: 34), scale: nil)
         ],
         stationsBySport: [.swim: [.swimming]],
-        field: [],
-        open: [StageRect(x: 0...390, y: 474...650)],
+        standing: [StageRect(x: 0...390, y: 474...650)],
         props: [])
 
     static let gym = StageLayout(
@@ -62,8 +60,7 @@ extension StageLayout {
                 scale: nil),
         ],
         stationsBySport: [.run: [.treadmill], .strength: [.squatRack, .dumbbells], .yoga: [.yogaMat]],
-        field: [StageRect(x: 75...315, y: 420...500)],
-        open: [StageRect(x: 0...390, y: 440...650)],
+        standing: [StageRect(x: 0...390, y: 420...650)],
         props: [StageRect(x: 40...350, y: 350...392), StageRect(x: 40...178, y: 440...456)])
 
     static let tennis = StageLayout(
@@ -79,11 +76,9 @@ extension StageLayout {
                 scale: nil),
         ],
         stationsBySport: [.tennis: [.rally, .serve]],
-        field: [StageRect(x: 70...330, y: 346...470)],
+        standing: [StageRect(x: 0...390, y: 346...650)],
         // The net.
-        fieldGaps: [StageRect(x: 0...390, y: 375...402)],
-        open: [StageRect(x: 0...390, y: 480...650)],
-        props: [])
+        props: [StageRect(x: 0...390, y: 375...402)])
 
     static let climbing = StageLayout(
         stations: [
@@ -101,8 +96,7 @@ extension StageLayout {
                 scale: nil),
         ],
         stationsBySport: [.climb: [.topRope, .bouldering, .chalk]],
-        // The foot of the wall.
-        field: [StageRect(x: 75...315, y: 482...482)],
-        open: [StageRect(x: 0...390, y: 470...650)],
+        // From the foot of the wall.
+        standing: [StageRect(x: 0...390, y: 470...650)],
         props: [])
 }

@@ -144,14 +144,23 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       }
     },
 
-    async countTrainedDays(member) {
-      const { days } = await db
+    async totals(member) {
+      const counts = await db
         .selectFrom('check_ins')
-        .select(sql<string>`count(distinct day)`.as('days'))
+        .select([
+          sql<string>`count(distinct day) filter (where kind = 'trained')`.as('trainedDays'),
+          sql<string>`count(*) filter (where kind = 'healthyMeal')`.as('healthyMeals'),
+          sql<string>`count(*) filter (where kind = 'cheatMeal')`.as('cheatMeals'),
+          sql<string>`count(*) filter (where kind = 'disclaimer')`.as('disclaimers'),
+        ])
         .where('member_id', '=', member)
-        .where('kind', '=', 'trained')
         .executeTakeFirstOrThrow();
-      return Number(days);
+      return {
+        trainedDays: Number(counts.trainedDays),
+        healthyMeals: Number(counts.healthyMeals),
+        cheatMeals: Number(counts.cheatMeals),
+        disclaimers: Number(counts.disclaimers),
+      };
     },
 
     async listForSquad({ squad, members, from, to }) {
@@ -172,6 +181,20 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .orderBy('check_ins.id')
         .execute();
       return withAudiences(rows);
+    },
+
+    async squadsCheckedInto({ from, to, before }) {
+      const rows = await db
+        .selectFrom('check_in_squads')
+        .innerJoin('check_ins', 'check_ins.id', 'check_in_squads.check_in_id')
+        .select('check_in_squads.squad_id')
+        .distinct()
+        .where('check_ins.day', '>=', from)
+        .where('check_ins.day', '<=', to)
+        .where('check_ins.created_at', '<', before)
+        .orderBy('check_in_squads.squad_id')
+        .execute();
+      return rows.map((row) => SquadId.parse(row.squad_id));
     },
 
     async listForMember({ member, from, to }) {

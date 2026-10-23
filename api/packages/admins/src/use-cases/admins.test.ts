@@ -40,6 +40,12 @@ describe('admins', () => {
     await expect(admins.requireAdmin(id)).rejects.toThrow(NotAnAdminError);
   });
 
+  it('lists everyone on the admin list, and no one else', async () => {
+    const [admin, other] = [await member({ admin: true }), await member({ admin: false })];
+    const listed = new Set<string>(await admins.list());
+    expect([listed.has(admin), listed.has(other)]).toStrictEqual([true, false]);
+  });
+
   it('logs each change with who, when and what, and lists them newest first', async () => {
     const admin = await admins.requireAdmin(await member({ admin: true }));
     const tool = ToolName.parse('turn_off_meme');

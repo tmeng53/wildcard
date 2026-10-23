@@ -2,23 +2,43 @@ import { z } from 'zod';
 
 import type { CheckInRecord, MemberId, SquadId } from './check-in.js';
 
+const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' });
+
+/** No emoji in Unicode takes more code points than this; it keeps a stored one small. */
+const MAX_CODE_POINTS = 16;
+
 /**
- * The reactions a teammate can leave on a check-in in the app: 加油 (`cheer`, also a double tap),
- * 名场面 (`highlight`) and 笑死 (`lol`), with more to come (Tracy, 2026-10-19). Like Strava's kudos,
- * a member leaves at most one per check-in and can change it. The app shows each with its own copy.
+ * Whether `text` is one emoji: one grapheme whose first code point is an emoji that shows as
+ * one by itself, or is followed by more (a variation selector, a keycap, a skin tone, a joiner).
+ * So ❤️, 1️⃣, flags and family emoji are, and a bare digit or `#` is not.
  */
-export const ReactionKind = z.enum(['cheer', 'highlight', 'lol']);
-export type ReactionKind = z.infer<typeof ReactionKind>;
+function isOneEmoji(text: string): boolean {
+  // Code points, not graphemes: what a joiner or a selector follows is what matters here.
+  const codePoints = Array.from(text);
+  const [first] = codePoints;
+  if (first === undefined || codePoints.length > MAX_CODE_POINTS) return false;
+  if ([...graphemes.segment(text)].length !== 1) return false;
+  return (
+    /\p{Emoji}/u.test(first) && (/\p{Emoji_Presentation}/u.test(first) || codePoints.length > 1)
+  );
+}
+
+/**
+ * The reaction a teammate leaves on a check-in: any one emoji, like iMessage's (Tracy,
+ * 2026-10-20). A member leaves at most one per check-in and can change it.
+ */
+export const Emoji = z.string().refine(isOneEmoji, 'Not one emoji').brand<'Emoji'>();
+export type Emoji = z.infer<typeof Emoji>;
 
 /** A member's reaction on a check-in. */
 export interface Reaction {
   readonly member: MemberId;
-  readonly kind: ReactionKind;
+  readonly emoji: Emoji;
   readonly reactedAt: Date;
 }
 
-/** What reacting did: a new reaction, a different one in place of the member's last, or nothing. */
-export type ReactOutcome = 'created' | 'changed' | 'unchanged';
+/** What saving a reaction or reply did: a new one, a different one in place of the member's last, or nothing. */
+export type SaveOutcome = 'created' | 'changed' | 'unchanged';
 
 /**
  * The squads through which `viewer` sees a check-in: those it went to that both they and its

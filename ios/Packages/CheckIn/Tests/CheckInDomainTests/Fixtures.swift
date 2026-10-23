@@ -114,9 +114,9 @@ actor ScriptedBackend: CheckInBackend {
         return reactionList[checkIn] ?? []
     }
 
-    func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(CheckInError) {
+    func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
         if let failure { throw failure }
-        reactionList[checkIn] = [Reaction(member: myID, kind: kind, reactedAt: Timestamp(millisecondsSince1970: 0))]
+        reactionList[checkIn] = [Reaction(member: myID, emoji: emoji, reactedAt: Timestamp(millisecondsSince1970: 0))]
     }
 
     func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {

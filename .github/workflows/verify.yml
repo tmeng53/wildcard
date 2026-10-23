@@ -4,9 +4,12 @@
 # runner here: on a public repo a fork's PR could run code on that machine.
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
-# Free macOS runners are few and shared by every PR, so on a PR the `ios` and `avatar-preview`
-# jobs run only when it changes what they build; otherwise they are skipped, which branch
-# protection counts as passing. Pushes to main always run everything.
+# Free macOS runners are few and shared by every PR, so a PR that leaves the app and its build
+# and lint setup alone uses no Mac: `verify` runs on Linux (the Swift packages build there too,
+# and SwiftUI code didn't change), and `ios` and `avatar-preview` run only when it changes what
+# they build; otherwise they are skipped, which branch protection counts as passing. A PR that
+# changes only the marketing site (web/) also skips `verify` and `supabase`, which check nothing
+# the site uses; the `web` job checks the site, on Linux. Pushes to main run everything.
 name: verify
 
 on:
@@ -30,6 +33,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
+      other: ${{ steps.diff.outputs.other }}
+      web: ${{ steps.diff.outputs.web }}
+      app: ${{ steps.diff.outputs.app }}
       ios: ${{ steps.diff.outputs.ios }}
       avatar: ${{ steps.diff.outputs.avatar }}
     steps:
@@ -45,27 +51,70 @@ jobs:
           files="$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD")"
           printf '%s\n' "$files"
           touches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
+          # other: anything outside web/, i.e. whatever `verify` and `supabase` check.
+          echo "other=$(grep -qvE '^web/' <<<"$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # web: the website, and the app art and font its generated files come from.
+          echo "web=$(touches '^(web/|ios/Packages/Avatar/Sources/AvatarArt/|ios/Packages/DesignSystem/Sources/DesignSystemUI/Resources/Fonts/|scripts/verify\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
+          # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
+          echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "avatar=$(touches '^(ios/Packages/(Avatar|DesignSystem)/|scripts/avatar-preview\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
 
   verify:
-    if: github.event_name == 'push' || !github.event.pull_request.draft
-    runs-on: macos-26
+    needs: changes
+    # !cancelled(): on a push `changes` is skipped, which would skip this job too.
+    # A web-only PR skips it; if `changes` failed, run rather than skip.
+    if: >-
+      !cancelled() && (github.event_name == 'push' ||
+      (!github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.other == 'true')))
+    # macOS also compiles the SwiftUI code (which Linux compiles out) and runs SwiftLint's custom
+    # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
+    # setup can't break those. If `changes` failed, take the Mac rather than guess.
+    runs-on: >-
+      ${{ (github.event_name == 'push' || needs.changes.result != 'success' ||
+      needs.changes.outputs.app == 'true') && 'macos-26' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      # The Linux image ships Swift (with swift format), as the supabase job relies on.
       - run: swift --version
       # Ahead of the image's own SwiftLint on PATH, which may be a different version.
       - name: Install the pinned SwiftLint
         run: |
           scripts/install-swiftlint.sh "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - run: scripts/verify.sh swift web
+      - run: scripts/verify.sh swift
+
+  # The website's checks (generated files current, ESLint, Prettier, the Playwright layout tests),
+  # on Linux, for a PR that changes web/ and every push to main.
+  web:
+    needs: changes
+    if: >-
+      !cancelled() && (github.event_name == 'push' ||
+      (!github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.web == 'true')))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --global pnpm@10.28.0
+      - run: scripts/verify.sh web
 
   supabase:
-    if: github.event_name == 'push' || !github.event.pull_request.draft
+    needs: changes
+    # !cancelled(): on a push `changes` is skipped, which would skip this job too.
+    if: >-
+      !cancelled() && (github.event_name == 'push' ||
+      (!github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.other == 'true')))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

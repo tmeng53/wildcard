@@ -35,7 +35,7 @@ export interface PushNotification {
   readonly mutableContent?: boolean;
   /**
    * What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`, or counts by kind
-   * such as `{ received: { cheer: 3 } }`.
+   * such as `{ received: { reaction: 3 } }`.
    */
   readonly event: Readonly<Record<string, EventValue>>;
 }

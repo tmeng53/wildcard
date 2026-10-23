@@ -16,6 +16,7 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
+import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import {
   CheckInDraft,
@@ -38,6 +39,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 const now = new Date('2026-10-18T20:00:00.000Z');
@@ -50,6 +52,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
+  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf,
@@ -207,6 +210,7 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf,
@@ -275,6 +279,7 @@ describe('saving a check-in', () => {
         },
         membership,
         reactions: createPostgresReactionStore(db),
+        replies: createPostgresReplyStore(db),
         plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf,
@@ -374,6 +379,7 @@ describe('saving a check-in', () => {
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: (who) =>
@@ -423,7 +429,7 @@ describe('listing check-ins', () => {
       squad,
       days: { from: '2026-10-17', to: '2026-10-18' },
     });
-    expect(listed.map(({ id, audience }) => ({ id, audience }))).toStrictEqual([
+    expect(listed.map(({ checkIn: { id, audience } }) => ({ id, audience }))).toStrictEqual([
       // The friend's other squad is hidden from me.
       { id: theirs, audience: [squad] },
       { id: mine, audience: [squad] },
@@ -437,7 +443,7 @@ describe('listing check-ins', () => {
     const today = await save(me, { audience: [squad] });
     const days = { from: '2026-10-18', to: '2026-10-18' };
     expect(
-      (await checkIns.listForSquad({ viewer: me, squad, days })).map(({ id }) => id),
+      (await checkIns.listForSquad({ viewer: me, squad, days })).map(({ checkIn }) => checkIn.id),
     ).toStrictEqual([today]);
     expect((await checkIns.listMine({ member: me, days })).map(({ id }) => id)).toStrictEqual([
       today,
@@ -471,9 +477,8 @@ describe('listing check-ins', () => {
       { id: withPhoto, photos: [cover] },
       { id: without, photos: [] },
     ];
-    expect(photosIn(await checkIns.listForSquad({ viewer: me, squad, days }))).toStrictEqual(
-      expected,
-    );
+    const posts = await checkIns.listForSquad({ viewer: me, squad, days });
+    expect(photosIn(posts.map(({ checkIn }) => checkIn))).toStrictEqual(expected);
     expect(photosIn(await checkIns.listMine({ member: me, days }))).toStrictEqual(expected);
   });
 

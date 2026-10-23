@@ -1,30 +1,30 @@
 import { sql, type Kysely } from 'kysely';
 
 import { CheckInId, MemberId, SquadId } from '../domain/check-in.js';
-import { ReactionKind, type Reaction } from '../domain/reaction.js';
+import { Emoji, type Reaction } from '../domain/reaction.js';
 import type { ReactionStore } from '../ports.js';
 import type { DB } from './tables.js';
 
-const fromRow = (row: { member_id: string; kind: string; reacted_at: Date }): Reaction => ({
+const fromRow = (row: { member_id: string; emoji: string; reacted_at: Date }): Reaction => ({
   member: MemberId.parse(row.member_id),
-  kind: ReactionKind.parse(row.kind),
+  emoji: Emoji.parse(row.emoji),
   reactedAt: row.reacted_at,
 });
 
 /** The reaction store on Postgres (`supabase/migrations`). */
 export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
   return {
-    async save(checkIn, { member, kind, reactedAt }) {
+    async save(checkIn, { member, emoji, reactedAt }) {
       // One statement, so two reactions at once can't both count as new. The update runs only
-      // for a different kind; `xmax = 0` tells a fresh row from an updated one.
+      // for a different emoji; `xmax = 0` tells a fresh row from an updated one.
       const row = await db
         .insertInto('check_in_reactions')
-        .values({ check_in_id: checkIn, member_id: member, kind, reacted_at: reactedAt })
+        .values({ check_in_id: checkIn, member_id: member, emoji, reacted_at: reactedAt })
         .onConflict((conflict) =>
           conflict
             .columns(['check_in_id', 'member_id'])
-            .doUpdateSet({ kind, reacted_at: reactedAt })
-            .where('check_in_reactions.kind', '<>', kind),
+            .doUpdateSet({ emoji, reacted_at: reactedAt })
+            .where('check_in_reactions.emoji', '<>', emoji),
         )
         .returning(sql<boolean>`xmax = 0`.as('created'))
         .executeTakeFirst();
@@ -43,7 +43,7 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
     async list(checkIn) {
       const rows = await db
         .selectFrom('check_in_reactions')
-        .select(['member_id', 'kind', 'reacted_at'])
+        .select(['member_id', 'emoji', 'reacted_at'])
         .where('check_in_id', '=', checkIn)
         .orderBy('reacted_at')
         .orderBy('member_id')
@@ -57,7 +57,7 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
         .innerJoin('check_ins', 'check_ins.id', 'check_in_reactions.check_in_id')
         .select([
           'check_in_reactions.member_id',
-          'check_in_reactions.kind',
+          'check_in_reactions.emoji',
           'check_in_reactions.reacted_at',
           (eb) =>
             eb
@@ -74,12 +74,10 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
         .orderBy('check_in_reactions.reacted_at')
         .orderBy('check_in_reactions.member_id')
         .execute();
-      // A kind this release no longer has is left out, not an error.
-      return rows.flatMap((row) =>
-        ReactionKind.safeParse(row.kind).success
-          ? [{ ...fromRow(row), audience: (row.audience ?? []).map((id) => SquadId.parse(id)) }]
-          : [],
-      );
+      return rows.map((row) => ({
+        ...fromRow(row),
+        audience: (row.audience ?? []).map((id) => SquadId.parse(id)),
+      }));
     },
 
     async listForAll(checkIns) {
@@ -87,7 +85,7 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
       if (checkIns.length === 0) return byCheckIn;
       const rows = await db
         .selectFrom('check_in_reactions')
-        .select(['check_in_id', 'member_id', 'kind', 'reacted_at'])
+        .select(['check_in_id', 'member_id', 'emoji', 'reacted_at'])
         .where('check_in_id', 'in', checkIns)
         .orderBy('reacted_at')
         .orderBy('member_id')
@@ -95,11 +93,7 @@ export function createPostgresReactionStore(db: Kysely<DB>): ReactionStore {
       for (const row of rows) {
         const checkIn = CheckInId.parse(row.check_in_id);
         const reactions = byCheckIn.get(checkIn) ?? [];
-        reactions.push({
-          member: MemberId.parse(row.member_id),
-          kind: ReactionKind.parse(row.kind),
-          reactedAt: row.reacted_at,
-        });
+        reactions.push(fromRow(row));
         byCheckIn.set(checkIn, reactions);
       }
       return byCheckIn;

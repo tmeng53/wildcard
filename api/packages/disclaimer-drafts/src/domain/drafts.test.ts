@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DraftReason, mentionsSelfHarm } from './draft-request.js';
+import { DraftReason } from './draft-request.js';
 import { outcomeOf } from './drafts.js';
 import { promptFor } from './prompt.js';
 
@@ -18,16 +18,17 @@ const drafts = (list: string[]) => ({
 
 describe('outcomeOf', () => {
   it('passes three distinct drafts within bounds, trimmed', () => {
-    expect(outcomeOf(drafts([` ${good[0] ?? ''} `, good[1] ?? '', good[2] ?? '']), reason)).toEqual(
-      { kind: 'drafts', drafts: good },
-    );
+    expect(outcomeOf(drafts([` ${good[0] ?? ''} `, good[1] ?? '', good[2] ?? '']))).toEqual({
+      kind: 'drafts',
+      drafts: good,
+    });
   });
 
   it('turns selfHarm into the care line and unsafe into a decline', () => {
-    expect(outcomeOf({ version: 1, outcome: 'selfHarm', drafts: [] }, reason)).toEqual({
+    expect(outcomeOf({ version: 1, outcome: 'selfHarm', drafts: [] })).toEqual({
       kind: 'care',
     });
-    expect(outcomeOf({ version: 1, outcome: 'unsafe', drafts: good }, reason)).toEqual({
+    expect(outcomeOf({ version: 1, outcome: 'unsafe', drafts: good })).toEqual({
       kind: 'declined',
     });
   });
@@ -42,26 +43,17 @@ describe('outcomeOf', () => {
       'a draft on two lines',
       ['闹钟响了三次，\n我和被子的谈判进入加时赛。', good[1] ?? '', good[2] ?? ''],
     ],
-    ['an emoji', ['闹钟响了三次，我和被子的谈判进入加时赛 😴', good[1] ?? '', good[2] ?? '']],
-    ['body talk', ['今天吃太多了胖了一圈，决定原地休息一天。', good[1] ?? '', good[2] ?? '']],
-    ['a body metric', ['今天体脂不想被打扰，决定原地休息一天。', good[1] ?? '', good[2] ?? '']],
-    ['a macro', ['蛋白质今天放假了，我也跟着原地休息一天。', good[1] ?? '', good[2] ?? '']],
-    [
-      'calories in English',
-      ['今天的 Calories 自己燃烧去吧，我先原地休息。', good[1] ?? '', good[2] ?? ''],
-    ],
-    [
-      'the whole reason echoed',
-      ['早上没起来，所以今天就先这样吧朋友们。', good[1] ?? '', good[2] ?? ''],
-    ],
   ])('fails %s', (_, list) => {
-    expect(outcomeOf(drafts(list), reason)).toBeUndefined();
+    expect(outcomeOf(drafts(list))).toBeUndefined();
   });
 
-  it('lets a short reason appear as a keyword', () => {
-    const rain = DraftReason.parse('下雨了');
-    const list = ['下雨了，跑道今天归青蛙使用，我礼让一天。', good[1] ?? '', good[2] ?? ''];
-    expect(outcomeOf(drafts(list), rain)?.kind).toBe('drafts');
+  it('leaves the words to the model: the prompt says what they may say', () => {
+    const list = [
+      '早上没起来，闹钟响了三次，被子领先 😴',
+      '今天吃太多了，决定原地休息一天，明天再战。',
+      good[2] ?? '',
+    ];
+    expect(outcomeOf(drafts(list))).toEqual({ kind: 'drafts', drafts: list });
   });
 });
 
@@ -81,30 +73,6 @@ describe('DraftReason', () => {
     expect(DraftReason.safeParse('👍🏽'.repeat(101)).success).toBe(false);
     expect(DraftReason.safeParse('\u200B').success).toBe(false);
   });
-});
-
-describe('mentionsSelfHarm', () => {
-  it.each(['想自杀', '不想活了', '我不想活', '活不下去', '想自残', '想轻生'])(
-    'catches 「%s」',
-    (reason) => {
-      expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(true);
-    },
-  );
-
-  it('catches plain words in English, whatever the case', () => {
-    expect(mentionsSelfHarm(DraftReason.parse('I want to KILL MYSELF'))).toBe(true);
-  });
-
-  it('leaves everyday exaggeration to the model', () => {
-    expect(mentionsSelfHarm(DraftReason.parse('加班累得想死'))).toBe(false);
-  });
-
-  it.each(['今天不想活动', '不想活动筋骨'])(
-    'leaves 「%s」 alone: it means not wanting to move',
-    (reason) => {
-      expect(mentionsSelfHarm(DraftReason.parse(reason))).toBe(false);
-    },
-  );
 });
 
 describe('promptFor', () => {

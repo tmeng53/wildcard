@@ -1,7 +1,9 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
+import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
-import type { Reaction, ReactionKind, ReactOutcome } from './domain/reaction.js';
+import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
+import type { Reply, ReplyKind } from './domain/reply.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
@@ -15,12 +17,17 @@ export interface CheckInStore {
   find(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** Saves a new check-in with its audience and photos, or says which uniqueness rule stopped it. */
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
-  /** Days ever with a 练了 from `member`. Several 练了 on one day count once. */
-  countTrainedDays(member: MemberId): Promise<number>;
+  /** Everything `member` ever checked in, counted by kind. */
+  totals(member: MemberId): Promise<CheckInTotals>;
   /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
   listForSquad(
     query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },
   ): Promise<CheckInRecord[]>;
+  /**
+   * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
+   * each once.
+   */
+  squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
 }
@@ -40,8 +47,8 @@ export interface ReactionStore {
   /** Saves the member's reaction on a check-in, in place of any they left before. */
   save(
     checkIn: CheckInId,
-    reaction: { readonly member: MemberId; readonly kind: ReactionKind; readonly reactedAt: Date },
-  ): Promise<ReactOutcome>;
+    reaction: { readonly member: MemberId; readonly emoji: Emoji; readonly reactedAt: Date },
+  ): Promise<SaveOutcome>;
   /** Takes the member's reaction off a check-in, if there is one. */
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
   /** A check-in's reactions, oldest first. */
@@ -57,6 +64,21 @@ export interface ReactionStore {
     readonly since: Date;
     readonly until: Date;
   }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
+}
+
+/** Where teammates' replies to 请假条 are kept. */
+export interface ReplyStore {
+  /** Saves the member's reply to a 请假条, in place of any they left before. */
+  save(
+    checkIn: CheckInId,
+    reply: { readonly member: MemberId; readonly kind: ReplyKind; readonly repliedAt: Date },
+  ): Promise<SaveOutcome>;
+  /** Takes the member's reply off a 请假条, if there is one. */
+  remove(checkIn: CheckInId, member: MemberId): Promise<void>;
+  /** A 请假条's replies, oldest first. */
+  list(checkIn: CheckInId): Promise<Reply[]>;
+  /** The replies to each of these check-ins, oldest first; a check-in without any is left out. */
+  listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Reply[]>>;
 }
 
 /** Where uploaded photo files are kept. */

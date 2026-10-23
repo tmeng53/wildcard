@@ -7,5 +7,7 @@
     { "id": "rabbit", "bodies": ["rabbit", "lop", "dutch"] },
     { "id": "bear", "bodies": ["bear"] }
   ],
+  "hats": ["cap", "headband"],
+  "shoes": ["sneaker", "runner", "climbing"],
   "props": ["dumbbell", "racket"]
 }

@@ -25,6 +25,11 @@ const Environment = z.object({
   // default). Without that provider's key the server still runs and the app shows its dice.
   LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
   LLM_MODEL: z.string().min(1).optional(),
+  // Which provider writes each squad's weekly awards (the Sunday 战报), and with which model.
+  // Tracy picked OpenAI's GPT-6 Luna for it (2026-10-20): close to Claude Sonnet 5.5 in her
+  // blind test, for far less. Without that provider's key the awards stay pending.
+  AWARDS_LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
+  AWARDS_LLM_MODEL: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
@@ -39,30 +44,51 @@ const Environment = z.object({
     .optional(),
   APPLE_PRIVATE_KEY: z.string().includes('-----BEGIN PRIVATE KEY-----').optional(),
   APPLE_CLIENT_ID: z.string().min(1).optional(),
-  // Sending push notifications through APNs with a token-based `.p8` key. All four, or none:
-  // without them the server sends no pushes.
-  APNS_KEY_ID: z
-    .string()
-    .regex(/^[A-Z0-9]{10}$/)
-    .optional(),
+  // Sending push notifications through APNs with token-based `.p8` keys. Apple limits a key to
+  // one environment, so there is a Sandbox key (debug builds run from Xcode) and a Production
+  // key (TestFlight and the App Store); a device's token picks which one signs.
+  // All six, or none: without them the server sends no pushes.
   APNS_TEAM_ID: z
     .string()
     .regex(/^[A-Z0-9]{10}$/)
     .optional(),
+  APNS_TOPIC: z.string().min(1).optional(),
+  APNS_SANDBOX_KEY_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
   // The `.p8` file's contents. A secret store may hand it over with its line breaks as `\n`.
-  APNS_PRIVATE_KEY: z
+  APNS_SANDBOX_PRIVATE_KEY: z
     .string()
     .transform((key) => key.replaceAll('\\n', '\n'))
     .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
     .optional(),
-  APNS_TOPIC: z.string().min(1).optional(),
+  APNS_PRODUCTION_KEY_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  APNS_PRODUCTION_PRIVATE_KEY: z
+    .string()
+    .transform((key) => key.replaceAll('\\n', '\n'))
+    .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
+    .optional(),
   // What the scheduler sends to start jobs such as the daily progress push. Without it no job
   // runs. Long and random, like any secret.
   JOBS_TOKEN: z.string().min(32).optional(),
 });
 
+/** Each provider's model for the weekly awards, unless AWARDS_LLM_MODEL names another. */
+const AWARDS_MODELS = { openai: 'gpt-6-luna', anthropic: 'claude-sonnet-5-5' } as const;
+
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
-const APNS = ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_PRIVATE_KEY', 'APNS_TOPIC'] as const;
+const APNS = [
+  'APNS_TEAM_ID',
+  'APNS_TOPIC',
+  'APNS_SANDBOX_KEY_ID',
+  'APNS_SANDBOX_PRIVATE_KEY',
+  'APNS_PRODUCTION_KEY_ID',
+  'APNS_PRODUCTION_PRIVATE_KEY',
+] as const;
 
 export interface Config {
   readonly port: number;
@@ -85,6 +111,15 @@ export interface Config {
         readonly model: string | undefined;
       }
     | undefined;
+  /** The model that writes each squad's weekly awards; undefined while its provider has no key. */
+  readonly awardsModel:
+    | {
+        readonly provider: 'openai' | 'anthropic';
+        readonly apiKey: string;
+        /** Undefined for the adapter's default. */
+        readonly model: string | undefined;
+      }
+    | undefined;
   /** Sign in with Apple's key; undefined until it is set up. */
   readonly appleSignInKey:
     | {
@@ -96,13 +131,14 @@ export interface Config {
     | undefined;
   /** The token that starts jobs; undefined until a scheduler is set up. */
   readonly jobsToken: string | undefined;
-  /** Undefined until there is an APNs key: then no pushes are sent. */
+  /** Undefined until there are APNs keys: then no pushes are sent. */
   readonly apns:
     | {
-        readonly keyId: string;
         readonly teamId: string;
-        readonly privateKey: string;
         readonly topic: string;
+        readonly keys: Readonly<
+          Record<'sandbox' | 'production', { readonly keyId: string; readonly privateKey: string }>
+        >;
       }
     | undefined;
 }
@@ -140,7 +176,6 @@ export function readConfig(environment: Record<string, string | undefined>): Con
   if (appleSignInKey === undefined && APPLE_VARIABLES.some((name) => name in environment)) {
     throw new Error(`Bad server environment: set all of ${APPLE_VARIABLES.join(', ')}, or none.`);
   }
-  const { APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY, APNS_TOPIC } = result.data;
   const apnsSet = APNS.filter((name) => result.data[name] !== undefined);
   if (apnsSet.length > 0 && apnsSet.length < APNS.length) {
     const missing = APNS.filter((name) => !apnsSet.includes(name));
@@ -148,10 +183,12 @@ export function readConfig(environment: Record<string, string | undefined>): Con
       `Bad server environment: set all of ${APNS.join(', ')} or none (missing ${missing.join(', ')})`,
     );
   }
+  const apns = readApns(result.data);
   const { LLM_PROVIDER, LLM_MODEL } = result.data;
-  const llmKey = { openai: result.data.OPENAI_API_KEY, anthropic: result.data.ANTHROPIC_API_KEY }[
-    LLM_PROVIDER
-  ];
+  const keys = { openai: result.data.OPENAI_API_KEY, anthropic: result.data.ANTHROPIC_API_KEY };
+  const llmKey = keys[LLM_PROVIDER];
+  const { AWARDS_LLM_PROVIDER, AWARDS_LLM_MODEL } = result.data;
+  const awardsKey = keys[AWARDS_LLM_PROVIDER];
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -165,19 +202,46 @@ export function readConfig(environment: Record<string, string | undefined>): Con
       llmKey === undefined
         ? undefined
         : { provider: LLM_PROVIDER, apiKey: llmKey, model: LLM_MODEL },
-    appleSignInKey,
-    jobsToken: result.data.JOBS_TOKEN,
-    apns:
-      APNS_KEY_ID === undefined ||
-      APNS_TEAM_ID === undefined ||
-      APNS_PRIVATE_KEY === undefined ||
-      APNS_TOPIC === undefined
+    awardsModel:
+      awardsKey === undefined
         ? undefined
         : {
-            keyId: APNS_KEY_ID,
-            teamId: APNS_TEAM_ID,
-            privateKey: APNS_PRIVATE_KEY,
-            topic: APNS_TOPIC,
+            provider: AWARDS_LLM_PROVIDER,
+            apiKey: awardsKey,
+            model: AWARDS_LLM_MODEL ?? AWARDS_MODELS[AWARDS_LLM_PROVIDER],
           },
+    appleSignInKey,
+    jobsToken: result.data.JOBS_TOKEN,
+    apns,
+  };
+}
+
+/** The APNs settings once `readConfig` has checked that all six are set or none is. */
+function readApns(data: z.infer<typeof Environment>): Config['apns'] {
+  const {
+    APNS_TEAM_ID,
+    APNS_TOPIC,
+    APNS_SANDBOX_KEY_ID,
+    APNS_SANDBOX_PRIVATE_KEY,
+    APNS_PRODUCTION_KEY_ID,
+    APNS_PRODUCTION_PRIVATE_KEY,
+  } = data;
+  if (
+    APNS_TEAM_ID === undefined ||
+    APNS_TOPIC === undefined ||
+    APNS_SANDBOX_KEY_ID === undefined ||
+    APNS_SANDBOX_PRIVATE_KEY === undefined ||
+    APNS_PRODUCTION_KEY_ID === undefined ||
+    APNS_PRODUCTION_PRIVATE_KEY === undefined
+  ) {
+    return undefined;
+  }
+  return {
+    teamId: APNS_TEAM_ID,
+    topic: APNS_TOPIC,
+    keys: {
+      sandbox: { keyId: APNS_SANDBOX_KEY_ID, privateKey: APNS_SANDBOX_PRIVATE_KEY },
+      production: { keyId: APNS_PRODUCTION_KEY_ID, privateKey: APNS_PRODUCTION_PRIVATE_KEY },
+    },
   };
 }

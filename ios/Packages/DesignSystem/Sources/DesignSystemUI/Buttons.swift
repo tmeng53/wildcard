@@ -52,6 +52,28 @@ public struct SecondaryButtonStyle: ButtonStyle {
     }
 }
 
+/// Confirming with Apple (用 Apple 确认注销): Apple's black capsule with its logo, 52 tall and
+/// full width, drawn in Apple's black rather than our ink, as Apple's button guidelines ask.
+/// Disabled, it turns a quiet grey.
+public struct AppleButtonStyle: ButtonStyle {
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.isEnabled) private var isEnabled
+
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .typeStyle(TypeRamp.headline)
+            .lineLimit(1)
+            .foregroundStyle(isEnabled ? Color(Palette.white) : Color(role: .fgSubtle, in: theme))
+            .padding(.horizontal, Space.l)
+            .frame(maxWidth: .infinity, minHeight: Sizing.primaryControl)
+            .background(isEnabled ? Color(Palette.appleBlack) : Color(role: .borderDefault, in: theme), in: Capsule())
+            .contentShape(Capsule())
+            .modifier(PressFeedback(isPressed: configuration.isPressed))
+    }
+}
+
 /// A word that acts: 以后再选 in muted ink, or 删除 in plain ink (deleting asks again; it is
 /// never red). 44 tall, no fill.
 public struct TextButtonStyle: ButtonStyle {

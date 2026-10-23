@@ -4,6 +4,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -19,8 +20,9 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
+import { adminOn, aiConsentOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
   reactionInteractions,
@@ -40,11 +42,13 @@ const members = createMembers({ store: createPostgresProfileStore(db) });
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership: squads,
   reactions: createPostgresReactionStore(db),
+  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -87,10 +91,12 @@ const deps = {
   squads,
   push,
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+  weeklyAwards: unusedWeeklyAwards,
   log,
   jobs: { token: JOBS_TOKEN, interactions, clock: () => new Date() },
   admin: adminOn(),
   publicRoutes: unlimitedPublicRoutes,
+  aiConsent: aiConsentOn(db),
 };
 const app = createApp(deps);
 
@@ -212,16 +218,16 @@ async function trained(who: { token: string; offset: number }, squad: string) {
 async function react({
   token,
   checkIn,
-  kind,
+  emoji,
 }: {
   readonly token: string;
   readonly checkIn: string;
-  readonly kind: string;
+  readonly emoji: string;
 }) {
   const reacted = await call('PUT', {
     path: `/check-ins/${checkIn}/reactions/mine`,
     token,
-    body: { version: 1, kind },
+    body: { version: 1, emoji },
   });
   expect(reacted.status).toBe(201);
 }
@@ -232,10 +238,10 @@ describe('the daily progress push', () => {
     const [early, other] = [await member(morning), await member(morning)];
     const squad = await squadOf(eve, early, other);
     const [run1, run2] = [await trained(eve, squad), await trained(eve, squad)];
-    // Early cheers both check-ins: still one person.
-    await react({ token: early.token, checkIn: run1, kind: 'cheer' });
-    await react({ token: early.token, checkIn: run2, kind: 'cheer' });
-    await react({ token: other.token, checkIn: run2, kind: 'lol' });
+    // Early reacts to both check-ins: still one person.
+    await react({ token: early.token, checkIn: run1, emoji: '❤️' });
+    await react({ token: early.token, checkIn: run2, emoji: '❤️' });
+    await react({ token: other.token, checkIn: run2, emoji: '😂' });
 
     await run();
     expect(sentTo.get(eve.phone)).toStrictEqual([
@@ -253,7 +259,7 @@ describe('the daily progress push', () => {
           // One day trained, of each member's default 5 planned.
           squadTrainedDays: 1,
           squadPlannedDays: 15,
-          received: { cheer: 1, lol: 1 },
+          received: { reaction: 2 },
         },
       },
     ]);
@@ -292,8 +298,8 @@ describe('the daily progress push', () => {
   it('counts from the last push on, so a reaction is never counted twice', async () => {
     const [eve, mate] = [await member(evening), await member(morning)];
     const squad = await squadOf(eve, mate);
-    await react({ token: mate.token, checkIn: await trained(eve, squad), kind: 'cheer' });
-    // Yesterday's push went out after that cheer, so it carried it.
+    await react({ token: mate.token, checkIn: await trained(eve, squad), emoji: '❤️' });
+    // Yesterday's push went out after that reaction, so it carried it.
     const yesterday = new Date(Date.parse(dayAt(eve.offset)) - 24 * HOUR)
       .toISOString()
       .slice(0, 10);
@@ -310,8 +316,8 @@ describe('the daily progress push', () => {
     const [before, after] = [await member(morning), await member(morning)];
     const squad = await squadOf(eve, before, after);
     const checkIn = await trained(eve, squad);
-    await react({ token: before.token, checkIn, kind: 'cheer' });
-    await react({ token: after.token, checkIn, kind: 'cheer' });
+    await react({ token: before.token, checkIn, emoji: '❤️' });
+    await react({ token: after.token, checkIn, emoji: '❤️' });
     // 6pm yesterday on eve's clock, `offset` hours ahead of UTC.
     const sixPm = Date.parse(dayAt(eve.offset)) - 24 * HOUR + (18 - eve.offset) * HOUR;
     const at = (member: string, ms: number) =>
@@ -321,7 +327,7 @@ describe('the daily progress push', () => {
     await at(after.userId, sixPm + 60_000);
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
-      { alert: { args: ['1', '15', '1'] }, event: { received: { cheer: 1 } } },
+      { alert: { args: ['1', '15', '1'] }, event: { received: { reaction: 1 } } },
     ]);
   });
 
@@ -330,7 +336,7 @@ describe('the daily progress push', () => {
     const first = await squadOf(eve, mate);
     // Still teammates, in another squad.
     await squadOf(eve, mate);
-    await react({ token: mate.token, checkIn: await trained(eve, first), kind: 'cheer' });
+    await react({ token: mate.token, checkIn: await trained(eve, first), emoji: '❤️' });
     await sql`delete from public.squad_members where squad_id = ${first} and member_id = ${mate.userId}`.execute(
       db,
     );
@@ -367,11 +373,11 @@ describe('the daily progress push', () => {
         day: '2026-10-19',
         squad: 'squad',
         squadWeek: { trainedDays: 14, plannedDays: 22 },
-        received: new Map([['cheer', new Set<string>()]]),
+        received: new Map([['reaction', new Set<string>()]]),
       }),
     ).toMatchObject({
       alert: { key: 'push.dailyProgress', args: ['14', '22'] },
-      event: { received: { cheer: 0 } },
+      event: { received: { reaction: 0 } },
     });
   });
 });

@@ -14,6 +14,9 @@
       "path": "../../packages/admins"
     },
     {
+      "path": "../../packages/ai-consent"
+    },
+    {
       "path": "../../packages/check-ins"
     },
     {
@@ -33,6 +36,9 @@
     },
     {
       "path": "../../packages/squads"
+    },
+    {
+      "path": "../../packages/weekly-awards"
     }
   ]
 }

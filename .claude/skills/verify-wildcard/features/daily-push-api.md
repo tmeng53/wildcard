@@ -2,7 +2,7 @@
 
 **Status: Ready** since the daily progress push (#78), driven over HTTP by `scripts/api-journeys.sh daily-push`; CI's `supabase` job runs it. The app's push text and its notification service extension aren't covered here.
 
-Four members in a time zone where it is about 8pm, each with a phone. Runner, cheerer and resting are in a squad; loner has none. Resting turns the daily push off. Runner trains and cheerer cheers it. The scheduler's job then handles runner and cheerer (something to tell them), loner quietly (no squad, so nothing to tell), and resting not at all; a second run handles no one again. No push is sent: CI has no APNs key, so the two with news count as `unsent`. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+Four members in a time zone where it is about 8pm, each with a phone. Runner, cheerer and resting are in a squad; loner has none. Resting turns the daily push off. Runner trains and cheerer leaves it a ❤️. The scheduler's job then handles runner and cheerer (something to tell them), loner quietly (no squad, so nothing to tell), and resting not at all; a second run handles no one again. No push is sent: CI has no APNs key, so the two with news count as `unsent`. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
 Code: `api/apps/server/src/flows/daily-progress-push.ts`, `api/apps/server/src/routes/jobs.ts`, `api/apps/server/src/routes/push-settings.ts`.
 
@@ -22,7 +22,7 @@ Ids and the zone differ each run; the shape doesn't. Copied from a real run:
 server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 daily-push: on until turned off, then off (200); a missing switch refused (400)
-daily-push: in Etc/GMT, runner trained and cheerer cheered them
+daily-push: in Etc/GMT, runner trained and cheerer left them a ❤️
 daily-push: a member's token refused (401); the job handled runner and cheerer, loner quietly, resting not at all
 daily-push: a second run handled no one again
 api-journeys: ok (daily-push)

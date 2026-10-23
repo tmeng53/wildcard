@@ -17,6 +17,7 @@ You are the verifier. You did not write the change, and your verdict is the only
 - **One verdict per diff.** A verdict covers one commit and the hash of its exact diff. A push that changes the diff needs a new verdict; merging main in without changing the PR's own diff keeps it.
 - **Check the evidence at the source.** A script printing a success line is a claim. The simulator screenshot and the database row are the evidence.
 - **Inconclusive is FAIL.** If a step can't run (no Docker, a service won't start), the verdict is FAIL with the reason. Never skip or fake a step.
+- **Don't redo CI.** CI runs `scripts/verify.sh`, `scripts/api-journeys.sh` and the UI tests on the head commit; quote its result for that commit instead of running them again. Your time goes to what CI can't show: the journeys the diff touches, the evidence at the source and the edge case the author may have missed. Start while CI is still running, and pick up its results and screenshots when they land. At the light tier (`raise-pr`, Independent verification) you read the diff, CI's results and screenshots and try one edge case, and launch the stack only if that edge case needs it.
 - **Judge the change, not the history.** A problem the change brings in is a FAIL. A problem already on main that the change doesn't touch goes in Notes, with a link to an issue if one exists.
 
 ## 1. Pin what you are verifying
@@ -34,7 +35,7 @@ git merge-base --is-ancestor origin/main HEAD || echo "behind main"
 
 If the branch is behind main, say so in Notes: the author merges main in, and a new verdict follows if the diff changed.
 
-Read the PR description (if there is no PR, the request that asked for the verdict) and the diff to decide which journeys in `features/` it touches. Always run every journey marked **Ready**.
+Read the PR description (if there is no PR, the request that asked for the verdict) and the diff to decide which journeys in `features/` it touches. Drive the journeys it touches. CI runs every **Ready** journey on the head (`scripts/api-journeys.sh`), so quote its result for those instead of running them again.
 
 Keep evidence in one folder outside the repo, so it survives cleanup. Shell variables don't survive between an agent's separate commands, so write the literal path, with the real short sha, in every command (below: `/tmp/verify-wildcard/<short sha>`):
 
@@ -69,7 +70,7 @@ If the job failed or the artifact is missing, stop: the verdict is FAIL, reason 
 
 ```sh
 npx --yes supabase@2.121.0 status -o json   # prints API_URL http://127.0.0.1:54321 and an ANON_KEY
-scripts/verify.sh supabase                  # resets the database from supabase/migrations; ends "Result: PASS" and "verify: ok"
+npx --yes supabase@2.121.0 db reset         # applies the head's supabase/migrations; CI's supabase job runs the pgTAP tests
 ```
 
 If a service won't start, stop: the verdict is FAIL, reason "stack did not start", with `docker ps -a` and `docker logs supabase_db_wildcard` saved to `/tmp/verify-wildcard/<short sha>/`.
@@ -87,6 +88,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | [Weekly plan through the API](features/weekly-plan-api.md): default, save, carry over, refused weeks | **Ready** (API only; CI runs it) |
 | [A squad's today through the API](features/squad-today-api.md): each member's today and the counts | **Ready** (API only; CI runs it) |
 | [Reactions through the API](features/reactions-api.md): react, change, take off, refusals | **Ready** (API only; CI runs it) |
+| [请假条 replies through the API](features/replies-api.md): reply, change, take off, apart from reactions, refusals | **Ready** (API only; CI runs it) |
 | [Push devices through the API](features/devices-api.md): register, move to another member, remove | **Ready** (API only, no APNs key; CI runs it) |
 | [Daily progress push through the API](features/daily-push-api.md): the push switch, the scheduler's job, once a day | **Ready** (API only, no APNs key; CI runs it) |
 | [Profile and account deletion through the API](features/account-api.md): save a profile, delete everything | **Ready** (API only, no Apple key; CI runs it) |
@@ -94,6 +96,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | Daily check-in in the app: pick 练了 / 健康餐 / 坦白放纵餐 / 今日请假条 and see it on the squad track | Screen on main against an in-memory squad; no feature file yet |
 | Join a squad from an invite link | Not on main yet |
 | [Sunday 战报 recap through the API](features/week-summary-api.md): awards, squad totals and my counts for a week | **Ready** (API only; CI runs it) |
+| [Weekly AI awards and the Sunday story through the API](features/weekly-awards-api.md): titles, pending, the nudge, the winners' push | **Ready** (the job route over HTTP, CI runs it; the awards themselves through the flow tests, no model key) |
 | Weekly schedule poster (3:4) | Not on main yet |
 
 A journey that isn't on main yet but is in the change under test: drive it the way the PR's own docs and tests describe, check the evidence listed in its file, and note in the verdict that its feature file needs filling in.

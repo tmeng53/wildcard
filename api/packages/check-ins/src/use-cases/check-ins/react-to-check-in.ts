@@ -1,5 +1,5 @@
 import type { CheckInId, MemberId } from '../../domain/check-in.js';
-import type { Reaction, ReactionKind, ReactOutcome } from '../../domain/reaction.js';
+import type { Emoji, Reaction, SaveOutcome } from '../../domain/reaction.js';
 import { OwnCheckInReactionError } from '../../errors.js';
 import type { CheckInStore, Clock, ReactionStore, SquadMembership } from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
@@ -7,12 +7,12 @@ import { findVisibleCheckIn } from './find-visible-check-in.js';
 export interface ReactToCheckInInput {
   readonly checkIn: CheckInId;
   readonly member: MemberId;
-  readonly kind: ReactionKind;
+  readonly emoji: Emoji;
 }
 
 export interface Reacted {
   readonly reaction: Reaction;
-  readonly outcome: ReactOutcome;
+  readonly outcome: SaveOutcome;
 }
 
 /**
@@ -32,11 +32,11 @@ export async function reactToCheckIn(
     readonly reactions: ReactionStore;
     readonly clock: Clock;
   },
-  { checkIn: id, member, kind }: ReactToCheckInInput,
+  { checkIn: id, member, emoji }: ReactToCheckInInput,
 ): Promise<Reacted> {
   const { checkIn } = await findVisibleCheckIn({ store, membership }, { id, viewer: member });
   if (checkIn.member === member) throw new OwnCheckInReactionError();
-  const asked = { member, kind, reactedAt: clock() };
+  const asked = { member, emoji, reactedAt: clock() };
   const outcome = await reactions.save(id, asked);
   // Unchanged keeps the time it was first left.
   const saved = (await reactions.list(id)).find((reaction) => reaction.member === member);

@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "about": "The home page's squad, left to right. A look picks a variant per slot of the app's art (ios/Packages/Avatar/Sources/AvatarArt/Placeholder); colors recolor a slot through its tones.json; shoes swap colors by literal find and replace, since shoes have no tones.json.",
+  "cast": [
+    {
+      "id": "kai",
+      "zh": "阿凯",
+      "zhHant": "阿凱",
+      "en": "Kai",
+      "persona": "energetic",
+      "look": {
+        "body": "peach",
+        "hair": "buzz",
+        "eyes": "sharp",
+        "brows": "bold",
+        "mouth": "grin",
+        "top": "tank",
+        "bottom": "greenshorts",
+        "hat": "headband",
+        "shoes": "runner",
+        "prop": "dumbbell"
+      },
+      "colors": {
+        "body": "#E8B48F",
+        "top": "#1F2128",
+        "bottom": "#E65345",
+        "hair": "#2A2333",
+        "brows": "#2A2333"
+      },
+      "shoes": []
+    },
+    {
+      "id": "snow",
+      "zh": "雪球",
+      "zhHant": "雪球",
+      "en": "Snowball",
+      "persona": "shy",
+      "look": {
+        "body": "bichon",
+        "top": "hoodie",
+        "bottom": "shorts",
+        "hat": "cap",
+        "prop": "stopwatch",
+        "shoes": "runner"
+      },
+      "colors": { "top": "#278C5E", "bottom": "#1F2128" },
+      "shoes": [
+        ["#2D5BA0", "#E65345"],
+        ["#254A82", "#B8392E"]
+      ]
+    },
+    {
+      "id": "garfield",
+      "zh": "胖橘",
+      "zhHant": "胖橘",
+      "en": "Garfield",
+      "persona": "deadpan",
+      "look": {
+        "body": "cat",
+        "eyes": "sleepy",
+        "mouth": "smirk",
+        "top": "jersey",
+        "bottom": "shorts",
+        "prop": "racket",
+        "shoes": "runner"
+      },
+      "colors": { "top": "#E65345", "bottom": "#1F2128" },
+      "shoes": [
+        ["stroke=\"#FFFFFF\"", "stroke=\"#E65345\""],
+        ["#2D5BA0", "#F4F6FA"],
+        ["#254A82", "#AFAEB9"]
+      ]
+    },
+    {
+      "id": "buns",
+      "zh": "丸子",
+      "zhHant": "丸子",
+      "en": "Maru",
+      "persona": "energetic",
+      "look": {
+        "body": "peach",
+        "hair": "spacebuns",
+        "eyes": "sparkle",
+        "brows": "arched",
+        "mouth": "grin",
+        "cheeks": "rosy",
+        "top": "tank",
+        "bottom": "leggings",
+        "prop": "chalkbag",
+        "shoes": "climbing"
+      },
+      "colors": { "bottom": "#9062DE", "hair": "#2A2333", "brows": "#2A2333" },
+      "shoes": []
+    },
+    {
+      "id": "oreo",
+      "zh": "奶牛",
+      "zhHant": "奶牛",
+      "en": "Oreo",
+      "persona": "drama",
+      "look": {
+        "body": "tuxedo",
+        "top": "tee",
+        "bottom": "leggings",
+        "glasses": "square",
+        "shoes": "runner"
+      },
+      "colors": { "top": "#2D5BA0", "bottom": "#1F2128" },
+      "shoes": [
+        ["#2D5BA0", "#1F2128"],
+        ["#254A82", "#1F2128"]
+      ]
+    }
+  ]
+}

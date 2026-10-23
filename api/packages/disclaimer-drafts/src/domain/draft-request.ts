@@ -38,32 +38,3 @@ export interface PromptMeme {
   readonly background: string;
   readonly styles: readonly DisclaimerStyle[];
 }
-
-/**
- * Words that mean the reason is about self-harm. A reason with one gets the care line straight
- * away, before any model is asked; the model also answers `selfHarm` for subtler ones. Everyday
- * exaggeration such as 「累得想死」 is left to the model, so a tired member still gets a joke.
- */
-const SELF_HARM_WORDS = [
-  '自杀',
-  '自尽',
-  '轻生',
-  '自残',
-  '割腕',
-  '活不下去',
-  '结束生命',
-  'suicide',
-  'suicidal',
-  'kill myself',
-  'self harm',
-  'self-harm',
-];
-
-/** 「不想活」, but not 「不想活动」 (don't feel like moving), 「活跃」 or 「活泼」. */
-const NOT_WANTING_TO_LIVE = /不想活(?![动跃泼])/u;
-
-/** True when the reason plainly speaks of self-harm. */
-export function mentionsSelfHarm(reason: DraftReason): boolean {
-  const lower = reason.toLowerCase();
-  return NOT_WANTING_TO_LIVE.test(lower) || SELF_HARM_WORDS.some((word) => lower.includes(word));
-}

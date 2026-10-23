@@ -190,15 +190,16 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     let today = store(backend)
     await today.load()
     let checkIn = CheckInID(id(50))
+    let laughing = try Emoji("😂")
 
-    try await today.react(.lol, to: checkIn)
-    #expect(today.myReaction(on: checkIn) == .lol)
+    try await today.react(laughing, to: checkIn)
+    #expect(today.myReaction(on: checkIn) == laughing)
 
     await backend.set(failure: .notSent)
-    await #expect(throws: CheckInError.notSent) { try await today.react(.cheer, to: checkIn) }
-    #expect(today.myReaction(on: checkIn) == .lol)
+    await #expect(throws: CheckInError.notSent) { try await today.react(.heart, to: checkIn) }
+    #expect(today.myReaction(on: checkIn) == laughing)
     await #expect(throws: CheckInError.notSent) { try await today.removeReaction(from: checkIn) }
-    #expect(today.myReaction(on: checkIn) == .lol)
+    #expect(today.myReaction(on: checkIn) == laughing)
 
     await backend.set(failure: nil)
     try await today.removeReaction(from: checkIn)

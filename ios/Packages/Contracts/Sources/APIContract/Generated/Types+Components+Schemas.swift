@@ -527,6 +527,164 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/AiConsent`.
+        public struct AiConsent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AiConsent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AiConsent/version`.
+            public var version: Components.Schemas.AiConsent.VersionPayload
+            /// The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/copyVersion`.
+            public var copyVersion: Swift.Int
+            /// The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
+            public struct GivenPayload: Codable, Hashable, Sendable {
+                /// The version they agreed to.
+                ///
+                /// - Remark: Generated from `#/components/schemas/AiConsent/given/copyVersion`.
+                public var copyVersion: Swift.Int
+                /// When they agreed, in UTC.
+                ///
+                /// - Remark: Generated from `#/components/schemas/AiConsent/given/givenAt`.
+                public var givenAt: Foundation.Date
+                /// Creates a new `GivenPayload`.
+                ///
+                /// - Parameters:
+                ///   - copyVersion: The version they agreed to.
+                ///   - givenAt: When they agreed, in UTC.
+                public init(
+                    copyVersion: Swift.Int,
+                    givenAt: Foundation.Date
+                ) {
+                    self.copyVersion = copyVersion
+                    self.givenAt = givenAt
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case copyVersion
+                    case givenAt
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.copyVersion = try container.decode(
+                        Swift.Int.self,
+                        forKey: .copyVersion
+                    )
+                    self.givenAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .givenAt
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "copyVersion",
+                        "givenAt"
+                    ])
+                }
+            }
+            /// The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/given`.
+            public var given: Components.Schemas.AiConsent.GivenPayload?
+            /// True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsent/current`.
+            public var current: Swift.Bool
+            /// Creates a new `AiConsent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - copyVersion: The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.
+            ///   - given: The member’s latest consent, left out when they never gave one. It may be to an older version.
+            ///   - current: True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask.
+            public init(
+                version: Components.Schemas.AiConsent.VersionPayload,
+                copyVersion: Swift.Int,
+                given: Components.Schemas.AiConsent.GivenPayload? = nil,
+                current: Swift.Bool
+            ) {
+                self.version = version
+                self.copyVersion = copyVersion
+                self.given = given
+                self.current = current
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case copyVersion
+                case given
+                case current
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AiConsent.VersionPayload.self,
+                    forKey: .version
+                )
+                self.copyVersion = try container.decode(
+                    Swift.Int.self,
+                    forKey: .copyVersion
+                )
+                self.given = try container.decodeIfPresent(
+                    Components.Schemas.AiConsent.GivenPayload.self,
+                    forKey: .given
+                )
+                self.current = try container.decode(
+                    Swift.Bool.self,
+                    forKey: .current
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "copyVersion",
+                    "given",
+                    "current"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AiConsentGiven`.
+        public struct AiConsentGiven: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/version`.
+            public var version: Components.Schemas.AiConsentGiven.VersionPayload
+            /// The version of the copy the app showed the member, who agreed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AiConsentGiven/copyVersion`.
+            public var copyVersion: Swift.Int
+            /// Creates a new `AiConsentGiven`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - copyVersion: The version of the copy the app showed the member, who agreed.
+            public init(
+                version: Components.Schemas.AiConsentGiven.VersionPayload,
+                copyVersion: Swift.Int
+            ) {
+                self.version = version
+                self.copyVersion = copyVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case copyVersion
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.AiConsentGiven.VersionPayload.self,
+                    forKey: .version
+                )
+                self.copyVersion = try container.decode(
+                    Swift.Int.self,
+                    forKey: .copyVersion
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "copyVersion"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckIn`.
         @frozen public enum CheckIn: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckIn/CheatMealCheckIn`.
@@ -1890,6 +2048,219 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadPostList`.
+        public struct SquadPostList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPostList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadPostList/version`.
+            public var version: Components.Schemas.SquadPostList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SquadPostList/posts`.
+            public var posts: [Components.Schemas.SquadPost]
+            /// Creates a new `SquadPostList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - posts:
+            public init(
+                version: Components.Schemas.SquadPostList.VersionPayload,
+                posts: [Components.Schemas.SquadPost]
+            ) {
+                self.version = version
+                self.posts = posts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case posts
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadPostList.VersionPayload.self,
+                    forKey: .version
+                )
+                self.posts = try container.decode(
+                    [Components.Schemas.SquadPost].self,
+                    forKey: .posts
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "posts"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadPost`.
+        public struct SquadPost: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPost/checkIn`.
+            public var checkIn: Components.Schemas.CheckIn
+            /// Teammates’ emoji, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPost/reactions`.
+            public var reactions: [Components.Schemas.ReactionEntry]
+            /// Teammates’ replies, oldest first. Always empty but on a 请假条.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPost/replies`.
+            public var replies: [Components.Schemas.ReplyEntry]
+            /// Creates a new `SquadPost`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - reactions: Teammates’ emoji, oldest first.
+            ///   - replies: Teammates’ replies, oldest first. Always empty but on a 请假条.
+            public init(
+                checkIn: Components.Schemas.CheckIn,
+                reactions: [Components.Schemas.ReactionEntry],
+                replies: [Components.Schemas.ReplyEntry]
+            ) {
+                self.checkIn = checkIn
+                self.reactions = reactions
+                self.replies = replies
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case reactions
+                case replies
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.checkIn = try container.decode(
+                    Components.Schemas.CheckIn.self,
+                    forKey: .checkIn
+                )
+                self.reactions = try container.decode(
+                    [Components.Schemas.ReactionEntry].self,
+                    forKey: .reactions
+                )
+                self.replies = try container.decode(
+                    [Components.Schemas.ReplyEntry].self,
+                    forKey: .replies
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "checkIn",
+                    "reactions",
+                    "replies"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReactionEntry`.
+        public struct ReactionEntry: Codable, Hashable, Sendable {
+            /// Who reacted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionEntry/member`.
+            public var member: Swift.String
+            /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionEntry/emoji`.
+            public var emoji: Swift.String
+            /// When they reacted, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionEntry/reactedAt`.
+            public var reactedAt: Foundation.Date
+            /// Creates a new `ReactionEntry`.
+            ///
+            /// - Parameters:
+            ///   - member: Who reacted.
+            ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
+            ///   - reactedAt: When they reacted, in UTC with milliseconds.
+            public init(
+                member: Swift.String,
+                emoji: Swift.String,
+                reactedAt: Foundation.Date
+            ) {
+                self.member = member
+                self.emoji = emoji
+                self.reactedAt = reactedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case emoji
+                case reactedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.emoji = try container.decode(
+                    Swift.String.self,
+                    forKey: .emoji
+                )
+                self.reactedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .reactedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "member",
+                    "emoji",
+                    "reactedAt"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReplyEntry`.
+        public struct ReplyEntry: Codable, Hashable, Sendable {
+            /// Who replied.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/member`.
+            public var member: Swift.String
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approved = "approved"
+                case hug = "hug"
+                case together = "together"
+            }
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/kind`.
+            public var kind: Components.Schemas.ReplyEntry.KindPayload
+            /// When they replied, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/repliedAt`.
+            public var repliedAt: Foundation.Date
+            /// Creates a new `ReplyEntry`.
+            ///
+            /// - Parameters:
+            ///   - member: Who replied.
+            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///   - repliedAt: When they replied, in UTC with milliseconds.
+            public init(
+                member: Swift.String,
+                kind: Components.Schemas.ReplyEntry.KindPayload,
+                repliedAt: Foundation.Date
+            ) {
+                self.member = member
+                self.kind = kind
+                self.repliedAt = repliedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case kind
+                case repliedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.ReplyEntry.KindPayload.self,
+                    forKey: .kind
+                )
+                self.repliedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .repliedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "member",
+                    "kind",
+                    "repliedAt"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInList`.
         public struct CheckInList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInList/version`.
@@ -1929,6 +2300,89 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "checkIns"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
+        public struct CheckInTotals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
+            public var version: Components.Schemas.CheckInTotals.VersionPayload
+            /// Days with a 练了; several 练了 on one day count once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// 健康餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// 坦白放纵餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// 今日请假条 check-ins, at most one a day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
+            public var disclaimers: Swift.Int
+            /// Creates a new `CheckInTotals`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
+            ///   - healthyMeals: 健康餐 check-ins.
+            ///   - cheatMeals: 坦白放纵餐 check-ins.
+            ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            public init(
+                version: Components.Schemas.CheckInTotals.VersionPayload,
+                trainedDays: Swift.Int,
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                disclaimers: Swift.Int
+            ) {
+                self.version = version
+                self.trainedDays = trainedDays
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.disclaimers = disclaimers
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case trainedDays
+                case healthyMeals
+                case cheatMeals
+                case disclaimers
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.CheckInTotals.VersionPayload.self,
+                    forKey: .version
+                )
+                self.trainedDays = try container.decode(
+                    Swift.Int.self,
+                    forKey: .trainedDays
+                )
+                self.healthyMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .healthyMeals
+                )
+                self.cheatMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .cheatMeals
+                )
+                self.disclaimers = try container.decode(
+                    Swift.Int.self,
+                    forKey: .disclaimers
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "trainedDays",
+                    "healthyMeals",
+                    "cheatMeals",
+                    "disclaimers"
                 ])
             }
         }
@@ -2001,18 +2455,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Reaction/member`.
             public var member: Swift.String
-            /// Which reaction. The app shows each with its own copy.
+            /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             ///
-            /// - Remark: Generated from `#/components/schemas/Reaction/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case cheer = "cheer"
-                case highlight = "highlight"
-                case lol = "lol"
-            }
-            /// Which reaction. The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/Reaction/kind`.
-            public var kind: Components.Schemas.Reaction.KindPayload
+            /// - Remark: Generated from `#/components/schemas/Reaction/emoji`.
+            public var emoji: Swift.String
             /// When they reacted, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/Reaction/reactedAt`.
@@ -2022,23 +2468,23 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - member: Who reacted.
-            ///   - kind: Which reaction. The app shows each with its own copy.
+            ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             ///   - reactedAt: When they reacted, in UTC with milliseconds.
             public init(
                 version: Components.Schemas.Reaction.VersionPayload,
                 member: Swift.String,
-                kind: Components.Schemas.Reaction.KindPayload,
+                emoji: Swift.String,
                 reactedAt: Foundation.Date
             ) {
                 self.version = version
                 self.member = member
-                self.kind = kind
+                self.emoji = emoji
                 self.reactedAt = reactedAt
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case member
-                case kind
+                case emoji
                 case reactedAt
             }
             public init(from decoder: any Swift.Decoder) throws {
@@ -2051,9 +2497,9 @@ extension Components {
                     Swift.String.self,
                     forKey: .member
                 )
-                self.kind = try container.decode(
-                    Components.Schemas.Reaction.KindPayload.self,
-                    forKey: .kind
+                self.emoji = try container.decode(
+                    Swift.String.self,
+                    forKey: .emoji
                 )
                 self.reactedAt = try container.decode(
                     Foundation.Date.self,
@@ -2062,7 +2508,7 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "member",
-                    "kind",
+                    "emoji",
                     "reactedAt"
                 ])
             }
@@ -2075,33 +2521,25 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/ReactionDraft/version`.
             public var version: Components.Schemas.ReactionDraft.VersionPayload
-            /// Which reaction. The app shows each with its own copy.
+            /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             ///
-            /// - Remark: Generated from `#/components/schemas/ReactionDraft/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case cheer = "cheer"
-                case highlight = "highlight"
-                case lol = "lol"
-            }
-            /// Which reaction. The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReactionDraft/kind`.
-            public var kind: Components.Schemas.ReactionDraft.KindPayload
+            /// - Remark: Generated from `#/components/schemas/ReactionDraft/emoji`.
+            public var emoji: Swift.String
             /// Creates a new `ReactionDraft`.
             ///
             /// - Parameters:
             ///   - version:
-            ///   - kind: Which reaction. The app shows each with its own copy.
+            ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
             public init(
                 version: Components.Schemas.ReactionDraft.VersionPayload,
-                kind: Components.Schemas.ReactionDraft.KindPayload
+                emoji: Swift.String
             ) {
                 self.version = version
-                self.kind = kind
+                self.emoji = emoji
             }
             public enum CodingKeys: String, CodingKey {
                 case version
-                case kind
+                case emoji
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -2109,13 +2547,13 @@ extension Components {
                     Components.Schemas.ReactionDraft.VersionPayload.self,
                     forKey: .version
                 )
-                self.kind = try container.decode(
-                    Components.Schemas.ReactionDraft.KindPayload.self,
-                    forKey: .kind
+                self.emoji = try container.decode(
+                    Swift.String.self,
+                    forKey: .emoji
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
-                    "kind"
+                    "emoji"
                 ])
             }
         }
@@ -2127,73 +2565,8 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/ReactionList/version`.
             public var version: Components.Schemas.ReactionList.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload`.
-            public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                /// Who reacted.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/member`.
-                public var member: Swift.String
-                /// Which reaction. The app shows each with its own copy.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/kind`.
-                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case cheer = "cheer"
-                    case highlight = "highlight"
-                    case lol = "lol"
-                }
-                /// Which reaction. The app shows each with its own copy.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/kind`.
-                public var kind: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload
-                /// When they reacted, in UTC with milliseconds.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/reactedAt`.
-                public var reactedAt: Foundation.Date
-                /// Creates a new `ReactionsPayloadPayload`.
-                ///
-                /// - Parameters:
-                ///   - member: Who reacted.
-                ///   - kind: Which reaction. The app shows each with its own copy.
-                ///   - reactedAt: When they reacted, in UTC with milliseconds.
-                public init(
-                    member: Swift.String,
-                    kind: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload,
-                    reactedAt: Foundation.Date
-                ) {
-                    self.member = member
-                    self.kind = kind
-                    self.reactedAt = reactedAt
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case member
-                    case kind
-                    case reactedAt
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.member = try container.decode(
-                        Swift.String.self,
-                        forKey: .member
-                    )
-                    self.kind = try container.decode(
-                        Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    self.reactedAt = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .reactedAt
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "member",
-                        "kind",
-                        "reactedAt"
-                    ])
-                }
-            }
             /// - Remark: Generated from `#/components/schemas/ReactionList/reactions`.
-            public typealias ReactionsPayload = [Components.Schemas.ReactionList.ReactionsPayloadPayload]
-            /// - Remark: Generated from `#/components/schemas/ReactionList/reactions`.
-            public var reactions: Components.Schemas.ReactionList.ReactionsPayload
+            public var reactions: [Components.Schemas.ReactionEntry]
             /// Creates a new `ReactionList`.
             ///
             /// - Parameters:
@@ -2201,7 +2574,7 @@ extension Components {
             ///   - reactions:
             public init(
                 version: Components.Schemas.ReactionList.VersionPayload,
-                reactions: Components.Schemas.ReactionList.ReactionsPayload
+                reactions: [Components.Schemas.ReactionEntry]
             ) {
                 self.version = version
                 self.reactions = reactions
@@ -2217,12 +2590,184 @@ extension Components {
                     forKey: .version
                 )
                 self.reactions = try container.decode(
-                    Components.Schemas.ReactionList.ReactionsPayload.self,
+                    [Components.Schemas.ReactionEntry].self,
                     forKey: .reactions
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "reactions"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Reply`.
+        public struct Reply: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Reply/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Reply/version`.
+            public var version: Components.Schemas.Reply.VersionPayload
+            /// Who replied.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/member`.
+            public var member: Swift.String
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approved = "approved"
+                case hug = "hug"
+                case together = "together"
+            }
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/kind`.
+            public var kind: Components.Schemas.Reply.KindPayload
+            /// When they replied, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Reply/repliedAt`.
+            public var repliedAt: Foundation.Date
+            /// Creates a new `Reply`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - member: Who replied.
+            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///   - repliedAt: When they replied, in UTC with milliseconds.
+            public init(
+                version: Components.Schemas.Reply.VersionPayload,
+                member: Swift.String,
+                kind: Components.Schemas.Reply.KindPayload,
+                repliedAt: Foundation.Date
+            ) {
+                self.version = version
+                self.member = member
+                self.kind = kind
+                self.repliedAt = repliedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case member
+                case kind
+                case repliedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Reply.VersionPayload.self,
+                    forKey: .version
+                )
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.Reply.KindPayload.self,
+                    forKey: .kind
+                )
+                self.repliedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .repliedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "member",
+                    "kind",
+                    "repliedAt"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReplyDraft`.
+        public struct ReplyDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/version`.
+            public var version: Components.Schemas.ReplyDraft.VersionPayload
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approved = "approved"
+                case hug = "hug"
+                case together = "together"
+            }
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyDraft/kind`.
+            public var kind: Components.Schemas.ReplyDraft.KindPayload
+            /// Creates a new `ReplyDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            public init(
+                version: Components.Schemas.ReplyDraft.VersionPayload,
+                kind: Components.Schemas.ReplyDraft.KindPayload
+            ) {
+                self.version = version
+                self.kind = kind
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ReplyDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.ReplyDraft.KindPayload.self,
+                    forKey: .kind
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "kind"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReplyList`.
+        public struct ReplyList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
+            public var version: Components.Schemas.ReplyList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/ReplyList/replies`.
+            public var replies: [Components.Schemas.ReplyEntry]
+            /// Creates a new `ReplyList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - replies:
+            public init(
+                version: Components.Schemas.ReplyList.VersionPayload,
+                replies: [Components.Schemas.ReplyEntry]
+            ) {
+                self.version = version
+                self.replies = replies
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case replies
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.ReplyList.VersionPayload.self,
+                    forKey: .version
+                )
+                self.replies = try container.decode(
+                    [Components.Schemas.ReplyEntry].self,
+                    forKey: .replies
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "replies"
                 ])
             }
         }
@@ -3296,64 +3841,51 @@ extension Components {
                 public var stats: [Components.Schemas.WeekStat]
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload`.
                 public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                    /// Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    /// Any one emoji.
                     ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/kind`.
-                    public var kind: Swift.String
-                    /// Its name, in the language asked for.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/label`.
-                    public var label: Swift.String
-                    /// Reactions of this kind.
+                    /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/emoji`.
+                    public var emoji: Swift.String
+                    /// Reactions with this emoji.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/ReactionsPayload/count`.
                     public var count: Swift.Int
                     /// Creates a new `ReactionsPayloadPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind: Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
-                    ///   - label: Its name, in the language asked for.
-                    ///   - count: Reactions of this kind.
+                    ///   - emoji: Any one emoji.
+                    ///   - count: Reactions with this emoji.
                     public init(
-                        kind: Swift.String,
-                        label: Swift.String,
+                        emoji: Swift.String,
                         count: Swift.Int
                     ) {
-                        self.kind = kind
-                        self.label = label
+                        self.emoji = emoji
                         self.count = count
                     }
                     public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case label
+                        case emoji
                         case count
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
+                        self.emoji = try container.decode(
                             Swift.String.self,
-                            forKey: .kind
-                        )
-                        self.label = try container.decode(
-                            Swift.String.self,
-                            forKey: .label
+                            forKey: .emoji
                         )
                         self.count = try container.decode(
                             Swift.Int.self,
                             forKey: .count
                         )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind",
-                            "label",
+                            "emoji",
                             "count"
                         ])
                     }
                 }
-                /// Teammates’ reactions on the week’s check-ins, one entry a kind.
+                /// Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/reactions`.
                 public typealias ReactionsPayload = [Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayloadPayload]
-                /// Teammates’ reactions on the week’s check-ins, one entry a kind.
+                /// Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals/reactions`.
                 public var reactions: Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayload
@@ -3361,7 +3893,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - stats: Each count added up over the members.
-                ///   - reactions: Teammates’ reactions on the week’s check-ins, one entry a kind.
+                ///   - reactions: Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 public init(
                     stats: [Components.Schemas.WeekStat],
                     reactions: Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayload
@@ -3399,55 +3931,43 @@ extension Components {
                 public var stats: [Components.Schemas.WeekStat]
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload`.
                 public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                    /// Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
+                    /// Any one emoji.
                     ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/kind`.
-                    public var kind: Swift.String
-                    /// Its name, in the language asked for.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/label`.
-                    public var label: Swift.String
-                    /// Reactions of this kind on their check-ins.
+                    /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/emoji`.
+                    public var emoji: Swift.String
+                    /// Reactions with this emoji on their check-ins.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/received`.
                     public var received: Swift.Int
-                    /// Reactions of this kind they left on teammates’ check-ins.
+                    /// Reactions with this emoji they left on teammates’ check-ins.
                     ///
                     /// - Remark: Generated from `#/components/schemas/WeekSummary/me/ReactionsPayload/given`.
                     public var given: Swift.Int
                     /// Creates a new `ReactionsPayloadPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind: Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words.
-                    ///   - label: Its name, in the language asked for.
-                    ///   - received: Reactions of this kind on their check-ins.
-                    ///   - given: Reactions of this kind they left on teammates’ check-ins.
+                    ///   - emoji: Any one emoji.
+                    ///   - received: Reactions with this emoji on their check-ins.
+                    ///   - given: Reactions with this emoji they left on teammates’ check-ins.
                     public init(
-                        kind: Swift.String,
-                        label: Swift.String,
+                        emoji: Swift.String,
                         received: Swift.Int,
                         given: Swift.Int
                     ) {
-                        self.kind = kind
-                        self.label = label
+                        self.emoji = emoji
                         self.received = received
                         self.given = given
                     }
                     public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case label
+                        case emoji
                         case received
                         case given
                     }
                     public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
+                        self.emoji = try container.decode(
                             Swift.String.self,
-                            forKey: .kind
-                        )
-                        self.label = try container.decode(
-                            Swift.String.self,
-                            forKey: .label
+                            forKey: .emoji
                         )
                         self.received = try container.decode(
                             Swift.Int.self,
@@ -3458,18 +3978,17 @@ extension Components {
                             forKey: .given
                         )
                         try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind",
-                            "label",
+                            "emoji",
                             "received",
                             "given"
                         ])
                     }
                 }
-                /// One entry a reaction kind.
+                /// One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/reactions`.
                 public typealias ReactionsPayload = [Components.Schemas.WeekSummary.MePayload.ReactionsPayloadPayload]
-                /// One entry a reaction kind.
+                /// One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekSummary/me/reactions`.
                 public var reactions: Components.Schemas.WeekSummary.MePayload.ReactionsPayload
@@ -3477,7 +3996,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - stats: The signed-in member’s own counts.
-                ///   - reactions: One entry a reaction kind.
+                ///   - reactions: One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 public init(
                     stats: [Components.Schemas.WeekStat],
                     reactions: Components.Schemas.WeekSummary.MePayload.ReactionsPayload
@@ -4438,6 +4957,676 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "days"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WeekStory`.
+        @frozen public enum WeekStory: Codable, Hashable, Sendable {
+            /// The week’s titles are written.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStory/case1`.
+            public struct Case1Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/version`.
+                @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                    case _1 = 1
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/version`.
+                public var version: Components.Schemas.WeekStory.Case1Payload.VersionPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
+                public struct SquadPayload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/id`.
+                    public var id: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/name`.
+                    public var name: Swift.String
+                    /// Creates a new `SquadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - id:
+                    ///   - name:
+                    public init(
+                        id: Swift.String,
+                        name: Swift.String
+                    ) {
+                        self.id = id
+                        self.name = name
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case id
+                        case name
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.id = try container.decode(
+                            Swift.String.self,
+                            forKey: .id
+                        )
+                        self.name = try container.decode(
+                            Swift.String.self,
+                            forKey: .name
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "id",
+                            "name"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
+                public var squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
+                public struct WeekPayload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week/from`.
+                    public var from: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week/to`.
+                    public var to: Swift.String
+                    /// Creates a new `WeekPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - from:
+                    ///   - to:
+                    public init(
+                        from: Swift.String,
+                        to: Swift.String
+                    ) {
+                        self.from = from
+                        self.to = to
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case from
+                        case to
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.from = try container.decode(
+                            Swift.String.self,
+                            forKey: .from
+                        )
+                        self.to = try container.decode(
+                            Swift.String.self,
+                            forKey: .to
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "from",
+                            "to"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
+                public var week: Components.Schemas.WeekStory.Case1Payload.WeekPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/hottest`.
+                public var hottest: Components.Schemas.StoryHottest?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/status`.
+                @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case ready = "ready"
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/status`.
+                public var status: Components.Schemas.WeekStory.Case1Payload.StatusPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/TitlesPayload`.
+                public struct TitlesPayloadPayload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/TitlesPayload/member`.
+                    public var member: Swift.String
+                    /// The best first.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/TitlesPayload/titles`.
+                    public var titles: [Components.Schemas.StoryTitle]
+                    /// Creates a new `TitlesPayloadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - member:
+                    ///   - titles: The best first.
+                    public init(
+                        member: Swift.String,
+                        titles: [Components.Schemas.StoryTitle]
+                    ) {
+                        self.member = member
+                        self.titles = titles
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case member
+                        case titles
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.member = try container.decode(
+                            Swift.String.self,
+                            forKey: .member
+                        )
+                        self.titles = try container.decode(
+                            [Components.Schemas.StoryTitle].self,
+                            forKey: .titles
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "member",
+                            "titles"
+                        ])
+                    }
+                }
+                /// Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/titles`.
+                public typealias TitlesPayload = [Components.Schemas.WeekStory.Case1Payload.TitlesPayloadPayload]
+                /// Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/titles`.
+                public var titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
+                /// Creates a new `Case1Payload`.
+                ///
+                /// - Parameters:
+                ///   - version:
+                ///   - squad:
+                ///   - week:
+                ///   - hottest:
+                ///   - status:
+                ///   - titles: Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                public init(
+                    version: Components.Schemas.WeekStory.Case1Payload.VersionPayload,
+                    squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload,
+                    week: Components.Schemas.WeekStory.Case1Payload.WeekPayload,
+                    hottest: Components.Schemas.StoryHottest? = nil,
+                    status: Components.Schemas.WeekStory.Case1Payload.StatusPayload,
+                    titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
+                ) {
+                    self.version = version
+                    self.squad = squad
+                    self.week = week
+                    self.hottest = hottest
+                    self.status = status
+                    self.titles = titles
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case version
+                    case squad
+                    case week
+                    case hottest
+                    case status
+                    case titles
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.version = try container.decode(
+                        Components.Schemas.WeekStory.Case1Payload.VersionPayload.self,
+                        forKey: .version
+                    )
+                    self.squad = try container.decode(
+                        Components.Schemas.WeekStory.Case1Payload.SquadPayload.self,
+                        forKey: .squad
+                    )
+                    self.week = try container.decode(
+                        Components.Schemas.WeekStory.Case1Payload.WeekPayload.self,
+                        forKey: .week
+                    )
+                    self.hottest = try container.decodeIfPresent(
+                        Components.Schemas.StoryHottest.self,
+                        forKey: .hottest
+                    )
+                    self.status = try container.decode(
+                        Components.Schemas.WeekStory.Case1Payload.StatusPayload.self,
+                        forKey: .status
+                    )
+                    self.titles = try container.decode(
+                        Components.Schemas.WeekStory.Case1Payload.TitlesPayload.self,
+                        forKey: .titles
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "version",
+                        "squad",
+                        "week",
+                        "hottest",
+                        "status",
+                        "titles"
+                    ])
+                }
+            }
+            /// The week’s titles are written.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStory/case1`.
+            case case1(Components.Schemas.WeekStory.Case1Payload)
+            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
+            public struct Case2Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/version`.
+                @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                    case _1 = 1
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/version`.
+                public var version: Components.Schemas.WeekStory.Case2Payload.VersionPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
+                public struct SquadPayload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/id`.
+                    public var id: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/name`.
+                    public var name: Swift.String
+                    /// Creates a new `SquadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - id:
+                    ///   - name:
+                    public init(
+                        id: Swift.String,
+                        name: Swift.String
+                    ) {
+                        self.id = id
+                        self.name = name
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case id
+                        case name
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.id = try container.decode(
+                            Swift.String.self,
+                            forKey: .id
+                        )
+                        self.name = try container.decode(
+                            Swift.String.self,
+                            forKey: .name
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "id",
+                            "name"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
+                public var squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
+                public struct WeekPayload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week/from`.
+                    public var from: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week/to`.
+                    public var to: Swift.String
+                    /// Creates a new `WeekPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - from:
+                    ///   - to:
+                    public init(
+                        from: Swift.String,
+                        to: Swift.String
+                    ) {
+                        self.from = from
+                        self.to = to
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case from
+                        case to
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.from = try container.decode(
+                            Swift.String.self,
+                            forKey: .from
+                        )
+                        self.to = try container.decode(
+                            Swift.String.self,
+                            forKey: .to
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "from",
+                            "to"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
+                public var week: Components.Schemas.WeekStory.Case2Payload.WeekPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/hottest`.
+                public var hottest: Components.Schemas.StoryHottest?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
+                @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case pending = "pending"
+                }
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
+                public var status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
+                /// Creates a new `Case2Payload`.
+                ///
+                /// - Parameters:
+                ///   - version:
+                ///   - squad:
+                ///   - week:
+                ///   - hottest:
+                ///   - status:
+                public init(
+                    version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
+                    squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload,
+                    week: Components.Schemas.WeekStory.Case2Payload.WeekPayload,
+                    hottest: Components.Schemas.StoryHottest? = nil,
+                    status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
+                ) {
+                    self.version = version
+                    self.squad = squad
+                    self.week = week
+                    self.hottest = hottest
+                    self.status = status
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case version
+                    case squad
+                    case week
+                    case hottest
+                    case status
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.version = try container.decode(
+                        Components.Schemas.WeekStory.Case2Payload.VersionPayload.self,
+                        forKey: .version
+                    )
+                    self.squad = try container.decode(
+                        Components.Schemas.WeekStory.Case2Payload.SquadPayload.self,
+                        forKey: .squad
+                    )
+                    self.week = try container.decode(
+                        Components.Schemas.WeekStory.Case2Payload.WeekPayload.self,
+                        forKey: .week
+                    )
+                    self.hottest = try container.decodeIfPresent(
+                        Components.Schemas.StoryHottest.self,
+                        forKey: .hottest
+                    )
+                    self.status = try container.decode(
+                        Components.Schemas.WeekStory.Case2Payload.StatusPayload.self,
+                        forKey: .status
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "version",
+                        "squad",
+                        "week",
+                        "hottest",
+                        "status"
+                    ])
+                }
+            }
+            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
+            case case2(Components.Schemas.WeekStory.Case2Payload)
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
+                do {
+                    self = .case1(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case2(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .case1(value):
+                    try value.encode(to: encoder)
+                case let .case2(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryHottest`.
+        public struct StoryHottest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/checkIn`.
+            public var checkIn: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case trained = "trained"
+                case healthyMeal = "healthyMeal"
+                case cheatMeal = "cheatMeal"
+                case disclaimer = "disclaimer"
+            }
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/kind`.
+            public var kind: Components.Schemas.StoryHottest.KindPayload
+            /// For a 练了: the listed sport’s key, or the name of the member’s own.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/sport`.
+            public var sport: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/caption`.
+            public var caption: Swift.String?
+            /// For a 请假条: its text.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/text`.
+            public var text: Swift.String?
+            /// Up to 3 photos, the cover first; empty when there are none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/photos`.
+            public var photos: [Components.Schemas.StoryPhoto]
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload`.
+            public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
+                /// Any one emoji.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload/emoji`.
+                public var emoji: Swift.String
+                /// - Remark: Generated from `#/components/schemas/StoryHottest/ReactionsPayload/count`.
+                public var count: Swift.Int
+                /// Creates a new `ReactionsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - emoji: Any one emoji.
+                ///   - count:
+                public init(
+                    emoji: Swift.String,
+                    count: Swift.Int
+                ) {
+                    self.emoji = emoji
+                    self.count = count
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case emoji
+                    case count
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.emoji = try container.decode(
+                        Swift.String.self,
+                        forKey: .emoji
+                    )
+                    self.count = try container.decode(
+                        Swift.Int.self,
+                        forKey: .count
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "emoji",
+                        "count"
+                    ])
+                }
+            }
+            /// Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/reactions`.
+            public typealias ReactionsPayload = [Components.Schemas.StoryHottest.ReactionsPayloadPayload]
+            /// Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/reactions`.
+            public var reactions: Components.Schemas.StoryHottest.ReactionsPayload
+            /// Creates a new `StoryHottest`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - day:
+            ///   - kind:
+            ///   - sport: For a 练了: the listed sport’s key, or the name of the member’s own.
+            ///   - caption:
+            ///   - text: For a 请假条: its text.
+            ///   - photos: Up to 3 photos, the cover first; empty when there are none.
+            ///   - reactions: Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
+            public init(
+                checkIn: Swift.String,
+                day: Swift.String,
+                kind: Components.Schemas.StoryHottest.KindPayload,
+                sport: Swift.String? = nil,
+                caption: Swift.String? = nil,
+                text: Swift.String? = nil,
+                photos: [Components.Schemas.StoryPhoto],
+                reactions: Components.Schemas.StoryHottest.ReactionsPayload
+            ) {
+                self.checkIn = checkIn
+                self.day = day
+                self.kind = kind
+                self.sport = sport
+                self.caption = caption
+                self.text = text
+                self.photos = photos
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case day
+                case kind
+                case sport
+                case caption
+                case text
+                case photos
+                case reactions
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.checkIn = try container.decode(
+                    Swift.String.self,
+                    forKey: .checkIn
+                )
+                self.day = try container.decode(
+                    Swift.String.self,
+                    forKey: .day
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.StoryHottest.KindPayload.self,
+                    forKey: .kind
+                )
+                self.sport = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .sport
+                )
+                self.caption = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .caption
+                )
+                self.text = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .text
+                )
+                self.photos = try container.decode(
+                    [Components.Schemas.StoryPhoto].self,
+                    forKey: .photos
+                )
+                self.reactions = try container.decode(
+                    Components.Schemas.StoryHottest.ReactionsPayload.self,
+                    forKey: .reactions
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "checkIn",
+                    "day",
+                    "kind",
+                    "sport",
+                    "caption",
+                    "text",
+                    "photos",
+                    "reactions"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryPhoto`.
+        public struct StoryPhoto: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryPhoto/path`.
+            public var path: Swift.String
+            /// `GET` the photo here. It works for an hour.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPhoto/url`.
+            public var url: Swift.String
+            /// Creates a new `StoryPhoto`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - url: `GET` the photo here. It works for an hour.
+            public init(
+                path: Swift.String,
+                url: Swift.String
+            ) {
+                self.path = path
+                self.url = url
+            }
+            public enum CodingKeys: String, CodingKey {
+                case path
+                case url
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.path = try container.decode(
+                    Swift.String.self,
+                    forKey: .path
+                )
+                self.url = try container.decode(
+                    Swift.String.self,
+                    forKey: .url
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "path",
+                    "url"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryTitle`.
+        public struct StoryTitle: Codable, Hashable, Sendable {
+            /// The title (头衔), at most 6 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryTitle/title`.
+            public var title: Swift.String
+            /// Its award line (颁奖词), at most 24 characters, citing something real from the week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryTitle/speech`.
+            public var speech: Swift.String
+            /// The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryTitle/move`.
+            public var move: Swift.String
+            /// Creates a new `StoryTitle`.
+            ///
+            /// - Parameters:
+            ///   - title: The title (头衔), at most 6 characters.
+            ///   - speech: Its award line (颁奖词), at most 24 characters, citing something real from the week.
+            ///   - move: The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            public init(
+                title: Swift.String,
+                speech: Swift.String,
+                move: Swift.String
+            ) {
+                self.title = title
+                self.speech = speech
+                self.move = move
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case speech
+                case move
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.title = try container.decode(
+                    Swift.String.self,
+                    forKey: .title
+                )
+                self.speech = try container.decode(
+                    Swift.String.self,
+                    forKey: .speech
+                )
+                self.move = try container.decode(
+                    Swift.String.self,
+                    forKey: .move
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "title",
+                    "speech",
+                    "move"
                 ])
             }
         }

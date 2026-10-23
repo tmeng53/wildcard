@@ -6,6 +6,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -47,8 +48,10 @@ const app = createApp({
     membership: createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: randomInviteCodes,
+      aiConsent: unused,
     }),
     reactions: createPostgresReactionStore(db),
+    replies: createPostgresReplyStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: unused,
@@ -67,11 +70,30 @@ const app = createApp({
     daily: createPostgresDailyPushStore(db),
     sender: createOffSender(),
   }),
-  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  squads: createSquads({
+    store: createPostgresSquadStore(db),
+    inviteCodes: randomInviteCodes,
+    aiConsent: unused,
+  }),
+  aiConsent: {
+    find: unused,
+    give: unused,
+    hasCurrent: unused,
+    currentAmong: unused,
+  },
+  weeklyAwards: {
+    awards: {
+      give: unused,
+      find: unused,
+      claimNudge: unused,
+      claimWinners: unused,
+    },
+    clock: unused,
+  },
   log: createLog(unused),
   jobs: { token: undefined, interactions: [], clock: unused },
   admin: {
-    admins: () => ({ requireAdmin: unused, logChange: unused, listLog: unused }),
+    admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL('http://localhost:54321/auth/v1'),

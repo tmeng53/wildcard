@@ -257,6 +257,77 @@
         ],
         "additionalProperties": false
       },
+      "AiConsent": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "copyVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version of the consent copy (in the app’s String Catalog, naming the AI providers) the member must agree to now.",
+            "example": 1
+          },
+          "given": {
+            "type": "object",
+            "properties": {
+              "copyVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The version they agreed to.",
+                "example": 1
+              },
+              "givenAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When they agreed, in UTC."
+              }
+            },
+            "required": [
+              "copyVersion",
+              "givenAt"
+            ],
+            "additionalProperties": false,
+            "description": "The member’s latest consent, left out when they never gave one. It may be to an older version."
+          },
+          "current": {
+            "type": "boolean",
+            "description": "True when `given` is to `copyVersion`. Making or joining a squad and AI drafts need it; when false, show that version of the copy and ask."
+          }
+        },
+        "required": [
+          "version",
+          "copyVersion",
+          "current"
+        ],
+        "additionalProperties": false
+      },
+      "AiConsentGiven": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "copyVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version of the copy the app showed the member, who agreed.",
+            "example": 1
+          }
+        },
+        "required": [
+          "version",
+          "copyVersion"
+        ],
+        "additionalProperties": false
+      },
       "CheckIn": {
         "oneOf": [
           {
@@ -968,6 +1039,114 @@
         ],
         "additionalProperties": false
       },
+      "SquadPostList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SquadPost"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "posts"
+        ],
+        "additionalProperties": false
+      },
+      "SquadPost": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "$ref": "#/components/schemas/CheckIn"
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReactionEntry"
+            },
+            "description": "Teammates’ emoji, oldest first."
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReplyEntry"
+            },
+            "description": "Teammates’ replies, oldest first. Always empty but on a 请假条."
+          }
+        },
+        "required": [
+          "checkIn",
+          "reactions",
+          "replies"
+        ],
+        "additionalProperties": false
+      },
+      "ReactionEntry": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who reacted."
+          },
+          "emoji": {
+            "type": "string",
+            "description": "The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.",
+            "example": "❤️"
+          },
+          "reactedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they reacted, in UTC with milliseconds.",
+            "example": "2026-10-18T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "member",
+          "emoji",
+          "reactedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReplyEntry": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who replied."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "hug",
+              "together"
+            ],
+            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
+          },
+          "repliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they replied, in UTC with milliseconds.",
+            "example": "2026-10-18T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "member",
+          "kind",
+          "repliedAt"
+        ],
+        "additionalProperties": false
+      },
       "CheckInList": {
         "type": "object",
         "properties": {
@@ -987,6 +1166,45 @@
         "required": [
           "version",
           "checkIns"
+        ],
+        "additionalProperties": false
+      },
+      "CheckInTotals": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "trainedDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days with a 练了; several 练了 on one day count once."
+          },
+          "healthyMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "健康餐 check-ins."
+          },
+          "cheatMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "坦白放纵餐 check-ins."
+          },
+          "disclaimers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "今日请假条 check-ins, at most one a day."
+          }
+        },
+        "required": [
+          "version",
+          "trainedDays",
+          "healthyMeals",
+          "cheatMeals",
+          "disclaimers"
         ],
         "additionalProperties": false
       },
@@ -1031,14 +1249,10 @@
             "format": "uuid",
             "description": "Who reacted."
           },
-          "kind": {
+          "emoji": {
             "type": "string",
-            "enum": [
-              "cheer",
-              "highlight",
-              "lol"
-            ],
-            "description": "Which reaction. The app shows each with its own copy."
+            "description": "The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.",
+            "example": "❤️"
           },
           "reactedAt": {
             "type": "string",
@@ -1050,7 +1264,7 @@
         "required": [
           "version",
           "member",
-          "kind",
+          "emoji",
           "reactedAt"
         ],
         "additionalProperties": false
@@ -1064,19 +1278,15 @@
               1
             ]
           },
-          "kind": {
+          "emoji": {
             "type": "string",
-            "enum": [
-              "cheer",
-              "highlight",
-              "lol"
-            ],
-            "description": "Which reaction. The app shows each with its own copy."
+            "description": "The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.",
+            "example": "❤️"
           }
         },
         "required": [
           "version",
-          "kind"
+          "emoji"
         ],
         "additionalProperties": false
       },
@@ -1092,41 +1302,98 @@
           "reactions": {
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "member": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Who reacted."
-                },
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "cheer",
-                    "highlight",
-                    "lol"
-                  ],
-                  "description": "Which reaction. The app shows each with its own copy."
-                },
-                "reactedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "When they reacted, in UTC with milliseconds.",
-                  "example": "2026-10-18T20:05:00.000Z"
-                }
-              },
-              "required": [
-                "member",
-                "kind",
-                "reactedAt"
-              ],
-              "additionalProperties": false
+              "$ref": "#/components/schemas/ReactionEntry"
             }
           }
         },
         "required": [
           "version",
           "reactions"
+        ],
+        "additionalProperties": false
+      },
+      "Reply": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who replied."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "hug",
+              "together"
+            ],
+            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
+          },
+          "repliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they replied, in UTC with milliseconds.",
+            "example": "2026-10-18T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "version",
+          "member",
+          "kind",
+          "repliedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReplyDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "hug",
+              "together"
+            ],
+            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
+          }
+        },
+        "required": [
+          "version",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "ReplyList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReplyEntry"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "replies"
         ],
         "additionalProperties": false
       },
@@ -1635,30 +1902,24 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "kind": {
+                    "emoji": {
                       "type": "string",
-                      "minLength": 1,
-                      "description": "Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words."
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Its name, in the language asked for."
+                      "description": "Any one emoji.",
+                      "example": "❤️"
                     },
                     "count": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Reactions of this kind."
+                      "description": "Reactions with this emoji."
                     }
                   },
                   "required": [
-                    "kind",
-                    "label",
+                    "emoji",
                     "count"
                   ],
                   "additionalProperties": false
                 },
-                "description": "Teammates’ reactions on the week’s check-ins, one entry a kind."
+                "description": "Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first."
               }
             },
             "required": [
@@ -1682,36 +1943,30 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "kind": {
+                    "emoji": {
                       "type": "string",
-                      "minLength": 1,
-                      "description": "Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words."
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Its name, in the language asked for."
+                      "description": "Any one emoji.",
+                      "example": "❤️"
                     },
                     "received": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Reactions of this kind on their check-ins."
+                      "description": "Reactions with this emoji on their check-ins."
                     },
                     "given": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Reactions of this kind they left on teammates’ check-ins."
+                      "description": "Reactions with this emoji they left on teammates’ check-ins."
                     }
                   },
                   "required": [
-                    "kind",
-                    "label",
+                    "emoji",
                     "received",
                     "given"
                   ],
                   "additionalProperties": false
                 },
-                "description": "One entry a reaction kind."
+                "description": "One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first."
               }
             },
             "required": [
@@ -2088,6 +2343,283 @@
           "days"
         ],
         "additionalProperties": false
+      },
+      "WeekStory": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "squad": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              "hottest": {
+                "$ref": "#/components/schemas/StoryHottest"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ready"
+                ]
+              },
+              "titles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "member": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "titles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryTitle"
+                      },
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "description": "The best first."
+                    }
+                  },
+                  "required": [
+                    "member",
+                    "titles"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too."
+              }
+            },
+            "required": [
+              "version",
+              "squad",
+              "week",
+              "status",
+              "titles"
+            ],
+            "additionalProperties": false,
+            "description": "The week’s titles are written."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "squad": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "week": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              "hottest": {
+                "$ref": "#/components/schemas/StoryHottest"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "squad",
+              "week",
+              "status"
+            ],
+            "additionalProperties": false,
+            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
+          }
+        ]
+      },
+      "StoryHottest": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained",
+              "healthyMeal",
+              "cheatMeal",
+              "disclaimer"
+            ]
+          },
+          "sport": {
+            "type": "string",
+            "description": "For a 练了: the listed sport’s key, or the name of the member’s own."
+          },
+          "caption": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "description": "For a 请假条: its text."
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryPhoto"
+            },
+            "description": "Up to 3 photos, the cover first; empty when there are none."
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "emoji": {
+                  "type": "string",
+                  "description": "Any one emoji.",
+                  "example": "❤️"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "emoji",
+                "count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards."
+          }
+        },
+        "required": [
+          "checkIn",
+          "day",
+          "kind",
+          "photos",
+          "reactions"
+        ],
+        "additionalProperties": false,
+        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any."
+      },
+      "StoryPhoto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "`GET` the photo here. It works for an hour."
+          }
+        },
+        "required": [
+          "path",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "StoryTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The title (头衔), at most 6 characters.",
+            "example": "雨中狠人"
+          },
+          "speech": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Its award line (颁奖词), at most 24 characters, citing something real from the week.",
+            "example": "周三下着雨还去跑了 5 公里"
+          },
+          "move": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          }
+        },
+        "required": [
+          "title",
+          "speech",
+          "move"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {}
@@ -2304,6 +2836,122 @@
         }
       }
     },
+    "/me/ai-consent": {
+      "get": {
+        "operationId": "getMyAiConsent",
+        "summary": "The signed-in member’s AI consent",
+        "description": "Whether they have agreed to the current copy, so a returning member isn’t asked again.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Their consent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConsent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "putMyAiConsent",
+        "summary": "Agree to the AI copy",
+        "description": "With the version of the copy the app showed, which must be the current one. Safe to repeat: agreeing again keeps when they first agreed.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiConsentGiven"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agreed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConsent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid request, or a version that isn’t the current one (`AI_CONSENT_COPY_OUTDATED`): read the current version and ask again",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/check-ins/{id}": {
       "put": {
         "operationId": "saveCheckIn",
@@ -2422,8 +3070,8 @@
     "/squads/{squadId}/check-ins": {
       "get": {
         "operationId": "listSquadCheckIns",
-        "summary": "A squad’s check-ins for a range of days",
-        "description": "Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.",
+        "summary": "A squad’s check-ins for a range of days, with their reactions and replies",
+        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.",
         "security": [
           {
             "bearer": []
@@ -2464,7 +3112,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckInList"
+                  "$ref": "#/components/schemas/SquadPostList"
                 }
               }
             }
@@ -2559,6 +3207,50 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/check-in-totals": {
+      "get": {
+        "operationId": "getMyCheckInTotals",
+        "summary": "Everything the signed-in member ever checked in, counted by kind",
+        "description": "All of their check-ins, wherever they went; 我 shows them. Counts only go up.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInTotals"
                 }
               }
             }
@@ -2828,6 +3520,252 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReactionList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{checkInId}/replies/mine": {
+      "put": {
+        "operationId": "replyToDisclaimer",
+        "summary": "Reply to a teammate’s 请假条",
+        "description": "Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplyDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already there, or changed from another reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reply"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Replied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid reply, not a 请假条 (`NOT_A_DISCLAIMER`), or the caller’s own (`OWN_DISCLAIMER_REPLY`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeMyReply",
+        "summary": "Take your reply off a 请假条",
+        "description": "Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Taken off"
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{checkInId}/replies": {
+      "get": {
+        "operationId": "listDisclaimerReplies",
+        "summary": "A 请假条’s replies",
+        "description": "Oldest first, for its author and the teammates who can see it. Empty for any other check-in.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The replies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyList"
                 }
               }
             }
@@ -3178,7 +4116,7 @@
       "put": {
         "operationId": "createSquad",
         "summary": "Create a squad",
-        "description": "With only a name; the caller is its first member. The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
+        "description": "With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
         "security": [
           {
             "bearer": []
@@ -3227,7 +4165,7 @@
             }
           },
           "400": {
-            "description": "Not a valid name, or the member is in 3 squads already (`SQUAD_LIMIT_REACHED`)",
+            "description": "Not a valid name, the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3479,7 +4417,7 @@
       "post": {
         "operationId": "joinSquad",
         "summary": "Join a squad by invite code",
-        "description": "Safe to repeat: joining a squad the member is in answers 200 with it.",
+        "description": "The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.",
         "security": [
           {
             "bearer": []
@@ -3518,7 +4456,7 @@
             }
           },
           "400": {
-            "description": "The squad has 8 members (`SQUAD_FULL`), or the member is in 3 squads already (`SQUAD_LIMIT_REACHED`)",
+            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3820,7 +4758,7 @@
             }
           },
           "400": {
-            "description": "Not a valid request",
+            "description": "Not a valid request, or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4005,6 +4943,193 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/story/nudge": {
+      "post": {
+        "operationId": "nudgeSquadWeekStory",
+        "summary": "Nudges the organisers about a story whose titles haven’t come (催一下主办方)",
+        "description": "For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Nudged, or nothing to nudge about"
+          },
+          "400": {
+            "description": "Not a Monday",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weeks/{weekStart}/story": {
+      "get": {
+        "operationId": "getSquadWeekStory",
+        "summary": "A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)",
+        "description": "Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The story, or `pending` while it is being written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekStory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a Monday",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
             "content": {
               "application/problem+json": {
                 "schema": {

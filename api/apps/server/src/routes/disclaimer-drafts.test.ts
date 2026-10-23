@@ -2,6 +2,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -23,9 +24,17 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database, and each provider's
 // adapter answering from recorded responses instead of the provider.
@@ -63,8 +72,10 @@ function appWith(model: LanguageModel) {
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
+      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),
@@ -75,6 +86,7 @@ function appWith(model: LanguageModel) {
       model,
       memes: () => Promise.resolve([]),
       allowance: createPostgresDraftAllowance(db),
+      aiConsent: () => Promise.resolve(true),
       clock: () => new Date(),
       random: () => 0,
     }),
@@ -84,8 +96,14 @@ function appWith(model: LanguageModel) {
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
     }),
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     push: pushOn(db),
+    aiConsent: aiConsentOn(db),
+    weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),
@@ -144,7 +162,7 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
     expect((await ask(app, { token })).body).toEqual({ version: 1, kind });
   });
 
-  it.each<Fixture>(['body-talk', 'refusal', 'overloaded'])(
+  it.each<Fixture>(['refusal', 'overloaded'])(
     'answers 503 when %s leaves nothing to show',
     async (fixture) => {
       const { app } = appAnswering(provider, fixture);

@@ -14,6 +14,7 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -29,11 +30,19 @@ import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.j
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
@@ -78,8 +87,10 @@ beforeAll(async () => {
             membership: createSquads({
               store: createPostgresSquadStore(db),
               inviteCodes: randomInviteCodes,
+              aiConsent: () => Promise.resolve(true),
             }),
             reactions: createPostgresReactionStore(db),
+            replies: createPostgresReplyStore(db),
             photos,
             plans: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),
@@ -94,10 +105,13 @@ beforeAll(async () => {
           squads: createSquads({
             store: createPostgresSquadStore(db),
             inviteCodes: randomInviteCodes,
+            aiConsent: () => Promise.resolve(true),
           }),
           disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
           push: pushOn(db),
           photos,
+          aiConsent: aiConsentOn(db),
+          weeklyAwards: unusedWeeklyAwards,
           log: createLog(() => undefined),
           jobs: noJobs,
           admin: {

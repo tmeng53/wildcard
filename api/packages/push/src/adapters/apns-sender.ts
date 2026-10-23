@@ -14,15 +14,21 @@ export const APNS_ORIGINS: Readonly<Record<PushEnvironment, string>> = {
   production: 'https://api.push.apple.com',
 };
 
+/** One `.p8` key. Apple limits a key to one environment, so each environment has its own. */
 export interface ApnsKey {
   /** The 10-character Key ID Apple shows for the `.p8` key. */
   readonly keyId: string;
-  /** The Apple Developer Team ID. */
-  readonly teamId: string;
   /** The `.p8` file's contents (a PEM EC private key). */
   readonly privateKey: string;
+}
+
+export interface ApnsAccount {
+  /** The Apple Developer Team ID. */
+  readonly teamId: string;
   /** The app's bundle id, which every notification is addressed to. */
   readonly topic: string;
+  /** The key that signs in for each kind of token. */
+  readonly keys: Readonly<Record<PushEnvironment, ApnsKey>>;
 }
 
 /**
@@ -45,12 +51,13 @@ const RETRY_LATER_STATUSES = new Set([429, 500, 503]);
 const ApnsError = z.object({ reason: z.string() });
 
 /**
- * Sends straight to Apple Push Notification service over HTTP/2, signing in with a token-based
- * `.p8` key (no certificate to renew). One connection per APNs host, kept open, as Apple asks.
+ * Sends straight to Apple Push Notification service over HTTP/2, signing in with token-based
+ * `.p8` keys (no certificate to renew): the sandbox key for sandbox tokens, the production key
+ * for production tokens. One connection per APNs host, kept open, as Apple asks.
  * https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns
  */
 export function createApnsSender(
-  key: ApnsKey,
+  account: ApnsAccount,
   options: {
     readonly origins?: Readonly<Record<PushEnvironment, string>>;
     readonly now?: () => number;
@@ -58,16 +65,27 @@ export function createApnsSender(
 ): PushSender & { close(): void } {
   const origins = options.origins ?? APNS_ORIGINS;
   const now = options.now ?? Date.now;
-  const privateKey = createPrivateKey(key.privateKey);
+  const privateKeys: Readonly<Record<PushEnvironment, KeyObject>> = {
+    sandbox: createPrivateKey(account.keys.sandbox.privateKey),
+    production: createPrivateKey(account.keys.production.privateKey),
+  };
   const sessions = new Map<PushEnvironment, ClientHttp2Session>();
-  let providerToken: { readonly jwt: string; readonly issuedAt: number } | undefined;
+  const providerTokens = new Map<
+    PushEnvironment,
+    { readonly jwt: string; readonly issuedAt: number }
+  >();
 
-  function bearer(): string {
+  function bearer(environment: PushEnvironment): string {
     const at = now();
-    if (providerToken === undefined || at - providerToken.issuedAt >= TOKEN_LIFETIME_MS) {
-      providerToken = { jwt: providerJwt(key, { privateKey, at }), issuedAt: at };
-    }
-    return providerToken.jwt;
+    const current = providerTokens.get(environment);
+    if (current !== undefined && at - current.issuedAt < TOKEN_LIFETIME_MS) return current.jwt;
+    const jwt = providerJwt(account.keys[environment], {
+      teamId: account.teamId,
+      privateKey: privateKeys[environment],
+      at,
+    });
+    providerTokens.set(environment, { jwt, issuedAt: at });
+    return jwt;
   }
 
   function session(environment: PushEnvironment): ClientHttp2Session {
@@ -93,8 +111,8 @@ export function createApnsSender(
         headers: {
           [constants.HTTP2_HEADER_METHOD]: 'POST',
           [constants.HTTP2_HEADER_PATH]: `/3/device/${device.token}`,
-          authorization: `bearer ${bearer()}`,
-          'apns-topic': key.topic,
+          authorization: `bearer ${bearer(device.environment)}`,
+          'apns-topic': account.topic,
           'apns-push-type': 'alert',
           // 10 sends at once; 5 lets the phone save power, right for a quiet notification.
           'apns-priority': notification.interruption === 'passive' ? '5' : '10',
@@ -125,11 +143,15 @@ export function createApnsSender(
 /** The ES256 JWT APNs takes as a provider token. */
 function providerJwt(
   key: ApnsKey,
-  { privateKey, at }: { readonly privateKey: KeyObject; readonly at: number },
+  {
+    teamId,
+    privateKey,
+    at,
+  }: { readonly teamId: string; readonly privateKey: KeyObject; readonly at: number },
 ): string {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const unsigned = `${encode({ alg: 'ES256', kid: key.keyId })}.${encode({
-    iss: key.teamId,
+    iss: teamId,
     iat: Math.floor(at / 1000),
   })}`;
   // JWS wants the raw r||s signature, not DER.

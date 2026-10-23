@@ -42,6 +42,10 @@ public enum AvatarError: Error, Equatable, Sendable {
     case invalidAccent(clip: String, accent: String)
     /// An accent track that doesn't start and end at rest (no offset, scale 1).
     case accentNotAtRest(accent: String, part: PartID, channel: Channel)
+    /// A clip asked to play at a tempo that isn't a positive number.
+    case invalidTempo(clip: String)
+    /// `kits.json` names a kit it doesn't define, or a sport or category that doesn't exist.
+    case unknownKit(String)
 }
 
 /// What's wrong in an SVG file. Art is exported flat: paths and basic shapes with fills
