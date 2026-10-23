@@ -41,8 +41,8 @@ const Environment = z.object({
   APPLE_PRIVATE_KEY: z.string().includes('-----BEGIN PRIVATE KEY-----').optional(),
   APPLE_CLIENT_ID: z.string().min(1).optional(),
   // Sending push notifications through APNs with token-based `.p8` keys. Apple limits a key to
-  // one environment, so there is a Sandbox key (Xcode and TestFlight-less debug builds) and a
-  // Production key (TestFlight and the App Store); a device's token picks which one signs.
+  // one environment, so there is a Sandbox key (debug builds run from Xcode) and a Production
+  // key (TestFlight and the App Store); a device's token picks which one signs.
   // All six, or none: without them the server sends no pushes.
   APNS_TEAM_ID: z
     .string()
