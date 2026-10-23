@@ -52,6 +52,8 @@ private struct WeekPoster: View {
     private let restOpacity = 0.55
     /// The selected day's row: white over the accent, faintly.
     private let selectedFill = 0.22
+    /// The total's strip along the bottom: the accent, a shade darker.
+    private let stripShade = 0.18
 
     var body: some View {
         let ink = Color(role: .fgOnAccent, in: theme)
@@ -81,14 +83,8 @@ private struct WeekPoster: View {
                         .allowsHitTesting(false)
                 }
             }
-            Text("每周训练 \(week.trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module)
-                .typeStyle(TypeRamp.headline)
-                .contentTransition(.numericText(value: Double(week.trainingDays)))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Space.m)
-                .padding(.vertical, Space.s)
-                .background(ink.opacity(selectedFill))
-                .accessibilityIdentifier("week.count")
+            WeekTotal(trainingDays: week.trainingDays)
+                .background(Color(role: .fgDefault, in: theme).opacity(stripShade))
         }
         .foregroundStyle(ink)
         .background(
@@ -149,7 +145,35 @@ private struct WeekPoster: View {
     }
 }
 
-/// What the selected day can be: each sport picked, or 训练 when none was, then 休息.
+/// 每周训练 on the left, small, and the count on the right, big, turning over as a day changes.
+private struct WeekTotal: View {
+    let trainingDays: Int
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
+            Text("每周训练", bundle: .module)
+                .typeStyle(TypeRamp.label)
+            Spacer(minLength: 0)
+            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                Text(verbatim: "\(trainingDays)")
+                    .typeStyle(TypeRamp.scoreCard)
+                    .contentTransition(.numericText(value: Double(trainingDays)))
+                Text(verbatim: "/\(WeeklyPlan.dayCount)")
+                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
+            }
+            Text("天", bundle: .module)
+                .typeStyle(TypeRamp.footnoteEmphasis)
+        }
+        .padding(.horizontal, Space.m)
+        .padding(.vertical, Space.xs)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("每周训练 \(trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module))
+        .accessibilityIdentifier("week.count")
+    }
+}
+
+/// What the selected day can be: each sport picked, or 训练 when none was, then 休息 with its
+/// moon. Small chips in words, the selected one outlined in the accent.
 private struct DayChoices: View {
     let model: SignUpModel
     let week: WeekDraft
@@ -157,22 +181,11 @@ private struct DayChoices: View {
     var body: some View {
         FlowRow {
             ForEach(week.choices, id: \.self) { choice in
-                PickPill(
-                    DayName(day: choice).text, systemImage: Self.symbol(for: choice),
-                    isSelected: week.days[week.selected] == choice
-                ) {
+                DayChip(day: choice, isSelected: week.days[week.selected] == choice) {
                     model.setDay(choice)
                 }
                 .accessibilityIdentifier("week.choice.\(Self.key(for: choice))")
             }
-        }
-    }
-
-    static func symbol(for day: PlanDay) -> String {
-        switch day {
-        case .train(let activity?): activity.symbol
-        case .train(nil): "figure.mixed.cardio"
-        case .rest: "moon.zzz"
         }
     }
 
@@ -182,6 +195,48 @@ private struct DayChoices: View {
         case .train(nil): "train"
         case .rest: "rest"
         }
+    }
+}
+
+/// One choice under the poster, as the design draws it: 34 points tall, corners of 10, within a
+/// full-height tap area.
+private struct DayChip: View {
+    let day: PlanDay
+    let isSelected: Bool
+    let action: () -> Void
+    @Environment(\.sceneTheme) private var theme
+
+    /// The chip's drawn height in the design.
+    private let height = 34.0
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+        Button(action: action) {
+            HStack(spacing: Space.xxs) {
+                if day == .rest {
+                    Image(systemName: "moon.fill")
+                        .font(.system(size: Sizing.smallIcon, weight: .medium))
+                        .accessibilityHidden(true)
+                }
+                DayName(day: day)
+                    .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .padding(.horizontal, Space.s)
+            .frame(minHeight: height)
+            .background(Color(role: .bgSubtle, in: theme), in: shape)
+            .overlay {
+                if isSelected {
+                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                }
+            }
+            .frame(minHeight: Sizing.minimumTapTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
