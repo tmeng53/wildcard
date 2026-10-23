@@ -78,7 +78,7 @@ private func day(daysFromThisMonday days: Int) throws -> LocalDay {
 // awards run. So the late titles are read from the API's own example of one.
 @Test func lateTitlesWaitAndTheHottestCheckInStillPlays() throws {
     let json = """
-        {"version":1,"language":"zh-Hans","status":"pending",
+        {"version":1,"status":"pending",
          "squad":{"id":"3f6c1a52-8a0e-4c39-9d43-6b2f3f0b1a11","name":"晨跑五人组"},
          "week":{"from":"2026-10-12","to":"2026-10-18"},
          "hottest":{"checkIn":"8d1c5b7e-2f4a-4e8b-9c0d-1a2b3c4d5e6f","day":"2026-10-15","kind":"trained",

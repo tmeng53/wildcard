@@ -98,9 +98,10 @@ private func facts(
     #expect(best == BestDisclaimer(checkIn: note.id, author: id(2), text: "教练说要循序渐进", reactions: 6))
 }
 
-@Test func theEndingCountsTheSquadsDaysAndIsLeftOutWhenNobodyPlanned() throws {
+@Test func theEndingCountsTheSquadsDaysAndIsLeftOutWhenNobodyTrained() throws {
     #expect(try story().filled(with: facts(trained: 19, planned: 22)).ending == Ending(done: 19, plan: 22))
-    #expect(try story().filled(with: facts()).ending == nil)
+    #expect(try story().filled(with: facts(planned: 22)).ending == nil)
+    #expect(try story().filled(with: facts(myPlanned: 5, plan: [.rest])).myWeek == nil)
 }
 
 @Test func aFilledStoryPlaysEveryPageInOrder() throws {

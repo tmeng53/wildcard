@@ -82,10 +82,10 @@ extension WeekFacts {
     }
 
     /// The reader's Monday to Sunday: a 练了 day plays its first sport, else a 请假条 lies flat,
-    /// else a planned rest day dozes.
+    /// else a planned rest day dozes. None when they checked in nothing all week.
     func myWeek(_ week: Week) -> MyWeek? {
         let mine = checkIns.filter { $0.member == viewer }
-        guard !mine.isEmpty || myPlanned > 0 else { return nil }
+        guard !mine.isEmpty else { return nil }
         let kinds = Self.days(of: week).enumerated().map { index, day -> MyWeek.Day in
             let posts = mine.filter { $0.day == day }
             if let sport = posts.lazy.compactMap(\.trainedActivity).first {
@@ -125,9 +125,10 @@ extension WeekFacts {
             checkIn: best.checkIn, author: note.member, text: disclaimer.text, reactions: best.reactions)
     }
 
-    /// The squad's days against its plans; none when nobody planned or trained.
+    /// The squad's days against its plans; none when nobody trained, so a quiet week isn't told
+    /// how short it fell.
     var ending: Ending? {
-        guard squadPlanned > 0 || squadTrained > 0 else { return nil }
+        guard squadTrained > 0 else { return nil }
         return Ending(done: squadTrained, plan: squadPlanned)
     }
 
