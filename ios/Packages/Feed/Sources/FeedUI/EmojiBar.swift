@@ -89,6 +89,7 @@ struct EmojiBar: View {
             }
             .buttonStyle(PressableButtonStyle())
             .accessibilityLabel(Text("更多表情", bundle: .module))
+            .accessibilityIdentifier("feed.emoji.more")
             .background {
                 EmojiField(isActive: $typing) { emoji in
                     pick(emoji)
