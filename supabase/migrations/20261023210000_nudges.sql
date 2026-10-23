@@ -1,3 +1,5 @@
+-- Dated after the migrations the beta already ran, since it never ran this one and the deploy
+-- applies only migrations newer than its last.
 -- Nudges between squadmates: pokes (`poke`, 拍一拍) for now. They aren't pushed one by
 -- one; the 6pm daily push counts them and names who sent them.
 -- As with every table, only our API reads and writes it.

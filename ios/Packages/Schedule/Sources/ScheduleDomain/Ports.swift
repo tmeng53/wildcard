@@ -25,9 +25,11 @@ public struct ScheduleProfile: Hashable, Sendable {
     public let timeZone: TimeZone
     /// The Monday of the week they joined: the earliest week to look back on.
     public let firstWeek: LocalDay
+    /// Their character's look, cheering in the poster's corner; nil until they have one.
+    public let look: CharacterLook?
 
-    public init(nickname: String, timeZone: TimeZone, firstWeek: LocalDay) {
-        (self.nickname, self.timeZone, self.firstWeek) = (nickname, timeZone, firstWeek.weekStart)
+    public init(nickname: String, timeZone: TimeZone, firstWeek: LocalDay, look: CharacterLook? = nil) {
+        (self.nickname, self.timeZone, self.firstWeek, self.look) = (nickname, timeZone, firstWeek.weekStart, look)
     }
 }
 

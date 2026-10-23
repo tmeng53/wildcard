@@ -18,14 +18,14 @@ extension InMemoryFeedSource {
         let write = SamplePosts(today: LocalDay(at: now, in: zone), zone: zone, audience: audience)
         var posts = [
             write.post(
-                jay, 0, 7, 42, .trained(write.training(.run, "track", "下雨也跑了，鞋已阵亡")),
+                jay, 0, 7, 42, .trained(write.training(.run, minutes: 45, "track", "下雨也跑了，鞋已阵亡")),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")]),
             write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
             write.post(
-                doudou, 1, 21, 5, .trained(write.training(.swim, "pool", "夜泳人，泳池是我的")),
+                doudou, 1, 21, 5, .trained(write.training(.swim, minutes: 40, "pool", "夜泳人，泳池是我的")),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
-                viewer, 1, 19, 20, .trained(write.training(.strength, "gym", "练腿日，明天下楼梯靠扶手")),
+                viewer, 1, 19, 20, .trained(write.training(.strength, minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")]),
             write.post(fish, 2, 18, 10, .trained(write.training(.tennis, "tennis", "发球终于过网了"))),
             write.post(
@@ -89,8 +89,10 @@ private struct SamplePosts {
     let zone: TimeZone
     let audience: Audience
 
-    func training(_ sport: Sport, _ photo: String, _ caption: String) -> Training {
-        Training(activity: .sport(sport), photos: photos(photo), caption: line(caption))
+    func training(_ sport: Sport, minutes: Int? = nil, _ photo: String, _ caption: String) -> Training {
+        Training(
+            activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: photos(photo),
+            caption: line(caption))
     }
 
     func meal(_ photo: String, _ caption: String) -> Meal {

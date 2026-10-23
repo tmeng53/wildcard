@@ -112,6 +112,10 @@ struct PostCard: View {
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
+                    if case .trained(let training) = post.checkIn.entry, let minutes = training.minutes {
+                        Spacer(minLength: Space.xs)
+                        minutesNumber(minutes)
+                    }
                 }
                 if case .disclaimer = post.checkIn.entry {
                     Tag(kindTitle, systemImage: "moon.fill", style: .rest)
@@ -125,6 +129,22 @@ struct PostCard: View {
             .padding(.trailing, Space.m)
             .padding(.bottom, Space.s)
         }
+    }
+
+    /// A 练了's minutes, the card's one big number, at the right of who and when.
+    private func minutesNumber(_ minutes: WorkoutMinutes) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
+            Text(verbatim: "\(minutes.value)")
+                .typeStyle(TypeRamp.scoreCard)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+            Text("分钟", bundle: .module)
+                .typeStyle(TypeRamp.footnoteEmphasis)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+        }
+        .lineLimit(1)
+        .fixedSize()
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("feed.minutes")
     }
 
     private var authorName: Text {

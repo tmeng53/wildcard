@@ -29,8 +29,8 @@ public enum StoryClip: Hashable, Sendable {
     /// 叠罗汉 at the ending: one carries, one sits on top.
     case stackBottom, stackTop
 
-    /// A shared clip's name in the character's art (`moves/<name>.json`); a sport's comes from
-    /// its kit instead.
+    /// A name for the clip, unique per case but a sport's: the story keeps each member's bound
+    /// clips by it, beside the kit.
     public var name: String {
         switch self {
         case .award(let move): move.rawValue
