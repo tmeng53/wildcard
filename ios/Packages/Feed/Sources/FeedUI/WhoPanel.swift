@@ -29,7 +29,10 @@ struct WhoPanel: View {
             if reactions.groups.count > 1 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: Space.xs) {
-                        PickPill(Text("全部 \(reactions.all.count)", bundle: .module), isSelected: filter == nil) {
+                        PickPill(
+                            Text("全部 \(reactions.all.count)", bundle: .module),
+                            isSelected: filter == nil || !reactions.groups.contains { $0.kind == filter }
+                        ) {
                             filter = nil
                         }
                         ForEach(reactions.groups, id: \.kind) { group in
@@ -68,9 +71,12 @@ struct WhoPanel: View {
         .accessibilityIdentifier("feed.who")
     }
 
-    /// Everyone who reacted, newest first, or those who left the filter's emoji.
+    /// Everyone who reacted, newest first, or those who left the filter's emoji. A filter whose
+    /// emoji nobody has any more shows everyone again.
     private var shown: [Responses<Emoji>.Response] {
-        reactions.newest(reactions.all.count).filter { filter == nil || $0.kind == filter }
+        let all = reactions.newest(reactions.all.count)
+        let picked = all.filter { $0.kind == filter }
+        return picked.isEmpty ? all : picked
     }
 
     private func name(_ member: MemberID) -> String {

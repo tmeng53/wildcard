@@ -4,8 +4,10 @@ import DesignSystemUI
 import SwiftUI
 
 /// An emoji flying on an arc from where it was picked to the author's head, where it pops. The
-/// double tap's heart first pops big where the finger was, holds, then shrinks as it flies.
+/// double tap's heart first pops big where the finger was, holds, then shrinks as it flies. With
+/// Reduce Motion it doesn't travel: it shows at the head and fades.
 struct FlyingEmoji: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let flight: FeedModel.Flight
     let target: CGPoint
     @State private var progress = 0.0
@@ -15,6 +17,8 @@ struct FlyingEmoji: View {
     private static let size: Double = 28
     private static let bigSize: Double = 96
     private static let arcLift: Double = 80
+    /// How much the emoji swells as it lands and fades.
+    private static let landingPop: Double = 1.4
 
     init(flight: FeedModel.Flight, to target: CGPoint) {
         self.flight = flight
@@ -32,17 +36,24 @@ struct FlyingEmoji: View {
             .accessibilityHidden(true)
             .task {
                 let landed = flight.big ? Self.size / Self.bigSize : 1
+                if reduceMotion {
+                    progress = 1
+                    scale = landed
+                    try? await Task.sleep(for: .seconds(FeedModel.flight))
+                    withAnimation(.wildcard(Motion.sheet.exit, reduceMotion: true)) { opacity = 0 }
+                    return
+                }
                 if flight.big {
-                    withAnimation(.wildcard(Motion.celebrate)) { scale = 1 }
+                    withAnimation(.wildcard(Motion.celebrate, reduceMotion: false)) { scale = 1 }
                     try? await Task.sleep(for: .seconds(FeedModel.bigHold))
                 }
-                withAnimation(.easeInOut(duration: FeedModel.flight)) {
+                withAnimation(.wildcard(Motion.page, reduceMotion: false)) {
                     progress = 1
                     scale = landed
                 }
                 try? await Task.sleep(for: .seconds(FeedModel.flight))
-                withAnimation(.easeOut(duration: 0.15)) {
-                    scale = landed * 1.4
+                withAnimation(.wildcard(Motion.sheet.exit, reduceMotion: false)) {
+                    scale = landed * Self.landingPop
                     opacity = 0
                 }
             }
