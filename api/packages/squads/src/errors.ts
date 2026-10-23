@@ -74,3 +74,61 @@ export class SquadIdConflictError extends AppError {
     super(`Squad ${squadId} already exists.`);
   }
 }
+
+/** Thrown when someone other than the captain renames the squad, removes a member or hands on the captaincy. */
+export class NotSquadCaptainError extends AppError {
+  override readonly name = 'NotSquadCaptainError';
+  readonly reason = 'NOT_SQUAD_CAPTAIN';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('Only the squad’s captain can do this.');
+  }
+}
+
+/** Thrown when the captaincy is handed to someone who isn't in the squad. */
+export class SquadMemberUnknownError extends AppError {
+  override readonly name = 'SquadMemberUnknownError';
+  readonly reason = 'SQUAD_MEMBER_UNKNOWN';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly member: string) {
+    super(`Member ${member} isn’t in this squad.`);
+  }
+}
+
+/**
+ * Thrown when a member who may not pick this week's scene tries to: only last week's crown
+ * winners may, or the captain when nobody won it.
+ */
+export class NotScenePickerError extends AppError {
+  override readonly name = 'NotScenePickerError';
+  readonly reason = 'NOT_SCENE_PICKER';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('Only last week’s crown winner picks this week’s scene, or the captain when nobody won.');
+  }
+}
+
+/** Thrown when the week's scene has been picked already: a pick is once a week. */
+export class ScenePickedError extends AppError {
+  override readonly name = 'ScenePickedError';
+  readonly reason = 'SCENE_ALREADY_PICKED';
+  readonly status = 'ALREADY_EXISTS';
+
+  constructor(readonly week: string) {
+    super(`The scene for the week of ${week} has been picked already.`);
+  }
+}
+
+/** Thrown when a pick names a week other than the one open for picking now. */
+export class SceneWeekClosedError extends AppError {
+  override readonly name = 'SceneWeekClosedError';
+  readonly reason = 'SCENE_WEEK_CLOSED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly week: string) {
+    super(`The week of ${week} isn’t open for picking.`);
+  }
+}

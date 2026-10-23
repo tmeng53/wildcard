@@ -6,10 +6,12 @@ public enum TextWeight: Sendable, Hashable {
     case semibold
 }
 
-/// Weights of the bundled Barlow Condensed cuts: numbers, and their lighter denominators.
+/// Weights of the bundled Barlow Condensed cuts: numbers, their lighter denominators, and the
+/// italic week number on the 出赛表 poster.
 public enum ScoreboardWeight: Sendable, Hashable {
     case semibold
     case extraBold
+    case extraBoldItalic
 }
 
 /// A typeface and weight. Only bundled or system cuts are representable.
@@ -26,6 +28,7 @@ public enum Face: Sendable, Hashable {
         case .text(.semibold): "PingFangSC-Semibold"
         case .scoreboard(.semibold): "BarlowCondensed-SemiBold"
         case .scoreboard(.extraBold): "BarlowCondensed-ExtraBold"
+        case .scoreboard(.extraBoldItalic): "BarlowCondensed-ExtraBoldItalic"
         }
     }
 }
@@ -100,6 +103,11 @@ public enum TypeRamp {
     /// A number inside a line of small text (小队 5 周前…): 14, semibold.
     public static let scoreCaption = TypeStyle(face: .scoreboard(.semibold), size: 14, anchor: .caption)
 
+    /// The week's number across the 出赛表 poster (W42), italic and set tight. The poster is a
+    /// picture saved at a fixed size, so it doesn't scale with Dynamic Type.
+    public static let posterWeek = TypeStyle(
+        face: .scoreboard(.extraBoldItalic), size: 128, tracking: -5, anchor: .largeTitle)
+
     /// The denominator after a number (`/22`): a weight lighter and a little over half the size.
     public static func denominator(of number: TypeStyle) -> TypeStyle {
         TypeStyle(face: .scoreboard(.semibold), size: (number.size * 0.55).rounded(), anchor: number.anchor)
@@ -113,5 +121,6 @@ public enum TypeRamp {
         ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
+        ("posterWeek", posterWeek),
     ]
 }

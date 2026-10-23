@@ -11,6 +11,8 @@ import Foundation
 import MeDomain
 import MeUI
 import OnboardingUI
+import ScheduleDomain
+import ScheduleUI
 import SwiftUI
 
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
@@ -25,6 +27,7 @@ import SwiftUI
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
+    @State private var schedule: ScheduleModel
     @State private var feed: FeedModel
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
@@ -33,7 +36,7 @@ struct WildcardApp: App {
     @State private var app: AppModel?
 
     // An init, not property initializers: those run outside the main actor, and the post
-    // callback and both models are the main actor's.
+    // callback and the models are the main actor's.
     init() {
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
@@ -56,6 +59,12 @@ struct WildcardApp: App {
                 service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
                 // The in-memory member has no Apple account to confirm with and nothing to sign out of.
                 confirm: { .signedInSession }, signOut: {}))
+        _schedule = State(
+            initialValue: ScheduleModel(
+                store: ScheduleStore(
+                    backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
+                    now: LaunchOptions.scheduleNow),
+                photos: LaunchOptions.posterSaver))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
         #else
@@ -113,7 +122,7 @@ struct WildcardApp: App {
             } else if let app {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
-                MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
+                MainTabs(today: today, profile: profile, schedule: schedule, feed: feed, selection: $tab)
                     .onAppear {
                         delegate.opened = { [today, $tab] in
                             $tab.wrappedValue = .today
@@ -145,7 +154,8 @@ private struct AppRoot: View {
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
             case .tabs(let today, let profile, let feed):
-                MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
+                // 出赛表 shows its placeholder here until its API adapter lands.
+                MainTabs(today: today, profile: profile, schedule: nil, feed: feed, selection: $tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

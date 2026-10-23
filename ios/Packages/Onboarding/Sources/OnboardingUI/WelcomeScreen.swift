@@ -304,7 +304,7 @@ private struct Reveal: ViewModifier {
     }
 }
 
-/// The open screen's floor: light grey, with the brand's graphite and volt stripe along its top
+/// The open screen's floor: light grey, with the brand's graphite and white stripe along its top
 /// and faint tiles, as on the website. No scene's floor, so this one is drawn here.
 private struct WelcomeFloor: View {
     let theme: SceneTheme

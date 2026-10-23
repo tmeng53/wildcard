@@ -28,6 +28,8 @@
 		A1C0DE000000000000000078 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000074 /* AccountUI */; };
 		A1C0DE000000000000000079 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000075 /* Backend */; };
 		A1C0DE00000000000000007A /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000076 /* Contracts */; };
+		A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C1 /* ScheduleDomain */; };
+		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +86,8 @@
 				A1C0DE000000000000000078 /* AccountUI in Frameworks */,
 				A1C0DE000000000000000079 /* Backend in Frameworks */,
 				A1C0DE00000000000000007A /* Contracts in Frameworks */,
+				A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */,
+				A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,6 +160,8 @@
 				A1C0DE000000000000000074 /* AccountUI */,
 				A1C0DE000000000000000075 /* Backend */,
 				A1C0DE000000000000000076 /* Contracts */,
+				A1C0DE0000000000000000C1 /* ScheduleDomain */,
+				A1C0DE0000000000000000C3 /* ScheduleUI */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -224,6 +230,7 @@
 				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */,
 				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
 				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
+				A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -344,6 +351,7 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报存到你的相册。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -373,6 +381,7 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报存到你的相册。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -501,6 +510,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Contracts;
 		};
+		A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Schedule;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -608,6 +621,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
 			productName = Contracts;
+		};
+		A1C0DE0000000000000000C1 /* ScheduleDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */;
+			productName = ScheduleDomain;
+		};
+		A1C0DE0000000000000000C3 /* ScheduleUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */;
+			productName = ScheduleUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

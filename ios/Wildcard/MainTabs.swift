@@ -5,6 +5,7 @@ import DesignSystemUI
 import FeedUI
 import MeDomain
 import MeUI
+import ScheduleUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -17,6 +18,9 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
+    /// Nil on the real backend until 出赛表's API adapter lands: the tab shows its placeholder
+    /// there rather than the in-memory sample member's week.
+    let schedule: ScheduleModel?
     let feed: FeedModel
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -85,7 +89,12 @@ struct MainTabs: View {
             FeedView(model: feed) { selection = .today }
                 .environment(\.sceneTheme, today.scene)
         case .schedule:
-            UpcomingTab(title: Text("出赛表"))
+            if let schedule {
+                ScheduleView(model: schedule)
+                    .environment(\.sceneTheme, today.scene)
+            } else {
+                UpcomingTab(title: Text("出赛表"))
+            }
         case .profile:
             MeView(
                 model: profile,

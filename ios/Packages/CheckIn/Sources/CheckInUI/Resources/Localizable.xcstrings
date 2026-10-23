@@ -281,16 +281,6 @@
         }
       }
     },
-    "搜索运动": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search sports"
-          }
-        }
-      }
-    },
     "搞笑": {
       "localizations": {
         "en": {
