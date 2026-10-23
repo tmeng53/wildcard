@@ -7,7 +7,7 @@ import DesignSystemUI
 import SwiftUI
 
 /// What 拍一拍 draws over the scene: the bubble over a tapped teammate, and while a pat plays,
-/// the accent dot flying from the hand, the 「!」 and the little flick lines where it lands, and
+/// the graphite (brand) dot flying from the hand, the 「!」 and the little flick lines where it lands, and
 /// the dot resting by their feet for a moment. Positions follow people who move, every frame.
 struct PatOverlay: View {
     /// The marks go on the scene, under the squad card; the bubble goes over the card, as in
@@ -101,7 +101,7 @@ struct PatOverlay: View {
     private func effects(of pat: PatStage.Pat, at date: Date, seconds: Double) -> some View {
         let elapsed = date.timeIntervalSince(pat.start)
         let colors = PatMarks.Colors(
-            dot: Color(role: .bgAccent, in: theme), ink: Color(role: .fgDefault, in: theme),
+            dot: Color(role: .bgBrand, in: theme), ink: Color(role: .fgDefault, in: theme),
             paper: Color(role: .bgCanvas, in: theme), flick: Color(role: .fgMuted, in: theme))
         return Canvas { context, _ in
             guard let patter = spot(of: pat.patter, seconds: seconds),

@@ -48,7 +48,10 @@ public final class TodayModel {
         let post: CheckIn?
     }
 
-    var isBurstOpen = false
+    /// Opening it closes a teammate's bubble, which would otherwise stay sharp over the blur.
+    var isBurstOpen = false {
+        didSet { if isBurstOpen { pats.dismissBubble() } }
+    }
     /// Everyone else on the scene.
     let cast = SquadCast()
     /// 拍一拍 on the scene.
