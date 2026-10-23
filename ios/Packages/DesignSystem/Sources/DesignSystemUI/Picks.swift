@@ -184,12 +184,13 @@ public struct PickTile<Picture: View>: View {
 /// A hairline around an unpicked shape; the accent border around a picked one.
 struct PickBorder<S: InsettableShape>: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     let shape: S
     let isSelected: Bool
 
     var body: some View {
         shape.strokeBorder(
-            Color(role: isSelected ? .bgAccent : .borderDefault, in: theme),
+            Color(role: isSelected ? tone.fill : .borderDefault, in: theme),
             lineWidth: isSelected ? Sizing.selectionStroke : Sizing.hairline)
     }
 }
@@ -197,6 +198,7 @@ struct PickBorder<S: InsettableShape>: View {
 /// The solid accent disc with a check that marks a picked choice.
 public struct CheckBadge: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     private let glyph: Double = 10
 
     public init() {}
@@ -204,9 +206,9 @@ public struct CheckBadge: View {
     public var body: some View {
         Image(systemName: "checkmark")
             .font(.system(size: glyph, weight: .heavy))
-            .foregroundStyle(Color(role: .fgOnAccent, in: theme))
+            .foregroundStyle(Color(role: tone.onFill, in: theme))
             .frame(width: Sizing.checkBadge, height: Sizing.checkBadge)
-            .background(Color(role: .bgAccent, in: theme), in: Circle())
+            .background(Color(role: tone.fill, in: theme), in: Circle())
             .accessibilityHidden(true)
     }
 }
@@ -215,6 +217,7 @@ public struct CheckBadge: View {
 /// Picked, a white gap and an accent ring go around it. It answers taps across 44 points.
 public struct Swatch: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var taps = 0
     private let color: Color
@@ -246,7 +249,7 @@ public struct Swatch: View {
                 .padding(gap)
                 .overlay {
                     if isSelected {
-                        Circle().strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                        Circle().strokeBorder(Color(role: tone.fill, in: theme), lineWidth: Sizing.selectionStroke)
                             .padding(-Sizing.selectionStroke)
                             .transition(.opacity)
                     }
