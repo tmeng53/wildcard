@@ -156,30 +156,6 @@ public struct WildcardAPI: Sendable {
         }
     }
 
-    // MARK: - 拍一拍
-
-    /// Whom the member patted today in `squad`, and who patted them in the last day.
-    public func pokes(in squad: SquadID) async throws(APIError) -> SquadPokes {
-        let wire = try await call {
-            try await client.listSquadNudges(path: .init(squadId: squad.description), query: .init(kind: .poke))
-                .ok.body.json
-        }
-        return try read { () throws(ContractsError) in try SquadPokes(wire) }
-    }
-
-    /// Pats a squadmate. Once a day each: patting them again the same day changes nothing.
-    public func pat(_ member: MemberID, in squad: SquadID) async throws(APIError) {
-        try await call {
-            switch try await client.nudgeSquadmate(
-                path: .init(squadId: squad.description),
-                body: .json(.init(version: ._1, to: member.description, kind: .poke)))
-            {
-            case .ok, .created: return
-            default: throw APIError.unreadableResponse
-            }
-        }
-    }
-
     // MARK: - 请假条 drafts
 
     /// What the AI writer made of the member's reason, in a style; nil when it doesn't write
