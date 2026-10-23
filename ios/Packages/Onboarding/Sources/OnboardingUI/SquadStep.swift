@@ -120,7 +120,7 @@ private struct CodeBox: View {
             .background(Color(role: .bgSubtle, in: theme), in: shape)
             .overlay {
                 if isNext {
-                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                    shape.strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: Sizing.selectionStroke)
                 }
             }
     }
@@ -148,10 +148,10 @@ private struct SquadFound: View {
             HStack(spacing: Space.s) {
                 Image(systemName: "flag.checkered")
                     .font(.system(size: Sizing.icon, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .frame(width: Sizing.control, height: Sizing.control)
                     .background(
-                        Color(role: .bgAccentSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.thumbnail)
+                        Color(role: .bgBrand, in: theme), in: RoundedRectangle(cornerRadius: Radius.thumbnail)
                     )
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Space.xxs) {

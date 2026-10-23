@@ -50,11 +50,11 @@ private struct WeekPoster: View {
     private let characterSize = CGSize(width: 132, height: 157)
     /// Days that are 休息 fade back, so the training days read first.
     private let restOpacity = 0.55
-    /// The selected day's row: white over the accent, faintly.
+    /// The selected day's row: white over the brand, faintly.
     private let selectedFill = 0.22
 
     var body: some View {
-        let ink = Color(role: .fgOnAccent, in: theme)
+        let ink = Color(role: .fgOnBrand, in: theme)
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: "\(model.nickname) · \(dates)")
@@ -92,7 +92,7 @@ private struct WeekPoster: View {
         }
         .foregroundStyle(ink)
         .background(
-            Color(role: .bgAccent, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+            Color(role: .bgBrand, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: week)
@@ -118,7 +118,7 @@ private struct WeekPoster: View {
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-                        .fill(Color(role: .fgOnAccent, in: theme).opacity(selectedFill))
+                        .fill(Color(role: .fgOnBrand, in: theme).opacity(selectedFill))
                 }
             }
             .opacity(day == .rest ? restOpacity : 1)

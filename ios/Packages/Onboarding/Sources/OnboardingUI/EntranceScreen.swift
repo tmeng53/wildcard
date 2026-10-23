@@ -8,7 +8,7 @@ import DesignSystemUI
 import OnboardingDomain
 import SwiftUI
 
-/// 上场: on the squad's scene, the teammates turn to look, the new member runs in from the right,
+/// 上场: on sign-up's brand floor, the teammates turn to look, the new member runs in from the right,
 /// jumps and lands on the empty spot in front, the ring under them closes with a burst of
 /// confetti, and the teammates cheer one after another, nearest first, each with a welcome line.
 /// Then the squad's card drops in and its week count turns over to include the new plan, and
@@ -26,7 +26,7 @@ struct EntranceScreen: View {
             let unit = proxy.size.width / EntranceStage.designWidth
             let script = stage.script(unit: unit)
             ZStack(alignment: .topLeading) {
-                SceneFloor()
+                BrandFloor(theme: theme)
                     .frame(height: proxy.size.height * (1 - EntranceStage.floorTop))
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .ignoresSafeArea(edges: .bottom)
@@ -68,7 +68,7 @@ struct EntranceScreen: View {
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: stage.showsCard)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: stage.countFlipped)
-        .background(Color(role: .bgScene, in: theme).ignoresSafeArea())
+        .background(Color(role: .bgBrandPage, in: theme).ignoresSafeArea())
         .contentShape(Rectangle())
         .onTapGesture { if stage.showsCard { model.finishEntrance() } }
         .haptic(.land, trigger: stage.hasLanded)
@@ -297,7 +297,7 @@ final class EntranceStage {
     }
 }
 
-/// The spot's ring on the floor: a dashed hairline while it waits, then an accent ring drawing
+/// The spot's ring on the floor: a dashed hairline while it waits, then a graphite ring drawing
 /// itself closed as the new member lands.
 private struct LandingRing: View {
     let isClosed: Bool
@@ -309,19 +309,19 @@ private struct LandingRing: View {
         ZStack {
             Ellipse()
                 .stroke(
-                    Color(role: .fgOnScene, in: theme).opacity(isClosed ? 0 : 0.5),
+                    Color(role: .fgMuted, in: theme).opacity(isClosed ? 0 : 0.5),
                     style: StrokeStyle(lineWidth: Sizing.selectionStroke, dash: dash))
             Ellipse()
                 .trim(from: 0, to: isClosed ? 1 : 0)
                 .stroke(
-                    Color(role: .bgAccent, in: theme), style: StrokeStyle(lineWidth: Sizing.ringWidth, lineCap: .round))
+                    Color(role: .bgBrand, in: theme), style: StrokeStyle(lineWidth: Sizing.ringWidth, lineCap: .round))
         }
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: isClosed)
         .accessibilityHidden(true)
     }
 }
 
-/// Paper bits thrown up from the spot on landing, in the accent, ink and white, falling back
+/// Paper bits thrown up from the spot on landing, in graphite, ink and white, falling back
 /// under gravity and spinning as they go.
 private struct Confetti: View {
     let start: Date?
@@ -346,7 +346,7 @@ private struct Confetti: View {
             seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
             return Double(seed >> 11) / Double(UInt64(1) << 53)
         }
-        let roles: [ColorRole] = [.bgAccent, .fgDefault, .bgCanvas]
+        let roles: [ColorRole] = [.bgBrand, .fgDefault, .bgCanvas]
         return (0..<18).map { index in
             Bit(
                 angle: -Double.pi / 2 + (next() - 0.5) * 2.3, speed: 330 + next() * 260, spin: (next() - 0.5) * 1400,
