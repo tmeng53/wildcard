@@ -8,8 +8,9 @@
 		<string>zh-Hans</string>
 		<string>en</string>
 	</array>
-	<!-- Where the hosted backend is, from build settings. Empty until it is deployed: the app then
-	     runs on the sample squad, or with `-local-backend` in Debug on this Mac's local one. -->
+	<!-- Where the hosted backend is, from build settings: Release (TestFlight, the App Store)
+	     names it; Debug leaves it empty and runs on the sample squad, as UI tests need, or with
+	     `-local-backend` on this Mac's local one. -->
 	<key>WildcardAPIURL</key>
 	<string>$(WILDCARD_API_URL)</string>
 	<key>WildcardAuthURL</key>

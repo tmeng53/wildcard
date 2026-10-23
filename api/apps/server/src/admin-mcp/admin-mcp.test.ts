@@ -18,9 +18,11 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import { createDraftSettings, createPostgresDraftSettings } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -40,6 +42,7 @@ import {
 } from '../test-kit/local-supabase.js';
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
+import { aiWritingTools } from './tools/ai-writing.js';
 import { memeTools } from './tools/memes.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
@@ -137,6 +140,10 @@ beforeAll(async () => {
               ...memeTools({
                 memes: createMemes({ store: createPostgresMemeStore(scope), clock: () => now }),
                 clock: () => now,
+              }),
+              ...aiWritingTools({
+                drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
+                awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
               }),
               // A tool that changes something, standing in for the meme tools.
               adminTool({
@@ -291,6 +298,10 @@ describe('the admin MCP server', () => {
       ['add_memes', false],
       ['turn_off_meme', false],
       ['turn_on_meme', false],
+      ['get_disclaimer_draft_settings', true],
+      ['change_disclaimer_draft_settings', false],
+      ['get_weekly_award_settings', true],
+      ['change_weekly_award_settings', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -391,6 +402,76 @@ describe('the admin MCP server', () => {
       'turn_off_meme',
       'turn_on_meme',
     ]);
+    await client.close();
+  });
+
+  it('reads and changes what the AI writes with, logging each change once', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const read = async (name: string) =>
+      z.record(z.string(), z.json()).parse(JSON.parse((await call(name)).text));
+    const drafts = await read('get_disclaimer_draft_settings');
+    const awards = await read('get_weekly_award_settings');
+    expect(drafts).toMatchObject({
+      version: 1,
+      writing: true,
+      model: 'openai/gpt-6-luna',
+      batchesPerDay: 6,
+      memeChance: 0.3,
+    });
+    expect(awards).toMatchObject({ version: 1, model: 'openai/gpt-6-luna' });
+    const events = async (
+      table: 'disclaimer_draft_setting_events' | 'weekly_award_setting_events',
+    ) =>
+      (
+        await sql<{ settings: unknown }>`
+          select settings from ${sql.table(table)} where changed_by = ${admin.userId} order by id
+        `.execute(db)
+      ).rows.map(({ settings }) => settings);
+
+    try {
+      const changed = await call('change_disclaimer_draft_settings', {
+        model: 'anthropic/claude-haiku-5-5',
+        batchesPerDay: 7,
+      });
+      const expected = { ...drafts, model: 'anthropic/claude-haiku-5-5', batchesPerDay: 7 };
+      expect(JSON.parse(changed.text)).toStrictEqual(expected);
+      expect(await read('get_disclaimer_draft_settings')).toStrictEqual(expected);
+      // The same change again saves nothing new.
+      await call('change_disclaimer_draft_settings', { batchesPerDay: 7 });
+      expect(await events('disclaimer_draft_setting_events')).toStrictEqual([expected]);
+
+      const moved = await call('change_weekly_award_settings', {
+        moves: { pump: '握拳，跳起来' },
+      });
+      expect(JSON.parse(moved.text)).toStrictEqual({
+        ...awards,
+        moves: { ...z.record(z.string(), z.string()).parse(awards.moves), pump: '握拳，跳起来' },
+      });
+
+      // A provider the server doesn't know, a move the app doesn't have, or no change at all.
+      for (const [name, args] of [
+        ['change_disclaimer_draft_settings', { model: 'gemini/flash' }],
+        ['change_disclaimer_draft_settings', { memeChance: 2 }],
+        ['change_disclaimer_draft_settings', {}],
+        ['change_weekly_award_settings', { moves: { moonwalk: '太空步' } }],
+      ] as const) {
+        expect((await call(name, args)).isError).toBe(true);
+      }
+      expect(await events('weekly_award_setting_events')).toHaveLength(1);
+    } finally {
+      await call('change_disclaimer_draft_settings', {
+        model: drafts.model,
+        batchesPerDay: drafts.batchesPerDay,
+      });
+      await call('change_weekly_award_settings', { moves: awards.moves });
+    }
+    expect(await read('get_disclaimer_draft_settings')).toStrictEqual(drafts);
+    expect(await read('get_weekly_award_settings')).toStrictEqual(awards);
     await client.close();
   });
 

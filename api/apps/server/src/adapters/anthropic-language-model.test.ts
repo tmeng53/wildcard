@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { recordedModel, type Fixture } from '../test-kit/recorded-model.js';
-import { ANTHROPIC_MODEL, createAnthropicLanguageModel } from './anthropic-language-model.js';
+import { createAnthropicLanguageModel } from './anthropic-language-model.js';
 
 const Reply = z.strictObject({
   version: z.literal(1),
@@ -18,12 +18,18 @@ function modelAnswering(...fixtures: [Fixture, ...Fixture[]]) {
     baseURL: 'http://anthropic.test',
     fetch: recorded.fetch,
   });
-  const answer = () => model.answer({ instructions: 'system', prompt: 'user', reply: Reply });
+  const answer = () =>
+    model.answer({
+      model: 'claude-haiku-5-5',
+      instructions: 'system',
+      prompt: 'user',
+      reply: Reply,
+    });
   return { answer, requests: recorded.requests };
 }
 
 describe('createAnthropicLanguageModel', () => {
-  it('asks Haiku for the reply’s shape and returns the parsed reply', async () => {
+  it('asks the model the request names for the reply’s shape and returns the parsed reply', async () => {
     const { answer, requests } = modelAnswering('drafts');
     const reply = await answer();
     expect(reply.outcome).toBe('drafts');
@@ -41,7 +47,6 @@ describe('createAnthropicLanguageModel', () => {
       })
       .parse(requests[0]);
     expect(request.model).toBe('claude-haiku-5-5');
-    expect(ANTHROPIC_MODEL).toBe('claude-haiku-5-5');
     expect(request.system).toBe('system');
     expect(request.messages).toEqual([{ role: 'user', content: 'user' }]);
     expect(request.output_config.effort).toBe('low');

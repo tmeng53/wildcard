@@ -3,6 +3,7 @@ import type {
   AiConsentCheck,
   Clock,
   DraftAllowance,
+  DraftSettingsStore,
   LanguageModel,
   MemesInUse,
   Random,
@@ -19,6 +20,7 @@ export interface DisclaimerDrafts {
 
 export function createDisclaimerDrafts(deps: {
   readonly model: LanguageModel;
+  readonly settings: DraftSettingsStore;
   readonly memes: MemesInUse;
   readonly allowance: DraftAllowance;
   readonly aiConsent: AiConsentCheck;

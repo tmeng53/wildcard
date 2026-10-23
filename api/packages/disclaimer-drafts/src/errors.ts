@@ -43,7 +43,8 @@ export class DisclaimerWriterUnavailableError extends AppError {
 }
 
 /**
- * Thrown when the server runs without a model, so drafts are off until one is configured. The
+ * Thrown while drafts are off: the settings turn them off, or the server has no key for the
+ * settings' model, so they stay off until an admin or a deploy turns them on. The
  * wire answer is the same as `DisclaimerWriterUnavailableError`'s, and the app shows its dice;
  * only the server tells them apart, since this one is expected and not worth an error log.
  */
