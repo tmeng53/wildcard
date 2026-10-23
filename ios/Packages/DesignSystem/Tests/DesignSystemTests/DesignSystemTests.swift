@@ -323,7 +323,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "unbox", "poke",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "poke", "unbox",
             ])
         #expect(Haptic.ringTicks == 3)
     }
