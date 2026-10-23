@@ -57,3 +57,61 @@ func everyStoryClipPlaysItsOwnArt(persona: Persona) throws {
     #expect(landed.parts[medal].opacity == 0)
     #expect(landed.parts[award].opacity == 1 && landed.parts[award].y == 0)
 }
+
+/// Every story clip, start to end, stays inside the area a story character is drawn in, so
+/// nothing is cut off. Curves stay inside their control points, so those are checked too.
+@Test(arguments: Persona.allCases)
+func everyStoryClipStaysInItsRoom(persona: Persona) throws {
+    let clips: [StoryClip] =
+        AwardMove.allCases.map(StoryClip.award) + [
+            .eat(.healthy), .eat(.cheat), .tossFlyer, .tossThrower, .stackTop, .stackBottom,
+        ]
+    // The widest bodies: a bear's ears, a lop's ears, a cat's tail.
+    let looks =
+        [PlaceholderCharacter.lifter]
+        + ["bear", "lop", "cat"].map { body in
+            var look = PlaceholderCharacter.lifter
+            look.variants["body"] = body
+            return look
+        }
+    for look in looks {
+        for clip in clips {
+            let figure = try PlaceholderCharacter.figure(wearing: clip.dressing(look))
+            let bound = try figure.bind(clip.art(persona: persona, species: nil))
+            var regalia = Regalia(medal: true, crown: 0)
+            for frame in 0...Int(bound.clip.duration * 25) {
+                var pose = figure.pose(bound, at: Double(frame) / 25)
+                // Only the champion wears the crown, through the toss and their award move; it
+                // drops in the first second, and one lying flat wears it already down.
+                switch clip {
+                case .award(.flat): regalia.crown = 1
+                case .award, .tossFlyer: regalia.crown = min(Double(frame) / 25, 1)
+                default: regalia.crown = nil
+                }
+                regalia.dress(&pose, on: figure)
+                for (part, placement) in zip(figure.parts, figure.layout(pose)) where placement.opacity > 0 {
+                    for shape in part.art.flatMap(\.shapes) {
+                        let margin = (shape.stroke?.width ?? 0) / 2
+                        for point in shape.path.flatMap(\.points).map(placement.transform.apply(to:)) {
+                            #expect(
+                                point.x - margin >= StoryRoom.minX && point.x + margin <= StoryRoom.maxX
+                                    && point.y - margin >= StoryRoom.minY && point.y + margin <= StoryRoom.maxY,
+                                "\(clip) \(persona): \(part.id) at (\(point.x), \(point.y))")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+extension PathElement {
+    fileprivate var points: [Point] {
+        switch self {
+        case .move(let point), .line(let point): [point]
+        case .quadCurve(let end, let control): [end, control]
+        case .curve(let end, let control1, let control2): [end, control1, control2]
+        case .close: []
+        }
+    }
+}

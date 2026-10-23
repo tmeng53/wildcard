@@ -62,9 +62,9 @@ final class StoryWardrobe {
         of member: MemberID, act: Act, regalia: Regalia, kit: SportKit?, at time: Double
     ) -> (drawing: FigureDrawing, placements: [Placement])? {
         guard let look = cast[member], let dressed = dress(look, for: act.clip, kit: kit) else { return nil }
-        var pose = pose(of: look, dressed, act: act, at: time)
-        regalia.dress(&pose, on: dressed.figure)
-        return (dressed.drawing, dressed.figure.layout(pose))
+        var posed = pose(of: look, dressed, act: act, at: time)
+        regalia.dress(&posed, on: dressed.figure)
+        return (dressed.drawing, dressed.figure.layout(posed))
     }
 
     private func pose(of member: StoryMember, _ dressed: Dressed, act: Act, at time: Double) -> Pose {
@@ -162,9 +162,10 @@ struct StoryCharacter: View {
         }
     }
 
-    /// The area drawn, in canvas points: the rig's 240 × 320 canvas with room above for the
-    /// stack's jump and the crown's drop, and to the sides for lying flat.
-    private static let room = CGRect(x: -60, y: -320, width: 360, height: 640)
+    /// The area drawn, in canvas points (`StoryRoom`).
+    private static let room = CGRect(
+        x: StoryRoom.minX, y: StoryRoom.minY, width: StoryRoom.maxX - StoryRoom.minX,
+        height: StoryRoom.maxY - StoryRoom.minY)
 
     /// With Reduce Motion the award is simply on.
     private var settled: Regalia {

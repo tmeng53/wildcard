@@ -62,3 +62,13 @@ struct Regalia: Hashable {
         }
     }
 }
+
+/// The area a story character is drawn in, in canvas points: the rig's 240 × 320 canvas with
+/// room above for the toss, the stack's jump and the crown's drop, to the left for lying flat,
+/// and to the right for the stack's top one, who ends `stackTopLandsAt` along.
+enum StoryRoom {
+    static let minX = -60.0
+    static let minY = -320.0
+    static let maxX = 520.0
+    static let maxY = 340.0
+}
