@@ -8,8 +8,9 @@ import SwiftUI
 
 /// The week as a 3:4 poster in the scene's color: who and which dates, the week's number, a
 /// swim lane a day, the member's character cheering in the corner, the titles the weekly awards
-/// gave them, and the week's 饮食小目标 and count along the bottom. Drawn at 360 × 480 points and
-/// scaled to fit, so the saved picture and the screen are the same drawing.
+/// gave them as stickers (their 颁奖词 sit under the poster), and the week's 饮食小目标 and
+/// count along the bottom. Drawn at 360 × 480 points and scaled to fit, so the saved picture
+/// and the screen are the same drawing.
 struct WeekPoster: View {
     /// The poster's own size, in points; 3:4.
     static let size = CGSize(width: 360, height: 480)
@@ -19,7 +20,6 @@ struct WeekPoster: View {
     /// Saving: the character holds one pose, since a picture can't move.
     var isStill = false
     var onTapLane: (Int) -> Void = { _ in }
-    var onTapTitle: (AwardTitle) -> Void = { _ in }
     var onTapFuel: () -> Void = {}
 
     @Environment(\.sceneTheme) private var theme
@@ -40,8 +40,6 @@ struct WeekPoster: View {
     private let stickerHeight: Double = 28
     /// The name and dates stop short of the title stickers.
     private let titleWidth: Double = 200
-    /// The award line drops over the lanes, under the stickers.
-    private let awardLineTop: Double = 112
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -53,7 +51,6 @@ struct WeekPoster: View {
                 .offset(y: lanesTop)
             character
             stickers
-            awardLine
             PosterBottomBar(content: content, theme: theme, onTapFuel: onTapFuel)
                 .frame(maxHeight: .infinity, alignment: .bottom)
         }
@@ -103,7 +100,7 @@ struct WeekPoster: View {
         .frame(width: Self.size.width)
     }
 
-    // MARK: Character, titles, award line
+    // MARK: Character, titles
 
     private var character: some View {
         Group {
@@ -128,59 +125,29 @@ struct WeekPoster: View {
     private var stickers: some View {
         VStack(alignment: .trailing, spacing: Space.xs - 2) {
             ForEach(Array(content.titles.enumerated()), id: \.element) { position, title in
-                Button {
-                    onTapTitle(title)
-                } label: {
-                    HStack(spacing: Space.xxs + 1) {
-                        Image(systemName: "medal.fill")
-                            .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text(verbatim: title.title)
-                            .typeStyle(TypeRamp.footnoteEmphasis)
-                            .lineLimit(1)
-                    }
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-                    .padding(.leading, Space.xs + 1)
-                    .padding(.trailing, Space.s)
-                    .frame(height: stickerHeight)
-                    .background(ink, in: Capsule())
-                    .rotationEffect(.degrees(stickerTilts[position % stickerTilts.count]))
-                    .frame(minHeight: Sizing.minimumTapTarget - Space.s)
-                    .contentShape(Rectangle())
+                HStack(spacing: Space.xxs + 1) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
+                        .accessibilityHidden(true)
+                    Text(verbatim: title.title)
+                        .typeStyle(TypeRamp.footnoteEmphasis)
+                        .lineLimit(1)
                 }
-                .buttonStyle(PressableButtonStyle())
+                .foregroundStyle(Color(role: .fgAccent, in: theme))
+                .padding(.leading, Space.xs + 1)
+                .padding(.trailing, Space.s)
+                .frame(height: stickerHeight)
+                .background(ink, in: Capsule())
+                .rotationEffect(.degrees(stickerTilts[position % stickerTilts.count]))
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("头衔：\(title.title)", bundle: .module))
-                .accessibilityHint(Text("看颁奖词", bundle: .module))
-                .accessibilityAddTraits(content.openTitle == title ? .isSelected : [])
                 .accessibilityIdentifier("schedule.title.\(position)")
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.trailing, Space.s)
-        .padding(.top, Space.xs)
-    }
-
-    @ViewBuilder
-    private var awardLine: some View {
-        if let title = content.openTitle {
-            VStack(alignment: .leading, spacing: Space.xs) {
-                Text("颁奖词 · \(title.title)", bundle: .module)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-                Text(verbatim: title.speech)
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Space.m)
-            .background(ink, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-            .padding(.horizontal, Space.s)
-            .padding(.top, awardLineTop)
-            .transition(.scale(scale: 0.92, anchor: .top).combined(with: .opacity))
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("schedule.awardLine")
-        }
+        .padding(.top, Space.s)
+        .allowsHitTesting(false)
     }
 }
 #endif

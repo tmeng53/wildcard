@@ -96,6 +96,7 @@ struct MainTabs: View {
         case .schedule:
             if let schedule {
                 ScheduleView(model: schedule)
+                    .environment(\.sceneTheme, today.scene)
             } else {
                 UpcomingTab(title: Text("出赛表"))
             }

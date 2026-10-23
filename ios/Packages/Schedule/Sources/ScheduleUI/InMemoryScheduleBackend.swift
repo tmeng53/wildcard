@@ -2,7 +2,7 @@ import Contracts
 import Foundation
 import ScheduleDomain
 
-/// A member in memory, for previews, UI tests and the app until sign-in lands: weeks back to the
+/// A member in memory, for previews, UI tests and the sample squad: weeks back to the
 /// one they joined, each with a plan, the days they trained and, once over, their titles.
 public actor InMemoryScheduleBackend: ScheduleBackend {
     private let member: ScheduleProfile

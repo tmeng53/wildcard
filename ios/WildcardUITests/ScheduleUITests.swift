@@ -122,15 +122,23 @@ final class ScheduleUITests: XCTestCase {
         chips.element(boundBy: index - 1).tap()
 
         XCTAssertFalse(lane(app, 4).isEnabled, "a past week can change")
-        let title = app.buttons["schedule.title.0"]
-        XCTAssertTrue(title.waitForExistence(timeout: 10), "last week has no title")
-        title.tap()
-        let line = find(app, "schedule.awardLine")
-        XCTAssertTrue(line.waitForExistence(timeout: 10), "the award line didn't open")
-        XCTAssertTrue(line.label.contains("颁奖词"))
-        XCTAssertTrue(find(app, "schedule.count.week").exists, "no count for the week")
+        XCTAssertTrue(find(app, "schedule.title.0").waitForExistence(timeout: 10), "last week has no title")
+        // The 颁奖词 sit under the poster, clear of the lanes, in place of the counts.
+        let award = find(app, "schedule.award.0")
+        XCTAssertTrue(award.waitForExistence(timeout: 10), "the award has no card under the poster")
+        XCTAssertGreaterThanOrEqual(
+            award.frame.minY, find(app, "schedule.poster").frame.maxY, "the award covers the poster")
+        XCTAssertFalse(find(app, "schedule.count.squad").exists, "a past week still shows its counts")
         settle()
         keepScreenshot(named: "67-schedule-past-week-award")
+        // Scrolled up, the 颁奖词 read whole above the tab bar.
+        app.swipeUp()
+        settle()
+        XCTAssertLessThanOrEqual(
+            award.frame.maxY, app.buttons["tab.schedule"].frame.minY, "the award sits under the tab bar")
+        keepScreenshot(named: "67-schedule-past-week-award-words")
+        app.swipeDown()
+        settle()
 
         app.buttons["schedule.save"].tap()
         XCTAssertTrue(find(app, "schedule.saved").waitForExistence(timeout: 10), "存图 didn't say it saved")

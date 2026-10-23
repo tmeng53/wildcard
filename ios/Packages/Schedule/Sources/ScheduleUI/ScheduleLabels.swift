@@ -15,7 +15,12 @@ enum ScheduleLabels {
 
     /// 10.13 – 10.19: month and day, the way Chinese posters write dates.
     static func dates(_ first: LocalDay, _ last: LocalDay) -> String {
-        "\(first.month).\(first.day) – \(last.month).\(last.day)"
+        "\(posterDate(first)) – \(posterDate(last))"
+    }
+
+    /// 10.20, as the poster and the countdown write a day.
+    static func posterDate(_ day: LocalDay) -> String {
+        "\(day.month).\(day.day)"
     }
 
     /// 10/24, under a day's picks.

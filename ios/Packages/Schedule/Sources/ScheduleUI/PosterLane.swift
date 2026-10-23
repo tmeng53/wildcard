@@ -55,7 +55,9 @@ struct PosterLane: View {
                 }
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        // Pressable, not plain: a plain button fades while disabled, and a locked day reads as
+        // clearly as one still to come.
+        .buttonStyle(PressableButtonStyle())
         .scaleEffect(lane.isLifted ? liftedScale : 1)
         .zIndex(isHeld ? 1 : 0)
         .disabled(!lane.isEditable)

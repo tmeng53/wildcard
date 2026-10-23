@@ -40,7 +40,6 @@ struct PosterContent: Equatable {
     let weekStart: LocalDay
     let lanes: [Lane]
     let titles: [AwardTitle]
-    let openTitle: AwardTitle?
     let fuel: [FuelGoal]
     let fuelOpen: Bool
     /// Only next week's 饮食小目标 open from the poster.
@@ -50,7 +49,7 @@ struct PosterContent: Equatable {
     var weekEnd: LocalDay { weekStart.adding(days: WeeklyPlan.dayCount - 1) }
 
     /// The week as the member sees it now, with what they have hold of.
-    init(sheet: WeekSheet, board: WeekBoard?, nickname: String, openTitle: AwardTitle?, fuelOpen: Bool) {
+    init(sheet: WeekSheet, board: WeekBoard?, nickname: String, fuelOpen: Bool, typingFuel: String = "") {
         self.nickname = nickname
         weekStart = sheet.weekStart
         let days = board?.days ?? sheet.plan
@@ -73,8 +72,9 @@ struct PosterContent: Equatable {
                 mark: sheet.marks[index], look: look, isEditable: board?.isEditable(index) ?? false, isLifted: lifted)
         }
         titles = tense == .past ? sheet.titles : []
-        self.openTitle = titles.contains { $0 == openTitle } ? openTitle : nil
-        fuel = sheet.fuel
+        // A goal being typed shows on the poster as it is written.
+        let typed = typingFuel.trimmingCharacters(in: .whitespacesAndNewlines)
+        fuel = typed.isEmpty ? sheet.fuel : sheet.fuel + [.own(typed)]
         fuelEditable = tense == .upcoming
         self.fuelOpen = fuelOpen && fuelEditable
         let planned = days.count { $0 != .rest }
@@ -85,7 +85,7 @@ struct PosterContent: Equatable {
         }
     }
 
-    /// The same week to save as a picture: nothing held, no award line open, the goals shut.
+    /// The same week to save as a picture: nothing held, the goals shut.
     var forSaving: PosterContent {
         PosterContent(
             nickname: nickname, weekStart: weekStart,
@@ -94,18 +94,17 @@ struct PosterContent: Equatable {
                     index: $0.index, day: $0.day, isToday: $0.isToday, plan: $0.plan, mark: $0.mark,
                     look: $0.isToday ? .today : .plain, isEditable: false, isLifted: false)
             },
-            titles: titles, openTitle: nil, fuel: fuel, fuelOpen: false, fuelEditable: false, tally: tally)
+            titles: titles, fuel: fuel, fuelOpen: false, fuelEditable: false, tally: tally)
     }
 
     private init(
-        nickname: String, weekStart: LocalDay, lanes: [Lane], titles: [AwardTitle], openTitle: AwardTitle?,
-        fuel: [FuelGoal], fuelOpen: Bool, fuelEditable: Bool, tally: Tally
+        nickname: String, weekStart: LocalDay, lanes: [Lane], titles: [AwardTitle], fuel: [FuelGoal], fuelOpen: Bool,
+        fuelEditable: Bool, tally: Tally
     ) {
         self.nickname = nickname
         self.weekStart = weekStart
         self.lanes = lanes
         self.titles = titles
-        self.openTitle = openTitle
         self.fuel = fuel
         self.fuelOpen = fuelOpen
         self.fuelEditable = fuelEditable

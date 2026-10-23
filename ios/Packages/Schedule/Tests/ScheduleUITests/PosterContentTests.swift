@@ -29,7 +29,7 @@ struct PosterContentTests {
     @Test func thisWeekShadesTodayAndCountsTrainedDays() throws {
         let board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         let content = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", openTitle: nil, fuelOpen: true)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", fuelOpen: true)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
         #expect(content.lanes.map(\.isEditable) == [false, false, false, false, true, true, true])
         #expect(content.tally == .trained(2, planned: 5, isPast: false))
@@ -42,7 +42,7 @@ struct PosterContentTests {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         board.tap(5)
         let content = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", openTitle: nil, fuelOpen: false)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", fuelOpen: false)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .swapTarget, .held, .swapTarget])
         #expect(content.lanes[5].isLifted)
     }
@@ -52,7 +52,7 @@ struct PosterContentTests {
         var board = WeekBoard(weekStart: next, days: plan, today: thursday)
         board.tap(2)
         let content = PosterContent(
-            sheet: try sheet(next), board: board, nickname: "Tracy", openTitle: nil, fuelOpen: true)
+            sheet: try sheet(next), board: board, nickname: "Tracy", fuelOpen: true)
         #expect(content.tally == .planned(train: 5, rest: 2))
         #expect(content.lanes[2].look == .held)
         #expect(!content.lanes[2].isLifted, "next week selects; only this week lifts")
@@ -60,16 +60,26 @@ struct PosterContentTests {
         #expect(content.fuelEditable)
     }
 
-    @Test func aPastWeekShowsItsTitlesAndTheOpenAwardLine() throws {
+    @Test func aPastWeekShowsItsTitles() throws {
         let last = monday.adding(days: -7)
         let board = WeekBoard(weekStart: last, days: plan, today: thursday)
         let content = PosterContent(
-            sheet: try sheet(last), board: board, nickname: "Tracy", openTitle: titles[0], fuelOpen: true)
+            sheet: try sheet(last), board: board, nickname: "Tracy", fuelOpen: true)
         #expect(content.titles == titles)
-        #expect(content.openTitle == titles[0])
         #expect(content.tally == .trained(2, planned: 5, isPast: true))
         #expect(!content.fuelOpen)
         #expect(content.lanes.allSatisfy { !$0.isEditable })
+    }
+
+    @Test func aGoalBeingTypedShowsOnThePoster() throws {
+        let next = monday.adding(days: 7)
+        let board = WeekBoard(weekStart: next, days: plan, today: thursday)
+        let typing = PosterContent(
+            sheet: try sheet(next), board: board, nickname: "Tracy", fuelOpen: true, typingFuel: " 少喝咖啡 ")
+        #expect(typing.fuel.last == .own("少喝咖啡"))
+        let blank = PosterContent(
+            sheet: try sheet(next), board: board, nickname: "Tracy", fuelOpen: true, typingFuel: "  ")
+        #expect(blank.fuel == (try sheet(next)).fuel)
     }
 
     @Test func theSavedPictureHoldsNothing() throws {
@@ -77,15 +87,14 @@ struct PosterContentTests {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         board.tap(5)
         let held = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", openTitle: nil, fuelOpen: false
+            sheet: try sheet(monday), board: board, nickname: "Tracy", fuelOpen: false
         ).forSaving
         #expect(held.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
         #expect(held.lanes.allSatisfy { !$0.isEditable && !$0.isLifted })
         let award = PosterContent(
             sheet: try sheet(last), board: WeekBoard(weekStart: last, days: plan, today: thursday), nickname: "Tracy",
-            openTitle: titles[0], fuelOpen: false
+            fuelOpen: false
         ).forSaving
-        #expect(award.openTitle == nil)
         #expect(award.titles == titles, "the stickers stay on the picture")
     }
 }

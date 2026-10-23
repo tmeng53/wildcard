@@ -6,37 +6,60 @@ import ScheduleDomain
 import SportsUI
 import SwiftUI
 
-/// The counts under a week that has started: lifetime or this week's trained days, and the squad's.
+/// The counts under this week: lifetime trained days, and the squad's this week.
 struct ScheduleCounts: View {
     let store: ScheduleStore
     let sheet: WeekSheet
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.cardGap) {
-            if isPast {
-                CountCard(
-                    label: Text("这周练了", bundle: .module), count: sheet.trainedDays, goal: sheet.plannedDays,
-                    unit: Text("天", bundle: .module)
-                )
-                .accessibilityIdentifier("schedule.count.week")
-            } else {
-                CountCard(
-                    label: Text("一共练了", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
-                    unit: Text("天", bundle: .module)
-                )
-                .accessibilityIdentifier("schedule.count.lifetime")
-            }
+            CountCard(
+                label: Text("一共练了", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
+                unit: Text("天", bundle: .module)
+            )
+            .accessibilityIdentifier("schedule.count.lifetime")
             if let squad = sheet.squad {
                 CountCard(
-                    label: isPast ? Text("小队训练", bundle: .module) : Text("本周小队训练", bundle: .module),
-                    count: squad.trained, goal: squad.planned, unit: Text("次", bundle: .module)
+                    label: Text("本周小队训练", bundle: .module), count: squad.trained, goal: squad.planned,
+                    unit: Text("次", bundle: .module)
                 )
                 .accessibilityIdentifier("schedule.count.squad")
             }
         }
     }
+}
 
-    private var isPast: Bool { store.board?.tense == .past }
+/// Under a past week: each title the week's awards gave the member, with its 颁奖词. The poster
+/// carries the stickers; their words sit here, clear of the lanes.
+struct WeekAwards: View {
+    let titles: [AwardTitle]
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.cardGap) {
+            ForEach(Array(titles.enumerated()), id: \.element) { position, title in
+                VStack(alignment: .leading, spacing: Space.labelGap) {
+                    Label {
+                        Text(verbatim: title.title)
+                            .typeStyle(TypeRamp.headline)
+                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    } icon: {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: Sizing.smallIcon, weight: .semibold))
+                            .foregroundStyle(Color(role: .fgAccent, in: theme))
+                    }
+                    Text(verbatim: title.speech)
+                        .typeStyle(TypeRamp.body)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .card(on: .page)
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("schedule.award.\(position)")
+            }
+        }
+    }
 }
 
 /// The picks for the day in hand: the week's sports and the usual ones, rest next week, and 更多.
@@ -162,7 +185,7 @@ struct CountdownCard: View {
                 }
                 Spacer(minLength: Space.xs)
                 if let start = store.shownWeek {
-                    Text("周一 \(ScheduleLabels.shortDate(start))", bundle: .module)
+                    Text("周一 \(ScheduleLabels.posterDate(start))", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }

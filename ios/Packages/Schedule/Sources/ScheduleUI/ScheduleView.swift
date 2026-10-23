@@ -20,6 +20,7 @@ public struct ScheduleView: View {
     @FocusState private var typingFuel: Bool
 
     private static let panelID = "schedule.panel"
+    private static let posterID = "schedule.posterFrame"
     /// How long 存好了 stays before it goes: long enough to read after looking up from the tap,
     /// and for a UI test to find it after a slow render.
     private let savedNoteHold: Duration = .seconds(5)
@@ -37,6 +38,7 @@ public struct ScheduleView: View {
                     topBar
                     if let sheet = store.sheet {
                         poster(sheet)
+                            .id(Self.posterID)
                         panel(sheet)
                             .id(Self.panelID)
                     } else {
@@ -47,6 +49,14 @@ public struct ScheduleView: View {
                 .padding(.top, Space.xs)
                 .padding(.bottom, Space.l)
                 .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.panel)
+            }
+            // Typing a goal of their own: the poster's bottom, where it shows as it is typed, sits
+            // just over the field.
+            .onChange(of: model.writingFuel) { _, writing in
+                guard writing else { return }
+                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                    scroller.scrollTo(Self.posterID, anchor: .bottom)
+                }
             }
             // On a shorter phone the picks can open below the fold: bring them up over the bar.
             .onChange(of: model.panel) { _, panel in
@@ -146,14 +156,14 @@ public struct ScheduleView: View {
 
     private func content(_ sheet: WeekSheet) -> PosterContent {
         PosterContent(
-            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "", openTitle: model.openTitle,
-            fuelOpen: model.panel == .fuel)
+            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "", fuelOpen: model.panel == .fuel,
+            typingFuel: model.writingFuel ? ownFuel : "")
     }
 
     private func poster(_ sheet: WeekSheet) -> some View {
         GeometryReader { proxy in
             WeekPoster(
-                content: content(sheet), player: model.player, onTapLane: model.tap, onTapTitle: model.toggle,
+                content: content(sheet), player: model.player, onTapLane: model.tap,
                 onTapFuel: model.toggleFuelPanel
             )
             .scaleEffect(proxy.size.width / WeekPoster.size.width, anchor: .topLeading)
@@ -176,10 +186,10 @@ public struct ScheduleView: View {
         VStack(alignment: .leading, spacing: Space.s) {
             switch model.panel {
             case .counts:
-                if store.board?.tense == .upcoming {
-                    CountdownCard(store: store)
-                } else {
-                    ScheduleCounts(store: store, sheet: sheet)
+                switch store.board?.tense {
+                case .upcoming: CountdownCard(store: store)
+                case .current: ScheduleCounts(store: store, sheet: sheet)
+                case .past, nil: WeekAwards(titles: sheet.titles)
                 }
             case .dayPicks(let index):
                 DayPicks(store: store, sheet: sheet, index: index, onPick: model.pick, onRest: model.rest) {

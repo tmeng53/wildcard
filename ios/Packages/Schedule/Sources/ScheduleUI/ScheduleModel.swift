@@ -37,8 +37,6 @@ public final class ScheduleModel {
     private(set) var fuelOpen = false
     /// Typing a 饮食小目标 of their own.
     var writingFuel = false
-    /// The title whose 颁奖词 shows over the poster.
-    private(set) var openTitle: AwardTitle?
     private(set) var saving = Saving.idle
     /// Bumps when a rest day is lifted off the poster, for its haptic; a plain select has none.
     private(set) var lifts = 0
@@ -74,7 +72,6 @@ public final class ScheduleModel {
     func show(_ week: LocalDay) {
         fuelOpen = false
         writingFuel = false
-        openTitle = nil
         Task { await store.show(week) }
     }
 
@@ -82,7 +79,6 @@ public final class ScheduleModel {
 
     func tap(_ day: Int) {
         fuelOpen = false
-        openTitle = nil
         Task {
             let outcome = await store.tap(day)
             switch outcome {
@@ -99,12 +95,6 @@ public final class ScheduleModel {
 
     func rest() {
         Task { await store.rest() }
-    }
-
-    // MARK: Titles
-
-    func toggle(_ title: AwardTitle) {
-        openTitle = openTitle == title ? nil : title
     }
 
     // MARK: 饮食小目标
