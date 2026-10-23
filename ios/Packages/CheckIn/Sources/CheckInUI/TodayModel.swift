@@ -85,7 +85,7 @@ public final class TodayModel {
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
 
-    private let now: () -> Date
+    let now: () -> Date
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once.
     private let defaults: UserDefaults
 
@@ -121,6 +121,10 @@ public final class TodayModel {
 
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
+
+    /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
+    /// settled (`TodayModel+DropIn.swift`).
+    var arrival: Arrival?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.

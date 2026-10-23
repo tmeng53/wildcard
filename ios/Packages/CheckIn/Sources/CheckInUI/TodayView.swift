@@ -83,7 +83,7 @@ public struct TodayView: View {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 celebration: model.celebrations, pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
-                patMate: model.patMate
+                patMate: model.patMate, arrival: model.arrival
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -97,6 +97,7 @@ public struct TodayView: View {
                         topCard(home: home, week: week, day: day, recap: model.recap)
                     }
                     .padding(.top, Space.xs)
+                    .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
                     .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
                     // Out of the way while the 请假条 composer is up.
                     .opacity(model.step == .disclaimer ? 0 : 1)
@@ -135,6 +136,7 @@ public struct TodayView: View {
                         model.pick(kind)
                     }
                     .padding(.bottom, Space.l)
+                    .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
                     // Room for the app's tab bar, which sits above this screen, measured from the
                     // screen's bottom edge as the design does.
                     Color.clear
@@ -225,6 +227,25 @@ public struct TodayView: View {
         } set: { isPresented in
             // Swiped down: the same as 取消.
             if !isPresented, case .pickingPhotos = model.step { model.cancel() }
+        }
+    }
+}
+
+/// Moves a piece of the home out of place while the squad drops onto a newly picked scene, by
+/// the drop's own timeline (`DropIn`), its stage points taken as points; still under Reduce
+/// Motion, and nothing once the squad has settled.
+private struct Arriving: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let arrival: TodayModel.Arrival?
+    let offset: (DropIn, Double) -> Double
+
+    func body(content: Content) -> some View {
+        if let arrival, !reduceMotion {
+            TimelineView(.animation) { timeline in
+                content.offset(y: offset(arrival.drop, arrival.elapsed(at: timeline.date)))
+            }
+        } else {
+            content
         }
     }
 }

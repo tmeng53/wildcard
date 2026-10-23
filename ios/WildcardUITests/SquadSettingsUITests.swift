@@ -55,10 +55,22 @@ final class SquadSettingsUITests: XCTestCase {
         settle()
         keepScreenshot(named: "63-squad-picker")
         app.buttons["squad.scene.confirm"].tap()
+        // Every pick ends on home: the reveal fills the screen with the pool, the page goes, and
+        // the squad drops onto the scene one after another, me last.
+        let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
+        waitFor(page, "exists == false", "the page didn't go after the reveal", timeout: 60)
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "64-squad-picked-dropping")
+        let card = app.descendants(matching: .any)["today.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30), "home didn't take over")
+        Thread.sleep(forTimeInterval: 2.5)
+        keepScreenshot(named: "64-squad-picked-home")
+        // Back on 小队设置, the pick is locked for the week.
+        app.buttons["tab.me"].tap()
+        XCTAssertTrue(app.buttons["me.squad"].waitForExistence(timeout: 30), "我 has no squad row")
+        app.buttons["me.squad"].tap()
         waitFor(app.staticTexts["squad.scene"], "label == '游泳池'", "the picked scene didn't show", timeout: 60)
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
-        settle()
-        keepScreenshot(named: "64-squad-picked")
     }
 
     /// The longest names the rules allow stay inside the screen on the smallest phone.
