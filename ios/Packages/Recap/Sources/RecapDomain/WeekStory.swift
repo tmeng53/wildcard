@@ -49,8 +49,8 @@ public struct WeekStory: Hashable, Sendable {
         self.ending = ending
     }
 
-    /// The pages to play, in order. A page whose data is missing is left out, and the ending
-    /// always closes the story. While the titles are pending, the pending page takes their place
+    /// The pages to play, in order. A page whose data is missing is left out, and the ending,
+    /// when there is one, closes the story. While the titles are pending, the pending page takes their place
     /// and every other page plays as usual.
     public var pages: [StoryPage] {
         var ids = (order ?? PageID.defaultOrder).filter { $0 != .ending }

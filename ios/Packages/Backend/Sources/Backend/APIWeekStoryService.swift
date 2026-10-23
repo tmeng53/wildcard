@@ -16,16 +16,15 @@ public struct APIWeekStoryService: WeekStoryService {
     /// the squad's check-ins and the reader's plan. A page whose facts can't be read is left out;
     /// the story still opens.
     public func story(squad: SquadID, week monday: LocalDay) async throws(RecapError) -> WeekStory? {
-        let api = api
-        async let facts = Self.facts(api: api, squad: squad, week: monday)
         let story: WeekStory?
         do {
             story = try await api.weekStory(of: squad, week: monday)
         } catch {
             throw Self.reason(error)
         }
+        // The facts are read only for a story that is out, which before Sunday's awards it isn't.
         guard let story else { return nil }
-        guard let facts = await facts else { return story }
+        guard let facts = await Self.facts(api: api, squad: squad, week: monday) else { return story }
         return story.filled(with: facts)
     }
 

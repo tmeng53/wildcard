@@ -23,6 +23,8 @@ final class AppModel {
     }
 
     private(set) var screen = Screen.starting
+    /// An awards push tapped before the home was up, opened once it is.
+    @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
@@ -104,7 +106,11 @@ final class AppModel {
 
     /// A tapped awards push: the 战报 it is about, over 动态.
     func openRecap(squad: SquadID, week: LocalDay) async {
-        if case .tabs(_, _, let recap) = screen { await recap.open(squad: squad, week: week) }
+        guard case .tabs(_, _, let recap) = screen else {
+            pendingRecap = (squad, week)
+            return
+        }
+        await recap.open(squad: squad, week: week)
     }
 
     func signOut() async {
@@ -149,6 +155,10 @@ final class AppModel {
                     confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() }),
                 recap: RecapShelf(
                     service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) }))
+            if let pending = pendingRecap {
+                pendingRecap = nil
+                await openRecap(squad: pending.squad, week: pending.week)
+            }
         }
     }
 
