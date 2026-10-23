@@ -2268,6 +2268,15 @@
               "default"
             ],
             "description": "`saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save."
+          },
+          "fuelGoals": {
+            "$ref": "#/components/schemas/FuelGoals"
+          },
+          "firstWeek": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.",
+            "example": "2026-10-12"
           }
         },
         "required": [
@@ -2275,9 +2284,68 @@
           "member",
           "weekStart",
           "days",
-          "source"
+          "source",
+          "fuelGoals"
         ],
         "additionalProperties": false
+      },
+      "FuelGoals": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "suggested"
+                  ]
+                },
+                "suggestion": {
+                  "type": "string",
+                  "enum": [
+                    "water",
+                    "cookAtHome",
+                    "veggies",
+                    "lessBubbleTea",
+                    "breakfast",
+                    "earlyDinner"
+                  ]
+                }
+              },
+              "required": [
+                "kind",
+                "suggestion"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "own"
+                  ]
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 1000,
+                  "description": "Trimmed, then 1 to 8 characters as people see them, on one line.",
+                  "x-max-characters": 8
+                }
+              },
+              "required": [
+                "kind",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "maxItems": 3,
+        "description": "The week’s 饮食小目标, at most 3 in the order picked, each once: `{\"kind\": \"suggested\", \"suggestion\": \"water\"}` for one the app suggests, or `{\"kind\": \"own\", \"text\": \"少喝冰美式\"}` in the member’s own words (1 to 8 characters, one line). Only those saved for this week; goals don’t carry over."
       },
       "WeeklyPlanDraft": {
         "type": "object",
@@ -2341,6 +2409,25 @@
         "required": [
           "version",
           "days"
+        ],
+        "additionalProperties": false
+      },
+      "FuelGoalsDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "goals": {
+            "$ref": "#/components/schemas/FuelGoals"
+          }
+        },
+        "required": [
+          "version",
+          "goals"
         ],
         "additionalProperties": false
       },
@@ -4923,6 +5010,94 @@
           },
           "400": {
             "description": "Not a valid plan or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`) or to this week’s number of rest days (`REST_DAYS_FIXED`); or no profile yet (`TIME_ZONE_NOT_SET`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/weekly-plans/{weekStart}/fuel-goals": {
+      "put": {
+        "operationId": "saveMyFuelGoals",
+        "summary": "Set the signed-in member’s 饮食小目标 for a week",
+        "description": "Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "The week’s Monday.",
+              "example": "2026-10-19"
+            },
+            "required": true,
+            "description": "The week’s Monday.",
+            "name": "weekStart",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuelGoalsDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklyPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not valid goals or not a Monday; a week that has started (`WEEK_STARTED`) or is too far ahead (`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)",
             "content": {
               "application/problem+json": {
                 "schema": {

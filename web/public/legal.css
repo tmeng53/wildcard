@@ -24,7 +24,7 @@
 .legal-chrome .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
 header.legal-chrome { background: var(--sky); }
 header.legal-chrome .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
-.mark { font-family: var(--num); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: .02em; color: var(--ink); text-decoration: none; }
+.mark { display: inline-flex; align-items: center; gap: 6px; font-family: var(--num); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: .02em; color: var(--ink); text-decoration: none; }
 .lang { display: flex; gap: 2px; }
 .lang a { height: 36px; padding: 0 12px; border-radius: 18px; color: var(--ink-2); font-size: 15px; line-height: 36px; font-weight: 500; text-decoration: none; }
 .lang a[aria-current="page"] { color: var(--ink); font-weight: 600; background: rgba(34, 37, 46, .07); }
@@ -40,3 +40,4 @@ footer.legal-chrome .grow { flex: 1; }
 @media (min-width: 720px) {
   .legal-chrome .wrap, .wc-page.legal { padding-inline: max(48px, env(safe-area-inset-left, 0px)) max(48px, env(safe-area-inset-right, 0px)); }
 }
+.mark img { display: block; width: 30px; height: 30px; }

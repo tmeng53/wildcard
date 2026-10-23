@@ -3,13 +3,15 @@ import DesignSystem
 import SwiftUI
 
 /// Lays out pills left to right, wrapping onto new lines.
-struct FlowRow: Layout {
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+public struct FlowRow: Layout {
+    public init() {}
+
+    public func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let rows = arrange(subviews, width: proposal.width ?? .infinity)
         return CGSize(width: proposal.width ?? rows.width, height: rows.height)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    public func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let rows = arrange(subviews, width: bounds.width)
         for (index, origin) in rows.origins.enumerated() {
             subviews[index].place(

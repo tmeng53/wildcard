@@ -88,14 +88,8 @@ struct MainTabs: View {
                     squad: { selection = .today },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: Self.legalPage("privacy"), terms: Self.legalPage("terms")))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
         }
-    }
-
-    /// The website's privacy policy or terms, in the language the app is showing.
-    private static func legalPage(_ page: String) -> URL? {
-        let chinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
-        return URL(string: "https://wildcardsquad.com/\(chinese ? "zh/" : "")\(page)")
     }
 
     private static let tabs: [TabBarItem<Tab>] = [

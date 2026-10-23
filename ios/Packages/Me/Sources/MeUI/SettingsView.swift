@@ -29,9 +29,7 @@ struct SettingsView: View {
                     .padding(.top, Space.s)
                 squadGroup
                 preferencesGroup
-                if destinations.privacyPolicy != nil || destinations.terms != nil {
-                    aboutGroup
-                }
+                aboutGroup
                 accountGroup
                 if model.saveFailed {
                     SaveFailed().padding(.top, Space.m)
@@ -83,16 +81,14 @@ struct SettingsView: View {
 
     private var aboutGroup: some View {
         MenuGroup(Text("关于", bundle: .module)) {
-            if let privacy = destinations.privacyPolicy {
-                ListRow(
-                    Text("隐私政策", bundle: .module), showsDivider: destinations.terms != nil, showsChevron: false
-                ) { openURL(privacy) }
-                .accessibilityIdentifier("me.privacy")
+            ListRow(Text("隐私政策", bundle: .module), showsChevron: false) {
+                openURL(destinations.privacyPolicy)
             }
-            if let terms = destinations.terms {
-                ListRow(Text("用户条款", bundle: .module), showsDivider: false, showsChevron: false) { openURL(terms) }
-                    .accessibilityIdentifier("me.terms")
+            .accessibilityIdentifier("me.privacy")
+            ListRow(Text("用户条款", bundle: .module), showsDivider: false, showsChevron: false) {
+                openURL(destinations.terms)
             }
+            .accessibilityIdentifier("me.terms")
         }
     }
 

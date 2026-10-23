@@ -25,7 +25,10 @@
   background: linear-gradient(var(--graphite), var(--graphite)) 0 0 / 100% 4px no-repeat, linear-gradient(var(--on-sig), var(--on-sig)) 0 4px / 100% 3px no-repeat,
     repeating-linear-gradient(90deg, var(--gym-tile) 0 2px, transparent 2px 64px) 0 7px / 100% 100% no-repeat,
     repeating-linear-gradient(180deg, transparent 0 45px, var(--gym-tile) 45px 47px, transparent 47px 64px) 0 7px / 100% 100% no-repeat, var(--gym-floor); }
-.nav { height: 72px; display: flex; align-items: center; justify-content: flex-end; }
+.nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
+/* the logo, top left: the black-and-white mark, then the brand name as live text */
+.logo { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-family: var(--num); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: .02em; color: var(--ink); text-decoration: none; }
+.logo img { display: block; width: 30px; height: 30px; }
 
 /* phones and tablets: the hero sits centred in the space above the squad */
 .main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 40px; padding-block: 40px 0; }

@@ -12,13 +12,13 @@ public struct MeDestinations {
     public var squad: () -> Void
     public var pastRecaps: () -> Void
     public var editCharacter: () -> Void
-    /// The published policy pages; a row shows only once its page is there.
-    public var privacyPolicy: URL?
-    public var terms: URL?
+    /// The published policy pages.
+    public var privacyPolicy: URL
+    public var terms: URL
 
     public init(
         squad: @escaping () -> Void, pastRecaps: @escaping () -> Void, editCharacter: @escaping () -> Void,
-        privacyPolicy: URL?, terms: URL?
+        privacyPolicy: URL, terms: URL
     ) {
         self.squad = squad
         self.pastRecaps = pastRecaps
