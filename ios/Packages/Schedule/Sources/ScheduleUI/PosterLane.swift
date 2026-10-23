@@ -79,6 +79,9 @@ struct PosterLane: View {
                 }
             }
             .typeStyle(TypeRamp.label)
+            // English's "Today" is a touch wider than the column: it shrinks rather than wraps.
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .frame(width: weekdayWidth, alignment: .leading)
             ScheduleLabels.plan(lane.plan)
                 .typeStyle(TypeRamp.headline)

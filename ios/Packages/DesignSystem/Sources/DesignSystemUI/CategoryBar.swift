@@ -49,6 +49,9 @@ public struct CategoryBar<ID: Hashable>: View {
             }
             .scrollIndicators(.hidden)
             .horizontalScrollFade()
+            // A selection that starts past the edge (the last item, say) opens in view, with its
+            // neighbours either side where there are any.
+            .onAppear { proxy.scrollTo(selection, anchor: .center) }
             .onChange(of: selection) { _, selected in
                 // Scrolls only as far as it takes to show the whole item.
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {

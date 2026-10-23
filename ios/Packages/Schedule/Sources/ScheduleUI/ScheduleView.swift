@@ -84,7 +84,6 @@ public struct ScheduleView: View {
     private var topBar: some View {
         HStack(spacing: Space.xs) {
             CategoryBar(weekChips, selection: weekSelection)
-                .defaultScrollAnchor(.trailing)
                 .frame(maxWidth: .infinity)
             Button {
                 Task { await save() }

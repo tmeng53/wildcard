@@ -35,15 +35,9 @@ struct PosterBottomBar: View {
                 Image(systemName: "fork.knife")
                     .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
                     .accessibilityHidden(true)
-                Group {
-                    if content.fuel.isEmpty {
-                        Text("饮食小目标", bundle: .module)
-                    } else {
-                        Text(verbatim: content.fuel.map(ScheduleLabels.fuelName).joined(separator: " · "))
-                    }
-                }
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .lineLimit(1)
+                fuelLabel
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .lineLimit(1)
             }
             .foregroundStyle(open ? Color(role: .fgAccent, in: theme) : ink)
             .padding(.horizontal, Space.s)
@@ -56,6 +50,21 @@ struct PosterBottomBar: View {
         .disabled(!content.fuelEditable)
         .accessibilityAddTraits(open ? .isSelected : [])
         .accessibilityIdentifier("schedule.fuel")
+    }
+
+    /// Every goal when they fit; otherwise the first and how many more, never cut off.
+    @ViewBuilder
+    private var fuelLabel: some View {
+        let names = content.fuel.map(ScheduleLabels.fuelName)
+        if let first = names.first {
+            ViewThatFits(in: .horizontal) {
+                Text(verbatim: names.joined(separator: " · "))
+                Text(verbatim: names.count > 1 ? "\(first) +\(names.count - 1)" : first)
+                    .minimumScaleFactor(0.7)
+            }
+        } else {
+            Text("饮食小目标", bundle: .module)
+        }
     }
 
     private var tally: some View {
