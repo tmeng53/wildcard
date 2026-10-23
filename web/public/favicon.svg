@@ -3,6 +3,6 @@
     <mask id="notch"><rect width="100" height="100" fill="#fff"/><circle cx="10" cy="50" r="9" fill="#000"/><circle cx="90" cy="50" r="9" fill="#000"/></mask>
     <clipPath id="wclip"><rect x="0" y="30" width="100" height="44"/></clipPath>
   </defs>
-  <rect x="10" y="2" width="80" height="96" rx="12" fill="#1F2128" mask="url(#notch)"/>
-  <g transform="translate(50 48) scale(1.1) translate(-50 -52)"><g clip-path="url(#wclip)"><polyline points="29,20 39.5,80 50,20 60.5,80 71,20" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linejoin="miter" stroke-miterlimit="10"/></g></g>
+  <rect x="10" y="2" width="80" height="96" rx="12" fill="#FFFFFF" stroke="#1F2128" stroke-width="4" mask="url(#notch)"/>
+  <g transform="translate(50 48) scale(1.1) translate(-50 -52)"><g clip-path="url(#wclip)"><polyline points="29,20 39.5,80 50,20 60.5,80 71,20" fill="none" stroke="#1F2128" stroke-width="11" stroke-linejoin="miter" stroke-miterlimit="10"/></g></g>
 </svg>
