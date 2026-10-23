@@ -32,7 +32,7 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 ## Evidence
 
-- The script counts the leaver's rows in `auth.users`, `public.profiles`, `public.check_ins`, `public.squad_members` and `storage.objects`: all 0; the squad keeps one member.
+- The script counts the leaver's rows in `auth.users`, `public.profiles`, `public.profile_events`, `public.squad_membership_events`, `public.check_ins`, `public.squad_members` and `storage.objects`: all 0; the squad keeps one member.
 
 ## Worth probing
 

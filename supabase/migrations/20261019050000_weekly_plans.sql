@@ -11,9 +11,31 @@ create table public.weekly_plans (
   -- The seven days, Monday first, as stored JSON with its shape's version at the top:
   -- {"version": 1, "days": [...]}. The API owns the shape and parses it on every read.
   payload jsonb not null check (coalesce(jsonb_typeof(payload -> 'version') = 'number', false)),
-  updated_at timestamptz not null default now(),
   primary key (member_id, week_start)
 );
 
+-- Every saved change to a week's plan, oldest first, with the whole plan as saved: replaying
+-- it rebuilds what any week's plan was on any day. Written in the same statement as the
+-- change, and only when the plan changed. Only grows (public.member_log_append_only);
+-- deleting the account takes it.
+create table public.weekly_plan_events (
+  id bigint generated always as identity primary key,
+  member_id uuid not null references auth.users (id) on delete cascade,
+  week_start date not null,
+  payload jsonb not null,
+  at timestamptz not null default now()
+);
+
+create index weekly_plan_events_member_id_idx on public.weekly_plan_events (member_id);
+
+create trigger weekly_plan_events_append_only
+  before update or delete on public.weekly_plan_events
+  for each row execute function public.member_log_append_only();
+
+create trigger weekly_plan_events_no_truncate
+  before truncate on public.weekly_plan_events
+  for each statement execute function public.member_log_append_only();
+
 -- No grants (the default privileges in the first migration see to that) and no policies.
 alter table public.weekly_plans enable row level security;
+alter table public.weekly_plan_events enable row level security;

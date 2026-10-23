@@ -109,6 +109,23 @@ describe('saving a week’s plan', () => {
     ]);
   });
 
+  it('logs each saved change, in order, and never a save that changed nothing', async () => {
+    const member = await newMember();
+    const swapped: PlanDays = [swim, rest, train, train, train, train, rest];
+    await plans.save({ member, weekStart: thisWeek, days: mine });
+    await plans.save({ member, weekStart: thisWeek, days: mine });
+    await plans.save({ member, weekStart: nextWeek, days: mine });
+    await plans.save({ member, weekStart: thisWeek, days: swapped });
+    const { rows } = await sql<{ week_start: string; payload: unknown }>`
+      select week_start::text, payload from weekly_plan_events where member_id = ${member} order by id
+    `.execute(db);
+    expect(rows).toStrictEqual([
+      { week_start: '2026-10-19', payload: { version: 1, days: mine } },
+      { week_start: '2026-10-26', payload: { version: 1, days: mine } },
+      { week_start: '2026-10-19', payload: { version: 1, days: swapped } },
+    ]);
+  });
+
   it('lets a member who signs up mid-week plan the whole week that day', async () => {
     const member = await newMember();
     const days: PlanDays = [rest, rest, rest, train, train, train, train];

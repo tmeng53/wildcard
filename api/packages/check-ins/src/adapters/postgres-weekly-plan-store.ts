@@ -26,14 +26,24 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
 
     async save({ member, weekStart, days }) {
       const payload = JSON.stringify({ version: 1, days });
+      // One statement: the plan and its log entry are saved together, and a save that
+      // changes nothing writes neither.
       await db
-        .insertInto('weekly_plans')
-        .values({ member_id: member, week_start: weekStart, payload })
-        .onConflict((conflict) =>
-          conflict
-            .columns(['member_id', 'week_start'])
-            .doUpdateSet({ payload, updated_at: sql`now()` }),
+        .with('saved', (cte) =>
+          cte
+            .insertInto('weekly_plans')
+            .values({ member_id: member, week_start: weekStart, payload })
+            .onConflict((conflict) =>
+              conflict
+                .columns(['member_id', 'week_start'])
+                .doUpdateSet({ payload })
+                .where(sql<boolean>`weekly_plans.payload is distinct from excluded.payload`),
+            )
+            .returning(['member_id', 'week_start', 'payload']),
         )
+        .insertInto('weekly_plan_events')
+        .columns(['member_id', 'week_start', 'payload'])
+        .expression((eb) => eb.selectFrom('saved').select(['member_id', 'week_start', 'payload']))
         .execute();
     },
   };

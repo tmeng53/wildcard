@@ -78,9 +78,25 @@ create table public.profiles (
   time_zone text not null,
   -- When the member joined: the profile is saved right after their first sign-in. Days of
   -- the week before it weren't theirs, so a weekly plan may still change them.
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  created_at timestamptz not null default now()
 );
+
+-- Guards every log of a member's own changes (profile_events, weekly_plan_events,
+-- push_setting_events): a row is never changed or removed, except when the account's
+-- deletion takes it. A row trigger, so the cascade from auth.users passes once that user
+-- is gone; a statement trigger refuses truncate, which skips row triggers.
+create function public.member_log_append_only()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' and not exists (select 1 from auth.users where id = old.member_id) then
+    return old;
+  end if;
+  raise exception '% is append-only', tg_table_name using errcode = '42501';
+end;
+$$;
 
 -- The database itself computes local times with `at time zone`, so a stored zone must
 -- be one Postgres knows. A trigger, not a check constraint: that list can change when
