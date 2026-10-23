@@ -7,8 +7,9 @@
 # Free macOS runners are few and shared by every PR, so a PR that leaves the app and its build
 # and lint setup alone uses no Mac: `verify` runs on Linux (the Swift packages build there too,
 # and SwiftUI code didn't change), and `ios` and `avatar-preview` run only when it changes what
-# they build; otherwise they are skipped, which branch protection counts as passing. Pushes to
-# main run everything on macOS.
+# they build; otherwise they are skipped, which branch protection counts as passing. A PR that
+# changes only the marketing site (web/) also skips `verify` and `supabase`, which check nothing
+# the site uses. Pushes to main run everything on macOS.
 name: verify
 
 on:
@@ -32,6 +33,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
+      other: ${{ steps.diff.outputs.other }}
       app: ${{ steps.diff.outputs.app }}
       ios: ${{ steps.diff.outputs.ios }}
       avatar: ${{ steps.diff.outputs.avatar }}
@@ -48,6 +50,8 @@ jobs:
           files="$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD")"
           printf '%s\n' "$files"
           touches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
+          # other: anything outside web/, i.e. whatever `verify` and `supabase` check.
+          echo "other=$(grep -qvE '^web/' <<<"$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
           echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
@@ -56,8 +60,11 @@ jobs:
   verify:
     needs: changes
     # !cancelled(): on a push `changes` is skipped, which would skip this job too.
+    # A web-only PR skips it; if `changes` failed, run rather than skip.
     if: >-
-      !cancelled() && (github.event_name == 'push' || !github.event.pull_request.draft)
+      !cancelled() && (github.event_name == 'push' ||
+      (!github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.other == 'true')))
     # macOS also compiles the SwiftUI code (which Linux compiles out) and runs SwiftLint's custom
     # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
     # setup can't break those. If `changes` failed, take the Mac rather than guess.
@@ -79,7 +86,12 @@ jobs:
       - run: scripts/verify.sh swift web
 
   supabase:
-    if: github.event_name == 'push' || !github.event.pull_request.draft
+    needs: changes
+    # !cancelled(): on a push `changes` is skipped, which would skip this job too.
+    if: >-
+      !cancelled() && (github.event_name == 'push' ||
+      (!github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.other == 'true')))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
