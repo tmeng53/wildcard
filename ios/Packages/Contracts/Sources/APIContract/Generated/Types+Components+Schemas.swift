@@ -174,17 +174,22 @@ extension Components {
             public var version: Components.Schemas.Catalog.VersionPayload
             /// - Remark: Generated from `#/components/schemas/Catalog/sports`.
             public var sports: Components.Schemas.SportsCatalog
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - sports:
+            ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
-                sports: Components.Schemas.SportsCatalog
+                sports: Components.Schemas.SportsCatalog,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
                 self.sports = sports
+                self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -200,10 +205,22 @@ extension Components {
                     Components.Schemas.SportsCatalog.self,
                     forKey: .sports
                 )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
                     "sports"
                 ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.version,
+                    forKey: .version
+                )
+                try container.encode(
+                    self.sports,
+                    forKey: .sports
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
             }
         }
         /// - Remark: Generated from `#/components/schemas/SportsCatalog`.
@@ -230,6 +247,8 @@ extension Components {
                     ///
                     /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/offered`.
                     public var offered: Swift.Bool
+                    /// A container of undocumented properties.
+                    public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
                     /// Creates a new `SportsPayloadPayload`.
                     ///
                     /// - Parameters:
@@ -237,16 +256,19 @@ extension Components {
                     ///   - names:
                     ///   - icon: An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
                     ///   - offered: False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    ///   - additionalProperties: A container of undocumented properties.
                     public init(
                         id: Swift.String,
                         names: Components.Schemas.CatalogNames,
                         icon: Swift.String,
-                        offered: Swift.Bool
+                        offered: Swift.Bool,
+                        additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                     ) {
                         self.id = id
                         self.names = names
                         self.icon = icon
                         self.offered = offered
+                        self.additionalProperties = additionalProperties
                     }
                     public enum CodingKeys: String, CodingKey {
                         case id
@@ -272,32 +294,57 @@ extension Components {
                             Swift.Bool.self,
                             forKey: .offered
                         )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                             "id",
                             "names",
                             "icon",
                             "offered"
                         ])
                     }
+                    public func encode(to encoder: any Swift.Encoder) throws {
+                        var container = encoder.container(keyedBy: CodingKeys.self)
+                        try container.encode(
+                            self.id,
+                            forKey: .id
+                        )
+                        try container.encode(
+                            self.names,
+                            forKey: .names
+                        )
+                        try container.encode(
+                            self.icon,
+                            forKey: .icon
+                        )
+                        try container.encode(
+                            self.offered,
+                            forKey: .offered
+                        )
+                        try encoder.encodeAdditionalProperties(additionalProperties)
+                    }
                 }
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
                 public typealias SportsPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayloadPayload]
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
                 public var sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
                 /// Creates a new `CategoriesPayloadPayload`.
                 ///
                 /// - Parameters:
                 ///   - id:
                 ///   - names:
                 ///   - sports:
+                ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
                     names: Components.Schemas.CatalogNames,
-                    sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload
+                    sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.id = id
                     self.names = names
                     self.sports = sports
+                    self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
@@ -318,11 +365,27 @@ extension Components {
                         Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
                         forKey: .sports
                     )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "id",
                         "names",
                         "sports"
                     ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.names,
+                        forKey: .names
+                    )
+                    try container.encode(
+                        self.sports,
+                        forKey: .sports
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
                 }
             }
             /// The picker’s tabs, in order, each with its sports in order.
@@ -349,20 +412,25 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/checkInQuick`.
                 public var checkInQuick: [Swift.String]
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
                 /// Creates a new `PicksPayload`.
                 ///
                 /// - Parameters:
                 ///   - signUpCommon: Sign-up’s 最常见 grid. Sport ids, in order.
                 ///   - signUpMore: Sign-up’s 更多 pills. Sport ids, in order.
                 ///   - checkInQuick: A 练了’s quick picks, before the whole list. Sport ids, in order.
+                ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     signUpCommon: [Swift.String],
                     signUpMore: [Swift.String],
-                    checkInQuick: [Swift.String]
+                    checkInQuick: [Swift.String],
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.signUpCommon = signUpCommon
                     self.signUpMore = signUpMore
                     self.checkInQuick = checkInQuick
+                    self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
                     case signUpCommon
@@ -383,28 +451,49 @@ extension Components {
                         [Swift.String].self,
                         forKey: .checkInQuick
                     )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "signUpCommon",
                         "signUpMore",
                         "checkInQuick"
                     ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.signUpCommon,
+                        forKey: .signUpCommon
+                    )
+                    try container.encode(
+                        self.signUpMore,
+                        forKey: .signUpMore
+                    )
+                    try container.encode(
+                        self.checkInQuick,
+                        forKey: .checkInQuick
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
                 }
             }
             /// The short lists some screens show before the whole list.
             ///
             /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
             public var picks: Components.Schemas.SportsCatalog.PicksPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `SportsCatalog`.
             ///
             /// - Parameters:
             ///   - categories: The picker’s tabs, in order, each with its sports in order.
             ///   - picks: The short lists some screens show before the whole list.
+            ///   - additionalProperties: A container of undocumented properties.
             public init(
                 categories: Components.Schemas.SportsCatalog.CategoriesPayload,
-                picks: Components.Schemas.SportsCatalog.PicksPayload
+                picks: Components.Schemas.SportsCatalog.PicksPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.categories = categories
                 self.picks = picks
+                self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
                 case categories
@@ -420,10 +509,22 @@ extension Components {
                     Components.Schemas.SportsCatalog.PicksPayload.self,
                     forKey: .picks
                 )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "categories",
                     "picks"
                 ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.categories,
+                    forKey: .categories
+                )
+                try container.encode(
+                    self.picks,
+                    forKey: .picks
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
             }
         }
         /// - Remark: Generated from `#/components/schemas/CatalogNames`.
@@ -440,20 +541,25 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHant`.
             public var zhHant: Swift.String
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `CatalogNames`.
             ///
             /// - Parameters:
             ///   - zhHans: Simplified Chinese.
             ///   - en: English.
             ///   - zhHant: Traditional Chinese (Taiwan).
+            ///   - additionalProperties: A container of undocumented properties.
             public init(
                 zhHans: Swift.String,
                 en: Swift.String,
-                zhHant: Swift.String
+                zhHant: Swift.String,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.zhHans = zhHans
                 self.en = en
                 self.zhHant = zhHant
+                self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
                 case zhHans
@@ -474,11 +580,27 @@ extension Components {
                     Swift.String.self,
                     forKey: .zhHant
                 )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "zhHans",
                     "en",
                     "zhHant"
                 ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.zhHans,
+                    forKey: .zhHans
+                )
+                try container.encode(
+                    self.en,
+                    forKey: .en
+                )
+                try container.encode(
+                    self.zhHant,
+                    forKey: .zhHant
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
             }
         }
         /// - Remark: Generated from `#/components/schemas/Me`.

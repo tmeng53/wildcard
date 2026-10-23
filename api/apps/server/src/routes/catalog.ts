@@ -21,7 +21,7 @@ export interface CatalogSection<Schema extends z.ZodType = z.ZodType> {
 }
 
 const Names = z
-  .strictObject({
+  .looseObject({
     zhHans: z.string().meta({ description: 'Simplified Chinese.', example: '跑步' }),
     en: z.string().meta({ description: 'English.', example: 'Run' }),
     zhHant: z.string().meta({ description: 'Traditional Chinese (Taiwan).', example: '跑步' }),
@@ -32,14 +32,14 @@ const sportIds = (description: string) =>
   z.array(z.string()).meta({ description: `${description} Sport ids, in order.` });
 
 export const SportsCatalog = z
-  .strictObject({
+  .looseObject({
     categories: z
       .array(
-        z.strictObject({
+        z.looseObject({
           id: z.string().meta({ example: 'runWalk' }),
           names: Names,
           sports: z.array(
-            z.strictObject({
+            z.looseObject({
               id: z.string().meta({
                 description:
                   'What a 练了 or a planned day sends as `sport`. Never changes, and a sport is ' +
@@ -63,7 +63,7 @@ export const SportsCatalog = z
       )
       .meta({ description: 'The picker’s tabs, in order, each with its sports in order.' }),
     picks: z
-      .strictObject({
+      .looseObject({
         signUpCommon: sportIds('Sign-up’s 最常见 grid.'),
         signUpMore: sportIds('Sign-up’s 更多 pills.'),
         checkInQuick: sportIds('A 练了’s quick picks, before the whole list.'),
@@ -94,10 +94,14 @@ const wireSports = (catalog: SportCatalog): z.input<typeof SportsCatalog> => ({
   },
 });
 
-/** The catalog's body: its version, then each section under its name. */
+/**
+ * The catalog's body: its version, then each section under its name. Every object in it is
+ * loose, unlike the other bodies, so a section, list or field added later still reads in the
+ * builds already out: the catalog is how the app changes without a release.
+ */
 export function catalogBody(sections: readonly CatalogSection[]) {
   return z
-    .strictObject({
+    .looseObject({
       version: bodyVersion(1),
       ...Object.fromEntries(sections.map(({ name, schema }) => [name, schema])),
     })

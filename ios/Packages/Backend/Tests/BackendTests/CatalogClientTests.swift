@@ -49,3 +49,24 @@ import Testing
     // Asked again with the kept ETag: 304, still nothing new.
     #expect(await client.refreshSports() == nil)
 }
+
+@Test func aListReadEarlierIsShownAtTheNextLaunch() throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    // As `refreshSports` keeps it, from a server that has since added a sport and a section.
+    let kept = #"""
+        {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1, "scenes": {},
+          "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
+            "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
+              "icon": "figure.tennis", "offered": true}]}],
+            "picks": {"signUpCommon": [], "signUpMore": [], "checkInQuick": ["padel"]}}}}
+        """#
+    try Data(kept.utf8).write(to: directory.appending(path: "catalog.json"))
+    let stack = try LocalStack()
+    let api = WildcardAPI(
+        url: stack.apiURL,
+        account: AccountSession(provider: stack.supabase.auth, store: MemorySessionStore(), now: { Date() }))
+    let sports = CatalogClient(api: api, directory: directory).keptSports()
+    #expect(sports.entry(for: "padel")?.names.english == "Padel")
+    #expect(sports.checkInQuick == ["padel"])
+}

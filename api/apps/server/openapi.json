@@ -105,7 +105,7 @@
           "version",
           "sports"
         ],
-        "additionalProperties": false
+        "additionalProperties": {}
       },
       "SportsCatalog": {
         "type": "object",
@@ -151,7 +151,7 @@
                       "icon",
                       "offered"
                     ],
-                    "additionalProperties": false
+                    "additionalProperties": {}
                   }
                 }
               },
@@ -160,7 +160,7 @@
                 "names",
                 "sports"
               ],
-              "additionalProperties": false
+              "additionalProperties": {}
             },
             "description": "The picker’s tabs, in order, each with its sports in order."
           },
@@ -194,7 +194,7 @@
               "signUpMore",
               "checkInQuick"
             ],
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "The short lists some screens show before the whole list."
           }
         },
@@ -202,7 +202,7 @@
           "categories",
           "picks"
         ],
-        "additionalProperties": false
+        "additionalProperties": {}
       },
       "CatalogNames": {
         "type": "object",
@@ -228,7 +228,7 @@
           "en",
           "zhHant"
         ],
-        "additionalProperties": false
+        "additionalProperties": {}
       },
       "Me": {
         "type": "object",
