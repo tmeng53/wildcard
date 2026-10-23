@@ -144,33 +144,9 @@ struct EndingPage: View {
                 Ground(height: StoryLayout.groundEnding)
                 finale(lineup, width: width, floor: floor + Space.xs)
                 if let actions {
-                    VStack(spacing: Space.xs) {
-                        // 存图 stands from the start, waiting while its picture is drawn.
-                        Group {
-                            if let picture = actions.picture {
-                                ShareLink(
-                                    item: picture,
-                                    preview: SharePreview(Text("本周战报", bundle: .module), image: picture)
-                                ) {
-                                    Text("存图", bundle: .module).frame(maxWidth: .infinity)
-                                }
-                            } else {
-                                Button {
-                                } label: {
-                                    Text("存图", bundle: .module).frame(maxWidth: .infinity)
-                                }
-                                .disabled(true)
-                            }
-                        }
-                        .buttonStyle(PrimaryButtonStyle(.large))
-                        .accessibilityIdentifier("recap.save")
-                        Button(action: actions.planNextWeek) { Text("排下周", bundle: .module) }
-                            .buttonStyle(TextButtonStyle(.muted))
-                            .accessibilityIdentifier("recap.planNextWeek")
-                    }
-                    .padding(.horizontal, Space.m)
-                    .frame(width: width)
-                    .position(x: width / 2, y: proxy.size.height - StoryLayout.groundEnding / 2 + Space.l)
+                    EndingButtons(actions: actions)
+                        .frame(width: width)
+                        .position(x: width / 2, y: proxy.size.height - StoryLayout.groundEnding / 2 + Space.l)
                 }
             }
         }
@@ -264,5 +240,38 @@ struct EndingActions {
     /// Nil until it is drawn, a moment after the page opens.
     let picture: Image?
     let planNextWeek: () -> Void
+}
+
+/// 存图 and 排下周, at the bottom of the last page.
+struct EndingButtons: View {
+    let actions: EndingActions
+
+    var body: some View {
+        VStack(spacing: Space.xs) {
+            // 存图 stands from the start, waiting while its picture is drawn.
+            Group {
+                if let picture = actions.picture {
+                    ShareLink(
+                        item: picture,
+                        preview: SharePreview(Text("本周战报", bundle: .module), image: picture)
+                    ) {
+                        Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                    }
+                } else {
+                    Button {
+                    } label: {
+                        Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                    }
+                    .disabled(true)
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle(.large))
+            .accessibilityIdentifier("recap.save")
+            Button(action: actions.planNextWeek) { Text("排下周", bundle: .module) }
+                .buttonStyle(TextButtonStyle(.muted))
+                .accessibilityIdentifier("recap.planNextWeek")
+        }
+        .padding(.horizontal, Space.m)
+    }
 }
 #endif

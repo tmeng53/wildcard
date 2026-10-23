@@ -5,7 +5,8 @@ import PackageDescription
 // one template per squad-week on the server; the app only plays it. `RecapDomain` holds the
 // story as the app reads it, which pages play in which order, how long each lasts, what the
 // characters do on each, and the tap-to-advance player; it is pure Swift, so it tests on Linux.
-// `RecapUI` draws the pages, the covered entry tile in 动态 and the pending page.
+// `RecapUI` draws the pages, the covered entry tile in 动态 and the pending page, and puts
+// `ScenePick`'s sticker and reveal on the last page for whoever picks next week's scene.
 let package = Package(
     name: "Recap",
     defaultLocalization: "zh-Hans",
@@ -19,6 +20,9 @@ let package = Package(
         .package(path: "../DesignSystem"),
         .package(path: "../Avatar"),
         .package(path: "../Sports"),
+        .package(path: "../ScenePick"),
+        // The picked scene's art, as home draws it, behind the reveal.
+        .package(path: "../CheckIn"),
     ],
     targets: [
         .target(
@@ -35,6 +39,9 @@ let package = Package(
                 .product(name: "AvatarUI", package: "Avatar"),
                 // Sport names, as every picker shows them.
                 .product(name: "SportsUI", package: "Sports"),
+                .product(name: "ScenePickDomain", package: "ScenePick"),
+                .product(name: "ScenePickUI", package: "ScenePick"),
+                .product(name: "CheckInUI", package: "CheckIn"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),

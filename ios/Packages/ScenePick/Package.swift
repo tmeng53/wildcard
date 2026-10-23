@@ -13,9 +13,11 @@ let package = Package(
         .library(name: "ScenePickDomain", targets: ["ScenePickDomain"]),
         .library(name: "ScenePickUI", targets: ["ScenePickUI"]),
     ],
-    dependencies: [.package(path: "../DesignSystem")],
+    dependencies: [.package(path: "../Contracts"), .package(path: "../DesignSystem")],
     targets: [
-        .target(name: "ScenePickDomain", dependencies: [.product(name: "DesignSystem", package: "DesignSystem")]),
+        .target(
+            name: "ScenePickDomain",
+            dependencies: ["Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
         .target(
             name: "ScenePickUI",
             dependencies: [
@@ -24,7 +26,7 @@ let package = Package(
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]),
-        .testTarget(name: "ScenePickDomainTests", dependencies: ["ScenePickDomain"]),
+        .testTarget(name: "ScenePickDomainTests", dependencies: ["ScenePickDomain", "Contracts"]),
         // The String Catalog read as a file; the views need a simulator.
         .testTarget(
             name: "ScenePickUITests",
