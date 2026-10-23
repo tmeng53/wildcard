@@ -7,10 +7,12 @@ import {
   type DailyCandidate,
   type Push,
   type PushNotification,
+  apnsPayload,
 } from '@wildcard/push';
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
 
 import type { Log } from '../log.js';
+import { pushToday, type PushToday } from './daily-push-today.js';
 
 /** How many members' pushes are put together at once. */
 const AT_ONCE = 4;
@@ -177,23 +179,47 @@ async function compose(
   const [squad] = await deps.squads.listMine(SquadMember.parse(member));
   if (squad === undefined) return undefined;
   const window = { member, since, until };
+  const squadId = SquadId.parse(squad.id);
   const [today, ...received] = await Promise.all([
-    deps.checkIns.squadToday({
-      viewer: CheckInMember.parse(member),
-      squad: SquadId.parse(squad.id),
-    }),
+    deps.checkIns.squadToday({ viewer: CheckInMember.parse(member), squad: squadId }),
     ...deps.interactions.map((source) => source(window)),
   ]);
   const byKind = mergeInteractions(received);
   const squadCheckedIn = today.members.some(({ firstCheckInAt }) => firstCheckInAt !== undefined);
   if (!squadCheckedIn && byKind.size === 0) return undefined;
-  return dailyProgressNotification({
+  const told = {
     day,
     squad: squad.id,
     squadWeek: today.squadWeek,
     received: byKind,
     named: await namedSender(deps.members, byKind),
+  };
+  return dailyProgressNotification({
+    ...told,
+    today: await pushToday(deps, {
+      viewer: member,
+      squad: squadId,
+      today,
+      pokers: [...(byKind.get('poke') ?? [])],
+      bytes: roomForToday(told),
+    }).catch((error: unknown) => {
+      // The long-press view is extra: the push still goes, and the phone shows its words alone.
+      deps.log.warn('daily push sent without today', { member, day, error });
+      return undefined;
+    }),
   });
+}
+
+/** The most bytes APNs takes in a push's payload. */
+export const APNS_BYTES = 4096;
+
+/** What APNs' 4KB leaves for `today` beside the rest of the push, whose alert can be long. */
+export function roomForToday(
+  told: Omit<Parameters<typeof dailyProgressNotification>[0], 'today'>,
+): number {
+  const rest = JSON.stringify(apnsPayload(dailyProgressNotification(told)));
+  // `today` goes in the event object as `,"today":…`.
+  return APNS_BYTES - Buffer.byteLength(rest) - Buffer.byteLength(',"today":');
 }
 
 /** Who the push names: the first sender of the most telling kind who has a nickname. */
@@ -237,6 +263,7 @@ export function dailyProgressNotification({
   squadWeek,
   received,
   named,
+  today,
 }: {
   readonly day: string;
   readonly squad: string;
@@ -244,6 +271,8 @@ export function dailyProgressNotification({
   readonly received: Interactions;
   /** The nudge's sender to name, and its kind. */
   readonly named?: { readonly kind: string; readonly nickname: string } | undefined;
+  /** Teammates' check-ins today, for the push's long-press view; left out when they couldn't be read. */
+  readonly today?: PushToday | undefined;
 }): PushNotification {
   const people = new Set([...received.values()].flatMap((each) => [...each])).size;
   const week = [String(squadWeek.trainedDays), String(squadWeek.plannedDays)];
@@ -273,6 +302,7 @@ export function dailyProgressNotification({
       squadTrainedDays: squadWeek.trainedDays,
       squadPlannedDays: squadWeek.plannedDays,
       received: Object.fromEntries([...received].map(([kind, each]) => [kind, each.size])),
+      ...(today === undefined ? {} : { today }),
     },
   };
 }
