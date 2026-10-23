@@ -84,13 +84,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ poked you · squad's at %1$@/%2$@ this week"
+            "value": "%3$@ gave you a pat · squad's at %1$@/%2$@ this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ 戳了你一下 · 本周小队已练 %1$@/%2$@ 次"
+            "value": "%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 次"
           }
         }
       }
@@ -102,13 +102,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ poked you, plus cheers from %4$@ more · squad's at %1$@/%2$@ this week"
+            "value": "%3$@ and %4$@ more gave you a pat · squad's at %1$@/%2$@ this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ 戳了你一下，还有 %4$@ 位队友给你打了气 · 本周小队已练 %1$@/%2$@ 次"
+            "value": "%3$@和另外 %4$@ 人拍了拍你 · 本周小队已练 %1$@/%2$@ 次"
           }
         }
       }
