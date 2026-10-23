@@ -551,6 +551,16 @@
         }
       }
     },
+    "小林": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lin"
+          }
+        }
+      }
+    },
     "小人舞台和气泡": {
       "localizations": {
         "en": {

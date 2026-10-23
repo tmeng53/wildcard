@@ -190,25 +190,33 @@ extension Components {
                 public var catchphrase: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/Me/profile/character`.
                 public var character: Components.Schemas.Character?
+                /// When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/joinedAt`.
+                public var joinedAt: Foundation.Date
                 /// Creates a new `ProfilePayload`.
                 ///
                 /// - Parameters:
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
                 ///   - character:
+                ///   - joinedAt: When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 public init(
                     timeZone: Swift.String,
                     catchphrase: Swift.String? = nil,
-                    character: Components.Schemas.Character? = nil
+                    character: Components.Schemas.Character? = nil,
+                    joinedAt: Foundation.Date
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
                     self.character = character
+                    self.joinedAt = joinedAt
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
                     case catchphrase
                     case character
+                    case joinedAt
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -224,10 +232,15 @@ extension Components {
                         Components.Schemas.Character.self,
                         forKey: .character
                     )
+                    self.joinedAt = try container.decode(
+                        Foundation.Date.self,
+                        forKey: .joinedAt
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "timeZone",
                         "catchphrase",
-                        "character"
+                        "character",
+                        "joinedAt"
                     ])
                 }
             }

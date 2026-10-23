@@ -39,7 +39,14 @@ export const Me = z
     version: bodyVersion(1),
     userId: z.uuid().meta({ description: 'The signed-in member’s Supabase Auth user id.' }),
     profile: z
-      .strictObject(profileFields)
+      .strictObject({
+        ...profileFields,
+        joinedAt: z.iso.datetime().meta({
+          description:
+            'When the member first saved their profile, right after signing up, in UTC: the day ' +
+            'on their character’s ticket.',
+        }),
+      })
       .nullable()
       .meta({ description: 'Null until the member first saves one, right after signing up.' }),
   })
@@ -161,12 +168,19 @@ export function me(
   return new OpenAPIHono<SignedIn>()
     .openapi(getMe, async (c) => {
       const userId = c.var.caller.userId;
-      const profile = await deps.members.findProfile(MemberId.parse(userId));
+      const member = MemberId.parse(userId);
+      const [profile, joinedAt] = await Promise.all([
+        deps.members.findProfile(member),
+        deps.members.joinedAt(member),
+      ]);
       return c.json(
         {
           version: 1,
           userId,
-          profile: profile === undefined ? null : wireProfile(profile),
+          profile:
+            profile === undefined || joinedAt === undefined
+              ? null
+              : { ...wireProfile(profile), joinedAt: joinedAt.toISOString() },
         } as const,
         200,
       );

@@ -5,22 +5,25 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The character editor: the character on its stage at the top, with its nickname under its
-/// feet; tabs of choices below; and one button to finish. In sign-up it shows the step, a back
-/// button and the title 创建你的外卡运动员; from 我 it shows 取消 and saves.
+/// The character editor: the character on its ticket at the top, with its nickname on the stub
+/// under its feet and the day the member signed up in the corner; tabs of choices below; and one
+/// button to finish. In sign-up it shows the step, a back button and the title 创建你的外卡运动员;
+/// from 我 it shows 取消 and saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
+    private let issued: Date?
     private let onBack: () -> Void
     private let onDone: (EditedCharacter) -> Void
     @Environment(\.sceneTheme) private var theme
 
     public init(
-        model: CharacterEditorModel, context: EditorContext, onBack: @escaping () -> Void,
+        model: CharacterEditorModel, context: EditorContext, issued: Date?, onBack: @escaping () -> Void,
         onDone: @escaping (EditedCharacter) -> Void
     ) {
         self.model = model
         self.context = context
+        self.issued = issued
         self.onBack = onBack
         self.onDone = onDone
     }
@@ -37,10 +40,14 @@ public struct CharacterEditorView: View {
                     .padding(.horizontal, Space.pageMargin)
                     .padding(.bottom, Space.s)
             }
-            CharacterStage {
+            CharacterStage(issued: issued) {
                 EditorStage(model: model)
+            } stub: {
+                NicknameField(nickname: $model.nickname)
             }
             .frame(height: EditorStage.height)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("editor.stage")
             .padding(.horizontal, Space.pageMargin)
             CategoryBar(
                 model.tabs.map {

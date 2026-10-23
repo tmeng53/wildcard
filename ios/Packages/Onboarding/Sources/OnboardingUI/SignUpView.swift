@@ -30,7 +30,9 @@ public struct SignUpView<SignIn: View>: View {
             case .character:
                 if let editor = model.editor {
                     CharacterEditorView(
-                        model: editor, context: .signUp(step: 1, total: SignUpStep.counted.count), onBack: model.back,
+                        model: editor, context: .signUp(step: 1, total: SignUpStep.counted.count),
+                        // The member is signing up today, so today is the day on the ticket.
+                        issued: .now, onBack: model.back,
                         onDone: model.finishCharacter
                     )
                     .transition(transition)

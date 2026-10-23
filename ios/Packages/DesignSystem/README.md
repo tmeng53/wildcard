@@ -31,7 +31,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows, a setting's on/off row |
 | `SceneTile`, `CartonBox`, `Tween`, `Wiggle` | A scene to pick for next week (a colour pattern card once the squad has trained there, a kraft carton until then, shaking every 2.4 s while picked); the carton the reveal opens; the reveal's easing curves |
-| `SpeechBubble`, `CharacterStage` | What the character says (with an action, a button that opens it); the character's stage in the editor |
+| `SpeechBubble`, `CharacterStage` | What the character says (with an action, a button that opens it); the character's ticket in the editor (sign-up and 我), in the brand's colours under a flat spotlight, never the scene's |
 
 Conventions, as SwiftUI's own controls do it: the label comes first (`Text`, so it goes through the String Catalog), state comes in as a value (`isSelected`, `status`) and changes go out through an `action` closure or a `Binding`; button variants are `ButtonStyle`s; the scene and the accent tone come from the environment (`\.sceneTheme`, `\.accentTone`); UI-test identifiers are set by the caller. Each component's doc comment says when to use it and what its states look like, and the style guide shows every state.
 
