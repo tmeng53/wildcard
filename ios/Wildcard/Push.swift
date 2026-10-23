@@ -22,10 +22,21 @@ enum Push {
 
 /// The app delegate, for what only it receives: the APNs token and taps on notifications.
 final class AppDelegate: NSObject, UIApplicationDelegate {
-    /// What a tapped notification does, given where the 6pm push's view asked to go; the scene
-    /// sets it.
-    var opened: (PushDestination?) -> Void = { _ in }
-    private lazy var taps = NotificationTaps { [weak self] in self?.opened(Push.takeDestination()) }
+    /// What a tapped notification does once the tabs are up; the scene sets it.
+    var opened: () -> Void = {}
+    /// Where the 6pm push's view asked to go, kept until the tabs take it: a tap that launched
+    /// the app comes before they are there.
+    private var destination: PushDestination?
+    private lazy var taps = NotificationTaps { [weak self] in
+        self?.destination = Push.takeDestination()
+        self?.opened()
+    }
+
+    /// Where the last tapped notification asked to go, once.
+    func takeDestination() -> PushDestination? {
+        defer { destination = nil }
+        return destination
+    }
 
     func application(
         _ application: UIApplication, didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]?

@@ -207,9 +207,11 @@ public actor AccountSession {
 
     private func refreshAndKeep(_ current: Session) async -> Result<Void, AccountError> {
         // Another process sharing the store (the 6pm push's view) may have renewed it already,
-        // using up this refresh token: take what it saved rather than renew with a used one.
+        // using up this refresh token: take what it saved rather than renew with a used one. A
+        // stored one no newer than ours is a save that failed, so it is left alone. Both renewing
+        // at the same moment can still happen; this narrows it to that moment.
         if let stored = try? await store.load(), stored.member == current.member,
-            stored.refreshToken != current.refreshToken, session == current
+            stored.refreshToken != current.refreshToken, stored.expiresAt > current.expiresAt, session == current
         {
             session = stored
             return .success(())

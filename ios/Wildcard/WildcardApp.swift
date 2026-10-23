@@ -128,9 +128,12 @@ struct WildcardApp: App {
             } else {
                 MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
                     .onAppear {
-                        delegate.opened = { [today, $tab] destination in
-                            Self.open(destination, today: today, tab: $tab)
+                        delegate.opened = { [delegate, today, $tab] in
+                            Self.open(delegate.takeDestination(), today: today, tab: $tab)
                             Task { await today.load() }
+                        }
+                        if let destination = delegate.takeDestination() {
+                            Self.open(destination, today: today, tab: $tab)
                         }
                     }
             }
@@ -159,13 +162,22 @@ private struct AppRoot: View {
                 }
             case .tabs(let today, let profile):
                 MainTabs(today: today, profile: profile, feed: nil, selection: $tab)
+                    .onAppear {
+                        // A tap that launched the app came before the tabs.
+                        if let destination = delegate.takeDestination() {
+                            WildcardApp.open(destination, today: today, tab: $tab)
+                        }
+                    }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
         .onAppear {
-            delegate.opened = { [app, $tab] destination in
-                if case .tabs(let today, _) = app.screen { WildcardApp.open(destination, today: today, tab: $tab) }
+            delegate.opened = { [app, delegate, $tab] in
+                // Before the tabs are up, they take the destination when they appear.
+                if case .tabs(let today, _) = app.screen {
+                    WildcardApp.open(delegate.takeDestination(), today: today, tab: $tab)
+                }
                 Task { await app.reloadToday() }
             }
         }
