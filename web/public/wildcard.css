@@ -74,7 +74,7 @@ a:hover { text-decoration-color: var(--ink); }
    The page sets its height, padding and font size. */
 .wc-cta { position: relative; display: inline-flex; align-items: center; gap: .45em; border-radius: 999px; background: var(--brand); color: var(--on-brand); font-weight: 600; text-decoration: none; white-space: nowrap; transition: transform .15s; }
 .wc-cta:active { transform: scale(.97); }
-.wc-cta svg { flex: none; width: 1.1em; height: 1.1em; margin-top: -.18em; fill: currentColor; }
+.wc-cta svg { flex: none; width: 1.1em; height: 1.1em; margin-top: -.09em; fill: currentColor; }
 /* a beam of graphite light runs round the button's edge (after Magic UI's border beam), with a soft halo:
    a conic gradient turned by --beam, masked to a 2px ring just outside the pill */
 @property --beam { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
