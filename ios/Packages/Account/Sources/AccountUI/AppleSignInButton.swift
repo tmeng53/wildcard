@@ -12,7 +12,10 @@ public struct AppleSignIn: Sendable, Equatable {
 }
 
 /// Apple's own Sign in with Apple button, which App Review expects to look as Apple draws it.
-/// It asks for the member's name only, never their email.
+/// It asks for the member's name and email. The email lands on the Supabase Auth user, never in
+/// our tables (a member is keyed by the provider's user id); it may be Apple's private relay
+/// address, and Apple sends it on the first authorization only, so an account made before we asked
+/// for it has none.
 public struct AppleSignInButton: View {
     private let onCompletion: (Result<AppleSignIn, AccountError>) -> Void
     @State private var nonce = AppleNonce.random()
@@ -26,7 +29,7 @@ public struct AppleSignInButton: View {
         SignInWithAppleButton(.signIn) { request in
             // A fresh nonce for every attempt: a token is good for one sign-in.
             nonce = AppleNonce.random()
-            request.requestedScopes = [.fullName]
+            request.requestedScopes = [.fullName, .email]
             request.nonce = nonce.hashed
         } onCompletion: { result in
             onCompletion(Self.signIn(from: result, nonce: nonce))

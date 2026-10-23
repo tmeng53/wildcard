@@ -6,6 +6,8 @@ import DesignSystem
 import Foundation
 import Observation
 import RecapDomain
+import ScenePickDomain
+import SwiftUI
 
 /// Where the app keeps the squad's latest 战报: the story 动态's tile opens, and the one a tapped
 /// awards push opens. It reads the story from its service and the squad (who is in it, how they
@@ -33,26 +35,37 @@ public final class RecapShelf {
     public var open: RecapModel?
     /// Who is in the squad, for the tile's peeking reader.
     public private(set) var cast: StoryCast?
+    /// How many scenes the reader picked on a story's last page, counted as each reveal fills
+    /// the screen: the app goes home onto the scene, the same one as last time or not, and the
+    /// squad drops in.
+    public private(set) var picks = 0
+    /// The scene picked last, and when it filled the screen.
+    public private(set) var picked: (scene: SceneTheme, coveredAt: Date)?
 
     @ObservationIgnored private let service: any WeekStoryService
     @ObservationIgnored private let readSquad: @MainActor () -> Squad?
     @ObservationIgnored private let planNextWeek: @MainActor () -> Void
-    @ObservationIgnored private let pickScene: (@MainActor (WeekStory) -> Void)?
+    @ObservationIgnored private let scenePicker: @MainActor (WeekStory) async -> ScenePicker?
+    @ObservationIgnored private let scenePicked: @MainActor (SceneTheme) -> Void
 
     /// - Parameters:
     ///   - squad: the squad and its people as the app holds them now; nil before the home loads.
     ///   - planNextWeek: 排下周 on the last page.
-    ///   - pickScene: called with the story once the reader closes it, so the scene pick
-    ///     (开箱选场地) can open for whoever picks next week's scene; the API says who that is
-    ///     (last week's crown winner, else the captain). Nil until that screen is wired.
+    ///   - scenePicker: the scene pick for the story's last page when the reader picks the scene
+    ///     for the week after it (last week's crown winner, else the captain, as the API says)
+    ///     and nobody has yet; nil otherwise.
+    ///   - scenePicked: the reader picked, and the reveal filled the screen with that scene.
     public init(
         service: any WeekStoryService, squad: @escaping @MainActor () -> Squad?,
-        planNextWeek: @escaping @MainActor () -> Void = {}, pickScene: (@MainActor (WeekStory) -> Void)? = nil
+        planNextWeek: @escaping @MainActor () -> Void = {},
+        scenePicker: @escaping @MainActor (WeekStory) async -> ScenePicker? = { _ in nil },
+        scenePicked: @escaping @MainActor (SceneTheme) -> Void = { _ in }
     ) {
         self.service = service
         readSquad = squad
         self.planNextWeek = planNextWeek
-        self.pickScene = pickScene
+        self.scenePicker = scenePicker
+        self.scenePicked = scenePicked
     }
 
     /// Reads the newest story: this week's, which is out from Sunday 8pm Eastern, else last
@@ -88,16 +101,27 @@ public final class RecapShelf {
     }
 
     private func show(_ story: WeekStory, cast: StoryCast) {
-        open = RecapModel(
+        let model = RecapModel(
             story: story, cast: cast, service: service,
-            close: { [weak self] in
-                self?.open = nil
-                self?.pickScene?(story)
-            },
+            close: { [weak self] in self?.open = nil },
             planNextWeek: { [weak self] in
                 self?.open = nil
                 self?.planNextWeek()
+            },
+            scenePicked: { [weak self] scene, coveredAt in
+                // The story goes at once: the reveal's last frame is the scene home draws.
+                var instant = Transaction()
+                instant.disablesAnimations = true
+                withTransaction(instant) { self?.open = nil }
+                self?.picked = (scene, coveredAt)
+                self?.picks += 1
+                self?.scenePicked(scene)
             })
+        open = model
+        // The sticker joins the last page once the squad's scene is read, long before the
+        // reader gets there.
+        let lookup = scenePicker
+        Task { model.scenePicker = await lookup(story) }
     }
 }
 
@@ -131,6 +155,26 @@ extension RecapSample {
         }
 
         public func nudge(squad: SquadID, week monday: LocalDay) async throws(RecapError) {}
+    }
+
+    /// The sample reader picking next week's scene, as in the approved design: the squad trains
+    /// at the track this week, was at the pool 5 weeks ago, and has never opened the rest. The
+    /// pick always goes through.
+    @MainActor
+    public static func scenePicker() -> ScenePicker {
+        ScenePicker(
+            options: [
+                SceneOption(scene: .track, lastTrained: .thisWeek),
+                SceneOption(scene: .pool, lastTrained: .weeksAgo(5)),
+                SceneOption(scene: .gym, lastTrained: .never),
+                SceneOption(scene: .tennis, lastTrained: .never),
+                SceneOption(scene: .climbing, lastTrained: .never),
+            ],
+            service: ScenePick())
+    }
+
+    private struct ScenePick: ScenePickService {
+        func pick(_ scene: SceneTheme) async throws(ScenePickError) {}
     }
 }
 #endif

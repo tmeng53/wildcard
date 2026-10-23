@@ -69,6 +69,9 @@ const Environment = z.object({
   // What the scheduler sends to start jobs such as the daily progress push. Without it no job
   // runs. Long and random, like any secret.
   JOBS_TOKEN: z.string().min(32).optional(),
+  // The service account Cloud Scheduler signs its OIDC tokens as, on the hosted server. When
+  // set, only its tokens (for PUBLIC_URL) start jobs, and JOBS_TOKEN isn't used.
+  JOBS_SCHEDULER_ACCOUNT: z.email().optional(),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
@@ -104,8 +107,11 @@ export interface Config {
         readonly clientId: string;
       }
     | undefined;
-  /** The token that starts jobs; undefined until a scheduler is set up. */
-  readonly jobsToken: string | undefined;
+  /** How the scheduler proves itself; undefined until one is set up, and then no job runs. */
+  readonly scheduler:
+    | { readonly kind: 'google'; readonly serviceAccount: string }
+    | { readonly kind: 'token'; readonly token: string }
+    | undefined;
   /** Undefined until there are APNs keys: then no pushes are sent. */
   readonly apns:
     | {
@@ -173,7 +179,12 @@ export function readConfig(environment: Record<string, string | undefined>): Con
       anthropic: result.data.ANTHROPIC_API_KEY,
     },
     appleSignInKey,
-    jobsToken: result.data.JOBS_TOKEN,
+    scheduler:
+      result.data.JOBS_SCHEDULER_ACCOUNT !== undefined
+        ? { kind: 'google', serviceAccount: result.data.JOBS_SCHEDULER_ACCOUNT }
+        : result.data.JOBS_TOKEN !== undefined
+          ? { kind: 'token', token: result.data.JOBS_TOKEN }
+          : undefined,
     apns,
   };
 }

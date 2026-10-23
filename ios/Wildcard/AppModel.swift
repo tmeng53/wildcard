@@ -11,7 +11,9 @@ import Foundation
 import MeDomain
 import Observation
 import OnboardingUI
+import RecapDomain
 import RecapUI
+import ScenePickDomain
 import ScheduleDomain
 import ScheduleUI
 import SquadDomain
@@ -175,7 +177,9 @@ final class AppModel {
                 signOut: { [weak self] in await self?.signOut() })
             let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
             let recap = RecapShelf(
-                service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) })
+                service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
+                scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
+                scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
             screen = .tabs(
                 today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
                 recap: recap)
@@ -199,6 +203,17 @@ final class AppModel {
     private func readScene(of squad: SquadID?, into today: TodayModel) async {
         guard let squad, let scene = try? await api.scene(of: squad) else { return }
         today.scene = SceneTheme(rawValue: scene.scene.rawValue) ?? .gym
+    }
+
+    /// 冠军专属 on a 战报's last page: when the reader picks the scene for the week after the
+    /// story's and nobody has yet. Offline, there is no sticker.
+    private static func scenePicker(api: WildcardAPI, after story: WeekStory) async -> ScenePicker? {
+        guard let scene = try? await api.scene(of: story.squad), scene.canPick, scene.picked == nil,
+            scene.week == story.week.monday.adding(days: 7)
+        else { return nil }
+        return ScenePicker(
+            options: SceneOption.options(from: scene.history),
+            service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
     /// 动态 on the member's squad, its days by the member's own clock.

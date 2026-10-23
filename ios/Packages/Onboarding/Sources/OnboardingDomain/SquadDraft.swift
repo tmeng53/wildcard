@@ -42,8 +42,11 @@ public struct SquadPreview: Hashable, Sendable {
     public let memberCount: Int
     /// The squad has its 8 members and can't take more.
     public let isFull: Bool
+    /// The members' characters, the earliest to join first, for their heads under the name.
+    /// Members who haven't made theirs yet are left out.
+    public let looks: [CharacterLook]
 
-    public init(code: InviteCode, name: String, memberCount: Int, isFull: Bool) {
-        (self.code, self.name, self.memberCount, self.isFull) = (code, name, memberCount, isFull)
+    public init(code: InviteCode, name: String, memberCount: Int, isFull: Bool, looks: [CharacterLook]) {
+        (self.code, self.name, self.memberCount, self.isFull, self.looks) = (code, name, memberCount, isFull, looks)
     }
 }

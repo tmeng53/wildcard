@@ -133,12 +133,15 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
+        let undo = app.buttons["editor.undo"]
+        let headerTop = undo.frame.minY
         // The first tap on a field puts the cursor after its text; delete more than it holds.
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
         waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
         nickname.typeText("小汤")
         waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
+        XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
         keepScreenshot(named: "27-editor-nickname")
     }
 

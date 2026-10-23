@@ -1,3 +1,4 @@
+import Contracts
 import DesignSystem
 import Observation
 
@@ -9,6 +10,16 @@ public enum LastTrained: Hashable, Sendable {
     case weeksAgo(Int)
     /// Never: the scene is still in its carton.
     case never
+
+    /// From how many weeks ago the squad last trained there, as the API counts: 0 this week,
+    /// nil never.
+    public init(weeksAgo: Int?) {
+        switch weeksAgo {
+        case .none: self = .never
+        case .some(let weeks) where weeks <= 0: self = .thisWeek
+        case .some(let weeks): self = .weeksAgo(weeks)
+        }
+    }
 }
 
 /// A scene on the picker and when the squad last trained there.
@@ -22,6 +33,16 @@ public struct SceneOption: Hashable, Sendable, Identifiable {
     }
 
     public var id: SceneTheme { scene }
+
+    /// The picker's tiles from the squad's scenes as the API lists them, in its order. A scene
+    /// this app doesn't draw is left out.
+    public static func options(from history: [SceneHistory]) -> [SceneOption] {
+        history.compactMap { entry in
+            SceneTheme(rawValue: entry.scene.rawValue).map {
+                SceneOption(scene: $0, lastTrained: LastTrained(weeksAgo: entry.weeksAgo))
+            }
+        }
+    }
     /// A scene the squad has trained at shows as itself; any other comes in a carton.
     public var isOpened: Bool { lastTrained != .never }
 }

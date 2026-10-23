@@ -186,18 +186,8 @@ public final class SquadSettingsModel {
     /// Opens the scene picker (换场地), with the scenes as tiles.
     public func openPicker() {
         guard let settings, settings.scene.canPick else { return }
-        let options = settings.scene.history.compactMap { entry -> SceneOption? in
-            guard let scene = SceneTheme(rawValue: entry.scene.rawValue) else { return nil }
-            let last: LastTrained =
-                switch entry.weeksAgo {
-                case .none: .never
-                case .some(0): .thisWeek
-                case .some(let weeks): .weeksAgo(weeks)
-                }
-            return SceneOption(scene: scene, lastTrained: last)
-        }
         picker = ScenePicker(
-            options: options,
+            options: SceneOption.options(from: settings.scene.history),
             service: SettingsScenePick(service: service, squad: settings.squad.id, week: settings.scene.week))
     }
 

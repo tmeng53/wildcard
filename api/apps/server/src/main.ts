@@ -63,6 +63,7 @@ import {
   createSupabaseTokenVerifier,
   supabaseAuthIssuer,
 } from './adapters/supabase-auth.js';
+import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
@@ -145,8 +146,21 @@ const awards = createWeeklyAwards({
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
 });
-if (config.jobsToken === undefined)
-  log.info('no JOBS_TOKEN: the daily progress push and weekly awards are off');
+// The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
+// token on a local one.
+const isScheduler =
+  config.scheduler?.kind === 'google'
+    ? googleScheduler({
+        serviceAccount: config.scheduler.serviceAccount,
+        audience: config.publicUrl.origin,
+      })
+    : config.scheduler?.kind === 'token'
+      ? jobsTokenScheduler(config.scheduler.token)
+      : undefined;
+if (isScheduler === undefined)
+  log.info(
+    'no scheduler (JOBS_SCHEDULER_ACCOUNT or JOBS_TOKEN): the daily progress push and weekly awards are off',
+  );
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
@@ -223,7 +237,7 @@ const app = createApp({
   weeklyAwards: { awards, clock: () => new Date() },
   log,
   jobs: {
-    token: config.jobsToken,
+    isScheduler,
     // Each kind of interaction the daily push counts comes from one of these.
     interactions: [reactionInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),

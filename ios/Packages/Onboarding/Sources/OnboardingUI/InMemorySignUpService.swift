@@ -37,7 +37,9 @@ public actor InMemorySignUpService: SignUpService {
     }
 
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {
-        SquadPreview(code: code, name: sample.name, memberCount: sample.teammates.count, isFull: false)
+        SquadPreview(
+            code: code, name: sample.name, memberCount: sample.teammates.count, isFull: false,
+            looks: sample.teammates.map { CharacterLook(outfit: $0.outfit, persona: $0.persona) })
     }
 
     public func agreeToAI() async throws(SignUpError) {

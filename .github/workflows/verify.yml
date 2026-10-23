@@ -5,19 +5,18 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
-# a PR never uses a Mac on its own: the macOS jobs run for pushes to main, a manual run
-# (Actions -> verify -> Run workflow) and a PR carrying the `ios-ci` label. Every other PR runs
-# `verify` on Linux, which builds and tests the Swift packages, and skips `ios` and
-# `avatar-preview`. Owners check screens on main's Mac run and fix forward.
-# Free macOS runners are few and shared by every PR, so a PR that leaves the app and its build
-# and lint setup alone uses no Mac: `verify` runs on Linux (the Swift packages build there too,
-# and SwiftUI code didn't change), and `ios` and `avatar-preview` run only when it changes what
-# they build; otherwise they are skipped, which branch protection counts as passing. Every job
-# runs only when the files a change touches can break what it checks: `verify` for the app's
-# Swift (and the OpenAPI file its generated types come from), `supabase` for the database, the
-# API and the app's Backend adapters, so a docs-only or web-only change runs neither; the `web`
-# job checks the site, on Linux. Pushes to main use the same rule against the commit before the push (the PR already ran the full merge),
-# so a merge no longer queues the Mac jobs again for a change that doesn't need them.
+# no merge uses a Mac on its own. `ios` and `avatar-preview` run on a schedule, every 3 hours,
+# for what main changed since the last scheduled run (nothing when main didn't change), on a
+# manual run (Actions -> verify -> Run workflow) and on a PR carrying the `ios-ci` label; the
+# macOS `verify` only on the last two. Owners check screens on the next scheduled run and fix
+# forward. Pushes to main and every other PR run the Linux checks only (`verify` on Linux builds
+# and tests the Swift packages).
+# Every job runs only when the files a change touches can break what it checks: `verify` for the
+# app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
+# the API and the app's Backend adapters, `web` for the site; `ios` and `avatar-preview` only
+# when the change touches what they build. A skipped job counts as passing for branch protection.
+# Pushes to main diff against the commit before the push (the PR already ran the full merge);
+# a scheduled run diffs against the commit the last scheduled run checked.
 name: verify
 
 on:
@@ -25,19 +24,26 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
   push:
     branches: [main]
+  # The macOS jobs for main (UTC). GitHub may start a scheduled run some minutes late.
+  schedule:
+    - cron: "23 */3 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
+  # The `changes` job reads which commit the last scheduled run checked.
+  actions: read
 
 concurrency:
-  # A PR's newer push cancels its older run. On main a run in progress is never cancelled, so
-  # the few macOS runners finish a run for main; commits that pile up behind it wait as one
-  # queued run (GitHub keeps only the newest pending), which then checks the newest commit.
+  # A PR's newer push cancels its older run. A run for main has a group of its own (its commit),
+  # so it is never cancelled and never replaces a waiting one: GitHub keeps only one pending run
+  # per group, which dropped every main run but the newest while the few Macs were busy.
   # Adding a label other than `ios-ci` gets its own group, so it never cancels the PR's real run.
+  # A scheduled run has its own group too, so it never replaces the push run for the same commit.
   group: >-
-    verify-${{ github.event.pull_request.number || 'main' }}${{
-    github.event.action == 'labeled' && github.event.label.name != 'ios-ci' && '-label' || '' }}
+    verify-${{ github.event.pull_request.number || github.sha }}${{
+    github.event.action == 'labeled' && github.event.label.name != 'ios-ci' && '-label' || '' }}${{
+    github.event_name == 'schedule' && '-schedule' || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -64,16 +70,32 @@ jobs:
           fetch-depth: 0
       - id: diff
         env:
+          EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-          MAC: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ios-ci') }}
+          MAC: >-
+            ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+            contains(github.event.pull_request.labels.*.name, 'ios-ci') }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # A scheduled run checks what main changed since the commit the last scheduled run
+          # checked (a cancelled one doesn't count), and nothing when that is this commit.
+          if [ "$EVENT" = schedule ]; then
+            BASE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow verify.yml --event schedule \
+              --branch main --status completed --limit 20 --json headSha,conclusion \
+              --jq '[.[] | select(.conclusion != "cancelled" and .conclusion != "skipped")][0].headSha // ""')"
+            echo "last scheduled run checked ${BASE:-nothing yet}"
+            if [ "$BASE" = "$HEAD" ]; then
+              echo "main hasn't changed since; nothing to run"
+              MAC=false
+            fi
+          fi
           # A push with no usable "before" (a new branch, a force push) checks everything.
           if ! files="$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD" 2>/dev/null)"; then
             files="$(git ls-files)"
           fi
           printf '%s\n' "$files"
-          # The Mac is for main, manual runs and PRs that ask for it with the `ios-ci` label.
+          # The Mac is for scheduled and manual runs and PRs that ask for it with the `ios-ci` label.
           echo "mac=${MAC}" >> "$GITHUB_OUTPUT"
           touches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
           # swift: the app's Swift checks, and the OpenAPI file its generated types must match.
@@ -90,8 +112,10 @@ jobs:
   verify:
     needs: changes
     # If `changes` failed, run rather than skip; a draft PR skips `changes`, and so this.
+    # A scheduled run is for `ios` and `avatar-preview`: the push to main already ran this.
     if: >-
       !cancelled() && !github.event.pull_request.draft && needs.changes.result != 'skipped' &&
+      github.event_name != 'schedule' &&
       (needs.changes.result != 'success' || needs.changes.outputs.swift == 'true')
     # macOS also compiles the SwiftUI code (which Linux compiles out) and runs SwiftLint's custom
     # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
@@ -118,7 +142,7 @@ jobs:
   web:
     needs: changes
     if: >-
-      !cancelled() && !github.event.pull_request.draft &&
+      !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
       (needs.changes.result != 'success' || needs.changes.outputs.web == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -135,7 +159,7 @@ jobs:
   supabase:
     needs: changes
     if: >-
-      !cancelled() && !github.event.pull_request.draft &&
+      !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
       (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 20

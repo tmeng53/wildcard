@@ -6,7 +6,8 @@ import PackageDescription
 // choice, the sports picked, the week, the welcome lines and who cheers when, and the open
 // screen's finish-line sprint); it is pure Swift
 // with the backend behind its `SignUpService` port, so it tests on Linux. `OnboardingUI` is the
-// screens; step 1 is the character editor itself.
+// screens; step 1 is the character editor itself, and 上场 plays on home's own scene and spots
+// (`CheckIn`).
 let package = Package(
     name: "Onboarding",
     defaultLocalization: "zh-Hans",
@@ -18,6 +19,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Avatar"),
         .package(path: "../CharacterEditor"),
+        .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
         .package(path: "../DesignSystem"),
         .package(path: "../Sports"),
@@ -37,6 +39,7 @@ let package = Package(
                 .product(name: "AvatarUI", package: "Avatar"),
                 .product(name: "CharacterEditorDomain", package: "CharacterEditor"),
                 .product(name: "CharacterEditorUI", package: "CharacterEditor"),
+                .product(name: "CheckInDomain", package: "CheckIn"), .product(name: "CheckInUI", package: "CheckIn"),
                 .product(name: "Contracts", package: "Contracts"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),

@@ -289,11 +289,13 @@ struct TypographyTests {
         #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func numbersAreBarlowAtFiveSizes() {
+    @Test func numbersAreBarlowAtSixSizes() {
         #expect(
             [TypeRamp.scoreStory, TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall]
                 .map(\.size) == [132, 60, 32, 22, 18])
         #expect(TypeRamp.denominator(of: TypeRamp.scoreStory).size == 73)
+        // The ending beside the scene pick, as the approved design sets it: 88 over 48.
+        #expect(TypeRamp.scoreEnding.size == 88 && TypeRamp.denominator(of: TypeRamp.scoreEnding).size == 48)
         #expect(
             [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map {
                 TypeRamp.denominator(of: $0).size
@@ -303,7 +305,10 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        let names = ["scoreStory", "scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption", "posterWeek"]
+        let names = [
+            "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption",
+            "posterWeek",
+        ]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
         // The 出赛表 poster's W42, as the approved design sets it.

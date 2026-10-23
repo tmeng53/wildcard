@@ -1223,6 +1223,22 @@
         }
       }
     },
+    "天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "days a week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天"
+          }
+        }
+      }
+    },
     "小队名": {
       "localizations": {
         "en": {
@@ -1363,6 +1379,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在找这个小队"
+          }
+        }
+      }
+    },
+    "每周训练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每周训练"
           }
         }
       }
