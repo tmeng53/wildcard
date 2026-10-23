@@ -97,7 +97,8 @@ struct WelcomeScreen<SignIn: View>: View {
         .haptic(.pick, trigger: crowd.taps[index])
         // Feet on the floor: the canvas's feet sit near its bottom.
         .position(x: spot.centerX * unit, y: feet - height * WelcomeCrowd.feetInCanvas + height / 2)
-        .zIndex(-spot.feetAbove)
+        // Nearer the front draws on top, and everyone over the floor (zIndex 0).
+        .zIndex(1 / (1 + spot.feetAbove))
     }
 }
 
