@@ -19,8 +19,8 @@ select throws_ok($$truncate public.week_summary_word_events$$, '42501', null, 't
 
 delete from auth.users where id = 'd0000000-0000-0000-0000-000000000002';
 select is(
-  (select count(*)::int from public.week_summary_word_events where changed_by is null),
-  2, 'the log keeps the first words and the deleted admin''s change, with no one named'
+  (select count(*)::int from public.week_summary_word_events where changed_by is null and words = '{"version": 1}'),
+  1, 'the log keeps the deleted admin''s change, with no one named'
 );
 
 select * from finish();

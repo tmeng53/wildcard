@@ -60,9 +60,9 @@ export interface AppDependencies {
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
-  /** Each squad's weekly awards, and the clock that says when they are due. */
   /** The Sunday summary's words now, kept in the database. */
   readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
+  /** Each squad's weekly awards, and the clock that says when they are due. */
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
