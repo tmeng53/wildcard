@@ -10,7 +10,7 @@ import Foundation
 /// design's 390 × 844 points with y down, and `frame(at:)` is a pure function of the time, so
 /// tests pin it to the prototype and the screen only draws what it returns. Once the card
 /// covers the screen (`covered`), the home takes over under the last of the confetti and its
-/// squad drops in (`SquadArrival`, in the home's own package).
+/// squad drops in.
 public struct Unboxing: Hashable, Sendable {
     /// Whether the scene comes in a carton: a scene the squad has never trained at.
     public let boxed: Bool
@@ -40,7 +40,7 @@ public struct Unboxing: Hashable, Sendable {
     /// Everything on screen `time` seconds after 「就它了」.
     public func frame(at time: Double) -> UnboxFrame {
         UnboxFrame(
-            dim: 0.86 * Easing.cubicOut(Easing.progress(time, from: 0, lasting: 0.25)),
+            dim: 0.86 * Tween.cubicOut(Tween.progress(time, from: 0, lasting: 0.25)),
             shake: shake(at: time),
             carton: boxed ? carton(at: time) : nil,
             dust: boxed ? Self.puffs(at: time, landingAt: Self.land, on: Point(x: 195, y: 520), count: 6) : [],
@@ -51,7 +51,7 @@ public struct Unboxing: Hashable, Sendable {
 
     /// The whole screen jolts as the carton lands.
     private func shake(at time: Double) -> Point {
-        let jolt = boxed ? Easing.progress(time, from: Self.land, lasting: 0.18) : 1
+        let jolt = boxed ? Tween.progress(time, from: Self.land, lasting: 0.18) : 1
         guard jolt > 0, jolt < 1 else { return Point(x: 0, y: 0) }
         return Point(x: sin(jolt * 40) * 5 * (1 - jolt), y: cos(jolt * 33) * 4 * (1 - jolt))
     }
@@ -59,12 +59,12 @@ public struct Unboxing: Hashable, Sendable {
     private func carton(at time: Double) -> CartonPose? {
         guard time <= 2.6 else { return nil }
         func progress(_ start: Double, _ duration: Double) -> Double {
-            Easing.progress(time, from: start, lasting: duration)
+            Tween.progress(time, from: start, lasting: duration)
         }
-        var lift = Easing.mix(-560, 0, Easing.quadIn(progress(0.1, 0.5)))
+        var lift = Tween.mix(-560, 0, Tween.quadIn(progress(0.1, 0.5)))
         var (scaleX, scaleY, rotation) = (1.0, 1.0, 0.0)
         if time >= Self.land {
-            let wobble = Easing.squash(progress(Self.land, 0.6))
+            let wobble = Tween.squash(progress(Self.land, 0.6))
             scaleY = 1 - 0.16 * wobble
             scaleX = 1 + 0.12 * wobble
         }
@@ -80,9 +80,9 @@ public struct Unboxing: Hashable, Sendable {
             scaleY *= 1 - 0.1 * sin(crouch * .pi)
             scaleX *= 1 + 0.08 * sin(crouch * .pi)
         }
-        let sink = Easing.quadIn(progress(1.95, 0.4))
+        let sink = Tween.quadIn(progress(1.95, 0.4))
         lift += 200 * sink
-        let open = Easing.cubicOut(progress(1.65, 0.38))
+        let open = Tween.cubicOut(progress(1.65, 0.38))
         return CartonPose(
             offsetY: lift, rotation: rotation, scaleX: scaleX, scaleY: scaleY, opacity: 1 - sink,
             leftFlap: FlapPose(x: -40 * open, y: -150 * open, rotation: -130 * open),
@@ -91,11 +91,11 @@ public struct Unboxing: Hashable, Sendable {
     }
 
     private func ring(at time: Double) -> RingPose? {
-        let grow = Easing.progress(time, from: Self.burst, lasting: 0.5)
+        let grow = Tween.progress(time, from: Self.burst, lasting: 0.5)
         guard grow > 0, grow < 1 else { return nil }
         return RingPose(
-            center: Point(x: 195, y: 360), diameter: Easing.mix(40, 420, Easing.cubicOut(grow)),
-            lineWidth: Easing.mix(10, 2, grow), opacity: 1 - grow)
+            center: Point(x: 195, y: 360), diameter: Tween.mix(40, 420, Tween.cubicOut(grow)),
+            lineWidth: Tween.mix(10, 2, grow), opacity: 1 - grow)
     }
 
     private func confetti(at time: Double) -> [ConfettiPiece] {
@@ -120,35 +120,35 @@ public struct Unboxing: Hashable, Sendable {
 
     /// `time` on the clock of a boxed reveal, where the card starts rising at 1.75 s.
     private func card(at time: Double) -> CardPose? {
-        let rising = Easing.progress(time, from: Self.cardRise, lasting: 0.45)
-        let rise = Easing.cubicOut(rising)
+        let rising = Tween.progress(time, from: Self.cardRise, lasting: 0.45)
+        let rise = Tween.cubicOut(rising)
         guard rise > 0 else { return nil }
-        let full = Easing.cubicInOut(Easing.progress(time, from: 2.3, lasting: 0.5))
+        let full = Tween.cubicInOut(Tween.progress(time, from: 2.3, lasting: 0.5))
         let (width, height) = (150.0, 220.0)
-        let centerY = Easing.mix(470, 330, rise)
-        let pop = Easing.mix(0.25, 1, Easing.backOut(rising))
+        let centerY = Tween.mix(470, 330, rise)
+        let pop = Tween.mix(0.25, 1, Tween.backOut(rising))
         return CardPose(
             frame: Rect(
-                x: Easing.mix(195 - width / 2, 0, full), y: Easing.mix(centerY - height / 2, 0, full),
-                width: Easing.mix(width, Self.stage.width, full), height: Easing.mix(height, Self.stage.height, full)),
-            cornerRadius: Easing.mix(18, 0, full),
-            scale: Easing.mix(pop, 1, full),
-            rotation: Easing.mix(-6 * (1 - rise) - 3, 0, full),
-            border: Easing.mix(4, 0, full),
+                x: Tween.mix(195 - width / 2, 0, full), y: Tween.mix(centerY - height / 2, 0, full),
+                width: Tween.mix(width, Self.stage.width, full), height: Tween.mix(height, Self.stage.height, full)),
+            cornerRadius: Tween.mix(18, 0, full),
+            scale: Tween.mix(pop, 1, full),
+            rotation: Tween.mix(-6 * (1 - rise) - 3, 0, full),
+            border: Tween.mix(4, 0, full),
             opacity: min(1, rise * 3))
     }
 
     /// A puff of dust where something lands, `count` small clouds spreading out both ways.
     public static func puffs(at time: Double, landingAt start: Double, on ground: Point, count: Int) -> [DustPuff] {
-        let spread = Easing.progress(time, from: start, lasting: 0.45)
+        let spread = Tween.progress(time, from: start, lasting: 0.45)
         guard spread > 0, spread < 1 else { return [] }
-        let eased = Easing.cubicOut(spread)
+        let eased = Tween.cubicOut(spread)
         return (0..<count).map { index in
             let side = (Double(index) / Double(count - 1) - 0.5) * 2
             return DustPuff(
                 center: Point(
-                    x: ground.x + side * Easing.mix(10, 48, eased), y: ground.y - Easing.mix(4, 16, eased)),
-                diameter: Easing.mix(8, 22, eased), opacity: 0.9 * (1 - spread))
+                    x: ground.x + side * Tween.mix(10, 48, eased), y: ground.y - Tween.mix(4, 16, eased)),
+                diameter: Tween.mix(8, 22, eased), opacity: 0.9 * (1 - spread))
         }
     }
 }

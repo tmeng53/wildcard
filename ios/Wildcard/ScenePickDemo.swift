@@ -80,13 +80,23 @@ struct ScenePickDemoView: View {
         let frozenAt: Double?
     }
 
-    @State private var picker = ScenePicker(options: ScenePickDemo.options, service: DemoPickService())
-    @State private var players = ScenePickDemo.squad(ScenePickDemo.members)
-    @State private var reveal: Reveal? = ScenePickDemo.frozen.map { frozen in
-        let opened = ScenePickDemo.options.first { $0.scene == frozen.scene }?.isOpened ?? false
-        return Reveal(unboxing: Unboxing(boxed: !opened), scene: frozen.scene, startedAt: .now, frozenAt: frozen.time)
-    }
+    @State private var picker: ScenePicker
+    @State private var players: [CharacterPlayer]
+    @State private var reveal: Reveal?
     @State private var landed: SceneTheme?
+
+    // An init, not property initializers: those run outside the main actor, and the picker, the
+    // players and the demo's options are the main actor's.
+    init() {
+        _picker = State(initialValue: ScenePicker(options: ScenePickDemo.options, service: DemoPickService()))
+        _players = State(initialValue: ScenePickDemo.squad(ScenePickDemo.members))
+        _reveal = State(
+            initialValue: ScenePickDemo.frozen.map { frozen in
+                let opened = ScenePickDemo.options.first { $0.scene == frozen.scene }?.isOpened ?? false
+                return Reveal(
+                    unboxing: Unboxing(boxed: !opened), scene: frozen.scene, startedAt: .now, frozenAt: frozen.time)
+            })
+    }
 
     var body: some View {
         if let landed {

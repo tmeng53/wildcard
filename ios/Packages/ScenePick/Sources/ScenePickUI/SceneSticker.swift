@@ -122,7 +122,9 @@ struct LastTrainedLine: View {
             case .thisWeek: Text("这周就在这儿练", bundle: .module)
             case .never: Text("小队还没来过", bundle: .module)
             case .weeksAgo(let weeks):
-                let number = Text(verbatim: "\(weeks)").typeStyle(TypeRamp.scoreCaption)
+                // Text's own modifiers, so the number stays a Text to interpolate.
+                let style = TypeRamp.scoreCaption
+                let number = Text(verbatim: "\(weeks)").font(.wildcard(style)).tracking(style.tracking)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Text("小队 \(number) 周前在这里练过", bundle: .module)
             }

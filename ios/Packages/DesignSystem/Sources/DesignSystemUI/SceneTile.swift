@@ -78,7 +78,7 @@ public struct SceneTile: View {
 
     @ViewBuilder private var face: some View {
         if isOpened {
-            ScenePattern(scene: scene)
+            TilePattern(scene: scene)
         } else if let pickedAt, !reduceMotion {
             TimelineView(.animation) { timeline in
                 CartonFace()
@@ -94,7 +94,7 @@ public struct SceneTile: View {
 
 /// A scene the squad knows: its colour, its pattern in white (volt on the gym's graphite) and
 /// its icon in the middle.
-struct ScenePattern: View {
+struct TilePattern: View {
     let scene: SceneTheme
 
     var body: some View {

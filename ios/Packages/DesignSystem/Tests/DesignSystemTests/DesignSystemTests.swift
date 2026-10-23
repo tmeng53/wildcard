@@ -331,18 +331,18 @@ struct KraftTests {
     }
 }
 
-struct EasingTests {
+struct TweenTests {
     /// The prototype's curves at a few points, as its JavaScript computes them.
     @Test func curvesMatchThePrototype() {
         func near(_ value: Double, _ expected: Double) -> Bool { abs(value - expected) < 1e-9 }
-        #expect(near(Easing.cubicOut(0.5), 0.875) && near(Easing.quadIn(0.5), 0.25))
-        #expect(near(Easing.cubicInOut(0.25), 0.0625) && near(Easing.cubicInOut(0.75), 0.9375))
-        #expect(near(Easing.backOut(0.5), 1.0875) && near(Easing.backOut(1), 1) && near(Easing.backOut(0), 0))
-        #expect(Easing.squash(1) == 0 && near(Easing.squash(0), 1))
-        #expect(Easing.progress(1.25, from: 1, lasting: 0.5) == 0.5 && Easing.progress(0, from: 1, lasting: 0.4) == 0)
-        #expect(Easing.mix(10, 20, 0.25) == 12.5)
+        #expect(near(Tween.cubicOut(0.5), 0.875) && near(Tween.quadIn(0.5), 0.25))
+        #expect(near(Tween.cubicInOut(0.25), 0.0625) && near(Tween.cubicInOut(0.75), 0.9375))
+        #expect(near(Tween.backOut(0.5), 1.0875) && near(Tween.backOut(1), 1) && near(Tween.backOut(0), 0))
+        #expect(Tween.squash(1) == 0 && near(Tween.squash(0), 1))
+        #expect(Tween.progress(1.25, from: 1, lasting: 0.5) == 0.5 && Tween.progress(0, from: 1, lasting: 0.4) == 0)
+        #expect(Tween.mix(10, 20, 0.25) == 12.5)
         // CSS ease-in-out, as the prototype's bezier solver gives it.
-        #expect(abs(Easing.easeInOut(0.25) - 0.129_161) < 1e-4 && abs(Easing.easeInOut(0.5) - 0.5) < 1e-4)
+        #expect(abs(Tween.easeInOut(0.25) - 0.129_161) < 1e-4 && abs(Tween.easeInOut(0.5) - 0.5) < 1e-4)
     }
 
     /// A picked carton's shake: -7°, 6°, -4°, 2° in the first fifth of 2.4 s, then still.

@@ -3,7 +3,7 @@ import Foundation
 /// Easing curves for motion drawn frame by frame from a clock (a reveal, an entrance), where
 /// a SwiftUI spring can't be sampled. Each maps progress 0…1 to eased progress, as the
 /// approved prototypes compute it, so a timeline ported from one matches it frame for frame.
-public enum Easing {
+public enum Tween {
     /// Fast, then settling: 1 − (1 − f)³.
     public static func cubicOut(_ progress: Double) -> Double { 1 - pow(1 - progress, 3) }
 
@@ -37,7 +37,7 @@ public enum Easing {
     }
 }
 
-extension Easing {
+extension Tween {
     /// CSS's `ease-in-out`, cubic-bezier(0.42, 0, 0.58, 1): how a CSS keyframe animation eases
     /// between its keyframes by default.
     public static func easeInOut(_ progress: Double) -> Double {
@@ -79,8 +79,8 @@ public enum Wiggle {
         let phase = (time.truncatingRemainder(dividingBy: period) + period).truncatingRemainder(dividingBy: period)
         let fraction = phase / period
         for (start, end) in zip(keys, keys.dropFirst()) where fraction < end.at {
-            let eased = Easing.easeInOut((fraction - start.at) / (end.at - start.at))
-            return Easing.mix(start.degrees, end.degrees, eased)
+            let eased = Tween.easeInOut((fraction - start.at) / (end.at - start.at))
+            return Tween.mix(start.degrees, end.degrees, eased)
         }
         return 0
     }
