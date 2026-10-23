@@ -130,29 +130,41 @@ struct WelcomeScreen<SignIn: View>: View {
     /// The first open plays the sprint, timed so the haptic, the cheer and the reveal land on
     /// the break; later opens, and Reduce Motion, start at the still screen.
     private func open(layout: FinishLineSprint.Layout) async {
-        guard !settled, sprint == nil else { return }
-        guard !reduceMotion, !sprintPlayed else {
+        guard sprint == nil else { return }
+        guard !settled, !reduceMotion, !sprintPlayed else {
+            // Still, or back on the screen after the sprint: the squad plays on where it stands.
             settled = true
             revealed = true
             await crowd.load(reduceMotion: reduceMotion)
             crowd.play(sprinting: false)
             return
         }
-        // The squad is on its spots before the word comes in; a new layout starts over.
+        // The squad is on its spots before the word comes in; a new layout before the break
+        // starts over, and one after it lets the screen settle.
         await crowd.load(reduceMotion: reduceMotion)
         guard !Task.isCancelled else { return }
-        sprintPlayed = true
-        let timing = FinishLineSprint.timing(for: layout)
+        // Played through off the main actor, so the first frame of the sprint isn't held up.
+        let timing = await Task.detached { FinishLineSprint.timing(for: layout) }.value
+        guard !Task.isCancelled else { return }
         let start = ContinuousClock.now
         sprint = SprintRunner(layout: layout)
-        try? await Task.sleep(until: start + .seconds(timing.breaks), clock: .continuous)
+        guard await wait(until: start + .seconds(timing.breaks)) else { return }
+        sprintPlayed = true
         landed += 1
         crowd.play(sprinting: true)
-        try? await Task.sleep(until: start + .seconds(timing.breaks + WelcomeCrowd.revealDelay), clock: .continuous)
+        guard await wait(until: start + .seconds(timing.breaks + WelcomeCrowd.revealDelay)) else { return }
         revealed = true
-        try? await Task.sleep(until: start + .seconds(timing.ends), clock: .continuous)
+        guard await wait(until: start + .seconds(timing.ends)) else { return }
         settled = true
         sprint = nil
+    }
+
+    /// Waits until `deadline`; false, with the sprint taken down, when the screen moved on.
+    private func wait(until deadline: ContinuousClock.Instant) async -> Bool {
+        try? await Task.sleep(until: deadline, clock: .continuous)
+        guard Task.isCancelled else { return true }
+        sprint = nil
+        return false
     }
 
     /// 继续即表示同意用户协议和隐私政策, with 用户协议 and 隐私政策 underlined links to their pages.
