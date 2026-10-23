@@ -1,0 +1,74 @@
+/* The home page: one screen. The gym wall with the headline, slogan and one button; the squad stands
+   on the gym floor; a thin white footer. Tokens from /wildcard.css (design system v4, gym). Light only. */
+.home { --sig: var(--graphite); --on-sig: var(--volt); }
+/* The body is the size container, not .site: a container is a stacking context, and the headline's
+   tape canvas (on the body, z-index 3) has to pass under the squad (z-index 4). */
+.home { container: site / inline-size; }
+.home button { font: inherit; cursor: pointer; color: inherit; }
+.home :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+/* Hidden until the headline runs in (home.js), so nothing flashes in place first. */
+.js #word, .js [data-settle] { opacity: 0; }
+
+.site { min-height: 100svh; display: flex; flex-direction: column; }
+.wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+@container site (min-width: 720px) { .wrap { padding-left: max(48px, env(safe-area-inset-left, 0px)); padding-right: max(48px, env(safe-area-inset-right, 0px)); } }
+
+/* the wall and floor; --cw is one character's width, --gh the floor band's height */
+.floor { --cw: min(29cqw, 230px, 21svh); --gh: calc(var(--cw) * .62 + 40px); position: relative; overflow-x: clip; flex: 1; background: var(--gym-sky); display: flex; flex-direction: column; }
+/* the gym floor, as on the app's welcome screen: graphite skirting, a volt line, faint tiles */
+.ground { position: absolute; left: 0; right: 0; bottom: 0; height: var(--gh); pointer-events: none;
+  background: linear-gradient(var(--graphite), var(--graphite)) 0 0 / 100% 4px no-repeat, linear-gradient(var(--on-sig), var(--on-sig)) 0 4px / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg, var(--gym-tile) 0 2px, transparent 2px 64px) 0 7px / 100% 100% no-repeat,
+    repeating-linear-gradient(180deg, transparent 0 45px, var(--gym-tile) 45px 47px, transparent 47px 64px) 0 7px / 100% 100% no-repeat, var(--gym-floor); }
+.nav { height: 72px; display: flex; align-items: center; justify-content: flex-end; }
+
+/* phones and tablets: the hero sits centred in the space above the squad */
+.main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 40px; padding-block: 40px 0; }
+.hero { align-self: center; }
+h1 { margin: 0; display: flex; flex-wrap: nowrap; align-items: baseline; column-gap: .08em; font-family: var(--num); font-weight: 800; font-size: clamp(40px, calc((100cqw - 40px) / 4.6), 120px); line-height: .86; letter-spacing: .01em; }
+/* optical alignment: the W's side bearing pulled back to the slogan's and button's edge */
+#word { display: inline-block; margin-left: -.018em; line-height: 1; will-change: transform; }
+/* 外卡's ink sits on WILDCARD's baseline */
+h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight: 600; font-size: .3em; color: var(--ink-2); letter-spacing: 0; line-height: 1; }
+.sub { margin: 14px 0 0; font-size: 22px; line-height: 30px; font-weight: 600; text-wrap: balance; }
+.btn { margin-top: 32px; height: 56px; padding: 0 30px; border-radius: 28px; background: var(--sig); color: var(--on-sig); font-size: 18px; font-weight: 600; display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; transition: transform .15s; }
+.btn:active { transform: scale(.97); }
+/* an iPhone glyph (a line phone, after lucide's smartphone): it's an iPhone app; Apple's own logo is only allowed in its badge */
+.btn-icon { width: 1.1em; height: 1.1em; margin: 0 8px 0 -4px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* the squad: two rows with depth (3 back, 2 front), the front row's feet on the floor */
+.squad { position: relative; z-index: 4; pointer-events: none; height: calc(var(--cw) * 4 / 3 * 1.62); margin-bottom: -4px; }
+.c { position: absolute; width: var(--cw); aspect-ratio: 3 / 4; height: auto; border: 0; padding: 0; background: none; flex: none; -webkit-tap-highlight-color: transparent; }
+/* only the drawn character takes a tap, so an overlapping neighbour's empty box never steals it */
+.c { pointer-events: none; }
+.c svg * { pointer-events: visiblePainted; }
+.c svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.c:nth-child(1) { left: calc(50% - var(--cw) * 1.55); bottom: calc(var(--cw) * .62); }
+.c:nth-child(2) { left: calc(50% - var(--cw) / 2); bottom: calc(var(--cw) * .7); }
+.c:nth-child(3) { left: calc(50% + var(--cw) * .55); bottom: calc(var(--cw) * .62); }
+.c:nth-child(4) { left: calc(50% - var(--cw) * 1.05); bottom: 0; z-index: 1; }
+.c:nth-child(5) { left: calc(50% + var(--cw) * .05); bottom: 0; z-index: 1; }
+.bubble { position: absolute; left: 50%; bottom: calc(100% - 4px); --dx: 0px; transform: translate(calc(-50% + var(--dx)), 4px); padding: 6px 10px; border-radius: 10px; background: var(--white); color: var(--ink); font-size: 13px; line-height: 18px; font-weight: 600; width: max-content; max-width: 170px; text-align: center; opacity: 0; transition: opacity .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); pointer-events: none; }
+.bubble::after { content: ""; position: absolute; left: calc(50% - var(--dx)); bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--white); }
+.bubble.on { opacity: 1; transform: translate(calc(-50% + var(--dx)), 0); }
+
+@container site (min-width: 720px) {
+  h1 { font-size: min(176px, calc((100cqw - 96px) / 4.6)); }
+  .sub { font-size: 30px; line-height: 38px; margin-top: 20px; }
+  .main { padding-block: 72px 0; }
+}
+/* desktop: one row on the right, overlapping the hero's lower right */
+@container site (min-width: 1100px) {
+  .main { grid-template-rows: none; padding-block: 56px 0; }
+  .hero { align-self: auto; }
+  .squad { display: flex; justify-content: flex-end; align-items: flex-end; gap: 4px; height: auto; margin-top: -220px; }
+  .c:nth-child(n) { position: relative; left: auto; bottom: auto; width: min(212px, 15vw, 32svh); }
+  .floor { --gh: 132px; }
+  h1 { font-size: 224px; }
+  .sub { font-size: 34px; line-height: 42px; }
+}
+
+footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
+.mail { user-select: all; }
+
+@media (prefers-reduced-motion: reduce) { .home * { transition: none !important; } }

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{description}}">
+<meta property="og:url" content="https://wildcardsquad.com{{path}}">
+<meta name="theme-color" content="#F2F3F5">
+<link rel="canonical" href="https://wildcardsquad.com{{path}}">
+<link rel="alternate" hreflang="zh-Hans" href="https://wildcardsquad.com/zh/">
+<link rel="alternate" hreflang="zh-Hant" href="https://wildcardsquad.com/zh-hant/">
+<link rel="alternate" hreflang="en" href="https://wildcardsquad.com/">
+<link rel="alternate" hreflang="x-default" href="https://wildcardsquad.com/">
+<link rel="preload" href="/fonts/BarlowCondensed-ExtraBold.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="/wildcard.css">
+<link rel="stylesheet" href="/home/home.css">
+<script>document.documentElement.classList.add('js');</script>
+<script src="/home/characters.js" defer></script>
+<script src="/home/avatar.js" defer></script>
+<script src="/home/wordmark.js" defer></script>
+<script src="/home/home.js" defer></script>
+</head>
+<body class="home">
+<div class="site">
+  <div class="floor">
+    <div class="ground" aria-hidden="true"></div>
+    <header class="wrap nav">
+      <nav class="wc-lang" aria-label="{{languageLabel}}">
+        <a href="/zh/" hreflang="zh-Hans" lang="zh-Hans"{{currentHans}}>简体</a>
+        <a href="/zh-hant/" hreflang="zh-Hant" lang="zh-Hant"{{currentHant}}>繁體</a>
+        <a href="/" hreflang="en" lang="en"{{currentEn}}>EN</a>
+      </nav>
+    </header>
+    <main class="wrap main">
+      <div class="hero">
+        <h1 aria-label="{{headlineLabel}}"><span id="word">WILDCARD</span>{{cn}}</h1>
+        <p class="sub" data-settle>{{slogan}}</p>
+        <a class="btn" href="#join" data-settle><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg>{{button}}</a>
+      </div>
+      <div class="squad" id="squad"></div>
+    </main>
+  </div>
+  <footer>
+    <div class="wrap wc-footer">
+      <span>© 2026 Wildcard</span>
+      <span class="grow"></span>
+      <a href="{{legal}}privacy">{{privacy}}</a>
+      <a href="{{legal}}terms">{{terms}}</a>
+      <span class="mail">support@wildcardsquad.com</span>
+    </div>
+  </footer>
+</div>
+</body>
+</html>
