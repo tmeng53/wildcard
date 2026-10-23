@@ -208,6 +208,13 @@ public final class SquadSettingsModel {
         changed()
     }
 
+    /// The pick was refused: someone else picked this week first, or the week moved on. The
+    /// page closes the picker and reads the squad's scene again.
+    public func pickRefused() async {
+        picker = nil
+        await reload()
+    }
+
     private func update(_ edit: (inout SquadSettings) -> Void) {
         guard case .loaded(var settings) = load else { return }
         edit(&settings)

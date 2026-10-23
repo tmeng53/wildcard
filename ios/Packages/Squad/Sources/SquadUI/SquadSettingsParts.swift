@@ -39,6 +39,8 @@ struct SceneLineText: View {
 struct ScenePickerGrid: View {
     let picker: ScenePicker
     let onPicked: (Unboxing, SceneTheme) -> Void
+    /// The pick was refused (someone else picked first, or the week moved on).
+    let onRefused: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: Space.xs, alignment: .top), count: 5)
@@ -63,7 +65,11 @@ struct ScenePickerGrid: View {
             }
             Button {
                 Task {
-                    if let reveal = await picker.confirm(), let scene = picker.selection { onPicked(reveal, scene) }
+                    if let reveal = await picker.confirm(), let scene = picker.selection {
+                        onPicked(reveal, scene)
+                    } else if case .failed(.notAllowed) = picker.phase {
+                        onRefused()
+                    }
                 }
             } label: {
                 Text("就它了", bundle: .module).frame(maxWidth: .infinity)

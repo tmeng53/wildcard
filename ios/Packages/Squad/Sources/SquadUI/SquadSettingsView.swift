@@ -187,9 +187,12 @@ public struct SquadSettingsView: View {
                 }
             }
             if let picker = model.picker {
-                ScenePickerGrid(picker: picker) { unboxing, scene in
-                    reveal = Reveal(unboxing: unboxing, scene: scene, startedAt: .now)
-                }
+                ScenePickerGrid(
+                    picker: picker,
+                    onPicked: { unboxing, scene in
+                        reveal = Reveal(unboxing: unboxing, scene: scene, startedAt: .now)
+                    },
+                    onRefused: { Task { await model.pickRefused() } })
             }
         }
         .card()

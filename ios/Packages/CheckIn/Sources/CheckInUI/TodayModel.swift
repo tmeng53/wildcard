@@ -86,8 +86,8 @@ public final class TodayModel {
     private let now: () -> Date
 
     /// - Parameters:
-    ///   - scene: the squad's scene. Each squad picks its own once squad settings land; until
-    ///     then every home is the gym, the scene the designs are drawn on.
+    ///   - scene: the squad's scene this week; the gym, the scene the designs are drawn on, until
+    ///     the app has read it.
     ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
     ///     notifications after the first.
     public init(

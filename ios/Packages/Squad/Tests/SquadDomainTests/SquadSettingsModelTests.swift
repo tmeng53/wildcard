@@ -139,7 +139,7 @@ private actor Squad3: SquadSettingsService {
         #expect(model.hasLeft)
     }
 
-    @Test func aRefusedChangeReadsTheSquadAgain() async throws {
+    @Test func aChangeThatDoesntGoThroughKeepsTheSquadAndSaysSo() async throws {
         let service = try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: true))
         let model = SquadSettingsModel(service: service)
         await model.reload()
@@ -171,5 +171,21 @@ private actor Squad3: SquadSettingsService {
         #expect(model.sceneLine == .youPicked)
         #expect(model.picker == nil)
         #expect(!model.canPickScene)
+    }
+
+    @Test func aRefusedPickClosesThePickerAndReadsTheSceneAgain() async throws {
+        let service = try Squad3(viewer: coco, scene: try scene(pickers: .crown([coco]), canPick: true))
+        let model = SquadSettingsModel(service: service)
+        await model.reload()
+        model.openPicker()
+        let picker = try #require(model.picker)
+        picker.select(.gym)
+        await service.fail(with: .outdated)
+        #expect(await picker.confirm() == nil)
+        #expect(picker.phase == .failed(.notAllowed))
+        await service.fail(with: nil)
+        await model.pickRefused()
+        #expect(model.picker == nil)
+        #expect(await service.picks.isEmpty)
     }
 }
