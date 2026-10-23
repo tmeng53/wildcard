@@ -111,11 +111,30 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
         ...characterColumns(profile.character),
       };
       try {
+        // One statement: the profile and its log entry are saved together, and a save that
+        // changes nothing writes neither.
         await db
-          .insertInto('profiles')
-          .values({ member_id: member, ...columns })
-          .onConflict((conflict) =>
-            conflict.column('member_id').doUpdateSet({ ...columns, updated_at: sql`now()` }),
+          .with('saved', (cte) =>
+            cte
+              .insertInto('profiles')
+              .values({ member_id: member, ...columns })
+              .onConflict((conflict) =>
+                conflict
+                  .column('member_id')
+                  .doUpdateSet(columns)
+                  .where(
+                    sql<boolean>`(profiles.time_zone, profiles.catchphrase, profiles.nickname, profiles.look)
+                      is distinct from (excluded.time_zone, excluded.catchphrase, excluded.nickname, excluded.look)`,
+                  ),
+              )
+              .returning(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look']),
+          )
+          .insertInto('profile_events')
+          .columns(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look'])
+          .expression((eb) =>
+            eb
+              .selectFrom('saved')
+              .select(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look']),
           )
           .execute();
         return true;

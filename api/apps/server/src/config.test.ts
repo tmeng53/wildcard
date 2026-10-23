@@ -19,10 +19,12 @@ const privateKey = generateKeyPairSync('ec', { namedCurve: 'P-256' })
   .privateKey.export({ type: 'pkcs8', format: 'pem' })
   .toString();
 const apns = {
-  APNS_KEY_ID: 'ABC123DEFG',
   APNS_TEAM_ID: 'TEAM123456',
-  APNS_PRIVATE_KEY: privateKey,
   APNS_TOPIC: 'app.wildcard.ios',
+  APNS_SANDBOX_KEY_ID: 'SBX123DEFG',
+  APNS_SANDBOX_PRIVATE_KEY: privateKey,
+  APNS_PRODUCTION_KEY_ID: 'PRD123DEFG',
+  APNS_PRODUCTION_PRIVATE_KEY: privateKey,
 };
 
 describe('readConfig', () => {
@@ -96,31 +98,39 @@ describe('readConfig', () => {
     );
   });
 
-  it('reads all four APNs settings, with the key’s line breaks given as \\n', () => {
+  it('reads the Sandbox and Production APNs keys, with line breaks given as \\n', () => {
     expect(
-      readConfig({ ...base, ...apns, APNS_PRIVATE_KEY: privateKey.replaceAll('\n', '\\n') }).apns,
+      readConfig({
+        ...base,
+        ...apns,
+        APNS_SANDBOX_PRIVATE_KEY: privateKey.replaceAll('\n', '\\n'),
+      }).apns,
     ).toStrictEqual({
-      keyId: 'ABC123DEFG',
       teamId: 'TEAM123456',
-      privateKey,
       topic: 'app.wildcard.ios',
+      keys: {
+        sandbox: { keyId: 'SBX123DEFG', privateKey },
+        production: { keyId: 'PRD123DEFG', privateKey },
+      },
     });
   });
 
-  it('refuses to start with only some APNs settings', () => {
-    const three = {
-      APNS_KEY_ID: apns.APNS_KEY_ID,
-      APNS_TEAM_ID: apns.APNS_TEAM_ID,
-      APNS_PRIVATE_KEY: apns.APNS_PRIVATE_KEY,
-    };
-    expect(() => readConfig({ ...base, ...three })).toThrow(
-      'set all of APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY, APNS_TOPIC or none (missing APNS_TOPIC)',
+  it('refuses to start with only some APNs settings, such as no Production key', () => {
+    expect(() =>
+      readConfig({
+        ...base,
+        ...apns,
+        APNS_PRODUCTION_KEY_ID: undefined,
+        APNS_PRODUCTION_PRIVATE_KEY: undefined,
+      }),
+    ).toThrow(
+      'set all of APNS_TEAM_ID, APNS_TOPIC, APNS_SANDBOX_KEY_ID, APNS_SANDBOX_PRIVATE_KEY, APNS_PRODUCTION_KEY_ID, APNS_PRODUCTION_PRIVATE_KEY or none (missing APNS_PRODUCTION_KEY_ID, APNS_PRODUCTION_PRIVATE_KEY)',
     );
   });
 
   it('refuses an APNs private key that isn’t a PEM key', () => {
-    expect(() => readConfig({ ...base, ...apns, APNS_PRIVATE_KEY: 'not a key' })).toThrow(
-      'Bad server environment',
-    );
+    expect(() =>
+      readConfig({ ...base, ...apns, APNS_PRODUCTION_PRIVATE_KEY: 'not a key' }),
+    ).toThrow('Bad server environment');
   });
 });
