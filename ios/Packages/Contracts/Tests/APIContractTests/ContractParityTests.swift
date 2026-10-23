@@ -71,6 +71,10 @@ func workoutMinutesRangeIsTheAPIs(schema: String) throws {
     #expect(try property("nickname", of: "Character")?.maxCharacters == Nickname.maxLength)
 }
 
+@Test func squadNameLimitIsTheAPIs() throws {
+    #expect(try property("name", of: "NewSquad")?.maxCharacters == SquadName.maxLength)
+}
+
 @Test(arguments: ["Training", "Meal", "Disclaimer"])
 func photoCountIsTheAPIs(schema: String) throws {
     #expect(try property("photos", of: schema)?.maxItems == Photos.maxCount)

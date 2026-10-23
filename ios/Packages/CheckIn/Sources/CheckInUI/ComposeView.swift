@@ -3,6 +3,7 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// One page like a social app's new post (spec rev 186, section 1): 取消 / title / 发布, the

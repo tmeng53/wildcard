@@ -73,9 +73,11 @@ Landed: `Account`, signing in: `AccountDomain` (`AccountSession`, which signs in
 
 Landed: `Notifications`, push on this phone: `NotificationsDomain` (`PushRegistration`: asks for permission only after the member's first check-in, never at sign-up, asks APNs for the token on every launch once allowed, and registers it through its `DeviceRegistry` port while someone is signed in; pure Swift) and `NotificationsUI` (the system prompt and APNs registration, taps on a notification, and which APNs servers this build's tokens are for). `Backend`'s `APIDeviceRegistry` is the registry, over `PUT /me/devices`.
 
+Landed: `Onboarding`, sign-up from the open screen to 上场: `OnboardingDomain` (the steps, the squad choice, the sports picked, the week drawn on its poster, the welcome lines and when each teammate cheers and where their bubble goes; pure Swift, the backend behind its `SignUpService` port) and `OnboardingUI` (the screens, step 1 being the character editor itself, the AI consent asked once per account on 你的小队, and `InMemorySignUpService` behind `-onboarding`). `Sports` holds `SportsUI`, the sports' names and symbols every picker shows.
+
 Landed: `Me`, the 我 tab: `MeDomain` (`MeModel`: the member's character, lifetime counts, squad and daily-push switch, signing out and deleting the account after confirming with Apple; the backend is its `MeService` port; pure Swift) and `MeUI` (我, the 注销账号 page, and an in-memory member the app passes until the API adapter lands). The app target's `MainTabs` puts one `TabBar` over 今天, 动态, 出赛表 and 我; a tab's full-screen step (writing a check-in) hides it.
 
-Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`, `Poster`, `Onboarding`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
+Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`, `Poster`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
 
 ## Domain rules
 
@@ -105,7 +107,7 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 - **Look at every screenshot before it leaves your hands.** The author, and again the verifier, checks each one (smallest supported phone, long text where the screen has any) for content that is clipped, cut off, covered by buttons, keyboard or tab bar, or overlapping. Any such flaw is a FAIL, not a note. Where layout is at risk, add a UI test asserting the content's frames stay inside the visible area and clear of the controls over it.
 - Domain tests use Swift Testing (`@Test`, `#expect`) with literal expected values. Backend tests run against local Supabase in Docker, never a mocked database.
 - **Someone else passes it, as deep as the change is risky.** The owner picks a tier from the diff and names it in the PR: CI only (docs, tests, a small fix with its test), light (a small UI change or one module's logic; the verifier reads the diff, CI and screenshots and tries an edge case) or full (contract, schema, auth, privacy, user data, AI, a new flow, across modules). A verifier is a fresh agent that did not write the change; it gets only the task and the diff, works from a clean checkout of the pushed commit, and returns PASS, PASS+NOTES or FAIL with evidence, naming the head commit and the diff hash from `scripts/verify-diff-hash.sh`. It starts when the PR is marked ready, alongside CI, quotes CI's result for the head instead of rerunning it, and spends its time on what CI can't show. One run per diff; after a fix it checks only the delta, unless the fix reaches past the findings or touches the contract or schema. CI, a code review and the author's own review are not a verdict. How, in `raise-pr` (Independent verification).
-- Run `scripts/verify.sh` before every push.
+- Every thread runs `scripts/verify.sh` (or the relevant local checks) before every push; where a check can't run in your session, say it is inconclusive and let CI be the evidence.
 
 ## Pull requests
 
@@ -118,6 +120,7 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 - **Review feedback is a symptom, not a to-do list.** Every finding (a person's, a bot's, a verifier's note) is a claim to check before acting; answer each on the PR, fixed (with the commit) or not and why. Read the whole review first and group findings by cause. When a PR gets findings a second time, post one short root-cause note before pushing a fix, then rework it into the simplest design. When in doubt, ask a human.
 - **Who merges:** the owner thread merges most PRs itself once they're green, verified and reviewed. Tracy merges a key technical decision or a major UI change she didn't ask for. The exact rule is in `raise-pr` (Merging).
 - Only change what the PR is about. Never force-push `main`; never edit or delete other people's comments.
+- **Keep parallel PRs from lagging.** Land small shared PRs first so others build on them; before removing public code, check the other open branches for users of it; after each merge, merge `main` into the other open PRs.
 - **A change removes what it replaces.** When a decision changes, the PR that builds the new way deletes the old one everywhere (app, API, database, docs, AGENTS.md), even in other packages. Removing it is in scope; a PR isn't done while the old path still exists.
 - **No backward compatibility until real users.** Edit migrations, stored shapes and names in place; no shims, no add-then-alter migrations.
 - **When a parallel PR lands, the later one wires them together** (or opens an issue saying what is left unwired).
