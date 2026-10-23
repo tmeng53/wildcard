@@ -71,6 +71,11 @@ jobs:
           persist-credentials: false
       # The Linux image ships Swift (with swift format), as the supabase job relies on.
       - run: swift --version
+      # For web/'s checks.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --global pnpm@10.28.0
       # Ahead of the image's own SwiftLint on PATH, which may be a different version.
       - name: Install the pinned SwiftLint
         run: |

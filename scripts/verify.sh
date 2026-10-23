@@ -62,7 +62,10 @@ fi
 if want web && [ -f web/package.json ]; then
   echo "==> web"
   pnpm --dir web install --frozen-lockfile
+  # The generated pages, squad and font must be current (`pnpm --dir web generate`), then ESLint and Prettier.
   pnpm --dir web lint
+  # The home page's layout and behavior tests run in Chromium. Cloud sessions ship it; CI installs it.
+  if [ "${CI:-}" = "true" ]; then pnpm --dir web exec playwright install --with-deps chromium; fi
   pnpm --dir web test
   ran=1
 fi

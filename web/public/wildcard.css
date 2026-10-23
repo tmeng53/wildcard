@@ -5,8 +5,11 @@
   color-scheme: light;
   --ink: #22252E; --ink-2: #6B7080; --ink-3: #AEB2BC; --line: #E8EBF0; --mist: #F3F5F8; --white: #FFFFFF;
   --sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'PingFang TC', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --num: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --r-s: 6px; --r-m: 10px; --r-l: 12px;
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
+  /* gym, the public site's own surface: light grey walls and floor, graphite with volt. --volt is the one volt value. */
+  --volt: #C6F432; --graphite: #1F2128; --gym-sky: #F2F3F5; --gym-floor: #E3E6EA; --gym-tile: #D6DAE0;
   /* default scene: pool */
   --sig: #079BB8; --on-sig: #FFFFFF; --sig-wash: #E2F5F9; --sig-text: #066E83; --scene-bg: #CDEBF1;
 }
@@ -14,7 +17,10 @@
 [data-scene="track"]    { --sig: #E65345; --on-sig: #FFFFFF; --sig-wash: #FCEDEB; --sig-text: #B83325; --scene-bg: #F6DCD8; }
 [data-scene="tennis"]   { --sig: #4F6B22; --on-sig: #FFFFFF; --sig-wash: #EEF2E4; --sig-text: #41591B; --scene-bg: #DCE5C8; }
 [data-scene="climbing"] { --sig: #8E4A2C; --on-sig: #FFFFFF; --sig-wash: #F6EDE8; --sig-text: #7A3E24; --scene-bg: #EBD9CF; }
-[data-scene="gym"]      { --sig: #C6F432; --on-sig: #1F2128; --sig-wash: #2E3324; --sig-text: #C6F432; --scene-bg: #1F2128; }
+[data-scene="gym"]      { --sig: var(--volt); --on-sig: var(--graphite); --sig-wash: #2E3324; --sig-text: var(--volt); --scene-bg: var(--graphite); }
+
+/* the wordmark font, from the app's DesignSystemUI (SIL OFL, /fonts/OFL.txt) */
+@font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-style: normal; font-display: swap; src: url('/fonts/BarlowCondensed-ExtraBold.ttf') format('truetype'); }
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--white); color: var(--ink); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; }
@@ -38,3 +44,14 @@ a:hover { text-decoration-color: var(--ink); }
 
 /* page frame */
 .wc-page { max-width: 680px; margin: 0 auto; padding: var(--s-6) var(--s-4) 64px; }
+
+/* language pills on the gym surface (home, and the legal pages' header): the current one is a faint ink capsule */
+.wc-lang { display: flex; gap: 2px; }
+.wc-lang a { height: 36px; padding: 0 12px; border-radius: 18px; color: var(--ink-2); font-size: 15px; line-height: 36px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.wc-lang a[aria-current="page"] { color: var(--ink); font-weight: 600; background: rgba(34, 37, 46, .07); }
+
+/* the white site footer */
+.wc-footer { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--ink-2); }
+.wc-footer a { color: var(--ink-2); text-decoration: none; }
+.wc-footer a:hover { color: var(--ink); }
+.wc-footer .grow { flex: 1; }
