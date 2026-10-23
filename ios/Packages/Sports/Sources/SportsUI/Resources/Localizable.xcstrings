@@ -40,7 +40,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "羽毛球"
+            "value": "羽球"
           }
         }
       }
@@ -788,7 +788,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "單板滑雪"
+            "value": "單板"
           }
         }
       }
@@ -920,7 +920,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "推嬰兒車散步"
+            "value": "推車散步"
           }
         }
       }
@@ -1052,7 +1052,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "極限飛盤"
+            "value": "飛盤"
           }
         }
       }
@@ -1360,7 +1360,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步和走路"
+            "value": "跑步健走"
           }
         }
       }
