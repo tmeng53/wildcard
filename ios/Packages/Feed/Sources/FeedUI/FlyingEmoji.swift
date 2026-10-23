@@ -61,7 +61,9 @@ struct FlyingEmoji: View {
 }
 
 /// Places a view along a curve from `from` to `target` that rises `lift` above the higher end.
-private struct Arc: ViewModifier, Animatable {
+/// Nonisolated so its `animatableData` meets `Animatable`'s nonisolated requirement; only `body`
+/// runs on the main actor.
+nonisolated private struct Arc: ViewModifier, Animatable {
     let from: CGPoint
     let target: CGPoint
     let lift: Double
@@ -72,7 +74,7 @@ private struct Arc: ViewModifier, Animatable {
         set { progress = newValue }
     }
 
-    func body(content: Content) -> some View {
+    @MainActor func body(content: Content) -> some View {
         let control = CGPoint(x: (from.x + target.x) / 2, y: min(from.y, target.y) - lift)
         let fraction = progress
         let rest = 1 - fraction
