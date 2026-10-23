@@ -125,16 +125,12 @@ private struct Face: View {
     @Environment(\.sceneTheme) private var theme
     let player: CharacterPlayer?
 
-    /// The face on the rig's 240 by 320 canvas.
-    private static let crop = CGRect(x: 40, y: 74, width: 160, height: 160)
-
     var body: some View {
         Circle()
             .fill(Color(role: .bgCanvas, in: theme))
             .overlay {
-                if let frame = player?.restFrame {
-                    CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.crop)
-                        .padding(Sizing.ringGap)
+                if let player {
+                    CharacterHead(player: player).padding(Sizing.ringGap)
                 }
             }
             .overlay { Circle().stroke(Color(role: .bgSubtle, in: theme), lineWidth: Sizing.ringGap) }
