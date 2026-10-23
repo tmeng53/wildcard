@@ -10,8 +10,16 @@ import SwiftUI
 /// the accent dot flying from the hand, the 「!」 and the little flick lines where it lands, and
 /// the dot resting by their feet for a moment. Positions follow people who move, every frame.
 struct PatOverlay: View {
+    /// The marks go on the scene, under the squad card; the bubble goes over the card, as in
+    /// the approved design, so a teammate at the back still gets a whole bubble to tap.
+    enum Layer {
+        case marks
+        case bubble
+    }
+
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let layer: Layer
     let cast: SquadCast
     let pats: PatStage
     let unit: Double
@@ -22,12 +30,13 @@ struct PatOverlay: View {
         TimelineView(.animation(minimumInterval: nil, paused: pats.pat == nil && pats.bubble == nil)) { timeline in
             let seconds = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             ZStack(alignment: .topLeading) {
-                if let current = pats.pat, !reduceMotion {
+                if layer == .marks, let current = pats.pat, !reduceMotion {
                     effects(of: current, at: timeline.date, seconds: seconds)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
                 }
-                if let bubble = pats.bubble, let mate = cast.mates.first(where: { $0.id == bubble.mate }),
+                if layer == .bubble, let bubble = pats.bubble,
+                    let mate = cast.mates.first(where: { $0.id == bubble.mate }),
                     let position = cast.stage.position(of: mate.id, at: seconds)
                 {
                     bubbleView(bubble, over: position)

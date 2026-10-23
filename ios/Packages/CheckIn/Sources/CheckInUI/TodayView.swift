@@ -110,6 +110,16 @@ public struct TodayView: View {
                 Spacer()
             }
 
+            // A tapped teammate's bubble, over the card like the approved design's, laid out on
+            // the scene's own stage.
+            GeometryReader { proxy in
+                PatOverlay(
+                    layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
+                    canPat: model.canPat, pat: model.patMate)
+            }
+            .ignoresSafeArea()
+            .opacity(model.step == .disclaimer ? 0 : 1)
+
             if model.isBurstOpen {
                 // A tap anywhere outside the capsules closes the burst.
                 Color.clear

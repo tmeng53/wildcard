@@ -43,7 +43,7 @@ struct SquadSceneView: View {
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)
-                PatOverlay(cast: cast, pats: pats, unit: unit, canPat: canPat, pat: patMate)
+                PatOverlay(layer: .marks, cast: cast, pats: pats, unit: unit, canPat: canPat, pat: patMate)
                 Streamers(trigger: celebration)
                     .allowsHitTesting(false)
             }
