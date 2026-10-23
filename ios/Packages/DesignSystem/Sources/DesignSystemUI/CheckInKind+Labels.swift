@@ -49,7 +49,7 @@ extension CheckInKind {
 
 /// A check-in kind as a round button with its word under it. The four kinds share the scene's
 /// colors, so only the icon and the word tell them apart: the wash on white, white on the
-/// scene's floor (the gym's are dark with volt). Unavailable, it greys out and shakes when tapped.
+/// scene's floor. Unavailable, it greys out and shakes when tapped.
 public struct KindButton: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

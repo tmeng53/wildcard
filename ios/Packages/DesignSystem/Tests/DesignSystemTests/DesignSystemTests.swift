@@ -14,7 +14,7 @@ struct SRGBColorTests {
     }
 
     @Test func contrastRatioIsSymmetric() {
-        #expect(Palette.ink.contrastRatio(with: Palette.volt) == Palette.volt.contrastRatio(with: Palette.ink))
+        #expect(Palette.ink.contrastRatio(with: Palette.poolWash) == Palette.poolWash.contrastRatio(with: Palette.ink))
     }
 }
 
@@ -34,8 +34,7 @@ struct NeutralTests {
         }
         #expect(
             themed.map(\.rawValue) == [
-                "bgAccent", "bgAccentSubtle", "fgOnAccent", "fgAccent", "bgScene", "fgOnScene", "ring", "bgKind",
-                "bgKindOnScene", "fgKind",
+                "bgAccent", "bgAccentSubtle", "fgAccent", "bgScene", "ring", "bgKind", "fgKind",
             ])
     }
 
@@ -116,11 +115,11 @@ struct SceneThemeTests {
             ])
     }
 
-    @Test func gymIsGraphiteWithVoltOnIt() {
+    @Test func gymIsSteel() {
         #expect(
             roles(.gym) == [
-                "#1F2128", "#EEF0F2", "#C6F432", "#1F2128", "#1F2128", "#FFFFFF", "#C6F432", "#2E3324", "#2E3324",
-                "#C6F432",
+                "#4A6C8C", "#EDF0F4", "#FFFFFF", "#3E5C78", "#DBE2E8", "#22252E", "#4A6C8C", "#EDF0F4", "#FFFFFF",
+                "#3E5C78",
             ])
     }
 
@@ -178,29 +177,18 @@ struct SceneThemeTests {
         #expect(ColorRole.fgOnScene.color(in: theme).contrastRatio(with: floor) >= 4.5)
     }
 
-    /// A light scene's kind buttons step out of the floor: white on the floor, the wash on white.
-    @Test(arguments: [SceneTheme.pool, .track, .tennis, .climbing])
+    /// Every scene is light: kind buttons step out of the floor, white on the floor, the wash on white.
+    @Test(arguments: SceneTheme.allCases)
     func lightKindsUseTheWashOrWhite(theme: SceneTheme) {
         #expect(ColorRole.bgKind.color(in: theme) == ColorRole.bgAccentSubtle.color(in: theme))
         #expect(ColorRole.bgKindOnScene.color(in: theme) == Palette.white)
         #expect(ColorRole.ring.color(in: theme) == ColorRole.bgAccent.color(in: theme))
     }
 
-    /// With Increase Contrast on, every scene's closed ring stands out from a white card (WCAG 1.4.11).
+    /// Every scene's closed ring stands out from a white card (WCAG 1.4.11).
     @Test(arguments: SceneTheme.allCases)
-    func ringsStandOutWithIncreasedContrast(theme: SceneTheme) {
-        let ring = ColorRole.ring.color(in: theme, contrast: .increased)
-        #expect(ring.contrastRatio(with: ColorRole.bgCanvas.color(in: theme)) >= 3)
-    }
-
-    @Test func onlyTheGymRingChangesWithIncreasedContrast() {
-        #expect(ColorRole.ring.color(in: .gym).hex == "#C6F432")
-        #expect(ColorRole.ring.color(in: .gym, contrast: .increased) == Palette.graphite)
-        for role in ColorRole.allCases where role != .ring {
-            for theme in SceneTheme.allCases {
-                #expect(role.color(in: theme, contrast: .increased) == role.color(in: theme))
-            }
-        }
+    func ringsStandOutOnWhite(theme: SceneTheme) {
+        #expect(ColorRole.ring.color(in: theme).contrastRatio(with: ColorRole.bgCanvas.color(in: theme)) >= 3)
     }
 }
 
@@ -208,8 +196,8 @@ struct ClothesTests {
     /// The old check-in colors live on only as outfit swatches.
     @Test func clothesKeepTheirColors() {
         #expect(
-            [Palette.cobalt, Palette.mint, Palette.honey, Palette.lavender].map(\.hex) == [
-                "#2D5BA0", "#278C5E", "#A0760E", "#9062DE",
+            [Palette.cobalt, Palette.mint, Palette.honey, Palette.lavender, Palette.graphite].map(\.hex) == [
+                "#2D5BA0", "#278C5E", "#A0760E", "#9062DE", "#1F2128",
             ])
     }
 }
@@ -373,10 +361,7 @@ struct BrandTests {
     /// Brand screens look the same whatever scene the squad picked.
     @Test(arguments: [ColorRole.bgBrand, .fgOnBrand])
     func brandNeverFollowsTheScene(role: ColorRole) {
-        let colors = SceneTheme.allCases.flatMap { theme in
-            [role.color(in: theme), role.color(in: theme, contrast: .increased)]
-        }
-        #expect(Set(colors).count == 1)
+        #expect(Set(SceneTheme.allCases.map { role.color(in: $0) }).count == 1)
     }
 
     /// A brand button's label can be small regular text, not only the 19-point action.

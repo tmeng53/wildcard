@@ -73,7 +73,7 @@ public struct SceneFloor: View {
     public var body: some View {
         ZStack {
             Color(role: .bgScene, in: theme)
-            ScenePattern(floorTop: 0.55, ink: Color(role: .bgCanvas, in: theme).opacity(theme == .gym ? 0.12 : 0.7))
+            ScenePattern(floorTop: 0.55, ink: Color(role: .bgCanvas, in: theme).opacity(0.7))
         }
         .accessibilityHidden(true)
     }
