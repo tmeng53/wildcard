@@ -22,11 +22,13 @@ concurrency:
 
 # None of these is secret.
 env:
-  GCP_PROJECT_ID: TODO
-  GCP_PROJECT_NUMBER: TODO
+  GCP_PROJECT_ID: soy-transducer-512501-h1
+  GCP_PROJECT_NUMBER: "872064445161"
   GCP_REGION: us-east4
   SUPABASE_URL: https://uuxclkozpfbelhpheaae.supabase.co
   SERVICE: wildcard-api
+  # The app's bundle id, which APNs calls the topic.
+  APNS_TOPIC: com.wildcardsquad.wildcard
 
 jobs:
   deploy:
@@ -120,23 +122,45 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          # --update-* keeps what was set by hand in the console (APNS_*, APPLE_*, LLM_PROVIDER...).
+          # --update-* keeps what was set by hand in the console (APPLE_*, LLM_PROVIDER...).
           secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
+          env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
+          absent=""
+          # Whether a secret exists. Only one that doesn't turns its feature off; any other error
+          # stops the deploy.
+          present() {
+            local error
+            if error="$(gcloud secrets describe "$1" 2>&1 >/dev/null)"; then return 0; fi
+            if [[ "$error" == *NOT_FOUND* ]]; then return 1; fi
+            echo "$error" >&2
+            exit 1
+          }
+          variable() { tr 'a-z-' 'A-Z_' <<<"$1"; }
           # Optional keys: the server runs without them, with that feature off. One deleted from
           # Secret Manager is unmapped, since Cloud Run can't start with a missing secret.
-          absent=""
           for key in openai-api-key anthropic-api-key; do
-            variable="$(tr 'a-z-' 'A-Z_' <<<"$key")"
-            # Only a secret that doesn't exist turns its feature off; any other error stops here.
-            if error="$(gcloud secrets describe "$key" 2>&1 >/dev/null)"; then
-              secrets="$secrets,$variable=$key:latest"
-            elif [[ "$error" == *NOT_FOUND* ]]; then
-              absent="${absent:+$absent,}$variable"
+            if present "$key"; then
+              secrets="$secrets,$(variable "$key")=$key:latest"
             else
-              echo "$error" >&2
-              exit 1
+              absent="${absent:+$absent,}$(variable "$key")"
             fi
           done
+          # Push through APNs: all of its keys or none (the key ids and team id aren't secret, but
+          # live with the .p8 keys so there is one place to set them).
+          apns=(apns-team-id apns-sandbox-key-id apns-sandbox-private-key apns-production-key-id apns-production-private-key)
+          found=0
+          for key in "${apns[@]}"; do if present "$key"; then found=$((found + 1)); fi; done
+          remove_env=()
+          if [ "$found" -eq "${#apns[@]}" ]; then
+            for key in "${apns[@]}"; do secrets="$secrets,$(variable "$key")=$key:latest"; done
+            env="$env,APNS_TOPIC=$APNS_TOPIC"
+          elif [ "$found" -eq 0 ]; then
+            for key in "${apns[@]}"; do absent="${absent:+$absent,}$(variable "$key")"; done
+            remove_env=(--remove-env-vars APNS_TOPIC)
+          else
+            echo "::error::Set all of ${apns[*]} in Secret Manager, or none"
+            exit 1
+          fi
           remove=()
           if [ -n "$absent" ]; then remove=(--remove-secrets "$absent"); fi
           # The startup probe keeps traffic on the old revision unless the new one reaches the
@@ -148,7 +172,8 @@ jobs:
             --startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=3,timeoutSeconds=3,failureThreshold=10 \
             --update-secrets "$secrets" \
             "${remove[@]}" \
-            --update-env-vars "SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
+            --update-env-vars "$env" \
+            "${remove_env[@]}"
 
       - name: Check it answers
         run: |
