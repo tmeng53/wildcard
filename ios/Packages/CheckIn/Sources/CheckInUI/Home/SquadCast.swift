@@ -16,6 +16,8 @@ final class SquadCast {
     struct Mate: Identifiable {
         let member: StageMember
         let persona: Persona
+        /// The species whose moves their clips play with.
+        let species: String?
         let player: CharacterPlayer
         /// What their character shouts in a cheer: their 口头禅, or their persona's own line.
         let line: String
@@ -34,7 +36,7 @@ final class SquadCast {
         var order: [MemberID]
     }
 
-    private var players: [MemberID: CharacterPlayer] = [:]
+    private var players: [MemberID: (look: Outfit, persona: Persona, player: CharacterPlayer)] = [:]
 
     /// Places the squad from the store's home: everyone but `me`.
     func update(home: Home, scene: SceneTheme, phase: DayPhase) {
@@ -47,14 +49,17 @@ final class SquadCast {
                     training: mate.training, activity: home.todaysSport(of: mate.member),
                     plannedRest: mate.plannedRest),
                 firstCheckInAt: mate.firstCheckInAt,
-                keepsToTheBack: Self.persona(of: mate.member) == .shy)
+                keepsToTheBack: Self.persona(of: mate) == .shy)
         }
         stage.arrange(members)
         mates = zip(teammates, members).compactMap { mate, member in
-            let persona = Self.persona(of: member.id)
-            guard let player = player(for: member, persona: persona) else { return nil }
+            let persona = Self.persona(of: mate)
+            let look = Self.look(of: mate)
+            let species = PlaceholderCharacter.species(of: look)
+            guard let player = player(for: member.id, wearing: look, persona: persona, species: species)
+            else { return nil }
             return Mate(
-                member: member, persona: persona, player: player,
+                member: member, persona: persona, species: species, player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
                 disclaimer: home.todaysDisclaimer(of: member.id))
         }
@@ -67,7 +72,7 @@ final class SquadCast {
             .compactMap { id in mates.first { $0.id == id } }
             .sorted { Self.cheerDelay($0.persona) < Self.cheerDelay($1.persona) }
         for mate in cheering {
-            guard let clip = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: Self.species)
+            guard let clip = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: mate.species)
             else { continue }
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(Self.cheerDelay(mate.persona)))
@@ -88,25 +93,34 @@ final class SquadCast {
         }
     }
 
-    private func player(for member: StageMember, persona: Persona) -> CharacterPlayer? {
-        if let existing = players[member.id] { return existing }
-        guard let figure = try? PlaceholderCharacter.figure(wearing: Self.look(of: member.id)),
-            let clip = Self.idle(persona: persona),
+    /// The member's character, made again when their look or persona changes.
+    private func player(for member: MemberID, wearing look: Outfit, persona: Persona, species: String?)
+        -> CharacterPlayer?
+    {
+        if let existing = players[member], existing.look == look, existing.persona == persona {
+            return existing.player
+        }
+        // The persona's idle, which everyone plays until the sport, sitting, sign and sleeping
+        // moves land; the scene adds the sign and the sleep.
+        guard let figure = try? PlaceholderCharacter.figure(wearing: look),
+            let clip = try? PlaceholderCharacter.clip("idle", persona: persona, species: species),
             let player = try? CharacterPlayer(figure: figure, idle: clip)
         else { return nil }
-        players[member.id] = player
+        players[member] = (look, persona, player)
         return player
     }
 
-    /// The persona's idle, which everyone plays until the sport, sitting, sign and sleeping moves
-    /// land; the scene adds the sign and the sleep.
-    private static func idle(persona: Persona) -> Clip? {
-        try? PlaceholderCharacter.clip("idle", persona: persona, species: species)
+    /// The persona the member picked, or a stand-in before they made their character.
+    static func persona(of mate: SquadmateToday) -> Persona {
+        mate.character.map { Persona($0.look) } ?? persona(of: mate.member)
     }
 
-    private static let species = "person"
+    /// The look the member made, or a stand-in before they made their character.
+    static func look(of mate: SquadmateToday) -> Outfit {
+        mate.character.map { Outfit($0.look) } ?? look(of: mate.member)
+    }
 
-    // MARK: Stand-ins until each member's look and persona come with the squad's today.
+    // MARK: Stand-ins for a member who hasn't made their character yet.
 
     /// A persona per member, the same on every launch.
     static func persona(of member: MemberID) -> Persona {
