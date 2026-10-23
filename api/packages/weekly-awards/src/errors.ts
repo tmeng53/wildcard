@@ -25,7 +25,7 @@ export class AwardsModelMissingError extends AppError {
   readonly status = 'UNAVAILABLE';
 
   constructor() {
-    super('No API key is set for AWARDS_LLM_PROVIDER.');
+    super('No API key is set for the provider of the awards’ model.');
   }
 }
 

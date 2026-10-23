@@ -38,16 +38,16 @@ struct SquadStep: View {
             // Back here after joining or making the squad: it shows what was chosen, read-only.
             .disabled(model.joined != nil)
         } actions: {
-            if model.asksForAIConsent {
-                AIConsentRow(isOn: model.agreesToAI, privacyPolicy: privacyPolicy, toggle: model.toggleAIConsent)
-                    .disabled(model.joined != nil)
-            }
             FailureLine(failure: model.failure)
             StepButton(
                 title: isJoining ? Text("加入小队", bundle: .module) : Text("建小队", bundle: .module),
                 isWorking: model.isWorking, isEnabled: model.canFinishSquad, action: model.finishSquad
             )
             .accessibilityIdentifier("squad.done")
+            if model.asksForAIConsent {
+                AIConsentLine(privacyPolicy: privacyPolicy)
+                    .padding(.top, Space.xxs)
+            }
         }
     }
 
@@ -99,9 +99,7 @@ private struct JoinPanel: View {
         .padding(.vertical, Space.xs)
         .onAppear { if model.squad.code == nil { isTyping = true } }
         // A whole code puts the keyboard away, so the squad it finds shows above the button.
-        .onChange(of: model.squad.codeLetters.count) { _, count in
-            if count == InviteCode.length { isTyping = false }
-        }
+        .onChange(of: model.squad.code) { _, code in if code != nil { isTyping = false } }
     }
 }
 
@@ -186,15 +184,13 @@ private struct SquadFound: View {
 private struct HeadRow: View {
     let heads: [CastMember]
     @Environment(\.sceneTheme) private var theme
-    /// The head and shoulders on the rig's 240 by 320 canvas, as the squad card crops them.
-    private let face = CGRect(x: 50, y: 20, width: 140, height: 140)
 
     var body: some View {
         HStack(spacing: -Space.xxs) {
             ForEach(heads.indices, id: \.self) { index in
                 ZStack {
                     if let player = heads[index].player {
-                        CharacterView(player: player, crop: face)
+                        CharacterHead(player: player)
                     }
                 }
                 .frame(width: Sizing.characterHead, height: Sizing.characterHead)
@@ -207,59 +203,31 @@ private struct HeadRow: View {
     }
 }
 
-/// 同意使用 AI 功能 (Tracy's approved copy), ticked by the member before they can join or make a squad; off
-/// at first. 隐私政策 under it opens the policy; it sits outside the toggle, so tapping it never
-/// ticks the box.
-private struct AIConsentRow: View {
-    let isOn: Bool
+/// The AI consent, one small grey line under the button (Tracy, 2026-10-23): going on agrees to
+/// send the text the member writes to third-party AI, and 隐私政策 says which and what for. The
+/// catalog marks the link `privacy:`, which becomes the page the app passes.
+private struct AIConsentLine: View {
     let privacyPolicy: URL
-    let toggle: () -> Void
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            toggleRow
-            Link(destination: privacyPolicy) {
-                Text("隐私政策", bundle: .module)
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-                    .frame(minHeight: Sizing.minimumTapTarget)
-                    .contentShape(Rectangle())
-            }
-            .padding(.leading, Sizing.checkBadge + Space.xs)
-            .padding(.top, -Space.xs)
-            .accessibilityIdentifier("squad.privacyPolicy")
-        }
+        Text(line)
+            .typeStyle(TypeRamp.footnote)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+            .tint(Color(role: .fgDefault, in: theme))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("squad.aiConsent")
     }
 
-    private var toggleRow: some View {
-        Button(action: toggle) {
-            HStack(alignment: .top, spacing: Space.xs) {
-                ZStack {
-                    if isOn {
-                        CheckBadge()
-                            .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
-                    } else {
-                        Circle()
-                            .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.selectionStroke)
-                    }
-                }
-                .frame(width: Sizing.checkBadge, height: Sizing.checkBadge)
-                Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖，不发照片。", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-            }
-            .frame(minHeight: Sizing.minimumTapTarget)
-            .contentShape(Rectangle())
+    private var line: AttributedString {
+        var line = AttributedString(
+            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module)
+        for (link, range) in line.runs[\.link] where link != nil {
+            line[range].link = privacyPolicy
+            line[range].underlineStyle = .single
         }
-        .buttonStyle(PressableButtonStyle())
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isOn)
-        .haptic(.pick, trigger: isOn)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
-        .accessibilityIdentifier("squad.aiConsent")
+        return line
     }
 }
 

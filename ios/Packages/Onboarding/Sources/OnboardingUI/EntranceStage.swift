@@ -28,8 +28,6 @@ final class EntranceStage {
     static let runway = CGRect(x: -60, y: -380, width: 1280, height: 710)
     /// How tall a line's tail stands over the feet, in canvas points: just above the head.
     static let headHeight = 292.0
-    /// The head and shoulders, in canvas points, for the squad card's rings.
-    static let head = CGRect(x: 50, y: 20, width: 140, height: 140)
 
     private(set) var newcomer: CastMember?
     /// The teammates, in the order they joined, where home puts them.

@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { cors } from 'hono/cors';
 import {
   InviteCode,
   InviteCodeUnknownError,
@@ -111,6 +112,9 @@ function inviteCodeOf(typed: string): InviteCode {
   if (!code.success) throw new InviteCodeUnknownError();
   return code.data;
 }
+
+/** The website, whose invite page (wildcardsquad.com/join/…) looks a code up from the browser. */
+const SITE_ORIGINS = ['https://wildcardsquad.com', 'https://www.wildcardsquad.com'];
 
 const signedInFailures = {
   401: problem('No bearer token, or not a valid one'),
@@ -247,6 +251,8 @@ export function squads(deps: {
       'that says who is in it. Limited per client address. Case, spaces and dashes in the code ' +
       'don’t matter.',
     middleware: [
+      // First, so a refusal (404, 429) reaches the page too; a plain GET needs no preflight.
+      cors({ origin: SITE_ORIGINS, allowMethods: ['GET'], exposeHeaders: ['Retry-After'] }),
       rateLimited(deps.publicRoutes.inviteLookups, deps.publicRoutes.proxyHops),
     ] as const,
     request: { params: inviteParams },

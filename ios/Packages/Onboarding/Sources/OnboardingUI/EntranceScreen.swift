@@ -119,7 +119,7 @@ struct EntranceScreen<Bar: View>: View {
                 mine: myWeek, page: $cardPage
             ) { member in
                 if let player = stage.player(for: member) {
-                    CharacterView(player: player, crop: EntranceStage.head)
+                    CharacterHead(player: player)
                 }
             }
             .accessibilityIdentifier("entrance.card")

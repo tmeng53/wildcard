@@ -67,7 +67,6 @@ public final class SignUpModel {
         in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false
     ) {
         self.service = service
-        agreesToAI = hasAgreedToAI
         asksForAIConsent = !hasAgreedToAI
         self.nickname = nickname
         squad = SquadDraft(invite: invite, suggestedName: "")
@@ -173,17 +172,10 @@ public final class SignUpModel {
         }
     }
 
-    /// The consent row above the button: AI writes the squad's weekly awards from its captions
-    /// and 请假条 words. Off until the member ticks it; no squad without it. Consent is the
-    /// account's, given once: an account that already gave it never sees the row.
-    private(set) var agreesToAI: Bool
-    /// Whether 你的小队 asks for consent: only until the account has given it.
+    /// Whether 你的小队 shows the consent line under the button: AI writes the squad's weekly
+    /// awards from what members write, and joining or making the squad agrees to it. Consent is the
+    /// account's, given once: an account that already gave it never sees the line.
     let asksForAIConsent: Bool
-
-    func toggleAIConsent() {
-        agreesToAI.toggle()
-        failure = nil
-    }
 
     func typeName(_ text: String) {
         squad.typedName = text
@@ -194,7 +186,6 @@ public final class SignUpModel {
     /// squad already joined or made.
     var canFinishSquad: Bool {
         if joined != nil { return true }
-        guard agreesToAI else { return false }
         switch squad.choice {
         case .join:
             if case .found(let found) = preview { return !found.isFull }
