@@ -82,6 +82,8 @@ Landed: `Feed`, 动态: `FeedDomain` (`FeedStore`: the squad's posts by day, new
 
 Landed: `Me`, the 我 tab: `MeDomain` (`MeModel`: the member's character, lifetime counts, squad and daily-push switch, signing out and deleting the account after confirming with Apple; the backend is its `MeService` port; pure Swift) and `MeUI` (我, the 注销账号 page, and an in-memory member for the sample squad); its adapter is `Backend`'s `APIMeService`, and `AccountUI`'s `AppleConfirmation` gets the Apple code deleting needs. The app target's `MainTabs` puts one `TabBar` over 今天, 动态, 出赛表 and 我; a tab's full-screen step (writing a check-in) hides it.
 
+Landed: `ScenePick`, picking where the squad trains next week (last week's crown winner, or the captain): `ScenePickDomain` (`ScenePicker`, the choice and one pick through its `ScenePickService` port; `Unboxing`, the reveal as a pure function of time, frame by frame, on the design's 390 × 844 stage, tested against the approved prototype's numbers; pure Swift) and `ScenePickUI` (`SceneSticker`, the 冠军专属 card on the 战报's last page, and `UnboxRevealView`, which plays the reveal over the page and calls `onCovered` once the picked scene fills the screen, for home to take over). Until the 战报 page and the API land, `-scene-pick` opens it on its own with an in-memory pick.
+
 Planned (update as packages land): packages by capability, each `Domain` (pure Swift, no SwiftUI/UIKit, builds on Linux) plus `UI` (SwiftUI) where needed: `Squad`, `Recap`, `Poster`. Supporting packages: `DesignSystem` (colors, type, motion), `Backend` (provider adapters and the API client). The app target only wires packages together.
 
 ## Domain rules

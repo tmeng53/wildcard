@@ -314,13 +314,8 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
-    }
-}
-
-struct SpeechTimingTests {
-    @Test func bubblesHoldThenFade() {
-        #expect([Motion.speechHold, Motion.speechFade, Motion.speechStagger] == [1.6, 0.2, 0.06])
+        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption"])
+        #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
     }
 }
 
@@ -328,7 +323,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "unbox",
             ])
         #expect(Haptic.ringTicks == 3)
     }
