@@ -84,7 +84,7 @@ public struct APIScheduleBackend: ScheduleBackend {
     {
         let story: Components.Schemas.WeekStory
         do {
-            story = try await api.weekStoryWire(of: squad, weekStart: weekStart)
+            story = try await api.weekStoryWire(of: squad, week: weekStart)
         } catch .account(let error) {
             throw .account(error)
         } catch {

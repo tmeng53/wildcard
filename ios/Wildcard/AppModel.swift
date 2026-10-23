@@ -11,6 +11,7 @@ import Foundation
 import MeDomain
 import Observation
 import OnboardingUI
+import RecapUI
 import ScheduleDomain
 import ScheduleUI
 import SquadDomain
@@ -25,10 +26,13 @@ final class AppModel {
         case starting
         case signUp(SignUpModel)
         case tabs(
-            today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel)
+            today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
+            recap: RecapShelf)
     }
 
     private(set) var screen = Screen.starting
+    /// An awards push tapped before the home was up, opened once it is.
+    @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
@@ -105,7 +109,16 @@ final class AppModel {
 
     /// A tapped notification: back on 今天 with the home loaded again.
     func reloadToday() async {
-        if case .tabs(let today, _, _, _, _) = screen { await today.load() }
+        if case .tabs(let today, _, _, _, _, _) = screen { await today.load() }
+    }
+
+    /// A tapped awards push: the 战报 it is about, over 动态.
+    func openRecap(squad: SquadID, week: LocalDay) async {
+        guard case .tabs(_, _, _, _, _, let recap) = screen else {
+            pendingRecap = (squad, week)
+            return
+        }
+        await recap.open(squad: squad, week: week)
     }
 
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
@@ -158,15 +171,22 @@ final class AppModel {
                 changed: { [weak self] in Task { await self?.squadChanged() } },
                 signOut: { [weak self] in await self?.signOut() })
             let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
+            let recap = RecapShelf(
+                service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) })
             screen = .tabs(
-                today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad)
+                today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+                recap: recap)
             await readScene(of: home.squad.id, into: today)
+            if let pending = pendingRecap {
+                pendingRecap = nil
+                await openRecap(squad: pending.squad, week: pending.week)
+            }
         }
     }
 
     /// The squad's name or scene changed on 小队设置: 今天 and 我 read them again.
     private func squadChanged() async {
-        guard case .tabs(let today, let profile, _, _, let squad) = screen else { return }
+        guard case .tabs(let today, let profile, _, _, let squad, _) = screen else { return }
         await readScene(of: squad.settings?.squad.id, into: today)
         await today.load()
         await profile.reload()

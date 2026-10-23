@@ -11,13 +11,4 @@ extension WildcardAPI {
             ).ok.body.json
         }
     }
-
-    /// The squad's story of the week starting on `weekStart`: the titles once they are written.
-    func weekStoryWire(of squad: SquadID, weekStart: LocalDay) async throws(APIError) -> Components.Schemas.WeekStory {
-        try await call {
-            try await client.getSquadWeekStory(
-                path: .init(squadId: squad.description, weekStart: weekStart.description)
-            ).ok.body.json
-        }
-    }
 }

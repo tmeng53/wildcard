@@ -7,6 +7,8 @@ import XCTest
 @MainActor
 final class FeedUITests: XCTestCase {
     private static let wait: TimeInterval = 30
+    /// More than the sample squad's posts need to reach the end.
+    private static let maxSwipes = 12
 
     func testReact() {
         continueAfterFailure = false
@@ -43,14 +45,17 @@ final class FeedUITests: XCTestCase {
         app.staticTexts["feed.title"].tap()
         waitFor(who, "exists == false", "who reacted stayed open")
 
-        // The oldest posts scroll up clear of the tab bar.
-        app.swipeUp()
-        app.swipeUp()
-        app.swipeUp()
-        settle()
+        // The oldest posts scroll up clear of the tab bar: swipe until the last post is on
+        // screen, as the list builds its cards as they come.
         let posts = app.descendants(matching: .any).matching(identifier: "feed.post")
-        let last = posts.element(boundBy: posts.count - 1)
-        assertClearOfTheTabBar(last, in: app)
+        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        var swipes = 0
+        while swipes < Self.maxSwipes, posts.element(boundBy: posts.count - 1).frame.maxY > tabBarTop {
+            app.swipeUp()
+            swipes += 1
+        }
+        settle()
+        assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
         keepScreenshot(named: "45-feed-end")
     }
 

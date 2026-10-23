@@ -9,6 +9,7 @@ import PackageDescription
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
 // - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to.
+// - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
 // - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
 //   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the
 //   posts still to go out kept on the device.
@@ -35,6 +36,7 @@ let package = Package(
         .package(path: "../DesignSystem"),
         .package(path: "../Me"),
         .package(path: "../Notifications"),
+        .package(path: "../Recap"),
         .package(path: "../Onboarding"),
         .package(path: "../ScenePick"),
         .package(path: "../Squad"),
@@ -54,6 +56,7 @@ let package = Package(
                 .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
+                .product(name: "RecapDomain", package: "Recap"),
                 .product(name: "OnboardingDomain", package: "Onboarding"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "ScenePickDomain", package: "ScenePick"),
@@ -67,11 +70,13 @@ let package = Package(
             name: "BackendTests",
             dependencies: [
                 "Backend", .product(name: "AccountDomain", package: "Account"),
+                .product(name: "APIContract", package: "Contracts"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
+                .product(name: "RecapDomain", package: "Recap"),
                 .product(name: "OnboardingDomain", package: "Onboarding"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "ScenePickDomain", package: "ScenePick"),

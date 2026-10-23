@@ -5,6 +5,7 @@ import DesignSystemUI
 import FeedUI
 import MeDomain
 import MeUI
+import RecapUI
 import ScheduleUI
 import SquadDomain
 import SquadUI
@@ -23,6 +24,7 @@ struct MainTabs: View {
     let schedule: ScheduleModel
     let feed: FeedModel
     let squad: SquadSettingsModel
+    let recap: RecapShelf
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
@@ -49,6 +51,12 @@ struct MainTabs: View {
                     }
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        }
+        // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
+        // 今天 opens 动态 on doesn't move down under it.
+        .task { await recap.refresh() }
+        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
+            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
@@ -100,8 +108,9 @@ struct MainTabs: View {
                 selection = .feed
             }
         case .feed:
-            FeedView(model: feed) { selection = .today }
+            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
                 .environment(\.sceneTheme, today.scene)
+                .task { await recap.refresh() }
         case .schedule:
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
@@ -131,4 +140,16 @@ struct MainTabs: View {
         TabBarItem(
             id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
     ]
+}
+
+/// The squad's newest 战报, once there is one, opening it.
+private struct RecapTile: View {
+    let recap: RecapShelf
+
+    var body: some View {
+        if let story = recap.latest {
+            RecapEntryTile(
+                week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
+        }
+    }
 }
