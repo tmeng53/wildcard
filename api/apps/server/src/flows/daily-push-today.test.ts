@@ -13,7 +13,7 @@ import { apnsPayload } from '@wildcard/push';
 import { describe, expect, it } from 'vitest';
 
 import { dailyProgressNotification } from './daily-progress-push.js';
-import { POKERS, TODAY_BYTES, TODAY_POSTS, pushToday } from './daily-push-today.js';
+import { POKERS, POST_REACTIONS, TODAY_BYTES, TODAY_POSTS, pushToday } from './daily-push-today.js';
 
 // The size of the push at its fullest, without a database: the most squad, names, words and
 // reactions the rules allow.
@@ -112,5 +112,32 @@ describe('the push’s today', () => {
     expect(carried.posts[0]?.text).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
     expect(carried.members[1]?.name).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
     expect(Buffer.byteLength(JSON.stringify(carried))).toBeLessThanOrEqual(TODAY_BYTES);
+  });
+
+  it('keeps the newest reactions and always the member’s own', async () => {
+    // Reactors from another squad the post went to as well: more than the cap.
+    const others = Array.from({ length: POST_REACTIONS + 2 }, () => MemberId.parse(randomUUID()));
+    const [first] = posts;
+    if (first === undefined) throw new Error('no post');
+    const reacted: SquadPost = {
+      ...first,
+      reactions: [viewer, ...others].map((member, at) => ({
+        member,
+        emoji: family,
+        // The member's own is the oldest.
+        reactedAt: new Date(at * 1000),
+      })),
+    };
+    const carried = await pushToday(
+      {
+        checkIns: { listForSquad: () => Promise.resolve([reacted]) },
+        members: { squadmates: () => Promise.resolve(new Map<ProfileMember, Squadmate>()) },
+      },
+      { viewer, squad, today, pokers: [] },
+    );
+    const [shown] = carried.posts;
+    const who = shown?.reactions.map(([at]) => carried.members[at]?.id);
+    expect(who).toEqual([...others].reverse().slice(0, POST_REACTIONS).concat(viewer));
+    expect(shown?.reactionCount).toBe(POST_REACTIONS + 3);
   });
 });

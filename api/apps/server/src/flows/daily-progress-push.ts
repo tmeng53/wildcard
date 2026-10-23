@@ -197,6 +197,10 @@ async function compose(
       squad: squadId,
       today,
       pokers: [...(byKind.get('poke') ?? [])],
+    }).catch((error: unknown) => {
+      // The long-press view is extra: the push still goes, and the phone shows its words alone.
+      deps.log.warn('daily push sent without today', { member, day, error });
+      return undefined;
     }),
   });
 }
@@ -250,8 +254,8 @@ export function dailyProgressNotification({
   readonly received: Interactions;
   /** The nudge's sender to name, and its kind. */
   readonly named?: { readonly kind: string; readonly nickname: string } | undefined;
-  /** Teammates' check-ins today, for the push's long-press view. */
-  readonly today: PushToday;
+  /** Teammates' check-ins today, for the push's long-press view; left out when they couldn't be read. */
+  readonly today?: PushToday | undefined;
 }): PushNotification {
   const people = new Set([...received.values()].flatMap((each) => [...each])).size;
   const week = [String(squadWeek.trainedDays), String(squadWeek.plannedDays)];
@@ -281,7 +285,7 @@ export function dailyProgressNotification({
       squadTrainedDays: squadWeek.trainedDays,
       squadPlannedDays: squadWeek.plannedDays,
       received: Object.fromEntries([...received].map(([kind, each]) => [kind, each.size])),
-      today,
+      ...(today === undefined ? {} : { today }),
     },
   };
 }
