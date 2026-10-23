@@ -108,7 +108,7 @@ public final class SignUpModel {
     /// Back a step, but not while a save is on its way: it would move the member on again when
     /// it lands, after they chose to go back.
     func back() {
-        guard !isWorking, reveal == nil, let previous = step.previous else { return }
+        guard !isWorking, !isPickingScene, reveal == nil, let previous = step.previous else { return }
         failure = nil
         show(previous, forward: false)
     }
@@ -298,7 +298,13 @@ public final class SignUpModel {
         failure = nil
         Task {
             guard let unboxing = await picker.confirm(), let scene = picker.selection else {
-                if case .failed(let error) = picker.phase { failure = error == .unavailable ? .unavailable : .rejected }
+                switch picker.phase {
+                case .failed(.unavailable): failure = .unavailable
+                // The squad has its scene already (an earlier try saved, its answer lost) or
+                // the week closed: home opens on whatever the squad trains on, with no drop.
+                case .failed(.notAllowed): finished = joined
+                case .choosing, .saving, .picked: break
+                }
                 return
             }
             reveal = SceneReveal(unboxing: unboxing, scene: scene, startedAt: .now)

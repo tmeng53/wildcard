@@ -37,6 +37,9 @@ extension TodayModel {
     /// over after its confetti, a moment later.
     public func dropIn(on scene: SceneTheme, coveredAt: Date) {
         self.scene = scene
+        // Placed now even when the scene stays the same, so a home just opened drops the
+        // members as they are, not its stand-ins.
+        placeSquad()
         isBurstOpen = false
         pats.dismissBubble()
         guard let clip = try? PlaceholderCharacter.drop() else { return }

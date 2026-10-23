@@ -152,7 +152,13 @@ struct WildcardApp: App {
                 )
                 .onAppear {
                     // Whoever made their squad in `-onboarding` drops onto the scene they picked.
-                    if let scene = signUp?.landing { today.dropIn(on: scene, coveredAt: .now) }
+                    // The home loads first, so the drop has the squad on it.
+                    if let scene = signUp?.landing {
+                        Task {
+                            await today.load()
+                            today.dropIn(on: scene, coveredAt: .now)
+                        }
+                    }
                     delegate.opened = { [today, $tab] _ in
                         $tab.wrappedValue = .today
                         Task { await today.load() }
