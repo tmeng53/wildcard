@@ -1,4 +1,5 @@
 import { promptKey, type MemberWeek, type WeekCheckIn } from './awards.js';
+import { AwardMove } from './moves.js';
 import type { AwardSettings } from './settings.js';
 import type { WeekStart } from './schedule.js';
 
@@ -51,6 +52,7 @@ export function promptFor(week: {
         ...(each.photos.length === 0 ? {} : { photos: each.photos.length }),
       })),
     })),
-    moves: Object.entries(week.moves).map(([id, description]) => ({ id, description })),
+    // In the moves' own order, whatever order the database keeps them in.
+    moves: AwardMove.options.map((id) => ({ id, description: week.moves[id] })),
   });
 }

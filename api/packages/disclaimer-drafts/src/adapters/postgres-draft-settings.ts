@@ -7,10 +7,11 @@ import type { DB } from './tables.js';
 /** The draft settings on Postgres: one row, and its log (`supabase/migrations`). */
 export function createPostgresDraftSettings(db: Kysely<DB>): DraftSettingsStore {
   return {
-    async current() {
+    async current(options) {
       const row = await db
         .selectFrom('disclaimer_draft_settings')
         .selectAll()
+        .$if(options?.forUpdate === true, (query) => query.forUpdate())
         .executeTakeFirstOrThrow();
       return DraftSettings.parse({
         version: 1,
@@ -37,7 +38,7 @@ export function createPostgresDraftSettings(db: Kysely<DB>): DraftSettingsStore 
               meme_chance: settings.memeChance,
             })
             .where(
-              sql<boolean>`(writing, model, instructions, batches_per_day, meme_chance) is distinct from (${settings.writing}, ${settings.model}, ${settings.instructions}, ${settings.batchesPerDay}, ${settings.memeChance}::real)`,
+              sql<boolean>`(writing, model, instructions, batches_per_day, meme_chance) is distinct from (${settings.writing}, ${settings.model}, ${settings.instructions}, ${settings.batchesPerDay}, ${settings.memeChance}::double precision)`,
             )
             .returning('only_row'),
         )

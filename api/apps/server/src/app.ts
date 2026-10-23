@@ -1,7 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
-import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
+import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-ins';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
@@ -64,6 +64,8 @@ export interface AppDependencies {
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
+  /** The Sunday summary's words now, kept in the database. */
+  readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
   /** Each squad's weekly awards, and the clock that says when they are due. */
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   readonly log: Log;
@@ -119,7 +121,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
   app.route('/', nudges(deps));
-  app.route('/', weekSummary(deps));
+  app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
