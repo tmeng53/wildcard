@@ -2,7 +2,12 @@
 // kind of push off, the daily push's record of which days it handled, and sending through Apple
 // Push Notification service.
 
-export { createApnsSender, APNS_ORIGINS, type ApnsKey } from './adapters/apns-sender.js';
+export {
+  createApnsSender,
+  APNS_ORIGINS,
+  type ApnsAccount,
+  type ApnsKey,
+} from './adapters/apns-sender.js';
 export { createOffSender } from './adapters/off-sender.js';
 export { createPostgresDailyPushStore } from './adapters/postgres-daily-push-store.js';
 export { createPostgresDeviceStore, type PushTables } from './adapters/postgres-device-store.js';

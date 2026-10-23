@@ -45,15 +45,20 @@ afterAll(
 );
 
 const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-const key = {
-  keyId: 'ABC123DEFG',
+const other = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+const pem = (key: typeof privateKey) => key.export({ type: 'pkcs8', format: 'pem' }).toString();
+// Production signs with `privateKey`, sandbox with its own.
+const account = {
   teamId: 'TEAM123456',
-  privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
   topic: 'com.wildcardsquad.wildcard',
+  keys: {
+    production: { keyId: 'ABC123DEFG', privateKey: pem(privateKey) },
+    sandbox: { keyId: 'SBX123DEFG', privateKey: pem(other.privateKey) },
+  },
 };
 let clock = Date.parse('2026-10-19T05:00:00.000Z');
 function senderFor() {
-  return createApnsSender(key, {
+  return createApnsSender(account, {
     origins: { sandbox: origin, production: origin },
     now: () => clock,
   });
@@ -112,6 +117,40 @@ describe('the APNs sender', () => {
         Buffer.from(`${header}.${claims}`),
         { key: publicKey, dsaEncoding: 'ieee-p1363' },
         Buffer.from(signature, 'base64url'),
+      ),
+    ).toBe(true);
+  });
+
+  it('signs a sandbox token with the sandbox key and a production token with the production key', async () => {
+    received.length = 0;
+    answer = { status: 200 };
+    const apns = senderFor();
+    await apns.send({ ...device, environment: 'sandbox' }, reaction);
+    await apns.send(device, reaction);
+    apns.close();
+    const [sandbox, production] = received.map((request) => {
+      const [header, claims, signature] = Jwt.parse(
+        z
+          .string()
+          .parse(request.headers.authorization)
+          .replace(/^bearer /, '')
+          .split('.'),
+      );
+      return {
+        header: decode(header),
+        claims,
+        signature,
+        signed: Buffer.from(`${header}.${claims}`),
+      };
+    });
+    expect(sandbox?.header).toStrictEqual({ alg: 'ES256', kid: 'SBX123DEFG' });
+    expect(production?.header).toStrictEqual({ alg: 'ES256', kid: 'ABC123DEFG' });
+    expect(
+      verify(
+        'sha256',
+        sandbox?.signed ?? Buffer.alloc(0),
+        { key: other.publicKey, dsaEncoding: 'ieee-p1363' },
+        Buffer.from(sandbox?.signature ?? '', 'base64url'),
       ),
     ).toBe(true);
   });
@@ -198,7 +237,7 @@ describe('the APNs sender', () => {
 
   it('throws when Apple can’t be reached', async () => {
     // Nothing listens on port 1.
-    const apns = createApnsSender(key, {
+    const apns = createApnsSender(account, {
       origins: { sandbox: 'http://127.0.0.1:1', production: 'http://127.0.0.1:1' },
     });
     await expect(apns.send(device, reaction)).rejects.toBeInstanceOf(PushUnavailableError);
