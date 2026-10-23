@@ -201,7 +201,7 @@ public final class TodayModel {
     /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
     func patMate(_ id: MemberID) {
         guard store.canPat(id), let mate = cast.mates.first(where: { $0.id == id }) else { return }
-        pats.pat(mate, mine: player)
+        guard pats.pat(mate, mine: player) else { return }
         Task { try? await store.pat(id) }
     }
 
@@ -219,9 +219,10 @@ public final class TodayModel {
         let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
         let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
         guard let latest = fresh.last, let first = patters.first else { return }
-        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
         try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
-        pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
+        guard pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
+        else { return }
+        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
     }
 
     func pick(_ kind: CheckInKind) {

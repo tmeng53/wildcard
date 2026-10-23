@@ -99,27 +99,32 @@ final class PatStage {
 
     // MARK: Patting
 
-    /// I pat `mate` from where I stand. The caller sends it to the server.
-    func pat(_ mate: SquadCast.Mate, mine: CharacterPlayer?, now: Date = .now) {
+    /// I pat `mate` from where I stand, unless another pat is playing; says whether it started,
+    /// so the caller sends only a pat that was seen.
+    @discardableResult
+    func pat(_ mate: SquadCast.Mate, mine: CharacterPlayer?, now: Date = .now) -> Bool {
         guard pat == nil, let mine, let jab = try? PlaceholderCharacter.patMove(),
             let reaction = try? PlaceholderCharacter.pattedMove(mate.persona)
-        else { return }
+        else { return false }
         bubble = nil
         play(patter: (.mine, mine, jab), patted: (.mate(mate.id), mate.player, reaction), now: now) { [weak self] in
             self?.landed += 1
         } finished: {
         }
+        return true
     }
 
     /// `mate` pats me, from where they stand, then their bubble says so and offers one back.
-    /// `others` also patted me: the first of them is named on the bubble's second line.
+    /// `others` also patted me: the first of them is named on the bubble's second line. Says
+    /// whether it started, so pats that couldn't play yet play on the next open.
+    @discardableResult
     func patMe(
         by mate: SquadCast.Mate, others: [SquadCast.Mate], mine: CharacterPlayer?, myPersona: Persona,
         now: Date = .now
-    ) {
+    ) -> Bool {
         guard pat == nil, let mine, let jab = try? PlaceholderCharacter.patMove(),
             let reaction = try? PlaceholderCharacter.pattedMove(myPersona)
-        else { return }
+        else { return false }
         bubble = nil
         play(patter: (.mate(mate.id), mate.player, jab), patted: (.mine, mine, reaction), now: now) { [weak self] in
             self?.landedOnMe += 1
@@ -137,6 +142,7 @@ final class PatStage {
                     },
                     id: nextBubble()), for: Self.bubbleHold)
         }
+        return true
     }
 
     /// Plays one pat: the jab now, the reaction from the contact, the haptic as the dot lands.
