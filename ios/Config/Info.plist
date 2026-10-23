@@ -8,5 +8,9 @@
 		<string>zh-Hans</string>
 		<string>en</string>
 	</array>
+	<!-- The app uses only the encryption built into iOS (HTTPS), which is exempt, so App Store
+	     Connect doesn't ask about export compliance on every upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
