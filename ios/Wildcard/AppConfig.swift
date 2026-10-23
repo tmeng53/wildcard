@@ -1,9 +1,9 @@
 import Foundation
 
-/// Where the app finds its backend: our API and the auth provider. Build settings fill these in
-/// through Info.plist once the hosted backend exists; until then a Debug build launched with
-/// `-local-backend` uses local Supabase and the API on this Mac (`scripts/local-backend.sh`),
-/// which the simulator reaches as 127.0.0.1.
+/// Where the app finds its backend: our API and the auth provider. Release build settings name
+/// the hosted one through Info.plist; Debug names none, so it runs on the sample squad, unless
+/// launched with `-local-backend`, which uses local Supabase and the API on this Mac
+/// (`scripts/local-backend.sh`), reached from the simulator as 127.0.0.1.
 struct AppConfig {
     let apiURL: URL
     let authURL: URL
