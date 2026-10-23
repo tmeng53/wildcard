@@ -6,7 +6,7 @@ import SwiftUI
 
 /// 我's player card, like a baseball card: the front has the character, the name and squad and the
 /// headline numbers; a tap turns it over to the career numbers, and two dots under it say which
-/// side is up. Plain card stock: white with a hairline, the character in a grey window.
+/// side is up. Ink card stock with white type, the character in a light grey window.
 struct PlayerCard: View {
     let overview: MeOverview
     @State private var showsBack = false
@@ -30,8 +30,7 @@ struct PlayerCard: View {
                 }
                 .padding(Space.xs)
                 .frame(width: Self.size.width, height: Self.size.height)
-                .background(Color(role: .bgCanvas, in: theme), in: Self.shape)
-                .overlay { Self.shape.strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline) }
+                .background(Color(role: .bgInk, in: theme), in: Self.shape)
                 .contentShape(Self.shape)
                 .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
             }
@@ -90,13 +89,13 @@ private struct CardFront: View {
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
                 Text(overview.character.nickname)
                     .typeStyle(TypeRamp.title)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .lineLimit(1)
                     .accessibilityIdentifier("me.nickname")
                 if let squad = overview.squadName {
                     Text(squad)
                         .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                         .lineLimit(1)
                         .accessibilityIdentifier("me.squadName")
                 }
@@ -106,12 +105,12 @@ private struct CardFront: View {
             .padding(.top, Space.s)
             HStack(alignment: .top, spacing: Space.xs) {
                 FrontStat(label: Text("练了", bundle: .module)) {
-                    Score(count: overview.counts.trainedDays, size: .card)
+                    Score(count: overview.counts.trainedDays, size: .card, onInk: true)
                         .accessibilityIdentifier("me.trainedDays")
                 }
                 if let week = overview.week {
                     FrontStat(label: Text("本周", bundle: .module)) {
-                        Score(count: week.trainedDays, goal: week.plannedDays, size: .card)
+                        Score(count: week.trainedDays, goal: week.plannedDays, size: .card, onInk: true)
                     }
                 }
             }
@@ -136,7 +135,7 @@ private struct FrontStat<Value: View>: View {
             value
             label
                 .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
@@ -152,32 +151,32 @@ private struct CardBack: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(overview.character.nickname)
                 .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .foregroundStyle(Color(role: .fgOnInk, in: theme))
                 .lineLimit(1)
             Text("card.career", bundle: .module)
                 .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                 .padding(.top, Space.m)
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
-                Score(count: overview.counts.trainedDays, size: .hero)
+                Score(count: overview.counts.trainedDays, size: .hero, onInk: true)
                 Text("次练了", bundle: .module)
                     .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
             }
             .padding(.top, Space.xxs)
             VStack(spacing: 0) {
                 BackStat(label: Text("健康餐", bundle: .module), isLast: false) {
-                    Score(count: overview.counts.healthyMeals, size: .inline)
+                    Score(count: overview.counts.healthyMeals, size: .inline, onInk: true)
                 }
                 BackStat(label: Text("坦白放纵餐", bundle: .module), isLast: false) {
-                    Score(count: overview.counts.cheatMeals, size: .inline)
+                    Score(count: overview.counts.cheatMeals, size: .inline, onInk: true)
                 }
                 BackStat(label: Text("请假条", bundle: .module), isLast: overview.week == nil) {
-                    Score(count: overview.counts.disclaimers, size: .inline)
+                    Score(count: overview.counts.disclaimers, size: .inline, onInk: true)
                 }
                 if let week = overview.week {
                     BackStat(label: Text("本周", bundle: .module), isLast: true) {
-                        Score(count: week.trainedDays, goal: week.plannedDays, size: .inline)
+                        Score(count: week.trainedDays, goal: week.plannedDays, size: .inline, onInk: true)
                     }
                 }
             }
@@ -201,7 +200,7 @@ private struct BackStat<Value: View>: View {
         HStack(alignment: .firstTextBaseline) {
             label
                 .typeStyle(TypeRamp.body)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .foregroundStyle(Color(role: .fgOnInk, in: theme))
             Spacer(minLength: Space.s)
             value
         }
@@ -219,7 +218,7 @@ private struct Hairline: View {
 
     var body: some View {
         Rectangle()
-            .fill(Color(role: .borderDefault, in: theme))
+            .fill(Color(role: .borderOnInk, in: theme))
             .frame(height: Sizing.hairline)
     }
 }

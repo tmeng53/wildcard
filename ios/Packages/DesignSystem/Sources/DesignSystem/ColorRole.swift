@@ -99,6 +99,14 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case fgMuted
     /// Placeholders, denominators and chevrons: large type and decoration only.
     case fgSubtle
+    /// An ink surface on a white page, such as 我's player card.
+    case bgInk
+    /// Text and numbers on `bgInk`.
+    case fgOnInk
+    /// Secondary text on `bgInk`.
+    case fgOnInkMuted
+    /// Dividers on `bgInk`.
+    case borderOnInk
 
     /// The scene's accent: primary buttons and selection, nothing else.
     case bgAccent
@@ -143,6 +151,10 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgDefault: .fixed(Palette.ink)
         case .fgMuted: .fixed(Palette.inkSecondary)
         case .fgSubtle: .fixed(Palette.inkTertiary)
+        case .bgInk: .fixed(Palette.ink)
+        case .fgOnInk: .fixed(Palette.white)
+        case .fgOnInkMuted: .fixed(Palette.inkTertiary)
+        case .borderOnInk: .fixed(Palette.inkLine)
         case .bgAccent: .scene(\.accent)
         case .bgAccentSubtle: .scene(\.accentSubtle)
         case .fgOnAccent: .scene(\.onAccent)

@@ -26,24 +26,27 @@ public struct Score: View {
     private let count: Int
     private let goal: Int?
     private let size: Size
+    private let onInk: Bool
 
-    /// Leave out `goal` for a count on its own (一共练了 46).
-    public init(count: Int, goal: Int? = nil, size: Size) {
+    /// Leave out `goal` for a count on its own (一共练了 46). `onInk` sets it white on a `bgInk`
+    /// surface, its goal in muted ink.
+    public init(count: Int, goal: Int? = nil, size: Size, onInk: Bool = false) {
         self.count = count
         self.goal = goal
         self.size = size
+        self.onInk = onInk
     }
 
     public var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 2) {
             Text(verbatim: "\(count)")
                 .typeStyle(size.style)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .foregroundStyle(Color(role: onInk ? .fgOnInk : .fgDefault, in: theme))
                 .contentTransition(.numericText(value: Double(count)))
             if let goal {
                 Text(verbatim: "/\(goal)")
                     .typeStyle(TypeRamp.denominator(of: size.style))
-                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                    .foregroundStyle(Color(role: onInk ? .fgMuted : .fgSubtle, in: theme))
             }
         }
         .monospacedDigit()

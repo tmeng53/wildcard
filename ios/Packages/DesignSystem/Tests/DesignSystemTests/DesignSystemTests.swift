@@ -27,6 +27,11 @@ struct NeutralTests {
             ])
     }
 
+    @Test func inkSurfaceMatchesTheApprovedCard() {
+        let ink: [ColorRole] = [.bgInk, .fgOnInk, .fgOnInkMuted, .borderOnInk]
+        #expect(ink.map { $0.color(in: .gym).hex } == ["#22252E", "#FFFFFF", "#AEB2BC", "#3A3E49"])
+    }
+
     /// A theme swaps only the accent group; neutrals never change.
     @Test func onlyTheAccentGroupFollowsTheScene() {
         let themed = ColorRole.allCases.filter { role in
@@ -58,6 +63,8 @@ struct NeutralTests {
         (.fgDefault, .bgSubtle),
         (.fgMuted, .bgCanvas),
         (.fgMuted, .bgSubtle),
+        (.fgOnInk, .bgInk),
+        (.fgOnInkMuted, .bgInk),
     ])
     func neutralTextIsReadable(text: ColorRole, background: ColorRole) {
         #expect(text.color(in: .pool).contrastRatio(with: background.color(in: .pool)) >= 4.5)
