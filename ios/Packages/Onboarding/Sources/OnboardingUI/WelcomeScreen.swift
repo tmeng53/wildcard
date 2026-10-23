@@ -130,7 +130,6 @@ struct WelcomeScreen<SignIn: View>: View {
     /// The first open plays the sprint, timed so the haptic, the cheer and the reveal land on
     /// the break; later opens, and Reduce Motion, start at the still screen.
     private func open(layout: FinishLineSprint.Layout) async {
-        guard sprint == nil else { return }
         guard !settled, !reduceMotion, !sprintPlayed else {
             // Still, or back on the screen after the sprint: the squad plays on where it stands.
             settled = true
@@ -147,23 +146,25 @@ struct WelcomeScreen<SignIn: View>: View {
         let timing = await Task.detached { FinishLineSprint.timing(for: layout) }.value
         guard !Task.isCancelled else { return }
         let start = ContinuousClock.now
-        sprint = SprintRunner(layout: layout)
-        guard await wait(until: start + .seconds(timing.breaks)) else { return }
+        let runner = SprintRunner(layout: layout)
+        sprint = runner
+        guard await wait(until: start + .seconds(timing.breaks), runner) else { return }
         sprintPlayed = true
         landed += 1
         crowd.play(sprinting: true)
-        guard await wait(until: start + .seconds(timing.breaks + WelcomeCrowd.revealDelay)) else { return }
+        guard await wait(until: start + .seconds(timing.breaks + WelcomeCrowd.revealDelay), runner) else { return }
         revealed = true
-        guard await wait(until: start + .seconds(timing.ends)) else { return }
+        guard await wait(until: start + .seconds(timing.ends), runner) else { return }
         settled = true
         sprint = nil
     }
 
-    /// Waits until `deadline`; false, with the sprint taken down, when the screen moved on.
-    private func wait(until deadline: ContinuousClock.Instant) async -> Bool {
+    /// Waits until `deadline`; false when the screen moved on, taking `runner` down unless a
+    /// newer layout's sprint has already replaced it.
+    private func wait(until deadline: ContinuousClock.Instant, _ runner: SprintRunner) async -> Bool {
         try? await Task.sleep(until: deadline, clock: .continuous)
         guard Task.isCancelled else { return true }
-        sprint = nil
+        if sprint === runner { sprint = nil }
         return false
     }
 

@@ -183,10 +183,13 @@ final class CharacterEditorUITests: XCTestCase {
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
-        for _ in 0..<8 where !(element.exists && element.isHittable) {
+        // Clear of 就这样 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
+        let done = app.buttons["editor.done"]
+        func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
+        for _ in 0..<8 where !inView() {
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
-        XCTAssertTrue(element.exists && element.isHittable, "\(element.identifier) never scrolled into view")
+        XCTAssertTrue(inView(), "\(element.identifier) never scrolled into view")
     }
 
     /// Lets thumbnails build and the character's one move finish before a screenshot.
