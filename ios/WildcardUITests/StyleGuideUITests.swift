@@ -120,7 +120,7 @@ final class StyleGuideUITests: XCTestCase {
         keepScreenshot(named: "20-motion")
     }
 
-    /// The gym is the one dark scene: graphite accent, volt on it.
+    /// The gym in steel, with its kinds and status ring.
     func testComponentsInGym() {
         let app = launch(language: "zh-Hans")
         pick(scene: "gym", in: app)
