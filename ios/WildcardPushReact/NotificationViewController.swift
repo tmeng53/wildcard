@@ -22,7 +22,7 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
             return
         }
         let model = DailyPushModel(
-            store: DailyPushStore(push: push, sender: Self.sender()), arrived: notification.date,
+            store: DailyPushStore(push: push, sender: Self.sender(), now: { Date() }), arrived: notification.date,
             looks: AppGroup.directory.map(SharedSquad.init)?.looks() ?? [:]
         ) { [weak self] destination in
             self?.open(destination)
@@ -32,7 +32,7 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
 
     /// Opens the app where the member asked: the app takes the place on launch.
     private func open(_ destination: PushDestination) {
-        AppGroup.defaults.map(PushDestinations.init)?.leave(destination)
+        AppGroup.defaults.map(PushDestinations.init)?.leave(destination, at: Date())
         extensionContext?.performNotificationDefaultAction()
     }
 

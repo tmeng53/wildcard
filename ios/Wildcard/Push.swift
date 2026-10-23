@@ -16,7 +16,7 @@ enum Push {
 
     /// Where the 6pm push's view asked to open the app: 动态, 打卡, or nil for a plain tap.
     static func takeDestination() -> PushDestination? {
-        AppGroup.defaults.map(PushDestinations.init).flatMap { $0.take() }
+        AppGroup.defaults.map(PushDestinations.init).flatMap { $0.take(at: Date()) }
     }
 }
 

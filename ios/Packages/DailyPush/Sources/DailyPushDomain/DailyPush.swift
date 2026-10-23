@@ -15,6 +15,8 @@ public struct DailyPush: Hashable, Sendable {
     public internal(set) var posts: [PushPost]
     /// Teammates' check-ins today beyond `posts`, for 「还有 n 条」.
     public let more: Int
+    /// Nobody else checked in today. A push whose posts didn't fit carries none, yet `more` counts them.
+    public var nobodyPosted: Bool { posts.isEmpty && more == 0 }
     private let names: [MemberID: String]
 
     /// Reads the push's `event`, as JSON.

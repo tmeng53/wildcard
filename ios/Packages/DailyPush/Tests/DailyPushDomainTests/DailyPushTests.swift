@@ -30,6 +30,8 @@ private let event = """
     }
     """
 
+private let noon = Date(timeIntervalSince1970: 1_793_448_000)
+
 private func id<Tag>(_ text: String) -> ID<Tag> { ID(UUID(uuidString: text) ?? UUID()) }
 
 @Test func readsWhatThePushCarries() throws {
@@ -46,6 +48,18 @@ private func id<Tag>(_ text: String) -> ID<Tag> { ID(UUID(uuidString: text) ?? U
     #expect(squatPost.latest(4).map(\.kind.text) == ["😂", "💪"])
     #expect(squatPost.reactionCount == 7)
     #expect(squatPost.text == "深蹲加了 5 公斤")
+    #expect(!push.nobodyPosted)
+}
+
+@Test func postsThatDidNotFitStillMeanSomeonePosted() throws {
+    let trimmed = event.replacingOccurrences(
+        of: #"(?s)"posts": \[.*\],\s*"more": 2"#, with: #""posts": [], "more": 3"#, options: .regularExpression)
+    let push = try DailyPush(event: Data(trimmed.utf8))
+    #expect(push.posts.isEmpty)
+    #expect(push.more == 3)
+    #expect(!push.nobodyPosted)
+    let quiet = try DailyPush(event: Data(trimmed.replacingOccurrences(of: #""more": 3"#, with: #""more": 0"#).utf8))
+    #expect(quiet.nobodyPosted)
 }
 
 @Test func refusesAPushWithoutTheSquadDay() {
@@ -71,7 +85,7 @@ private actor Sender: ReactionSender {
 
 @MainActor @Test func reactingShowsAtOnceAndTheSameEmojiTakesItBack() async throws {
     let sender = Sender()
-    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: sender)
+    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: sender, now: { noon })
     let move = try store.pick(try Emoji("❤️"), on: id(slip))
     #expect(move == MoveID("heart"))
     #expect(store.mine(on: id(slip))?.text == "❤️")
@@ -89,7 +103,7 @@ private actor Sender: ReactionSender {
 @MainActor @Test func aReactionThatFailsIsPutBack() async throws {
     let sender = Sender()
     await sender.failing()
-    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: sender)
+    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: sender, now: { noon })
     try store.pick(try Emoji("🔥"), on: id(slip))
     #expect(store.mine(on: id(slip))?.text == "🔥")
     await store.sending?.value
@@ -97,6 +111,6 @@ private actor Sender: ReactionSender {
 }
 
 @MainActor @Test func nobodyReactsToAPostNotInThePush() async throws {
-    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: Sender())
+    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: Sender(), now: { noon })
     #expect(throws: DailyPushError.unknownPost) { try store.pick(try Emoji("❤️"), on: id(meID)) }
 }

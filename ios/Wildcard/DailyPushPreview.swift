@@ -24,7 +24,7 @@ struct DailyPushPreview: View {
         _model = State(
             initialValue: DailyPushSample.push(empty: day == .empty, now: now).map {
                 DailyPushModel(
-                    store: DailyPushStore(push: $0, sender: KeptReactions()), arrived: now,
+                    store: DailyPushStore(push: $0, sender: KeptReactions(), now: { Date() }), arrived: now,
                     looks: DailyPushSample.looks
                 ) { destination in
                     opened.wrappedValue = destination

@@ -15,7 +15,7 @@ public final class DailyPushStore {
     /// The latest reaction going out, for tests to wait on.
     @ObservationIgnored private(set) var sending: Task<Void, Never>?
 
-    public init(push: DailyPush, sender: any ReactionSender, now: @escaping () -> Date = { Date() }) {
+    public init(push: DailyPush, sender: any ReactionSender, now: @escaping () -> Date) {
         self.push = push
         self.sender = sender
         self.now = now

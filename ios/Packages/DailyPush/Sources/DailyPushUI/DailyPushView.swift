@@ -139,11 +139,10 @@ private struct PushToday: View {
             SectionLabel(Text("今天", bundle: .module))
                 .padding(.top, Space.xxs)
                 .padding(.bottom, Space.xxs)
-            let posts = model.push.posts
-            if posts.isEmpty {
+            if model.push.nobodyPosted {
                 EmptyDay(model: model)
             } else {
-                ForEach(Array(posts.enumerated()), id: \.element.id) { index, post in
+                ForEach(Array(model.push.posts.enumerated()), id: \.element.id) { index, post in
                     PostRow(model: model, post: post)
                         .overlay(alignment: .top) {
                             if index > 0 { Hairline() }
