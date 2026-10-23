@@ -53,6 +53,13 @@ export interface CheckInSquads {
   squad_id: string;
 }
 
+export interface DisclaimerReplies {
+  check_in_id: string;
+  kind: string;
+  member_id: string;
+  replied_at: Timestamp;
+}
+
 export interface WeeklyPlans {
   member_id: string;
   payload: Json;
@@ -65,5 +72,6 @@ export interface DB {
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
+  disclaimer_replies: DisclaimerReplies;
   weekly_plans: WeeklyPlans;
 }
