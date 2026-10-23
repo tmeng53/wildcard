@@ -142,8 +142,8 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
-            case .tabs(let today, let profile):
-                MainTabs(today: today, profile: profile, feed: nil, selection: $tab)
+            case .tabs(let today, let profile, let feed):
+                MainTabs(today: today, profile: profile, feed: feed, selection: $tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

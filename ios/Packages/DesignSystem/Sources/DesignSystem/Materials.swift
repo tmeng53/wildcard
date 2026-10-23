@@ -1,7 +1,8 @@
 /// What sits between the scene and an open check-in: a light blur, not a grey dim, so the
 /// squad and the scene stay visible. There are no shadows and no frost: layers differ by their
 /// fill (page white, subtle blocks, solid white cards on the scene), and system Liquid Glass is
-/// only for the tab bar, header buttons on the scene and the check-in kinds.
+/// only for the tab bar, header buttons on the scene, the check-in kinds and 动态's emoji bar,
+/// emoji grid and who-reacted panel.
 public enum Scrim {
     /// Blur radius in points, equivalent to a 3 px CSS blur.
     public static let blurRadius: Double = 3
