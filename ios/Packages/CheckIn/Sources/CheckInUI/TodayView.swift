@@ -4,6 +4,7 @@ import CheckInDomain
 import DesignSystem
 import Contracts
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// The 今天 tab: the whole squad on its scene with the week's card on top, me front and centre,

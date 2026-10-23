@@ -34,6 +34,22 @@ enum LaunchOptions {
         !ProcessInfo.processInfo.arguments.contains("-uitest-no-push")
     }
 
+    /// `-onboarding`: open sign-up, then 今天 once it is done.
+    static var showsOnboarding: Bool {
+        ProcessInfo.processInfo.arguments.contains("-onboarding")
+    }
+
+    /// The moment sign-up starts at: noon on this week's Monday with `-uitest-monday`, so the
+    /// week step's default plan and screenshots don't change with the day the tests run;
+    /// otherwise now.
+    static var signUpTime: Date {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-monday") else { return .now }
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = .current
+        guard let monday = calendar.dateInterval(of: .weekOfYear, for: .now)?.start else { return .now }
+        return calendar.date(byAdding: .hour, value: 12, to: monday) ?? .now
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {
