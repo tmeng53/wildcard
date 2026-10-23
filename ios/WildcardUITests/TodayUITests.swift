@@ -135,15 +135,18 @@ final class TodayUITests: XCTestCase {
         settle()
         keepScreenshot(named: "19-today-disclaimer-posted")
 
-        assertOpensItsPost(bubble, in: app)
+        assertOpensItsPost(bubble, saying: line, in: app)
     }
 
-    /// A caption's bubble opens its post: the 动态 tab, until the feed can scroll to it.
-    private func assertOpensItsPost(_ bubble: XCUIElement, in app: XCUIApplication) {
+    /// A caption's bubble opens its post in 动态, on screen.
+    private func assertOpensItsPost(_ bubble: XCUIElement, saying line: String, in app: XCUIApplication) {
         bubble.tap()
-        let feed = app.staticTexts["tab.title"]
-        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "tapping the bubble didn't leave 今天")
-        XCTAssertEqual(feed.label, "动态", "tapping the bubble opened another tab")
+        XCTAssertTrue(
+            app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "tapping the bubble didn't open 动态")
+        let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
+        XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
+        waitFor(post, "isHittable == true", "动态 didn't open on my post")
+        keepScreenshot(named: "48-feed-my-post")
     }
 
     /// The excuse shows exactly what will be posted: Return finishes editing, and typing stops

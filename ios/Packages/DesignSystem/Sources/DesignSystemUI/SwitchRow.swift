@@ -42,12 +42,13 @@ public struct SwitchRow: View {
 /// The switch itself: a 51×31 capsule and its knob.
 private struct SwitchTrack: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Environment(\.colorSchemeContrast) private var contrast
     let isOn: Bool
 
     var body: some View {
         Capsule()
-            .fill(Color(role: isOn ? .bgAccent : offTrack, in: theme))
+            .fill(Color(role: isOn ? tone.fill : offTrack, in: theme))
             .frame(width: Sizing.switchWidth, height: Sizing.switchHeight)
             .overlay(alignment: isOn ? .trailing : .leading) {
                 Circle()

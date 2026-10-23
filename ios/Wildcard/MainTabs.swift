@@ -2,6 +2,7 @@ import CharacterEditorUI
 import CheckInUI
 import DesignSystem
 import DesignSystemUI
+import FeedUI
 import MeDomain
 import MeUI
 import RecapUI
@@ -17,6 +18,8 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
+    /// Nil on the real backend until 动态 has its API adapter: the tab shows only the 战报.
+    let feed: FeedModel?
     let recap: RecapShelf
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -80,9 +83,20 @@ struct MainTabs: View {
     @ViewBuilder private var screen: some View {
         switch selection {
         case .today:
-            TodayView(model: today) { selection = .feed }
+            TodayView(model: today) { post in
+                feed?.open(post)
+                selection = .feed
+            }
         case .feed:
-            FeedTab(recap: recap)
+            Group {
+                if let feed {
+                    FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
+                } else {
+                    FeedTab(recap: recap)
+                }
+            }
+            .environment(\.sceneTheme, today.scene)
+            .task { await recap.refresh() }
         case .schedule:
             UpcomingTab(title: Text("出赛表"))
         case .profile:
@@ -122,18 +136,25 @@ private struct FeedTab: View {
             Text("动态")
                 .typeStyle(TypeRamp.largeTitle)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .accessibilityIdentifier("tab.title")
-            if let story = recap.latest {
-                RecapEntryTile(
-                    week: story.week, pages: story.pages.count, viewer: recap.cast?.reader,
-                    action: recap.openLatest)
-            }
+                .accessibilityIdentifier("tab.upcoming")
+            RecapTile(recap: recap)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.l)
         .background(Color(role: .bgCanvas, in: theme))
-        .task { await recap.refresh() }
+    }
+}
+
+/// The squad's newest 战报, once there is one, opening it.
+private struct RecapTile: View {
+    let recap: RecapShelf
+
+    var body: some View {
+        if let story = recap.latest {
+            RecapEntryTile(
+                week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
+        }
     }
 }
 
@@ -150,6 +171,6 @@ private struct UpcomingTab: View {
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.l)
             .background(Color(role: .bgCanvas, in: theme))
-            .accessibilityIdentifier("tab.title")
+            .accessibilityIdentifier("tab.upcoming")
     }
 }

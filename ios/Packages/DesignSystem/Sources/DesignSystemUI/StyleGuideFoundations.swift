@@ -14,6 +14,11 @@ struct ColorSection: View {
         (.fgSubtle, Text("弱文字、占位", bundle: .module)),
     ]
 
+    private let brand: [(role: ColorRole, name: Text)] = [
+        (.bgBrand, Text("品牌色：主操作、选中", bundle: .module)),
+        (.fgOnBrand, Text("品牌色上的字", bundle: .module)),
+    ]
+
     private let accents: [(role: ColorRole, name: Text)] = [
         (.bgAccent, Text("主操作、选中", bundle: .module)),
         (.bgAccentSubtle, Text("强调浅底", bundle: .module)),
@@ -29,6 +34,9 @@ struct ColorSection: View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 1, title: Text("颜色", bundle: .module))
             GuideGroup(Text("中性色", bundle: .module)) { SwatchGrid(swatches: neutrals) }
+            GuideGroup(Text("品牌：开场、注册、我、发动态、请假条、动态", bundle: .module)) {
+                SwatchGrid(swatches: brand)
+            }
             GuideGroup(Text("强调：当前场景色，一屏只有这一种", bundle: .module)) { SwatchGrid(swatches: accents) }
         }
     }

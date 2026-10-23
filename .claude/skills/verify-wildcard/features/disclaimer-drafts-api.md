@@ -36,10 +36,11 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 Check at the source, with the ids from the log:
 
 - `psql "$DB_URL" -c "select count(*) from public.disclaimer_draft_requests where member_id = '<me>'"`: 0. A batch that showed nothing gives its place back.
-- The server log has no `"severity":"ERROR"` line for the no-key 503s; it logs `no key for LLM_PROVIDER: AI drafts are off` once at startup.
+- The server log has no `"severity":"ERROR"` line for the no-key 503s; it logs `no language model key: AI drafts are off and weekly awards stay pending` once at startup.
 
 ## Worth probing
 
 - A reason about self-harm reaches the model like any other; the recorded `self-harm` answer gives `{"version":1,"kind":"care"}`.
-- With a key (a fake one, pointed at a local stub replaying `api/apps/server/src/test-kit/openai/*.json`, or `anthropic/*.json` with `LLM_PROVIDER=anthropic`): 3 drafts per batch, and the 7th counted batch in 24 hours answers 429 `DISCLAIMER_DRAFTS_USED_UP`. About 3 in 10 prompts carry one `本周梗` line, for a meme in use that suits the style; the rest carry none, and none ever lists the whole library.
+- With a key (a fake one, pointed at a local stub replaying `api/apps/server/src/test-kit/openai/*.json`, or `anthropic/*.json` after setting the model to `anthropic/…` with the admin tool `change_disclaimer_draft_settings`): 3 drafts per batch, and the 7th counted batch in 24 hours answers 429 `DISCLAIMER_DRAFTS_USED_UP` (the settings' `batchesPerDay`). About 3 in 10 prompts (the settings' `memeChance`) carry one `本周梗` line, for a meme in use that suits the style; the rest carry none, and none ever lists the whole library.
+- Settings apply to the next request with no restart: `writing: false` makes every request answer 503 `DISCLAIMER_WRITER_UNAVAILABLE` without counting, and the request names the settings' model and instructions.
 - The server checks only a batch's shape (exactly 3 distinct drafts, 15 to 80 characters, one line each); a batch out of shape answers 503 and doesn't count. What the drafts say is the prompt's job: there are no word checks on them.

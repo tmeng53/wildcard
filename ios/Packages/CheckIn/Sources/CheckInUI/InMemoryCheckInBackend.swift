@@ -15,13 +15,17 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
     /// every state (three trained: running, yoga, swimming; one 请假条; one rest day; two not yet)
-    /// and the member not checked in, today being `now`'s day in the device's zone.
-    public static func sampleSquad(now: Date) -> InMemoryCheckInBackend {
+    /// and the member not checked in, today being `now`'s day in the device's zone. A smaller
+    /// `size` (1 to 8, me included) keeps the 请假条, then the runner, the rest day and so on. Pass
+    /// `member` and `squad` to share them with another screen's sample, such as 动态's.
+    public static func sampleSquad(
+        now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID())
+    ) -> InMemoryCheckInBackend {
         let zone = TimeZone.current
         let day = LocalDay(at: now, in: zone)
-        let member = MemberID(UUID())
-        let mates = (0..<7).map { _ in MemberID(UUID()) }
-        let squadID = SquadID(UUID())
+        let everyone = (0..<7).map { _ in MemberID(UUID()) }
+        let kept = Set([3, 0, 4, 1, 5, 2, 6].prefix(min(7, max(0, size - 1))).map { everyone[$0] })
+        let mates = everyone.filter(kept.contains)
         func at(_ hoursAgo: Double) -> Timestamp { Timestamp(now.addingTimeInterval(-hoursAgo * 3600)) }
         func mate(_ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil)
             -> SquadmateToday
@@ -31,16 +35,17 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 plannedRest: rest,
                 firstCheckInAt: first)
         }
-        let members = [
-            mate(mates[0], .trained, since: at(5)), mate(mates[1], .trained, since: at(4)),
-            mate(mates[2], .trained, since: at(3)), mate(mates[3], .disclaimer, since: at(2)),
-            mate(mates[4], .notCheckedIn, rest: true), mate(mates[5], .notCheckedIn), mate(mates[6], .notCheckedIn),
-            mate(member, .notCheckedIn),
-        ]
+        let members =
+            [
+                mate(everyone[0], .trained, since: at(5)), mate(everyone[1], .trained, since: at(4)),
+                mate(everyone[2], .trained, since: at(3)), mate(everyone[3], .disclaimer, since: at(2)),
+                mate(everyone[4], .notCheckedIn, rest: true), mate(everyone[5], .notCheckedIn),
+                mate(everyone[6], .notCheckedIn),
+            ].filter { kept.contains($0.member) } + [mate(member, .notCheckedIn)]
         // My week so far: a swim yesterday and a run the day before, where those are this week.
         let earlier = [1, 2].map { day.adding(days: -$0) }.filter { $0.weekStart == day.weekStart }
         let checkIns =
-            sampleCheckIns(by: mates, on: day, in: squadID) { at($0) }
+            sampleCheckIns(by: everyone, on: day, in: squadID) { at($0) }.filter { kept.contains($0.member) }
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
@@ -55,13 +60,22 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                         inviteCode: "K7M2QX9P", members: mates + [member]),
                     today: SquadToday(
                         squad: squadID, members: members,
-                        today: TodayCounts(trained: 3, disclaimer: 1, resting: 1, everyoneTrained: false),
+                        today: counts(of: members),
                         myWeek: MyWeek(
                             firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
                             week: WeekCount(trainedDays: earlier.count, plannedDays: 5), lifetimeTrainedDays: 40),
                         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
             })
+    }
+
+    /// Today's counts of the sample squad's `members`, never 全员上场.
+    private static func counts(of members: [SquadmateToday]) -> TodayCounts {
+        TodayCounts(
+            trained: members.count { $0.training == .trained },
+            disclaimer: members.count { $0.training == .disclaimer },
+            resting: members.count { $0.plannedRest && $0.training == .notCheckedIn },
+            everyoneTrained: false)
     }
 
     /// The sample squad's check-ins today: three 练了 and a 请假条.
