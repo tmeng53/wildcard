@@ -59,15 +59,15 @@ final class PatStage {
     private var bubbles = 0
 
     /// When in a pat the dot leaves my hand, lands, and how long the dot rests after.
-    static let dotLeaves = 0.45
-    static let dotLands = PlaceholderCharacter.patContact - 0.1
+    nonisolated static let dotLeaves = 0.45
+    nonisolated static let dotLands = PlaceholderCharacter.patContact - 0.1
     /// How long a tapped teammate's bubble stays up.
-    static let bubbleHold = 5.0
+    nonisolated static let bubbleHold = 5.0
     /// How long after opening the home a teammate pats me.
-    static let patMeDelay = 1.0
+    nonisolated static let patMeDelay = 1.0
     /// A tapped teammate's hop: how long, and how high in the rig's points at the stage's
     /// scale of 0.25 (the approved home).
-    static let hop = (duration: 0.5, height: 14.0)
+    nonisolated static let hop = (duration: 0.5, height: 14.0)
 
     // MARK: Tapping a teammate
 
