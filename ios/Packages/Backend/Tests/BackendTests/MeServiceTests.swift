@@ -41,14 +41,18 @@ import Testing
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
     let zone = try #require(TimeZone(identifier: "America/Toronto"))
-    _ = try await member.api.save(Profile(timeZone: zone, catchphrase: try Catchphrase("冲就完了")))
+    _ = try await member.api.save(
+        Profile(timeZone: zone, catchphrase: try Catchphrase("冲就完了"), jerseyNumber: try JerseyNumber(7)))
     let service = APIMeService(api: member.api)
 
     try await service.save(MeCharacter(nickname: "豆豆", outfit: Outfit(["body": "bear"]), persona: .shy))
 
-    let profile = try #require(try await member.api.me().profile)
+    let signedIn = try await member.api.me()
+    let profile = try #require(signedIn.profile)
     #expect(profile.timeZone == zone)
     #expect(profile.catchphrase == (try Catchphrase("冲就完了")))
+    #expect(profile.jerseyNumber?.text == "07")
+    #expect(signedIn.joinedAt != nil)
     #expect(
         try await service.overview().character
             == MeCharacter(nickname: "豆豆", outfit: Outfit(["body": "bear"]), persona: .shy))

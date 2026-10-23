@@ -9,6 +9,8 @@ export {
   CATCHPHRASE_MAX_CHARACTERS,
   Catchphrase,
   Character,
+  JERSEY_NUMBER_MAX,
+  JerseyNumber,
   LOOK_MAX_SLOTS,
   Look,
   MemberId,

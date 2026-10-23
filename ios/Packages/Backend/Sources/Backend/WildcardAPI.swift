@@ -65,10 +65,13 @@ public struct WildcardAPI: Sendable {
                 body: .json(
                     .init(
                         version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text,
-                        character: profile.character.map(Components.Schemas.Character.init)))
+                        character: profile.character.map(Components.Schemas.Character.init),
+                        jerseyNumber: profile.jerseyNumber?.value))
             ).ok.body.json
         }
-        return try Profile(timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character)
+        return try Profile(
+            timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character,
+            jerseyNumber: saved.jerseyNumber)
     }
 
     // MARK: - Check-ins
@@ -337,29 +340,40 @@ public struct Profile: Hashable, Sendable {
     /// Their nickname and character's look. Nil until they make it, right after signing in.
     /// A save without it clears it, since the profile is saved whole.
     public let character: MemberCharacter?
+    /// The number on their player card. Nil until they pick one, and the card shows their place
+    /// in their squad.
+    public let jerseyNumber: JerseyNumber?
 
-    public init(timeZone: TimeZone, catchphrase: Catchphrase? = nil, character: MemberCharacter? = nil) {
+    public init(
+        timeZone: TimeZone, catchphrase: Catchphrase? = nil, character: MemberCharacter? = nil,
+        jerseyNumber: JerseyNumber? = nil
+    ) {
         self.timeZone = timeZone
         self.catchphrase = catchphrase
         self.character = character
+        self.jerseyNumber = jerseyNumber
     }
 
-    init(timeZone identifier: String, catchphrase: String?, character: Components.Schemas.Character?)
-        throws(APIError)
-    {
+    init(
+        timeZone identifier: String, catchphrase: String?, character: Components.Schemas.Character?,
+        jerseyNumber: Int?
+    ) throws(APIError) {
         guard let timeZone = TimeZone(identifier: identifier) else { throw .unreadableResponse }
         do {
             self.init(
                 timeZone: timeZone,
                 catchphrase: try catchphrase.map { text throws(ContractsError) in try Catchphrase(text) },
-                character: try character.map { wire throws(ContractsError) in try MemberCharacter(wire) })
+                character: try character.map { wire throws(ContractsError) in try MemberCharacter(wire) },
+                jerseyNumber: try jerseyNumber.map { number throws(ContractsError) in try JerseyNumber(number) })
         } catch {
             throw .unreadableResponse
         }
     }
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
-        try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character)
+        try self.init(
+            timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character,
+            jerseyNumber: wire.jerseyNumber)
     }
 }
 

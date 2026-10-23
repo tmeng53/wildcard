@@ -41,7 +41,7 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
     async find(member) {
       const row = await db
         .selectFrom('profiles')
-        .select(['time_zone', 'catchphrase', 'nickname', 'look'])
+        .select(['time_zone', 'catchphrase', 'nickname', 'look', 'jersey_number'])
         .where('member_id', '=', member)
         .executeTakeFirst();
       return row === undefined
@@ -50,6 +50,7 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
             timeZone: row.time_zone,
             catchphrase: row.catchphrase,
             character: characterOf(row),
+            jerseyNumber: row.jersey_number,
           });
     },
 
@@ -109,6 +110,7 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
         time_zone: profile.timeZone,
         catchphrase: profile.catchphrase,
         ...characterColumns(profile.character),
+        jersey_number: profile.jerseyNumber,
       };
       try {
         // One statement: the profile and its log entry are saved together, and a save that
@@ -123,18 +125,32 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
                   .column('member_id')
                   .doUpdateSet(columns)
                   .where(
-                    sql<boolean>`(profiles.time_zone, profiles.catchphrase, profiles.nickname, profiles.look)
-                      is distinct from (excluded.time_zone, excluded.catchphrase, excluded.nickname, excluded.look)`,
+                    sql<boolean>`(profiles.time_zone, profiles.catchphrase, profiles.nickname, profiles.look, profiles.jersey_number)
+                      is distinct from (excluded.time_zone, excluded.catchphrase, excluded.nickname, excluded.look, excluded.jersey_number)`,
                   ),
               )
-              .returning(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look']),
+              .returning([
+                'member_id',
+                'time_zone',
+                'catchphrase',
+                'nickname',
+                'look',
+                'jersey_number',
+              ]),
           )
           .insertInto('profile_events')
-          .columns(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look'])
+          .columns(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look', 'jersey_number'])
           .expression((eb) =>
             eb
               .selectFrom('saved')
-              .select(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look']),
+              .select([
+                'member_id',
+                'time_zone',
+                'catchphrase',
+                'nickname',
+                'look',
+                'jersey_number',
+              ]),
           )
           .execute();
         return true;
