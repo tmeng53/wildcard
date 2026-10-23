@@ -32,11 +32,13 @@ export const ReactionDraft = z
 export const Reaction = z
   .strictObject({ version: bodyVersion(1), ...reactionFields })
   .openapi('Reaction');
+/** A reaction in a list, which carries the version. */
+export const ReactionEntry = z.strictObject(reactionFields).openapi('ReactionEntry');
 const ReactionList = z
-  .strictObject({ version: bodyVersion(1), reactions: z.array(z.strictObject(reactionFields)) })
+  .strictObject({ version: bodyVersion(1), reactions: z.array(ReactionEntry) })
   .openapi('ReactionList');
 
-const wire = ({ member, emoji: left, reactedAt }: ReactionRecord) => ({
+export const wireReaction = ({ member, emoji: left, reactedAt }: ReactionRecord) => ({
   member,
   emoji: left,
   reactedAt: reactedAt.toISOString(),
@@ -124,7 +126,7 @@ export function reactions(deps: {
         member: MemberId.parse(c.var.caller.userId),
         emoji: c.req.valid('json').emoji,
       });
-      const body = { version: 1 as const, ...wire(reacted.reaction) };
+      const body = { version: 1 as const, ...wireReaction(reacted.reaction) };
       return reacted.outcome === 'created' ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(remove, async (c) => {
@@ -139,6 +141,6 @@ export function reactions(deps: {
         checkIn: c.req.valid('param').checkInId,
         viewer: MemberId.parse(c.var.caller.userId),
       });
-      return c.json({ version: 1 as const, reactions: found.map(wire) }, 200);
+      return c.json({ version: 1 as const, reactions: found.map(wireReaction) }, 200);
     });
 }

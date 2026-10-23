@@ -18,6 +18,7 @@ import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
 import {
   listSquadCheckIns,
   type ListSquadCheckInsInput,
+  type SquadPost,
 } from './check-ins/list-squad-check-ins.js';
 import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
@@ -47,7 +48,8 @@ import {
 /** Daily check-ins: saving them, reading them back, and teammates' reactions and replies. */
 export interface CheckIns {
   save(input: SaveCheckInInput): Promise<SavedCheckIn>;
-  listForSquad(input: ListSquadCheckInsInput): Promise<CheckInRecord[]>;
+  /** A squad's feed: its check-ins for a range of days, each with its reactions and replies. */
+  listForSquad(input: ListSquadCheckInsInput): Promise<SquadPost[]>;
   listMine(input: { readonly member: MemberId; readonly days: DayRange }): Promise<CheckInRecord[]>;
   /** Everything the member ever checked in, counted by kind, wherever it went. */
   totals(member: MemberId): Promise<CheckInTotals>;

@@ -318,13 +318,31 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       meal: { caption: '番茄炒蛋' },
     };
     const range = `from=${day}&to=${day}`;
+    const reacted = await call({
+      method: 'PUT',
+      path: `/check-ins/${id}/reactions/mine`,
+      token: me.token,
+      body: { version: 1, emoji: '🤤' },
+    });
+    expect(reacted.status).toBe(201);
+    const { reactedAt } = z.object({ reactedAt: z.string() }).parse(reacted.body);
 
+    // The feed: each post with its reactions and, on a 请假条, its replies.
     expect(
       await call({ method: 'GET', path: `/squads/${squad}/check-ins?${range}`, token: me.token }),
     ).toStrictEqual({
       status: 200,
       type: 'application/json',
-      body: { version: 1, checkIns: [{ ...saved, audience: [squad] }] },
+      body: {
+        version: 1,
+        posts: [
+          {
+            checkIn: { ...saved, audience: [squad] },
+            reactions: [{ member: me.userId, emoji: '🤤', reactedAt }],
+            replies: [],
+          },
+        ],
+      },
     });
     expect(
       await call({ method: 'GET', path: `/me/check-ins?${range}`, token: friend.token }),
@@ -471,7 +489,9 @@ describe('photos on check-ins', () => {
       path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
       token: friend.token,
     });
-    const [checkIn] = z.object({ checkIns: z.array(z.unknown()) }).parse(listed.body).checkIns;
+    const [{ checkIn }] = z
+      .object({ posts: z.tuple([z.object({ checkIn: z.unknown() })]) })
+      .parse(listed.body).posts;
     expect(await viewed(checkIn)).toStrictEqual([
       [cover, 'cover'],
       [second, 'two'],
@@ -502,19 +522,25 @@ describe('photos on check-ins', () => {
       path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
       token: friend.token,
     });
-    const { checkIns } = z
+    const { posts } = z
       .object({
-        checkIns: z.tuple([
+        posts: z.tuple([
           z.object({
-            disclaimer: z.object({
-              text: z.string(),
-              photos: z.array(z.object({ path: z.string(), url: z.url() })),
+            checkIn: z.object({
+              disclaimer: z.object({
+                text: z.string(),
+                photos: z.array(z.object({ path: z.string(), url: z.url() })),
+              }),
             }),
           }),
         ]),
       })
       .parse(listed.body);
-    const [{ disclaimer }] = checkIns;
+    const [
+      {
+        checkIn: { disclaimer },
+      },
+    ] = posts;
     expect(disclaimer.text).toBe('下雨了');
     expect(
       await Promise.all(

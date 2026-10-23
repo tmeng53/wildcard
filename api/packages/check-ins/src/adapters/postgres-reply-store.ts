@@ -1,9 +1,15 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId } from '../domain/check-in.js';
-import { ReplyKind } from '../domain/reply.js';
+import { CheckInId, MemberId } from '../domain/check-in.js';
+import { ReplyKind, type Reply } from '../domain/reply.js';
 import type { ReplyStore } from '../ports.js';
 import type { DB } from './tables.js';
+
+const fromRow = (row: { member_id: string; kind: string; replied_at: Date }): Reply => ({
+  member: MemberId.parse(row.member_id),
+  kind: ReplyKind.parse(row.kind),
+  repliedAt: row.replied_at,
+});
 
 /** The 请假条 reply store on Postgres (`supabase/migrations`). */
 export function createPostgresReplyStore(db: Kysely<DB>): ReplyStore {
@@ -42,11 +48,26 @@ export function createPostgresReplyStore(db: Kysely<DB>): ReplyStore {
         .orderBy('replied_at')
         .orderBy('member_id')
         .execute();
-      return rows.map((row) => ({
-        member: MemberId.parse(row.member_id),
-        kind: ReplyKind.parse(row.kind),
-        repliedAt: row.replied_at,
-      }));
+      return rows.map(fromRow);
+    },
+
+    async listForAll(checkIns) {
+      const byCheckIn = new Map<CheckInId, Reply[]>();
+      if (checkIns.length === 0) return byCheckIn;
+      const rows = await db
+        .selectFrom('disclaimer_replies')
+        .select(['check_in_id', 'member_id', 'kind', 'replied_at'])
+        .where('check_in_id', 'in', checkIns)
+        .orderBy('replied_at')
+        .orderBy('member_id')
+        .execute();
+      for (const row of rows) {
+        const checkIn = CheckInId.parse(row.check_in_id);
+        const replies = byCheckIn.get(checkIn) ?? [];
+        replies.push(fromRow(row));
+        byCheckIn.set(checkIn, replies);
+      }
+      return byCheckIn;
     },
   };
 }

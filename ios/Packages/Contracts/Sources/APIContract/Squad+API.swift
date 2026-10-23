@@ -54,7 +54,7 @@ extension WeeklyPlan {
 }
 
 extension Reaction {
-    public init(_ wire: Components.Schemas.ReactionList.ReactionsPayloadPayload) throws(ContractsError) {
+    public init(_ wire: Components.Schemas.ReactionEntry) throws(ContractsError) {
         self.init(
             member: try MemberID(wire: wire.member), emoji: try Emoji(wire.emoji),
             reactedAt: Timestamp(wire: wire.reactedAt))
