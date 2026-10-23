@@ -34,6 +34,39 @@ enum LaunchOptions {
         !ProcessInfo.processInfo.arguments.contains("-uitest-no-push")
     }
 
+    #if DEBUG
+    /// `-local-backend`: use local Supabase and the API on this Mac (`scripts/local-backend.sh`)
+    /// instead of the sample squad.
+    static var usesLocalBackend: Bool {
+        ProcessInfo.processInfo.arguments.contains("-local-backend")
+    }
+
+    /// `-test-member EMAIL PASSWORD`: sign in as this member of local Supabase instead of with
+    /// Apple, which the simulator can't do without the team's signing (`scripts/local-backend.sh`
+    /// makes `member1@wildcard.test` to `member3@…`).
+    static var testMember: (email: String, password: String)? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-test-member"), flag + 2 < arguments.count else { return nil }
+        return (arguments[flag + 1], arguments[flag + 2])
+    }
+    #endif
+
+    /// On the sample squad, `-onboarding`: open sign-up, then 今天 once it is done.
+    static var showsOnboarding: Bool {
+        ProcessInfo.processInfo.arguments.contains("-onboarding")
+    }
+
+    /// The moment sign-up starts at: noon on this week's Monday with `-uitest-monday`, so the
+    /// week step's default plan and screenshots don't change with the day the tests run;
+    /// otherwise now.
+    static var signUpTime: Date {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-monday") else { return .now }
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = .current
+        guard let monday = calendar.dateInterval(of: .weekOfYear, for: .now)?.start else { return .now }
+        return calendar.date(byAdding: .hour, value: 12, to: monday) ?? .now
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {

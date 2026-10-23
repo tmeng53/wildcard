@@ -88,7 +88,7 @@ struct MainTabs: View {
                     squad: { selection = .today },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: nil, terms: nil))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
         }
     }
 

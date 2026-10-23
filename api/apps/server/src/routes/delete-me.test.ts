@@ -289,7 +289,7 @@ describe('DELETE /me', () => {
       `/squads/${squad}/check-ins?from=${day}&to=${day}`,
       friend.token,
     );
-    expect(z.object({ checkIns: z.array(z.unknown()) }).parse(body).checkIns).toHaveLength(1);
+    expect(z.object({ posts: z.array(z.unknown()) }).parse(body).posts).toHaveLength(1);
 
     // The deleted session no longer works here.
     const again = await call('DELETE', '/me', me.token, { version: 1 });

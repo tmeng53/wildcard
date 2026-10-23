@@ -32,6 +32,7 @@ extension SquadmateToday {
     init(_ wire: Components.Schemas.SquadToday.MembersPayloadPayload) throws(ContractsError) {
         self.init(
             member: try MemberID(wire: wire.member), catchphrase: try wire.catchphrase.map(Catchphrase.init),
+            character: try wire.character.map(MemberCharacter.init),
             day: try LocalDay(wire.day),
             training: TrainingStatus(wire.training), latestMeal: wire.latestMeal.map(MealKind.init),
             plannedRest: wire.plannedRest, firstCheckInAt: wire.firstCheckInAt.map(Timestamp.init(wire:)))
@@ -53,8 +54,24 @@ extension WeeklyPlan {
     }
 }
 
+extension Components.Schemas.WeeklyPlanDraft {
+    /// The body of `PUT /me/weekly-plans/{weekStart}` that saves these days, the week's first
+    /// day first, with the week in the path.
+    public init(_ days: [PlanDay]) {
+        self.init(
+            version: ._1,
+            days: days.map { day in
+                switch day {
+                case .train(let activity):
+                    .case1(.init(kind: .train, sport: activity?.wireSport, customSport: activity?.wireCustomSport))
+                case .rest: .case2(.init(kind: .rest))
+                }
+            })
+    }
+}
+
 extension Reaction {
-    public init(_ wire: Components.Schemas.ReactionList.ReactionsPayloadPayload) throws(ContractsError) {
+    public init(_ wire: Components.Schemas.ReactionEntry) throws(ContractsError) {
         self.init(
             member: try MemberID(wire: wire.member), emoji: try Emoji(wire.emoji),
             reactedAt: Timestamp(wire: wire.reactedAt))

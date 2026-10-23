@@ -208,7 +208,7 @@ private struct Dice: DisclaimerWriter {
 @Test func withoutTheAIWriterTheDiceAnswer() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
-    try await stack.agreeToAI(author)
+    try await author.api.agreeToAI(copyVersion: 1)
     // The local API runs without ANTHROPIC_API_KEY, so it answers 503.
     await #expect(throws: APIError.unavailable) {
         try await author.api.disclaimerDrafts(reason: "早上没起来", style: .funny)

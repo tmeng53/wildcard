@@ -177,7 +177,18 @@ export class WeekNotStartedError extends AppError {
   }
 }
 
-/** Thrown for a plan more than 4 weeks after the current one. */
+/** Thrown for a change to the 饮食小目标 of a week that has started: they are set before it. */
+export class WeekStartedError extends AppError {
+  override readonly name = 'WeekStartedError';
+  readonly reason = 'WEEK_STARTED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly weekStart: string) {
+    super(`The week of ${weekStart} has started, so its 饮食小目标 can’t change.`);
+  }
+}
+
+/** Thrown for a plan or 饮食小目标 more than 4 weeks after the current one. */
 export class WeekTooFarAheadError extends AppError {
   override readonly name = 'WeekTooFarAheadError';
   readonly reason = 'WEEK_TOO_FAR_AHEAD';

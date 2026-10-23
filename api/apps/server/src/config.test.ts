@@ -13,14 +13,14 @@ const apple = {
   APPLE_TEAM_ID: 'TEAM123456',
   APPLE_KEY_ID: 'KEY1234567',
   APPLE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nMIGT\\n-----END PRIVATE KEY-----',
-  APPLE_CLIENT_ID: 'app.wildcard.ios',
+  APPLE_CLIENT_ID: 'com.wildcardsquad.wildcard',
 };
 const privateKey = generateKeyPairSync('ec', { namedCurve: 'P-256' })
   .privateKey.export({ type: 'pkcs8', format: 'pem' })
   .toString();
 const apns = {
   APNS_TEAM_ID: 'TEAM123456',
-  APNS_TOPIC: 'app.wildcard.ios',
+  APNS_TOPIC: 'com.wildcardsquad.wildcard',
   APNS_SANDBOX_KEY_ID: 'SBX123DEFG',
   APNS_SANDBOX_PRIVATE_KEY: privateKey,
   APNS_PRODUCTION_KEY_ID: 'PRD123DEFG',
@@ -32,6 +32,7 @@ describe('readConfig', () => {
     expect(readConfig(base)).toStrictEqual({
       port: 8080,
       databaseUrl: base.DATABASE_URL,
+      databaseCaFile: undefined,
       supabaseUrl: 'http://127.0.0.1:54321',
       supabaseSecretKey: 'sb_secret_local',
       publicUrl: new URL('http://localhost:8080'),
@@ -88,8 +89,23 @@ describe('readConfig', () => {
       teamId: 'TEAM123456',
       keyId: 'KEY1234567',
       privateKey: '-----BEGIN PRIVATE KEY-----\nMIGT\n-----END PRIVATE KEY-----',
-      clientId: 'app.wildcard.ios',
+      clientId: 'com.wildcardsquad.wildcard',
     });
+  });
+
+  it('refuses settings in the database URL once a CA file is given', () => {
+    for (const query of ['?sslmode=no-verify', '?ssl=no-verify', '?ssl=0']) {
+      expect(() =>
+        readConfig({
+          ...base,
+          DATABASE_URL: `${base.DATABASE_URL}${query}`,
+          DATABASE_CA_FILE: '/certs/ca.crt',
+        }),
+      ).toThrow('DATABASE_URL has a query string, whose settings would override DATABASE_CA_FILE');
+    }
+    expect(readConfig({ ...base, DATABASE_CA_FILE: '/certs/ca.crt' }).databaseCaFile).toBe(
+      '/certs/ca.crt',
+    );
   });
 
   it('refuses part of the key', () => {
@@ -107,7 +123,7 @@ describe('readConfig', () => {
       }).apns,
     ).toStrictEqual({
       teamId: 'TEAM123456',
-      topic: 'app.wildcard.ios',
+      topic: 'com.wildcardsquad.wildcard',
       keys: {
         sandbox: { keyId: 'SBX123DEFG', privateKey },
         production: { keyId: 'PRD123DEFG', privateKey },

@@ -2048,6 +2048,219 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadPostList`.
+        public struct SquadPostList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPostList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadPostList/version`.
+            public var version: Components.Schemas.SquadPostList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SquadPostList/posts`.
+            public var posts: [Components.Schemas.SquadPost]
+            /// Creates a new `SquadPostList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - posts:
+            public init(
+                version: Components.Schemas.SquadPostList.VersionPayload,
+                posts: [Components.Schemas.SquadPost]
+            ) {
+                self.version = version
+                self.posts = posts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case posts
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.SquadPostList.VersionPayload.self,
+                    forKey: .version
+                )
+                self.posts = try container.decode(
+                    [Components.Schemas.SquadPost].self,
+                    forKey: .posts
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "posts"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadPost`.
+        public struct SquadPost: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPost/checkIn`.
+            public var checkIn: Components.Schemas.CheckIn
+            /// Teammates’ emoji, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPost/reactions`.
+            public var reactions: [Components.Schemas.ReactionEntry]
+            /// Teammates’ replies, oldest first. Always empty but on a 请假条.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPost/replies`.
+            public var replies: [Components.Schemas.ReplyEntry]
+            /// Creates a new `SquadPost`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - reactions: Teammates’ emoji, oldest first.
+            ///   - replies: Teammates’ replies, oldest first. Always empty but on a 请假条.
+            public init(
+                checkIn: Components.Schemas.CheckIn,
+                reactions: [Components.Schemas.ReactionEntry],
+                replies: [Components.Schemas.ReplyEntry]
+            ) {
+                self.checkIn = checkIn
+                self.reactions = reactions
+                self.replies = replies
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case reactions
+                case replies
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.checkIn = try container.decode(
+                    Components.Schemas.CheckIn.self,
+                    forKey: .checkIn
+                )
+                self.reactions = try container.decode(
+                    [Components.Schemas.ReactionEntry].self,
+                    forKey: .reactions
+                )
+                self.replies = try container.decode(
+                    [Components.Schemas.ReplyEntry].self,
+                    forKey: .replies
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "checkIn",
+                    "reactions",
+                    "replies"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReactionEntry`.
+        public struct ReactionEntry: Codable, Hashable, Sendable {
+            /// Who reacted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionEntry/member`.
+            public var member: Swift.String
+            /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionEntry/emoji`.
+            public var emoji: Swift.String
+            /// When they reacted, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionEntry/reactedAt`.
+            public var reactedAt: Foundation.Date
+            /// Creates a new `ReactionEntry`.
+            ///
+            /// - Parameters:
+            ///   - member: Who reacted.
+            ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
+            ///   - reactedAt: When they reacted, in UTC with milliseconds.
+            public init(
+                member: Swift.String,
+                emoji: Swift.String,
+                reactedAt: Foundation.Date
+            ) {
+                self.member = member
+                self.emoji = emoji
+                self.reactedAt = reactedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case emoji
+                case reactedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.emoji = try container.decode(
+                    Swift.String.self,
+                    forKey: .emoji
+                )
+                self.reactedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .reactedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "member",
+                    "emoji",
+                    "reactedAt"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReplyEntry`.
+        public struct ReplyEntry: Codable, Hashable, Sendable {
+            /// Who replied.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/member`.
+            public var member: Swift.String
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approved = "approved"
+                case hug = "hug"
+                case together = "together"
+            }
+            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/kind`.
+            public var kind: Components.Schemas.ReplyEntry.KindPayload
+            /// When they replied, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReplyEntry/repliedAt`.
+            public var repliedAt: Foundation.Date
+            /// Creates a new `ReplyEntry`.
+            ///
+            /// - Parameters:
+            ///   - member: Who replied.
+            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
+            ///   - repliedAt: When they replied, in UTC with milliseconds.
+            public init(
+                member: Swift.String,
+                kind: Components.Schemas.ReplyEntry.KindPayload,
+                repliedAt: Foundation.Date
+            ) {
+                self.member = member
+                self.kind = kind
+                self.repliedAt = repliedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case kind
+                case repliedAt
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.member = try container.decode(
+                    Swift.String.self,
+                    forKey: .member
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.ReplyEntry.KindPayload.self,
+                    forKey: .kind
+                )
+                self.repliedAt = try container.decode(
+                    Foundation.Date.self,
+                    forKey: .repliedAt
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "member",
+                    "kind",
+                    "repliedAt"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInList`.
         public struct CheckInList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInList/version`.
@@ -2352,65 +2565,8 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/ReactionList/version`.
             public var version: Components.Schemas.ReactionList.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload`.
-            public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                /// Who reacted.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/member`.
-                public var member: Swift.String
-                /// The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/emoji`.
-                public var emoji: Swift.String
-                /// When they reacted, in UTC with milliseconds.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReactionList/ReactionsPayload/reactedAt`.
-                public var reactedAt: Foundation.Date
-                /// Creates a new `ReactionsPayloadPayload`.
-                ///
-                /// - Parameters:
-                ///   - member: Who reacted.
-                ///   - emoji: The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.
-                ///   - reactedAt: When they reacted, in UTC with milliseconds.
-                public init(
-                    member: Swift.String,
-                    emoji: Swift.String,
-                    reactedAt: Foundation.Date
-                ) {
-                    self.member = member
-                    self.emoji = emoji
-                    self.reactedAt = reactedAt
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case member
-                    case emoji
-                    case reactedAt
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.member = try container.decode(
-                        Swift.String.self,
-                        forKey: .member
-                    )
-                    self.emoji = try container.decode(
-                        Swift.String.self,
-                        forKey: .emoji
-                    )
-                    self.reactedAt = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .reactedAt
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "member",
-                        "emoji",
-                        "reactedAt"
-                    ])
-                }
-            }
             /// - Remark: Generated from `#/components/schemas/ReactionList/reactions`.
-            public typealias ReactionsPayload = [Components.Schemas.ReactionList.ReactionsPayloadPayload]
-            /// - Remark: Generated from `#/components/schemas/ReactionList/reactions`.
-            public var reactions: Components.Schemas.ReactionList.ReactionsPayload
+            public var reactions: [Components.Schemas.ReactionEntry]
             /// Creates a new `ReactionList`.
             ///
             /// - Parameters:
@@ -2418,7 +2574,7 @@ extension Components {
             ///   - reactions:
             public init(
                 version: Components.Schemas.ReactionList.VersionPayload,
-                reactions: Components.Schemas.ReactionList.ReactionsPayload
+                reactions: [Components.Schemas.ReactionEntry]
             ) {
                 self.version = version
                 self.reactions = reactions
@@ -2434,7 +2590,7 @@ extension Components {
                     forKey: .version
                 )
                 self.reactions = try container.decode(
-                    Components.Schemas.ReactionList.ReactionsPayload.self,
+                    [Components.Schemas.ReactionEntry].self,
                     forKey: .reactions
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
@@ -2581,73 +2737,8 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
             public var version: Components.Schemas.ReplyList.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload`.
-            public struct RepliesPayloadPayload: Codable, Hashable, Sendable {
-                /// Who replied.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/member`.
-                public var member: Swift.String
-                /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/kind`.
-                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case approved = "approved"
-                    case hug = "hug"
-                    case together = "together"
-                }
-                /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/kind`.
-                public var kind: Components.Schemas.ReplyList.RepliesPayloadPayload.KindPayload
-                /// When they replied, in UTC with milliseconds.
-                ///
-                /// - Remark: Generated from `#/components/schemas/ReplyList/RepliesPayload/repliedAt`.
-                public var repliedAt: Foundation.Date
-                /// Creates a new `RepliesPayloadPayload`.
-                ///
-                /// - Parameters:
-                ///   - member: Who replied.
-                ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-                ///   - repliedAt: When they replied, in UTC with milliseconds.
-                public init(
-                    member: Swift.String,
-                    kind: Components.Schemas.ReplyList.RepliesPayloadPayload.KindPayload,
-                    repliedAt: Foundation.Date
-                ) {
-                    self.member = member
-                    self.kind = kind
-                    self.repliedAt = repliedAt
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case member
-                    case kind
-                    case repliedAt
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.member = try container.decode(
-                        Swift.String.self,
-                        forKey: .member
-                    )
-                    self.kind = try container.decode(
-                        Components.Schemas.ReplyList.RepliesPayloadPayload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    self.repliedAt = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .repliedAt
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "member",
-                        "kind",
-                        "repliedAt"
-                    ])
-                }
-            }
             /// - Remark: Generated from `#/components/schemas/ReplyList/replies`.
-            public typealias RepliesPayload = [Components.Schemas.ReplyList.RepliesPayloadPayload]
-            /// - Remark: Generated from `#/components/schemas/ReplyList/replies`.
-            public var replies: Components.Schemas.ReplyList.RepliesPayload
+            public var replies: [Components.Schemas.ReplyEntry]
             /// Creates a new `ReplyList`.
             ///
             /// - Parameters:
@@ -2655,7 +2746,7 @@ extension Components {
             ///   - replies:
             public init(
                 version: Components.Schemas.ReplyList.VersionPayload,
-                replies: Components.Schemas.ReplyList.RepliesPayload
+                replies: [Components.Schemas.ReplyEntry]
             ) {
                 self.version = version
                 self.replies = replies
@@ -2671,7 +2762,7 @@ extension Components {
                     forKey: .version
                 )
                 self.replies = try container.decode(
-                    Components.Schemas.ReplyList.RepliesPayload.self,
+                    [Components.Schemas.ReplyEntry].self,
                     forKey: .replies
                 )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
@@ -4643,6 +4734,12 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             public var source: Components.Schemas.WeeklyPlan.SourcePayload
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/fuelGoals`.
+            public var fuelGoals: Components.Schemas.FuelGoals
+            /// The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/firstWeek`.
+            public var firstWeek: Swift.String?
             /// Creates a new `WeeklyPlan`.
             ///
             /// - Parameters:
@@ -4651,18 +4748,24 @@ extension Components {
             ///   - weekStart: The week’s Monday.
             ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
             ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            ///   - fuelGoals:
+            ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
             public init(
                 version: Components.Schemas.WeeklyPlan.VersionPayload,
                 member: Swift.String,
                 weekStart: Swift.String,
                 days: Components.Schemas.WeeklyPlan.DaysPayload,
-                source: Components.Schemas.WeeklyPlan.SourcePayload
+                source: Components.Schemas.WeeklyPlan.SourcePayload,
+                fuelGoals: Components.Schemas.FuelGoals,
+                firstWeek: Swift.String? = nil
             ) {
                 self.version = version
                 self.member = member
                 self.weekStart = weekStart
                 self.days = days
                 self.source = source
+                self.fuelGoals = fuelGoals
+                self.firstWeek = firstWeek
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -4670,6 +4773,8 @@ extension Components {
                 case weekStart
                 case days
                 case source
+                case fuelGoals
+                case firstWeek
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -4693,15 +4798,159 @@ extension Components {
                     Components.Schemas.WeeklyPlan.SourcePayload.self,
                     forKey: .source
                 )
+                self.fuelGoals = try container.decode(
+                    Components.Schemas.FuelGoals.self,
+                    forKey: .fuelGoals
+                )
+                self.firstWeek = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .firstWeek
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "member",
                     "weekStart",
                     "days",
-                    "source"
+                    "source",
+                    "fuelGoals",
+                    "firstWeek"
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/FuelGoals`.
+        @frozen public enum FuelGoalsPayload: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case1`.
+            public struct Case1Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case suggested = "suggested"
+                }
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/kind`.
+                public var kind: Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/suggestion`.
+                @frozen public enum SuggestionPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case water = "water"
+                    case cookAtHome = "cookAtHome"
+                    case veggies = "veggies"
+                    case lessBubbleTea = "lessBubbleTea"
+                    case breakfast = "breakfast"
+                    case earlyDinner = "earlyDinner"
+                }
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/suggestion`.
+                public var suggestion: Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload
+                /// Creates a new `Case1Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                ///   - suggestion:
+                public init(
+                    kind: Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload,
+                    suggestion: Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload
+                ) {
+                    self.kind = kind
+                    self.suggestion = suggestion
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case suggestion
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.kind = try container.decode(
+                        Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.suggestion = try container.decode(
+                        Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload.self,
+                        forKey: .suggestion
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "kind",
+                        "suggestion"
+                    ])
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case1`.
+            case case1(Components.Schemas.FuelGoalsPayload.Case1Payload)
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case2`.
+            public struct Case2Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case2/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case own = "own"
+                }
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case2/kind`.
+                public var kind: Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload
+                /// Trimmed, then 1 to 8 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case2/text`.
+                public var text: Swift.String
+                /// Creates a new `Case2Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                ///   - text: Trimmed, then 1 to 8 characters as people see them, on one line.
+                public init(
+                    kind: Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload,
+                    text: Swift.String
+                ) {
+                    self.kind = kind
+                    self.text = text
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case text
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.kind = try container.decode(
+                        Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.text = try container.decode(
+                        Swift.String.self,
+                        forKey: .text
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "kind",
+                        "text"
+                    ])
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case2`.
+            case case2(Components.Schemas.FuelGoalsPayload.Case2Payload)
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
+                do {
+                    self = .case1(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case2(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .case1(value):
+                    try value.encode(to: encoder)
+                case let .case2(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// The week’s 饮食小目标, at most 3 in the order picked, each once: `{"kind": "suggested", "suggestion": "water"}` for one the app suggests, or `{"kind": "own", "text": "少喝冰美式"}` in the member’s own words (1 to 8 characters, one line). Only those saved for this week; goals don’t carry over.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FuelGoals`.
+        public typealias FuelGoals = [Components.Schemas.FuelGoalsPayload]
         /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft`.
         public struct WeeklyPlanDraft: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/version`.
@@ -4866,6 +5115,48 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "days"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft`.
+        public struct FuelGoalsDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft/version`.
+            public var version: Components.Schemas.FuelGoalsDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft/goals`.
+            public var goals: Components.Schemas.FuelGoals
+            /// Creates a new `FuelGoalsDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - goals:
+            public init(
+                version: Components.Schemas.FuelGoalsDraft.VersionPayload,
+                goals: Components.Schemas.FuelGoals
+            ) {
+                self.version = version
+                self.goals = goals
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case goals
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.FuelGoalsDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.goals = try container.decode(
+                    Components.Schemas.FuelGoals.self,
+                    forKey: .goals
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "goals"
                 ])
             }
         }

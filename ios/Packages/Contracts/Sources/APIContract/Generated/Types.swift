@@ -53,9 +53,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)`.
     func saveCheckIn(_ input: Operations.SaveCheckIn.Input) async throws -> Operations.SaveCheckIn.Output
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -229,6 +229,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
     func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
+    /// Set the signed-in member’s 饮食小目标 for a week
+    ///
+    /// Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.
+    ///
+    /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
+    /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
+    func saveMyFuelGoals(_ input: Operations.SaveMyFuelGoals.Input) async throws -> Operations.SaveMyFuelGoals.Output
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -334,9 +341,9 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// A squad’s check-ins for a range of days
+    /// A squad’s check-ins for a range of days, with their reactions and replies
     ///
-    /// Check-ins sent to the squad by members still in it, newest day first. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -699,6 +706,23 @@ extension APIProtocol {
         body: Operations.SaveMyWeeklyPlan.Input.Body
     ) async throws -> Operations.SaveMyWeeklyPlan.Output {
         try await saveMyWeeklyPlan(Operations.SaveMyWeeklyPlan.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Set the signed-in member’s 饮食小目标 for a week
+    ///
+    /// Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.
+    ///
+    /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
+    /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
+    public func saveMyFuelGoals(
+        path: Operations.SaveMyFuelGoals.Input.Path,
+        headers: Operations.SaveMyFuelGoals.Input.Headers = .init(),
+        body: Operations.SaveMyFuelGoals.Input.Body
+    ) async throws -> Operations.SaveMyFuelGoals.Output {
+        try await saveMyFuelGoals(Operations.SaveMyFuelGoals.Input(
             path: path,
             headers: headers,
             body: body

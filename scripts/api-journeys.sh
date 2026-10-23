@@ -153,9 +153,9 @@ if want check-in; then
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
   expect 200
-  [ "$(jq -c '[.checkIns[].id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
+  [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
     fail "squad list should hold exactly $id and $first: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.checkIns | length' <<<"$body") check-ins)"
+  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins)"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
@@ -196,7 +196,7 @@ if want photo-upload; then
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
   expect 200
-  view_url="$(jq -r --arg id "$id" '.checkIns[] | select(.id == $id) | .meal.photos[0].url' <<<"$body")"
+  view_url="$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .meal.photos[0].url' <<<"$body")"
   [ -n "$view_url" ] && [ "$view_url" != null ] || fail "mate's list has no photo URL for $id: $body"
   curl -sf "$view_url" -o "$tmp/viewed.jpg" || fail "the view URL didn't serve the photo"
   cmp -s "$tmp/photo.jpg" "$tmp/viewed.jpg" || fail "the photo served differs from the one uploaded"
@@ -355,6 +355,22 @@ if want weekly-plan; then
   rows="$(psql "$DB_URL" -tAc "select count(*) from public.weekly_plans where member_id = '$planner'")"
   [ "$rows" = 1 ] || fail "only next week should be stored: $rows rows"
   echo "weekly-plan: one row stored, for $next"
+
+  goals='{"version":1,"goals":[{"kind":"suggested","suggestion":"water"},{"kind":"own","text":" 少喝冰美式 "}]}'
+  call PUT "/me/weekly-plans/$next/fuel-goals" "$planner_token" "$goals"
+  expect 200
+  [ "$(jq -c '[.fuelGoals, .firstWeek, .source]' <<<"$body")" = "[[{\"kind\":\"suggested\",\"suggestion\":\"water\"},{\"kind\":\"own\",\"text\":\"少喝冰美式\"}],\"$monday\",\"saved\"]" ] ||
+    fail "next week should hold the two goals, trimmed, and say the planner joined this week: $body"
+  call PUT "/me/weekly-plans/$next/fuel-goals" "$planner_token" "$goals"
+  expect 200
+  call GET "/me/weekly-plans/$later" "$planner_token"
+  expect 200
+  [ "$(jq -c .fuelGoals <<<"$body")" = '[]' ] || fail "goals shouldn't carry over to the week after: $body"
+  call PUT "/me/weekly-plans/$monday/fuel-goals" "$planner_token" "$goals"
+  expect 400 WEEK_STARTED
+  logged="$(psql "$DB_URL" -tAc "select count(*) from public.fuel_goal_events where member_id = '$planner'")"
+  [ "$logged" = 1 ] || fail "saving the same goals twice should log once: $logged rows"
+  echo "weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's refused (400 WEEK_STARTED); first week $monday"
 fi
 
 if want squad-today; then
@@ -547,6 +563,13 @@ if want replies; then
   [ "$(jq -c '[.replies[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"hug"]]')" ] ||
     fail "the author should see one reply, mate's hug: $body"
   echo "replies: the author sees one reply, mate's 抱抱, apart from the reaction"
+
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$me_token"
+  expect 200
+  [ "$(jq -c --arg e "$excuse" '.posts[] | select(.checkIn.id == $e) | [[.reactions[] | [.member, .emoji]], [.replies[] | [.member, .kind]]]' <<<"$body")" = \
+    "$(jq -cn --arg m "$mate" '[[[$m,"😂"]],[[$m,"hug"]]]')" ] ||
+    fail "the feed should list the 请假条 with mate's 😂 and 抱抱: $body"
+  echo "replies: the squad's feed lists the 请假条 with mate's 😂 and 抱抱 in one call"
 
   run="$(new_id)"
   call PUT "/check-ins/$run" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
