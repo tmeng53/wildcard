@@ -20,7 +20,11 @@ alter table public.squad_membership_events
 alter table public.squad_membership_events
   add column actor_id uuid references auth.users (id) on delete set null;
 
+-- The backfill sets who made each existing row, before the guard below allows such updates, so
+-- the guard is off for this one statement.
+alter table public.squad_membership_events disable trigger squad_membership_events_append_only;
 update public.squad_membership_events set actor_id = member_id;
+alter table public.squad_membership_events enable trigger squad_membership_events_append_only;
 
 create index squad_membership_events_actor_id_idx on public.squad_membership_events (actor_id);
 
