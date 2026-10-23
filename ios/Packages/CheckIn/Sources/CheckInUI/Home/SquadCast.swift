@@ -108,10 +108,9 @@ final class SquadCast {
     private func player(
         for member: MemberID, wearing look: Outfit, persona: Persona, species: String?, in pose: StagePose
     ) -> CharacterPlayer? {
-        guard let idle = try? Self.idle(in: pose, persona: persona, species: species) else { return nil }
+        guard let idle = try? pose.loop(persona: persona, species: species) else { return nil }
         if let existing = players[member], existing.look == look, existing.persona == persona {
-            if existing.idle != idle.name {
-                try? existing.player.wear(existing.player.figure, idle: idle)
+            if existing.idle != idle.name, (try? existing.player.wear(existing.player.figure, idle: idle)) != nil {
                 players[member]?.idle = idle.name
             }
             return existing.player
@@ -121,18 +120,6 @@ final class SquadCast {
         else { return nil }
         players[member] = Made(look: look, persona: persona, idle: idle.name, player: player)
         return player
-    }
-
-    /// What a teammate loops in `pose`: sitting on a rest day, holding up their 请假条, asleep at
-    /// night, and otherwise the persona's idle, until the sport moves land. The scene draws the
-    /// card and the "z z".
-    static func idle(in pose: StagePose, persona: Persona, species: String?) throws(AvatarError) -> Clip {
-        switch pose {
-        case .sitting: try PlaceholderCharacter.sitting(persona: persona)
-        case .holdingSign: try PlaceholderCharacter.holdingSign(persona: persona)
-        case .asleep: try PlaceholderCharacter.sleeping(persona: persona)
-        case .station, .inPlace, .standing: try PlaceholderCharacter.clip("idle", persona: persona, species: species)
-        }
     }
 
     /// The persona the member picked, or a stand-in before they made their character.
