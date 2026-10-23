@@ -31,6 +31,13 @@ import {
 } from '../test-kit/local-supabase.js';
 import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
+/** The `index`th entry of a list a test made long enough. */
+function nth<T>(list: readonly T[], index: number): T {
+  const entry = list[index];
+  if (entry === undefined) throw new Error(`No entry ${String(index)}.`);
+  return entry;
+}
+
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
 const photos = createSupabasePhotoStorage({
@@ -118,6 +125,7 @@ const create = (token: string, { id = randomUUID(), name }: { id?: string; name:
 
 const SquadBody = z.object({
   id: z.uuid(),
+  captain: z.uuid().nullable(),
   name: z.string(),
   inviteCode: z.string(),
   members: z.array(z.object({ userId: z.uuid(), joinedAt: z.string() })),
@@ -149,6 +157,7 @@ describe('PUT /squads/{squadId}', () => {
         name: z.literal('早八跑团'),
         inviteCode: z.string().regex(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/),
         createdAt: z.iso.datetime(),
+        captain: z.literal(me.userId),
         members: z.tuple([
           z.strictObject({ userId: z.literal(me.userId), joinedAt: z.iso.datetime() }),
         ]),
@@ -292,7 +301,8 @@ describe('reading and leaving squads', () => {
     expect([missing.status, reason(missing)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
     for (const [method, path] of [
       ['GET', '/squads/not-a-uuid'],
-      ['DELETE', '/squads/not-a-uuid/members/me'],
+      ['DELETE', `/squads/not-a-uuid/members/${me.userId}`],
+      ['DELETE', `/squads/${theirs.id}/members/me`],
     ] as const) {
       const malformed = await call({ method, path, token: friend.token });
       expect([malformed.status, reason(malformed)]).toStrictEqual([400, 'REQUEST_INVALID']);
@@ -303,13 +313,13 @@ describe('reading and leaving squads', () => {
 
     const left = await call({
       method: 'DELETE',
-      path: `/squads/${theirs.id}/members/me`,
+      path: `/squads/${theirs.id}/members/${me.userId}`,
       token: me.token,
     });
     expect([left.status, left.body]).toStrictEqual([204, undefined]);
     const leftAgain = await call({
       method: 'DELETE',
-      path: `/squads/${theirs.id}/members/me`,
+      path: `/squads/${theirs.id}/members/${me.userId}`,
       token: me.token,
     });
     expect(leftAgain.status).toBe(204);
@@ -317,6 +327,189 @@ describe('reading and leaving squads', () => {
     expect(SquadListBody.parse(after.body).squads.map(({ id }) => id)).toStrictEqual([mine.id]);
     const gone = await call({ method: 'GET', path: `/squads/${theirs.id}`, token: me.token });
     expect(reason(gone)).toBe('SQUAD_NOT_JOINED');
+  });
+});
+
+describe('the captain’s settings', () => {
+  /** A squad of `count` members, the first its captain. */
+  async function squadOf(count: number) {
+    const people = await Promise.all(Array.from({ length: count }, () => signUp()));
+    const [captain, rest] = [nth(people, 0), people.slice(1)];
+    const squad = await newSquad(captain.token);
+    for (const member of rest) {
+      const joined = await call({
+        method: 'POST',
+        path: `/squad-invites/${squad.inviteCode}/accept`,
+        token: member.token,
+      });
+      expect(joined.status).toBe(201);
+    }
+    return { squad, people };
+  }
+
+  it('lets only the captain rename the squad', async () => {
+    const { squad, people } = await squadOf(2);
+    const [ann, bo] = [nth(people, 0), nth(people, 1)];
+    expect(squad.captain).toBe(ann.userId);
+    const path = `/squads/${squad.id}/name`;
+    const renamed = await call({
+      method: 'PUT',
+      path,
+      token: ann.token,
+      body: { version: 1, name: ' 夜跑团 ' },
+    });
+    expect([renamed.status, SquadBody.parse(renamed.body).name]).toStrictEqual([200, '夜跑团']);
+    const refused = await call({
+      method: 'PUT',
+      path,
+      token: bo.token,
+      body: { version: 1, name: '乱改' },
+    });
+    expect([refused.status, reason(refused)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const tooLong = await call({
+      method: 'PUT',
+      path,
+      token: ann.token,
+      body: { version: 1, name: '跑'.repeat(21) },
+    });
+    expect(tooLong.status).toBe(400);
+  });
+
+  it('hands the captaincy on, and the new captain removes members', async () => {
+    const { squad, people } = await squadOf(3);
+    const [ann, bo, cy] = [nth(people, 0), nth(people, 1), nth(people, 2)];
+    const captainPath = `/squads/${squad.id}/captain`;
+    const stranger = await call({
+      method: 'PUT',
+      path: captainPath,
+      token: ann.token,
+      body: { version: 1, member: randomUUID() },
+    });
+    expect([stranger.status, reason(stranger)]).toStrictEqual([404, 'SQUAD_MEMBER_UNKNOWN']);
+    const handed = await call({
+      method: 'PUT',
+      path: captainPath,
+      token: ann.token,
+      body: { version: 1, member: bo.userId },
+    });
+    expect([handed.status, SquadBody.parse(handed.body).captain]).toStrictEqual([200, bo.userId]);
+
+    const byAnn = await call({
+      method: 'DELETE',
+      path: `/squads/${squad.id}/members/${cy.userId}`,
+      token: ann.token,
+    });
+    expect([byAnn.status, reason(byAnn)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const byBo = await call({
+      method: 'DELETE',
+      path: `/squads/${squad.id}/members/${cy.userId}`,
+      token: bo.token,
+    });
+    expect(byBo.status).toBe(204);
+    const seen = await call({ method: 'GET', path: `/squads/${squad.id}`, token: bo.token });
+    expect(memberIds(seen.body)).toStrictEqual([ann.userId, bo.userId]);
+
+    await call({
+      method: 'DELETE',
+      path: `/squads/${squad.id}/members/${bo.userId}`,
+      token: bo.token,
+    });
+    const after = await call({ method: 'GET', path: `/squads/${squad.id}`, token: ann.token });
+    expect(SquadBody.parse(after.body).captain).toBe(ann.userId);
+  });
+});
+
+describe('the squad’s scene', () => {
+  const SceneBody = z.object({
+    week: z.string(),
+    scene: z.string(),
+    pickers: z.object({ by: z.string(), members: z.array(z.uuid()) }),
+    picked: z.object({ scene: z.string(), by: z.uuid().nullable() }).nullable(),
+    canPick: z.boolean(),
+    scenes: z.array(z.object({ scene: z.string(), weeksAgo: z.int().nullable() })),
+  });
+
+  it('starts on the gym, and lets the captain pick once when nobody won the crown', async () => {
+    const [ann, bo] = [await signUp(), await signUp()];
+    const squad = await newSquad(ann.token);
+    await call({
+      method: 'POST',
+      path: `/squad-invites/${squad.inviteCode}/accept`,
+      token: bo.token,
+    });
+
+    const first = await call({
+      method: 'GET',
+      path: `/squads/${squad.id}/scene`,
+      token: ann.token,
+    });
+    const scene = SceneBody.parse(first.body);
+    expect(scene).toMatchObject({
+      scene: 'gym',
+      pickers: { by: 'captain', members: [ann.userId] },
+      picked: null,
+      canPick: true,
+      scenes: [
+        { scene: 'track', weeksAgo: null },
+        { scene: 'pool', weeksAgo: null },
+        { scene: 'gym', weeksAgo: 0 },
+        { scene: 'tennis', weeksAgo: null },
+        { scene: 'climbing', weeksAgo: null },
+      ],
+    });
+    const forBo = await call({ method: 'GET', path: `/squads/${squad.id}/scene`, token: bo.token });
+    expect(SceneBody.parse(forBo.body).canPick).toBe(false);
+
+    const path = `/squads/${squad.id}/weeks/${scene.week}/scene`;
+    const notBo = await call({
+      method: 'PUT',
+      path,
+      token: bo.token,
+      body: { version: 1, scene: 'gym' },
+    });
+    expect([notBo.status, reason(notBo)]).toStrictEqual([403, 'NOT_SCENE_PICKER']);
+    const picked = await call({
+      method: 'PUT',
+      path,
+      token: ann.token,
+      body: { version: 1, scene: 'pool' },
+    });
+    expect(picked.status).toBe(201);
+    expect(SceneBody.parse(picked.body)).toMatchObject({
+      scene: 'pool',
+      picked: { scene: 'pool', by: ann.userId },
+      canPick: false,
+    });
+    const retry = await call({
+      method: 'PUT',
+      path,
+      token: ann.token,
+      body: { version: 1, scene: 'pool' },
+    });
+    expect(retry.status).toBe(200);
+    const again = await call({
+      method: 'PUT',
+      path,
+      token: ann.token,
+      body: { version: 1, scene: 'gym' },
+    });
+    expect([again.status, reason(again)]).toStrictEqual([409, 'SCENE_ALREADY_PICKED']);
+
+    const nextWeek = new Date(Date.parse(scene.week) + 7 * 86_400_000).toISOString().slice(0, 10);
+    const closed = await call({
+      method: 'PUT',
+      path: `/squads/${squad.id}/weeks/${nextWeek}/scene`,
+      token: ann.token,
+      body: { version: 1, scene: 'gym' },
+    });
+    expect([closed.status, reason(closed)]).toStrictEqual([400, 'SCENE_WEEK_CLOSED']);
+    const stranger = await signUp();
+    const hidden = await call({
+      method: 'GET',
+      path: `/squads/${squad.id}/scene`,
+      token: stranger.token,
+    });
+    expect([hidden.status, reason(hidden)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 });
 

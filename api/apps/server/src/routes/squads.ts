@@ -35,6 +35,15 @@ export const Squad = z
     name: z.string().meta({ description: 'The squad’s name, as its creator typed it, trimmed.' }),
     inviteCode: inviteCodeField,
     createdAt: z.iso.datetime().meta({ description: 'When it was created, in UTC.' }),
+    captain: z
+      .uuid()
+      .nullable()
+      .meta({
+        description:
+          'The captain (队长), who renames the squad, removes members and hands the captaincy on: ' +
+          'the creator at first; when the captain leaves, the earliest member to join. Null only ' +
+          'once everyone has left.',
+      }),
     members: z
       .array(
         z.strictObject({
@@ -58,6 +67,17 @@ const SquadList = z
   .openapi('SquadList');
 
 const NewSquad = z.strictObject({ version: bodyVersion(1), name: SquadName }).openapi('NewSquad');
+
+const SquadNameBody = z
+  .strictObject({ version: bodyVersion(1), name: SquadName })
+  .openapi('SquadNameChange');
+
+const SquadCaptainBody = z
+  .strictObject({
+    version: bodyVersion(1),
+    member: z.uuid().meta({ description: 'The member to hand the captaincy to.' }),
+  })
+  .openapi('SquadCaptainChange');
 
 const SquadInvite = z
   .strictObject({
@@ -94,6 +114,7 @@ function wire(squad: SquadRecord) {
     name: squad.name,
     inviteCode: squad.inviteCode,
     createdAt: squad.createdAt.toISOString(),
+    captain: squad.captain,
     members: squad.members.map(({ member, joinedAt }) => ({
       userId: member,
       joinedAt: joinedAt.toISOString(),
@@ -127,8 +148,9 @@ export interface PublicRoutes {
 }
 
 /**
- * Squads: create one with a name, preview and join one by invite code, list mine, read one, and
- * leave. A squad is never deleted; its members leave.
+ * Squads: create one with a name, preview and join one by invite code, list mine, read one,
+ * leave, and the captain's settings (rename, remove a member, hand on the captaincy). A squad is
+ * never deleted; its members leave.
  */
 export function squads(deps: {
   readonly verifyToken: VerifyToken;
@@ -199,20 +221,69 @@ export function squads(deps: {
     },
   });
 
-  const leave = createRoute({
-    method: 'delete',
-    path: '/squads/{squadId}/members/me',
-    operationId: 'leaveSquad',
-    summary: 'Leave a squad',
-    description:
-      'Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the ' +
-      'member isn’t in changes nothing.',
+  const captainOnly = problem(
+    'The caller isn’t the squad’s captain (`NOT_SQUAD_CAPTAIN`), or isn’t in it (`SQUAD_NOT_JOINED`)',
+  );
+
+  const rename = createRoute({
+    method: 'put',
+    path: '/squads/{squadId}/name',
+    operationId: 'renameSquad',
+    summary: 'Rename a squad',
+    description: 'Only its captain. The same name again changes nothing.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { params: squadParams },
+    request: {
+      params: squadParams,
+      body: { required: true, content: { 'application/json': { schema: SquadNameBody } } },
+    },
+    responses: {
+      200: squadResponse('The squad, renamed'),
+      400: problem('Not a valid squad id or name'),
+      403: captainOnly,
+      ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
+  const handCaptaincy = createRoute({
+    method: 'put',
+    path: '/squads/{squadId}/captain',
+    operationId: 'handSquadCaptaincy',
+    summary: 'Hand the captaincy to another member',
+    description: 'Only the captain. Naming the captain again changes nothing.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: squadParams,
+      body: { required: true, content: { 'application/json': { schema: SquadCaptainBody } } },
+    },
+    responses: {
+      200: squadResponse('The squad, with its new captain'),
+      400: problem('Not a valid squad id or member id'),
+      403: captainOnly,
+      404: problem('The member isn’t in the squad (`SQUAD_MEMBER_UNKNOWN`)'),
+      ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
+  const removeMember = createRoute({
+    method: 'delete',
+    path: '/squads/{squadId}/members/{memberId}',
+    operationId: 'removeSquadMember',
+    summary: 'Leave a squad, or remove a member from it',
+    description:
+      'Anyone may take themselves out (leaving); only the captain may take out someone else. ' +
+      'A captain who leaves hands the captaincy to the earliest member left. Their check-ins ' +
+      'leave the squad’s list with them. Safe to repeat: someone not in the squad changes nothing.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ squadId: SquadId, memberId: MemberId }) },
     responses: {
       204: { description: 'Not in the squad any more' },
-      400: problem('Not a valid squad id'),
+      400: problem('Not a valid squad id or member id'),
+      403: captainOnly,
       ...signedInFailures,
     },
   });
@@ -319,10 +390,28 @@ export function squads(deps: {
       });
       return c.json(wire(squad), 200);
     })
-    .openapi(leave, async (c) => {
-      await deps.squads.leave({
+    .openapi(rename, async (c) => {
+      const squad = await deps.squads.rename({
         squad: c.req.valid('param').squadId,
         member: caller(c.var.caller.userId),
+        name: c.req.valid('json').name,
+      });
+      return c.json(wire(squad), 200);
+    })
+    .openapi(handCaptaincy, async (c) => {
+      const squad = await deps.squads.handCaptaincy({
+        squad: c.req.valid('param').squadId,
+        member: caller(c.var.caller.userId),
+        to: MemberId.parse(c.req.valid('json').member),
+      });
+      return c.json(wire(squad), 200);
+    })
+    .openapi(removeMember, async (c) => {
+      const { squadId, memberId } = c.req.valid('param');
+      await deps.squads.removeMember({
+        squad: squadId,
+        member: caller(c.var.caller.userId),
+        removed: memberId,
       });
       return c.body(null, 204);
     })
