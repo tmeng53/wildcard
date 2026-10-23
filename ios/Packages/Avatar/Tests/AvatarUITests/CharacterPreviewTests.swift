@@ -13,8 +13,8 @@ import UniformTypeIdentifiers
 /// strip of each persona's cheer, the five cheering together as the player shows it, each
 /// persona's idle loop, frame by frame as animated GIFs, a sheet of the color swatches, one
 /// of every body and hair, one of every face part with each persona's cheer face, a character
-/// changing into each sport's kit, the 上场 entrance with the welcome after it, and 我's typing and
-/// crying.
+/// changing into each sport's kit, the 上场 entrance with the welcome after it, 我's typing and
+/// crying, and the squad's 排队入场 lineup.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -85,6 +85,7 @@ struct CharacterPreviewTests {
         try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
         try writeSpecies(to: folder.appendingPathComponent("08-species-moves.gif"))
         try writeMoves(to: folder)
+        try writeLineup(to: folder.appendingPathComponent("13-lineup.gif"))
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
