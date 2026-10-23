@@ -88,7 +88,9 @@ struct MainTabs: View {
                     squad: { selection = .today },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+            )
+            .accentTone(.brand)
         }
     }
 

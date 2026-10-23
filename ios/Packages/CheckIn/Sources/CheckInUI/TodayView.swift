@@ -35,11 +35,13 @@ public struct TodayView: View {
         ZStack {
             if model.step == .disclaimer {
                 DisclaimerComposer(model: model)
+                    .accentTone(.brand)
                     .transition(.opacity)
             }
 
             if case .composing(let kind) = model.step {
                 ComposeView(model: model, kind: kind)
+                    .accentTone(.brand)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
             }
@@ -55,6 +57,7 @@ public struct TodayView: View {
         .sheet(isPresented: isPickingPhotos) {
             PhotoStep(model: model)
                 .environment(\.sceneTheme, theme)
+                .accentTone(.brand)
         }
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
