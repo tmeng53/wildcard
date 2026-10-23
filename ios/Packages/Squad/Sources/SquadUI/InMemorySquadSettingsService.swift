@@ -1,4 +1,3 @@
-import AvatarArt
 import Contracts
 import Foundation
 import SquadDomain
@@ -37,9 +36,8 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
             : ["小林", "Coco", "Mia", "阿杰", "大卫"].map {
                 Bundle.module.localizedString(forKey: $0, value: nil, table: nil)
             }
-        let look = CharacterLook(outfit: PlaceholderCharacter.lifter, persona: .energetic)
         var characters: [MemberID: MemberCharacter] = [:]
-        for (id, name) in zip(ids, names) {
+        for (id, (name, look)) in zip(ids, zip(names, sampleLooks)) {
             if let nickname = try? Nickname(name) { characters[id] = MemberCharacter(nickname: nickname, look: look) }
         }
         let squadName =
@@ -119,3 +117,15 @@ extension Squad {
         Squad(id: id, name: name, inviteCode: inviteCode, members: members, captain: captain)
     }
 }
+
+/// The sample squad's looks, one each, so the page shows a squad of different characters.
+private let sampleLooks: [CharacterLook] = [
+    CharacterLook(
+        persona: "energetic", variants: ["body": "peach", "hair": "long", "top": "tank", "bottom": "shorts"]),
+    CharacterLook(persona: "drama", variants: ["body": "lop", "top": "hoodie", "bottom": "leggings"]),
+    CharacterLook(persona: "deadpan", variants: ["body": "calico", "top": "tee", "bottom": "greenshorts"]),
+    CharacterLook(
+        persona: "energetic", variants: ["body": "peach", "hair": "curls", "top": "tee", "bottom": "shorts"],
+        colors: ["body": "#C68A5E"]),
+    CharacterLook(persona: "shy", variants: ["body": "shiba", "top": "jersey", "bottom": "shorts"]),
+]
