@@ -11,9 +11,29 @@ create table public.push_settings (
   member_id uuid not null references auth.users (id) on delete cascade,
   topic text not null,
   enabled boolean not null,
-  updated_at timestamptz not null default now(),
   primary key (member_id, topic)
 );
+
+-- Every switch a member flipped, oldest first, with where it was left. Written in the same
+-- statement as the change, and only when the switch changed. Only grows
+-- (public.member_log_append_only); deleting the account takes it.
+create table public.push_setting_events (
+  id bigint generated always as identity primary key,
+  member_id uuid not null references auth.users (id) on delete cascade,
+  topic text not null,
+  enabled boolean not null,
+  at timestamptz not null default now()
+);
+
+create index push_setting_events_member_id_idx on public.push_setting_events (member_id);
+
+create trigger push_setting_events_append_only
+  before update or delete on public.push_setting_events
+  for each row execute function public.member_log_append_only();
+
+create trigger push_setting_events_no_truncate
+  before truncate on public.push_setting_events
+  for each statement execute function public.member_log_append_only();
 
 -- Daily pushes ---------------------------------------------------------------------------
 
@@ -30,4 +50,5 @@ create table public.daily_pushes (
 
 -- No grants (the default privileges in the first migration see to that) and no policies.
 alter table public.push_settings enable row level security;
+alter table public.push_setting_events enable row level security;
 alter table public.daily_pushes enable row level security;

@@ -19,6 +19,7 @@ A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), an
 | Component | Use it for |
 | --- | --- |
 | `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, scene accent), a second action (44, grey), a quiet text action |
+| `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask |
 | `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button; a sign-up step's back button and ink segments |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |
@@ -27,7 +28,7 @@ A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), an
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows, a setting's on/off row |
-| `SpeechBubble`, `SceneFloor`, `CharacterStage` | What the character says; the scene's floor; the character's stage in the editor |
+| `SpeechBubble`, `SceneFloor`, `CharacterStage` | What the character says (with an action, a button that opens it); the scene's floor behind sign-up; the character's stage in the editor |
 
 Conventions, as SwiftUI's own controls do it: the label comes first (`Text`, so it goes through the String Catalog), state comes in as a value (`isSelected`, `status`) and changes go out through an `action` closure or a `Binding`; button variants are `ButtonStyle`s; the scene comes from the environment (`\.sceneTheme`); UI-test identifiers are set by the caller. Each component's doc comment says when to use it and what its states look like, and the style guide shows every state.
 

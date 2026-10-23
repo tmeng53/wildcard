@@ -23,17 +23,6 @@ struct StringCatalogCoverageTests {
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
-    @Test func everySportAndCategoryHasAChineseAndEnglishName() throws {
-        let keys =
-            Sport.allCases.map { "sport.\($0.rawValue)" }
-            + SportCategory.allCases.map { "sportCategory.\($0.rawValue)" }
-        #expect(keys.count == 64)
-        let missing = try keys.filter { try Self.english(for: $0) == nil || Self.value(for: $0, in: "zh-Hans") == nil }
-        #expect(missing.isEmpty, "sports without both names: \(missing)")
-        #expect(try Self.value(for: "sport.pickleball", in: "zh-Hans") == "匹克球")
-        #expect(try Self.english(for: "sportCategory.everyday") == "Everyday counts")
-    }
-
     @Test func diceLinesHaveEnglish() throws {
         let source = try String(
             contentsOf: Self.sources.appendingPathComponent("DiceDisclaimerWriter.swift"), encoding: .utf8)

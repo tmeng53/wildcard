@@ -15,6 +15,15 @@ import Testing
     #expect(catalog.swatches(for: "body", wearing: "calico").isEmpty)
     #expect(catalog.originals["top"]?["tee"] == RGBAColor(hex: "#2D5BA0"))
     #expect(catalog.swatches["hat"] == nil)
+    #expect(catalog.variants["eyes"] == ["dot", "happy", "round", "sharp", "sleepy", "sparkle"])
+    #expect(catalog.variants["brows"] == ["arched", "bold", "soft", "worried"])
+    #expect(catalog.variants["mouth"] == ["cat", "grin", "oh", "smile", "smirk"])
+    #expect(catalog.variants["cheeks"] == ["flushed", "freckles", "rosy"])
+    #expect(catalog.variants["glasses"] == ["round", "square"])
+    #expect(catalog.swatches(for: "eyes", wearing: "round").isEmpty == false)
+    #expect(catalog.swatches(for: "brows", wearing: "soft") == catalog.swatches(for: "hair", wearing: "bob"))
+    #expect(catalog.swatches["mouth"] == nil && catalog.swatches["cheeks"] == nil && catalog.swatches["glasses"] == nil)
+    #expect(catalog.defaults == ["eyes": "round", "mouth": "smile"])
     for (slot, byVariant) in catalog.swatches {
         #expect(Set(byVariant.keys) == Set(catalog.originals[slot].map { Array($0.keys) } ?? []))
     }

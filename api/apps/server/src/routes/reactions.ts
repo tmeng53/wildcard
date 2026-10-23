@@ -1,8 +1,8 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   CheckInId,
+  Emoji,
   MemberId,
-  ReactionKind,
   type CheckIns,
   type Reaction as ReactionRecord,
 } from '@wildcard/check-ins';
@@ -12,13 +12,14 @@ import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
-const kind = ReactionKind.meta({
-  description: 'Which reaction. The app shows each with its own copy.',
+const emoji = Emoji.meta({
+  description: 'The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.',
+  example: '❤️',
 });
 
 const reactionFields = {
   member: z.uuid().meta({ description: 'Who reacted.' }),
-  kind,
+  emoji,
   reactedAt: z.iso.datetime().meta({
     description: 'When they reacted, in UTC with milliseconds.',
     example: '2026-10-18T20:05:00.000Z',
@@ -26,18 +27,20 @@ const reactionFields = {
 };
 
 export const ReactionDraft = z
-  .strictObject({ version: bodyVersion(1), kind })
+  .strictObject({ version: bodyVersion(1), emoji })
   .openapi('ReactionDraft');
 export const Reaction = z
   .strictObject({ version: bodyVersion(1), ...reactionFields })
   .openapi('Reaction');
+/** A reaction in a list, which carries the version. */
+export const ReactionEntry = z.strictObject(reactionFields).openapi('ReactionEntry');
 const ReactionList = z
-  .strictObject({ version: bodyVersion(1), reactions: z.array(z.strictObject(reactionFields)) })
+  .strictObject({ version: bodyVersion(1), reactions: z.array(ReactionEntry) })
   .openapi('ReactionList');
 
-const wire = ({ member, kind, reactedAt }: ReactionRecord) => ({
+export const wireReaction = ({ member, emoji: left, reactedAt }: ReactionRecord) => ({
   member,
-  kind,
+  emoji: left,
   reactedAt: reactedAt.toISOString(),
 });
 
@@ -121,9 +124,9 @@ export function reactions(deps: {
       const reacted = await deps.checkIns.react({
         checkIn: c.req.valid('param').checkInId,
         member: MemberId.parse(c.var.caller.userId),
-        kind: c.req.valid('json').kind,
+        emoji: c.req.valid('json').emoji,
       });
-      const body = { version: 1 as const, ...wire(reacted.reaction) };
+      const body = { version: 1 as const, ...wireReaction(reacted.reaction) };
       return reacted.outcome === 'created' ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(remove, async (c) => {
@@ -138,6 +141,6 @@ export function reactions(deps: {
         checkIn: c.req.valid('param').checkInId,
         viewer: MemberId.parse(c.var.caller.userId),
       });
-      return c.json({ version: 1 as const, reactions: found.map(wire) }, 200);
+      return c.json({ version: 1 as const, reactions: found.map(wireReaction) }, 200);
     });
 }

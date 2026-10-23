@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 import type { CheckInId, CheckInRecord, MemberId } from './check-in.js';
 import { trainedDays, type Week } from './days.js';
-import { ReactionKind, type Reaction } from './reaction.js';
+import type { Emoji, Reaction } from './reaction.js';
 
 // The Sunday summary (周日战报): a squad's week as awards and counts. Every award and every
 // count is one entry in a registry below, keyed by its kind, so adding one is adding a kind to
-// its enum and its rule next to it; the compiler asks for both. Reaction counts come from
-// `ReactionKind`, so a new reaction shows up here without a change. Awards only ever name
+// its enum and its rule next to it; the compiler asks for both. Reactions are counted by emoji,
+// any emoji anyone left, most-used first. Awards only ever name
 // winners: nobody is ranked last, and a member's own counts go only to them.
 
 /** One member's week in a squad: their plan and what they sent to the squad. */
@@ -126,13 +126,17 @@ export interface WeekSummary {
   readonly awards: Award[];
   readonly squad: {
     readonly stats: Stat[];
-    readonly reactions: { readonly kind: ReactionKind; readonly count: number }[];
+    /** Each emoji teammates left on the week's check-ins, most-used first. */
+    readonly reactions: { readonly emoji: Emoji; readonly count: number }[];
   };
   readonly me: {
     readonly stats: Stat[];
-    /** Reactions the member got on the week's check-ins, and left on teammates' ones. */
+    /**
+     * Reactions the member got on the week's check-ins, and left on teammates' ones, by emoji:
+     * those they got first, most-received first, then those they only left, most-left first.
+     */
     readonly reactions: {
-      readonly kind: ReactionKind;
+      readonly emoji: Emoji;
       readonly received: number;
       readonly given: number;
     }[];
@@ -151,8 +155,12 @@ export function summarizeWeek(facts: WeekFacts, viewer: MemberId): WeekSummary {
   const all = [...facts.reactions.entries()].flatMap(([checkIn, reactions]) =>
     reactions.map((reaction) => ({ checkIn, reaction })),
   );
-  const count = (kind: ReactionKind, keep: (each: (typeof all)[number]) => boolean) =>
-    all.filter((each) => each.reaction.kind === kind && keep(each)).length;
+  const received = byEmoji(
+    all.flatMap(({ checkIn, reaction }) => (mine.has(checkIn) ? [reaction] : [])),
+  );
+  const given = byEmoji(
+    all.flatMap(({ reaction }) => (reaction.member === viewer ? [reaction] : [])),
+  );
 
   return {
     awards: AwardKind.options
@@ -160,15 +168,25 @@ export function summarizeWeek(facts: WeekFacts, viewer: MemberId): WeekSummary {
       .filter(({ winners }) => winners.length > 0),
     squad: {
       stats: statsOf(facts.members),
-      reactions: ReactionKind.options.map((kind) => ({ kind, count: count(kind, () => true) })),
+      reactions: [...byEmoji(all.map(({ reaction }) => reaction))].map(([emoji, count]) => ({
+        emoji,
+        count,
+      })),
     },
     me: {
       stats: statsOf(me === undefined ? [] : [me]),
-      reactions: ReactionKind.options.map((kind) => ({
-        kind,
-        received: count(kind, ({ checkIn }) => mine.has(checkIn)),
-        given: count(kind, ({ reaction }) => reaction.member === viewer),
+      reactions: [...new Set([...received.keys(), ...given.keys()])].map((emoji) => ({
+        emoji,
+        received: received.get(emoji) ?? 0,
+        given: given.get(emoji) ?? 0,
       })),
     },
   };
+}
+
+/** How many of these reactions each emoji has, most first; a tie keeps the order they came in. */
+function byEmoji(reactions: readonly Reaction[]): Map<Emoji, number> {
+  const counts = new Map<Emoji, number>();
+  for (const { emoji } of reactions) counts.set(emoji, (counts.get(emoji) ?? 0) + 1);
+  return new Map([...counts].sort(([, a], [, b]) => b - a));
 }

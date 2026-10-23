@@ -33,6 +33,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 // Wednesday 2026-10-21, 1pm in Los Angeles and already 5am Thursday in Tokyo.

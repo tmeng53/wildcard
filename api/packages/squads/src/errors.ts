@@ -14,6 +14,20 @@ export class SquadNotJoinedError extends AppError {
   }
 }
 
+/**
+ * Thrown when a member without a current AI consent creates or joins a squad. The app asks for
+ * it on the squad step and tries again. Drafts answer with the same reason.
+ */
+export class AiConsentRequiredError extends AppError {
+  override readonly name = 'AiConsentRequiredError';
+  readonly reason = 'AI_CONSENT_REQUIRED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('Agree to the AI terms before joining or making a squad.');
+  }
+}
+
 /** Thrown for an invite code no squad has: a typo, or a link from somewhere else. */
 export class InviteCodeUnknownError extends AppError {
   override readonly name = 'InviteCodeUnknownError';

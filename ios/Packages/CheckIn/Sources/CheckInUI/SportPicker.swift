@@ -2,6 +2,7 @@
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// Every sport, by category with search (spec P4). One pick closes it.
@@ -42,12 +43,7 @@ struct SportPicker: View {
     }
 
     private var shown: [Sport] {
-        let needle = query.trimmingCharacters(in: .whitespaces)
-        guard !needle.isEmpty else { return category.sports }
-        return Sport.allCases.filter {
-            $0.localizedName.localizedCaseInsensitiveContains(needle)
-                || $0.rawValue.localizedCaseInsensitiveContains(needle)
-        }
+        query.trimmingCharacters(in: .whitespaces).isEmpty ? category.sports : Sport.matching(query)
     }
 
     private var categories: [CategoryBarItem<SportCategory>] {

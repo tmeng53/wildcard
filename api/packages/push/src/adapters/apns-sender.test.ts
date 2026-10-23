@@ -45,15 +45,20 @@ afterAll(
 );
 
 const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-const key = {
-  keyId: 'ABC123DEFG',
+const other = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+const pem = (key: typeof privateKey) => key.export({ type: 'pkcs8', format: 'pem' }).toString();
+// Production signs with `privateKey`, sandbox with its own.
+const account = {
   teamId: 'TEAM123456',
-  privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
-  topic: 'app.wildcard.ios',
+  topic: 'com.wildcardsquad.wildcard',
+  keys: {
+    production: { keyId: 'ABC123DEFG', privateKey: pem(privateKey) },
+    sandbox: { keyId: 'SBX123DEFG', privateKey: pem(other.privateKey) },
+  },
 };
 let clock = Date.parse('2026-10-19T05:00:00.000Z');
 function senderFor() {
-  return createApnsSender(key, {
+  return createApnsSender(account, {
     origins: { sandbox: origin, production: origin },
     now: () => clock,
   });
@@ -64,7 +69,7 @@ const device: Device = {
   environment: 'production',
 };
 const reaction: PushNotification = {
-  alert: { key: 'push.reaction.cheer', args: ['3'] },
+  alert: { key: 'push.dailyProgress.received', args: ['3'] },
   category: 'reaction',
   thread: 'check-in:1',
   collapseId: 'reactions:1',
@@ -86,14 +91,14 @@ describe('the APNs sender', () => {
     const [request] = received;
     expect(request?.headers[':method']).toBe('POST');
     expect(request?.headers[':path']).toBe(`/3/device/${'a1'.repeat(32)}`);
-    expect(request?.headers['apns-topic']).toBe('app.wildcard.ios');
+    expect(request?.headers['apns-topic']).toBe('com.wildcardsquad.wildcard');
     expect(request?.headers['apns-push-type']).toBe('alert');
     expect(request?.headers['apns-priority']).toBe('10');
     expect(request?.headers['apns-collapse-id']).toBe('reactions:1');
     expect(JSON.parse(request?.body ?? '')).toStrictEqual({
       version: 1,
       aps: {
-        alert: { 'loc-key': 'push.reaction.cheer', 'loc-args': ['3'] },
+        alert: { 'loc-key': 'push.dailyProgress.received', 'loc-args': ['3'] },
         category: 'reaction',
         'thread-id': 'check-in:1',
         'interruption-level': 'active',
@@ -116,6 +121,40 @@ describe('the APNs sender', () => {
     ).toBe(true);
   });
 
+  it('signs a sandbox token with the sandbox key and a production token with the production key', async () => {
+    received.length = 0;
+    answer = { status: 200 };
+    const apns = senderFor();
+    await apns.send({ ...device, environment: 'sandbox' }, reaction);
+    await apns.send(device, reaction);
+    apns.close();
+    const [sandbox, production] = received.map((request) => {
+      const [header, claims, signature] = Jwt.parse(
+        z
+          .string()
+          .parse(request.headers.authorization)
+          .replace(/^bearer /, '')
+          .split('.'),
+      );
+      return {
+        header: decode(header),
+        claims,
+        signature,
+        signed: Buffer.from(`${header}.${claims}`),
+      };
+    });
+    expect(sandbox?.header).toStrictEqual({ alg: 'ES256', kid: 'SBX123DEFG' });
+    expect(production?.header).toStrictEqual({ alg: 'ES256', kid: 'ABC123DEFG' });
+    expect(
+      verify(
+        'sha256',
+        sandbox?.signed ?? Buffer.alloc(0),
+        { key: other.publicKey, dsaEncoding: 'ieee-p1363' },
+        Buffer.from(sandbox?.signature ?? '', 'base64url'),
+      ),
+    ).toBe(true);
+  });
+
   it('sends a quiet notification at low priority, with no sound and no collapse id', async () => {
     received.length = 0;
     answer = { status: 200 };
@@ -130,7 +169,7 @@ describe('the APNs sender', () => {
     expect(
       z.looseObject({ aps: z.looseObject({}) }).parse(JSON.parse(request?.body ?? '')).aps,
     ).toStrictEqual({
-      alert: { 'loc-key': 'push.reaction.cheer', 'loc-args': ['3'] },
+      alert: { 'loc-key': 'push.dailyProgress.received', 'loc-args': ['3'] },
       category: 'reaction',
       'thread-id': 'check-in:1',
       'interruption-level': 'passive',
@@ -198,7 +237,7 @@ describe('the APNs sender', () => {
 
   it('throws when Apple can’t be reached', async () => {
     // Nothing listens on port 1.
-    const apns = createApnsSender(key, {
+    const apns = createApnsSender(account, {
       origins: { sandbox: 'http://127.0.0.1:1', production: 'http://127.0.0.1:1' },
     });
     await expect(apns.send(device, reaction)).rejects.toBeInstanceOf(PushUnavailableError);

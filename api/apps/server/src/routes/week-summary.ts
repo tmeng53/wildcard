@@ -1,11 +1,11 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { LocalDay, MemberId, SquadId, WeekStart, type CheckIns } from '@wildcard/check-ins';
+import { Emoji, LocalDay, MemberId, SquadId, WeekStart, type CheckIns } from '@wildcard/check-ins';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
-import { AWARD_COPY, languageOf, REACTION_COPY, STAT_COPY } from './week-summary-copy.js';
+import { AWARD_COPY, languageOf, STAT_COPY } from './week-summary-copy.js';
 
 const count = (description: string) => z.int().min(0).meta({ description });
 
@@ -60,10 +60,7 @@ const Award = z
   })
   .openapi('WeekAward');
 
-const reaction = {
-  kind: openKind('Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死).'),
-  label: words('Its name, in the language asked for.'),
-};
+const reaction = { emoji: Emoji.meta({ description: 'Any one emoji.', example: '❤️' }) };
 
 export const WeekSummaryBody = z
   .strictObject({
@@ -87,8 +84,12 @@ export const WeekSummaryBody = z
     squadTotals: z.strictObject({
       stats: z.array(Stat).meta({ description: 'Each count added up over the members.' }),
       reactions: z
-        .array(z.strictObject({ ...reaction, count: count('Reactions of this kind.') }))
-        .meta({ description: 'Teammates’ reactions on the week’s check-ins, one entry a kind.' }),
+        .array(z.strictObject({ ...reaction, count: count('Reactions with this emoji.') }))
+        .meta({
+          description:
+            'Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, ' +
+            'most-used first.',
+        }),
     }),
     me: z.strictObject({
       stats: z.array(Stat).meta({ description: 'The signed-in member’s own counts.' }),
@@ -96,11 +97,15 @@ export const WeekSummaryBody = z
         .array(
           z.strictObject({
             ...reaction,
-            received: count('Reactions of this kind on their check-ins.'),
-            given: count('Reactions of this kind they left on teammates’ check-ins.'),
+            received: count('Reactions with this emoji on their check-ins.'),
+            given: count('Reactions with this emoji they left on teammates’ check-ins.'),
           }),
         )
-        .meta({ description: 'One entry a reaction kind.' }),
+        .meta({
+          description:
+            'One entry an emoji they got or left: those they got first, most-received first, ' +
+            'then those they only left, most-left first.',
+        }),
     }),
   })
   .openapi('WeekSummary');
@@ -174,20 +179,11 @@ export function weekSummary(deps: {
         })),
         squadTotals: {
           stats: statsOf(summary.squad.stats),
-          reactions: summary.squad.reactions.map(({ kind, count: total }) => ({
-            kind,
-            label: REACTION_COPY[kind][language],
-            count: total,
-          })),
+          reactions: summary.squad.reactions,
         },
         me: {
           stats: statsOf(summary.me.stats),
-          reactions: summary.me.reactions.map(({ kind, received, given }) => ({
-            kind,
-            label: REACTION_COPY[kind][language],
-            received,
-            given,
-          })),
+          reactions: summary.me.reactions,
         },
       },
       200,

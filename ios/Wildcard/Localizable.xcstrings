@@ -1,6 +1,46 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feed"
+          }
+        }
+      }
+    },
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup"
+          }
+        }
+      }
+    },
+    "我": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me"
+          }
+        }
+      }
+    },
     "push.weeklyAwards.ready": {
       "comment": "The push when a squad's Sunday 战报 is ready. It never says who won anything.",
       "extractionState": "manual",

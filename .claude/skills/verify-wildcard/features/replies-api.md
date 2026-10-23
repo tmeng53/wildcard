@@ -2,9 +2,9 @@
 
 **Status: Ready** since 请假条 replies, driven over HTTP by `scripts/api-journeys.sh replies`; CI's `supabase` job runs it. The app's screens for it aren't covered here.
 
-A member posts a 今日请假条; a teammate replies 准了 (`approved`), repeats it, changes it to 抱抱 (`hug`) and also leaves a 笑死 reaction, which is kept apart; the author sees the one reply. A 练了 takes no replies, the author can't reply to their own 请假条, and someone outside the squad can't see it at all. Taking the reply off leaves the reaction. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+A member posts a 今日请假条; a teammate replies 准了 (`approved`), repeats it, changes it to 抱抱 (`hug`) and also leaves a 😂 reaction, which is kept apart; the author sees the one reply, and the squad's feed (`GET /squads/{squadId}/check-ins`) lists the 请假条 with both in one call. A 练了 takes no replies, the author can't reply to their own 请假条, and someone outside the squad can't see it at all. Taking the reply off leaves the reaction. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
-Code: `api/apps/server/src/routes/replies.ts`, `api/packages/check-ins/src/use-cases/check-ins/reply-to-disclaimer.ts`.
+Code: `api/apps/server/src/routes/replies.ts`, `api/packages/check-ins/src/use-cases/check-ins/reply-to-disclaimer.ts`, `api/packages/check-ins/src/use-cases/check-ins/list-squad-check-ins.ts`.
 
 ## Drive it
 
@@ -23,6 +23,7 @@ server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 replies: mate replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too
 replies: the author sees one reply, mate's 抱抱, apart from the reaction
+replies: the squad's feed lists the 请假条 with mate's 😂 and 抱抱 in one call
 replies: a 练了 refused (400 NOT_A_DISCLAIMER), own 请假条 refused (400 OWN_DISCLAIMER_REPLY), outsider sees nothing (404), unknown kind refused (400)
 replies: mate took it off (204, again 204), no reply row left, the reaction kept
 api-journeys: ok (replies)
@@ -32,7 +33,7 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 ## Evidence
 
-- `psql "$DB_URL" -c "select * from public.disclaimer_replies where check_in_id = '<excuse>'"`: no rows at the end, while `check_in_reactions` still holds the mate's `lol` (the script checks both).
+- `psql "$DB_URL" -c "select * from public.disclaimer_replies where check_in_id = '<excuse>'"`: no rows at the end, while `check_in_reactions` still holds the mate's 😂 (the script checks both).
 
 ## Worth probing
 

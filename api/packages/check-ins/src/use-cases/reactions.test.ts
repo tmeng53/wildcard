@@ -19,8 +19,13 @@ import { createPostgresReactionStore } from '../adapters/postgres-reaction-store
 import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
+import { Emoji } from '../domain/reaction.js';
 import { CheckInNotFoundError, OwnCheckInReactionError } from '../errors.js';
 import { createCheckIns } from './check-ins.js';
+
+const heart = Emoji.parse('❤️');
+const muscle = Emoji.parse('💪');
+const laughing = Emoji.parse('😂');
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
 const db = new Kysely<CheckInTables & SquadTables>({
@@ -33,6 +38,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 let now = new Date('2026-10-18T20:00:00.000Z');
@@ -100,17 +106,17 @@ describe('reacting to a check-in', () => {
     const run = await trained(tracy, squad);
 
     now = new Date('2026-10-18T20:05:00.000Z');
-    const reacted = await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    const reacted = await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
     expect([reacted.outcome, reacted.reaction]).toStrictEqual([
       'created',
-      { member: ann, kind: 'cheer', reactedAt: new Date('2026-10-18T20:05:00.000Z') },
+      { member: ann, emoji: heart, reactedAt: new Date('2026-10-18T20:05:00.000Z') },
     ]);
     now = new Date('2026-10-18T20:06:00.000Z');
-    await checkIns.react({ checkIn: run.id, member: bo, kind: 'highlight' });
+    await checkIns.react({ checkIn: run.id, member: bo, emoji: muscle });
 
     const expected = [
-      { member: ann, kind: 'cheer', reactedAt: new Date('2026-10-18T20:05:00.000Z') },
-      { member: bo, kind: 'highlight', reactedAt: new Date('2026-10-18T20:06:00.000Z') },
+      { member: ann, emoji: heart, reactedAt: new Date('2026-10-18T20:05:00.000Z') },
+      { member: bo, emoji: muscle, reactedAt: new Date('2026-10-18T20:06:00.000Z') },
     ];
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual(
       expected,
@@ -123,25 +129,25 @@ describe('reacting to a check-in', () => {
     const run = await trained(tracy, await newSquad(tracy, ann));
 
     now = new Date('2026-10-18T20:05:00.000Z');
-    await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
     now = new Date('2026-10-18T20:07:00.000Z');
-    const again = await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    const again = await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
     expect([again.outcome, again.reaction.reactedAt]).toStrictEqual([
       'unchanged',
       new Date('2026-10-18T20:05:00.000Z'),
     ]);
     now = new Date('2026-10-18T20:09:00.000Z');
-    const changed = await checkIns.react({ checkIn: run.id, member: ann, kind: 'lol' });
+    const changed = await checkIns.react({ checkIn: run.id, member: ann, emoji: laughing });
     expect(changed.outcome).toBe('changed');
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
-      { member: ann, kind: 'lol', reactedAt: new Date('2026-10-18T20:09:00.000Z') },
+      { member: ann, emoji: laughing, reactedAt: new Date('2026-10-18T20:09:00.000Z') },
     ]);
   });
 
   it('takes a reaction off, and taking it off again is fine', async () => {
     const [tracy, ann] = [await newMember(), await newMember()];
     const run = await trained(tracy, await newSquad(tracy, ann));
-    await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
 
     await checkIns.removeReaction({ checkIn: run.id, member: ann });
     await checkIns.removeReaction({ checkIn: run.id, member: ann });
@@ -152,7 +158,7 @@ describe('reacting to a check-in', () => {
     const tracy = await newMember();
     const run = await trained(tracy, await newSquad(tracy));
     await expect(
-      checkIns.react({ checkIn: run.id, member: tracy, kind: 'cheer' }),
+      checkIns.react({ checkIn: run.id, member: tracy, emoji: heart }),
     ).rejects.toStrictEqual(new OwnCheckInReactionError());
   });
 
@@ -165,14 +171,14 @@ describe('reacting to a check-in', () => {
     const missing = CheckInId.parse(randomUUID());
 
     for (const attempt of [
-      () => checkIns.react({ checkIn: run.id, member: stranger, kind: 'cheer' }),
+      () => checkIns.react({ checkIn: run.id, member: stranger, emoji: heart }),
       () => checkIns.removeReaction({ checkIn: run.id, member: stranger }),
       () => checkIns.listReactions({ checkIn: run.id, viewer: stranger }),
     ]) {
       await expect(attempt()).rejects.toStrictEqual(new CheckInNotFoundError(run.id));
     }
     await expect(
-      checkIns.react({ checkIn: missing, member: ann, kind: 'cheer' }),
+      checkIns.react({ checkIn: missing, member: ann, emoji: heart }),
     ).rejects.toStrictEqual(new CheckInNotFoundError(missing));
   });
 
@@ -183,12 +189,12 @@ describe('reacting to a check-in', () => {
 
     await leave(squad, ann);
     await expect(
-      checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' }),
+      checkIns.react({ checkIn: run.id, member: ann, emoji: heart }),
     ).rejects.toBeInstanceOf(CheckInNotFoundError);
     await join(squad, ann);
     await leave(squad, tracy);
     await expect(
-      checkIns.react({ checkIn: run.id, member: bo, kind: 'cheer' }),
+      checkIns.react({ checkIn: run.id, member: bo, emoji: heart }),
     ).rejects.toBeInstanceOf(CheckInNotFoundError);
   });
 });
@@ -201,18 +207,18 @@ describe('who sees which reactions', () => {
     const climbers = await newSquad(tracy, bo);
     const run = await trained(tracy, runners, climbers);
     now = new Date('2026-10-18T20:05:00.000Z');
-    await checkIns.react({ checkIn: run.id, member: ann, kind: 'cheer' });
+    await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
     now = new Date('2026-10-18T20:06:00.000Z');
-    await checkIns.react({ checkIn: run.id, member: bo, kind: 'lol' });
+    await checkIns.react({ checkIn: run.id, member: bo, emoji: laughing });
 
     const annsReaction = {
       member: ann,
-      kind: 'cheer',
+      emoji: heart,
       reactedAt: new Date('2026-10-18T20:05:00.000Z'),
     };
     const bosReaction = {
       member: bo,
-      kind: 'lol',
+      emoji: laughing,
       reactedAt: new Date('2026-10-18T20:06:00.000Z'),
     };
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: ann })).toStrictEqual([
@@ -231,5 +237,55 @@ describe('who sees which reactions', () => {
     expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
       annsReaction,
     ]);
+  });
+
+  it('lists each post in a squad’s feed with the reactions its viewer may see', async () => {
+    const [tracy, ann, bo] = [await newMember(), await newMember(), await newMember()];
+    const runners = await newSquad(tracy, ann);
+    const climbers = await newSquad(tracy, bo);
+    const run = await trained(tracy, runners, climbers);
+    const quiet = await trained(ann, runners);
+    now = new Date('2026-10-18T20:05:00.000Z');
+    await checkIns.react({ checkIn: run.id, member: ann, emoji: heart });
+    now = new Date('2026-10-18T20:06:00.000Z');
+    await checkIns.react({ checkIn: run.id, member: bo, emoji: laughing });
+    const days = { from: '2026-10-18', to: '2026-10-18' };
+    const feed = async (viewer: MemberId, squad: SquadId) =>
+      (await checkIns.listForSquad({ viewer, squad, days })).map(
+        ({ checkIn, reactions, replies }) => ({
+          id: checkIn.id,
+          emoji: reactions.map(({ member, emoji }) => [member, emoji]),
+          replies,
+        }),
+      );
+
+    // Ann sees the runners' feed, so only her own heart on Tracy's run; Tracy sees both.
+    const annSees = [
+      { id: run.id, emoji: [[ann, heart]], replies: [] },
+      { id: quiet.id, emoji: [], replies: [] },
+    ];
+    expect(new Set(await feed(ann, runners))).toStrictEqual(new Set(annSees));
+    expect(await feed(tracy, climbers)).toStrictEqual([
+      {
+        id: run.id,
+        emoji: [
+          [ann, heart],
+          [bo, laughing],
+        ],
+        replies: [],
+      },
+    ]);
+    // Each post's reactions are the same as reading them one post at a time.
+    for (const viewer of [tracy, ann]) {
+      for (const { checkIn, reactions } of await checkIns.listForSquad({
+        viewer,
+        squad: runners,
+        days,
+      })) {
+        expect(reactions).toStrictEqual(
+          await checkIns.listReactions({ checkIn: checkIn.id, viewer }),
+        );
+      }
+    }
   });
 });

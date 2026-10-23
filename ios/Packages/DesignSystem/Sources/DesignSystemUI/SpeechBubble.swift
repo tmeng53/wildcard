@@ -8,6 +8,8 @@ import SwiftUI
 /// optional title line (name · kind); it wraps to show all of it, since those are words people
 /// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest. White on the scene, light grey on a page.
 /// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
+/// Given an `action`, it is a button that opens what it says (a caption opens its post) and
+/// shrinks while held like every other control.
 public struct SpeechBubble: View {
     public enum Kind {
         case line
@@ -18,6 +20,7 @@ public struct SpeechBubble: View {
     private let text: Text
     private let kind: Kind
     private let surface: CardSurface
+    private let action: (() -> Void)?
 
     private static let lineWidth: Double = 160
     private static let infoWidth: Double = 200
@@ -25,13 +28,23 @@ public struct SpeechBubble: View {
     private static let verticalPadding: Double = 6
     private static let horizontalPadding: Double = 10
 
-    public init(_ text: Text, kind: Kind = .line, on surface: CardSurface = .scene) {
+    public init(_ text: Text, kind: Kind = .line, on surface: CardSurface = .scene, action: (() -> Void)? = nil) {
         self.text = text
         self.kind = kind
         self.surface = surface
+        self.action = action
     }
 
     public var body: some View {
+        if let action {
+            Button(action: action) { bubble }
+                .buttonStyle(PressableButtonStyle())
+        } else {
+            bubble
+        }
+    }
+
+    private var bubble: some View {
         content
             .padding(.vertical, Self.verticalPadding)
             .padding(.horizontal, Self.horizontalPadding)

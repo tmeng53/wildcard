@@ -1,8 +1,10 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
+import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
-import type { Reaction, ReactionKind, SaveOutcome } from './domain/reaction.js';
+import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { Reply, ReplyKind } from './domain/reply.js';
+import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
@@ -16,8 +18,8 @@ export interface CheckInStore {
   find(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** Saves a new check-in with its audience and photos, or says which uniqueness rule stopped it. */
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
-  /** Days ever with a 练了 from `member`. Several 练了 on one day count once. */
-  countTrainedDays(member: MemberId): Promise<number>;
+  /** Everything `member` ever checked in, counted by kind. */
+  totals(member: MemberId): Promise<CheckInTotals>;
   /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
   listForSquad(
     query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },
@@ -46,7 +48,7 @@ export interface ReactionStore {
   /** Saves the member's reaction on a check-in, in place of any they left before. */
   save(
     checkIn: CheckInId,
-    reaction: { readonly member: MemberId; readonly kind: ReactionKind; readonly reactedAt: Date },
+    reaction: { readonly member: MemberId; readonly emoji: Emoji; readonly reactedAt: Date },
   ): Promise<SaveOutcome>;
   /** Takes the member's reaction off a check-in, if there is one. */
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
@@ -76,6 +78,8 @@ export interface ReplyStore {
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;
   /** A 请假条's replies, oldest first. */
   list(checkIn: CheckInId): Promise<Reply[]>;
+  /** The replies to each of these check-ins, oldest first; a check-in without any is left out. */
+  listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Reply[]>>;
 }
 
 /** Where uploaded photo files are kept. */
@@ -87,7 +91,10 @@ export interface PhotoFiles {
 /** The current time. */
 export type Clock = () => Date;
 
-/** Where members' weekly plans are kept: a row only for each week the member changed. */
+/**
+ * Where members' weekly plans and 饮食小目标 are kept: a row only for each week the member
+ * changed.
+ */
 export interface WeeklyPlanStore {
   /** The member's plan saved for `weekStart` or, failing that, for the latest week before it. */
   latestFrom(
@@ -99,6 +106,14 @@ export interface WeeklyPlanStore {
     readonly member: MemberId;
     readonly weekStart: WeekStart;
     readonly days: PlanDays;
+  }): Promise<void>;
+  /** The member's 饮食小目标 saved for `weekStart`; goals don't carry over to later weeks. */
+  fuelGoals(member: MemberId, weekStart: WeekStart): Promise<FuelGoals | undefined>;
+  /** Saves the member's 饮食小目标 for a week, replacing any saved before. */
+  saveFuelGoals(goals: {
+    readonly member: MemberId;
+    readonly weekStart: WeekStart;
+    readonly goals: FuelGoals;
   }): Promise<void>;
 }
 

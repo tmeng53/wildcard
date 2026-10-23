@@ -19,8 +19,11 @@ import { createPostgresReactionStore } from '../adapters/postgres-reaction-store
 import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
+import { Emoji } from '../domain/reaction.js';
 import { CheckInNotFoundError, NotADisclaimerError, OwnDisclaimerReplyError } from '../errors.js';
 import { createCheckIns } from './check-ins.js';
+
+const laughing = Emoji.parse('😂');
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
 const db = new Kysely<CheckInTables & SquadTables>({
@@ -33,6 +36,7 @@ afterAll(() => db.destroy());
 const membership = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
 
 let now = new Date('2026-10-18T20:00:00.000Z');
@@ -153,16 +157,18 @@ describe('replying to a 请假条', () => {
 
     now = new Date('2026-10-18T20:05:00.000Z');
     await checkIns.reply({ checkIn: excuse.id, member: ann, kind: 'approved' });
-    await checkIns.react({ checkIn: excuse.id, member: ann, kind: 'lol' });
+    await checkIns.react({ checkIn: excuse.id, member: ann, emoji: laughing });
     await checkIns.removeReaction({ checkIn: excuse.id, member: ann });
     expect(await checkIns.listReplies({ checkIn: excuse.id, viewer: tracy })).toStrictEqual([
       { member: ann, kind: 'approved', repliedAt: new Date('2026-10-18T20:05:00.000Z') },
     ]);
-    await checkIns.react({ checkIn: excuse.id, member: ann, kind: 'lol' });
+    await checkIns.react({ checkIn: excuse.id, member: ann, emoji: laughing });
     await checkIns.removeReply({ checkIn: excuse.id, member: ann });
     expect(
-      (await checkIns.listReactions({ checkIn: excuse.id, viewer: tracy })).map(({ kind }) => kind),
-    ).toStrictEqual(['lol']);
+      (await checkIns.listReactions({ checkIn: excuse.id, viewer: tracy })).map(
+        ({ emoji }) => emoji,
+      ),
+    ).toStrictEqual(['😂']);
   });
 
   it('takes a reply off, and taking it off again is fine', async () => {
@@ -242,5 +248,53 @@ describe('replying to a 请假条', () => {
     expect(await checkIns.listReplies({ checkIn: excuse.id, viewer: tracy })).toStrictEqual([
       annsReply,
     ]);
+  });
+
+  it('lists each 请假条 in the squad’s feed with the replies its viewer may see, apart from reactions', async () => {
+    const [tracy, ann, bo] = [await newMember(), await newMember(), await newMember()];
+    // Ann is in the runners only, Bo in the climbers only; Tracy sends to both.
+    const runners = await newSquad(tracy, ann);
+    const climbers = await newSquad(tracy, bo);
+    const slip = await posted('disclaimer', { member: tracy, audience: [runners, climbers] });
+    const annsSlip = await posted('disclaimer', { member: ann, audience: [runners] });
+    now = new Date('2026-10-18T20:05:00.000Z');
+    await checkIns.reply({ checkIn: slip.id, member: ann, kind: 'hug' });
+    await checkIns.react({ checkIn: slip.id, member: ann, emoji: Emoji.parse('🥹') });
+    await checkIns.reply({ checkIn: slip.id, member: bo, kind: 'approved' });
+    await checkIns.reply({ checkIn: annsSlip.id, member: tracy, kind: 'together' });
+    const days = { from: '2026-10-18', to: '2026-10-18' };
+    const feed = async (viewer: MemberId, squad: SquadId) =>
+      new Map(
+        (await checkIns.listForSquad({ viewer, squad, days })).map(
+          ({ checkIn, reactions, replies }) => [
+            checkIn.id,
+            {
+              emoji: reactions.map(({ member, emoji }) => [member, emoji]),
+              replies: replies.map(({ member, kind }) => [member, kind]),
+            },
+          ],
+        ),
+      );
+
+    expect(await feed(ann, runners)).toStrictEqual(
+      new Map([
+        [slip.id, { emoji: [[ann, '🥹']], replies: [[ann, 'hug']] }],
+        [annsSlip.id, { emoji: [], replies: [[tracy, 'together']] }],
+      ]),
+    );
+    expect(await feed(bo, climbers)).toStrictEqual(
+      new Map([[slip.id, { emoji: [], replies: [[bo, 'approved']] }]]),
+    );
+    // Each post's replies are the same as reading them one post at a time.
+    for (const [viewer, squad] of [
+      [tracy, runners],
+      [tracy, climbers],
+      [ann, runners],
+      [bo, climbers],
+    ] as const) {
+      for (const { checkIn, replies } of await checkIns.listForSquad({ viewer, squad, days })) {
+        expect(replies).toStrictEqual(await checkIns.listReplies({ checkIn: checkIn.id, viewer }));
+      }
+    }
   });
 });

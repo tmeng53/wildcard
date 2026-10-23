@@ -71,58 +71,31 @@ describe('titlesOf', () => {
     ).toBeUndefined();
   });
 
-  it('refuses no titles, or more than 3', () => {
-    const title = { title: '狠人', speech: '周三去跑了。', move: 'pump' as const };
-    const many = [1, 2, 3, 4].map((n) => ({ ...title, title: `狠人${String(n)}` }));
-    expect(titlesOf({ ...good, awards: [{ member: 'A', titles: [] }] }, [ana])).toBeUndefined();
-    expect(titlesOf({ ...good, awards: [{ member: 'A', titles: many }] }, [ana])).toBeUndefined();
+  it('refuses a title or line that is blank once trimmed', () => {
+    const blank = (title: string, speech: string) => ({
+      ...good,
+      awards: [{ member: 'A', titles: [{ title, speech, move: 'pump' as const }] }],
+    });
+    expect(titlesOf(blank(' ', '周三下着雨还去跑了。'), [ana])).toBeUndefined();
+    expect(titlesOf(blank('雨中狠人', '  '), [ana])).toBeUndefined();
+  });
+
+  it('keeps a title and line on one line', () => {
+    const title = {
+      title: '雨中\n狠人',
+      speech: '周三下着雨\r\n 还去\u2028跑了。',
+      move: 'pump' as const,
+    };
     expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: many.slice(0, 3) }] }, [ana])?.get(ana),
-    ).toHaveLength(3);
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
+    ).toStrictEqual([{ title: '雨中 狠人', speech: '周三下着雨 还去 跑了。', move: 'pump' }]);
   });
 
-  it('refuses a title over 6 characters, a line over 24, or either empty', () => {
-    const one = (title: string, speech: string) =>
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [{ title, speech, move: 'cheer' }] }] }, [
-        ana,
-      ]);
-    expect(one('网球场钉子户', '一'.repeat(24))?.get(ana)?.[0]?.title).toBe('网球场钉子户');
-    expect(one('网球场钉子户长', '周三去跑了。')).toBeUndefined();
-    expect(one('狠人', '一'.repeat(25))).toBeUndefined();
-    expect(one(' ', '周三去跑了。')).toBeUndefined();
-  });
-
-  it('refuses a title used twice in the squad', () => {
-    const same = { title: '雨中狠人', speech: '周三去跑了。', move: 'pump' as const };
+  it('leaves the words to the model: the prompt says what they may say', () => {
+    const title = { title: '本周第一', speech: '这周练得最多，排第一。', move: 'pump' as const };
     expect(
-      titlesOf(
-        {
-          ...good,
-          awards: [
-            { member: 'A', titles: [same] },
-            { member: 'B', titles: [same] },
-          ],
-        },
-        [ana, bo],
-      ),
-    ).toBeUndefined();
-  });
-
-  it('refuses body words, ranking words, self-harm words, emoji and line breaks', () => {
-    for (const speech of [
-      '这周体重稳住了。',
-      '本周垫底选手。',
-      '周三去跑了🔥',
-      '周三\n去跑了',
-      '不想活了也要去跑',
-    ]) {
-      expect(
-        titlesOf(
-          { ...good, awards: [{ member: 'A', titles: [{ title: '狠人', speech, move: 'pump' }] }] },
-          [ana],
-        ),
-      ).toBeUndefined();
-    }
+      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
+    ).toStrictEqual([title]);
   });
 });
 
@@ -139,18 +112,18 @@ const checkIn = (overrides: Partial<WeekCheckIn>): WeekCheckIn => ({
 
 describe('topCheckInOf', () => {
   it('is the check-in with the most reactions, the latest on a tie', () => {
-    const first = checkIn({ id: 'c0000000-0000-4000-8000-000000000001', reactions: { cheer: 2 } });
+    const first = checkIn({ id: 'c0000000-0000-4000-8000-000000000001', reactions: { '❤️': 2 } });
     const second = checkIn({
       id: 'c0000000-0000-4000-8000-000000000002',
       kind: 'cheatMeal',
       sport: undefined,
       caption: '火锅',
       photos: ['a/b', 'a/c'],
-      reactions: { lol: 3 },
+      reactions: { '😂': 3 },
     });
     const third = checkIn({
       id: 'c0000000-0000-4000-8000-000000000003',
-      reactions: { cheer: 1, lol: 2 },
+      reactions: { '❤️': 1, '😂': 2 },
     });
     expect(topCheckInOf([first, second, third])).toStrictEqual({
       checkIn: third.id,
@@ -158,7 +131,7 @@ describe('topCheckInOf', () => {
       kind: 'trained',
       sport: 'run',
       photos: [],
-      reactions: { cheer: 1, lol: 2 },
+      reactions: { '❤️': 1, '😂': 2 },
     });
     expect(topCheckInOf([first, second])).toStrictEqual({
       checkIn: second.id,
@@ -166,7 +139,7 @@ describe('topCheckInOf', () => {
       kind: 'cheatMeal',
       caption: '火锅',
       photos: ['a/b', 'a/c'],
-      reactions: { lol: 3 },
+      reactions: { '😂': 3 },
     });
   });
 
@@ -178,7 +151,7 @@ describe('topCheckInOf', () => {
 const Prompt = z.object({ members: z.unknown(), moves: z.array(z.object({ id: z.string() })) });
 
 describe('promptFor', () => {
-  it('lists members by letter with their days, times on their own clock, and the moves, never words about self-harm', () => {
+  it('lists members by letter with their days, times on their own clock, and the moves', () => {
     const prompt = Prompt.parse(
       JSON.parse(
         promptFor({
@@ -209,7 +182,9 @@ describe('promptFor', () => {
     expect(prompt.members).toStrictEqual([
       {
         member: 'A',
-        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '请假条', reason: '（略）' }],
+        checkIns: [
+          { day: '2026-10-21 周三', time: '12:00', kind: '请假条', reason: '最近不想活了' },
+        ],
       },
       {
         member: 'B',
@@ -228,29 +203,5 @@ describe('promptFor', () => {
     ]);
     expect(prompt.moves.map(({ id }) => id)).toContain('flat');
     expect(JSON.stringify(prompt)).not.toContain(ana);
-  });
-});
-
-describe('promptFor, a sport the member named', () => {
-  it('is left out when it is about self-harm, like their other words', () => {
-    const prompt = z
-      .object({
-        members: z.array(z.object({ checkIns: z.array(z.object({ sport: z.string() })) })),
-      })
-      .parse(
-        JSON.parse(
-          promptFor({
-            weekStart: WeekStart.parse('2026-10-19'),
-            members: [
-              {
-                member: ana,
-                timeZone: 'UTC',
-                checkIns: [checkIn({ sport: '不想活了' }), checkIn({})],
-              },
-            ],
-          }),
-        ),
-      );
-    expect(prompt.members[0]?.checkIns.map(({ sport }) => sport)).toStrictEqual(['（略）', 'run']);
   });
 });

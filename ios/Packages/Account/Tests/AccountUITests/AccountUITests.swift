@@ -19,7 +19,7 @@ import Testing
 }
 
 @Test func theKeychainKeepsReplacesAndForgetsTheSession() async throws {
-    let store = KeychainSessionStore(service: "app.wildcard.tests.\(UUID())")
+    let store = KeychainSessionStore(service: "com.wildcardsquad.wildcard.tests.\(UUID())")
     let member = MemberID(UUID())
     let first = Session(
         member: member, accessToken: "a1", refreshToken: "r1", expiresAt: Date(timeIntervalSince1970: 1_792_371_600))

@@ -17,6 +17,7 @@ let package = Package(
         .package(path: "../Contracts"),
         .package(path: "../DesignSystem"),
         .package(path: "../Avatar"),
+        .package(path: "../Sports"),
     ],
     targets: [
         .target(
@@ -29,9 +30,11 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
                 .product(name: "AvatarArt", package: "Avatar"),
+                .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "AvatarUI", package: "Avatar"),
+                .product(name: "SportsUI", package: "Sports"),
             ],
-            resources: [.process("Resources/Localizable.xcstrings")]
+            resources: [.process("Resources/Localizable.xcstrings"), .process("Resources/Scenes")]
         ),
         .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain", "Contracts"]),
         // The screen's non-visual parts, and its String Catalog read as a file; runs on Linux too.

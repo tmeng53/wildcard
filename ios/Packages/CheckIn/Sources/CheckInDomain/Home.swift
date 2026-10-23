@@ -75,7 +75,8 @@ public struct Home: Hashable, Sendable {
         home.today.members.remove(at: index)
         home.today.members.append(
             SquadmateToday(
-                member: member, catchphrase: old.catchphrase, day: day, training: .notCheckedIn, latestMeal: nil,
+                member: member, catchphrase: old.catchphrase, character: old.character, day: day,
+                training: .notCheckedIn, latestMeal: nil,
                 plannedRest: plannedRest, firstCheckInAt: nil))
         if day > today.myWeek.lastDay {
             home.today.myWeek = MyWeek(
@@ -90,7 +91,7 @@ public struct Home: Hashable, Sendable {
     }
 
     /// Whether this week's plan rests on `day`; false for a day outside it.
-    private func isRestDay(_ day: LocalDay) -> Bool {
+    func isRestDay(_ day: LocalDay) -> Bool {
         let offset = day.weekday - 1
         return day.weekStart == plan.weekStart && plan.days.indices.contains(offset) && plan.days[offset] == .rest
     }

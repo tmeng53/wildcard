@@ -19,6 +19,8 @@ import { bodyVersion } from '../body-version.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { ReactionEntry, wireReaction } from './reactions.js';
+import { ReplyEntry, wireReply } from './replies.js';
 
 const checkInFields = {
   version: bodyVersion(1),
@@ -87,6 +89,38 @@ const CheckInList = z
   .strictObject({ version: bodyVersion(1), checkIns: z.array(CheckIn) })
   .openapi('CheckInList');
 
+/** A squad's check-ins, each with what teammates left on it. */
+const SquadPostList = z
+  .strictObject({
+    version: bodyVersion(1),
+    posts: z.array(
+      z
+        .strictObject({
+          checkIn: CheckIn,
+          reactions: z
+            .array(ReactionEntry)
+            .meta({ description: 'Teammates’ emoji, oldest first.' }),
+          replies: z.array(ReplyEntry).meta({
+            description: 'Teammates’ replies, oldest first. Always empty but on a 请假条.',
+          }),
+        })
+        .openapi('SquadPost'),
+    ),
+  })
+  .openapi('SquadPostList');
+
+const count = (description: string) => z.int().nonnegative().meta({ description });
+
+const CheckInTotals = z
+  .strictObject({
+    version: bodyVersion(1),
+    trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
+    healthyMeals: count('健康餐 check-ins.'),
+    cheatMeals: count('坦白放纵餐 check-ins.'),
+    disclaimers: count('今日请假条 check-ins, at most one a day.'),
+  })
+  .openapi('CheckInTotals');
+
 /** Signs a view URL for every photo of these check-ins, in one call to storage. */
 async function viewUrls(photos: PhotoStorage, records: readonly CheckInRecord[]) {
   const paths = records.flatMap((record) => photosOf(record).map(({ path }) => path));
@@ -134,8 +168,10 @@ const signedInFailures = {
 };
 
 /**
- * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` and
- * `GET /me/check-ins` read them back for a range of days.
+ * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` (the
+ * squad's feed, with reactions and replies) and `GET /me/check-ins` read them back for a range of
+ * days, and `GET /me/check-in-totals` counts
+ * all of the member's own.
  */
 export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
@@ -184,17 +220,18 @@ export function checkIns(deps: {
     method: 'get',
     path: '/squads/{squadId}/check-ins',
     operationId: 'listSquadCheckIns',
-    summary: 'A squad’s check-ins for a range of days',
+    summary: 'A squad’s check-ins for a range of days, with their reactions and replies',
     description:
-      'Check-ins sent to the squad by members still in it, newest day first. Only for members ' +
-      'of the squad.',
+      'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
+      'each with the reactions and replies of the teammates the viewer shares a squad with. ' +
+      'Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: z.strictObject({ squadId: SquadId }), query: DayRange },
     responses: {
       200: {
         description: 'The check-ins',
-        content: { 'application/json': { schema: CheckInList } },
+        content: { 'application/json': { schema: SquadPostList } },
       },
       400: problem('Not a valid range of days (at most 31)'),
       403: problem('The member isn’t in this squad'),
@@ -221,6 +258,23 @@ export function checkIns(deps: {
     },
   });
 
+  const totals = createRoute({
+    method: 'get',
+    path: '/me/check-in-totals',
+    operationId: 'getMyCheckInTotals',
+    summary: 'Everything the signed-in member ever checked in, counted by kind',
+    description: 'All of their check-ins, wherever they went; 我 shows them. Counts only go up.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    responses: {
+      200: {
+        description: 'The counts',
+        content: { 'application/json': { schema: CheckInTotals } },
+      },
+      ...signedInFailures,
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
     .openapi(save, async (c) => {
       const { checkIn, created } = await deps.checkIns.save({
@@ -232,14 +286,24 @@ export function checkIns(deps: {
       return created ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(listForSquad, async (c) => {
-      const records = await deps.checkIns.listForSquad({
+      const posts = await deps.checkIns.listForSquad({
         viewer: MemberId.parse(c.var.caller.userId),
         squad: c.req.valid('param').squadId,
         days: c.req.valid('query'),
       });
-      const urls = await viewUrls(deps.photos, records);
+      const urls = await viewUrls(
+        deps.photos,
+        posts.map(({ checkIn }) => checkIn),
+      );
       return c.json(
-        { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
+        {
+          version: 1 as const,
+          posts: posts.map(({ checkIn, reactions, replies }) => ({
+            checkIn: wire(checkIn, urls),
+            reactions: reactions.map(wireReaction),
+            replies: replies.map(wireReply),
+          })),
+        },
         200,
       );
     })
@@ -253,5 +317,9 @@ export function checkIns(deps: {
         { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
         200,
       );
+    })
+    .openapi(totals, async (c) => {
+      const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
+      return c.json({ version: 1 as const, ...counts }, 200);
     });
 }

@@ -26,6 +26,16 @@ import Testing
     #expect(store.myStatus == .trained)
 }
 
+// The card's my-week page agrees with the count: each day I trained this week shows.
+@MainActor @Test func theSampleWeekShowsTheDaysItCounts() async throws {
+    let store = sampleStore()
+    await store.load()
+    let home = try #require(store.home)
+    let day = try #require(store.day)
+    let week = home.week(on: day)
+    #expect(week.days.count { $0 == .trained } == home.today.myWeek.week.trainedDays)
+}
+
 @MainActor @Test func theSampleSquadTakesOneDisclaimerBeforeTraining() async throws {
     let store = sampleStore()
     await store.load()

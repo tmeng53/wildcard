@@ -18,7 +18,7 @@ public struct WildcardAPI: Sendable {
     /// `AccountSession.accessToken(rejected:)` is the app's.
     public typealias AccessToken = @Sendable (_ rejected: String?) async throws(AccountError) -> String
 
-    private let client: Client
+    let client: Client
     private let http: URLSession
 
     /// - Parameters:
@@ -116,9 +116,20 @@ public struct WildcardAPI: Sendable {
         return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
     }
 
+    /// Saves the member's plan for the week starting on `weekStart`, a Monday: seven days, its
+    /// first day first.
+    public func save(_ days: [PlanDay], weekStart: LocalDay) async throws(APIError) -> WeeklyPlan {
+        let wire = try await call {
+            try await client.saveMyWeeklyPlan(
+                path: .init(weekStart: weekStart.description), body: .json(.init(days))
+            ).ok.body.json
+        }
+        return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
+    }
+
     // MARK: - Reactions
 
-    /// Who reacted to a check-in, and how.
+    /// Who reacted to a check-in, and with which emoji.
     public func reactions(to checkIn: CheckInID) async throws(APIError) -> [Reaction] {
         let list = try await call {
             try await client.listCheckInReactions(path: .init(checkInId: checkIn.description)).ok.body.json
@@ -127,9 +138,10 @@ public struct WildcardAPI: Sendable {
     }
 
     /// Sets the member's one reaction on a teammate's check-in, replacing any earlier one.
-    public func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(APIError) {
+    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(APIError) {
         try await call {
-            switch try await client.reactToCheckIn(path: .init(checkInId: checkIn.description), body: .json(kind.draft))
+            switch try await client.reactToCheckIn(
+                path: .init(checkInId: checkIn.description), body: .json(emoji.draft))
             {
             case .ok, .created: return
             default: throw APIError.unreadableResponse
@@ -217,7 +229,7 @@ public struct WildcardAPI: Sendable {
     }
 
     func checkInsWire(of squad: SquadID, from: LocalDay, through last: LocalDay) async throws(APIError)
-        -> Components.Schemas.CheckInList
+        -> Components.Schemas.SquadPostList
     {
         try await call {
             try await client.listSquadCheckIns(
@@ -281,7 +293,7 @@ public struct WildcardAPI: Sendable {
     // MARK: - Private
 
     /// Runs a generated call, turning whatever it throws into an `APIError`.
-    private func call<T>(_ body: () async throws -> T) async throws(APIError) -> T {
+    func call<T>(_ body: () async throws -> T) async throws(APIError) -> T {
         do {
             return try await body()
         } catch let error as APIError {
@@ -306,6 +318,12 @@ public struct WildcardAPI: Sendable {
 
     func read(_ list: Components.Schemas.CheckInList) throws(APIError) -> [CheckIn] {
         try read { () throws(ContractsError) in try list.checkIns.map(CheckIn.init) }
+    }
+
+    func read(_ list: Components.Schemas.SquadPostList) throws(APIError) -> [CheckIn] {
+        try read { () throws(ContractsError) in
+            try list.posts.map { post throws(ContractsError) in try CheckIn(post.checkIn) }
+        }
     }
 }
 
@@ -349,26 +367,6 @@ public struct Profile: Hashable, Sendable {
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
         try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character)
-    }
-}
-
-extension MemberCharacter {
-    init(_ wire: Components.Schemas.Character) throws(ContractsError) {
-        self.init(
-            nickname: try Nickname(wire.nickname),
-            look: CharacterLook(
-                persona: wire.look.persona, variants: wire.look.variants.additionalProperties,
-                colors: wire.look.colors.additionalProperties))
-    }
-}
-
-extension Components.Schemas.Character {
-    init(_ character: MemberCharacter) {
-        self.init(
-            nickname: character.nickname.text,
-            look: .init(
-                persona: character.look.persona, variants: .init(additionalProperties: character.look.variants),
-                colors: .init(additionalProperties: character.look.colors)))
     }
 }
 

@@ -1,8 +1,11 @@
-import type { MemberId } from '../domain/check-in.js';
+import type { LocalDay, MemberId } from '../domain/check-in.js';
+import type { FuelGoals } from '../domain/fuel-goal.js';
 import {
   DEFAULT_PLAN_DAYS,
+  checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
+  weekStartOf,
   type PlanDays,
   type WeekStart,
   type WeeklyPlan,
@@ -16,10 +19,18 @@ interface Deps {
   readonly clock: Clock;
 }
 
+/** A member's week as the 出赛表 shows it: the plan, the week's 饮食小目标 and how far back to look. */
+export interface PlannedWeek extends WeeklyPlan {
+  /** Only those saved for this week: goals don't carry over. */
+  readonly fuelGoals: FuelGoals;
+  /** The Monday of the week the member joined, in their time zone; none before their profile. */
+  readonly firstWeek: WeekStart | undefined;
+}
+
 /** Members' weekly plans: reading a week's plan and changing it. */
 export interface WeeklyPlans {
   /** The member's plan for a week, whether saved for it, carried over or the default. */
-  find(input: { readonly member: MemberId; readonly weekStart: WeekStart }): Promise<WeeklyPlan>;
+  find(input: { readonly member: MemberId; readonly weekStart: WeekStart }): Promise<PlannedWeek>;
   /**
    * Saves the member's plan for a week and returns it. Throws `TimeZoneNotSetError` before the
    * member has a profile, and the errors of `checkPlanChange` for a change the rules don't allow.
@@ -29,7 +40,17 @@ export interface WeeklyPlans {
     readonly member: MemberId;
     readonly weekStart: WeekStart;
     readonly days: PlanDays;
-  }): Promise<WeeklyPlan>;
+  }): Promise<PlannedWeek>;
+  /**
+   * Saves the member's 饮食小目标 for a week that hasn't started and returns the week. Throws
+   * `TimeZoneNotSetError` before the member has a profile, and the errors of
+   * `checkFuelGoalsChange` otherwise. Safe to repeat.
+   */
+  saveFuelGoals(input: {
+    readonly member: MemberId;
+    readonly weekStart: WeekStart;
+    readonly goals: FuelGoals;
+  }): Promise<PlannedWeek>;
 }
 
 /** The member's plan for a week: saved for it, carried over from an earlier week, or the default. */
@@ -47,21 +68,48 @@ export async function findWeeklyPlan(
 }
 
 export function createWeeklyPlans(deps: Deps): WeeklyPlans {
+  /** The member's today and the day they joined, on their clock; throws before their profile. */
+  async function daysOf(member: MemberId) {
+    const calendar = await deps.calendarOf(member);
+    if (calendar === undefined) throw new TimeZoneNotSetError();
+    const { timeZone, joinedAt } = calendar;
+    return { today: localDayAt(deps.clock(), timeZone), joinedOn: localDayAt(joinedAt, timeZone) };
+  }
+
+  async function plannedWeek(
+    { member, joinedOn }: { readonly member: MemberId; readonly joinedOn: LocalDay | undefined },
+    plan: WeeklyPlan,
+  ): Promise<PlannedWeek> {
+    const fuelGoals = await deps.store.fuelGoals(member, plan.weekStart);
+    return {
+      ...plan,
+      fuelGoals: fuelGoals ?? [],
+      firstWeek: joinedOn === undefined ? undefined : weekStartOf(joinedOn),
+    };
+  }
+
   return {
-    find: (input) => findWeeklyPlan(deps, input),
+    async find(input) {
+      const [plan, calendar] = await Promise.all([
+        findWeeklyPlan(deps, input),
+        deps.calendarOf(input.member),
+      ]);
+      const joinedOn =
+        calendar === undefined ? undefined : localDayAt(calendar.joinedAt, calendar.timeZone);
+      return plannedWeek({ member: input.member, joinedOn }, plan);
+    },
     async save({ member, weekStart, days }) {
-      const calendar = await deps.calendarOf(member);
-      if (calendar === undefined) throw new TimeZoneNotSetError();
-      const { timeZone, joinedAt } = calendar;
+      const { today, joinedOn } = await daysOf(member);
       const current = await findWeeklyPlan(deps, { member, weekStart });
-      checkPlanChange({
-        current,
-        next: days,
-        today: localDayAt(deps.clock(), timeZone),
-        joinedOn: localDayAt(joinedAt, timeZone),
-      });
+      checkPlanChange({ current, next: days, today, joinedOn });
       await deps.store.save({ member, weekStart, days });
-      return { weekStart, days, source: 'saved' };
+      return plannedWeek({ member, joinedOn }, { weekStart, days, source: 'saved' });
+    },
+    async saveFuelGoals({ member, weekStart, goals }) {
+      const { today, joinedOn } = await daysOf(member);
+      checkFuelGoalsChange({ weekStart, today });
+      await deps.store.saveFuelGoals({ member, weekStart, goals });
+      return plannedWeek({ member, joinedOn }, await findWeeklyPlan(deps, { member, weekStart }));
     },
   };
 }

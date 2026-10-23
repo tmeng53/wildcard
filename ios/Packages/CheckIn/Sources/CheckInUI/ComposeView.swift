@@ -3,6 +3,7 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// One page like a social app's new post (spec rev 186, section 1): 取消 / title / 发布, the
@@ -63,7 +64,7 @@ struct ComposeView: View {
 
     /// The board's last sport until the member picks one; detection from the cover comes later.
     private var currentActivity: Activity {
-        activity ?? model.board?.lastActivity ?? .sport(.run)
+        activity ?? model.suggestedActivity
     }
 
     private var bar: some View {

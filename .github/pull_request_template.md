@@ -55,4 +55,4 @@ Otherwise delete this section.
 
 ## Verifier verdict
 
-<!-- Link to the latest verdict comment; it must cover the current diff (raise-pr skill, Independent verification). "Pending" until it's posted. -->
+<!-- The tier (1 CI only, 2 light, 3 full) and why, in one line (raise-pr skill, Independent verification). For tier 2 or 3, link the latest verdict comment; it must cover the current diff. "Pending" until it's posted. -->

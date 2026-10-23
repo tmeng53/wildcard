@@ -1,5 +1,6 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
+import { AI_CONSENT_COPY_VERSION, MemberId as ConsentMember } from '@wildcard/ai-consent';
 import {
   CheckInId,
   MemberId as CheckInMember,
@@ -10,9 +11,9 @@ import {
   createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
+  Emoji,
   type CheckInRecord,
 } from '@wildcard/check-ins';
-import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
   MemberId as MembersMember,
   createMembers,
@@ -36,9 +37,15 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { giveWeeklyAwards } from './weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -53,7 +60,9 @@ const members = createMembers({ store: createPostgresProfileStore(db) });
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent: () => Promise.resolve(true),
 });
+const aiConsent = aiConsentOn(db);
 const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
 const checkIns = createCheckIns({
@@ -65,6 +74,16 @@ const checkIns = createCheckIns({
   photos,
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
+});
+
+const JOBS_TOKEN = randomBytes(32).toString('hex');
+const RunBody = z.strictObject({
+  version: z.literal(1),
+  weeks: z.array(z.string()),
+  squads: z.number(),
+  given: z.number(),
+  failed: z.number(),
+  told: z.number(),
 });
 
 // The week of Monday 2026-10-19; its awards are on Sunday 10-25 at 8pm in New York.
@@ -106,18 +125,13 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
       return Promise.resolve('sent');
     },
   });
-  const awards = createWeeklyAwards({ model, store: createPostgresAwardsStore(db) });
+  const awards = createWeeklyAwards({
+    model,
+    store: createPostgresAwardsStore(db),
+    aiConsented: (members) =>
+      aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+  });
   const clock = () => now;
-  const deps = {
-    checkIns,
-    members,
-    squads,
-    awards,
-    push,
-    admins: createAdmins({ store: createPostgresAdminStore(db), clock }),
-    clock,
-    log: createLog(() => undefined),
-  };
   const app = createApp({
     db,
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -139,8 +153,9 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
+    aiConsent,
     log: createLog(() => undefined),
-    jobs: noJobs,
+    jobs: { ...noJobs, token: JOBS_TOKEN },
     admin: adminOn(),
   });
   const read = async ({
@@ -168,7 +183,16 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     return response.status;
   };
   return {
-    run: () => giveWeeklyAwards(deps),
+    // As the scheduler starts it, every hour.
+    run: async () => {
+      const response = await app.request('/jobs/weekly-awards', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${JOBS_TOKEN}` },
+      });
+      expect(response.status).toBe(200);
+      return RunBody.parse(await response.json());
+    },
+    app,
     read,
     nudge,
     prompts,
@@ -179,9 +203,15 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
   };
 }
 
-/** A signed-up member with a time zone and a phone. */
-async function member(timeZone = 'America/Los_Angeles') {
+/** A signed-up member with a time zone and a phone, who agreed to AI use unless told not. */
+async function member(timeZone = 'America/Los_Angeles', agreedToAi = true) {
   const signedUp = await signUp();
+  if (agreedToAi) {
+    await aiConsent.give({
+      member: ConsentMember.parse(signedUp.userId),
+      copyVersion: AI_CONSENT_COPY_VERSION,
+    });
+  }
   await members.saveProfile({
     member: MembersMember.parse(signedUp.userId),
     profile: { timeZone, catchphrase: null, character: null },
@@ -268,12 +298,25 @@ const Story = z.object({
       kind: z.string(),
       caption: z.string().optional(),
       photos: z.array(z.object({ path: z.string(), url: z.url() })),
-      reactions: z.array(z.object({ kind: z.string(), label: z.string(), count: z.int() })),
+      reactions: z.array(z.object({ emoji: z.string(), count: z.int() })),
     })
     .optional(),
 });
 
 describe('weekly awards', () => {
+  it('runs only for the scheduler', async () => {
+    const { app } = setup();
+    const start = (authorization?: string) =>
+      app.request('/jobs/weekly-awards', {
+        method: 'POST',
+        headers: authorization === undefined ? {} : { authorization },
+      });
+    const wrong = await start(`Bearer ${randomBytes(32).toString('hex')}`);
+    expect(wrong.status).toBe(401);
+    expect(await wrong.json()).toMatchObject({ reason: 'JOB_TOKEN_INVALID' });
+    expect((await start()).status).toBe(401);
+  });
+
   it('awards members who checked in before Sunday 8pm Eastern, and tells each once', async () => {
     const { run, read, sent, prompts } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];
@@ -295,7 +338,7 @@ describe('weekly awards', () => {
     });
     await reactions.save(top, {
       member: CheckInMember.parse(bo.userId),
-      kind: 'cheer',
+      emoji: Emoji.parse('❤️'),
       reactedAt: new Date(),
     });
 
@@ -333,7 +376,7 @@ describe('weekly awards', () => {
     const forAna = Story.parse((await read({ token: ana.token, squad })).body);
     expect(forAna.hottest?.checkIn).toBe(top);
     expect(forAna.hottest?.caption).toBe(caption);
-    expect(forAna.hottest?.reactions).toStrictEqual([{ kind: 'cheer', label: '加油', count: 1 }]);
+    expect(forAna.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
     const view = forAna.hottest?.photos[0];
     expect(view?.path).toBe(photo);
     expect((await fetch(view?.url ?? '')).ok).toBe(true);
@@ -346,6 +389,25 @@ describe('weekly awards', () => {
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(2);
+  });
+
+  it('leaves out of the prompt and the awards a member who hasn’t agreed to AI use', async () => {
+    const { run, read, sent, prompts } = setup();
+    const [ana, bo] = [await member(), await member('America/Los_Angeles', false)];
+    const squad = await squadOf(ana, bo);
+    const caption = `只给同意的人 ${randomUUID().slice(0, 8)}`;
+    await trained(ana, { squad, caption });
+    const boCaption = `没同意 ${randomUUID().slice(0, 8)}`;
+    await trained(bo, { squad, caption: boCaption });
+
+    await run();
+    const mine = prompts.filter((prompt) => prompt.includes(caption));
+    expect(mine).toHaveLength(1);
+    expect(lettersIn(mine[0] ?? '')).toStrictEqual(['A']);
+    expect(prompts.some((prompt) => prompt.includes(boCaption))).toBe(false);
+    const story = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(story.titles?.map((each) => each.member)).toStrictEqual([ana.userId]);
+    expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(0);
   });
 
   it('is not there before Sunday 8pm Eastern, waits only for its titles while the model fails, then is ready', async () => {
@@ -361,7 +423,7 @@ describe('weekly awards', () => {
     const top = await trained(ana, { squad });
     await reactions.save(top, {
       member: CheckInMember.parse(bo.userId),
-      kind: 'lol',
+      emoji: Emoji.parse('😂'),
       reactedAt: new Date(),
     });
 
@@ -378,7 +440,7 @@ describe('weekly awards', () => {
       undefined,
       top,
     ]);
-    expect(pending.hottest?.reactions).toStrictEqual([{ kind: 'lol', label: '笑死', count: 1 }]);
+    expect(pending.hottest?.reactions).toStrictEqual([{ emoji: '😂', count: 1 }]);
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(0);
 
     // 催一下主办方: the first nudge tells each admin which squad, how many tries failed and why.
