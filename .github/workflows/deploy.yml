@@ -1,0 +1,181 @@
+# Deploys the API to the beta: applies new migrations to the hosted Supabase database, builds the
+# server's image (api/Dockerfile) and rolls it out on Cloud Run. Run it by hand from `main`
+# (Actions → deploy → Run workflow). scripts/gcp-setup.sh made the Google Cloud side once.
+# GitHub holds no keys: the job signs in to Google through Workload Identity, and the server's
+# secrets live in Secret Manager, which Cloud Run reads as the server starts.
+# https://github.com/google-github-actions/auth#workload-identity-federation-through-a-service-account
+# https://cloud.google.com/run/docs/configuring/services/secrets
+name: deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # For the token Workload Identity trades for a short-lived Google one.
+  id-token: write
+
+concurrency:
+  # One deploy at a time, and never cancel one halfway through its migrations.
+  group: deploy
+  cancel-in-progress: false
+
+# None of these is secret.
+env:
+  GCP_PROJECT_ID: soy-transducer-512501-h1
+  GCP_PROJECT_NUMBER: "872064445161"
+  GCP_REGION: us-east4
+  SUPABASE_URL: https://uuxclkozpfbelhpheaae.supabase.co
+  SERVICE: wildcard-api
+  # The app's bundle id, which APNs calls the topic.
+  APNS_TOPIC: com.wildcardsquad.wildcard
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: beta
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/wildcard
+          service_account: github-deploy@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v3
+
+      # `database-url` is the transaction pooler (port 6543), which the server shares across
+      # instances. Migrations run through the session pooler on 5432 of the same host, which keeps
+      # one connection for the whole run as the CLI needs, with TLS checked as the server checks it.
+      # https://supabase.com/docs/guides/database/connecting-to-postgres
+      #
+      # A migration the hosted database already ran is never run again, so an edit to one would
+      # silently never reach it. Until there are real users, migrations are edited in place
+      # (AGENTS.md), so that needs a person to reset the beta database first. The database itself
+      # keeps the hash of each migration file it ran, as a comment on the CLI's history table,
+      # written after every push, even one that fails partway.
+      - name: Apply new migrations
+        run: |
+          # A failed psql inside a pipe or a test must stop the step, never pass the guard.
+          set -o pipefail
+          database_url="$(gcloud secrets versions access latest --secret database-url)"
+          echo "::add-mask::$database_url"
+          case "$database_url" in
+            *\?*) echo "::error::database-url should have no query string" && exit 1 ;;
+            *:6543/*) ;;
+            *) echo "::error::database-url should be Supabase's transaction pooler (port 6543)" && exit 1 ;;
+          esac
+          userinfo="${database_url#*://}"
+          userinfo="${userinfo%@*}"
+          password="${userinfo#*:}"
+          echo "::add-mask::$password"
+          echo "::add-mask::$(printf '%b' "${password//%/\\x}")"
+          # A raw @, / or : splits the URL somewhere else, and psql would print the rest of it.
+          if [[ ! "$password" =~ ^[A-Za-z0-9%._~-]+$ ]]; then
+            echo "::error::Percent-encode the database-url password, or reset it to letters and digits"
+            exit 1
+          fi
+          ca="$PWD/api/apps/server/certs/supabase-root-2021.crt"
+          url="${database_url/:6543\//:5432/}?sslmode=verify-full&sslrootcert=$ca"
+          command -v psql >/dev/null || sudo apt-get install -y -qq postgresql-client
+          history="supabase_migrations.schema_migrations"
+          # "<version> <sha256 of its file>" for each migration the database ran, from the files here.
+          hashes() {
+            psql "$url" -Atc "select version from $history order by version" | while read -r version; do
+              for file in supabase/migrations/"$version"_*.sql; do
+                if [ -f "$file" ]; then echo "$version $(sha256sum < "$file" | cut -d' ' -f1)"; fi
+              done
+            done
+          }
+          exists="$(psql "$url" -Atc "select to_regclass('$history') is not null")"
+          if [ "$exists" = t ]; then
+            recorded="$(psql "$url" -Atc "select obj_description('$history'::regclass, 'pg_class')")"
+            ran="$(psql "$url" -Atc "select count(*) from $history")"
+            current="$(hashes)"
+            if [ "$ran" -gt 0 ] && [ "$current" != "$recorded" ]; then
+              echo "::error::Migrations the hosted database already ran were edited, removed or run outside this workflow. Reset the beta database first."
+              diff <(echo "$recorded") <(echo "$current") || true
+              exit 1
+            fi
+          fi
+          record() {
+            status=$?
+            if ! applied="$(hashes)" ||
+              ! psql "$url" -v ON_ERROR_STOP=1 -v hashes="$applied" <<<"comment on table $history is :'hashes'"; then
+              echo "::error::Couldn't record the migrations the database ran, so the next deploy will refuse. Once a person has checked none was edited, they set the comment on $history to one '<version> <sha256 of its file>' line per migration it ran."
+              status=1
+            fi
+            exit "$status"
+          }
+          trap record EXIT
+          npx --yes supabase@2.121.0 db push --yes --db-url "$url"
+
+      - name: Build and push the image
+        run: |
+          image="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/wildcard/api:$GITHUB_SHA"
+          gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev" --quiet
+          docker build -t "$image" api
+          docker push "$image"
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+
+      - name: Deploy to Cloud Run
+        run: |
+          # --update-* keeps what was set by hand in the console (APPLE_*, LLM_PROVIDER...).
+          secrets="DATABASE_URL=database-url:latest,SUPABASE_SECRET_KEY=supabase-secret-key:latest"
+          env="SUPABASE_URL=$SUPABASE_URL,PUBLIC_URL=https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app,DATABASE_CA_FILE=/api/apps/server/certs/supabase-root-2021.crt"
+          absent=""
+          # Whether a secret exists. Only one that doesn't turns its feature off; any other error
+          # stops the deploy.
+          present() {
+            local error
+            if error="$(gcloud secrets describe "$1" 2>&1 >/dev/null)"; then return 0; fi
+            if [[ "$error" == *NOT_FOUND* ]]; then return 1; fi
+            echo "$error" >&2
+            exit 1
+          }
+          variable() { tr 'a-z-' 'A-Z_' <<<"$1"; }
+          # Optional keys: the server runs without them, with that feature off. One deleted from
+          # Secret Manager is unmapped, since Cloud Run can't start with a missing secret.
+          for key in openai-api-key anthropic-api-key; do
+            if present "$key"; then
+              secrets="$secrets,$(variable "$key")=$key:latest"
+            else
+              absent="${absent:+$absent,}$(variable "$key")"
+            fi
+          done
+          # Push through APNs: all of its keys or none (the key ids and team id aren't secret, but
+          # live with the .p8 keys so there is one place to set them).
+          apns=(apns-team-id apns-sandbox-key-id apns-sandbox-private-key apns-production-key-id apns-production-private-key)
+          found=0
+          for key in "${apns[@]}"; do if present "$key"; then found=$((found + 1)); fi; done
+          remove_env=()
+          if [ "$found" -eq "${#apns[@]}" ]; then
+            for key in "${apns[@]}"; do secrets="$secrets,$(variable "$key")=$key:latest"; done
+            env="$env,APNS_TOPIC=$APNS_TOPIC"
+          elif [ "$found" -eq 0 ]; then
+            for key in "${apns[@]}"; do absent="${absent:+$absent,}$(variable "$key")"; done
+            remove_env=(--remove-env-vars APNS_TOPIC)
+          else
+            echo "::error::Set all of ${apns[*]} in Secret Manager, or none"
+            exit 1
+          fi
+          remove=()
+          if [ -n "$absent" ]; then remove=(--remove-secrets "$absent"); fi
+          # The startup probe keeps traffic on the old revision unless the new one reaches the
+          # database (/health runs `select 1`).
+          gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$GCP_REGION" \
+            --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
+            --allow-unauthenticated \
+            --max-instances 3 \
+            --startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=3,timeoutSeconds=3,failureThreshold=10 \
+            --update-secrets "$secrets" \
+            "${remove[@]}" \
+            --update-env-vars "$env" \
+            "${remove_env[@]}"
+
+      - name: Check it answers
+        run: |
+          url="https://$SERVICE-$GCP_PROJECT_NUMBER.$GCP_REGION.run.app"
+          curl -fsS --retry 5 --retry-all-errors "$url/health"
