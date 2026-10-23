@@ -10,7 +10,7 @@
 # manual run (Actions -> verify -> Run workflow) and on a PR carrying the `ios-ci` label; the
 # macOS `verify` only on the last two. Owners check screens on the next scheduled run and fix
 # forward. Pushes to main and every other PR run the Linux checks only (`verify` on Linux builds
-# and tests the Swift packages). TestFlight builds come from Xcode Cloud (ios/ci_scripts).
+# and tests the Swift packages).
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
 # app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
 # the API and the app's Backend adapters, `web` for the site; `ios` and `avatar-preview` only

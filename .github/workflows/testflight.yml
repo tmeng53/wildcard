@@ -1,5 +1,3 @@
-# Backup for Xcode Cloud, which builds main for TestFlight on its own schedule (ios/ci_scripts);
-# remove this workflow once Xcode Cloud has uploaded a build.
 # Builds the app, signs it and uploads it to TestFlight. Run it by hand from `main`
 # (Actions → testflight → Run workflow); it never runs on its own, since macOS minutes are scarce.
 # Signing is automatic and Apple-managed: xcodebuild signs in to App Store Connect with an API key
