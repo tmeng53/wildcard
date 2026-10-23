@@ -331,7 +331,7 @@ private struct SignCard: View {
 }
 
 /// The venue's art, exported from the approved home design (`SceneArt/render.mjs`). The home
-/// draws it full screen; 动态's empty state shows a window onto it.
+/// draws it full screen; 动态's empty state shows a window onto it, and 上场 plays on it.
 public struct SceneArt: View {
     public enum Layer: Sendable {
         case day
@@ -356,6 +356,9 @@ public struct SceneArt: View {
         self.scene = scene
         self.layer = layer
     }
+
+    /// The art's height on the design's 390-point-wide stage (`StageLayout.width`).
+    public static var designHeight: Double { Stage.height }
 
     public var body: some View {
         Image(uiImage: UIImage(named: "\(scene.rawValue)-\(layer.name)", in: .module, with: nil) ?? UIImage())

@@ -136,6 +136,8 @@ struct WildcardApp: App {
             } else if let signUp, signUp.finished == nil {
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     StandInSignIn { signUp.signedIn(name: nil) }
+                } tabBar: {
+                    MainTabs.entranceTabBar
                 }
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
@@ -174,6 +176,8 @@ private struct AppRoot: View {
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
+                } tabBar: {
+                    MainTabs.entranceTabBar
                 }
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }

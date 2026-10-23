@@ -1673,6 +1673,13 @@
           "joined": {
             "type": "boolean",
             "description": "True when the caller is in it already."
+          },
+          "looks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Look"
+            },
+            "description": "The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids."
           }
         },
         "required": [
@@ -1680,7 +1687,8 @@
           "name",
           "memberCount",
           "full",
-          "joined"
+          "joined",
+          "looks"
         ],
         "additionalProperties": false
       },
