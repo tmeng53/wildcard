@@ -30,10 +30,10 @@ public struct SystemPush: PushSystem {
 /// Shows a notification that arrives while the app is open, and tells the app when the member
 /// taps one. iOS keeps its delegate weakly, so the app delegate holds this.
 public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate, Sendable {
-    private let opened: @MainActor @Sendable () -> Void
+    private let opened: @MainActor @Sendable (OpenedNotification) -> Void
 
     /// - Parameter opened: the member tapped a notification, which opened the app.
-    public init(opened: @escaping @MainActor @Sendable () -> Void) {
+    public init(opened: @escaping @MainActor @Sendable (OpenedNotification) -> Void) {
         self.opened = opened
     }
 
@@ -47,7 +47,9 @@ public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate,
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
         guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
-        await opened()
+        let payload = response.notification.request.content
+        let event = (payload.userInfo["event"] as? [String: Any] ?? [:]).compactMapValues { $0 as? String }
+        await opened(OpenedNotification(category: payload.categoryIdentifier, event: event))
     }
 }
 #endif

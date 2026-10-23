@@ -16,13 +16,16 @@ public struct FeedView: View {
     @State private var model: FeedModel
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
+    /// What the app shows under the title, before the posts: the squad's latest 战报.
+    private let header: AnyView?
 
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
     static let space = "feed"
 
-    public init(model: FeedModel, checkIn: @escaping () -> Void) {
+    public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
+        self.header = header
         self.checkIn = checkIn
     }
 
@@ -36,6 +39,7 @@ public struct FeedView: View {
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("feed.title")
                         .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    header
                     content
                 }
                 .padding(.horizontal, Space.pageMargin)

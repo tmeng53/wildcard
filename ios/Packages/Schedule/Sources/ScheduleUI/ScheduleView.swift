@@ -70,10 +70,14 @@ public struct ScheduleView: View {
         // The weeks and 存图 stay put while the poster scrolls, so nothing slides under the
         // status bar.
         .safeAreaInset(edge: .top, spacing: 0) {
-            topBar
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.top, Space.xs)
-                .background(Color(role: .bgCanvas, in: theme))
+            VStack(alignment: .leading, spacing: Space.xs) {
+                topBar
+                SaveNote(saving: model.saving)
+            }
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.saving)
+            .padding(.horizontal, Space.pageMargin)
+            .padding(.top, Space.xs)
+            .background(Color(role: .bgCanvas, in: theme))
         }
         .safeAreaInset(edge: .bottom) {
             if model.writingFuel {
@@ -205,7 +209,7 @@ public struct ScheduleView: View {
             case .fuel:
                 fuelPicks(sheet)
             }
-            PanelNote(model: model)
+            PanelNote(store: store)
         }
         .transition(.opacity)
     }
