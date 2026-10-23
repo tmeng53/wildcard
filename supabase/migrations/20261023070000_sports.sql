@@ -65,9 +65,25 @@ create trigger sports_keep_their_ids
   before update or delete on public.sports
   for each row execute function public.sports_keep_their_ids();
 
+-- A truncate skips the row triggers, so it would wipe the list without a word in the log.
+create function public.sport_catalog_no_truncate() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  raise exception 'the sports list changes row by row, so each change is logged' using errcode = '42501';
+end;
+$$;
+
+create trigger sport_categories_no_truncate
+  before truncate on public.sport_categories
+  for each statement execute function public.sport_catalog_no_truncate();
 create trigger sports_no_truncate
   before truncate on public.sports
-  for each statement execute function public.sports_keep_their_ids();
+  for each statement execute function public.sport_catalog_no_truncate();
+create trigger sport_picks_no_truncate
+  before truncate on public.sport_picks
+  for each statement execute function public.sport_catalog_no_truncate();
 
 -- Every change to the list, however it is made: one row per inserted, changed or deleted
 -- row with its full new value (the old one for a delete), and none for an update that

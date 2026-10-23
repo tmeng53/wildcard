@@ -1,6 +1,6 @@
 -- What the database keeps true about the sports list however it is edited.
 begin;
-select plan(10);
+select plan(13);
 
 select is((select count(*)::int from public.sports), 52, 'the first list has 52 sports');
 select is(
@@ -13,6 +13,18 @@ select is(
 select throws_ok(
   $$delete from public.sports where id = 'run'$$,
   '42501', null, 'a sport is never deleted, since check-ins name it'
+);
+select throws_ok(
+  $$truncate public.sports cascade$$,
+  '42501', null, 'a truncate cannot wipe the sports, since it would skip the log'
+);
+select throws_ok(
+  $$truncate public.sport_categories cascade$$,
+  '42501', null, 'nor the categories'
+);
+select throws_ok(
+  $$truncate public.sport_picks$$,
+  '42501', null, 'nor the short lists'
 );
 select throws_ok(
   $$update public.sports set id = 'running' where id = 'run'$$,
