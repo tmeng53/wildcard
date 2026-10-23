@@ -203,6 +203,15 @@ public struct WildcardAPI: Sendable {
         }
     }
 
+    func weekSummaryWire(of squad: SquadID, week monday: LocalDay) async throws(APIError)
+        -> Components.Schemas.WeekSummary
+    {
+        try await call {
+            try await client.getSquadWeekSummary(path: .init(squadId: squad.description, weekStart: monday.description))
+                .ok.body.json
+        }
+    }
+
     func meWire() async throws(APIError) -> Components.Schemas.Me {
         try await call { try await client.getMe().ok.body.json }
     }

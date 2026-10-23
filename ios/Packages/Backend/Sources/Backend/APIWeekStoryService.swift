@@ -12,12 +12,29 @@ public struct APIWeekStoryService: WeekStoryService {
         self.api = api
     }
 
+    /// The story, with the pages the API's story doesn't carry yet drawn from the week's summary,
+    /// the squad's check-ins and the reader's plan. A page whose facts can't be read is left out;
+    /// the story still opens.
     public func story(squad: SquadID, week monday: LocalDay) async throws(RecapError) -> WeekStory? {
+        let api = api
+        async let facts = Self.facts(api: api, squad: squad, week: monday)
+        let story: WeekStory?
         do {
-            return try await api.weekStory(of: squad, week: monday)
+            story = try await api.weekStory(of: squad, week: monday)
         } catch {
             throw Self.reason(error)
         }
+        guard let story else { return nil }
+        guard let facts = await facts else { return story }
+        return story.filled(with: facts)
+    }
+
+    private static func facts(api: WildcardAPI, squad: SquadID, week monday: LocalDay) async -> WeekFacts? {
+        async let summary = try? await api.weekSummaryWire(of: squad, week: monday)
+        async let checkIns = try? await api.checkIns(of: squad, from: monday, through: monday.adding(days: 6))
+        async let plan = try? await api.weeklyPlan(weekStart: monday)
+        guard let summary = await summary, let plan = await plan else { return nil }
+        return WeekFacts(summary, viewer: plan.member, checkIns: await checkIns ?? [], plan: plan.days)
     }
 
     public func nudge(squad: SquadID, week monday: LocalDay) async throws(RecapError) {
@@ -49,6 +66,29 @@ extension WildcardAPI {
         }
         guard let story = WeekStory(wire) else { throw .unreadableResponse }
         return story
+    }
+}
+
+extension WeekFacts {
+    init(_ summary: Components.Schemas.WeekSummary, viewer: MemberID, checkIns: [CheckIn], plan: [PlanDay]) {
+        func winners(_ kind: String) -> [Components.Schemas.WeekAward.WinnersPayloadPayload] {
+            summary.awards.first { $0.kind == kind }?.winners ?? []
+        }
+        func members(_ kind: String) -> [MemberID] {
+            winners(kind).compactMap { UUID(uuidString: $0.member).map(MemberID.init) }
+        }
+        func count(_ stats: [Components.Schemas.WeekStat], _ kind: String) -> Int {
+            stats.first { $0.kind == kind }?.value ?? 0
+        }
+        let best = winners("bestDisclaimer").first.flatMap { winner in
+            winner.checkIn.flatMap(UUID.init(uuidString:)).map { Best(checkIn: CheckInID($0), reactions: winner.value) }
+        }
+        self.init(
+            viewer: viewer, planCompleted: members("planCompleted"), crown: members("crown"), bestDisclaimer: best,
+            squadTrained: count(summary.squadTotals.stats, "trainedDays"),
+            squadPlanned: count(summary.squadTotals.stats, "plannedDays"),
+            myPlanned: count(summary.me.stats, "plannedDays"),
+            myReactionsReceived: count(summary.me.stats, "reactionsReceived"), checkIns: checkIns, plan: plan)
     }
 }
 
@@ -109,6 +149,6 @@ extension Hottest {
         self.init(
             checkIn: CheckInID(checkIn), day: day, kind: kind, sport: sport, words: wire.text ?? wire.caption,
             photos: wire.photos.compactMap { URL(string: $0.url) },
-            reactions: wire.reactions.map { ReactionCount(kind: $0.kind, label: $0.label, count: $0.count) })
+            reactions: wire.reactions.map { ReactionCount(emoji: $0.emoji, count: $0.count) })
     }
 }

@@ -4,6 +4,7 @@ import DesignSystem
 import DesignSystemUI
 import MeDomain
 import MeUI
+import RecapUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -16,6 +17,7 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
+    let recap: RecapShelf
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
@@ -38,6 +40,9 @@ struct MainTabs: View {
                     }
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        }
+        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
+            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
@@ -77,7 +82,7 @@ struct MainTabs: View {
         case .today:
             TodayView(model: today) { selection = .feed }
         case .feed:
-            UpcomingTab(title: Text("动态"))
+            FeedTab(recap: recap)
         case .schedule:
             UpcomingTab(title: Text("出赛表"))
         case .profile:
@@ -106,6 +111,32 @@ struct MainTabs: View {
     ]
 }
 
+/// 动态 until its feed lands: its name, and the squad's newest 战报 as its tile, which opens the
+/// story. The feed puts the same tile at the top of its list.
+private struct FeedTab: View {
+    let recap: RecapShelf
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.l) {
+            Text("动态")
+                .typeStyle(TypeRamp.largeTitle)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .accessibilityIdentifier("tab.title")
+            if let story = recap.latest {
+                RecapEntryTile(
+                    week: story.week, pages: story.pages.count, viewer: recap.cast?.reader,
+                    action: recap.openLatest)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, Space.pageMargin)
+        .padding(.top, Space.l)
+        .background(Color(role: .bgCanvas, in: theme))
+        .task { await recap.refresh() }
+    }
+}
+
 /// A tab whose screen is still being built: its name on a white page.
 private struct UpcomingTab: View {
     let title: Text
@@ -119,6 +150,6 @@ private struct UpcomingTab: View {
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.l)
             .background(Color(role: .bgCanvas, in: theme))
-            .accessibilityIdentifier("tab.upcoming")
+            .accessibilityIdentifier("tab.title")
     }
 }

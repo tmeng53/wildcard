@@ -13,14 +13,14 @@ public struct RecapEntryTile: View {
     private let week: Week
     private let pages: Int
     private let viewer: StoryMember?
-    private let action: () -> Void
+    private let action: @MainActor () -> Void
     @Environment(\.sceneTheme) private var theme
     @State private var peek: (drawing: FigureDrawing, placements: [Placement])?
 
     /// - Parameters:
     ///   - pages: how many pages the story has, for the segment ticks; never what is on them.
     ///   - viewer: the reader, who peeks from behind the cloth.
-    public init(week: Week, pages: Int, viewer: StoryMember?, action: @escaping () -> Void) {
+    public init(week: Week, pages: Int, viewer: StoryMember?, action: @escaping @MainActor () -> Void) {
         self.week = week
         self.pages = pages
         self.viewer = viewer

@@ -141,7 +141,7 @@ final class TodayUITests: XCTestCase {
     /// A caption's bubble opens its post: the 动态 tab, until the feed can scroll to it.
     private func assertOpensItsPost(_ bubble: XCUIElement, in app: XCUIApplication) {
         bubble.tap()
-        let feed = app.staticTexts["tab.upcoming"]
+        let feed = app.staticTexts["tab.title"]
         XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "tapping the bubble didn't leave 今天")
         XCTAssertEqual(feed.label, "动态", "tapping the bubble opened another tab")
     }

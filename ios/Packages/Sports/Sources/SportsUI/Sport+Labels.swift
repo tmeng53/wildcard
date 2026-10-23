@@ -7,7 +7,6 @@ extension Sport {
     /// String Catalog key for the name people see.
     public var nameKey: String { "sport.\(rawValue)" }
 
-    /// The name people see. Public, so the 战报 names a day's sport the way 今天 does.
     public var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
 
     /// The localized name as a string, for search.

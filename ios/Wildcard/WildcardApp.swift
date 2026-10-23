@@ -3,11 +3,13 @@ import AccountUI
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
+import Contracts
 import DesignSystemUI
 import Foundation
 import MeDomain
 import MeUI
 import OnboardingUI
+import RecapUI
 import SwiftUI
 
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
@@ -17,13 +19,14 @@ import SwiftUI
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
 /// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
 /// instead. After the first check-in it asks for notifications; a tapped one brings the member
-/// back to 今天 with the home loaded again.
+/// back to 今天 with the home loaded again, or opens the 战报 its awards push is about.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
+    @State private var recap: RecapShelf
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
     @State private var app: AppModel?
@@ -45,6 +48,11 @@ struct WildcardApp: App {
                 service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
                 // The in-memory member has no Apple account to confirm with and nothing to sign out of.
                 confirm: { .signedInSession }, signOut: {}))
+        // The sample squad's story, as the in-memory squad has no awards of its own.
+        _recap = State(
+            initialValue: RecapShelf(
+                service: RecapSample.Service(),
+                squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) }))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
         #else
@@ -86,9 +94,9 @@ struct WildcardApp: App {
             } else if let app {
                 AppRoot(app: app, tab: $tab, delegate: delegate)
             } else {
-                MainTabs(today: today, profile: profile, selection: $tab)
+                MainTabs(today: today, profile: profile, recap: recap, selection: $tab)
                     .onAppear {
-                        delegate.opened = { [today, $tab] in
+                        delegate.opened = { [today, $tab] _ in
                             $tab.wrappedValue = .today
                             Task { await today.load() }
                         }
@@ -117,16 +125,22 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
-            case .tabs(let today, let profile):
-                MainTabs(today: today, profile: profile, selection: $tab)
+            case .tabs(let today, let profile, let recap):
+                MainTabs(today: today, profile: profile, recap: recap, selection: $tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
         .onAppear {
-            delegate.opened = { [app, $tab] in
-                $tab.wrappedValue = .today
-                Task { await app.reloadToday() }
+            delegate.opened = { [app, $tab] opened in
+                switch opened {
+                case .weeklyAwards(let squad, let week):
+                    $tab.wrappedValue = .feed
+                    Task { await app.openRecap(squad: squad, week: week) }
+                case .other:
+                    $tab.wrappedValue = .today
+                    Task { await app.reloadToday() }
+                }
             }
         }
     }

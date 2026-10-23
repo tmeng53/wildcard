@@ -66,11 +66,27 @@ final class RecapUITests: XCTestCase {
         XCTAssertEqual(app.buttons["recap.planNextWeek"].label, "Plan next week")
     }
 
-    private func launch(language: String, extra: [String] = []) -> XCUIApplication {
+    /// 动态 shows the squad's newest 战报 as its tile, clear of the tab bar, and the tile opens it.
+    func testFeedTileOpensTheStory() {
+        let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
+        let tile = app.buttons["recap.entry"]
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "动态 shows no 战报 tile")
+        let bar = app.buttons["tab.feed"]
+        XCTAssertTrue(bar.isSelected, "-tab feed didn't open on 动态")
+        XCTAssertLessThan(tile.frame.maxY, bar.frame.minY, "the tile runs under the tab bar")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "recap-20-feed-tile")
+        tile.tap()
+        show("podium", in: app)
+        app.buttons["recap.close"].tap()
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't go back to 动态")
+    }
+
+    private func launch(language: String, extra: [String] = [], demo: Bool = true) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", language]
-        app.launchArguments += ["-recap", "-uitest-recap-manual", "-uitest-no-push"] + extra
+        app.launchArguments += (demo ? ["-recap"] : []) + ["-uitest-recap-manual", "-uitest-no-push"] + extra
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app

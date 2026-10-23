@@ -2,8 +2,8 @@
 import Contracts
 import DesignSystem
 import DesignSystemUI
-import CheckInUI
 import RecapDomain
+import SportsUI
 import SwiftUI
 
 /// 你的一周: your character hops Monday to Sunday and does each day: that day's sport, a doze on
@@ -200,7 +200,7 @@ struct HottestPage: View {
                         .opacity(page.ramp(1.4, 1.7))
                 }
                 HStack(spacing: Space.xs) {
-                    ForEach(Array(hottest.reactions.enumerated()), id: \.element.kind) { index, reaction in
+                    ForEach(Array(hottest.reactions.enumerated()), id: \.element.emoji) { index, reaction in
                         let start = 0.7 + Double(index) * 0.15
                         ReactionChip(reaction: reaction, isFirst: index == 0)
                             .scaleEffect(page.pop(start, start + 0.3))

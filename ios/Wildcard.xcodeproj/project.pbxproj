@@ -10,6 +10,7 @@
 		A1C0DE00000000000000001D /* DesignSystemUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001C /* DesignSystemUI */; };
 		A1C0DE000000000000000020 /* CheckInUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001F /* CheckInUI */; };
 		A1C0DE0000000000000000B2 /* RecapUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B1 /* RecapUI */; };
+		A1C0DE0000000000000000B4 /* RecapDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B3 /* RecapDomain */; };
 		A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000031 /* CharacterEditorUI */; };
 		A1C0DE000000000000000034 /* CheckInDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000033 /* CheckInDomain */; };
 		A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000041 /* NotificationsDomain */; };
@@ -60,6 +61,7 @@
 				A1C0DE00000000000000001D /* DesignSystemUI in Frameworks */,
 				A1C0DE000000000000000020 /* CheckInUI in Frameworks */,
 				A1C0DE0000000000000000B2 /* RecapUI in Frameworks */,
+				A1C0DE0000000000000000B4 /* RecapDomain in Frameworks */,
 				A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */,
 				A1C0DE000000000000000034 /* CheckInDomain in Frameworks */,
 				A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */,
@@ -126,6 +128,7 @@
 				A1C0DE00000000000000001C /* DesignSystemUI */,
 				A1C0DE00000000000000001F /* CheckInUI */,
 				A1C0DE0000000000000000B1 /* RecapUI */,
+				A1C0DE0000000000000000B3 /* RecapDomain */,
 				A1C0DE000000000000000031 /* CharacterEditorUI */,
 				A1C0DE000000000000000033 /* CheckInDomain */,
 				A1C0DE000000000000000041 /* NotificationsDomain */,
@@ -487,6 +490,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/Recap" */;
 			productName = RecapUI;
+		};
+		A1C0DE0000000000000000B3 /* RecapDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/Recap" */;
+			productName = RecapDomain;
 		};
 		A1C0DE000000000000000031 /* CharacterEditorUI */ = {
 			isa = XCSwiftPackageProductDependency;

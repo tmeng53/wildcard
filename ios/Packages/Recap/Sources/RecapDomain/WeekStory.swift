@@ -247,15 +247,13 @@ public struct Hottest: Hashable, Sendable {
     }
 }
 
-/// Reactions of one kind. The API sends the words, so a new kind needs no app release.
+/// How many teammates reacted with one emoji. Any emoji is a reaction, so it stays a string.
 public struct ReactionCount: Hashable, Sendable {
-    public let kind: String
-    public let label: String
+    public let emoji: String
     public let count: Int
 
-    public init(kind: String, label: String, count: Int) {
-        self.kind = kind
-        self.label = label
+    public init(emoji: String, count: Int) {
+        self.emoji = emoji
         self.count = count
     }
 }

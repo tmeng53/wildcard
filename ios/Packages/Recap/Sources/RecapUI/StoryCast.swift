@@ -37,6 +37,9 @@ public struct StoryCast: Sendable {
 
     public subscript(id: MemberID) -> StoryMember? { members[id] }
 
+    /// The one reading.
+    public var reader: StoryMember? { members[viewer] }
+
     /// A member who left the squad since the awards shows by id only; nobody else is shown.
     func nickname(of id: MemberID) -> String { members[id]?.nickname ?? "" }
 }

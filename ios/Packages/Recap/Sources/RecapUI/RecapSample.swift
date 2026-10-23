@@ -17,7 +17,7 @@ public enum RecapSample {
         let ready = !pending
         return WeekStory(
             status: pending ? .pending : .ready, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
-            week: Week(monday: day(13), sunday: day(19)),
+            week: Week(monday: day(12), sunday: day(18)),
             order: [.podium, .titles, .myWeek, .hottest, .meals, .bestDisclaimer, .ending],
             podium: Podium(
                 champion: coco, sides: [lin, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
@@ -33,17 +33,17 @@ public enum RecapSample {
             myWeek: MyWeek(
                 plan: 5,
                 days: [
-                    .init(day: day(13), kind: .trained(.run)), .init(day: day(14), kind: .trained(.tennis)),
-                    .init(day: day(15), kind: .rest), .init(day: day(16), kind: .trained(.strength)),
-                    .init(day: day(17), kind: .disclaimer), .init(day: day(18), kind: .trained(.yoga)),
-                    .init(day: day(19), kind: .rest),
+                    .init(day: day(12), kind: .trained(.run)), .init(day: day(13), kind: .trained(.tennis)),
+                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained(.strength)),
+                    .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained(.yoga)),
+                    .init(day: day(18), kind: .rest),
                 ], line: ready ? "周二那场网球最有灵魂" : nil, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),
             hottest: Hottest(
-                checkIn: CheckInID(uuid(20)), day: day(16), kind: .trained, sport: .run, words: "晨跑 8 公里，腿还在",
+                checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: .run, words: "晨跑 8 公里，腿还在",
                 reactions: [
-                    ReactionCount(kind: "cheer", label: "加油", count: 5),
-                    ReactionCount(kind: "highlight", label: "名场面", count: 3),
-                    ReactionCount(kind: "lol", label: "笑死", count: 2),
+                    ReactionCount(emoji: "💪", count: 5),
+                    ReactionCount(emoji: "😂", count: 3),
+                    ReactionCount(emoji: "❤️", count: 2),
                 ], line: ready ? "五个人给你加油，腿替你谢谢大家" : nil, move: ready ? .pose : nil),
             meals: Meals(
                 healthy: 14, cheat: 5,
@@ -112,7 +112,7 @@ public enum RecapSample {
         UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", number)) ?? UUID()
     }
 
-    /// A day of the sample week, 2026-10-13 to 19.
+    /// A day of the sample week, 2026-10-12 to 18.
     private static func day(_ number: Int) -> LocalDay {
         guard let day = try? LocalDay(year: 2026, month: 10, day: number) else {
             fatalError("The sample week's days are valid dates")

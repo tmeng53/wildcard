@@ -170,7 +170,7 @@ struct CoveredPodium: View {
     }
 }
 
-/// A count of one reaction kind, as the feed shows it: its word and a Barlow number.
+/// A count of one emoji, as the feed shows it: the emoji and a Barlow number.
 struct ReactionChip: View {
     let reaction: ReactionCount
     let isFirst: Bool
@@ -178,7 +178,7 @@ struct ReactionChip: View {
 
     var body: some View {
         HStack(spacing: Space.xxs) {
-            Text(verbatim: reaction.label).typeStyle(isFirst ? TypeRamp.calloutEmphasis : TypeRamp.callout)
+            Text(verbatim: reaction.emoji).typeStyle(isFirst ? TypeRamp.calloutEmphasis : TypeRamp.callout)
             Text(verbatim: "\(reaction.count)").typeStyle(TypeRamp.scoreSmall)
         }
         .foregroundStyle(Color(role: isFirst ? .fgAccent : .fgDefault, in: theme))

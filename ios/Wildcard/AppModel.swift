@@ -8,6 +8,7 @@ import Foundation
 import MeDomain
 import Observation
 import OnboardingUI
+import RecapUI
 
 /// The app on the real backend: who is signed in decides between sign-up and the tabs. A member
 /// signed out, or signed in with no squad yet, goes through sign-up; one with a squad opens on
@@ -18,7 +19,7 @@ final class AppModel {
         /// Reading the stored session, and the member's home once signed in.
         case starting
         case signUp(SignUpModel)
-        case tabs(today: TodayModel, profile: MeModel)
+        case tabs(today: TodayModel, profile: MeModel, recap: RecapShelf)
     }
 
     private(set) var screen = Screen.starting
@@ -98,7 +99,12 @@ final class AppModel {
 
     /// A tapped notification: back on 今天 with the home loaded again.
     func reloadToday() async {
-        if case .tabs(let today, _) = screen { await today.load() }
+        if case .tabs(let today, _, _) = screen { await today.load() }
+    }
+
+    /// A tapped awards push: the 战报 it is about, over 动态.
+    func openRecap(squad: SquadID, week: LocalDay) async {
+        if case .tabs(_, _, let recap) = screen { await recap.open(squad: squad, week: week) }
     }
 
     func signOut() async {
@@ -129,7 +135,9 @@ final class AppModel {
                     posted: posted),
                 profile: MeModel(
                     service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-                    confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() }))
+                    confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() }),
+                recap: RecapShelf(
+                    service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) }))
         }
     }
 

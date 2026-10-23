@@ -18,7 +18,7 @@ let package = Package(
         .package(path: "../Contracts"),
         .package(path: "../DesignSystem"),
         .package(path: "../Avatar"),
-        .package(path: "../CheckIn"),
+        .package(path: "../Sports"),
     ],
     targets: [
         .target(
@@ -33,8 +33,8 @@ let package = Package(
                 .product(name: "AvatarArt", package: "Avatar"),
                 .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "AvatarUI", package: "Avatar"),
-                // Sport names, as 今天 shows them.
-                .product(name: "CheckInUI", package: "CheckIn"),
+                // Sport names, as every picker shows them.
+                .product(name: "SportsUI", package: "Sports"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),

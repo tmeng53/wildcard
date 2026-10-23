@@ -26,7 +26,7 @@ final class TabsUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "30-tabs-today")
 
-        let upcoming = app.staticTexts["tab.upcoming"]
+        let upcoming = app.staticTexts["tab.title"]
         for (tab, title) in [("tab.feed", "动态"), ("tab.schedule", "出赛表")] {
             app.buttons[tab].tap()
             waitFor(app.buttons[tab], "isSelected == true", "\(tab) didn't open")
@@ -66,7 +66,7 @@ final class TabsUITests: XCTestCase {
         let schedule = app.buttons["tab.schedule"]
         XCTAssertTrue(schedule.waitForExistence(timeout: 30), "no tab bar")
         XCTAssertTrue(schedule.isSelected, "-tab schedule didn't open on 出赛表")
-        XCTAssertEqual(app.staticTexts["tab.upcoming"].label, "出赛表")
+        XCTAssertEqual(app.staticTexts["tab.title"].label, "出赛表")
     }
 
     private func keepScreenshot(named name: String) {

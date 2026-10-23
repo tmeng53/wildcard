@@ -84,7 +84,7 @@ private func day(daysFromThisMonday days: Int) throws -> LocalDay {
          "hottest":{"checkIn":"8d1c5b7e-2f4a-4e8b-9c0d-1a2b3c4d5e6f","day":"2026-10-15","kind":"trained",
            "sport":"run","caption":"雨里 5 公里",
            "photos":[{"path":"a/b.jpg","url":"https://example.com/b.jpg"}],
-           "reactions":[{"kind":"cheer","label":"加油","count":3}]}}
+           "reactions":[{"emoji":"💪","count":3}]}}
         """
     let wire = try JSONDecoder().decode(Components.Schemas.WeekStory.self, from: Data(json.utf8))
 
@@ -97,6 +97,6 @@ private func day(daysFromThisMonday days: Int) throws -> LocalDay {
     #expect(hottest.sport == .run)
     #expect(hottest.words == "雨里 5 公里")
     #expect(hottest.photos == [try #require(URL(string: "https://example.com/b.jpg"))])
-    #expect(hottest.reactions == [ReactionCount(kind: "cheer", label: "加油", count: 3)])
+    #expect(hottest.reactions == [ReactionCount(emoji: "💪", count: 3)])
     #expect(story.pages == [.pending, .hottest(hottest)])
 }
