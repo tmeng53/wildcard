@@ -119,6 +119,12 @@ public enum ColorRole: String, CaseIterable, Sendable {
     /// The icon on a check-in kind button.
     case fgKind
 
+    /// The brand's light gym, the same in every scene: the open screen's page, its floor and
+    /// the floor's tile lines, as on the website.
+    case bgBrandPage
+    case bgBrandFloor
+    case borderBrandFloor
+
     /// The color this role takes in a scene.
     public func color(in theme: SceneTheme) -> SRGBColor {
         switch source {
@@ -152,6 +158,9 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .bgKind: .scene(\.kindFill)
         case .bgKindOnScene: .scene(\.kindFillOnFloor)
         case .fgKind: .scene(\.kindInk)
+        case .bgBrandPage: .fixed(Palette.brandSky)
+        case .bgBrandFloor: .fixed(Palette.brandFloor)
+        case .borderBrandFloor: .fixed(Palette.brandTile)
         }
     }
 }

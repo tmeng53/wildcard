@@ -24,6 +24,11 @@ public enum Palette {
     public static let brand = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
     /// Labels and icons on `brand`.
     public static let onBrand = SRGBColor(red: 0xFF, green: 0xFF, blue: 0xFF)
+    /// The brand's light gym, where the open screen and the website stand (`--brand-sky`,
+    /// `--brand-floor` and `--brand-tile` in `web/public/wildcard.css`).
+    public static let brandSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
+    public static let brandFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
+    public static let brandTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
 
     // MARK: Pool scene
 

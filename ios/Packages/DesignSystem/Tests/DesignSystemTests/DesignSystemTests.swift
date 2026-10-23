@@ -331,6 +331,13 @@ struct MotionTests {
         #expect([Motion.collapseDuration, Motion.collapseStagger, Motion.burstStagger] == [0.19, 0.016, 0.028])
     }
 
+    /// The open screen's reveal and fade, as the approved design times them.
+    @Test func timedCurvesMatchTheSpec() {
+        #expect(Motion.reveal == MotionCurve(duration: 0.3, 0.33, 1, 0.68, 1))
+        #expect([Motion.revealRise, Motion.revealStagger] == [8, 0.08])
+        #expect(Motion.fadeIn == MotionCurve(duration: 0.25, 0, 0, 1, 1))
+    }
+
     /// Bounce is kept for the moment a check-in lands; everyday motion never overshoots visibly.
     @Test func onlyTheCelebrationBounces() {
         let bouncing = Motion.all.filter { $0.spring.dampingFraction < 0.8 }.map(\.name)
