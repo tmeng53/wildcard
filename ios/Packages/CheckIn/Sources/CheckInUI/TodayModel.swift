@@ -1,5 +1,6 @@
 #if os(iOS)
 import AvatarArt
+import AvatarDomain
 import AvatarUI
 import CheckInDomain
 import Contracts
@@ -72,7 +73,10 @@ public final class TodayModel {
     private(set) var sendFailed = false
 
     let photoSource: PhotoSource
-    let player: CharacterPlayer?
+    /// My character, as I made it once the home says so; the stand-in lifter until then.
+    private(set) var player: CharacterPlayer?
+    private var myLook = PlaceholderCharacter.lifter
+    private var myPersona = Persona.energetic
     private let store: TodayStore
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
@@ -90,16 +94,14 @@ public final class TodayModel {
         self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
-        player = try? CharacterPlayer(
-            figure: PlaceholderCharacter.figure(wearing: Self.look),
-            idle: PlaceholderCharacter.clip("idle", persona: Self.persona, species: Self.species))
+        player = Self.player(wearing: myLook, persona: myPersona)
     }
 
-    /// The member's look and persona; picked at sign-up once onboarding lands.
-    private static let look = PlaceholderCharacter.lifter
-    private static let persona = Persona.energetic
-    /// The lifter's species, whose moves play on top of the persona's.
-    private static let species = "person"
+    private static func player(wearing look: Outfit, persona: Persona) -> CharacterPlayer? {
+        try? CharacterPlayer(
+            figure: PlaceholderCharacter.figure(wearing: look),
+            idle: PlaceholderCharacter.clip("idle", persona: persona, species: PlaceholderCharacter.species(of: look)))
+    }
 
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
@@ -148,6 +150,13 @@ public final class TodayModel {
     /// Puts everyone where they belong after the home changed.
     func placeSquad() {
         guard let home else { return }
+        if let character = home.mine?.character {
+            let (look, persona) = (Outfit(character.look), Persona(character.look))
+            if look != myLook || persona != myPersona {
+                (myLook, myPersona) = (look, persona)
+                player = Self.player(wearing: look, persona: persona)
+            }
+        }
         cast.update(home: home, scene: scene, phase: phase)
     }
 
@@ -240,7 +249,8 @@ public final class TodayModel {
         payoff = Payoff(kind: draft.kind, line: line)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.kind != .disclaimer,
-            let cheer = try? PlaceholderCharacter.clip("cheer", persona: Self.persona, species: Self.species)
+            let cheer = try? PlaceholderCharacter.clip(
+                "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
         {
             try? player?.play(cheer)
         }
