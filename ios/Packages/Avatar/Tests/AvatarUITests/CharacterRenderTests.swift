@@ -48,7 +48,7 @@ struct CharacterRenderTests {
         let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
         let player = try CharacterPlayer(
             figure: lifter, idle: PlaceholderCharacter.clip("idle", persona: .shy), now: start)
-        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
         let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
         let hop = try PlaceholderCharacter.kitHop()
         try player.change(
@@ -70,7 +70,7 @@ struct CharacterRenderTests {
         let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
         let idle = try PlaceholderCharacter.clip("idle", persona: .shy)
         let player = try CharacterPlayer(figure: lifter, idle: idle, now: start)
-        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
         let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
         try player.change(
             into: swimmer, idle: PlaceholderCharacter.move(for: swim, persona: .shy),

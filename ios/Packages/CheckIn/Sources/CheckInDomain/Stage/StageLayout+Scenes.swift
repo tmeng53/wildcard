@@ -27,7 +27,7 @@ extension StageLayout {
                         StationPath.Lap(y: 456, direction: -1, speed: 48),
                     ]), scale: nil)
         ],
-        stationsBySport: [.run: [.jogging]],
+        stationsBySport: ["run": [.jogging]],
         standing: [StageRect(x: 0...390, y: 346...650)],
         props: [])
 
@@ -40,7 +40,7 @@ extension StageLayout {
         stations: [
             Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes, speed: 34), scale: nil)
         ],
-        stationsBySport: [.swim: [.swimming]],
+        stationsBySport: ["swim": [.swimming]],
         standing: [StageRect(x: 0...390, y: 474...650)],
         props: [])
 
@@ -59,7 +59,7 @@ extension StageLayout {
                 kind: .yogaMat, capacity: 2, path: .spots([StagePoint(x: 250, y: 502), StagePoint(x: 326, y: 502)]),
                 scale: nil),
         ],
-        stationsBySport: [.run: [.treadmill], .strength: [.squatRack, .dumbbells], .yoga: [.yogaMat]],
+        stationsBySport: ["run": [.treadmill], "strength": [.squatRack, .dumbbells], "yoga": [.yogaMat]],
         standing: [StageRect(x: 0...390, y: 420...650)],
         props: [StageRect(x: 40...350, y: 350...392), StageRect(x: 40...178, y: 440...456)])
 
@@ -75,7 +75,7 @@ extension StageLayout {
                 kind: .serve, capacity: 2, path: .spots([StagePoint(x: 40, y: 322), StagePoint(x: 350, y: 466)]),
                 scale: nil),
         ],
-        stationsBySport: [.tennis: [.rally, .serve]],
+        stationsBySport: ["tennis": [.rally, .serve]],
         standing: [StageRect(x: 0...390, y: 346...650)],
         // The net.
         props: [StageRect(x: 0...390, y: 375...402)])
@@ -95,7 +95,7 @@ extension StageLayout {
                 kind: .chalk, capacity: 2, path: .spots([StagePoint(x: 150, y: 530), StagePoint(x: 240, y: 530)]),
                 scale: nil),
         ],
-        stationsBySport: [.climb: [.topRope, .bouldering, .chalk]],
+        stationsBySport: ["climb": [.topRope, .bouldering, .chalk]],
         // From the foot of the wall.
         standing: [StageRect(x: 0...390, y: 470...650)],
         props: [])

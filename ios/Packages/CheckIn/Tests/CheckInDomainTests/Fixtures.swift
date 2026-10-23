@@ -42,7 +42,7 @@ func sampleToday() -> SquadToday {
 func sampleHome(today: SquadToday = sampleToday(), checkIns: [CheckIn] = []) -> Home {
     let plan = try? WeeklyPlan(
         member: myID, weekStart: tuesday.weekStart,
-        days: [.train(nil), .train(.sport(.yoga)), .rest, .train(nil), .train(nil), .train(nil), .rest])
+        days: [.train(nil), .train(.sport("yoga")), .rest, .train(nil), .train(nil), .train(nil), .rest])
     return Home(
         member: myID, timeZone: losAngeles,
         squad: Squad(id: squadID, name: "周三不练腿", inviteCode: "K7M2QX9P", members: [mate, myID, resting]),

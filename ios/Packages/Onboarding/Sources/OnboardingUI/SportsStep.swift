@@ -50,7 +50,7 @@ struct SportsStep: View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
             SectionLabel(Text("最常见", bundle: .module))
             LazyVGrid(columns: columns, spacing: Space.xs) {
-                ForEach(SportPicks.common, id: \.self) { sport in
+                ForEach(catalog.signUpCommon, id: \.self) { sport in
                     row(.sport(sport))
                 }
             }
@@ -61,7 +61,7 @@ struct SportsStep: View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
             SectionLabel(Text("更多", bundle: .module))
             FlowRow {
-                ForEach(SportPicks.more, id: \.self) { sport in
+                ForEach(catalog.signUpMore, id: \.self) { sport in
                     pill(.sport(sport))
                 }
                 // Sports picked by search or named under 其他 show here too, to take off.
@@ -88,7 +88,7 @@ struct SportsStep: View {
     }
 
     private var results: some View {
-        let found = Sport.matching(query)
+        let found = catalog.matching(query)
         return VStack(alignment: .leading, spacing: Space.xs) {
             ForEach(found, id: \.self) { sport in
                 row(.sport(sport))
@@ -117,9 +117,11 @@ struct SportsStep: View {
 
     /// Picks that are in neither 最常见 nor 更多.
     private var extraPicks: [Activity] {
-        let shown = Set((SportPicks.common + SportPicks.more).map(Activity.sport))
+        let shown = Set((catalog.signUpCommon + catalog.signUpMore).map(Activity.sport))
         return model.sports.picked.filter { !shown.contains($0) }
     }
+
+    private var catalog: SportCatalog { SportList.shared.catalog }
 
     private func addCustom() {
         guard let custom = try? CustomSport(customName) else { return }

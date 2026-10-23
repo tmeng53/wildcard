@@ -13,10 +13,14 @@ struct BearerToken: ClientMiddleware {
     /// Called with the renewed token the API refused too.
     let refused: @Sendable (_ token: String) async -> Void
 
+    static let publicOperations: Set<String> = [Operations.GetCatalog.id]
+
     func intercept(
         _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
+        // Routes anyone may call send no token, so they work signed out, as sign-up's are.
+        if Self.publicOperations.contains(operationID) { return try await next(request, body, baseURL) }
         // Read once, so the retry can send it again: request bodies are a check-in or a profile.
         var sent: Data?
         if let body { sent = try await Data(collecting: body, upTo: 1024 * 1024) }

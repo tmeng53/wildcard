@@ -15,24 +15,24 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
 
 @Test func eachMembersTodayIsTheirLatestTrainingAndTheirDisclaimer() throws {
     let home = sampleHome(checkIns: [
-        try checkIn(1, by: mate, on: tuesday.adding(days: -1), .trained(Training(activity: .sport(.swim)))),
+        try checkIn(1, by: mate, on: tuesday.adding(days: -1), .trained(Training(activity: .sport("swim")))),
         try checkIn(2, by: mate, .disclaimer(try Disclaimer("腿还没回来"))),
-        try checkIn(3, by: mate, .trained(Training(activity: .sport(.yoga)))),
-        try checkIn(4, by: mate, .trained(Training(activity: .sport(.climb)))),
+        try checkIn(3, by: mate, .trained(Training(activity: .sport("yoga")))),
+        try checkIn(4, by: mate, .trained(Training(activity: .sport("climb")))),
         try checkIn(5, by: mate, .healthyMeal(Meal())),
     ])
     #expect(home.todaysCheckIns(of: mate).map(\.id) == [2, 3, 4, 5].map { CheckInID(id($0)) })
-    #expect(home.todaysSport(of: mate) == .sport(.climb))
+    #expect(home.todaysSport(of: mate) == .sport("climb"))
     #expect(home.todaysDisclaimer(of: mate) == "腿还没回来")
     #expect(home.todaysSport(of: myID) == nil)
     #expect(home.todaysDisclaimer(of: myID) == nil)
 }
 
 @Test func withoutAPlannedSportANewTrainingStartsWithTheLastOne() throws {
-    let home = sampleHome(checkIns: [try checkIn(1, by: myID, .trained(Training(activity: .sport(.tennis))))])
+    let home = sampleHome(checkIns: [try checkIn(1, by: myID, .trained(Training(activity: .sport("tennis"))))])
     // Monday's plan says train with no sport.
-    #expect(home.suggestedActivity(on: tuesday.adding(days: -1)) == .sport(.tennis))
-    #expect(home.suggestedActivity(on: tuesday) == .sport(.yoga))
+    #expect(home.suggestedActivity(on: tuesday.adding(days: -1)) == .sport("tennis"))
+    #expect(home.suggestedActivity(on: tuesday) == .sport("yoga"))
 }
 
 @Test func aHomeRolledIntoANewWeekStartsTheWeeksFromNothing() {
@@ -65,23 +65,23 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
 @Test func myWeekShowsEachDaysOneStatusWhatITrainedAndMyMeals() throws {
     let monday = tuesday.adding(days: -1)
     let home = sampleHome(checkIns: [
-        try checkIn(1, by: myID, on: monday, .trained(Training(activity: .sport(.swim)))),
-        try checkIn(2, by: myID, on: monday, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(1, by: myID, on: monday, .trained(Training(activity: .sport("swim")))),
+        try checkIn(2, by: myID, on: monday, .trained(Training(activity: .sport("swim")))),
         try checkIn(3, by: myID, on: monday, .healthyMeal(Meal())),
         try checkIn(4, by: myID, .disclaimer(try Disclaimer("腿还没回来"))),
-        try checkIn(5, by: myID, .trained(Training(activity: .sport(.run)))),
+        try checkIn(5, by: myID, .trained(Training(activity: .sport("run")))),
         try checkIn(6, by: myID, .cheatMeal(Meal())),
-        try checkIn(9, by: myID, .trained(Training(activity: .sport(.swim)))),
-        try checkIn(7, by: mate, .trained(Training(activity: .sport(.yoga)))),
+        try checkIn(9, by: myID, .trained(Training(activity: .sport("swim")))),
+        try checkIn(7, by: mate, .trained(Training(activity: .sport("yoga")))),
         // Last week's doesn't count.
-        try checkIn(8, by: myID, on: monday.adding(days: -1), .trained(Training(activity: .sport(.run)))),
+        try checkIn(8, by: myID, on: monday.adding(days: -1), .trained(Training(activity: .sport("run")))),
     ])
     let week = home.week(on: tuesday)
     // Wednesday and Sunday are rest days in the plan; a 练了 beats the 请假条 on Tuesday.
     #expect(week.days == [.trained, .trained, .restDay, .open, .open, .open, .restDay])
     #expect(week.today == 1)
     // Two swims on Monday are one day of swimming.
-    #expect(week.trained.map(\.activity) == [.sport(.swim), .sport(.run)])
+    #expect(week.trained.map(\.activity) == [.sport("swim"), .sport("run")])
     #expect(week.trained.map(\.days) == [2, 1])
     #expect(week.healthyMeals == 1)
     #expect(week.cheatMeals == 1)
@@ -94,7 +94,7 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     let elsewhere = CheckIn(
         id: CheckInID(id(60)), member: myID, day: tuesday,
         createdAt: Timestamp(millisecondsSince1970: 1_792_512_000_000),
-        audience: try Audience([SquadID(id(11))]), entry: .trained(Training(activity: .sport(.swim))))
+        audience: try Audience([SquadID(id(11))]), entry: .trained(Training(activity: .sport("swim"))))
     let home = sampleHome(checkIns: [elsewhere])
     #expect(home.todaysCheckIns(of: myID).isEmpty)
     #expect(home.todaysSport(of: myID) == nil)

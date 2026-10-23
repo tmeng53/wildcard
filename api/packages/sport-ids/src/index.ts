@@ -7,9 +7,12 @@ import { z } from 'zod';
 /** `custom` stands for 其他, a sport the member names themselves; no listed sport has it. */
 export const CUSTOM_SPORT = 'custom';
 
-/** A listed sport's id, such as `run` or `trailRun`: camelCase letters and digits. Never changes. */
+/** The shape of a sport's id, such as `run` or `trailRun`: camelCase letters and digits. */
+export const SPORT_ID_PATTERN = /^[a-z][A-Za-z0-9]{0,39}$/;
+
+/** A listed sport's id. Never changes. */
 export const SportId = z
   .string()
-  .regex(/^[a-z][A-Za-z0-9]{0,39}$/)
+  .regex(SPORT_ID_PATTERN)
   .refine((id) => id !== CUSTOM_SPORT, { message: '`custom` is not a listed sport' });
 export type SportId = z.infer<typeof SportId>;

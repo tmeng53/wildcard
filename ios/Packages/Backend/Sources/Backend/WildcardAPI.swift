@@ -183,6 +183,20 @@ public struct WildcardAPI: Sendable {
 
     // MARK: - Wire answers, which the device copy keeps as the API sent them
 
+    /// `GET /public/catalog`, which needs no sign-in: the catalog and its `ETag`, or nil while
+    /// it is still the one named `known`.
+    func catalogWire(ifNoneMatch known: String?) async throws(APIError) -> (
+        catalog: Components.Schemas.Catalog, etag: String?
+    )? {
+        try await call {
+            switch try await client.getCatalog(headers: .init(ifNoneMatch: known)) {
+            case .ok(let answer): (try answer.body.json, answer.headers.eTag)
+            case .notModified: nil
+            default: throw APIError.unreadableResponse
+            }
+        }
+    }
+
     func meWire() async throws(APIError) -> Components.Schemas.Me {
         try await call { try await client.getMe().ok.body.json }
     }

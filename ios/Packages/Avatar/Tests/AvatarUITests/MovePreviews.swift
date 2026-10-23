@@ -23,7 +23,7 @@ extension CharacterPreviewTests {
     func writeKits(to url: URL) throws {
         let kits = try PlaceholderCharacter.sportKits()
         let hop = try PlaceholderCharacter.kitHop()
-        let sports: [Sport] = [.swim, .run, .strength, .tennis, .climb, .yoga]
+        let sports: [Sport] = ["swim", "run", "strength", "tennis", "climb", "yoga"]
         let cast: [(Persona, Outfit)] = [(.energetic, PlaceholderCharacter.lifter), (.deadpan, Looks.cat)]
         // A performance acts on what is asked of it at once, so each pick is a performance of its
         // own, on stage from the moment it's made.
@@ -35,7 +35,7 @@ extension CharacterPreviewTests {
                 idle: try looks[0].figure.bind(PlaceholderCharacter.clip("idle", persona: persona)))
             var picks = [(from: 0.0, performance: performance)]
             for (index, sport) in sports.enumerated() {
-                let kit = kits.kit(for: .sport(sport))
+                let kit = kits.kit(for: .sport(sport), in: Looks.sports)
                 let look = try Frame(outfit: kit.dress(outfit))
                 looks.append(look)
                 let time = 0.5 + Double(index) * 2

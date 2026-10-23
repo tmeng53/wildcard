@@ -26,7 +26,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     try await signUp.save(try character("小林", body: "calico", persona: .shy))
     try await signUp.agreeToAI()
     let squad = try await signUp.create(named: try SquadName("周三不练腿"))
-    let week: [PlanDay] = [.train(.sport(.run)), .rest, .train(nil), .rest, .train(.sport(.yoga)), .rest, .rest]
+    let week: [PlanDay] = [.train(.sport("run")), .rest, .train(nil), .rest, .train(.sport("yoga")), .rest, .rest]
     try await signUp.savePlan(week)
 
     #expect(try await member.api.hasAgreedToAI())
@@ -145,7 +145,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(today.phase == .current)
     #expect(today.home?.squad.id == squad.id)
     #expect(today.home?.today.members.map(\.character?.nickname.text) == ["小林"])
-    guard case .posted = try await today.post(.trained(.sport(.run), PostBody(photos: [], caption: "")))
+    guard case .posted = try await today.post(.trained(.sport("run"), PostBody(photos: [], caption: "")))
     else { Issue.record("the post was queued, not saved"); return }
     #expect(today.myStatus == .trained)
 }

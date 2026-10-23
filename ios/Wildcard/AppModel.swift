@@ -8,6 +8,7 @@ import Foundation
 import MeDomain
 import Observation
 import OnboardingUI
+import SportsUI
 
 /// The app on the real backend: who is signed in decides between sign-up and the tabs. A member
 /// signed out, or signed in with no squad yet, goes through sign-up; one with a squad opens on
@@ -27,6 +28,8 @@ final class AppModel {
     @ObservationIgnored private let api: WildcardAPI
     /// Where the home's copy and the posts still to go out are kept.
     @ObservationIgnored private let directory: URL
+    /// The lists the app shows that live in the database, such as every sport.
+    @ObservationIgnored private let catalog: CatalogClient
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
     /// with the session alone.
     @ObservationIgnored private let confirmDeletion: @MainActor () async throws(MeError) -> DeletionConfirmation
@@ -41,6 +44,10 @@ final class AppModel {
             store: KeychainSessionStore(), now: { Date() })
         api = WildcardAPI(url: config.apiURL, account: account)
         directory = URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory)
+        catalog = CatalogClient(
+            api: api, directory: URL.applicationSupportDirectory.appending(path: "Catalog", directoryHint: .isDirectory)
+        )
+        SportList.shared.show(catalog.keptSports())
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -60,6 +67,7 @@ final class AppModel {
     /// Follows the account for as long as the app runs: the first state picks the first screen,
     /// and signing out, from here or because the session ended, returns to the open screen.
     func run() async {
+        Task { await refreshCatalog() }
         for await state in await account.states() {
             switch state {
             case .signedOut: await signedOut()
@@ -99,6 +107,12 @@ final class AppModel {
     /// A tapped notification: back on 今天 with the home loaded again.
     func reloadToday() async {
         if case .tabs(let today, _) = screen { await today.load() }
+    }
+
+    /// Reads the catalog again, as the app comes back to the front: a sport added on the server
+    /// shows without an app update.
+    func refreshCatalog() async {
+        if let sports = await catalog.refreshSports() { SportList.shared.show(sports) }
     }
 
     func signOut() async {

@@ -586,18 +586,8 @@
         "additionalProperties": false
       },
       "Sport": {
-        "anyOf": [
-          {
-            "type": "string",
-            "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
-          },
-          {
-            "type": "string",
-            "enum": [
-              "custom"
-            ]
-          }
-        ],
+        "type": "string",
+        "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
         "description": "A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`."
       },
       "PhotoView": {

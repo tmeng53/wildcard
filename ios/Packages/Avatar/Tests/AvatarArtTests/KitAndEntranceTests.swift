@@ -34,14 +34,14 @@ import Testing
 @Test func sportsPickTheirKits() throws {
     let kits = try PlaceholderCharacter.sportKits()
     let picks: [Sport: String] = [
-        .swim: "swim", .surf: "swim", .run: "run", .hike: "run", .spin: "run", .strength: "strength",
-        .boxing: "strength", .tennis: "tennis", .badminton: "tennis", .climb: "climb", .ski: "warmup",
-        .yoga: "yoga", .matPilates: "yoga", .basketball: "warmup", .dance: "warmup", .dogWalk: "warmup",
+        "swim": "swim", "surf": "swim", "run": "run", "hike": "run", "spin": "run", "strength": "strength",
+        "boxing": "strength", "tennis": "tennis", "badminton": "tennis", "climb": "climb", "ski": "warmup",
+        "yoga": "yoga", "matPilates": "yoga", "basketball": "warmup", "dance": "warmup", "dogWalk": "warmup",
     ]
     for (sport, kit) in picks {
-        #expect(kits.kit(for: .sport(sport)).id == kit, "\(sport)")
+        #expect(kits.kit(for: .sport(sport), in: Looks.sports).id == kit, "\(sport)")
     }
-    #expect(kits.kit(for: .custom(try CustomSport("飞盘"))).id == "warmup")
+    #expect(kits.kit(for: .custom(try CustomSport("飞盘")), in: Looks.sports).id == "warmup")
     #expect(kits.kits.map(\.id) == ["swim", "run", "strength", "tennis", "climb", "yoga", "warmup"])
 }
 
@@ -53,18 +53,18 @@ import Testing
     let look = Outfit(
         ["body": "peach", "hair": "bob", "eyes": "sharp", "hat": "cap", "top": "tee", "bottom": "leggings"],
         colors: ["top": blue, "hair": try #require(RGBAColor(hex: "#2A2333"))])
-    let running = kits.kit(for: .sport(.run)).dress(look)
+    let running = kits.kit(for: .sport("run"), in: Looks.sports).dress(look)
     #expect(running.variants["top"] == "tank" && running.colors["top"] == blue)
     #expect(running.variants["hat"] == "headband" && running.variants["shoes"] == "runner")
     #expect(running.variants["prop"] == "stopwatch")
     #expect(running.variants["hair"] == "bob" && running.variants["eyes"] == "sharp")
     #expect(running.colors["hair"] == look.colors["hair"])
-    let climbing = kits.kit(for: .sport(.climb)).dress(look)
+    let climbing = kits.kit(for: .sport("climb"), in: Looks.sports).dress(look)
     #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "climbing")
-    #expect(kits.kit(for: .sport(.ski)).dress(look) == look)
+    #expect(kits.kit(for: .sport("ski"), in: Looks.sports).dress(look) == look)
 }
 
-@Test func kitsJSONIsChecked() {
+@Test func kitsJSONIsChecked() throws {
     func decode(_ json: String) throws(AvatarError) -> SportKits {
         try SportKits.decode(Data(json.utf8))
     }
@@ -73,13 +73,17 @@ import Testing
         try decode(
             #"{"version": 1, "kits": \#(kit), "categories": {"water": "swim"}, "sports": {}, "otherwise": "run"}"#)
     }
-    #expect(throws: AvatarError.unknownKit("pool")) {
-        try decode(#"{"version": 1, "kits": \#(kit), "categories": {"pool": "run"}, "sports": {}, "otherwise": "run"}"#)
-    }
-    #expect(throws: AvatarError.unknownKit("parkour")) {
+    // Sports and categories are the API's data, so the file may name ones this build hasn't
+    // seen; only a key that can't be an id is refused.
+    #expect(throws: AvatarError.unknownKit("Pool Party")) {
         try decode(
-            #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#)
+            #"{"version": 1, "kits": \#(kit), "categories": {"Pool Party": "run"}, "sports": {}, "otherwise": "run"}"#)
     }
+    #expect(
+        try decode(
+            #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#
+        )
+        .kit(for: .sport("parkour"), in: .empty).id == "run")
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try decode(#"{"version": 2, "kits": [], "categories": {}, "sports": {}, "otherwise": "run"}"#)
     }
@@ -114,7 +118,7 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
 
 /// A deadpan character swims slower than an energetic one.
 @Test func personasPlayKitMovesAtTheirOwnTempo() throws {
-    let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+    let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
     let deadpan = try PlaceholderCharacter.move(for: swim, persona: .deadpan)
     let energetic = try PlaceholderCharacter.move(for: swim, persona: .energetic)
     #expect(abs(deadpan.duration - 1.3 / 0.7) < 1e-9)

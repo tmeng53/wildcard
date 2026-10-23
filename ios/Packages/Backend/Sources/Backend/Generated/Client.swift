@@ -116,6 +116,120 @@ internal struct Client: APIProtocol {
             }
         )
     }
+    /// The lists the app shows, such as every sport
+    ///
+    /// No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.
+    ///
+    /// - Remark: HTTP `GET /public/catalog`.
+    /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)`.
+    internal func getCatalog(_ input: Operations.GetCatalog.Input) async throws -> Operations.GetCatalog.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.GetCatalog.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/public/catalog",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setHeaderFieldAsURI(
+                    in: &request.headerFields,
+                    name: "if-none-match",
+                    value: input.headers.ifNoneMatch
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let headers: Operations.GetCatalog.Output.Ok.Headers = .init(
+                        eTag: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "ETag",
+                            as: Swift.String.self
+                        ),
+                        cacheControl: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Cache-Control",
+                            as: Swift.String.self
+                        )
+                    )
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetCatalog.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Catalog.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(
+                        headers: headers,
+                        body: body
+                    ))
+                case 304:
+                    return .notModified(.init())
+                case 429:
+                    let headers: Operations.GetCatalog.Output.TooManyRequests.Headers = .init(retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                        in: response.headerFields,
+                        name: "Retry-After",
+                        as: Swift.Int.self
+                    ))
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetCatalog.Output.TooManyRequests.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// The signed-in member
     ///
     /// Who the bearer token belongs to, and their profile once they have saved one.

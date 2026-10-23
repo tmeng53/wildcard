@@ -164,6 +164,323 @@ extension Components {
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/Catalog`.
+        public struct Catalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Catalog/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Catalog/version`.
+            public var version: Components.Schemas.Catalog.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/Catalog/sports`.
+            public var sports: Components.Schemas.SportsCatalog
+            /// Creates a new `Catalog`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - sports:
+            public init(
+                version: Components.Schemas.Catalog.VersionPayload,
+                sports: Components.Schemas.SportsCatalog
+            ) {
+                self.version = version
+                self.sports = sports
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case sports
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Catalog.VersionPayload.self,
+                    forKey: .version
+                )
+                self.sports = try container.decode(
+                    Components.Schemas.SportsCatalog.self,
+                    forKey: .sports
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "sports"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SportsCatalog`.
+        public struct SportsCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload`.
+            public struct CategoriesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/id`.
+                public var id: Swift.String
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/names`.
+                public var names: Components.Schemas.CatalogNames
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload`.
+                public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                    /// What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/id`.
+                    public var id: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/names`.
+                    public var names: Components.Schemas.CatalogNames
+                    /// An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/icon`.
+                    public var icon: Swift.String
+                    /// False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/offered`.
+                    public var offered: Swift.Bool
+                    /// Creates a new `SportsPayloadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - id: What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
+                    ///   - names:
+                    ///   - icon: An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
+                    ///   - offered: False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    public init(
+                        id: Swift.String,
+                        names: Components.Schemas.CatalogNames,
+                        icon: Swift.String,
+                        offered: Swift.Bool
+                    ) {
+                        self.id = id
+                        self.names = names
+                        self.icon = icon
+                        self.offered = offered
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case id
+                        case names
+                        case icon
+                        case offered
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.id = try container.decode(
+                            Swift.String.self,
+                            forKey: .id
+                        )
+                        self.names = try container.decode(
+                            Components.Schemas.CatalogNames.self,
+                            forKey: .names
+                        )
+                        self.icon = try container.decode(
+                            Swift.String.self,
+                            forKey: .icon
+                        )
+                        self.offered = try container.decode(
+                            Swift.Bool.self,
+                            forKey: .offered
+                        )
+                        try decoder.ensureNoAdditionalProperties(knownKeys: [
+                            "id",
+                            "names",
+                            "icon",
+                            "offered"
+                        ])
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
+                public typealias SportsPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayloadPayload]
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
+                public var sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload
+                /// Creates a new `CategoriesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - names:
+                ///   - sports:
+                public init(
+                    id: Swift.String,
+                    names: Components.Schemas.CatalogNames,
+                    sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload
+                ) {
+                    self.id = id
+                    self.names = names
+                    self.sports = sports
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case names
+                    case sports
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.names = try container.decode(
+                        Components.Schemas.CatalogNames.self,
+                        forKey: .names
+                    )
+                    self.sports = try container.decode(
+                        Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
+                        forKey: .sports
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "id",
+                        "names",
+                        "sports"
+                    ])
+                }
+            }
+            /// The picker’s tabs, in order, each with its sports in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/categories`.
+            public typealias CategoriesPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload]
+            /// The picker’s tabs, in order, each with its sports in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/categories`.
+            public var categories: Components.Schemas.SportsCatalog.CategoriesPayload
+            /// The short lists some screens show before the whole list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
+            public struct PicksPayload: Codable, Hashable, Sendable {
+                /// Sign-up’s 最常见 grid. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/signUpCommon`.
+                public var signUpCommon: [Swift.String]
+                /// Sign-up’s 更多 pills. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/signUpMore`.
+                public var signUpMore: [Swift.String]
+                /// A 练了’s quick picks, before the whole list. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/checkInQuick`.
+                public var checkInQuick: [Swift.String]
+                /// Creates a new `PicksPayload`.
+                ///
+                /// - Parameters:
+                ///   - signUpCommon: Sign-up’s 最常见 grid. Sport ids, in order.
+                ///   - signUpMore: Sign-up’s 更多 pills. Sport ids, in order.
+                ///   - checkInQuick: A 练了’s quick picks, before the whole list. Sport ids, in order.
+                public init(
+                    signUpCommon: [Swift.String],
+                    signUpMore: [Swift.String],
+                    checkInQuick: [Swift.String]
+                ) {
+                    self.signUpCommon = signUpCommon
+                    self.signUpMore = signUpMore
+                    self.checkInQuick = checkInQuick
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case signUpCommon
+                    case signUpMore
+                    case checkInQuick
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.signUpCommon = try container.decode(
+                        [Swift.String].self,
+                        forKey: .signUpCommon
+                    )
+                    self.signUpMore = try container.decode(
+                        [Swift.String].self,
+                        forKey: .signUpMore
+                    )
+                    self.checkInQuick = try container.decode(
+                        [Swift.String].self,
+                        forKey: .checkInQuick
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "signUpCommon",
+                        "signUpMore",
+                        "checkInQuick"
+                    ])
+                }
+            }
+            /// The short lists some screens show before the whole list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
+            public var picks: Components.Schemas.SportsCatalog.PicksPayload
+            /// Creates a new `SportsCatalog`.
+            ///
+            /// - Parameters:
+            ///   - categories: The picker’s tabs, in order, each with its sports in order.
+            ///   - picks: The short lists some screens show before the whole list.
+            public init(
+                categories: Components.Schemas.SportsCatalog.CategoriesPayload,
+                picks: Components.Schemas.SportsCatalog.PicksPayload
+            ) {
+                self.categories = categories
+                self.picks = picks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case categories
+                case picks
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.categories = try container.decode(
+                    Components.Schemas.SportsCatalog.CategoriesPayload.self,
+                    forKey: .categories
+                )
+                self.picks = try container.decode(
+                    Components.Schemas.SportsCatalog.PicksPayload.self,
+                    forKey: .picks
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "categories",
+                    "picks"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CatalogNames`.
+        public struct CatalogNames: Codable, Hashable, Sendable {
+            /// Simplified Chinese.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHans`.
+            public var zhHans: Swift.String
+            /// English.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/en`.
+            public var en: Swift.String
+            /// Traditional Chinese (Taiwan).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHant`.
+            public var zhHant: Swift.String
+            /// Creates a new `CatalogNames`.
+            ///
+            /// - Parameters:
+            ///   - zhHans: Simplified Chinese.
+            ///   - en: English.
+            ///   - zhHant: Traditional Chinese (Taiwan).
+            public init(
+                zhHans: Swift.String,
+                en: Swift.String,
+                zhHant: Swift.String
+            ) {
+                self.zhHans = zhHans
+                self.en = en
+                self.zhHant = zhHant
+            }
+            public enum CodingKeys: String, CodingKey {
+                case zhHans
+                case en
+                case zhHant
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.zhHans = try container.decode(
+                    Swift.String.self,
+                    forKey: .zhHans
+                )
+                self.en = try container.decode(
+                    Swift.String.self,
+                    forKey: .en
+                )
+                self.zhHant = try container.decode(
+                    Swift.String.self,
+                    forKey: .zhHant
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "zhHans",
+                    "en",
+                    "zhHant"
+                ])
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Me`.
         public struct Me: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Me/version`.
@@ -920,64 +1237,10 @@ extension Components {
                 ])
             }
         }
-        /// A listed sport, or `custom` with the member’s own name in `customSport`.
+        /// A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`.
         ///
         /// - Remark: Generated from `#/components/schemas/Sport`.
-        @frozen public enum Sport: String, Codable, Hashable, Sendable, CaseIterable {
-            case run = "run"
-            case walk = "walk"
-            case hike = "hike"
-            case trailRun = "trailRun"
-            case strength = "strength"
-            case crossfit = "crossfit"
-            case hyrox = "hyrox"
-            case kettlebell = "kettlebell"
-            case spin = "spin"
-            case elliptical = "elliptical"
-            case rowing = "rowing"
-            case hiit = "hiit"
-            case jumpRope = "jumpRope"
-            case aerobics = "aerobics"
-            case yoga = "yoga"
-            case matPilates = "matPilates"
-            case reformerPilates = "reformerPilates"
-            case barre = "barre"
-            case stretching = "stretching"
-            case swim = "swim"
-            case surf = "surf"
-            case paddleboard = "paddleboard"
-            case kayak = "kayak"
-            case tennis = "tennis"
-            case badminton = "badminton"
-            case pickleball = "pickleball"
-            case tableTennis = "tableTennis"
-            case squash = "squash"
-            case basketball = "basketball"
-            case soccer = "soccer"
-            case volleyball = "volleyball"
-            case golf = "golf"
-            case baseballSoftball = "baseballSoftball"
-            case ultimate = "ultimate"
-            case roadCycling = "roadCycling"
-            case mountainBiking = "mountainBiking"
-            case climb = "climb"
-            case ski = "ski"
-            case snowboard = "snowboard"
-            case skate = "skate"
-            case boxing = "boxing"
-            case kickboxing = "kickboxing"
-            case jiuJitsu = "jiuJitsu"
-            case martialArts = "martialArts"
-            case dance = "dance"
-            case dogWalk = "dogWalk"
-            case walkCommute = "walkCommute"
-            case bikeCommute = "bikeCommute"
-            case deepClean = "deepClean"
-            case moving = "moving"
-            case strollerWalk = "strollerWalk"
-            case gardening = "gardening"
-            case custom = "custom"
-        }
+        public typealias Sport = Swift.String
         /// - Remark: Generated from `#/components/schemas/PhotoView`.
         public struct PhotoView: Codable, Hashable, Sendable {
             /// The photo’s name, as the check-in was saved with.

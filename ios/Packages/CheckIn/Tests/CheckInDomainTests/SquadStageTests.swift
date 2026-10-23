@@ -20,7 +20,7 @@ private func member(_ number: Int, _ status: StageStatus, _ minute: Int64? = nil
 private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: across, y: y) }
 
 @Test func aDayIsTrainedThenOnLeaveThenRestThenNotYet() {
-    let run = Activity.sport(.run)
+    let run = Activity.sport("run")
     #expect(StageStatus(training: .trained, activity: run, plannedRest: true) == .trained(run))
     #expect(StageStatus(training: .disclaimer, activity: nil, plannedRest: true) == .disclaimer)
     #expect(StageStatus(training: .notCheckedIn, activity: nil, plannedRest: true) == .restDay)
@@ -60,7 +60,7 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
 
 @Test func nobodyIsDrawnOverAnotherOrStandsOnALaneSomeoneIsRunning() {
     let sports: [SceneTheme: Sport] = [
-        .track: .run, .pool: .swim, .gym: .strength, .tennis: .tennis, .climbing: .climb,
+        .track: "run", .pool: "swim", .gym: "strength", .tennis: "tennis", .climbing: "climb",
     ]
     for scene in SceneTheme.allCases {
         for trainers in 0...4 {
@@ -68,7 +68,7 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
             stage.arrange(
                 (1...7).map { number in
                     number <= trainers
-                        ? member(number, .trained(.sport(sports[scene] ?? .run)), Int64(number))
+                        ? member(number, .trained(.sport(sports[scene] ?? "run")), Int64(number))
                         : member(number, .notYet, shy: number.isMultiple(of: 2))
                 })
             let spots = stage.placements.values.compactMap { placement -> StagePoint? in
@@ -119,7 +119,7 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.placements[id(4)] == .floor(point(347, 346)))
     #expect(stage.placements[id(5)] == .floor(point(43, 346)))
 
-    stage.arrange(squad + [member(6, .trained(.sport(.run)), 1)])
+    stage.arrange(squad + [member(6, .trained(.sport("run")), 1)])
     #expect(stage.placements[id(6)] == .station(.jogging, slot: 0))
     #expect(stage.placements[id(1)] == .floor(point(81, 556)))
     #expect(stage.placements[id(2)] == .floor(point(309, 556)))
@@ -131,10 +131,10 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
 @Test func aMatchingSportUsesTheScenesEquipmentInCheckInOrder() {
     var stage = SquadStage(layout: .of(.gym))
     stage.arrange([
-        member(1, .trained(.sport(.strength)), 20),
-        member(2, .trained(.sport(.strength)), 5),
-        member(3, .trained(.sport(.strength)), 30),
-        member(4, .trained(.sport(.yoga)), 40),
+        member(1, .trained(.sport("strength")), 20),
+        member(2, .trained(.sport("strength")), 5),
+        member(3, .trained(.sport("strength")), 30),
+        member(4, .trained(.sport("yoga")), 40),
     ])
     #expect(stage.placements[id(2)] == .station(.squatRack, slot: 0))
     #expect(stage.placements[id(1)] == .station(.squatRack, slot: 1))
@@ -155,7 +155,7 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.placements[id(3)] == .floor(point(195, 486)))
 
     // A swimmer goes to the water; the others stay put.
-    stage.arrange([member(1, .trained(.sport(.swim)), 2), member(2, .notYet), member(3, .disclaimer, 1)])
+    stage.arrange([member(1, .trained(.sport("swim")), 2), member(2, .notYet), member(3, .disclaimer, 1)])
     #expect(stage.placements[id(1)] == .station(.swimming, slot: 0))
     #expect(stage.placements[id(2)] == .floor(point(309, 556)))
     #expect(stage.placements[id(3)] == .floor(point(195, 486)))
@@ -163,9 +163,9 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
 
 @Test func someoneOnEquipmentKeepsTheirSlotWhenAnEarlierTeammateArrives() {
     var stage = SquadStage(layout: .of(.climbing))
-    stage.arrange([member(1, .trained(.sport(.climb)), 30)])
+    stage.arrange([member(1, .trained(.sport("climb")), 30)])
     #expect(stage.placements[id(1)] == .station(.topRope, slot: 0))
-    stage.arrange([member(1, .trained(.sport(.climb)), 30), member(2, .trained(.sport(.climb)), 10)])
+    stage.arrange([member(1, .trained(.sport("climb")), 30), member(2, .trained(.sport("climb")), 10)])
     #expect(stage.placements[id(1)] == .station(.topRope, slot: 0))
     #expect(stage.placements[id(2)] == .station(.topRope, slot: 1))
 }
@@ -173,17 +173,17 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
 @Test func posesFollowTheStatusAndAtNightOnlyTrainingStaysAwake() {
     var stage = SquadStage(layout: .of(.tennis))
     let people = [
-        member(1, .trained(.sport(.tennis)), 1), member(2, .trained(.sport(.run)), 2),
+        member(1, .trained(.sport("tennis")), 1), member(2, .trained(.sport("run")), 2),
         member(3, .disclaimer, 3), member(4, .restDay), member(5, .notYet),
     ]
     stage.arrange(people)
     #expect(
         people.map { stage.pose(of: $0, at: .day) } == [
-            .station(.rally), .inPlace(.sport(.run)), .holdingSign, .sitting, .standing,
+            .station(.rally), .inPlace(.sport("run")), .holdingSign, .sitting, .standing,
         ])
     #expect(
         people.map { stage.pose(of: $0, at: .night) } == [
-            .station(.rally), .inPlace(.sport(.run)), .asleep, .asleep, .asleep,
+            .station(.rally), .inPlace(.sport("run")), .asleep, .asleep, .asleep,
         ])
 }
 
@@ -211,15 +211,15 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
 
 @Test func climbersAreDrawnSmallerToFitTheWall() {
     var stage = SquadStage(layout: .of(.climbing))
-    stage.arrange([member(1, .trained(.sport(.climb)), 1)])
+    stage.arrange([member(1, .trained(.sport("climb")), 1)])
     #expect(stage.position(of: id(1), at: 0) == StagePosition(point: point(132, 422), facing: 1, scale: 0.19))
 }
 
 @Test func everyoneAwakeWhoIsNotTrainingCheersAndNobodyAtNight() {
     var stage = SquadStage(layout: .of(.pool))
     let people = [
-        member(1, .trained(.sport(.swim)), 1), member(2, .notYet), member(3, .disclaimer, 2),
-        member(4, .trained(.sport(.run)), 3), member(5, .restDay),
+        member(1, .trained(.sport("swim")), 1), member(2, .notYet), member(3, .disclaimer, 2),
+        member(4, .trained(.sport("run")), 3), member(5, .restDay),
     ]
     stage.arrange(people)
     // Swimmers and the runner keep going.

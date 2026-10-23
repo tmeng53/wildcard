@@ -14,6 +14,8 @@ import PackageDescription
 //   posts still to go out kept on the device.
 // - `APISignUpService`, the adapter behind `OnboardingDomain`'s `SignUpService`: the squad, the
 //   character and the first week's plan saved through the API.
+// - `CatalogClient`, the lists the app shows that live in the database (every sport), kept on
+//   the device, with the copy this build ships with until the first read.
 // - `APIMeService`, the adapter behind `MeDomain`'s `MeService`: 我's overview, the daily push
 //   switch and deleting the account.
 let package = Package(
@@ -46,7 +48,9 @@ let package = Package(
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
-            ]),
+            ],
+            // The catalog this build ships with, for its first launch offline.
+            resources: [.copy("Resources/catalog.json")]),
         .testTarget(
             name: "BackendTests",
             dependencies: [

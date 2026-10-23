@@ -62,29 +62,23 @@ struct SportPicksTests {
     @Test func theCharacterWearsTheLatestPick() {
         var picks = SportPicks()
         #expect(picks.wearing == nil)
-        #expect(picks.toggle(.sport(.run)) == .picked)
-        #expect(picks.toggle(.sport(.strength)) == .picked)
-        #expect(picks.wearing == .sport(.strength))
-        #expect(picks.picked == [.sport(.run), .sport(.strength)])
+        #expect(picks.toggle(.sport("run")) == .picked)
+        #expect(picks.toggle(.sport("strength")) == .picked)
+        #expect(picks.wearing == .sport("strength"))
+        #expect(picks.picked == [.sport("run"), .sport("strength")])
     }
 
     @Test func takingOffTheWornSportChangesBackToTheOneBefore() {
-        var picks = SportPicks([.sport(.run), .sport(.strength)])
-        #expect(picks.toggle(.sport(.strength)) == .removed(changed: true))
-        #expect(picks.wearing == .sport(.run))
-        #expect(picks.toggle(.sport(.run)) == .removed(changed: true))
+        var picks = SportPicks([.sport("run"), .sport("strength")])
+        #expect(picks.toggle(.sport("strength")) == .removed(changed: true))
+        #expect(picks.wearing == .sport("run"))
+        #expect(picks.toggle(.sport("run")) == .removed(changed: true))
         #expect(picks.wearing == nil)
     }
 
     @Test func takingOffAnotherSportKeepsWhatIsWorn() {
-        var picks = SportPicks([.sport(.run), .sport(.strength)])
-        #expect(picks.toggle(.sport(.run)) == .removed(changed: false))
-        #expect(picks.wearing == .sport(.strength))
-    }
-
-    @Test func theListsHaveNoRepeats() {
-        let all = SportPicks.common + SportPicks.more
-        #expect(Set(all).count == all.count)
-        #expect(SportPicks.common == [.swim, .run, .strength, .tennis, .climb, .yoga])
+        var picks = SportPicks([.sport("run"), .sport("strength")])
+        #expect(picks.toggle(.sport("run")) == .removed(changed: false))
+        #expect(picks.wearing == .sport("strength"))
     }
 }

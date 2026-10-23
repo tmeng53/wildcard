@@ -11,7 +11,8 @@ struct SportPicker: View {
     let selected: Activity
     let pick: (Activity) -> Void
     @State private var query = ""
-    @State private var category = SportCategory.runWalk
+    /// The tab shown: the first until one is picked.
+    @State private var picked: String?
 
     var body: some View {
         ScrollView {
@@ -19,8 +20,14 @@ struct SportPicker: View {
                 SearchField(text: $query, prompt: Text("搜索运动", bundle: .module))
                     .padding(.horizontal, Space.pageMargin)
                     .accessibilityIdentifier("sports.search")
-                if query.isEmpty {
-                    CategoryBar(categories, selection: $category)
+                if query.isEmpty, let category {
+                    CategoryBar(
+                        categories,
+                        selection: Binding {
+                            category.id
+                        } set: {
+                            picked = $0
+                        })
                 }
                 LazyVGrid(
                     columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 2),
@@ -42,13 +49,19 @@ struct SportPicker: View {
         .presentationDragIndicator(.visible)
     }
 
-    private var shown: [Sport] {
-        query.trimmingCharacters(in: .whitespaces).isEmpty ? category.sports : Sport.matching(query)
+    private var catalog: SportCatalog { SportList.shared.catalog }
+
+    private var category: SportCatalog.Category? {
+        catalog.categories.first { $0.id == picked } ?? catalog.categories.first
     }
 
-    private var categories: [CategoryBarItem<SportCategory>] {
-        SportCategory.allCases.map {
-            CategoryBarItem(id: $0, title: $0.name, accessibilityIdentifier: "sports.category.\($0.rawValue)")
+    private var shown: [Sport] {
+        query.trimmingCharacters(in: .whitespaces).isEmpty ? category?.offered ?? [] : catalog.matching(query)
+    }
+
+    private var categories: [CategoryBarItem<String>] {
+        catalog.categories.filter { !$0.offered.isEmpty }.map {
+            CategoryBarItem(id: $0.id, title: $0.name, accessibilityIdentifier: "sports.category.\($0.id)")
         }
     }
 }

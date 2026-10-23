@@ -1,5 +1,6 @@
 import AccountDomain
 import AccountUI
+import Backend
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
@@ -8,6 +9,7 @@ import Foundation
 import MeDomain
 import MeUI
 import OnboardingUI
+import SportsUI
 import SwiftUI
 
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
@@ -30,6 +32,8 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and both models are the main actor's.
     init() {
+        // The sports this build ships with; with a backend, `AppModel` shows the kept or newer list.
+        SportList.shared.show(CatalogClient.bundledSports)
         _today = State(
             initialValue: TodayModel(
                 store: TodayStore(
@@ -100,6 +104,7 @@ private struct AppRoot: View {
     let app: AppModel
     @Binding var tab: MainTabs.Tab
     let delegate: AppDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         // A ZStack, not a Group, so the task below starts once and outlives screen changes.
@@ -120,6 +125,9 @@ private struct AppRoot: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await app.refreshCatalog() } }
+        }
         .onAppear {
             delegate.opened = { [app, $tab] in
                 $tab.wrappedValue = .today

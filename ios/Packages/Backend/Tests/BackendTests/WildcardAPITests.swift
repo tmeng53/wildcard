@@ -162,7 +162,7 @@ private func photoBytes() -> Data {
     let author = try await stack.signedInMember()
     let outsider = try await stack.signedInMember()
     let squad = try await stack.squad(of: author)
-    let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport(.run))))
+    let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport("run"))))
 
     await #expect(throws: APIError.refused(.squadNotJoined)) { try await outsider.api.save(trained) }
     await #expect(throws: APIError.refused(.squadNotJoined)) {
