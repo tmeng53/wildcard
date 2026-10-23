@@ -17,7 +17,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
             "heartR", "sparkle",
             "tearL", "tearR",
-            "propR",
+            "propR", "food0", "food1", "food2",
             "armL", "flexL", "muscleL", "armR", "flexR", "muscleR", "heart", "desk",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
@@ -69,7 +69,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 48)
+    #expect(figure.parts.count == 51)
 }
 
 @Test(arguments: Persona.allCases)

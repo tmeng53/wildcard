@@ -19,9 +19,10 @@ import SwiftUI
 /// build launched with `-local-backend`) it follows the account: sign-up until the member is in a
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
-/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide and
-/// `-character-editor` the character editor instead. After the first check-in it asks for
-/// notifications; a tapped one brings the member back to 今天 with the home loaded again.
+/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
+/// `-character-editor` the character editor and `-scene-pick` the scene pick instead. After the
+/// first check-in it asks for notifications; a tapped one brings the member back to 今天 with the
+/// home loaded again.
 @main
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
@@ -108,6 +109,8 @@ struct WildcardApp: App {
         WindowGroup {
             if let editor {
                 CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
+            } else if ScenePickDemo.isOn {
+                ScenePickDemoView()
             } else if let signUp, signUp.finished == nil {
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     StandInSignIn { signUp.signedIn(name: nil) }
@@ -148,9 +151,9 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }
                 }
-            case .tabs(let today, let profile):
+            case .tabs(let today, let profile, let feed):
                 // 出赛表 shows its placeholder here until its API adapter lands.
-                MainTabs(today: today, profile: profile, schedule: nil, feed: nil, selection: $tab)
+                MainTabs(today: today, profile: profile, schedule: nil, feed: feed, selection: $tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
