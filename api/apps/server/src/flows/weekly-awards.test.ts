@@ -42,6 +42,7 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -154,6 +155,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
     aiConsent,
+    nudges: nudgesOn(db),
     log: createLog(() => undefined),
     jobs: { ...noJobs, token: JOBS_TOKEN },
     admin: adminOn(),

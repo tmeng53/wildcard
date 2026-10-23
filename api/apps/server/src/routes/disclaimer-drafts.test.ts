@@ -29,6 +29,7 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -103,6 +104,7 @@ function appWith(model: LanguageModel) {
     }),
     push: pushOn(db),
     aiConsent: aiConsentOn(db),
+    nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,

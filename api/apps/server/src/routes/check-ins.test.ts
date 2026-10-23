@@ -23,6 +23,7 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -74,6 +75,7 @@ const app = createApp({
   }),
   weeklyAwards: unusedWeeklyAwards,
   aiConsent: aiConsentOn(db),
+  nudges: nudgesOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

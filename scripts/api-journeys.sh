@@ -661,6 +661,16 @@ if want daily-push; then
   call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"emoji":"❤️"}'
   expect 201
   echo "daily-push: in $evening, runner trained and cheerer left them a ❤️"
+  nudge="{\"version\":1,\"to\":\"$runner\",\"kind\":\"train\"}"
+  call POST "/squads/$squad/nudges" "$resting_token" "$nudge"
+  expect 201
+  call POST "/squads/$squad/nudges" "$resting_token" "$nudge"
+  expect 200
+  call POST "/squads/$squad/nudges" "$loner_token" "$nudge"
+  expect 403 SQUAD_NOT_JOINED
+  [ "$(psql "$DB_URL" -tAc "select count(*) from public.nudges where to_member_id = '$runner'")" = 1 ] ||
+    fail "one 催你练 for runner"
+  echo "daily-push: resting said 催你练 to runner once (201, then 200); loner, not in the squad, refused (403)"
 
   call POST /jobs/daily-progress-push "$runner_token"
   expect 401 JOB_TOKEN_INVALID

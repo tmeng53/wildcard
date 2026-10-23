@@ -20,14 +20,21 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, aiConsentOn, config, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  nudgesOn,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
+  nudgeInteractions,
   reactionInteractions,
   sendDailyProgress,
-  type InteractionSource,
 } from './daily-progress-push.js';
 
 // The daily progress push, from the routes the app calls to what each phone is sent, on local
@@ -66,11 +73,8 @@ const recorder: PushSender = {
 const push = pushOn(db, recorder);
 const log = createLog(() => undefined);
 const JOBS_TOKEN = randomBytes(32).toString('hex');
-const pokes = new Map<string, Set<string>>();
-/** A stand-in for an interaction that isn't built yet: pokes, from `pokes`. */
-const pokeSource: InteractionSource = ({ member }) =>
-  Promise.resolve(new Map([['poke', pokes.get(member) ?? new Set<string>()]]));
-const interactions = [reactionInteractions(checkIns), pokeSource];
+const nudges = nudgesOn(db);
+const interactions = [reactionInteractions(checkIns), nudgeInteractions(nudges)];
 
 const deps = {
   db,
@@ -97,6 +101,7 @@ const deps = {
   admin: adminOn(),
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
+  nudges,
 };
 const app = createApp(deps);
 
@@ -155,13 +160,22 @@ const morning = zoneAt(8, 11);
 /** The day on a clock `offset` hours ahead of UTC (never within 3 hours of midnight here). */
 const dayAt = (offset: number) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
 
-/** A member with a profile in `at`'s zone and a phone. */
-async function member(at: { readonly zone: string; readonly offset: number }) {
+/** A member with a profile in `at`'s zone (and a character called `nickname`) and a phone. */
+async function member(at: { readonly zone: string; readonly offset: number }, nickname?: string) {
   const signedUp = await signUp();
+  const character =
+    nickname === undefined
+      ? {}
+      : {
+          character: {
+            nickname,
+            look: { persona: 'showoff', variants: { body: 'peach' }, colors: {} },
+          },
+        };
   const saved = await call('PUT', {
     path: '/me/profile',
     token: signedUp.token,
-    body: { version: 1, timeZone: at.zone },
+    body: { version: 1, timeZone: at.zone, ...character },
   });
   expect(saved.status).toBe(200);
   const phone = randomBytes(32).toString('hex');
@@ -232,6 +246,18 @@ async function react({
   expect(reacted.status).toBe(201);
 }
 
+async function nudge(
+  from: { readonly token: string },
+  { squad, to, kind }: { readonly squad: string; readonly to: { userId: string }; kind: string },
+) {
+  const sent = await call('POST', {
+    path: `/squads/${squad}/nudges`,
+    token: from.token,
+    body: { version: 1, to: to.userId, kind },
+  });
+  expect(sent.status).toBe(201);
+}
+
 describe('the daily progress push', () => {
   it('sends a member past 6pm their squad’s week and who reacted, each person once, once a day', async () => {
     const eve = await member(evening);
@@ -282,16 +308,57 @@ describe('the daily progress push', () => {
     expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: true }]);
   });
 
-  it('counts any source’s interactions with the reactions, and one alone is worth a push', async () => {
-    const [eve, mate] = [await member(evening), await member(morning)];
-    await squadOf(eve, mate);
-    pokes.set(eve.userId, new Set([mate.userId]));
+  it('names who said 催你练, and a nudge alone is worth a push', async () => {
+    const [eve, mate] = [await member(evening), await member(morning, '小美')];
+    const squad = await squadOf(eve, mate);
+    await nudge(mate, { squad, to: eve, kind: 'train' });
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
-        alert: { key: 'push.dailyProgress.received', args: ['0', '10', '1'] },
-        event: { received: { poke: 1 } },
+        alert: { key: 'push.dailyProgress.train', args: ['0', '10', '小美'] },
+        event: { received: { train: 1 } },
       },
+    ]);
+  });
+
+  it('names a 催你练 before a 好好休息, and counts everyone else who did something', async () => {
+    const eve = await member(evening);
+    const [rester, trainer, fan] = [
+      await member(morning, '阿森'),
+      await member(morning, '小美'),
+      await member(morning),
+    ];
+    const squad = await squadOf(eve, rester, trainer, fan);
+    await nudge(rester, { squad, to: eve, kind: 'rest' });
+    await nudge(trainer, { squad, to: eve, kind: 'train' });
+    await nudge(trainer, { squad, to: eve, kind: 'rest' });
+    await react({ token: fan.token, checkIn: await trained(eve, squad), emoji: '❤️' });
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      {
+        alert: { key: 'push.dailyProgress.train.more', args: ['1', '20', '小美', '2'] },
+        event: { received: { reaction: 1, train: 1, rest: 2 } },
+      },
+    ]);
+  });
+
+  it('names who said 好好休息 when no one said 催你练', async () => {
+    const [eve, mate] = [await member(evening), await member(morning, '阿森')];
+    const squad = await squadOf(eve, mate);
+    await nudge(mate, { squad, to: eve, kind: 'rest' });
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      { alert: { key: 'push.dailyProgress.rest', args: ['0', '10', '阿森'] } },
+    ]);
+  });
+
+  it('counts a nudge from someone without a nickname without naming them', async () => {
+    const [eve, mate] = [await member(evening), await member(morning)];
+    const squad = await squadOf(eve, mate);
+    await nudge(mate, { squad, to: eve, kind: 'train' });
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      { alert: { key: 'push.dailyProgress.received', args: ['0', '10', '1'] } },
     ]);
   });
 
@@ -379,6 +446,58 @@ describe('the daily progress push', () => {
       alert: { key: 'push.dailyProgress', args: ['14', '22'] },
       event: { received: { reaction: 0 } },
     });
+  });
+});
+
+describe('POST /squads/{squadId}/nudges', () => {
+  it('sends one of each kind a day, so the same again is safe', async () => {
+    const [ann, bo] = [await member(morning), await member(morning)];
+    const squad = await squadOf(ann, bo);
+    const body = { version: 1, to: bo.userId, kind: 'train' };
+    const path = `/squads/${squad}/nudges`;
+    expect(await call('POST', { path, token: ann.token, body })).toStrictEqual({
+      status: 201,
+      body,
+    });
+    expect(await call('POST', { path, token: ann.token, body })).toStrictEqual({
+      status: 200,
+      body,
+    });
+    expect(
+      await call('POST', { path, token: ann.token, body: { ...body, kind: 'rest' } }),
+    ).toMatchObject({ status: 201 });
+  });
+
+  it('refuses outsiders, someone outside the squad, oneself and other kinds', async () => {
+    const [ann, bo, outsider] = [
+      await member(morning),
+      await member(morning),
+      await member(morning),
+    ];
+    const squad = await squadOf(ann, bo);
+    const path = `/squads/${squad}/nudges`;
+    const send = (token: string, { to, kind = 'train' }: { to: string; kind?: string }) =>
+      call('POST', { path, token, body: { version: 1, to, kind } });
+    expect(await send(outsider.token, { to: bo.userId })).toMatchObject({
+      status: 403,
+      body: { reason: 'SQUAD_NOT_JOINED' },
+    });
+    expect(await send(ann.token, { to: outsider.userId })).toMatchObject({
+      status: 404,
+      body: { reason: 'NOT_A_SQUADMATE' },
+    });
+    expect(await send(ann.token, { to: ann.userId })).toMatchObject({
+      status: 400,
+      body: { reason: 'OWN_NUDGE' },
+    });
+    expect(await send(ann.token, { to: bo.userId, kind: 'poke' })).toMatchObject({ status: 400 });
+    expect(
+      await app.request(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ version: 1, to: bo.userId, kind: 'train' }),
+      }),
+    ).toMatchObject({ status: 401 });
   });
 });
 
