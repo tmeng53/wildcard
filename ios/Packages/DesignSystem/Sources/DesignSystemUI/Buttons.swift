@@ -2,10 +2,10 @@
 import DesignSystem
 import SwiftUI
 
-/// The one primary action on a screen (下一步, 打卡, 发布): a solid capsule in the scene's
-/// accent, flat, that shrinks while held. `.large` is 52 points tall and fills its width when the
-/// label asks for it; `.regular` is 44, for an action inside content (去打卡). Disabled, it turns a
-/// quiet grey.
+/// The one primary action on a screen (下一步, 打卡, 发布): a solid capsule in the accent tone's
+/// colour (the scene's, or the brand's under `.accentTone(.brand)`), flat, that shrinks while held.
+/// `.large` is 52 points tall and fills its width when the label asks for it; `.regular` is 44,
+/// for an action inside content (去打卡). Disabled, it turns a quiet grey.
 public struct PrimaryButtonStyle: ButtonStyle {
     public enum Size: Sendable {
         case large
@@ -13,6 +13,7 @@ public struct PrimaryButtonStyle: ButtonStyle {
     }
 
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Environment(\.isEnabled) private var isEnabled
     private let size: Size
 
@@ -24,10 +25,10 @@ public struct PrimaryButtonStyle: ButtonStyle {
         configuration.label
             .typeStyle(size == .large ? TypeRamp.action : TypeRamp.calloutEmphasis)
             .lineLimit(1)
-            .foregroundStyle(Color(role: isEnabled ? .fgOnAccent : .fgSubtle, in: theme))
+            .foregroundStyle(Color(role: isEnabled ? tone.onFill : .fgSubtle, in: theme))
             .padding(.horizontal, size == .large ? Space.l : Space.m + Space.xxs)
             .frame(minHeight: size == .large ? Sizing.primaryControl : Sizing.control)
-            .background(Color(role: isEnabled ? .bgAccent : .borderDefault, in: theme), in: Capsule())
+            .background(Color(role: isEnabled ? tone.fill : .borderDefault, in: theme), in: Capsule())
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }

@@ -39,4 +39,4 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 - The server without `JOBS_TOKEN`: the job answers 503 `JOBS_OFF`.
 - Several runs at once: each member is still handled once (`daily_pushes`' primary key), the others count them as `skipped`.
-- A member before 6pm on their clock, or without a phone: not due.
+- A member before the push hour (`daily_push_settings`, 18 to begin with) on their clock, or without a phone: not due.
