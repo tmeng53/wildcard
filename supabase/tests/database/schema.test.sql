@@ -1,7 +1,7 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(24);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -140,12 +140,35 @@ select lives_ok(
     where member_id = 'a0000000-0000-0000-0000-000000000001'$$,
   'a nickname and a versioned look are saved together'
 );
+insert into public.squad_membership_events (squad_id, member_id, kind) values
+  ('5a000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'joined');
 delete from auth.users where id = 'a0000000-0000-0000-0000-000000000001';
 select is(
   (select count(*)::int from public.check_ins where member_id = 'a0000000-0000-0000-0000-000000000001')
   + (select count(*)::int from public.profiles where member_id = 'a0000000-0000-0000-0000-000000000001')
-  + (select count(*)::int from public.squad_members where member_id = 'a0000000-0000-0000-0000-000000000001'),
-  0, 'deleting an account takes its check-ins, profile and memberships with it'
+  + (select count(*)::int from public.squad_members where member_id = 'a0000000-0000-0000-0000-000000000001')
+  + (select count(*)::int from public.squad_membership_events where member_id = 'a0000000-0000-0000-0000-000000000001'),
+  0, 'deleting an account takes its check-ins, profile, memberships and its membership log with it'
+);
+
+-- The squad membership log only grows.
+insert into public.squads (id, name, invite_code) values
+  ('5a000000-0000-0000-0000-000000000002', '夜跑团', 'Q8W4ZR2M');
+insert into public.squad_membership_events (squad_id, member_id, kind) values
+  ('5a000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'joined');
+select throws_ok(
+  $$update public.squad_membership_events set kind = 'left'$$, '42501', null, 'the membership log refuses an update'
+);
+select throws_ok(
+  $$delete from public.squad_membership_events$$, '42501', null, 'the membership log refuses a delete'
+);
+select throws_ok(
+  $$truncate public.squad_membership_events$$, '42501', null, 'the membership log refuses a truncate'
+);
+delete from public.squads where id = '5a000000-0000-0000-0000-000000000002';
+select is(
+  (select count(*)::int from public.squad_membership_events where squad_id = '5a000000-0000-0000-0000-000000000002'),
+  0, 'deleting a squad takes its membership log with it'
 );
 
 select * from finish();
