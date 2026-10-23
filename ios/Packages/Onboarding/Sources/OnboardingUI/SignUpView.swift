@@ -56,8 +56,10 @@ public struct SignUpView<SignIn: View, Bar: View>: View {
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
-        // Sign-up is the gym's, like the open screen and the website, whatever scene the squad has.
+        // Sign-up is the gym's, like the open screen and the website, whatever scene the squad has,
+        // and a brand screen: its buttons and picks wear the brand's colour.
         .environment(\.sceneTheme, .gym)
+        .accentTone(.brand)
     }
 
     private var transition: AnyTransition {

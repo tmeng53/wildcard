@@ -2,6 +2,7 @@ import CharacterEditorUI
 import CheckInUI
 import DesignSystem
 import DesignSystemUI
+import FeedUI
 import MeDomain
 import MeUI
 import SwiftUI
@@ -16,6 +17,8 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
+    /// Nil on the real backend until 动态 has its API adapter: the tab says it is coming.
+    let feed: FeedModel?
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
@@ -75,9 +78,17 @@ struct MainTabs: View {
     @ViewBuilder private var screen: some View {
         switch selection {
         case .today:
-            TodayView(model: today) { selection = .feed }
+            TodayView(model: today) { post in
+                feed?.open(post)
+                selection = .feed
+            }
         case .feed:
-            UpcomingTab(title: Text("动态"))
+            if let feed {
+                FeedView(model: feed) { selection = .today }
+                    .environment(\.sceneTheme, today.scene)
+            } else {
+                UpcomingTab(title: Text("动态"))
+            }
         case .schedule:
             UpcomingTab(title: Text("出赛表"))
         case .profile:

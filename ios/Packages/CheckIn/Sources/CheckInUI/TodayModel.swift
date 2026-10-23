@@ -40,10 +40,12 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the line in the bubble.
+    /// What lands on the scene after a post: the line in the bubble, and the post it opens once
+    /// the server saved it.
     struct Payoff: Equatable {
         let kind: CheckInKind
         let line: String?
+        let post: CheckIn?
     }
 
     var isBurstOpen = false
@@ -83,12 +85,16 @@ public final class TodayModel {
 
     private let now: () -> Date
 
-    /// - Parameter posted: called each time a check-in lands, after the payoff starts; the app
-    ///   asks for notifications after the first.
+    /// - Parameters:
+    ///   - scene: the squad's scene. Each squad picks its own once squad settings land; until
+    ///     then every home is the gym, the scene the designs are drawn on.
+    ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
+    ///     notifications after the first.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
+        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
     ) {
+        self.scene = scene
         self.store = store
         self.now = now
         self.writer = writer
@@ -107,14 +113,11 @@ public final class TodayModel {
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
     private static let scoreDelay = 1.7
 
-    /// Each squad picks its scene once squad settings land; 跑道 until then.
-    private static let scene = SceneTheme.track
-
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
 
     /// The squad's scene.
-    var scene: SceneTheme { Self.scene }
+    public let scene: SceneTheme
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
@@ -224,11 +227,11 @@ public final class TodayModel {
         let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
-            try await store.post(draft)
+            let outcome = try await store.post(draft)
             placeSquad()
             step = .scene
             photos = []
-            land(draft, weekBefore: before)
+            land(draft, weekBefore: before, saved: outcome)
             posted()
         } catch {
             sendFailed = true
@@ -237,7 +240,9 @@ public final class TodayModel {
 
     /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
     /// in the post, off the scene (the product owner: too busy).
-    private func land(_ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?) {
+    private func land(
+        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, saved: TodayStore.PostOutcome
+    ) {
         let line: String?
         switch draft {
         case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body):
@@ -246,7 +251,8 @@ public final class TodayModel {
             line = disclaimer.text
         }
         posts += 1
-        payoff = Payoff(kind: draft.kind, line: line)
+        let post: CheckIn? = if case .posted(let checkIn) = saved { checkIn } else { nil }
+        payoff = Payoff(kind: draft.kind, line: line, post: post)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.kind != .disclaimer,
             let cheer = try? PlaceholderCharacter.clip(

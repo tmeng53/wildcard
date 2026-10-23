@@ -218,8 +218,8 @@ private struct SignCard: View {
     }
 }
 
-/// The venue's art, exported from the approved home design (`SceneArt/render.mjs`).
-/// Public so 上场 plays on the same art the squad's home shows next.
+/// The venue's art, exported from the approved home design (`SceneArt/render.mjs`). The home
+/// draws it full screen; 动态's empty state shows a window onto it, and 上场 plays on it.
 public struct SceneArt: View {
     public enum Layer: Sendable {
         case day

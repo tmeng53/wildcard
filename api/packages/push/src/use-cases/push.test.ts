@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createPostgresDailyPushStore } from '../adapters/postgres-daily-push-store.js';
+import { createPostgresDailyPushSettings } from '../adapters/postgres-daily-push-settings.js';
 import { createPostgresDeviceStore, type PushTables } from '../adapters/postgres-device-store.js';
 import { createPostgresSettingsStore } from '../adapters/postgres-settings-store.js';
 import { DeviceToken, MemberId, type Device } from '../domain/device.js';
@@ -57,6 +58,7 @@ const stores = {
   store,
   settings: createPostgresSettingsStore(db),
   daily: createPostgresDailyPushStore(db),
+  dailySettings: createPostgresDailyPushSettings(db),
 };
 
 describe('push devices', () => {

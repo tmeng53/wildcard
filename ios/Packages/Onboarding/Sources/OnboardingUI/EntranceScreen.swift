@@ -107,6 +107,8 @@ struct EntranceScreen<Bar: View>: View {
             }
         }
         .environment(\.sceneTheme, scene)
+        // Home's own turf from here: its card, 打卡 and rings wear the scene, as home does.
+        .accentTone(.scene)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: stage.showsCard)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: stage.showsChrome)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: stage.countFlipped)
