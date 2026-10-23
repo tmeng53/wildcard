@@ -6,8 +6,8 @@ import DesignSystemUI
 import SwiftUI
 
 /// The character editor: the character on its stage at the top, with its nickname under its
-/// feet; tabs of choices below; and one button to finish. In sign-up it shows the step and a
-/// back button; from 我 it shows 取消 and saves.
+/// feet; tabs of choices below; and one button to finish. In sign-up it shows the step, a back
+/// button and the title 创建你的外卡运动员; from 我 it shows 取消 and saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
@@ -28,6 +28,15 @@ public struct CharacterEditorView: View {
     public var body: some View {
         VStack(spacing: 0) {
             EditorHeader(model: model, context: context, onBack: onBack)
+            if case .signUp = context {
+                Text("创建你的外卡运动员", bundle: .module)
+                    .typeStyle(TypeRamp.taskTitle)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .accessibilityAddTraits(.isHeader)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.bottom, Space.s)
+            }
             CharacterStage {
                 EditorStage(model: model)
             }

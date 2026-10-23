@@ -135,6 +135,18 @@ public final class FeedStore {
         ownNotYetListed[checkIn.id] = post
     }
 
+    /// Teammates' reactions on the member's own posts left after `moment`, the newest on each
+    /// post, newest first: what their character answers when 动态 opens.
+    public func arrivals(since moment: Timestamp) -> [Arrival] {
+        loaded.values
+            .filter { $0.author == viewer }
+            .compactMap { post in
+                post.reactions.all.last { $0.member != viewer && $0.moment > moment }
+                    .map { Arrival(post: post.id, member: $0.member, emoji: $0.kind, moment: $0.moment) }
+            }
+            .sorted { ($0.moment, $0.post.description) > ($1.moment, $1.post.description) }
+    }
+
     // MARK: - Responding
 
     /// The member reacts to a teammate's post: shown at once, sent by `sendResponses()`. Returns
@@ -190,4 +202,12 @@ private struct Wish: Hashable, Sendable {
         post.reactions = post.reactions.setting(emoji, for: member, at: since)
         return post
     }
+}
+
+/// A teammate's reaction on one of the member's own posts.
+public struct Arrival: Hashable, Sendable {
+    public let post: CheckInID
+    public let member: MemberID
+    public let emoji: Emoji
+    public let moment: Timestamp
 }

@@ -7,7 +7,8 @@ import ImageIO
 import SwiftUI
 
 /// A post's photos across the top of its card, swiped one to the next, the cover first. A double
-/// tap leaves ❤️ where it landed (never taking a reaction back).
+/// tap pops a big ❤️ where it landed, which flies to the author's character (never taking a
+/// reaction back).
 struct PostPhotos: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
@@ -29,9 +30,9 @@ struct PostPhotos: View {
         .clipShape(
             UnevenRoundedRectangle(topLeadingRadius: Radius.card, topTrailingRadius: Radius.card, style: .continuous)
         )
-        .onTapGesture(count: 2, coordinateSpace: .local) { location in
+        .onTapGesture(count: 2, coordinateSpace: .named(FeedView.space)) { location in
             guard post.canRespond(model.viewer) else { return }
-            model.react(.doubleTap, on: post, at: location)
+            model.react(.doubleTap, on: post, from: location)
         }
         .accessibilityElement(children: .contain)
     }

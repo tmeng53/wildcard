@@ -1430,6 +1430,16 @@
           }
         }
       }
+    },
+    "下周场地：去过的是色卡，没开过的是纸箱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next week's scene: a colour card once visited, a carton until then"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

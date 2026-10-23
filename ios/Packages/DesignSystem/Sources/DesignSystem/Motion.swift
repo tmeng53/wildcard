@@ -19,6 +19,18 @@ public struct MotionSpring: Sendable, Hashable {
     }
 }
 
+/// A timed ease: a cubic Bézier from rest to rest over `duration` seconds, for motion that has to
+/// land at a set time rather than settle like a spring.
+public struct MotionCurve: Sendable, Hashable {
+    public let duration: Double
+    /// The curve's two control points, as in CSS's `cubic-bezier()`.
+    public let controlPoints: [Double]
+
+    public init(duration: Double, _ firstX: Double, _ firstY: Double, _ secondX: Double, _ secondY: Double) {
+        (self.duration, controlPoints) = (duration, [firstX, firstY, secondX, secondY])
+    }
+}
+
 /// Motion tokens: four everyday springs that never bounce, and one bounce kept for the moment a
 /// check-in lands. Everything that moves uses one of these, so the app feels like one thing.
 public enum Motion {
@@ -57,6 +69,13 @@ public enum Motion {
     public static let speechHold: Double = 1.6
     public static let speechFade: Double = 0.2
     public static let speechStagger: Double = 0.06
+    /// Text and a button revealing themselves on the open screen: an ease-out cubic
+    /// (1 - (1 - k)³) over 0.3 s, rising `revealRise` points, each `revealStagger` after the last.
+    public static let reveal = MotionCurve(duration: 0.3, 0.33, 1, 0.68, 1)
+    public static let revealRise: Double = 8
+    public static let revealStagger: Double = 0.08
+    /// Something already in place fading in, evenly over 0.25 s.
+    public static let fadeIn = MotionCurve(duration: 0.25, 0, 0, 1, 1)
     /// With Reduce Motion on, motion becomes a fade of this length, in seconds.
     public static let reducedDuration: Double = 0.2
 

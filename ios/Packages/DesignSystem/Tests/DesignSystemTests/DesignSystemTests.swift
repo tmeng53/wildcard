@@ -314,13 +314,8 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
-    }
-}
-
-struct SpeechTimingTests {
-    @Test func bubblesHoldThenFade() {
-        #expect([Motion.speechHold, Motion.speechFade, Motion.speechStagger] == [1.6, 0.2, 0.06])
+        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption"])
+        #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
     }
 }
 
@@ -328,7 +323,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "unbox",
             ])
         #expect(Haptic.ringTicks == 3)
     }
@@ -341,6 +336,13 @@ struct MotionTests {
         #expect(Motion.all.map(\.spring.dampingFraction) == [0.9, 1, 0.9, 0.9, 0.6])
         #expect([Motion.ringFill, Motion.ringPopScale] == [0.5, 1.08])
         #expect([Motion.collapseDuration, Motion.collapseStagger, Motion.burstStagger] == [0.19, 0.016, 0.028])
+    }
+
+    /// The open screen's reveal and fade, as the approved design times them.
+    @Test func timedCurvesMatchTheSpec() {
+        #expect(Motion.reveal == MotionCurve(duration: 0.3, 0.33, 1, 0.68, 1))
+        #expect([Motion.revealRise, Motion.revealStagger] == [8, 0.08])
+        #expect(Motion.fadeIn == MotionCurve(duration: 0.25, 0, 0, 1, 1))
     }
 
     /// Bounce is kept for the moment a check-in lands; everyday motion never overshoots visibly.
@@ -364,10 +366,10 @@ struct MotionTests {
 }
 
 struct BrandTests {
-    /// Graphite with a volt label until Tracy picks the brand's own colour.
-    @Test func brandIsGraphiteWithVoltOnIt() {
+    /// Graphite with white on it (Tracy, 2026-10-23).
+    @Test func brandIsGraphiteWithWhiteOnIt() {
         #expect(ColorRole.bgBrand.color(in: .pool).hex == "#1F2128")
-        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#C6F432")
+        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#FFFFFF")
     }
 
     /// Brand screens look the same whatever scene the squad picked.
