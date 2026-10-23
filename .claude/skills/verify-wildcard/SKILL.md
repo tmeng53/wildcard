@@ -142,4 +142,4 @@ Quote real output lines, never paraphrase them. A verdict without a commit, a di
 
 ## Keeping this skill current
 
-The PR that adds something a user can do adds or fills in its file in `features/` and sets its row above to **Ready**. Changes to this skill are agent rules; see `raise-pr` (Merging) for when Tracy merges them.
+The PR that adds something a user can do adds or fills in its file in `features/` and sets its row above to **Ready**. Changes to this skill are agent rules; see `raise-pr` (Merging) for how they are verified and merged.
