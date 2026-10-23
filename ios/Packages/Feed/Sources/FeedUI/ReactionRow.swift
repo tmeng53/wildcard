@@ -6,112 +6,116 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The emoji row at the bottom of a card: the most-left emoji (up to 3), how many reacted and
-/// the latest three faces; tapping them lists who left what. At the right, my button: a smiley
-/// that opens the emoji bar, or my emoji on the scene's wash once I reacted. My own posts have no
-/// button: nobody reacts to their own post.
+/// The emoji row at the bottom of a card: up to four heads, newest first, each wearing that
+/// person's emoji, then +n for the rest; tapping them opens who reacted. At the right, my button:
+/// a smiley that opens the emoji bar, or my emoji on the scene's wash once I reacted. My own
+/// posts have no button, and no row until someone reacts.
 struct ReactionRow: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
     let post: FeedPost
-    @State private var showsWho = false
 
-    private static let buttonWidth: Double = 44
-    private static let headOverlap: Double = 8
+    static let heads = 4
+    private static let headSize: Double = 26
+    private static let emojiSize: Double = 12
+    private static let buttonSize = CGSize(width: 44, height: 34)
+    private static let buttonEmojiSize: Double = 20
+    private static let buttonPop: Double = 1.18
+
+    private var canRespond: Bool { post.canRespond(model.viewer) }
 
     var body: some View {
         let reactions = post.reactions
-        VStack(alignment: .leading, spacing: Space.xs) {
+        if canRespond || !reactions.isEmpty {
             HStack(spacing: Space.xs) {
                 if !reactions.isEmpty {
                     summary(reactions)
                 }
                 Spacer(minLength: 0)
-                if post.canRespond(model.viewer) {
+                if canRespond {
                     myButton(reactions.kind(of: model.viewer))
                 }
             }
-            if showsWho, !reactions.isEmpty {
-                who(reactions)
-                    .transition(.opacity)
-            }
+            .frame(height: Sizing.minimumTapTarget)
         }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: showsWho)
     }
 
     private func summary(_ reactions: Responses<Emoji>) -> some View {
         Button {
-            showsWho.toggle()
+            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                model.closeBar()
+                model.listing = post.id
+            }
         } label: {
-            HStack(spacing: Space.xs - 2) {
-                Text(verbatim: reactions.topKinds(3).map(\.text).joined())
-                    .typeStyle(TypeRamp.headline)
-                Text(verbatim: "\(reactions.all.count)")
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .contentTransition(.numericText())
-                HStack(spacing: -Self.headOverlap) {
-                    ForEach(reactions.latestMembers(3), id: \.self) { member in
-                        Face(player: model.head(of: member))
-                    }
+            HStack(spacing: Space.xxs) {
+                ForEach(reactions.newest(Self.heads), id: \.member) { response in
+                    WearingHead(model: model, member: response.member, emoji: response.kind, size: Self.headSize)
+                        .transition(.move(edge: .leading).combined(with: .opacity))
                 }
-                .padding(.leading, Space.xxs)
+                let more = reactions.more(than: Self.heads)
+                if more > 0 {
+                    Text(verbatim: "+\(more)")
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .contentTransition(.numericText())
+                        .padding(.leading, Space.xxs)
+                }
             }
             .frame(minHeight: Sizing.minimumTapTarget)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: reactions.all.count)
-        .accessibilityLabel(Text("\(reactions.all.count) 个回应", bundle: .module))
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: reactions)
+        .anchorPreference(key: FeedAnchors.self, value: .bounds) { bounds in
+            FeedAnchors.Value(who: model.listing == post.id ? FeedAnchor(post: post.id, bounds: bounds) : nil)
+        }
+        .accessibilityLabel(Self.summaryLabel(reactions))
         .accessibilityHint(Text("看谁回应了", bundle: .module))
         .accessibilityIdentifier("feed.reactions")
     }
 
-    /// Who left which emoji, the most left first.
-    private func who(_ reactions: Responses<Emoji>) -> some View {
-        VStack(alignment: .leading, spacing: Space.xxs) {
-            ForEach(reactions.groups, id: \.kind) { group in
-                HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-                    Text(verbatim: group.kind.text)
-                        .typeStyle(TypeRamp.body)
-                    Text(verbatim: group.members.map(name).joined(separator: "、"))
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func name(_ member: MemberID) -> String {
-        if member == model.viewer { return String(localized: "我", bundle: .module) }
-        return model.name(of: member) ?? String(localized: "队友", bundle: .module)
+    /// 「3 人回应：💪 2，😂 1」.
+    static func summaryLabel(_ reactions: Responses<Emoji>) -> Text {
+        let counts = reactions.groups.map { "\($0.kind.text) \($0.members.count)" }.joined(separator: "，")
+        return Text("\(reactions.all.count) 人回应：\(counts)", bundle: .module)
     }
 
     private func myButton(_ mine: Emoji?) -> some View {
         Button {
-            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.picking = post.id }
+            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
+                if model.picking == post.id {
+                    model.closeBar()
+                } else {
+                    model.openBar(on: post.id, lifted: false)
+                }
+            }
         } label: {
             Group {
                 if let mine {
-                    Text(verbatim: mine.text).typeStyle(TypeRamp.headline)
+                    Text(verbatim: mine.text).font(.system(size: Self.buttonEmojiSize))
                 } else {
                     Image(systemName: "face.smiling")
-                        .font(.system(size: Sizing.icon, weight: .regular))
+                        .font(.system(size: Self.buttonEmojiSize, weight: .regular))
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
             }
-            .frame(width: Self.buttonWidth, height: Sizing.compactControl)
+            .frame(width: Self.buttonSize.width, height: Self.buttonSize.height)
             .background(Color(role: mine == nil ? .bgCanvas : .bgAccentSubtle, in: theme), in: Capsule())
+            .keyframeAnimator(initialValue: 1.0, trigger: mine) { button, scale in
+                button.scaleEffect(reduceMotion ? 1 : scale)
+            } keyframes: { _ in
+                KeyframeTrack {
+                    SpringKeyframe(Self.buttonPop, duration: 0.12, spring: .snappy)
+                    SpringKeyframe(1, duration: 0.2)
+                }
+            }
             .frame(minHeight: Sizing.minimumTapTarget)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
-        .onGeometryChange(for: CGRect.self) {
-            $0.frame(in: .named(FeedView.space))
-        } action: { frame in
-            model.buttons[post.id] = frame
+        .anchorPreference(key: FeedAnchors.self, value: .bounds) { bounds in
+            FeedAnchors.Value(bar: model.picking == post.id ? FeedAnchor(post: post.id, bounds: bounds) : nil)
         }
         .accessibilityLabel(
             mine.map { Text("我的回应：\($0.text)", bundle: .module) } ?? Text("回应", bundle: .module)
@@ -120,10 +124,31 @@ struct ReactionRow: View {
     }
 }
 
-/// A teammate's head in a small white circle, as on the home's squad card.
-private struct Face: View {
+/// A teammate's head on a white disc with a mist ring, wearing their emoji at its lower right.
+struct WearingHead: View {
+    let model: FeedModel
+    let member: MemberID
+    let emoji: Emoji?
+    let size: Double
+
+    var body: some View {
+        Face(player: model.head(of: member), size: size)
+            .overlay(alignment: .bottomTrailing) {
+                if let emoji {
+                    Text(verbatim: emoji.text)
+                        .font(.system(size: size * 12 / 26))
+                        .offset(x: size * 0.12, y: size * 0.08)
+                }
+            }
+            .accessibilityHidden(true)
+    }
+}
+
+/// A teammate's head in a small white circle with a mist ring, as on the home's squad card.
+struct Face: View {
     @Environment(\.sceneTheme) private var theme
     let player: CharacterPlayer?
+    let size: Double
 
     var body: some View {
         Circle()
@@ -133,8 +158,9 @@ private struct Face: View {
                     CharacterHead(player: player).padding(Sizing.ringGap)
                 }
             }
+            .clipShape(Circle())
             .overlay { Circle().stroke(Color(role: .bgSubtle, in: theme), lineWidth: Sizing.ringGap) }
-            .frame(width: Sizing.characterHead, height: Sizing.characterHead)
+            .frame(width: size, height: size)
             .accessibilityHidden(true)
     }
 }

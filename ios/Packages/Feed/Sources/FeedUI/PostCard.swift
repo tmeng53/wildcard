@@ -8,10 +8,10 @@ import SportsUI
 import SwiftUI
 
 /// One post: its photos on top (swipe; the cover first), the author's character standing at the
-/// card's left in that day's kit, their name and time, the kind's tag, the caption or the
-/// 请假条's text, then the emoji row. A teammate reacts with the
-/// smiley button, a long press on the card or a double tap on a photo (❤️); the author's
-/// character answers with a move.
+/// card's left in that day's kit, their name and time, the kind's tag (a 请假条's grey with a
+/// moon), the caption or the 请假条's text, then the emoji row. A teammate reacts with the
+/// smiley button, by holding the card and sliding to an emoji, or with a double tap on a photo
+/// (❤️); the emoji flies to the author's character, which answers with a move.
 struct PostCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -22,8 +22,15 @@ struct PostCard: View {
     static let characterColumn: Double = 100
     /// How far the character's head reaches up into the photo above it.
     static let overlap: Double = Space.l
+    /// How long a press on the card takes to open the emoji bar.
+    static let holdToPick: Double = 0.45
+    /// Moving this far first makes the press a scroll.
+    static let holdSlop: Double = 10
+    /// How much the held card lifts over the blurred feed.
+    static let liftScale: Double = 1.02
 
     private var canRespond: Bool { post.canRespond(model.viewer) }
+    private var isLifted: Bool { model.lifted && model.picking == post.id }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -33,22 +40,60 @@ struct PostCard: View {
             details
             ReactionRow(model: model, post: post)
                 .padding(.horizontal, Space.m)
-                .padding(.bottom, Space.m)
+                .padding(.bottom, Space.xs)
         }
         .background(
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         )
-        .overlay(alignment: .topTrailing) { PopBadge(pop: model.pops[post.id]) }
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        // Alongside, so the card's buttons (my emoji button, the faces) still take their taps.
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.45).onEnded { _ in
-                guard canRespond else { return }
-                withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.picking = post.id }
-            }
-        )
+        .gesture(holdAndSlide, isEnabled: canRespond)
+        .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
+        .blur(radius: model.lifted && !isLifted ? Scrim.blurRadius : 0)
+        .zIndex(isLifted ? 1 : 0)
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isLifted)
         .accessibilityElement(children: .contain)
+        .accessibilityActions {
+            if canRespond {
+                ForEach(EmojiBar.common, id: \.self) { emoji in
+                    Button {
+                        model.react(.pick(emoji), on: post)
+                    } label: {
+                        Text("回应 \(emoji.text)", bundle: .module)
+                    }
+                }
+            }
+            if !post.reactions.isEmpty {
+                Button {
+                    model.listing = post.id
+                } label: {
+                    Text("看谁回应了", bundle: .module)
+                }
+            }
+        }
         .accessibilityIdentifier("feed.post")
+    }
+
+    /// Press and hold the card to open the emoji bar over it, then slide along the bar and let go
+    /// on an emoji to pick it; letting go anywhere else leaves the bar open for a tap.
+    private var holdAndSlide: some Gesture {
+        LongPressGesture(minimumDuration: Self.holdToPick, maximumDistance: Self.holdSlop)
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named(FeedView.space)))
+            .onChanged { value in
+                guard case .second(true, let drag) = value else { return }
+                if !isLifted {
+                    withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
+                        model.openBar(on: post.id, lifted: true)
+                    }
+                }
+                if let drag { model.hovering = model.slot(at: drag.location) }
+            }
+            .onEnded { value in
+                model.hovering = nil
+                guard case .second(true, let drag) = value, let drag, let index = model.slot(at: drag.location),
+                    let from = model.slotCenter(index)
+                else { return }
+                model.react(.pick(EmojiBar.common[index]), on: post, from: from)
+            }
     }
 
     /// The character's column, then who, when, what and the words.
@@ -68,7 +113,11 @@ struct PostCard: View {
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
                 }
-                Tag(kindTitle)
+                if case .disclaimer = post.checkIn.entry {
+                    Tag(kindTitle, systemImage: "moon.fill", style: .rest)
+                } else {
+                    Tag(kindTitle)
+                }
                 words
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -125,46 +174,4 @@ extension CheckIn {
     }
 }
 
-/// The emoji that popped on the card when I reacted: a white circle that springs up, holds, and
-/// fades, at my double tap or the card's top corner.
-private struct PopBadge: View {
-    @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let pop: FeedModel.Pop?
-
-    private static let size: Double = 40
-
-    var body: some View {
-        GeometryReader { proxy in
-            Text(verbatim: pop?.emoji.text ?? "")
-                .font(.system(size: Self.size * 0.55))
-                .frame(width: Self.size, height: Self.size)
-                .background(Color(role: .bgCanvas, in: theme), in: Circle())
-                .keyframeAnimator(initialValue: Burst(), trigger: pop?.count ?? 0) { badge, burst in
-                    badge.scaleEffect(reduceMotion ? 1 : burst.scale).opacity(burst.opacity)
-                } keyframes: { _ in
-                    KeyframeTrack(\.scale) {
-                        SpringKeyframe(1.2, duration: 0.3, spring: .snappy)
-                        SpringKeyframe(1, duration: 0.2)
-                        LinearKeyframe(1, duration: 0.8)
-                        LinearKeyframe(0.8, duration: 0.3)
-                    }
-                    KeyframeTrack(\.opacity) {
-                        LinearKeyframe(1, duration: 0.05)
-                        LinearKeyframe(1, duration: 1.25)
-                        LinearKeyframe(0, duration: 0.3)
-                    }
-                }
-                .position(pop?.point ?? CGPoint(x: proxy.size.width - Space.l, y: Space.xs))
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    /// Hidden until a pop: the animation runs from here and ends here.
-    struct Burst {
-        var scale = 0.0
-        var opacity = 0.0
-    }
-}
 #endif

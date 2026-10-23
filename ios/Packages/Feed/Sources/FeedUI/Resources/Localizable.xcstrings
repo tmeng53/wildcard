@@ -1,12 +1,32 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
-    "%lld 个回应" : {
+    "%@回应了你：%@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld reactions"
+            "value" : "%1$@ reacted to you: %2$@"
+          }
+        }
+      }
+    },
+    "%@收到了%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ got %2$@"
+          }
+        }
+      }
+    },
+    "%lld 人回应：%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld reacted: %2$@"
           }
         }
       }
@@ -57,6 +77,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Healthy meal"
+          }
+        }
+      }
+    },
+    "全部" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        }
+      }
+    },
+    "全部 %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All %lld"
           }
         }
       }
@@ -171,6 +211,16 @@
         }
       }
     },
+    "回应 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "React %@"
+          }
+        }
+      }
+    },
     "坦白放纵餐" : {
       "localizations" : {
         "en" : {
@@ -221,6 +271,16 @@
         }
       }
     },
+    "搜索表情" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search emoji"
+          }
+        }
+      }
+    },
     "昨天" : {
       "localizations" : {
         "en" : {
@@ -237,6 +297,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "More emoji"
+          }
+        }
+      }
+    },
+    "最近" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent"
           }
         }
       }
