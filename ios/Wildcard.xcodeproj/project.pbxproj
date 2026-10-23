@@ -362,6 +362,9 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				WILDCARD_API_URL = "https://wildcard-api-872064445161.us-east4.run.app";
+				WILDCARD_AUTH_PUBLISHABLE_KEY = sb_publishable_0k3jsx2o9G6SV3tyRMB-Rg_or-FTsVs;
+				WILDCARD_AUTH_URL = "https://uuxclkozpfbelhpheaae.supabase.co";
 			};
 			name = Release;
 		};
