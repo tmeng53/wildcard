@@ -14,6 +14,7 @@ import {
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createOffSender,
+  createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -114,6 +115,7 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
     store: createPostgresDeviceStore(db),
     settings: createPostgresSettingsStore(db),
     daily: createPostgresDailyPushStore(db),
+    dailySettings: createPostgresDailyPushSettings(db),
     sender,
   });
 }

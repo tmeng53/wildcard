@@ -35,6 +35,8 @@ import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createApnsSender,
   createOffSender,
+  createDailyPushSettings,
+  createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -64,6 +66,7 @@ import {
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
@@ -120,6 +123,7 @@ const push = createPush({
   store: createPostgresDeviceStore(db),
   settings: createPostgresSettingsStore(db),
   daily: createPostgresDailyPushStore(db),
+  dailySettings: createPostgresDailyPushSettings(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
@@ -235,6 +239,9 @@ const app = createApp({
       ...aiWritingTools({
         drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
         awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
+      }),
+      ...dailyPushTools({
+        settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
       }),
       ...weekSummaryWordTools({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),

@@ -12,9 +12,6 @@ import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
 
 import type { Log } from '../log.js';
 
-/** The daily push goes out at this hour on each member's own clock, or later that evening. */
-export const DAILY_PUSH_HOUR = 18;
-
 /** How many members' pushes are put together at once. */
 const AT_ONCE = 4;
 
@@ -71,7 +68,7 @@ export interface DailyProgressDependencies {
 
 /** What a run did, member by member. */
 export interface DailyProgressRun {
-  /** Members whose push was due: past 6pm, a phone, not turned off, not handled today. */
+  /** Members whose push was due: past the hour, a phone, not turned off, not handled today. */
   readonly due: number;
   /** Reached at least one of the member's phones. */
   readonly sent: number;
@@ -86,7 +83,8 @@ export interface DailyProgressRun {
 }
 
 /**
- * Sends each member their one push of the day once their clock passes 6pm: the squad's week so
+ * Sends each member their one push of the day once their clock passes the hour the push settings
+ * name (6pm to begin with): the squad's week so
  * far and who reacted to, poked or otherwise cheered them on since their last one. Meant to run
  * every few minutes; each member's day is handled once, claimed before sending, so runs can overlap or
  * repeat. A member whose squad was quiet and who got nothing gets no push that day.
@@ -95,7 +93,10 @@ export async function sendDailyProgress(
   deps: DailyProgressDependencies,
 ): Promise<DailyProgressRun> {
   const now = deps.clock();
-  const evening = await deps.members.pastLocalHour({ hour: DAILY_PUSH_HOUR, now });
+  const settings = await deps.push.dailySettings();
+  // Switched off for everyone: nobody is due, and nobody's day is marked handled.
+  if (!settings.sending) return { due: 0, sent: 0, unsent: 0, quiet: 0, skipped: 0, failed: 0 };
+  const evening = await deps.members.pastLocalHour({ hour: settings.hour, now });
   const dayBefore = new Map<string, Date>(
     evening.map(({ member, hourTheDayBefore }) => [member, hourTheDayBefore]),
   );
@@ -134,7 +135,7 @@ export async function sendDailyProgress(
 type Outcome = 'sent' | 'unsent' | 'quiet' | 'skipped' | 'failed';
 
 /**
- * A member whose push is due, and what it covers: from their last one (or 6pm on their clock the
+ * A member whose push is due, and what it covers: from their last one (or the push hour on their clock the
  * day before, if that is later) to this run, which their day is then handled at. So consecutive
  * pushes meet, and nothing is counted twice or left out, whenever in the evening a run reaches
  * them.

@@ -83,12 +83,16 @@ public final class TodayModel {
 
     private let now: () -> Date
 
-    /// - Parameter posted: called each time a check-in lands, after the payoff starts; the app
-    ///   asks for notifications after the first.
+    /// - Parameters:
+    ///   - scene: the squad's scene. Each squad picks its own once squad settings land; until
+    ///     then every home is the gym, the scene the designs are drawn on.
+    ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
+    ///     notifications after the first.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
+        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
     ) {
+        self.scene = scene
         self.store = store
         self.now = now
         self.writer = writer
@@ -107,14 +111,11 @@ public final class TodayModel {
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
     private static let scoreDelay = 1.7
 
-    /// Each squad picks its scene once squad settings land; 跑道 until then.
-    private static let scene = SceneTheme.track
-
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
 
     /// The squad's scene.
-    var scene: SceneTheme { Self.scene }
+    let scene: SceneTheme
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
