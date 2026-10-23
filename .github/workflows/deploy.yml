@@ -25,7 +25,7 @@ env:
   GCP_PROJECT_ID: TODO
   GCP_PROJECT_NUMBER: TODO
   GCP_REGION: us-east4
-  SUPABASE_URL: TODO
+  SUPABASE_URL: https://uuxclkozpfbelhpheaae.supabase.co
   SERVICE: wildcard-api
 
 jobs:
