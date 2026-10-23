@@ -200,6 +200,9 @@ describe('push devices', () => {
 describe('push settings', () => {
   it('logs each switch flipped, in order, and never a save that changed nothing', async () => {
     const member = await newMember();
+    // Saving the default before any switch was flipped changes nothing, so stores nothing.
+    await stores.settings.save(member, { dailyProgress: true });
+    expect(await stores.settings.changedBy(member)).toStrictEqual(new Map());
     await stores.settings.save(member, { dailyProgress: false });
     await stores.settings.save(member, { dailyProgress: false });
     await stores.settings.save(member, { dailyProgress: true });
