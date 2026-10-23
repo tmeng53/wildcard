@@ -65,7 +65,6 @@ public struct FeedView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
         }
-        .accessibilityIdentifier("feed")
     }
 
     @ViewBuilder private var content: some View {

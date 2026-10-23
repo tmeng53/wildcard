@@ -18,15 +18,14 @@ final class FeedUITests: XCTestCase {
 
         react.tap()
         settle()
-        keepScreenshot(named: "41-feed-tapped")
-        let bar = app.descendants(matching: .any).matching(identifier: "feed.emojiBar").firstMatch
+        let bar = app.buttons["feed.emoji.💪"]
         XCTAssertTrue(bar.waitForExistence(timeout: Self.wait), "the emoji bar didn't open")
         assertOnScreen(bar, in: app)
-        settle()
+        assertOnScreen(app.buttons["feed.emoji.more"], in: app)
         keepScreenshot(named: "41-feed-emoji-bar")
 
         // The emoji pops on the card and the author's character plays its move.
-        app.buttons["feed.emoji.💪"].tap()
+        bar.tap()
         for frame in 0..<10 {
             keepScreenshot(named: String(format: "42-feed-reacted-%02d", frame))
             Thread.sleep(forTimeInterval: 0.15)
