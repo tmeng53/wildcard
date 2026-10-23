@@ -218,9 +218,10 @@ private struct SignCard: View {
     }
 }
 
-/// The venue's art, exported from the approved home design (`SceneArt/render.mjs`).
-struct SceneArt: View {
-    enum Layer {
+/// The venue's art, exported from the approved home design (`SceneArt/render.mjs`). The home
+/// draws it full screen; 动态's empty state shows a window onto it.
+public struct SceneArt: View {
+    public enum Layer: Sendable {
         case day
         /// The dark tint and the lamps, over everything on the scene.
         case night
@@ -239,7 +240,12 @@ struct SceneArt: View {
     let scene: SceneTheme
     let layer: Layer
 
-    var body: some View {
+    public init(scene: SceneTheme, layer: Layer) {
+        self.scene = scene
+        self.layer = layer
+    }
+
+    public var body: some View {
         Image(uiImage: UIImage(named: "\(scene.rawValue)-\(layer.name)", in: .module, with: nil) ?? UIImage())
             .resizable()
             .accessibilityHidden(true)
