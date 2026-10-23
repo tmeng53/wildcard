@@ -4,7 +4,7 @@ import XCTest
 /// of each once its animation has played. CI uploads them (scripts/ios-test.sh).
 @MainActor
 final class RecapUITests: XCTestCase {
-    /// A busy CI simulator can take seconds per accessibility query; see StyleGuideUITests.
+    /// A busy CI simulator can take seconds per accessibility query.
     private static let wait: TimeInterval = 30
 
     func testReadyStoryInChinese() {
