@@ -132,31 +132,3 @@ const LINK = new RegExp(
 export function containsLink(text: string): boolean {
   return LINK.test(text);
 }
-
-/**
- * Words that mean a text is about self-harm: a 请假条 with one is never handed to the weekly
- * awards' model to joke about. Everyday exaggeration such as 「累得想死」 is left in.
- */
-const SELF_HARM_WORDS = [
-  '自杀',
-  '自尽',
-  '轻生',
-  '自残',
-  '割腕',
-  '活不下去',
-  '结束生命',
-  'suicide',
-  'suicidal',
-  'kill myself',
-  'self harm',
-  'self-harm',
-];
-
-/** 「不想活」, but not 「不想活动」 (don't feel like moving), 「活跃」 or 「活泼」. */
-const NOT_WANTING_TO_LIVE = /不想活(?![动跃泼])/u;
-
-/** True when the text plainly speaks of self-harm. */
-export function mentionsSelfHarm(text: string): boolean {
-  const lower = text.toLowerCase();
-  return NOT_WANTING_TO_LIVE.test(lower) || SELF_HARM_WORDS.some((word) => lower.includes(word));
-}

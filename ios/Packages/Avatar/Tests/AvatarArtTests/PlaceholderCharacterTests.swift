@@ -10,7 +10,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL", "flapR", "crown",
+            "shadow", "dustL", "dustR", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL",
+            "flapR", "crown",
             "nose",
             "eyes", "brows", "browsSad", "browsMad", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad",
             "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
@@ -28,7 +29,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let isPerson = people.contains(outfit.variants["body"] ?? "")
     #expect(try figure.part("brows").art.count == (isPerson ? 1 : 0))
     // The open mouth waits hidden until the cheer swaps it in, and the sad face until crying does.
-    for part in ["mouthOpen", "browsSad", "mouthSad", "tearL", "tearR"] as [PartID] {
+    for part in ["mouthOpen", "browsSad", "mouthSad", "tearL", "tearR", "dustL", "dustR"] as [PartID] {
         #expect(figure.layout(figure.restPose)[try figure.index(part)].opacity == 0)
     }
 }
@@ -68,7 +69,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 46)
+    #expect(figure.parts.count == 48)
 }
 
 @Test(arguments: Persona.allCases)
@@ -175,7 +176,8 @@ func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     func rootValues(_ persona: Persona, _ value: (PartPose) -> Double) throws -> [Double] {
         let cheer = try figure.bind(PlaceholderCharacter.clip("cheer", persona: persona))
-        return (0...Int(cheer.clip.duration * 100)).map { value(figure.pose(cheer, at: Double($0) / 100).parts[1]) }
+        let root = try figure.index("root")
+        return (0...Int(cheer.clip.duration * 100)).map { value(figure.pose(cheer, at: Double($0) / 100).parts[root]) }
     }
     // Root y is up-negative, so the highest jump has the smallest minimum.
     let peaks = try Persona.allCases.map { try rootValues($0, \.y).min() ?? 0 }

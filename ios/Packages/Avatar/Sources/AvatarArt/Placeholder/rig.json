@@ -4,6 +4,8 @@
   "defaults": { "eyes": "round", "mouth": "smile", "shoes": "sneaker" },
   "parts": [
     { "id": "shadow", "pivot": [120, 316.8], "layers": [{ "art": "shadow" }] },
+    { "id": "dustL", "pivot": [72, 307.2], "opacity": 0, "layers": [{ "art": "dustL" }] },
+    { "id": "dustR", "pivot": [168, 307.2], "opacity": 0, "layers": [{ "art": "dustR" }] },
     { "id": "root", "pivot": [120, 312] },
     { "id": "tail", "parent": "torso", "pivot": [151.2, 274.8], "layers": [{ "slot": "body", "art": "tail" }] },
     { "id": "legL", "parent": "root", "pivot": [105.6, 277.2],
