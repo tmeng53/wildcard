@@ -87,6 +87,14 @@ public struct Performance: Sendable {
         return figure
     }
 
+    /// The pose a character holds when it stands still (Reduce Motion): its idle's first frame,
+    /// in the outfit a change of clothes ends up in, so a face the idle sets (near tears, say)
+    /// stays on.
+    public var stillPose: Pose {
+        if let change { return change.performance.stillPose }
+        return figure.pose(idle, at: 0)
+    }
+
     /// The clip on screen at a time: a one-shot clip that has ended is idle again.
     public func clipName(at time: Double) -> String {
         if let change, time >= change.swap { return change.performance.clipName(at: time) }

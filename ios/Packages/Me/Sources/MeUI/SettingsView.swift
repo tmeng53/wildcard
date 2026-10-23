@@ -7,8 +7,9 @@ import SwiftUI
 import UIKit
 #endif
 
-/// 设置: a plain menu of hairline rows under small group labels (小队, 偏好, 关于, 账号), with
-/// no icons and no chevrons, and an ink switch. Signing out and deleting the account come last.
+/// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
+/// small group labels (小队, 偏好, 关于, 账号), with no icons and no chevrons, and an ink switch.
+/// Signing out and deleting the account come last.
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
@@ -36,6 +37,9 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
                     .accessibilityIdentifier("settings.back")
+                MeStage(character: model.overview?.character, size: CGSize(width: 96, height: 120), mood: .typing)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityHidden(true)
                 Text("设置", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))

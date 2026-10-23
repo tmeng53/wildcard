@@ -79,8 +79,9 @@ struct CharacterRenderTests {
         #expect(before.drawing.width == after.drawing.width)
         #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)
         #expect(player.figure == swimmer)
-        // Reduce Motion shows the kit straight away, standing still.
-        #expect(player.restFrame.placements == swimmer.layout(swimmer.restPose))
+        // Reduce Motion shows the kit straight away, holding its move's first frame.
+        let move = try swimmer.bind(PlaceholderCharacter.move(for: swim, persona: .shy))
+        #expect(player.restFrame.placements == swimmer.layout(swimmer.pose(move, at: 0)))
     }
 
     /// Taking a sport off mid-hop: the outfit worn instead stays on, the kit never shows.
