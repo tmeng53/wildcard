@@ -67,6 +67,16 @@ enum LaunchOptions {
         return calendar.date(byAdding: .hour, value: 12, to: monday) ?? .now
     }
 
+    /// `-uitest-squad N`: the sample squad with N members, me included (1 to 8; 8 without it), so
+    /// UI tests can check the scene at every size.
+    static var squadSize: Int {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-squad"), flag + 1 < arguments.count,
+            let size = Int(arguments[flag + 1])
+        else { return 8 }
+        return size
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {
