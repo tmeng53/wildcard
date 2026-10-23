@@ -8,7 +8,7 @@ export type MemberId = z.infer<typeof MemberId>;
  * to. The copy itself lives in the app's String Catalog; bump this with any change to what it
  * says (another provider included), and every member is asked again.
  */
-export const AI_CONSENT_COPY_VERSION = 1;
+export const AI_CONSENT_COPY_VERSION = 2;
 
 /** A version of the consent copy. */
 export const CopyVersion = z.int().min(1);

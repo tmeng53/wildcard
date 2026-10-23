@@ -13,9 +13,12 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "shadow", "dustL", "dustR", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL",
             "flapR", "crown",
             "nose",
-            "eyes", "brows", "browsSad", "glasses", "mouthSmile", "mouthOpen", "mouthSad", "tearL", "tearR", "propR",
-            "food0", "food1", "food2",
-            "armL", "armR", "desk",
+            "eyes", "brows", "browsSad", "browsMad", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad",
+            "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
+            "heartR", "sparkle",
+            "tearL", "tearR",
+            "propR", "food0", "food1", "food2",
+            "armL", "flexL", "muscleL", "armR", "flexR", "muscleR", "heart", "desk",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
     #expect(try figure.part("propR").art.count == (outfit == Looks.bear ? 0 : 1))
@@ -66,7 +69,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 31)
+    #expect(figure.parts.count == 51)
 }
 
 @Test(arguments: Persona.allCases)
@@ -204,7 +207,9 @@ func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
 
 /// Checks every frame of a clip, 50 a second, keeps the figure inside its canvas. Only the
 /// shadow may touch the bottom edge.
-func expectOnCanvas(_ figure: Figure, _ bound: BoundClip, for seconds: Double, _ label: String) {
+func expectOnCanvas(
+    _ figure: Figure, _ bound: BoundClip, for seconds: Double, _ label: String, sideways: Double = 0, above: Double = 0
+) {
     for frame in 0...Int(seconds * 50) {
         let time = Double(frame) / 50
         for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
@@ -214,7 +219,8 @@ func expectOnCanvas(_ figure: Figure, _ bound: BoundClip, for seconds: Double, _
                 for point in outline(shape.path).map(placement.transform.apply(to:)) {
                     let bottom = part.id == "shadow" || point.y + margin <= figure.height
                     #expect(
-                        point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0 && bottom,
+                        point.x - margin >= -sideways && point.x + margin <= figure.width + sideways
+                            && point.y - margin >= -above && bottom,
                         "\(label) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
                 }
             }

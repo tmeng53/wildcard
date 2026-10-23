@@ -17,9 +17,9 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
-import { aiConsentOn, noJobs, pushOn } from './test-kit/local-supabase.js';
+import { aiConsentOn, noJobs, nudgesOn, pushOn } from './test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
-import { unusedWeeklyAwards } from './test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -71,7 +71,9 @@ describe('openapi.json', () => {
         aiConsent: () => Promise.resolve(true),
       }),
       weeklyAwards: unusedWeeklyAwards,
+      weekSummaryWords: unusedWeekSummaryWords,
       aiConsent: aiConsentOn(db),
+      nudges: nudgesOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,
       admin: {

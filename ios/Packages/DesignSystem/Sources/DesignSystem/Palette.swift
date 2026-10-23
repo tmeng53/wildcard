@@ -16,6 +16,15 @@ public enum Palette {
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
+    // MARK: Brand: the app's own colour, the same in every scene
+
+    /// The brand's one solid colour: primary buttons and selection on brand screens (opening,
+    /// sign-up, 我, the tab bar, writing a post, 请假条, the feed). Its own value, not the gym's,
+    /// so the brand can change without touching a scene.
+    public static let brand = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
+    /// Labels and icons on `brand`.
+    public static let onBrand = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
+
     // MARK: Pool scene
 
     public static let poolSignature = SRGBColor(red: 0x07, green: 0x9B, blue: 0xB8)

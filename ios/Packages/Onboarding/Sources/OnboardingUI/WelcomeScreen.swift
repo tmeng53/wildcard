@@ -5,7 +5,7 @@ import DesignSystemUI
 import OnboardingDomain
 import SwiftUI
 
-/// The open screen: the app's name, one line, and five characters on the gym's floor, two at
+/// The open screen: the app's name, one line, and five characters on a light floor, two at
 /// the back and three in front, the middle one biggest. On the first open WILDCARD sprints in
 /// and breaks the finish tape while the squad watches; they cheer, then each does a check-in
 /// once. Every so often one of them changes into another look, and a tap changes it too. The
@@ -14,8 +14,9 @@ struct WelcomeScreen<SignIn: View>: View {
     let model: SignUpModel
     let policies: PolicyLinks
     let signIn: SignIn
-    /// The open screen is the gym's, like the website, whatever the squad's scene.
-    private let theme = SceneTheme.gym
+    /// The open screen wears the brand, like the website, whatever the squad's scene; the
+    /// roles it draws with are fixed, so the scene only fills in the signature.
+    @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("welcome.sprintPlayed") private var sprintPlayed = false
     @State private var crowd = WelcomeCrowd()
@@ -76,7 +77,7 @@ struct WelcomeScreen<SignIn: View>: View {
         }
         .background {
             // Reaching under the home indicator, the page knows how tall it is.
-            Color(role: .bgBrand, in: theme)
+            Color(role: .bgBrandPage, in: theme)
                 .ignoresSafeArea()
                 .onGeometryChange(for: Double.self) {
                     $0.safeAreaInsets.bottom
@@ -84,7 +85,7 @@ struct WelcomeScreen<SignIn: View>: View {
                     homeIndicator = $0
                 }
         }
-        .environment(\.sceneTheme, theme)
+        .accentTone(.brand)
         .haptic(.land, trigger: landed)
         .onDisappear { crowd.stop() }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
@@ -261,7 +262,7 @@ private struct Sprinting: ViewModifier {
     }
 }
 
-/// The finish tape in the accent, round at its ends, fading once it has fallen.
+/// The finish tape in the brand colour, round at its ends, fading once it has fallen.
 private struct FinishTape: View {
     let runner: SprintRunner
     let theme: SceneTheme
@@ -278,7 +279,7 @@ private struct FinishTape: View {
                 }
                 canvas.opacity = sprint.tapeOpacity
                 canvas.stroke(
-                    path, with: .color(Color(role: .bgAccent, in: theme)),
+                    path, with: .color(Color(role: .bgBrand, in: theme)),
                     style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
             }
         }
@@ -301,8 +302,8 @@ private struct Reveal: ViewModifier {
     }
 }
 
-/// The open screen's floor: light grey, with the gym's graphite and volt stripe along its top
-/// and faint tiles, as on the website. The gym's own floor is dark, so this one is drawn here.
+/// The open screen's floor: light grey, with the brand's graphite and volt stripe along its top
+/// and faint tiles, as on the website. No scene's floor, so this one is drawn here.
 private struct WelcomeFloor: View {
     let theme: SceneTheme
     /// The tiles' side, in points.
@@ -326,8 +327,8 @@ private struct WelcomeFloor: View {
                 context.stroke(path, with: .color(Color(role: .borderBrandFloor, in: theme)), lineWidth: 1.5)
             }
             VStack(spacing: 0) {
-                Color(role: .bgAccent, in: theme).frame(height: 4)
-                Color(role: .fgOnAccent, in: theme).frame(height: 3)
+                Color(role: .bgBrand, in: theme).frame(height: 4)
+                Color(role: .fgOnBrand, in: theme).frame(height: 3)
             }
         }
         .accessibilityHidden(true)

@@ -58,7 +58,7 @@ struct EntranceScreen: View {
                     mine: myWeek, page: $cardPage
                 ) { member in
                     if let player = stage.player(for: member) {
-                        CharacterView(player: player, crop: EntranceStage.head)
+                        CharacterHead(player: player)
                     }
                 }
                 .padding(.top, Space.xs)
@@ -177,8 +177,6 @@ final class EntranceStage {
     static let runway = CGRect(x: -60, y: -380, width: 1280, height: 710)
     /// How tall a line's tail stands over the feet, in canvas points: just above the head.
     static let headHeight = 292.0
-    /// The head and shoulders, in canvas points, for the squad card's rings.
-    static let head = CGRect(x: 50, y: 20, width: 140, height: 140)
     /// The ring under the spot, in design points.
     static let ringWidth = 60.0
     static let ringHeight = 20.0
