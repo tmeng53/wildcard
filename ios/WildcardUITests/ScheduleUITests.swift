@@ -144,7 +144,13 @@ final class ScheduleUITests: XCTestCase {
         settle()
 
         app.buttons["schedule.save"].tap()
-        XCTAssertTrue(find(app, "schedule.saved").waitForExistence(timeout: 10), "存图 didn't say it saved")
+        let saved = find(app, "schedule.saved")
+        XCTAssertTrue(saved.waitForExistence(timeout: 10), "存图 didn't say it saved")
+        // The note shows by 存图, never below the fold under the award cards.
+        XCTAssertGreaterThanOrEqual(
+            saved.frame.minY, app.buttons["schedule.save"].frame.maxY, "the note isn't under 存图")
+        XCTAssertLessThanOrEqual(
+            saved.frame.maxY, find(app, "schedule.poster").frame.minY, "the note isn't over the poster")
         keepScreenshot(named: "68-schedule-saved")
     }
 
