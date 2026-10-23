@@ -145,16 +145,25 @@ struct EndingPage: View {
                 finale(lineup, width: width, floor: floor + Space.xs)
                 if let actions {
                     VStack(spacing: Space.xs) {
-                        if let picture = actions.picture {
-                            ShareLink(
-                                item: picture,
-                                preview: SharePreview(Text("本周战报", bundle: .module), image: picture)
-                            ) {
-                                Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                        // 存图 stands from the start, waiting while its picture is drawn.
+                        Group {
+                            if let picture = actions.picture {
+                                ShareLink(
+                                    item: picture,
+                                    preview: SharePreview(Text("本周战报", bundle: .module), image: picture)
+                                ) {
+                                    Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                                }
+                            } else {
+                                Button {
+                                } label: {
+                                    Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                                }
+                                .disabled(true)
                             }
-                            .buttonStyle(PrimaryButtonStyle(.large))
-                            .accessibilityIdentifier("recap.save")
                         }
+                        .buttonStyle(PrimaryButtonStyle(.large))
+                        .accessibilityIdentifier("recap.save")
                         Button(action: actions.planNextWeek) { Text("排下周", bundle: .module) }
                             .buttonStyle(TextButtonStyle(.muted))
                             .accessibilityIdentifier("recap.planNextWeek")

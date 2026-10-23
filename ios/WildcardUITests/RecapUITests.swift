@@ -26,7 +26,9 @@ final class RecapUITests: XCTestCase {
             keepScreenshot(named: "recap-\(String(format: "%02d", index + 1))-\(page)")
             if page != "ending" { next(in: app) }
         }
-        XCTAssertTrue(app.buttons["recap.save"].waitForExistence(timeout: Self.wait), "no 存图 on the ending")
+        let save = app.buttons["recap.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "no 存图 on the ending")
+        XCTAssertTrue(save.isEnabled, "存图 never got its picture")
         XCTAssertTrue(app.buttons["recap.planNextWeek"].exists)
         app.buttons["recap.close"].tap()
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't close the story")
