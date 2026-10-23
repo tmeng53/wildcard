@@ -99,21 +99,21 @@ public struct RecapView: View {
         switch page {
         case .pending:
             PendingPage(page: context, nudged: model.nudged, nudge: model.nudge)
-                .accessibilityIdentifier("recap.page.pending")
-        case .podium(let podium): PodiumPage(podium: podium, page: context).accessibilityIdentifier("recap.page.podium")
-        case .titles(let rows): TitlesPage(rows: rows, page: context).accessibilityIdentifier("recap.page.titles")
-        case .myWeek(let week): MyWeekPage(week: week, page: context).accessibilityIdentifier("recap.page.myWeek")
+                .storyPage("pending")
+        case .podium(let podium): PodiumPage(podium: podium, page: context).storyPage("podium")
+        case .titles(let rows): TitlesPage(rows: rows, page: context).storyPage("titles")
+        case .myWeek(let week): MyWeekPage(week: week, page: context).storyPage("myWeek")
         case .hottest(let hottest):
-            HottestPage(hottest: hottest, page: context).accessibilityIdentifier("recap.page.hottest")
-        case .meals(let meals): MealsPage(meals: meals, page: context).accessibilityIdentifier("recap.page.meals")
+            HottestPage(hottest: hottest, page: context).storyPage("hottest")
+        case .meals(let meals): MealsPage(meals: meals, page: context).storyPage("meals")
         case .bestDisclaimer(let note):
-            BestDisclaimerPage(note: note, page: context).accessibilityIdentifier("recap.page.bestDisclaimer")
+            BestDisclaimerPage(note: note, page: context).storyPage("bestDisclaimer")
         case .ending(let ending):
             EndingPage(
                 ending: ending, page: context,
                 actions: EndingActions(picture: picture, planNextWeek: model.planNextWeek)
             )
-            .accessibilityIdentifier("recap.page.ending")
+            .storyPage("ending")
         }
     }
 
@@ -171,6 +171,13 @@ private struct SegmentBar: View {
 
     private var currentPage: Int {
         (fractions.firstIndex { $0 < 1 } ?? fractions.count - 1) + 1
+    }
+}
+
+extension View {
+    /// Names a page for UI tests as a container, so the buttons on it keep their own names.
+    fileprivate func storyPage(_ name: String) -> some View {
+        accessibilityElement(children: .contain).accessibilityIdentifier("recap.page.\(name)")
     }
 }
 #endif
