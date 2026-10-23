@@ -77,13 +77,14 @@ describe('the Google scheduler', () => {
     expect(await isScheduler()(await idToken({ iss: 'accounts.google.com' }))).toBe(true);
   });
 
-  it('refuses another account, audience or issuer, an unverified email and an expired token', async () => {
+  it('refuses another account, audience or issuer, an unverified email, and an expired token or one that never expires', async () => {
     for (const claims of [
       { email: 'someone@project.iam.gserviceaccount.com' },
       { aud: 'https://elsewhere.example' },
       { iss: 'https://evil.example' },
       { email_verified: false },
       { iat: now() - 7_200, exp: now() - 3_600 },
+      { exp: undefined },
     ]) {
       expect(await isScheduler()(await idToken(claims))).toBe(false);
     }

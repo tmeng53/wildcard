@@ -22,7 +22,7 @@
 # Secret values never pass through here: they are pasted into Secret Manager by hand.
 set -euo pipefail
 
-project="${1:?usage: gcp-setup.sh PROJECT_ID [REGION]}"
+project="${1:?usage: gcp-setup.sh PROJECT_ID [REGION] [API_URL]}"
 region="${2:-us-east4}"
 api_url="${3:-https://api.wildcardsquad.com}"
 # GitHub's id for tmeng53/wildcard: a repository renamed or recreated under the name can't deploy.

@@ -22,6 +22,7 @@ export const GOOGLE_KEYS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
 
 // Plain `z.object`: a third party's payload, which carries more fields than we read.
 const GoogleIdToken = z.object({
+  exp: z.number(),
   email: z.string(),
   email_verified: z.literal(true),
 });
