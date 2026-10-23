@@ -48,3 +48,26 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     #expect(feed.post(run.id)?.reactions.kind(of: viewer) == heart)
     #expect(throws: FeedError.ownPost) { try feed.react(.doubleTap, on: mine.id) }
 }
+
+/// Each sample post's photo comes back by the name it was rendered under.
+@MainActor @Test func theSamplePhotosLoadByName() async throws {
+    let photos = Dictionary(uniqueKeysWithValues: InMemoryFeedSource.samplePhotoNames.map { ($0, Data($0.utf8)) })
+    let source = InMemoryFeedSource.sample(viewer: viewer, squad: squad, now: thursday, zone: newYork, photos: photos)
+    let today = LocalDay(at: thursday, in: newYork)
+    let feed = FeedStore(source: source, squad: squad, viewer: viewer, today: { today }, now: { Timestamp(thursday) })
+    await feed.load()
+    let refs = feed.sections.flatMap(\.posts).flatMap { post -> [PhotoRef] in
+        switch post.checkIn.entry {
+        case .trained(let training): training.photos?.all ?? []
+        case .healthyMeal(let meal), .cheatMeal(let meal): meal.photos?.all ?? []
+        case .disclaimer(let disclaimer): disclaimer.photos?.all ?? []
+        }
+    }
+    #expect(refs.count == 6)
+    var loaded: [String] = []
+    for ref in refs {
+        let data = try #require(await feed.photo(ref))
+        loaded.append(try #require(String(bytes: data, encoding: .utf8)))
+    }
+    #expect(Set(loaded) == Set(InMemoryFeedSource.samplePhotoNames))
+}

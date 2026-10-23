@@ -40,7 +40,8 @@ extension InMemoryFeedSource {
         let characters = sampleCharacters([
             "阿杰": jay, "Coco": coco, "Mia": mia, "豆豆": doudou, "小鱼": fish, "Kiki": kiki, "Momo": viewer,
         ])
-        return InMemoryFeedSource(viewer: viewer, posts: posts, characters: characters, photos: photos)
+        let byPath = Dictionary(uniqueKeysWithValues: photos.map { ("\(photoFolder)/\($0.key)", $0.value) })
+        return InMemoryFeedSource(viewer: viewer, posts: posts, characters: characters, photos: byPath)
     }
 
     /// The sample squad's characters, by nickname: who they are and how they look.
@@ -69,6 +70,9 @@ extension InMemoryFeedSource {
         }
         return characters
     }
+
+    /// Where the sample posts' photos are, as a member's folder in Storage.
+    fileprivate static let photoFolder = "sample"
 
     /// The sample photos `sample` refers to, by name.
     public static let samplePhotoNames = ["track", "salad", "pool", "gym", "tennis", "burger"]
@@ -118,7 +122,7 @@ private struct SamplePosts {
     }
 
     private func photos(_ name: String) -> Photos? {
-        (try? PhotoRef(path: "sample/\(name)")).flatMap { try? Photos([$0]) }
+        (try? PhotoRef(path: "\(InMemoryFeedSource.photoFolder)/\(name)")).flatMap { try? Photos([$0]) }
     }
 
     private func line(_ key: String) -> Caption? {
