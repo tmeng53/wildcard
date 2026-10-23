@@ -9,7 +9,9 @@ const sizes = [
   [320, 568],
   [390, 844],
   [820, 1180],
+  [1024, 700],
   [1100, 800],
+  [1280, 600],
   [1440, 900],
 ];
 
@@ -52,9 +54,12 @@ for (const { path, slogan, button, legal } of pages) {
       }
       for (const text of hero) for (const c of squad) expect(overlaps(text, c)).toBe(false);
 
-      // Feet on the floor: no character reaches into the white footer.
+      // Feet on the floor and on screen: no character reaches into the white footer or below the fold.
       const footer = await page.locator('footer').boundingBox();
-      for (const c of squad) expect(c.y + c.height).toBeLessThanOrEqual(footer.y + 4);
+      for (const c of squad) {
+        expect(c.y + c.height).toBeLessThanOrEqual(footer.y + 4);
+        expect(c.y + c.height).toBeLessThanOrEqual(height);
+      }
     });
   }
 }
