@@ -65,7 +65,7 @@ struct PostRow: View {
                 SpeechBubble(Text(verbatim: bubble.emoji.text), on: .page)
                     .fixedSize()
                     .offset(y: -Space.l + 2)
-                    .transition(SpeechBubble.speech(reduceMotion: reduceMotion))
+                    .transition(.speech(reduceMotion: reduceMotion))
                     .task(id: bubble.count) {
                         try? await Task.sleep(for: .seconds(DailyPushModel.bubbleTime))
                         withAnimation(.wildcard(Motion.sheet.exit, reduceMotion: reduceMotion)) {
