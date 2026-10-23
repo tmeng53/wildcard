@@ -17,6 +17,9 @@ public struct FeedView: View {
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
 
+    /// The coordinate space the emoji bar is placed in: the whole tab.
+    static let space = "feed"
+
     public init(model: FeedModel, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
         self.checkIn = checkIn
@@ -54,9 +57,8 @@ public struct FeedView: View {
                 }
             }
         }
-        .overlayPreferenceValue(EmojiBarAnchor.self) { anchor in
-            EmojiBarLayer(model: model, anchor: anchor)
-        }
+        .coordinateSpace(.named(Self.space))
+        .overlay { EmojiBarLayer(model: model) }
         .background(Color(role: .bgCanvas, in: theme))
         .haptic(.reaction, trigger: model.responses)
         .task { await model.load() }

@@ -6,30 +6,15 @@ import FeedDomain
 import SwiftUI
 import UIKit
 
-/// Where the open emoji bar belongs: over the button of the post it is for.
-struct EmojiBarAnchor: PreferenceKey {
-    struct Target {
-        let post: CheckInID
-        let button: Anchor<CGRect>
-    }
-
-    static var defaultValue: Target? { nil }
-
-    static func reduce(value: inout Target?, nextValue: () -> Target?) {
-        value = value ?? nextValue()
-    }
-}
-
-/// The emoji bar over the whole feed while it is open: a tap anywhere else closes it.
+/// The emoji bar over the whole feed while it is open, over its post's button: a tap anywhere
+/// else closes it. It shares the feed's frame, so `FeedView.space` is its own.
 struct EmojiBarLayer: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
-    let anchor: EmojiBarAnchor.Target?
 
     var body: some View {
         GeometryReader { proxy in
-            if let anchor, let post = model.store.post(anchor.post) {
-                let button = proxy[anchor.button]
+            if let open = model.picking, let post = model.store.post(open), let button = model.buttons[open] {
                 Color.clear
                     .contentShape(Rectangle())
                     .onTapGesture { close() }
@@ -49,7 +34,7 @@ struct EmojiBarLayer: View {
                 .transition(.scale(scale: 0.4, anchor: .bottomTrailing).combined(with: .opacity))
             }
         }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: anchor?.post)
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.picking)
     }
 
     private func close() {

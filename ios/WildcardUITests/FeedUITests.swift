@@ -17,6 +17,8 @@ final class FeedUITests: XCTestCase {
         keepScreenshot(named: "40-feed")
 
         react.tap()
+        settle()
+        keepScreenshot(named: "41-feed-tapped")
         let bar = app.descendants(matching: .any).matching(identifier: "feed.emojiBar").firstMatch
         XCTAssertTrue(bar.waitForExistence(timeout: Self.wait), "the emoji bar didn't open")
         assertOnScreen(bar, in: app)

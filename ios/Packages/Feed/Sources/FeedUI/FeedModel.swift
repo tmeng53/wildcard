@@ -36,6 +36,9 @@ public final class FeedModel {
     /// Bumps on each emoji the member leaves, for its haptic.
     private(set) var responses = 0
 
+    /// Where each post's button is in `FeedView.space`, for the emoji bar to open over. Not
+    /// observed: it moves on every scroll, and the bar reads it only when it opens.
+    @ObservationIgnored var buttons: [CheckInID: CGRect] = [:]
     @ObservationIgnored private var players: [CheckInID: CharacterPlayer] = [:]
     @ObservationIgnored private var heads: [MemberID: CharacterPlayer] = [:]
     @ObservationIgnored private let now: () -> Date

@@ -40,10 +40,13 @@ struct PostCard: View {
         )
         .overlay(alignment: .topTrailing) { PopBadge(pop: model.pops[post.id]) }
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        .onLongPressGesture(minimumDuration: 0.45) {
-            guard canRespond else { return }
-            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.picking = post.id }
-        }
+        // Alongside, so the card's buttons (my emoji button, the faces) still take their taps.
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.45).onEnded { _ in
+                guard canRespond else { return }
+                withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.picking = post.id }
+            }
+        )
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("feed.post")
     }
