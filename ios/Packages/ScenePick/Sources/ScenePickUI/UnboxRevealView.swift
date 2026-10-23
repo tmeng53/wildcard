@@ -24,7 +24,7 @@ public struct UnboxRevealView<Page: View, Backdrop: View>: View {
     private let backdrop: Backdrop
 
     /// When the flaps fly, and the haptic plays.
-    private static let flapsFly = 1.65
+    private static var flapsFly: Double { 1.65 }
 
     /// `frozenAt` holds the reveal on one moment, for screenshots and previews.
     public init(
