@@ -1,3 +1,5 @@
+import AccountDomain
+import AccountUI
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
@@ -10,9 +12,11 @@ import ScheduleDomain
 import ScheduleUI
 import SwiftUI
 
-/// The app target only wires packages together. It opens on 今天 under the tab bar, backed by an
-/// in-memory squad and member until sign-in lands; `-onboarding` opens sign-up first, which hands
-/// over to the tabs once its 上场 has played; `-styleguide` opens the design system's style guide and
+/// The app target only wires packages together. With a backend (the build names one, or a Debug
+/// build launched with `-local-backend`) it follows the account: sign-up until the member is in a
+/// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
+/// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
+/// tabs once its 上场 has played. `-styleguide` opens the design system's style guide and
 /// `-character-editor` the character editor instead. After the first check-in it asks for
 /// notifications; a tapped one brings the member back to 今天 with the home loaded again.
 @main
@@ -24,6 +28,7 @@ struct WildcardApp: App {
     @State private var profile: MeModel
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
+    @State private var app: AppModel?
 
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
@@ -48,6 +53,15 @@ struct WildcardApp: App {
                     backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
                     now: LaunchOptions.scheduleNow),
                 photos: LaunchOptions.posterSaver))
+        #if DEBUG
+        let usesApple = LaunchOptions.testMember == nil
+        #else
+        let usesApple = true
+        #endif
+        _app = State(
+            initialValue: AppConfig.current.map {
+                AppModel(config: $0, usesApple: usesApple, posted: Self.askForNotifications)
+            })
         if LaunchOptions.showsOnboarding {
             _signUp = State(
                 initialValue: SignUpModel(
@@ -75,6 +89,8 @@ struct WildcardApp: App {
                 }
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
+            } else if let app {
+                AppRoot(app: app, schedule: schedule, tab: $tab, delegate: delegate)
             } else {
                 MainTabs(today: today, profile: profile, schedule: schedule, selection: $tab)
                     .onAppear {
@@ -84,6 +100,72 @@ struct WildcardApp: App {
                         }
                     }
             }
+        }
+    }
+}
+
+/// The app on the real backend: the screen its account is on.
+private struct AppRoot: View {
+    let app: AppModel
+    /// 出赛表 stays on its in-memory member until its API adapter lands.
+    let schedule: ScheduleModel
+    @Binding var tab: MainTabs.Tab
+    let delegate: AppDelegate
+
+    var body: some View {
+        // A ZStack, not a Group, so the task below starts once and outlives screen changes.
+        ZStack {
+            switch app.screen {
+            case .starting:
+                EmptyView()
+            case .signUp(let signUp):
+                SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
+                    SignInButton(app: app, signUp: signUp)
+                }
+                .onChange(of: signUp.finished) { _, finished in
+                    if finished != nil { Task { await app.finishSignUp() } }
+                }
+            case .tabs(let today, let profile):
+                MainTabs(today: today, profile: profile, schedule: schedule, selection: $tab)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task { await app.run() }
+        .onAppear {
+            delegate.opened = { [app, $tab] in
+                $tab.wrappedValue = .today
+                Task { await app.reloadToday() }
+            }
+        }
+    }
+}
+
+/// The open screen's sign-in: Sign in with Apple, or in Debug with `-test-member` a stand-in
+/// that signs in as that member of local Supabase.
+private struct SignInButton: View {
+    let app: AppModel
+    let signUp: SignUpModel
+
+    var body: some View {
+        #if DEBUG
+        if let member = LaunchOptions.testMember {
+            StandInSignIn {
+                Task {
+                    await app.signIn(
+                        with: .testMember(email: member.email, password: member.password), name: nil, from: signUp)
+                }
+            }
+        } else {
+            apple
+        }
+        #else
+        apple
+        #endif
+    }
+
+    private var apple: some View {
+        AppleSignInButton { result in
+            Task { await app.signIn(result, from: signUp) }
         }
     }
 }

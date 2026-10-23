@@ -4,13 +4,16 @@ import {
   PlanDayStartedError,
   RestDaysFixedError,
   WeekOverError,
+  WeekStartedError,
   WeekTooFarAheadError,
 } from '../errors.js';
+import { FuelGoals } from './fuel-goal.js';
 import {
   DEFAULT_PLAN_DAYS,
   PlanDay,
   PlanDays,
   WeekStart,
+  checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
   weekStartOf,
@@ -196,5 +199,55 @@ describe('checkPlanChange', () => {
     );
     // On its Sunday the week is still the current one.
     expect(changeOn('2026-10-18')(plan('saved', '2026-10-12'), days)).toBe('allowed');
+  });
+});
+
+describe('checkFuelGoalsChange', () => {
+  const on = (today: string, weekStart: string) => {
+    try {
+      checkFuelGoalsChange({ weekStart: WeekStart.parse(weekStart), today });
+      return 'allowed';
+    } catch (error) {
+      return error;
+    }
+  };
+
+  it('lets a week change only before it starts, up to 4 weeks ahead', () => {
+    expect(on('2026-10-25', '2026-10-26')).toBe('allowed');
+    expect(on('2026-10-21', '2026-11-16')).toBe('allowed');
+    expect(on('2026-10-21', '2026-11-23')).toStrictEqual(new WeekTooFarAheadError('2026-11-23'));
+    expect(on('2026-10-26', '2026-10-26')).toStrictEqual(new WeekStartedError('2026-10-26'));
+    expect(on('2026-10-21', '2026-10-12')).toStrictEqual(new WeekStartedError('2026-10-12'));
+  });
+});
+
+describe('FuelGoals', () => {
+  it('takes up to 3 goals, each once, own words trimmed to 1 to 8 characters on one line', () => {
+    expect(
+      FuelGoals.parse([
+        { kind: 'suggested', suggestion: 'water' },
+        { kind: 'own', text: ' 少喝冰美式 ' },
+        { kind: 'own', text: '早睡🌙' },
+      ]),
+    ).toStrictEqual([
+      { kind: 'suggested', suggestion: 'water' },
+      { kind: 'own', text: '少喝冰美式' },
+      { kind: 'own', text: '早睡🌙' },
+    ]);
+    for (const refused of [
+      [{ kind: 'own', text: '一二三四五六七八九' }],
+      [{ kind: 'own', text: '多喝水\n早睡' }],
+      [
+        { kind: 'own', text: '喝水' },
+        { kind: 'own', text: ' 喝水' },
+      ],
+      ['water', 'veggies', 'breakfast', 'earlyDinner'].map((suggestion) => ({
+        kind: 'suggested',
+        suggestion,
+      })),
+      [{ kind: 'suggested', suggestion: 'protein' }],
+    ]) {
+      expect(FuelGoals.safeParse(refused).success).toBe(false);
+    }
   });
 });

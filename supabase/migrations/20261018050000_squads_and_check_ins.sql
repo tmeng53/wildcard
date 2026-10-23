@@ -81,7 +81,7 @@ create table public.profiles (
   created_at timestamptz not null default now()
 );
 
--- Guards every log of a member's own changes (profile_events, weekly_plan_events,
+-- Guards every log of a member's own changes (profile_events, weekly_plan_events, fuel_goal_events,
 -- push_setting_events): a row is never changed or removed, except when the account's
 -- deletion takes it. A row trigger, so the cascade from auth.users passes once that user
 -- is gone; a statement trigger refuses truncate, which skips row triggers.

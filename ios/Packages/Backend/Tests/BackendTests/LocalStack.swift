@@ -69,50 +69,19 @@ struct LocalStack {
         return SignedInMember(id: member.id, account: account, api: WildcardAPI(url: apiURL, account: account))
     }
 
-    /// A squad of these members: the first creates it through the API and the rest accept its
-    /// invite, each agreeing to the AI consent copy first, as `scripts/api-journeys.sh` does. The
-    /// client has no squad or consent calls yet.
+    /// A squad of these members: the first creates it and the rest join by its invite code, each
+    /// agreeing to the AI consent copy first, through the client as the app does.
     func squad(of creator: SignedInMember, _ others: SignedInMember...) async throws -> SquadID {
         for member in [creator] + others {
-            try await agreeToAI(member)
+            try await member.api.agreeToAI(copyVersion: 1)
         }
-        let squad = SquadID(UUID())
-        let created: CreatedSquad = try await send(
-            "PUT", "squads/\(squad)", as: creator, body: #"{"version":1,"name":"backend tests"}"#)
+        let squad = try await creator.api.createSquad(SquadID(UUID()), named: try SquadName("backend tests"))
         for member in others {
-            let _: JoinedSquad = try await send(
-                "POST", "squad-invites/\(created.inviteCode)/accept", as: member, body: nil)
+            _ = try await member.api.join(try InviteCode(squad.inviteCode))
         }
-        return squad
-    }
-
-    /// The member agrees to the AI consent copy, which squads and AI drafts need.
-    func agreeToAI(_ member: SignedInMember) async throws {
-        let _: AgreedToAI = try await send(
-            "PUT", "me/ai-consent", as: member, body: #"{"version":1,"copyVersion":1}"#, expecting: 200)
-    }
-
-    private func send<Answer: Decodable>(
-        _ method: String, _ path: String, as member: SignedInMember, body: String?, expecting status: Int = 201
-    ) async throws -> Answer {
-        var request = URLRequest(url: apiURL.appending(path: path))
-        request.httpMethod = method
-        request.setValue("Bearer \(try await member.account.accessToken())", forHTTPHeaderField: "Authorization")
-        if let body {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = Data(body.utf8)
-        }
-        let (data, response) = try await URLSession.shared.data(for: request)
-        try #require(
-            (response as? HTTPURLResponse)?.statusCode == status,
-            "\(method) \(path): \(String(bytes: data, encoding: .utf8) ?? "")")
-        return try JSONDecoder().decode(Answer.self, from: data)
+        return squad.id
     }
 }
-
-private struct CreatedSquad: Decodable { let inviteCode: String }
-private struct JoinedSquad: Decodable {}
-private struct AgreedToAI: Decodable {}
 
 /// The session kept in memory, where the app keeps it in the Keychain.
 actor MemorySessionStore: SessionStore {
