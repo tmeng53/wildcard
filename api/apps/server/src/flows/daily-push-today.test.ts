@@ -1,0 +1,110 @@
+import { randomUUID } from 'node:crypto';
+
+import {
+  CheckInId,
+  Emoji,
+  MemberId,
+  SquadId,
+  type SquadPost,
+  type SquadToday,
+} from '@wildcard/check-ins';
+import { Look, Nickname, type MemberId as ProfileMember, type Squadmate } from '@wildcard/members';
+import { apnsPayload } from '@wildcard/push';
+import { describe, expect, it } from 'vitest';
+
+import { dailyProgressNotification } from './daily-progress-push.js';
+import { TODAY_BYTES, TODAY_POSTS, pushToday } from './daily-push-today.js';
+
+// The size of the push at its fullest, without a database: the most squad, names, words and
+// reactions the rules allow.
+const day = '2026-10-23';
+const squad = SquadId.parse(randomUUID());
+const viewer = MemberId.parse(randomUUID());
+const mates = Array.from({ length: 7 }, () => MemberId.parse(randomUUID()));
+const everyone = [viewer, ...mates];
+// The widest emoji: a family, 7 code points and 25 bytes.
+const family = Emoji.parse('👨‍👩‍👧‍👦');
+// 12 characters of 4 bytes each.
+const nickname = Nickname.parse('🏋🏋🏋🏋🏋🏋🏋🏋🏋🏋🏋🏋');
+const look = Look.parse({ persona: 'deadpan', variants: { body: 'peach' }, colors: {} });
+
+const today: SquadToday = {
+  members: everyone.map((member) => ({
+    member,
+    day,
+    training: 'trained',
+    latestMeal: undefined,
+    plannedRest: false,
+    firstCheckInAt: new Date(),
+  })),
+  trainedToday: everyone.length,
+  disclaimerToday: 0,
+  restingToday: 0,
+  everyoneTrained: true,
+  myWeek: { from: '2026-10-19', to: '2026-10-25', days: [], trainedDays: 5, plannedDays: 5 },
+  myLifetimeTrainedDays: 5,
+  squadWeek: { trainedDays: 40, plannedDays: 40 },
+};
+
+function post(author: MemberId, minute: number): SquadPost {
+  return {
+    checkIn: {
+      id: CheckInId.parse(randomUUID()),
+      member: author,
+      day,
+      createdAt: new Date(Date.UTC(2026, 9, 23, 18, minute)),
+      audience: [squad],
+      kind: 'trained',
+      training: {
+        sport: 'custom',
+        customSport: '超长名字的自己的运动超长名字的自己的运动',
+        caption: '很长很长的一句话'.repeat(8).slice(0, 60),
+      },
+    },
+    reactions: everyone
+      .filter((member) => member !== author)
+      .map((member, at) => ({ member, emoji: family, reactedAt: new Date(at * 1000) })),
+    replies: [],
+  };
+}
+
+const posts = mates.flatMap((mate, at) => [post(mate, at * 2), post(mate, at * 2 + 1)]);
+
+describe('the push’s today', () => {
+  it('keeps the whole push under APNs’ 4KB at its fullest', async () => {
+    const carried = await pushToday(
+      {
+        checkIns: { listForSquad: () => Promise.resolve(posts) },
+        members: {
+          squadmates: (members) =>
+            Promise.resolve(
+              new Map<ProfileMember, Squadmate>(
+                members.map((member) => [
+                  member,
+                  { catchphrase: null, character: { nickname, look } },
+                ]),
+              ),
+            ),
+        },
+      },
+      { viewer, squad, today },
+    );
+    const payload = apnsPayload(
+      dailyProgressNotification({
+        day,
+        squad,
+        squadWeek: today.squadWeek,
+        received: new Map([
+          ['reaction', new Set(mates)],
+          ['poke', new Set(mates)],
+        ]),
+        today: carried,
+      }),
+    );
+    expect(Buffer.byteLength(JSON.stringify(payload))).toBeLessThanOrEqual(4096);
+    // Even at its fullest, all four fit; the rest are counted.
+    expect(carried.posts).toHaveLength(TODAY_POSTS);
+    expect(carried.more).toBe(posts.length - TODAY_POSTS);
+    expect(Buffer.byteLength(JSON.stringify(carried))).toBeLessThanOrEqual(TODAY_BYTES);
+  });
+});

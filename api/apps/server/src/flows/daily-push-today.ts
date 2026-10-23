@@ -13,10 +13,12 @@ export const POST_REACTIONS = 8;
 /** A post's words are cut to this many characters as people see them, with `…`. */
 export const POST_TEXT = 40;
 /**
- * The most bytes `today` may take as JSON. APNs takes 4KB in all; the alert and the rest of the
- * event take well under 1KB. Posts are dropped from the end (and counted in `more`) until it fits.
+ * The most bytes `today` may take as JSON. APNs takes 4KB in all; at their fullest (8 members with
+ * 12-emoji nicknames, 60-character captions, the widest emoji) the alert and the rest of the event
+ * take under 500 bytes and four posts about 3.2KB. A safety net: posts are dropped from the end
+ * (and counted in `more`) until it fits.
  */
-export const TODAY_BYTES = 2800;
+export const TODAY_BYTES = 3400;
 
 /**
  * Today's check-ins in the daily push, for the push's long-press view on the phone, which must
@@ -59,7 +61,10 @@ function cut(text: string): string {
 
 /** What the daily push carries of `viewer`'s squad's day, from the squad's today. */
 export async function pushToday(
-  deps: { readonly checkIns: CheckIns; readonly members: Members },
+  deps: {
+    readonly checkIns: Pick<CheckIns, 'listForSquad'>;
+    readonly members: Pick<Members, 'squadmates'>;
+  },
   {
     viewer,
     squad,
