@@ -131,7 +131,7 @@ const pages = [
     lang: 'zh-Hant',
     path: '/zh-hant/',
     title: '外卡 Wildcard：人人都是運動員',
-    description: '和朋友組隊，每天打卡。人人都是運動員。',
+    description: '揪朋友組隊，每天打卡。人人都是運動員。',
     languageLabel: '語言',
     headlineLabel: 'Wildcard 外卡',
     cn: '<span class="cn" data-settle>外卡</span>',
