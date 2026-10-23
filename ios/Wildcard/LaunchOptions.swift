@@ -2,6 +2,7 @@ import CheckInDomain
 import CheckInUI
 import DesignSystem
 import Foundation
+import ScheduleUI
 import UIKit
 
 /// Launch arguments the UI tests pass in.
@@ -119,6 +120,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
     }
 
+    /// `-uitest-save-poster`: 存图 says it saved without asking for Photos, whose permission prompt
+    /// UI tests can't answer.
+    static var posterSaver: any PosterSaver {
+        ProcessInfo.processInfo.arguments.contains("-uitest-save-poster") ? PretendPosterSaver() : PhotoLibrarySaver()
+    }
+
     /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in
     /// daylight and the squad cheers whatever time CI runs the UI tests.
     static let now: @Sendable () -> Date = {
@@ -127,6 +134,20 @@ enum LaunchOptions {
         else { return { Date() } }
         let launched = Date()
         return { noon.addingTimeInterval(Date().timeIntervalSince(launched)) }
+    }()
+
+    /// `-uitest-thursday`: 出赛表's clock starts at noon on this week's Thursday and runs on, so
+    /// this week has days behind and ahead whatever day CI runs the UI tests.
+    static let scheduleNow: @Sendable () -> Date = {
+        let calendar = Calendar.current
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-thursday"),
+            let noon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: Date())
+        else { return now }
+        // Monday is 2 in the Gregorian calendar, Sunday 1; weeks here run Monday to Sunday.
+        let mondayFirst = (calendar.component(.weekday, from: noon) + 5) % 7
+        let thursday = noon.addingTimeInterval(Double(3 - mondayFirst) * 86_400)
+        let launched = Date()
+        return { thursday.addingTimeInterval(Date().timeIntervalSince(launched)) }
     }()
 
     /// `-uitest-photos N`: hand N generated photos to every check-in instead of the system photo

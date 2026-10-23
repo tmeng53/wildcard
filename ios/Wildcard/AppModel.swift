@@ -4,6 +4,8 @@ import Backend
 import CheckInDomain
 import CheckInUI
 import Contracts
+import FeedDomain
+import FeedUI
 import Foundation
 import MeDomain
 import Observation
@@ -19,7 +21,7 @@ final class AppModel {
         /// Reading the stored session, and the member's home once signed in.
         case starting
         case signUp(SignUpModel)
-        case tabs(today: TodayModel, profile: MeModel, recap: RecapShelf)
+        case tabs(today: TodayModel, profile: MeModel, feed: FeedModel, recap: RecapShelf)
     }
 
     private(set) var screen = Screen.starting
@@ -101,12 +103,12 @@ final class AppModel {
 
     /// A tapped notification: back on 今天 with the home loaded again.
     func reloadToday() async {
-        if case .tabs(let today, _, _) = screen { await today.load() }
+        if case .tabs(let today, _, _, _) = screen { await today.load() }
     }
 
     /// A tapped awards push: the 战报 it is about, over 动态.
     func openRecap(squad: SquadID, week: LocalDay) async {
-        guard case .tabs(_, _, let recap) = screen else {
+        guard case .tabs(_, _, _, let recap) = screen else {
             pendingRecap = (squad, week)
             return
         }
@@ -134,7 +136,7 @@ final class AppModel {
             screen = .signUp(model)
         case .signedOut:
             await signedOut()
-        case .offline where store.home == nil:
+        case .loading where store.home == nil, .offline where store.home == nil:
             // Nothing kept on the phone to show, so it isn't known yet whether the member has a
             // squad. Rather than open an empty 今天: after signing in on the open screen, say it
             // didn't work so they can try again; at launch, wait and try again.
@@ -146,6 +148,8 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(3))
             await openHome()
         case .loading, .current, .offline:
+            // The case above has every load without a home.
+            guard let home = store.home else { return }
             screen = .tabs(
                 today: TodayModel(
                     store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
@@ -153,6 +157,7 @@ final class AppModel {
                 profile: MeModel(
                     service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
                     confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() }),
+                feed: Self.feed(api: api, home: home),
                 recap: RecapShelf(
                     service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) }))
             if let pending = pendingRecap {
@@ -160,6 +165,15 @@ final class AppModel {
                 await openRecap(squad: pending.squad, week: pending.week)
             }
         }
+    }
+
+    /// 动态 on the member's squad, its days by the member's own clock.
+    private static func feed(api: WildcardAPI, home: Home) -> FeedModel {
+        let zone = home.timeZone
+        let store = FeedStore(
+            source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
+            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) })
+        return FeedModel(store: store, viewer: home.member, now: { Date() })
     }
 
     private func registerForPush() async {

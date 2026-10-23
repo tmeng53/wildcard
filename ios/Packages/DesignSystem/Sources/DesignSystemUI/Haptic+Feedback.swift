@@ -16,6 +16,7 @@ extension Haptic {
         case .land: .impact(weight: .medium)
         case .reaction: .impact(flexibility: .soft, intensity: 0.7)
         case .crown: .impact(weight: .medium)
+        case .unbox: .impact(weight: .heavy)
         }
     }
 }

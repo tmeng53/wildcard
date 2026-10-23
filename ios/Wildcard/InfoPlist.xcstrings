@@ -16,6 +16,22 @@
           }
         }
       }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save puts your weekly schedule poster in your photo library."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存图时把出赛表海报存到你的相册。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

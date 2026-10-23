@@ -19,6 +19,7 @@ public struct StyleGuideView: View {
                 LayoutSection()
                 ButtonSection()
                 PickSection()
+                ScenePickGuide()
                 KindSection()
                 StatusSection()
                 ListSection()

@@ -17,6 +17,8 @@ import PackageDescription
 //   character and the first week's plan saved through the API.
 // - `APIMeService`, the adapter behind `MeDomain`'s `MeService`: 我's overview, the daily push
 //   switch and deleting the account.
+// - `APIFeedSource`, the adapter behind `FeedDomain`'s `FeedSource`: 动态's posts with their
+//   reactions, the squad's characters and the photos.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -26,6 +28,7 @@ let package = Package(
         .package(path: "../Avatar"),
         .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
+        .package(path: "../Feed"),
         .package(path: "../Me"),
         .package(path: "../Notifications"),
         .package(path: "../Recap"),
@@ -43,6 +46,7 @@ let package = Package(
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
+                .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "RecapDomain", package: "Recap"),
@@ -59,6 +63,7 @@ let package = Package(
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
+                .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "RecapDomain", package: "Recap"),

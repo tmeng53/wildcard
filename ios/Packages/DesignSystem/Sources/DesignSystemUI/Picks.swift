@@ -63,14 +63,22 @@ public struct PickRow: View {
 }
 
 /// A compact choice: a capsule with a word and maybe an icon, for a wrapping row of more
-/// choices (更多). Picked, it takes the accent border and a heavier word. Removable pills end in
-/// a cross; the caller removes the pill in `action`.
+/// choices (更多). Picked, an `.outlined` pill takes the accent border and a heavier word; a
+/// `.solid` one fills with the accent tone (发动态's sport and minutes). Removable pills end in a
+/// cross; the caller removes the pill in `action`.
 public struct PickPill: View {
+    public enum Look: Sendable {
+        case outlined
+        case solid
+    }
+
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var taps = 0
     private let title: Text
     private let systemImage: String?
+    private let look: Look
     private let isSelected: Bool
     private let isRemovable: Bool
     private let action: () -> Void
@@ -79,11 +87,12 @@ public struct PickPill: View {
     private let removeGlyph: Double = 11
 
     public init(
-        _ title: Text, systemImage: String? = nil, isSelected: Bool, isRemovable: Bool = false,
-        action: @escaping () -> Void
+        _ title: Text, systemImage: String? = nil, look: Look = .outlined, isSelected: Bool,
+        isRemovable: Bool = false, action: @escaping () -> Void
     ) {
         self.title = title
         self.systemImage = systemImage
+        self.look = look
         self.isSelected = isSelected
         self.isRemovable = isRemovable
         self.action = action
@@ -110,11 +119,11 @@ public struct PickPill: View {
                         .accessibilityHidden(true)
                 }
             }
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .foregroundStyle(Color(role: isFilled ? tone.onFill : .fgDefault, in: theme))
             .padding(.horizontal, Space.s + 2)
             // Grows with Dynamic Type instead of clipping the label.
             .frame(minHeight: Sizing.compactControl)
-            .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+            .background(Color(role: isFilled ? tone.fill : .bgCanvas, in: theme), in: Capsule())
             .overlay { PickBorder(shape: Capsule(), isSelected: isSelected) }
             // Draws 36 points tall but answers taps across the full 44.
             .padding(.vertical, (Sizing.minimumTapTarget - Sizing.compactControl) / 2)
@@ -126,6 +135,8 @@ public struct PickPill: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityHint(isRemovable ? Text("移除这一项", bundle: .module) : Text(verbatim: ""))
     }
+
+    private var isFilled: Bool { look == .solid && isSelected }
 }
 
 /// A choice shown as a picture, such as a hairstyle on the person's own character: a white

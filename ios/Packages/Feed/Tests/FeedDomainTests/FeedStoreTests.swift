@@ -185,3 +185,19 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     #expect(feed.post(mine.id)?.reactions.count(of: emoji("💪")) == 1)
     #expect(feed.sections.flatMap(\.posts).count == 2)
 }
+
+@MainActor @Test func teammatesNewReactionsOnMyPostsArriveNewestFirst() async {
+    let mine = FeedPost(
+        checkIn: checkIn(3, by: coco, on: "2026-10-22", at: 200),
+        reactions: reactions([(mia, "😂", 300), (jay, "💪", 400)]))
+    let older = FeedPost(
+        checkIn: checkIn(4, by: coco, on: "2026-10-21", at: 100), reactions: reactions([(doudou, "❤️", 350)]))
+    let feed = store(FakeSource([mine, older, jaysRun]))
+    await feed.load()
+    #expect(
+        feed.arrivals(since: at(250)) == [
+            Arrival(post: mine.id, member: jay, emoji: emoji("💪"), moment: at(400)),
+            Arrival(post: older.id, member: doudou, emoji: emoji("❤️"), moment: at(350)),
+        ])
+    #expect(feed.arrivals(since: at(400)) == [])
+}

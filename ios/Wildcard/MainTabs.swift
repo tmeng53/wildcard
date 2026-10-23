@@ -6,6 +6,7 @@ import FeedUI
 import MeDomain
 import MeUI
 import RecapUI
+import ScheduleUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -18,8 +19,10 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
-    /// Nil on the real backend until 动态 has its API adapter: the tab shows only the 战报.
-    let feed: FeedModel?
+    /// Nil on the real backend until 出赛表's API adapter lands: the tab shows its placeholder
+    /// there rather than the in-memory sample member's week.
+    let schedule: ScheduleModel?
+    let feed: FeedModel
     let recap: RecapShelf
     @Binding var selection: Tab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -87,21 +90,20 @@ struct MainTabs: View {
         switch selection {
         case .today:
             TodayView(model: today) { post in
-                feed?.open(post)
+                feed.open(post)
                 selection = .feed
             }
         case .feed:
-            Group {
-                if let feed {
-                    FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
-                } else {
-                    FeedTab(recap: recap)
-                }
-            }
-            .environment(\.sceneTheme, today.scene)
-            .task { await recap.refresh() }
+            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
+                .environment(\.sceneTheme, today.scene)
+                .task { await recap.refresh() }
         case .schedule:
-            UpcomingTab(title: Text("出赛表"))
+            if let schedule {
+                ScheduleView(model: schedule)
+                    .environment(\.sceneTheme, today.scene)
+            } else {
+                UpcomingTab(title: Text("出赛表"))
+            }
         case .profile:
             MeView(
                 model: profile,
@@ -110,7 +112,9 @@ struct MainTabs: View {
                     squad: { selection = .today },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+            )
+            .accentTone(.brand)
         }
     }
 
@@ -126,27 +130,6 @@ struct MainTabs: View {
         TabBarItem(
             id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
     ]
-}
-
-/// 动态 until its feed lands: its name, and the squad's newest 战报 as its tile, which opens the
-/// story. The feed puts the same tile at the top of its list.
-private struct FeedTab: View {
-    let recap: RecapShelf
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.l) {
-            Text("动态")
-                .typeStyle(TypeRamp.largeTitle)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .accessibilityIdentifier("tab.upcoming")
-            RecapTile(recap: recap)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(.horizontal, Space.pageMargin)
-        .padding(.top, Space.l)
-        .background(Color(role: .bgCanvas, in: theme))
-    }
 }
 
 /// The squad's newest 战报, once there is one, opening it.

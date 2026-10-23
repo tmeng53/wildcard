@@ -32,9 +32,9 @@ final class TabsUITests: XCTestCase {
         XCTAssertFalse(checkIn.exists, "今天 still shows under 动态")
         let upcoming = app.staticTexts["tab.upcoming"]
         app.buttons["tab.schedule"].tap()
-        waitFor(app.buttons["tab.schedule"], "isSelected == true", "tab.schedule didn't open")
-        XCTAssertEqual(upcoming.label, "出赛表", "tab.schedule shows another tab's screen")
-        XCTAssertFalse(checkIn.exists, "今天 still shows under tab.schedule")
+        waitFor(app.buttons["tab.schedule"], "isSelected == true", "出赛表 didn't open")
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 shows another tab's screen")
+        XCTAssertFalse(checkIn.exists, "今天 still shows under 出赛表")
         app.buttons["tab.me"].tap()
         waitFor(app.buttons["tab.me"], "isSelected == true", "tab.me didn't open")
         let mePage = app.descendants(matching: .any).matching(identifier: "me.page").firstMatch
@@ -68,7 +68,7 @@ final class TabsUITests: XCTestCase {
         let schedule = app.buttons["tab.schedule"]
         XCTAssertTrue(schedule.waitForExistence(timeout: 30), "no tab bar")
         XCTAssertTrue(schedule.isSelected, "-tab schedule didn't open on 出赛表")
-        XCTAssertEqual(app.staticTexts["tab.upcoming"].label, "出赛表")
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "-tab schedule didn't show 出赛表")
     }
 
     private func keepScreenshot(named name: String) {
