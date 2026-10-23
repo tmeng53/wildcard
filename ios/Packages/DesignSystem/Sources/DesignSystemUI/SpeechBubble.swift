@@ -81,43 +81,45 @@ public struct SpeechBubble: View {
     @ViewBuilder private var content: some View {
         switch kind {
         case .line:
-            text
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-                .frame(maxWidth: Self.lineWidth - 2 * Self.horizontalPadding)
-        case .info(let title):
-            VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                if let title {
-                    title
-                        .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                }
-                text
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding, alignment: .leading)
-        case .status(let detail, let button):
-            VStack(spacing: Space.xxs / 2) {
+            HuggingWidth(max: Self.lineWidth - 2 * Self.horizontalPadding) {
                 text
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .lineLimit(1)
-                if let detail {
-                    detail
+            }
+        case .info(let title):
+            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+                VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                    if let title {
+                        title
+                            .typeStyle(TypeRamp.label)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .lineLimit(1)
+                    }
+                    text
                         .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .multilineTextAlignment(.center)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                StatusCapsule(button: button)
-                    .padding(.top, Space.xs - Space.xxs / 2)
             }
-            .frame(minWidth: Self.statusMinWidth - 2 * Space.s)
-            .frame(maxWidth: Self.statusWidth - 2 * Space.s)
+        case .status(let detail, let button):
+            HuggingWidth(min: Self.statusMinWidth - 2 * Space.s, max: Self.statusWidth - 2 * Space.s) {
+                VStack(spacing: Space.xxs / 2) {
+                    text
+                        .typeStyle(TypeRamp.footnoteEmphasis)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .lineLimit(1)
+                    if let detail {
+                        detail
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    StatusCapsule(button: button)
+                        .padding(.top, Space.xs - Space.xxs / 2)
+                }
+            }
         }
     }
 
@@ -131,6 +133,28 @@ public struct SpeechBubble: View {
 
     private var fill: Color {
         Color(role: surface == .scene ? .bgCanvas : .bgSubtle, in: theme)
+    }
+}
+
+/// Offers its content at most `max` wide and takes only the width the content uses (at least
+/// `min`), so a bubble hugs its words however wide its caller offers it. A
+/// `.frame(maxWidth:)` would instead stretch to whatever it is offered, up to its max.
+private struct HuggingWidth: Layout {
+    var min: Double = 0
+    let max: Double
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let content = subviews.first else { return .zero }
+        let size = content.sizeThatFits(offer(proposal))
+        return CGSize(width: Swift.max(min, size.width), height: size.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: CGPoint(x: bounds.midX, y: bounds.minY), anchor: .top, proposal: offer(proposal))
+    }
+
+    private func offer(_ proposal: ProposedViewSize) -> ProposedViewSize {
+        ProposedViewSize(width: Swift.min(proposal.width ?? max, max), height: nil)
     }
 }
 
