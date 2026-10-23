@@ -5,6 +5,10 @@ import DesignSystemUI
 import FeedUI
 import MeDomain
 import MeUI
+import RecapUI
+import ScheduleUI
+import SquadDomain
+import SquadUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
@@ -17,12 +21,18 @@ struct MainTabs: View {
 
     let today: TodayModel
     let profile: MeModel
-    /// Nil on the real backend until 动态 has its API adapter: the tab says it is coming.
-    let feed: FeedModel?
+    let schedule: ScheduleModel
+    let feed: FeedModel
+    let squad: SquadSettingsModel
+    let recap: RecapShelf
     @Binding var selection: Tab
+    /// The member left the squad on 小队设置.
+    var leftSquad: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
     @State private var editor: CharacterEditorModel?
+    /// 小队设置, open from 我 over everything.
+    @State private var showsSquad = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -42,6 +52,14 @@ struct MainTabs: View {
                 }
                 .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         }
+        // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
+        // 今天 opens 动态 on doesn't move down under it.
+        .task { await recap.refresh() }
+        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
+            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
+        }
+        // A scene picked on the story's last page: its reveal ends where home takes over.
+        .onChange(of: recap.picks) { selection = .today }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
                 CharacterEditorView(
@@ -54,6 +72,15 @@ struct MainTabs: View {
                         }
                     })
             }
+        }
+        .fullScreenCover(isPresented: $showsSquad) {
+            SquadSettingsView(model: squad) { showsSquad = false }
+                .environment(\.sceneTheme, squad.scene)
+        }
+        .onChange(of: squad.hasLeft) { _, left in
+            guard left else { return }
+            showsSquad = false
+            leftSquad()
         }
     }
 
@@ -79,27 +106,27 @@ struct MainTabs: View {
         switch selection {
         case .today:
             TodayView(model: today) { post in
-                feed?.open(post)
+                feed.open(post)
                 selection = .feed
             }
         case .feed:
-            if let feed {
-                FeedView(model: feed) { selection = .today }
-                    .environment(\.sceneTheme, today.scene)
-            } else {
-                UpcomingTab(title: Text("动态"))
-            }
+            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
+                .environment(\.sceneTheme, today.scene)
+                .task { await recap.refresh() }
         case .schedule:
-            UpcomingTab(title: Text("出赛表"))
+            ScheduleView(model: schedule)
+                .environment(\.sceneTheme, today.scene)
         case .profile:
             MeView(
                 model: profile,
                 destinations: MeDestinations(
-                    // The squad lives on 今天 and past 战报 in 动态 until each has a page of its own.
-                    squad: { selection = .today },
+                    // Past 战报 live in 动态 until they have a page of their own.
+                    squad: { showsSquad = true },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms))
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+            )
+            .accentTone(.brand)
         }
     }
 
@@ -117,19 +144,14 @@ struct MainTabs: View {
     ]
 }
 
-/// A tab whose screen is still being built: its name on a white page.
-private struct UpcomingTab: View {
-    let title: Text
-    @Environment(\.sceneTheme) private var theme
+/// The squad's newest 战报, once there is one, opening it.
+private struct RecapTile: View {
+    let recap: RecapShelf
 
     var body: some View {
-        title
-            .typeStyle(TypeRamp.largeTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.l)
-            .background(Color(role: .bgCanvas, in: theme))
-            .accessibilityIdentifier("tab.upcoming")
+        if let story = recap.latest {
+            RecapEntryTile(
+                week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
+        }
     }
 }

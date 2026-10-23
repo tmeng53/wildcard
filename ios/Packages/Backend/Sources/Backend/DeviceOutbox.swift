@@ -67,6 +67,7 @@ public actor DeviceOutbox: Outbox {
         let kind: String
         let sport: String?
         let customSport: String?
+        let minutes: Int?
         let caption: String?
         let text: String?
         let photos: [StoredPhoto]
@@ -80,11 +81,13 @@ public actor DeviceOutbox: Outbox {
             photos = post.draft.photos.map { StoredPhoto(id: $0.id, path: post.uploaded[$0.id]?.path) }
             var sport: String?
             var customSport: String?
+            var minutes: Int?
             var caption: String?
             var text: String?
             switch post.draft {
-            case .trained(let activity, let body):
+            case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
+                minutes = workoutMinutes?.value
                 caption = body.caption
                 switch activity {
                 case .sport(let listed): sport = listed.rawValue
@@ -100,7 +103,9 @@ public actor DeviceOutbox: Outbox {
                 kind = "disclaimer"
                 text = disclaimer.text
             }
-            (self.sport, self.customSport, self.caption, self.text) = (sport, customSport, caption, text)
+            (self.sport, self.customSport, self.minutes, self.caption, self.text) = (
+                sport, customSport, minutes, caption, text
+            )
         }
 
         func pending(photos directory: URL) throws -> PendingCheckIn? {
@@ -119,10 +124,11 @@ public actor DeviceOutbox: Outbox {
             let draft: CheckInDraft
             switch kind {
             case "trained":
+                let minutes = try minutes.map(WorkoutMinutes.init)
                 if let sport, let listed = Sport(rawValue: sport) {
-                    draft = .trained(.sport(listed), body)
+                    draft = .trained(.sport(listed), minutes, body)
                 } else if let customSport {
-                    draft = .trained(.custom(try CustomSport(customSport)), body)
+                    draft = .trained(.custom(try CustomSport(customSport)), minutes, body)
                 } else {
                     return nil
                 }

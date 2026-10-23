@@ -1,11 +1,14 @@
 import XCTest
 
-/// 动态 on the sample squad, the way a teammate uses it: react with an emoji, watch the author's
-/// character answer, and keep screenshots for review. Each check that the
+/// 动态 on the sample squad, the way a teammate uses it: react with an emoji from the bar, the
+/// grid or by holding the card, watch it fly to the author's character, see who reacted, and
+/// keep screenshots for review. Each check that the
 /// content clears the floating tab bar runs where the screen has the most in it.
 @MainActor
 final class FeedUITests: XCTestCase {
     private static let wait: TimeInterval = 30
+    /// More than the sample squad's posts need to reach the end.
+    private static let maxSwipes = 12
 
     func testReact() {
         continueAfterFailure = false
@@ -14,39 +17,84 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(react.waitForExistence(timeout: Self.wait), "no post to react to")
         settle()
         assertClearOfTheTabBar(app.staticTexts["feed.title"], in: app)
+        // A 练了 with its minutes shows them as the card's big number.
+        let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
+        XCTAssertTrue(minutes.exists, "no minutes on a 练了")
+        assertOnScreen(minutes, in: app)
         keepScreenshot(named: "40-feed")
 
         react.tap()
-        settle()
         let bar = app.buttons["feed.emoji.💪"]
         XCTAssertTrue(bar.waitForExistence(timeout: Self.wait), "the emoji bar didn't open")
         assertOnScreen(bar, in: app)
-        assertOnScreen(app.buttons["feed.emoji.more"], in: app)
+        settle()
         keepScreenshot(named: "41-feed-emoji-bar")
 
-        // The emoji pops on the card and the author's character plays its move.
+        // The emoji flies to the author's head and the character plays its move.
         bar.tap()
-        for frame in 0..<10 {
+        for frame in 0..<12 {
             keepScreenshot(named: String(format: "42-feed-reacted-%02d", frame))
-            Thread.sleep(forTimeInterval: 0.15)
+            Thread.sleep(forTimeInterval: 0.12)
         }
         waitFor(bar, "exists == false", "the emoji bar stayed open")
         XCTAssertEqual(react.label, "我的回应：💪", "my emoji isn't on my button")
 
-        // Tapping the faces lists who left what.
+        // Tapping the heads opens who reacted, right at the row.
         app.buttons.matching(identifier: "feed.reactions").firstMatch.tap()
+        let who = app.descendants(matching: .any).matching(identifier: "feed.who").firstMatch
+        XCTAssertTrue(who.waitForExistence(timeout: Self.wait), "who reacted didn't open")
+        assertOnScreen(who, in: app)
         settle()
         keepScreenshot(named: "43-feed-who-reacted")
+        app.staticTexts["feed.title"].tap()
+        waitFor(who, "exists == false", "who reacted stayed open")
 
-        // The oldest posts scroll up clear of the tab bar.
-        app.swipeUp()
-        app.swipeUp()
-        app.swipeUp()
-        settle()
+        // The oldest posts scroll up clear of the tab bar: swipe until the last post is on
+        // screen, as the list builds its cards as they come.
         let posts = app.descendants(matching: .any).matching(identifier: "feed.post")
-        let last = posts.element(boundBy: posts.count - 1)
-        assertClearOfTheTabBar(last, in: app)
+        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        var swipes = 0
+        while swipes < Self.maxSwipes, posts.element(boundBy: posts.count - 1).frame.maxY > tabBarTop {
+            app.swipeUp()
+            swipes += 1
+        }
+        settle()
+        assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
         keepScreenshot(named: "45-feed-end")
+    }
+
+    /// ＋ opens our own emoji grid, and holding a card then sliding along the bar picks.
+    func testGridAndHoldToPick() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let react = app.buttons.matching(identifier: "feed.react").firstMatch
+        XCTAssertTrue(react.waitForExistence(timeout: Self.wait), "no post to react to")
+        settle()
+        react.tap()
+        let bar = app.buttons["feed.emoji.💪"]
+        XCTAssertTrue(bar.waitForExistence(timeout: Self.wait), "the emoji bar didn't open")
+
+        // ＋ opens our own emoji grid in place of the bar.
+        app.buttons["feed.emoji.more"].tap()
+        let grid = app.descendants(matching: .any).matching(identifier: "feed.emojiGrid").firstMatch
+        XCTAssertTrue(grid.waitForExistence(timeout: Self.wait), "the emoji grid didn't open")
+        assertOnScreen(grid, in: app)
+        settle()
+        keepScreenshot(named: "41-feed-emoji-grid")
+        // 全部, as the grid opens on 最近 once this phone has picked before.
+        grid.buttons["全部"].firstMatch.tap()
+        grid.buttons["😀"].firstMatch.tap()
+        waitFor(react, "label == '我的回应：😀'", "picking from the grid didn't react")
+
+        // Holding the card and sliding to 😂 swaps it: the bar's slots sit left of my button's
+        // right edge, 44 points each.
+        let slot = react.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0)).withOffset(
+            CGVector(dx: -(7 - 2.5) * 44 - 4, dy: -8 - 26))
+        // Pressed on the card's words, above its row.
+        let words = react.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0)).withOffset(
+            CGVector(dx: -120, dy: -50))
+        words.press(forDuration: 0.8, thenDragTo: slot)
+        waitFor(react, "label == '我的回应：😂'", "holding and sliding didn't pick 😂")
     }
 
     func testFeedInEnglish() {

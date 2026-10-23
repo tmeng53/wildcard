@@ -6,10 +6,12 @@ public enum TextWeight: Sendable, Hashable {
     case semibold
 }
 
-/// Weights of the bundled Barlow Condensed cuts: numbers, and their lighter denominators.
+/// Weights of the bundled Barlow Condensed cuts: numbers, their lighter denominators, and the
+/// italic week number on the 出赛表 poster.
 public enum ScoreboardWeight: Sendable, Hashable {
     case semibold
     case extraBold
+    case extraBoldItalic
 }
 
 /// A typeface and weight. Only bundled or system cuts are representable.
@@ -26,6 +28,7 @@ public enum Face: Sendable, Hashable {
         case .text(.semibold): "PingFangSC-Semibold"
         case .scoreboard(.semibold): "BarlowCondensed-SemiBold"
         case .scoreboard(.extraBold): "BarlowCondensed-ExtraBold"
+        case .scoreboard(.extraBoldItalic): "BarlowCondensed-ExtraBoldItalic"
         }
     }
 }
@@ -84,9 +87,15 @@ public enum TypeRamp {
     /// A tab bar item's name; the selected one uses `tabSelected`.
     public static let tab = TypeStyle(face: .text(.medium), size: 12, anchor: .caption)
     public static let tabSelected = TypeStyle(face: .text(.semibold), size: 12, anchor: .caption)
+    /// A small name under a tile (跑道 under its scene): 12, regular; picked, `tabSelected`.
+    public static let caption = TypeStyle(face: .text(.regular), size: 12, anchor: .caption)
     /// Secondary and text buttons, and the selected switch or pill: `callout`, one weight heavier.
     public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
 
+    /// The 战报's full-screen numbers (你的一周 2/5, the squad's 23/22): one per story page.
+    public static let scoreStory = TypeStyle(face: .scoreboard(.extraBold), size: 132, anchor: .largeTitle)
+    /// The squad's count on the 战报's last page when the scene pick shares it (23/22).
+    public static let scoreEnding = TypeStyle(face: .scoreboard(.extraBold), size: 88, anchor: .largeTitle)
     /// The one hero number on a screen (the squad's 14/22).
     public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 60, anchor: .largeTitle)
     /// A number on a card.
@@ -95,6 +104,13 @@ public enum TypeRamp {
     public static let scoreInline = TypeStyle(face: .scoreboard(.extraBold), size: 22, anchor: .title3)
     /// A count beside its label in a row of counts (健康餐 3): 18.
     public static let scoreSmall = TypeStyle(face: .scoreboard(.extraBold), size: 18, anchor: .body)
+    /// A number inside a line of small text (小队 5 周前…): 14, semibold.
+    public static let scoreCaption = TypeStyle(face: .scoreboard(.semibold), size: 14, anchor: .caption)
+
+    /// The week's number across the 出赛表 poster (W42), italic and set tight. The poster is a
+    /// picture saved at a fixed size, so it doesn't scale with Dynamic Type.
+    public static let posterWeek = TypeStyle(
+        face: .scoreboard(.extraBoldItalic), size: 128, tracking: -5, anchor: .largeTitle)
 
     /// The denominator after a number (`/22`): a weight lighter and a little over half the size.
     public static func denominator(of number: TypeStyle) -> TypeStyle {
@@ -105,8 +121,11 @@ public enum TypeRamp {
         ("largeTitle", largeTitle), ("taskTitle", taskTitle), ("title", title), ("headline", headline),
         ("body", body), ("field", field), ("pick", pick), ("footnote", footnote),
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
-        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("scoreHero", scoreHero),
+        ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("caption", caption),
+        ("scoreStory", scoreStory), ("scoreEnding", scoreEnding),
+        ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
-        ("scoreInline", scoreInline), ("scoreSmall", scoreSmall),
+        ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
+        ("posterWeek", posterWeek),
     ]
 }

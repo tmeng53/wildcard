@@ -41,6 +41,7 @@ import { pushSettings } from './routes/push-settings.js';
 import { reactions } from './routes/reactions.js';
 import { replies } from './routes/replies.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
+import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
 import { weekStory } from './routes/week-story.js';
 import { weekSummary } from './routes/week-summary.js';
@@ -121,6 +122,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
+  app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', nudges(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));

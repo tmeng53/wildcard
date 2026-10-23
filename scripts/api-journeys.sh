@@ -124,11 +124,16 @@ echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
 if want check-in; then
   id="$(new_id)"
-  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"caption\":\"累但爽\"}}"
+  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"minutes\":40,\"caption\":\"累但爽\"}}"
   call PUT "/check-ins/$id" "$me_token" "$trained"
   expect 201
   [ "$(jq -r .training.customSport <<<"$body")" = "飞盘" ] || fail "custom sport not trimmed: $body"
-  echo "check-in: saved trained $id (201)"
+  [ "$(jq -r .training.minutes <<<"$body")" = "40" ] || fail "minutes not kept: $body"
+  echo "check-in: saved trained $id with 40 minutes (201)"
+
+  call PUT "/check-ins/$(new_id)" "$me_token" "${trained/\"minutes\":40/\"minutes\":601}"
+  expect 400 REQUEST_INVALID
+  echo "check-in: 601 minutes refused (400 REQUEST_INVALID)"
 
   call PUT "/check-ins/$id" "$me_token" "$trained"
   expect 200
@@ -155,7 +160,9 @@ if want check-in; then
   expect 200
   [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
     fail "squad list should hold exactly $id and $first: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins)"
+  [ "$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .training.minutes' <<<"$body")" = "40" ] ||
+    fail "mate should see the 练了's 40 minutes: $body"
+  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
@@ -274,7 +281,31 @@ if want squad; then
   expect 403 SQUAD_NOT_JOINED
   echo "squad: outsider reading the squad refused (403 SQUAD_NOT_JOINED)"
 
-  call DELETE "/squads/$squad/members/me" "$newcomer_token"
+  call PUT "/squads/$squad/name" "$newcomer_token" '{"version":1,"name":"乱改"}'
+  expect 403 NOT_SQUAD_CAPTAIN
+  call PUT "/squads/$squad/name" "$me_token" '{"version":1,"name":"夜跑团"}'
+  expect 200
+  [ "$(jq -r '.name + " " + .captain' <<<"$body")" = "夜跑团 $me" ] || fail "rename: $body"
+  call PUT "/squads/$squad/name" "$me_token" '{"version":1,"name":"早八跑团"}'
+  expect 200
+  call DELETE "/squads/$squad/members/$me" "$newcomer_token"
+  expect 403 NOT_SQUAD_CAPTAIN
+  echo "squad: only the captain renames (200, newcomer 403) or removes others"
+
+  call GET "/squads/$squad/scene" "$newcomer_token"
+  expect 200
+  [ "$(jq -r '.pickers.by + " " + (.canPick | tostring)' <<<"$body")" = "captain false" ] || fail "scene: $body"
+  call GET "/squads/$squad/scene" "$me_token"
+  expect 200
+  week="$(jq -r .week <<<"$body")"
+  [ "$(jq -r '.scene + " " + (.canPick | tostring)' <<<"$body")" = "gym true" ] || fail "scene: $body"
+  call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"pool"}'
+  expect 201
+  call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"gym"}'
+  expect 409 SCENE_ALREADY_PICKED
+  echo "squad: nobody won the crown, so the captain picked the pool for $week, once (201, then 409)"
+
+  call DELETE "/squads/$squad/members/$newcomer" "$newcomer_token"
   expect 204
   call GET "/squads/$squad" "$newcomer_token"
   expect 403 SQUAD_NOT_JOINED

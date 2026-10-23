@@ -98,7 +98,7 @@ struct DisclaimerComposer: View {
     private var hero: some View {
         VStack(alignment: .leading, spacing: Space.s) {
             Capsule()
-                .fill(Color(role: .bgAccent, in: theme))
+                .fill(Color(role: .fgDefault, in: theme))
                 .frame(width: Self.accentBar.width, height: Self.accentBar.height)
             TextField(text: $text, axis: .vertical) {
                 Text("为什么没练？", bundle: .module)
@@ -192,7 +192,7 @@ struct DisclaimerComposer: View {
         .accessibilityIdentifier("disclaimer.source")
     }
 
-    /// The four styles as text, the picked one underlined in the scene's color.
+    /// The four styles as text, the picked one underlined in ink.
     private var tabs: some View {
         HStack(spacing: Space.l) {
             ForEach(DisclaimerStyle.allCases, id: \.self) { option in
@@ -207,7 +207,7 @@ struct DisclaimerComposer: View {
                         .overlay(alignment: .bottom) {
                             if option == style {
                                 Rectangle()
-                                    .fill(Color(role: .bgAccent, in: theme))
+                                    .fill(Color(role: .fgDefault, in: theme))
                                     .frame(height: Self.tabUnderline)
                             }
                         }
@@ -278,7 +278,7 @@ struct DisclaimerComposer: View {
     }
 }
 
-/// A line on offer: a row with a hairline under it, a dot in the scene's color once it's picked.
+/// A line on offer: a row with a hairline under it, an ink dot once it's picked.
 private struct DraftRow: View {
     private static let dot: Double = 6
     @Environment(\.sceneTheme) private var theme
@@ -290,7 +290,7 @@ private struct DraftRow: View {
         Button(action: action) {
             HStack(spacing: Space.s) {
                 Circle()
-                    .fill(isPicked ? Color(role: .bgAccent, in: theme) : .clear)
+                    .fill(isPicked ? Color(role: .fgDefault, in: theme) : .clear)
                     .frame(width: Self.dot, height: Self.dot)
                 Text(verbatim: line)
                     .typeStyle(TypeRamp.callout)
@@ -354,12 +354,12 @@ private struct PostButton: View {
             ZStack {
                 Text("发布请假条", bundle: .module)
                     .opacity(model.isSending ? 0 : 1)
-                if model.isSending { ProgressView().tint(Color(role: .fgOnAccent, in: theme)) }
+                if model.isSending { ProgressView().tint(Color(role: .fgOnBrand, in: theme)) }
             }
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
-        // Still enabled while sending, so it stays the accent color under its spinner; the action
+        // Still enabled while sending, so it stays the brand color under its spinner; the action
         // ignores taps until the post is done.
         .disabled(disclaimer == nil)
         .accessibilityIdentifier("disclaimer.post")

@@ -14,7 +14,7 @@ struct SRGBColorTests {
     }
 
     @Test func contrastRatioIsSymmetric() {
-        #expect(Palette.ink.contrastRatio(with: Palette.volt) == Palette.volt.contrastRatio(with: Palette.ink))
+        #expect(Palette.ink.contrastRatio(with: Palette.poolWash) == Palette.poolWash.contrastRatio(with: Palette.ink))
     }
 }
 
@@ -34,8 +34,7 @@ struct NeutralTests {
         }
         #expect(
             themed.map(\.rawValue) == [
-                "bgAccent", "bgAccentSubtle", "fgOnAccent", "fgAccent", "bgScene", "fgOnScene", "ring", "bgKind",
-                "bgKindOnScene", "fgKind",
+                "bgAccent", "bgAccentSubtle", "fgAccent", "bgScene", "ring", "bgKind", "fgKind",
             ])
     }
 
@@ -116,11 +115,11 @@ struct SceneThemeTests {
             ])
     }
 
-    @Test func gymIsGraphiteWithVoltOnIt() {
+    @Test func gymIsSteel() {
         #expect(
             roles(.gym) == [
-                "#1F2128", "#EEF0F2", "#C6F432", "#1F2128", "#1F2128", "#FFFFFF", "#C6F432", "#2E3324", "#2E3324",
-                "#C6F432",
+                "#4A6C8C", "#EDF0F4", "#FFFFFF", "#3E5C78", "#DBE2E8", "#22252E", "#4A6C8C", "#EDF0F4", "#FFFFFF",
+                "#3E5C78",
             ])
     }
 
@@ -178,29 +177,18 @@ struct SceneThemeTests {
         #expect(ColorRole.fgOnScene.color(in: theme).contrastRatio(with: floor) >= 4.5)
     }
 
-    /// A light scene's kind buttons step out of the floor: white on the floor, the wash on white.
-    @Test(arguments: [SceneTheme.pool, .track, .tennis, .climbing])
+    /// Every scene is light: kind buttons step out of the floor, white on the floor, the wash on white.
+    @Test(arguments: SceneTheme.allCases)
     func lightKindsUseTheWashOrWhite(theme: SceneTheme) {
         #expect(ColorRole.bgKind.color(in: theme) == ColorRole.bgAccentSubtle.color(in: theme))
         #expect(ColorRole.bgKindOnScene.color(in: theme) == Palette.white)
         #expect(ColorRole.ring.color(in: theme) == ColorRole.bgAccent.color(in: theme))
     }
 
-    /// With Increase Contrast on, every scene's closed ring stands out from a white card (WCAG 1.4.11).
+    /// Every scene's closed ring stands out from a white card (WCAG 1.4.11).
     @Test(arguments: SceneTheme.allCases)
-    func ringsStandOutWithIncreasedContrast(theme: SceneTheme) {
-        let ring = ColorRole.ring.color(in: theme, contrast: .increased)
-        #expect(ring.contrastRatio(with: ColorRole.bgCanvas.color(in: theme)) >= 3)
-    }
-
-    @Test func onlyTheGymRingChangesWithIncreasedContrast() {
-        #expect(ColorRole.ring.color(in: .gym).hex == "#C6F432")
-        #expect(ColorRole.ring.color(in: .gym, contrast: .increased) == Palette.graphite)
-        for role in ColorRole.allCases where role != .ring {
-            for theme in SceneTheme.allCases {
-                #expect(role.color(in: theme, contrast: .increased) == role.color(in: theme))
-            }
-        }
+    func ringsStandOutOnWhite(theme: SceneTheme) {
+        #expect(ColorRole.ring.color(in: theme).contrastRatio(with: ColorRole.bgCanvas.color(in: theme)) >= 3)
     }
 }
 
@@ -208,8 +196,8 @@ struct ClothesTests {
     /// The old check-in colors live on only as outfit swatches.
     @Test func clothesKeepTheirColors() {
         #expect(
-            [Palette.cobalt, Palette.mint, Palette.honey, Palette.lavender].map(\.hex) == [
-                "#2D5BA0", "#278C5E", "#A0760E", "#9062DE",
+            [Palette.cobalt, Palette.mint, Palette.honey, Palette.lavender, Palette.graphite].map(\.hex) == [
+                "#2D5BA0", "#278C5E", "#A0760E", "#9062DE", "#1F2128",
             ])
     }
 }
@@ -272,6 +260,7 @@ struct TypographyTests {
         #expect(Face.text(.regular).postScriptName == "PingFangSC-Regular")
         #expect(Face.scoreboard(.extraBold).postScriptName == "BarlowCondensed-ExtraBold")
         #expect(Face.scoreboard(.semibold).postScriptName == "BarlowCondensed-SemiBold")
+        #expect(Face.scoreboard(.extraBoldItalic).postScriptName == "BarlowCondensed-ExtraBoldItalic")
     }
 
     /// Six text levels, as the design system v4 canvas sets them.
@@ -300,11 +289,13 @@ struct TypographyTests {
         #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func numbersAreBarlowAtFourSizes() {
+    @Test func numbersAreBarlowAtSixSizes() {
         #expect(
-            [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall].map(\.size) == [
-                60, 32, 22, 18,
-            ])
+            [TypeRamp.scoreStory, TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall]
+                .map(\.size) == [132, 60, 32, 22, 18])
+        #expect(TypeRamp.denominator(of: TypeRamp.scoreStory).size == 73)
+        // The ending beside the scene pick, as the approved design sets it: 88 over 48.
+        #expect(TypeRamp.scoreEnding.size == 88 && TypeRamp.denominator(of: TypeRamp.scoreEnding).size == 48)
         #expect(
             [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map {
                 TypeRamp.denominator(of: $0).size
@@ -314,13 +305,15 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        #expect(scoreboard.map(\.name) == ["scoreHero", "scoreCard", "scoreInline", "scoreSmall"])
-    }
-}
-
-struct SpeechTimingTests {
-    @Test func bubblesHoldThenFade() {
-        #expect([Motion.speechHold, Motion.speechFade, Motion.speechStagger] == [1.6, 0.2, 0.06])
+        let names = [
+            "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption",
+            "posterWeek",
+        ]
+        #expect(scoreboard.map(\.name) == names)
+        #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
+        // The 出赛表 poster's W42, as the approved design sets it.
+        #expect(TypeRamp.posterWeek.face == .scoreboard(.extraBoldItalic))
+        #expect(TypeRamp.posterWeek.size == 128 && TypeRamp.posterWeek.tracking == -5)
     }
 }
 
@@ -328,7 +321,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown", "poke", "unbox",
             ])
         #expect(Haptic.ringTicks == 3)
     }
@@ -341,6 +334,13 @@ struct MotionTests {
         #expect(Motion.all.map(\.spring.dampingFraction) == [0.9, 1, 0.9, 0.9, 0.6])
         #expect([Motion.ringFill, Motion.ringPopScale] == [0.5, 1.08])
         #expect([Motion.collapseDuration, Motion.collapseStagger, Motion.burstStagger] == [0.19, 0.016, 0.028])
+    }
+
+    /// The open screen's reveal and fade, as the approved design times them.
+    @Test func timedCurvesMatchTheSpec() {
+        #expect(Motion.reveal == MotionCurve(duration: 0.3, 0.33, 1, 0.68, 1))
+        #expect([Motion.revealRise, Motion.revealStagger] == [8, 0.08])
+        #expect(Motion.fadeIn == MotionCurve(duration: 0.25, 0, 0, 1, 1))
     }
 
     /// Bounce is kept for the moment a check-in lands; everyday motion never overshoots visibly.
@@ -364,19 +364,16 @@ struct MotionTests {
 }
 
 struct BrandTests {
-    /// Graphite with a volt label until Tracy picks the brand's own colour.
-    @Test func brandIsGraphiteWithVoltOnIt() {
+    /// Graphite with white on it (Tracy, 2026-10-23).
+    @Test func brandIsGraphiteWithWhiteOnIt() {
         #expect(ColorRole.bgBrand.color(in: .pool).hex == "#1F2128")
-        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#C6F432")
+        #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#FFFFFF")
     }
 
     /// Brand screens look the same whatever scene the squad picked.
     @Test(arguments: [ColorRole.bgBrand, .fgOnBrand])
     func brandNeverFollowsTheScene(role: ColorRole) {
-        let colors = SceneTheme.allCases.flatMap { theme in
-            [role.color(in: theme), role.color(in: theme, contrast: .increased)]
-        }
-        #expect(Set(colors).count == 1)
+        #expect(Set(SceneTheme.allCases.map { role.color(in: $0) }).count == 1)
     }
 
     /// A brand button's label can be small regular text, not only the 19-point action.

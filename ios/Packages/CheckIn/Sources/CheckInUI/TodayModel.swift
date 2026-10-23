@@ -51,6 +51,8 @@ public final class TodayModel {
     var isBurstOpen = false
     /// Everyone else on the scene.
     let cast = SquadCast()
+    /// 拍一拍 on the scene.
+    let pats = PatStage()
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
     private(set) var step = Step.scene
@@ -84,17 +86,21 @@ public final class TodayModel {
     private let posted: @MainActor () -> Void
 
     private let now: () -> Date
+    /// Keeps when the latest pat I was shown arrived, so each pat on me plays once.
+    private let defaults: UserDefaults
 
     /// - Parameters:
-    ///   - scene: the squad's scene. Each squad picks its own once squad settings land; until
-    ///     then every home is the gym, the scene the designs are drawn on.
+    ///   - scene: the squad's scene this week; the gym, the scene the designs are drawn on, until
+    ///     the app has read it.
     ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
     ///     notifications after the first.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
+        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
+        posted: @escaping @MainActor () -> Void
     ) {
         self.scene = scene
+        self.defaults = defaults
         self.store = store
         self.now = now
         self.writer = writer
@@ -116,8 +122,11 @@ public final class TodayModel {
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
 
-    /// The squad's scene.
-    public let scene: SceneTheme
+    /// The squad's scene this week, which the app reads with the squad: the gym until then, and
+    /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
+    public var scene: SceneTheme {
+        didSet { if scene != oldValue { placeSquad() } }
+    }
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
@@ -127,6 +136,28 @@ public final class TodayModel {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = store.home?.timeZone ?? .current
         return DayPhase(hour: calendar.component(.hour, from: now()))
+    }
+
+    /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
+    var recap: DayRecap? {
+        guard let home, home.showsRecap(at: now()) else { return nil }
+        return home.recap(pending: store.pending)
+    }
+
+    /// Noon of the member's today in their time zone: the day the recap's title names.
+    var dayDate: Date? {
+        guard let home, let day = home.mine?.day else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = home.timeZone
+        return calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
+    }
+
+    /// A member's head and name on 今日赛况: 我 for me, else their nickname, or 队友 before they
+    /// made their character.
+    func recapMember(_ member: MemberID) -> (head: CharacterPlayer?, name: String) {
+        if member == home?.member { return (player, String(localized: "我", bundle: .module)) }
+        let nickname = home?.today.members.first { $0.member == member }?.character?.nickname.text
+        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module))
     }
 
     /// The ring under my feet.
@@ -176,6 +207,47 @@ public final class TodayModel {
     public func load() async {
         await store.load()
         placeSquad()
+        Task { await playPatsOnMe() }
+    }
+
+    // MARK: 拍一拍
+
+    /// A teammate on the scene was tapped: their status and 「拍一拍」.
+    func tapMate(_ id: MemberID) {
+        guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        pats.tap(mate, cast: cast, phase: phase)
+    }
+
+    /// Whether I can still pat `id` today.
+    func canPat(_ id: MemberID) -> Bool {
+        store.canPat(id)
+    }
+
+    /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
+    func patMate(_ id: MemberID) {
+        guard store.canPat(id), let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        guard pats.pat(mate, mine: player) else { return }
+        Task { try? await store.pat(id) }
+    }
+
+    /// The key under which the latest pat already shown to `member` is kept, apart for each
+    /// account signed in on this phone.
+    private static func patsShownKey(for member: MemberID) -> String {
+        "today.patsShownUntil.\(member)"
+    }
+
+    /// Whoever patted me since the last pat shown pats me now, from where they stand: the
+    /// earliest, with the next one named on their bubble. Each pat plays once on this phone.
+    private func playPatsOnMe() async {
+        guard let member = store.home?.member else { return }
+        let shown = defaults.double(forKey: Self.patsShownKey(for: member))
+        let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
+        let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
+        guard let latest = fresh.last, let first = patters.first else { return }
+        try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
+        guard pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
+        else { return }
+        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
     }
 
     func pick(_ kind: CheckInKind) {
@@ -245,7 +317,7 @@ public final class TodayModel {
     ) {
         let line: String?
         switch draft {
-        case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body):
+        case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body):
             line = body.caption
         case .disclaimer(let disclaimer):
             line = disclaimer.text
