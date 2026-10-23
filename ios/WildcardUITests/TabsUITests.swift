@@ -27,15 +27,21 @@ final class TabsUITests: XCTestCase {
         keepScreenshot(named: "30-tabs-today")
 
         let upcoming = app.staticTexts["tab.upcoming"]
-        for (tab, title) in [("tab.feed", "动态"), ("tab.schedule", "出赛表"), ("tab.me", "我")] {
+        for (tab, title) in [("tab.feed", "动态"), ("tab.schedule", "出赛表")] {
             app.buttons[tab].tap()
             waitFor(app.buttons[tab], "isSelected == true", "\(tab) didn't open")
             XCTAssertEqual(upcoming.label, title, "\(tab) shows another tab's screen")
             XCTAssertFalse(checkIn.exists, "今天 still shows under \(tab)")
         }
+        app.buttons["tab.me"].tap()
+        waitFor(app.buttons["tab.me"], "isSelected == true", "tab.me didn't open")
+        let mePage = app.descendants(matching: .any).matching(identifier: "me.page").firstMatch
+        XCTAssertTrue(mePage.waitForExistence(timeout: 30), "我 didn't show its page")
+        XCTAssertFalse(upcoming.exists, "我 shows another tab's screen")
+        XCTAssertFalse(checkIn.exists, "今天 still shows under tab.me")
         app.buttons["tab.today"].tap()
         waitFor(today, "isSelected == true", "今天 didn't open again")
-        XCTAssertFalse(upcoming.exists, "the last tab's screen stayed over 今天")
+        XCTAssertFalse(mePage.exists, "the last tab's screen stayed over 今天")
 
         // The 打卡 burst takes the screen: the bar steps aside until it closes.
         checkIn.tap()

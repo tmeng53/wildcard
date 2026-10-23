@@ -54,4 +54,6 @@ public enum ContractsError: Error, Equatable, Sendable {
     case invalidInviteCode(String)
     /// A timestamp that isn't ISO 8601.
     case invalidTimestamp(String)
+    /// A reaction that isn't exactly one emoji.
+    case notAnEmoji(String)
 }

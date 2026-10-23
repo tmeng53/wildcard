@@ -18,8 +18,8 @@ export const DAILY_PUSH_HOUR = 18;
 const AT_ONCE = 4;
 
 /**
- * Teammates who did something for a member, by kind (`cheer`, `lol`, and later a poke): each
- * person once per kind. The kind is the name the app's String Catalog keys the copy by.
+ * Teammates who did something for a member, by kind (`reaction`, and later a poke): each person
+ * once per kind. The kind is the name the app's String Catalog keys the copy by.
  */
 export type Interactions = ReadonlyMap<string, ReadonlySet<string>>;
 
@@ -34,10 +34,16 @@ export type InteractionSource = (query: {
   readonly until: Date;
 }) => Promise<Interactions>;
 
-/** The interactions sources built on check-ins: teammates' reactions. */
+/** The interactions sources built on check-ins: teammates' reactions, with any emoji. */
 export function reactionInteractions(checkIns: CheckIns): InteractionSource {
-  return ({ member, since, until }) =>
-    checkIns.reactionsReceived({ member: CheckInMember.parse(member), since, until });
+  return async ({ member, since, until }) => {
+    const people = await checkIns.reactionsReceived({
+      member: CheckInMember.parse(member),
+      since,
+      until,
+    });
+    return new Map([['reaction', people]]);
+  };
 }
 
 export interface DailyProgressDependencies {
@@ -191,7 +197,7 @@ function mergeInteractions(all: readonly Interactions[]): Map<string, Set<string
  * The daily push, without its words: the alert names a String Catalog key with the squad's week
  * (and how many teammates did something for the member), and `event` carries the people per
  * kind, for the app's notification service extension to write one line per kind, such as
- * 「3 人给你加油，2 人催你练了」.
+ * 「3 人给你点了表情，2 人催你练了」.
  */
 export function dailyProgressNotification({
   day,

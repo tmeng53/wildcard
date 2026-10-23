@@ -66,17 +66,22 @@ private let squad = "33333333-3333-3333-3333-333333333333"
 @Test func reactionsRead() throws {
     let wire = try decode(
         Components.Schemas.ReactionList.self,
-        #"{"version":1,"reactions":[{"member":"\#(mate)","kind":"lol","reactedAt":"2026-10-19T15:00:00.000Z"}]}"#)
+        #"{"version":1,"reactions":[{"member":"\#(mate)","emoji":"😂","reactedAt":"2026-10-19T15:00:00.000Z"}]}"#)
     #expect(
         try wire.reactions.map(Reaction.init) == [
             Reaction(
-                member: MemberID(try #require(UUID(uuidString: mate))), kind: .lol,
+                member: MemberID(try #require(UUID(uuidString: mate))), emoji: try Emoji("😂"),
                 reactedAt: Timestamp(millisecondsSince1970: 1_792_422_000_000))
         ])
 }
 
-@Test func reactionKindsAreTheAPIs() {
-    #expect(
-        ReactionKind.allCases.map(\.rawValue) == Components.Schemas.ReactionDraft.KindPayload.allCases.map(\.rawValue))
-    #expect(ReactionKind.allCases.map(\.draft.kind.rawValue) == ReactionKind.allCases.map(\.rawValue))
+@Test func aReactionThatIsNotOneEmojiIsRefused() throws {
+    let wire = try decode(
+        Components.Schemas.ReactionList.self,
+        #"{"version":1,"reactions":[{"member":"\#(mate)","emoji":"lol","reactedAt":"2026-10-19T15:00:00.000Z"}]}"#)
+    #expect(throws: ContractsError.notAnEmoji("lol")) { try wire.reactions.map(Reaction.init) }
+}
+
+@Test func aReactionDraftCarriesItsEmoji() {
+    #expect(Emoji.heart.draft == .init(version: ._1, emoji: "❤️"))
 }

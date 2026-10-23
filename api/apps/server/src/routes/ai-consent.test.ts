@@ -183,16 +183,14 @@ describe('what needs a current AI consent', () => {
     expect(squad.members.map(({ userId }) => userId)).toStrictEqual([ann.userId, bo.userId]);
   });
 
-  it('AI drafts, though not the care line, and without asking the model', async () => {
+  it('AI drafts, whatever the reason, without asking the model', async () => {
     const me = await signUp();
     const draft = (reason: string) =>
       call('POST', '/disclaimer-drafts', me.token, { version: 1, reason, style: 'funny' });
-    const refused = await draft('早上没起来');
-    expect([refused.status, reasonOf(refused.body)]).toStrictEqual([400, 'AI_CONSENT_REQUIRED']);
-    expect(await draft('想自杀')).toStrictEqual({
-      status: 200,
-      body: { version: 1, kind: 'care' },
-    });
+    for (const reason of ['早上没起来', '想自杀']) {
+      const refused = await draft(reason);
+      expect([refused.status, reasonOf(refused.body)]).toStrictEqual([400, 'AI_CONSENT_REQUIRED']);
+    }
     expect(asked).toStrictEqual([]);
   });
 });

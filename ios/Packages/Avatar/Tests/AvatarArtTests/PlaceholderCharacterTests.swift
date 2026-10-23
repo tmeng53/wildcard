@@ -12,7 +12,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
         figure.parts.map(\.id.rawValue) == [
             "shadow", "root", "tail", "legL", "legR", "torso", "earL", "earR", "head", "flapL", "flapR", "crown",
             "nose",
-            "eyes", "brows", "glasses", "mouthSmile", "mouthOpen", "propR", "armL", "armR",
+            "eyes", "brows", "browsSad", "glasses", "mouthSmile", "mouthOpen", "mouthSad", "tearL", "tearR", "propR",
+            "armL", "armR", "desk",
         ])
     // Only the bear's hands are free, and only the cat has a tail.
     #expect(try figure.part("propR").art.count == (outfit == Looks.bear ? 0 : 1))
@@ -22,8 +23,10 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let people = try PlaceholderCharacter.editorChoices().species.filter(\.wearsHair).flatMap(\.bodies)
     let isPerson = people.contains(outfit.variants["body"] ?? "")
     #expect(try figure.part("brows").art.count == (isPerson ? 1 : 0))
-    // The open mouth waits hidden until the cheer swaps it in.
-    #expect(figure.layout(figure.restPose)[try figure.index("mouthOpen")].opacity == 0)
+    // The open mouth waits hidden until the cheer swaps it in, and the sad face until crying does.
+    for part in ["mouthOpen", "browsSad", "mouthSad", "tearL", "tearR"] as [PartID] {
+        #expect(figure.layout(figure.restPose)[try figure.index(part)].opacity == 0)
+    }
 }
 
 /// Every body and hair the editor can offer, by folder name.
@@ -61,7 +64,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 21)
+    #expect(figure.parts.count == 26)
 }
 
 @Test(arguments: Persona.allCases)

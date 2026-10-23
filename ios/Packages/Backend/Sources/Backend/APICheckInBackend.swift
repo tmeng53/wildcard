@@ -70,8 +70,8 @@ public struct APICheckInBackend: CheckInBackend {
         do { return try await api.reactions(to: checkIn) } catch { throw CheckInError(error) }
     }
 
-    public func react(_ kind: ReactionKind, to checkIn: CheckInID) async throws(CheckInError) {
-        do { try await api.react(kind, to: checkIn) } catch { throw CheckInError(error) }
+    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
+        do { try await api.react(emoji, to: checkIn) } catch { throw CheckInError(error) }
     }
 
     public func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {

@@ -292,9 +292,8 @@ if want disclaimer-drafts; then
   echo "disclaimer-drafts: no key, so 503 DISCLAIMER_WRITER_UNAVAILABLE (the app shows its dice), no error logged"
 
   call POST /disclaimer-drafts "$me_token" "$(ask 我不想活了 funny)"
-  expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"kind":"care"}' ] || fail "expected the care line: $body"
-  echo "disclaimer-drafts: a self-harm reason gets the care line (200), with or without a key"
+  expect 503 DISCLAIMER_WRITER_UNAVAILABLE
+  echo "disclaimer-drafts: a self-harm reason is the model's to judge, so with no key it is 503 too"
 
   call POST /disclaimer-drafts "$outsider_token" "$(ask 早上没起来 funny)"
   expect 400 AI_CONSENT_REQUIRED
@@ -466,7 +465,7 @@ if want week-summary; then
   excuse="$(new_id)"
   call PUT "/check-ins/$excuse" "$writer_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}')"
   expect 201
-  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"kind":"lol"}'
+  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"emoji":"😂"}'
   expect 201
   echo "week-summary: squad=$squad in $zone ($today) ace trained on a week planned all rest, writer posted a 请假条, fan laughed at it"
 
@@ -477,10 +476,10 @@ if want week-summary; then
       '[false, [["planCompleted",[[$a,1,null]]],["crown",[[$a,1,null]]],["bestDisclaimer",[[$w,1,$e]]]]]')" ] ||
     fail "ace should complete the plan and wear the crown, and the writer's 请假条 be the best; not final yet: $body"
   echo "week-summary: still being played; podium and crown ace (1 day), best 请假条 writer's (1 reaction)"
-  [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.kind == "lol") | .count], [.me.reactions[] | select(.kind == "lol") | .given]]' <<<"$body")" = \
+  [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.emoji == "😂") | .count], [.me.reactions[] | select(.emoji == "😂") | .given]]' <<<"$body")" = \
     '[[1,10,2],[1],[1]]' ] ||
-    fail "the squad should have 1 of 10 days trained in 2 check-ins and 1 lol, given by the fan: $body"
-  echo "week-summary: squad 1/10 days in 2 check-ins, 1 笑死, which the fan sees as given"
+    fail "the squad should have 1 of 10 days trained in 2 check-ins and one 😂, given by the fan: $body"
+  echo "week-summary: squad 1/10 days in 2 check-ins, one 😂, which the fan sees as given"
 
   call GET "/squads/$squad/weeks/$(days_after "$monday" 7)/summary" "$fan_token"
   expect 400 WEEK_NOT_STARTED
@@ -494,30 +493,30 @@ if want reactions; then
   post="$(new_id)"
   call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
   expect 201
-  reaction() { echo "{\"version\":1,\"kind\":\"$1\"}"; }
-  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction cheer)"
+  reaction() { echo "{\"version\":1,\"emoji\":\"$1\"}"; }
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction ❤️)"
   expect 201
-  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction cheer)"
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction ❤️)"
   expect 200
-  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction lol)"
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction 😂)"
   expect 200
-  echo "reactions: mate cheered (201), again (200), then changed it to lol (200)"
+  echo "reactions: mate left ❤️ (201), again (200), then changed it to 😂 (200)"
 
   call GET "/check-ins/$post/reactions" "$me_token"
   expect 200
-  [ "$(jq -c '[.reactions[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"lol"]]')" ] ||
-    fail "the author should see one reaction, mate's lol: $body"
-  echo "reactions: the author sees one reaction, mate's lol"
+  [ "$(jq -c '[.reactions[] | [.member, .emoji]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"😂"]]')" ] ||
+    fail "the author should see one reaction, mate's 😂: $body"
+  echo "reactions: the author sees one reaction, mate's 😂"
 
-  call PUT "/check-ins/$post/reactions/mine" "$me_token" "$(reaction cheer)"
+  call PUT "/check-ins/$post/reactions/mine" "$me_token" "$(reaction ❤️)"
   expect 400 OWN_CHECK_IN_REACTION
-  call PUT "/check-ins/$post/reactions/mine" "$outsider_token" "$(reaction cheer)"
+  call PUT "/check-ins/$post/reactions/mine" "$outsider_token" "$(reaction ❤️)"
   expect 404 CHECK_IN_NOT_FOUND
   call GET "/check-ins/$post/reactions" "$outsider_token"
   expect 404 CHECK_IN_NOT_FOUND
   call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction 稳)"
   expect 400 REQUEST_INVALID
-  echo "reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), unknown kind refused (400)"
+  echo "reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), text that isn't one emoji refused (400)"
 
   call DELETE "/check-ins/$post/reactions/mine" "$mate_token"
   expect 204
@@ -539,7 +538,7 @@ if want replies; then
   expect 200
   call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply hug)"
   expect 200
-  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"kind":"lol"}'
+  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"emoji":"😂"}'
   expect 201
   echo "replies: mate replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too"
 
@@ -636,9 +635,9 @@ if want daily-push; then
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$evening_day" trained '"training":{"sport":"run"}')"
   expect 201
   post="$(jq -r .id <<<"$body")"
-  call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"kind":"cheer"}'
+  call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"emoji":"❤️"}'
   expect 201
-  echo "daily-push: in $evening, runner trained and cheerer cheered them"
+  echo "daily-push: in $evening, runner trained and cheerer left them a ❤️"
 
   call POST /jobs/daily-progress-push "$runner_token"
   expect 401 JOB_TOKEN_INVALID

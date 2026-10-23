@@ -125,12 +125,9 @@ async function checkedIn(
 }
 
 /** A teammate's reaction, written straight to the table. */
-async function reacted(
-  member: MemberId,
-  [checkIn, kind]: [CheckInId, 'cheer' | 'highlight' | 'lol'],
-) {
-  await sql`insert into public.check_in_reactions (check_in_id, member_id, kind, reacted_at)
-    values (${checkIn}, ${member}, ${kind}, now())`.execute(db);
+async function reacted(member: MemberId, [checkIn, emoji]: [CheckInId, string]) {
+  await sql`insert into public.check_in_reactions (check_in_id, member_id, emoji, reacted_at)
+    values (${checkIn}, ${member}, ${emoji}, now())`.execute(db);
 }
 
 const week = WeekStart.parse('2026-10-19');
@@ -184,14 +181,14 @@ describe('a squad’s week summary', () => {
     await checkedIn(me, { kind: 'healthyMeal', day: '2026-10-23', audience: [squad] });
     await checkedIn(me, { kind: 'cheatMeal', day: '2026-10-24', audience: [squad] });
 
-    await reacted(tokyo, [aceMonday, 'cheer']);
-    await reacted(me, [aceMonday, 'cheer']);
-    await reacted(ace, [thursday, 'lol']);
-    await reacted(tokyo, [thursday, 'cheer']);
-    await reacted(ace, [friday, 'highlight']);
-    await reacted(quiet, [friday, 'lol']);
+    await reacted(tokyo, [aceMonday, '❤️']);
+    await reacted(me, [aceMonday, '❤️']);
+    await reacted(ace, [thursday, '😂']);
+    await reacted(tokyo, [thursday, '❤️']);
+    await reacted(ace, [friday, '💪']);
+    await reacted(quiet, [friday, '😂']);
     // The leaver's reaction would make Friday's the best; they left, so it doesn't count.
-    await reacted(leaver, [friday, 'lol']);
+    await reacted(leaver, [friday, '😂']);
     await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${leaver}`.execute(
       db,
     );
@@ -223,9 +220,9 @@ describe('a squad’s week summary', () => {
           reactionsReceived: 6,
         }),
         reactions: [
-          { kind: 'cheer', count: 3 },
-          { kind: 'highlight', count: 1 },
-          { kind: 'lol', count: 2 },
+          { emoji: '❤️', count: 3 },
+          { emoji: '😂', count: 2 },
+          { emoji: '💪', count: 1 },
         ],
       },
       me: {
@@ -239,9 +236,9 @@ describe('a squad’s week summary', () => {
           reactionsReceived: 4,
         }),
         reactions: [
-          { kind: 'cheer', received: 1, given: 1 },
-          { kind: 'highlight', received: 1, given: 0 },
-          { kind: 'lol', received: 2, given: 0 },
+          { emoji: '😂', received: 2, given: 0 },
+          { emoji: '❤️', received: 1, given: 1 },
+          { emoji: '💪', received: 1, given: 0 },
         ],
       },
     });

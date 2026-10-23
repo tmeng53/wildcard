@@ -4,9 +4,9 @@ import Contracts
 public struct StageMember: Hashable, Sendable {
     public let id: MemberID
     public let status: StageStatus
-    /// Their first check-in today, of any kind. Earlier ones get the nearer, more central spots.
+    /// Their first check-in today, of any kind. Earlier ones pick their spot first.
     public let firstCheckInAt: Timestamp?
-    /// 社恐 takes the last free spot instead of the best.
+    /// 社恐 takes the free spot furthest back.
     public let keepsToTheBack: Bool
 
     public init(id: MemberID, status: StageStatus, firstCheckInAt: Timestamp?, keepsToTheBack: Bool) {
@@ -21,98 +21,86 @@ public struct StageMember: Hashable, Sendable {
 public enum StagePlacement: Hashable, Sendable {
     /// Using a slot of the scene's equipment.
     case station(StationKind, slot: Int)
-    /// Training in place on the playing area, while nobody uses the scene's equipment.
-    case field(StagePoint)
-    /// On the open floor: training in place, holding a 请假条, sitting or standing.
+    /// Somewhere on the scene: training in place, holding a 请假条, sitting or standing.
     case floor(StagePoint)
 }
 
-/// Who stands where on the home scene. People keep their spot, except for these moves: to or
-/// from the equipment, from the floor onto the playing area when they start training while the
-/// equipment is idle and a spot there is free, and from the playing area back to the floor once
-/// someone takes the equipment. Arrange the same stage again to keep it.
+/// Who stands where on the home scene. People keep their spot, except to go to or from the
+/// equipment, or off a lane someone starts running. Arrange the same stage again to keep it.
 public struct SquadStage: Hashable, Sendable {
     public let layout: StageLayout
     public private(set) var placements: [MemberID: StagePlacement]
-    /// Who was training at the last arrangement, so only starting to train moves someone onto
-    /// the playing area.
-    private var training: Set<MemberID>
 
     public init(layout: StageLayout) {
         self.layout = layout
         placements = [:]
-        training = []
     }
 
     /// Places `teammates` (everyone but me, who is always front and centre).
     ///
     /// 1. Teammates whose sport the scene has equipment for take a free slot, in the order they
     ///    checked in.
-    /// 2. While nobody uses the equipment, anyone else training takes the playing area, middle out.
-    /// 3. Everyone else stands on the open floor: on their old spot if it is still free (someone
-    ///    already training stays on the floor rather than hopping onto the playing area), else on
-    ///    the best free one (earliest check-ins first, those not checked in after); 社恐 take the
-    ///    last free spot.
+    /// 2. Everyone else, whatever they are doing, is scattered over the scene, the track and
+    ///    the court included but off any lane someone is running: on their old spot if it is
+    ///    still free, else (earliest check-ins first, those not checked in after) on the free
+    ///    spot that keeps everyone well apart; 社恐 take the free spot furthest back.
     public mutating func arrange(_ teammates: [StageMember]) {
         let ordered = Self.byCheckIn(teammates)
         var next = stations(for: ordered)
-        let equipmentIdle = next.isEmpty
+        let running = runningLanes(next)
+        let open = layout.floor.filter { spot in !running.contains { $0.blocks(spot) } }
         var taken: [StagePoint] = []
         // A spot is free while nobody stands on it or close enough to be drawn over them.
         func isFree(_ spot: StagePoint) -> Bool { !taken.contains { StageLayout.crowds($0, spot) } }
-        let rest = ordered.filter { next[$0.id] == nil }
         // Old spots are kept first, so nobody is pushed off theirs by someone newer.
-        var startedOnFloor: [StageMember] = []
-        for member in rest {
-            let mayTakeField = equipmentIdle && isTraining(member)
-            switch placements[member.id] {
-            case .field(let spot)? where mayTakeField && isFree(spot):
-                taken.append(spot)
-                next[member.id] = .field(spot)
-            case .floor(let spot)? where isFree(spot):
-                // Held even for someone who just started training, so nobody takes it while
-                // they wait for a spot on the playing area.
+        for member in ordered where next[member.id] == nil {
+            if case .floor(let spot)? = placements[member.id], open.contains(spot), isFree(spot) {
                 taken.append(spot)
                 next[member.id] = .floor(spot)
-                if mayTakeField && !training.contains(member.id) { startedOnFloor.append(member) }
-            default:
-                continue
             }
         }
-        // Someone who just started training moves onto the playing area if a spot is free there.
-        for member in startedOnFloor {
-            guard case .floor(let old)? = next[member.id] else { continue }
-            taken.removeAll { $0 == old }
-            if let spot = layout.field.first(where: isFree) {
-                taken.append(spot)
-                next[member.id] = .field(spot)
-            } else {
-                taken.append(old)
-            }
-        }
-        placeNew(rest.filter { next[$0.id] == nil }, equipmentIdle: equipmentIdle, in: &next, taken: &taken)
-        placements = next
-        training = Set(teammates.filter(isTraining).map(\.id))
-    }
-
-    /// Places those without a spot yet, in order: a trainer onto the playing area while the
-    /// equipment is idle and it has room, everyone else on the best free floor spot (社恐 the last).
-    private func placeNew(
-        _ members: [StageMember], equipmentIdle: Bool, in next: inout [MemberID: StagePlacement],
-        taken: inout [StagePoint]
-    ) {
-        for member in members {
-            let spots = taken
-            let isFree = { (spot: StagePoint) in !spots.contains { StageLayout.crowds($0, spot) } }
-            if equipmentIdle && isTraining(member), let spot = layout.field.first(where: isFree) {
-                taken.append(spot)
-                next[member.id] = .field(spot)
-                continue
-            }
-            let free = layout.floor.filter(isFree)
-            guard let spot = member.keepsToTheBack ? free.last : free.first else { continue }
+        for member in ordered where next[member.id] == nil {
+            let free = open.filter(isFree)
+            let spot = member.keepsToTheBack ? Self.furthestBack(free) : Self.apart(free, from: taken)
+            guard let spot else { continue }
             taken.append(spot)
             next[member.id] = .floor(spot)
+        }
+        placements = next
+    }
+
+    /// How far apart two spots look, depth counting more as it does on screen.
+    private static func distance(_ one: StagePoint, _ other: StagePoint) -> Double {
+        let across = one.x - other.x
+        let deep = (one.y - other.y) * 1.4
+        return (across * across + deep * deep).squareRoot()
+    }
+
+    /// The free spot furthest from everyone placed and from me, counting any distance past
+    /// `roomy` as roomy enough; among those, the nearest to me, so a small squad isn't flung
+    /// to the corners.
+    private static func apart(_ free: [StagePoint], from taken: [StagePoint]) -> StagePoint? {
+        let roomy = 200.0
+        let others = taken + [StageLayout.mySpot]
+        func room(_ spot: StagePoint) -> Double { min(roomy, others.map { distance($0, spot) }.min() ?? roomy) }
+        return free.enumerated().min { lhs, rhs in
+            (-room(lhs.element), distance(lhs.element, StageLayout.mySpot), lhs.offset)
+                < (-room(rhs.element), distance(rhs.element, StageLayout.mySpot), rhs.offset)
+        }?.element
+    }
+
+    /// The free spot furthest back, the most central of those.
+    private static func furthestBack(_ free: [StagePoint]) -> StagePoint? {
+        free.enumerated().min { ($0.element.y, $0.offset) < ($1.element.y, $1.offset) }?.element
+    }
+
+    /// The lanes someone is running in `placements`, as a strip across the scene.
+    private func runningLanes(_ placements: [MemberID: StagePlacement]) -> [StageRect] {
+        placements.values.compactMap { placement in
+            guard case .station(let kind, let slot) = placement, let lap = layout.station(kind)?.lap(ofSlot: slot)
+            else { return nil }
+            // Clear of the runners' bodies too, which rise above the lane.
+            return StageRect(x: 0...StageLayout.width, y: (lap.y - 40)...lap.y)
         }
     }
 
@@ -135,10 +123,6 @@ public struct SquadStage: Hashable, Sendable {
             next[member.id] = .station(slot.kind, slot: slot.slot)
         }
         return next
-    }
-
-    private func isTraining(_ member: StageMember) -> Bool {
-        if case .trained = member.status { true } else { false }
     }
 
     private func sport(of member: StageMember) -> Sport? {

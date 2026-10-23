@@ -5,13 +5,12 @@
 
 -- Reactions --------------------------------------------------------------------------
 
--- At most one reaction per member per check-in, as with Strava's kudos: reacting again
--- replaces it. Which reactions exist is the API's to decide, so `kind` is text it checks,
--- not an enum a migration would have to change.
+-- At most one reaction per member per check-in, as with iMessage's: reacting again replaces
+-- it. A reaction is any one emoji; what counts as one is the API's to check.
 create table public.check_in_reactions (
   check_in_id uuid not null references public.check_ins (id) on delete cascade,
   member_id uuid not null references auth.users (id) on delete cascade,
-  kind text not null,
+  emoji text not null,
   reacted_at timestamptz not null,
   primary key (check_in_id, member_id)
 );

@@ -1,9 +1,8 @@
-import type { AwardKind, ReactionKind, StatKind } from '@wildcard/check-ins';
+import type { AwardKind, StatKind } from '@wildcard/check-ins';
 
 // The words of the Sunday summary (周日战报). The app shows what the API sends, so a new award or
 // count reaches every installed app with no release: add its kind and its copy here, and the
-// compiler asks for both languages. A new reaction kind shows up here the same way, but the
-// reaction routes still send a closed enum, so adding one is still an app release.
+// compiler asks for both languages. Reactions are emoji, which need no words.
 
 /** The languages the summary is written in; Chinese first. */
 export type Language = 'zh-Hans' | 'en';
@@ -73,10 +72,4 @@ export const STAT_COPY: Readonly<Record<StatKind, Words>> = {
   healthyMeals: { 'zh-Hans': '健康餐', en: 'Clean meals' },
   cheatMeals: { 'zh-Hans': '放纵餐', en: 'Cheat meals' },
   reactionsReceived: { 'zh-Hans': '收到的回应', en: 'Reactions received' },
-};
-
-export const REACTION_COPY: Readonly<Record<ReactionKind, Words>> = {
-  cheer: { 'zh-Hans': '加油', en: 'Cheer' },
-  highlight: { 'zh-Hans': '名场面', en: 'Highlights' },
-  lol: { 'zh-Hans': '笑死', en: 'LOL' },
 };

@@ -2,7 +2,7 @@
 
 **Status: Ready** since reactions (#53), driven over HTTP by `scripts/api-journeys.sh reactions`; CI's `supabase` job runs it. The app's screens for it aren't covered here.
 
-A teammate reacts to a member's check-in, repeats it, changes it, and takes it off; the author sees it; the author can't react to their own, and someone outside the squad can't see the check-in at all. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+A teammate reacts to a member's check-in with an emoji, repeats it, changes it to another, and takes it off; the author sees it; the author can't react to their own, and someone outside the squad can't see the check-in at all. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
 Code: `api/apps/server/src/routes/reactions.ts`.
 
@@ -21,9 +21,9 @@ Ids, dates and the time zone differ each run; the shape doesn't. Copied from a r
 ```text
 server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
-reactions: mate cheered (201), again (200), then changed it to lol (200)
-reactions: the author sees one reaction, mate's lol
-reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), unknown kind refused (400)
+reactions: mate left ❤️ (201), again (200), then changed it to 😂 (200)
+reactions: the author sees one reaction, mate's 😂
+reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), text that isn't one emoji refused (400)
 reactions: mate took it off (204, again 204), no row left
 api-journeys: ok (reactions)
 ```

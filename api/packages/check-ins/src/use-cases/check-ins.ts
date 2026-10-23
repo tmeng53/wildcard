@@ -2,7 +2,7 @@ import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/chec
 import type { DayRange } from '../domain/day-range.js';
 import type { CheckInTotals } from '../domain/totals.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
-import type { Reaction, ReactionKind } from '../domain/reaction.js';
+import type { Reaction } from '../domain/reaction.js';
 import type { Reply } from '../domain/reply.js';
 import type {
   CheckInStore,
@@ -57,15 +57,12 @@ export interface CheckIns {
     readonly checkIn: CheckInId;
     readonly viewer: MemberId;
   }): Promise<Reaction[]>;
-  /**
-   * Teammates who reacted to the member's check-ins in `[since, until)`, by kind, each once per
-   * kind.
-   */
+  /** Teammates who reacted to the member's check-ins in `[since, until)`, with any emoji. */
   reactionsReceived(input: {
     readonly member: MemberId;
     readonly since: Date;
     readonly until: Date;
-  }): Promise<ReadonlyMap<ReactionKind, ReadonlySet<MemberId>>>;
+  }): Promise<ReadonlySet<MemberId>>;
   /** Replies are for 请假条 only, apart from reactions: a teammate may leave both. */
   reply(input: ReplyToDisclaimerInput): Promise<Replied>;
   removeReply(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;

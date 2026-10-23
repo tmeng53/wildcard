@@ -7,8 +7,17 @@ import Foundation
 import SwiftUI
 import Testing
 
-/// The previews of moves that change the character: sport kits and the 上场 entrance.
+/// The previews of moves that change the character: sport kits, the 上场 entrance, and 我's
+/// typing at the laptop and crying on 注销账号.
 extension CharacterPreviewTests {
+    /// `09-sport-kits.gif`, `10-entrance.gif`, `11-typing.gif` and `12-teary.gif`.
+    func writeMoves(to folder: URL) throws {
+        try writeKits(to: folder.appendingPathComponent("09-sport-kits.gif"))
+        try writeEntrance(to: folder.appendingPathComponent("10-entrance.gif"))
+        try writeMeMove(typing: true, to: folder.appendingPathComponent("11-typing.gif"))
+        try writeMeMove(typing: false, to: folder.appendingPathComponent("12-teary.gif"))
+    }
+
     /// The lifter (and a cat beside it) picking each sport in turn, every 2 s: a hop into the
     /// kit, then the sport's move.
     func writeKits(to url: URL) throws {
@@ -75,6 +84,27 @@ extension CharacterPreviewTests {
                 let performance = time < landed ? entering : welcoming
                 return try look.render(
                     image: performance.pose(at: time), scale: 0.4, background: Self.mist, crop: stage)
+            },
+            fps: 20, to: url)
+    }
+
+    /// The squad at 我's desk typing, or crying as on 注销账号, each look in a persona of its
+    /// own, two loops long.
+    func writeMeMove(typing: Bool, to url: URL) throws {
+        let cast = Array(zip(Looks.squad, [Persona.deadpan, .energetic, .drama, .shy]))
+        let stages = try cast.map { outfit, persona in
+            let look = try Frame(outfit: typing ? PlaceholderCharacter.atDesk(outfit) : outfit)
+            let clip =
+                try typing
+                ? PlaceholderCharacter.typing(persona: persona) : PlaceholderCharacter.teary(persona: persona)
+            return (look, try look.figure.bind(clip))
+        }
+        try writeGIF(
+            frames(seconds: typing ? 8 : 6.4, fps: 20) { time in
+                try sideBySide(
+                    stages.map { look, move in
+                        try look.render(image: look.figure.pose(move, at: time), scale: 1, background: Self.mist)
+                    })
             },
             fps: 20, to: url)
     }

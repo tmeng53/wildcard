@@ -235,6 +235,44 @@ describe('leaving and listing', () => {
     expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['二']);
   });
 
+  it('logs each join and leave, in order, and never a leave that changed nothing', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await newSquad(bo);
+    const log = async () =>
+      (
+        await sql<{ member: string; kind: string }>`select member_id as member, kind
+          from public.squad_membership_events where squad_id = ${squad.id} order by id`.execute(db)
+      ).rows;
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    // Joining again while in it changes nothing, so it logs nothing.
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    expect(await log()).toStrictEqual([
+      { member: bo, kind: 'joined' },
+      { member: ann, kind: 'joined' },
+      { member: ann, kind: 'left' },
+      { member: ann, kind: 'joined' },
+      { member: ann, kind: 'left' },
+    ]);
+    expect(await squads.membersOf(squad.id)).toStrictEqual([bo]);
+  });
+
+  it('keeps the log append-only', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann);
+    await expect(
+      sql`update public.squad_membership_events set kind = 'left' where squad_id = ${squad.id}`.execute(
+        db,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      sql`delete from public.squad_membership_events where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
+  });
+
   it('shows a squad only to its members, the same way whether or not it exists', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann);

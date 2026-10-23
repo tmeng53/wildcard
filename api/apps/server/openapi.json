@@ -1141,14 +1141,10 @@
             "format": "uuid",
             "description": "Who reacted."
           },
-          "kind": {
+          "emoji": {
             "type": "string",
-            "enum": [
-              "cheer",
-              "highlight",
-              "lol"
-            ],
-            "description": "Which reaction. The app shows each with its own copy."
+            "description": "The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.",
+            "example": "❤️"
           },
           "reactedAt": {
             "type": "string",
@@ -1160,7 +1156,7 @@
         "required": [
           "version",
           "member",
-          "kind",
+          "emoji",
           "reactedAt"
         ],
         "additionalProperties": false
@@ -1174,19 +1170,15 @@
               1
             ]
           },
-          "kind": {
+          "emoji": {
             "type": "string",
-            "enum": [
-              "cheer",
-              "highlight",
-              "lol"
-            ],
-            "description": "Which reaction. The app shows each with its own copy."
+            "description": "The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.",
+            "example": "❤️"
           }
         },
         "required": [
           "version",
-          "kind"
+          "emoji"
         ],
         "additionalProperties": false
       },
@@ -1209,14 +1201,10 @@
                   "format": "uuid",
                   "description": "Who reacted."
                 },
-                "kind": {
+                "emoji": {
                   "type": "string",
-                  "enum": [
-                    "cheer",
-                    "highlight",
-                    "lol"
-                  ],
-                  "description": "Which reaction. The app shows each with its own copy."
+                  "description": "The reaction: any one emoji, such as ❤️, 💪 or 🇨🇦.",
+                  "example": "❤️"
                 },
                 "reactedAt": {
                   "type": "string",
@@ -1227,7 +1215,7 @@
               },
               "required": [
                 "member",
-                "kind",
+                "emoji",
                 "reactedAt"
               ],
               "additionalProperties": false
@@ -1858,30 +1846,24 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "kind": {
+                    "emoji": {
                       "type": "string",
-                      "minLength": 1,
-                      "description": "Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words."
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Its name, in the language asked for."
+                      "description": "Any one emoji.",
+                      "example": "❤️"
                     },
                     "count": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Reactions of this kind."
+                      "description": "Reactions with this emoji."
                     }
                   },
                   "required": [
-                    "kind",
-                    "label",
+                    "emoji",
                     "count"
                   ],
                   "additionalProperties": false
                 },
-                "description": "Teammates’ reactions on the week’s check-ins, one entry a kind."
+                "description": "Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first."
               }
             },
             "required": [
@@ -1905,36 +1887,30 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "kind": {
+                    "emoji": {
                       "type": "string",
-                      "minLength": 1,
-                      "description": "Today `cheer` (加油), `highlight` (名场面) and `lol` (笑死). New kinds come without an app release, so show any kind from its words."
-                    },
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Its name, in the language asked for."
+                      "description": "Any one emoji.",
+                      "example": "❤️"
                     },
                     "received": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Reactions of this kind on their check-ins."
+                      "description": "Reactions with this emoji on their check-ins."
                     },
                     "given": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Reactions of this kind they left on teammates’ check-ins."
+                      "description": "Reactions with this emoji they left on teammates’ check-ins."
                     }
                   },
                   "required": [
-                    "kind",
-                    "label",
+                    "emoji",
                     "received",
                     "given"
                   ],
                   "additionalProperties": false
                 },
-                "description": "One entry a reaction kind."
+                "description": "One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first."
               }
             },
             "required": [
@@ -2323,11 +2299,6 @@
                   1
                 ]
               },
-              "language": {
-                "type": "string",
-                "minLength": 1,
-                "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
-              },
               "squad": {
                 "type": "object",
                 "properties": {
@@ -2402,7 +2373,6 @@
             },
             "required": [
               "version",
-              "language",
               "squad",
               "week",
               "status",
@@ -2419,11 +2389,6 @@
                 "enum": [
                   1
                 ]
-              },
-              "language": {
-                "type": "string",
-                "minLength": 1,
-                "description": "The language of the reaction labels: today `zh-Hans` or `en`. The AI writes its lines in Chinese."
               },
               "squad": {
                 "type": "object",
@@ -2472,7 +2437,6 @@
             },
             "required": [
               "version",
-              "language",
               "squad",
               "week",
               "status"
@@ -2525,15 +2489,10 @@
             "items": {
               "type": "object",
               "properties": {
-                "kind": {
+                "emoji": {
                   "type": "string",
-                  "minLength": 1,
-                  "description": "Today `cheer`, `highlight` or `lol`; show any kind from its label."
-                },
-                "label": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Its name, in the language asked for."
+                  "description": "Any one emoji.",
+                  "example": "❤️"
                 },
                 "count": {
                   "type": "integer",
@@ -2541,13 +2500,12 @@
                 }
               },
               "required": [
-                "kind",
-                "label",
+                "emoji",
                 "count"
               ],
               "additionalProperties": false
             },
-            "description": "Teammates’ reactions on it by kind, as they stood at the awards."
+            "description": "Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards."
           }
         },
         "required": [
@@ -5044,7 +5002,7 @@
       "get": {
         "operationId": "getSquadWeekStory",
         "summary": "A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)",
-        "description": "Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad. Reaction labels come in the language of the request’s `Accept-Language`, as the week summary’s do.",
+        "description": "Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.",
         "security": [
           {
             "bearer": []

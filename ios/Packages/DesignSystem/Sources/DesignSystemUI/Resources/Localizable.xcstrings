@@ -1081,6 +1081,16 @@
         }
       }
     },
+    "用 Apple 确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm with Apple"
+          }
+        }
+      }
+    },
     "白底页上：浅灰卡片": {
       "localizations": {
         "en": {

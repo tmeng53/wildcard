@@ -56,13 +56,13 @@ extension WeeklyPlan {
 extension Reaction {
     public init(_ wire: Components.Schemas.ReactionList.ReactionsPayloadPayload) throws(ContractsError) {
         self.init(
-            member: try MemberID(wire: wire.member), kind: ReactionKind(wire.kind),
+            member: try MemberID(wire: wire.member), emoji: try Emoji(wire.emoji),
             reactedAt: Timestamp(wire: wire.reactedAt))
     }
 
     public init(_ wire: Components.Schemas.Reaction) throws(ContractsError) {
         self.init(
-            member: try MemberID(wire: wire.member), kind: ReactionKind(wire.kind),
+            member: try MemberID(wire: wire.member), emoji: try Emoji(wire.emoji),
             reactedAt: Timestamp(wire: wire.reactedAt))
     }
 }
@@ -88,33 +88,7 @@ extension MealKind {
     }
 }
 
-extension ReactionKind {
-    init(_ wire: Components.Schemas.ReactionList.ReactionsPayloadPayload.KindPayload) {
-        self =
-            switch wire {
-            case .cheer: .cheer
-            case .highlight: .highlight
-            case .lol: .lol
-            }
-    }
-
-    init(_ wire: Components.Schemas.Reaction.KindPayload) {
-        self =
-            switch wire {
-            case .cheer: .cheer
-            case .highlight: .highlight
-            case .lol: .lol
-            }
-    }
-
+extension Emoji {
     /// The body of `PUT /check-ins/{id}/reactions/mine`.
-    public var draft: Components.Schemas.ReactionDraft {
-        let kind: Components.Schemas.ReactionDraft.KindPayload =
-            switch self {
-            case .cheer: .cheer
-            case .highlight: .highlight
-            case .lol: .lol
-            }
-        return .init(version: ._1, kind: kind)
-    }
+    public var draft: Components.Schemas.ReactionDraft { .init(version: ._1, emoji: text) }
 }

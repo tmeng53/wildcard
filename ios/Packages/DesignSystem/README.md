@@ -19,6 +19,7 @@ A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), an
 | Component | Use it for |
 | --- | --- |
 | `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, scene accent), a second action (44, grey), a quiet text action |
+| `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask |
 | `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button; a sign-up step's back button and ink segments |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |

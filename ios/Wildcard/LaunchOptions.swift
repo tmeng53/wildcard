@@ -22,6 +22,12 @@ enum LaunchOptions {
         }
     }
 
+    /// `-uitest-me-fails`: the in-memory member refuses every change, so UI tests see a switch
+    /// flip back and a delete fail.
+    static var meFailsSaving: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-me-fails")
+    }
+
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
     /// tests check after a post. Only the notification UI test leaves it out.
     static var asksForNotifications: Bool {

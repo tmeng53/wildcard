@@ -183,7 +183,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
     const reacted = await call('PUT', {
       path: `/check-ins/${excuse}/reactions/mine`,
       token: me.token,
-      body: { version: 1, kind: 'lol' },
+      body: { version: 1, emoji: '😂' },
     });
     expect(reacted.status).toBe(201);
 
@@ -227,11 +227,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
           { kind: 'cheatMeals', label: '放纵餐', value: 0 },
           { kind: 'reactionsReceived', label: '收到的回应', value: 1 },
         ],
-        reactions: [
-          { kind: 'cheer', label: '加油', count: 0 },
-          { kind: 'highlight', label: '名场面', count: 0 },
-          { kind: 'lol', label: '笑死', count: 1 },
-        ],
+        reactions: [{ emoji: '😂', count: 1 }],
       },
       me: {
         stats: [
@@ -243,11 +239,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
           { kind: 'cheatMeals', value: 0 },
           { kind: 'reactionsReceived', value: 0 },
         ],
-        reactions: [
-          { kind: 'cheer', label: '加油', received: 0, given: 0 },
-          { kind: 'highlight', label: '名场面', received: 0, given: 0 },
-          { kind: 'lol', label: '笑死', received: 0, given: 1 },
-        ],
+        reactions: [{ emoji: '😂', received: 0, given: 1 }],
       },
     });
     expect(body).not.toHaveProperty('awards.0.winners.0.checkIn');
@@ -266,7 +258,6 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       ],
     });
     expect(english.body).toHaveProperty('squadTotals.stats.0.label', 'Days trained');
-    expect(english.body).toHaveProperty('me.reactions.2.label', 'LOL');
   });
 
   it('refuses a day that isn’t a Monday, a week not started, and non-members', async () => {

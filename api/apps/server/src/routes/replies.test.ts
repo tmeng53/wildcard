@@ -235,7 +235,7 @@ describe('DELETE /check-ins/{checkInId}/replies/mine', () => {
     await call('PUT', {
       path: `/check-ins/${excuse}/reactions/mine`,
       token: ann.token,
-      body: { version: 1, kind: 'lol' },
+      body: { version: 1, emoji: '😂' },
     });
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -250,6 +250,6 @@ describe('DELETE /check-ins/{checkInId}/replies/mine', () => {
     ).toStrictEqual({ status: 200, body: { version: 1, replies: [] } });
     expect(
       await call('GET', { path: `/check-ins/${excuse}/reactions`, token: tracy.token }),
-    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, kind: 'lol' }] } });
+    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, emoji: '😂' }] } });
   });
 });
