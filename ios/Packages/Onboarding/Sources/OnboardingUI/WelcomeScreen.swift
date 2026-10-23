@@ -51,7 +51,9 @@ struct WelcomeScreen<SignIn: View>: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .coordinateSpace(.named(WelcomeTitle.space))
-            .task(id: word.map { Self.layout(word: $0, top: top, height: proxy.size.height, unit: unit) }) {
+            // Once the word is measured, from where it stands then. Keyed on the layout, the
+            // sprint restarted forever: the word is measured again as the sprint takes it over.
+            .task(id: word != nil) {
                 guard let word else { return }
                 await open(layout: Self.layout(word: word, top: top, height: proxy.size.height, unit: unit))
             }
@@ -139,8 +141,8 @@ struct WelcomeScreen<SignIn: View>: View {
             crowd.play(sprinting: false)
             return
         }
-        // The squad is on its spots before the word comes in; a new layout before the break
-        // starts over, and one after it lets the screen settle.
+        // The squad is on its spots before the word comes in; coming back before the break
+        // starts over, and after it lets the screen settle.
         await crowd.load(reduceMotion: reduceMotion)
         guard !Task.isCancelled else { return }
         // Played through off the main actor, so the first frame of the sprint isn't held up.
