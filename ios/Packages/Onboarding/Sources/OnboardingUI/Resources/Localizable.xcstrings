@@ -14,6 +14,12 @@
             "state": "translated",
             "value": "%@ 的小队"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 的小隊"
+          }
         }
       }
     },
@@ -26,6 +32,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 人"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld 人"
@@ -46,6 +58,12 @@
             "state": "translated",
             "value": "%lld 人 · 满员了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 人 · 滿了"
+          }
         }
       }
     },
@@ -58,6 +76,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WILDCARD"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "WILDCARD"
@@ -78,6 +102,12 @@
             "state": "translated",
             "value": "哦，来了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "喔，來了"
+          }
         }
       }
     },
@@ -93,6 +123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "欢迎，别卷我"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎，別太拚喔"
           }
         }
       }
@@ -110,6 +146,12 @@
             "state": "translated",
             "value": "坐，随便坐"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坐，隨便坐"
+          }
         }
       }
     },
@@ -125,6 +167,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "又多一个陪练的"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "又多一個陪練的"
           }
         }
       }
@@ -142,6 +190,12 @@
             "state": "translated",
             "value": "欢迎，不用太努力"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎，不用太努力"
+          }
         }
       }
     },
@@ -157,6 +211,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "挺好，人齐了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不錯，人到齊了"
           }
         }
       }
@@ -174,6 +234,12 @@
             "state": "translated",
             "value": "嗯，来了就行"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "嗯，來了就好"
+          }
         }
       }
     },
@@ -189,6 +255,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "欢迎，按自己节奏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎，照自己的節奏"
           }
         }
       }
@@ -206,6 +278,12 @@
             "state": "translated",
             "value": "慢慢来，不急"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "慢慢來，不急"
+          }
         }
       }
     },
@@ -221,6 +299,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "来了？那挺好"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來了？那不錯"
           }
         }
       }
@@ -238,6 +322,12 @@
             "state": "translated",
             "value": "这一刻我等了一辈子"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這一刻我等了一輩子"
+          }
         }
       }
     },
@@ -253,6 +343,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天值得写进日记"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天值得寫進日記"
           }
         }
       }
@@ -270,6 +366,12 @@
             "state": "translated",
             "value": "命运的相遇"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命運的相遇"
+          }
         }
       }
     },
@@ -285,6 +387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "我宣布，小队完整了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我宣布，小隊完整了"
           }
         }
       }
@@ -302,6 +410,12 @@
             "state": "translated",
             "value": "剧本里说你会来"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劇本裡說你會來"
+          }
         }
       }
     },
@@ -317,6 +431,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "激动到表情管理失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "激動到表情管理失敗"
           }
         }
       }
@@ -334,6 +454,12 @@
             "state": "translated",
             "value": "我不允许你不来"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我不允許你不來"
+          }
         }
       }
     },
@@ -349,6 +475,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "泪，终于等到你"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "淚，終於等到你"
           }
         }
       }
@@ -366,6 +498,12 @@
             "state": "translated",
             "value": "这是什么神仙队友"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這是什麼神隊友"
+          }
         }
       }
     },
@@ -381,6 +519,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "快，给我递纸巾"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快，給我衛生紙"
           }
         }
       }
@@ -398,6 +542,12 @@
             "state": "translated",
             "value": "终于有人陪我卷了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終於有人陪我拚了"
+          }
         }
       }
     },
@@ -413,6 +563,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "体力满格欢迎你"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "體力滿格歡迎你"
           }
         }
       }
@@ -430,6 +586,12 @@
             "state": "translated",
             "value": "新兵！先跑两圈！"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜鳥！先跑兩圈！"
+          }
         }
       }
     },
@@ -445,6 +607,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天就开练？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天就開練？"
           }
         }
       }
@@ -462,6 +630,12 @@
             "state": "translated",
             "value": "来了就别想走"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來了就別想走"
+          }
         }
       }
     },
@@ -477,6 +651,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "热身已就位！"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暖身已就位！"
           }
         }
       }
@@ -494,6 +674,12 @@
             "state": "translated",
             "value": "击个掌！"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來，擊掌！"
+          }
         }
       }
     },
@@ -509,6 +695,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "人多练得更起劲！"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人多練得更起勁！"
           }
         }
       }
@@ -526,6 +718,12 @@
             "state": "translated",
             "value": "明天几点？我都行"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明天幾點？我都可以"
+          }
         }
       }
     },
@@ -541,6 +739,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "欢迎！走走走！"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎！走走走！"
           }
         }
       }
@@ -558,6 +762,12 @@
             "state": "translated",
             "value": "报到！"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "報到！"
+          }
         }
       }
     },
@@ -573,6 +783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "我来了！"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我來了！"
           }
         }
       }
@@ -590,6 +806,12 @@
             "state": "translated",
             "value": "新人报到"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新人報到"
+          }
         }
       }
     },
@@ -606,6 +828,12 @@
             "state": "translated",
             "value": "来啦来啦"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來了來了"
+          }
         }
       }
     },
@@ -618,6 +846,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "久等了！"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "久等了！"
@@ -638,6 +872,12 @@
             "state": "translated",
             "value": "请多指教"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請多指教"
+          }
         }
       }
     },
@@ -654,6 +894,12 @@
             "state": "translated",
             "value": "我准备好了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我準備好了"
+          }
         }
       }
     },
@@ -666,6 +912,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是我是我"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "是我是我"
@@ -686,6 +938,12 @@
             "state": "translated",
             "value": "C位借你一秒"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C位借你一秒"
+          }
         }
       }
     },
@@ -701,6 +959,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "入队仪式由我主持"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入隊儀式由我主持"
           }
         }
       }
@@ -718,6 +982,12 @@
             "state": "translated",
             "value": "镜头分你一点"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鏡頭分你一點"
+          }
         }
       }
     },
@@ -733,6 +1003,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "新人站我旁边，显我"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新人站我旁邊，襯托我一下"
           }
         }
       }
@@ -750,6 +1026,12 @@
             "state": "translated",
             "value": "先跟我合个影"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先跟我合照一張"
+          }
         }
       }
     },
@@ -765,6 +1047,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "欢迎来到我的主场"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎來到我的主場"
           }
         }
       }
@@ -782,6 +1070,12 @@
             "state": "translated",
             "value": "注意，主角出场了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "注意，主角登場了"
+          }
         }
       }
     },
@@ -797,6 +1091,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "看我这个欢迎pose"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看我這個歡迎 pose"
           }
         }
       }
@@ -814,6 +1114,12 @@
             "state": "translated",
             "value": "新人？先学我这招"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新人？先學我這招"
+          }
         }
       }
     },
@@ -829,6 +1135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天的光给你"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天的光給你"
           }
         }
       }
@@ -846,6 +1158,12 @@
             "state": "translated",
             "value": "已在心里鼓掌三次"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已經在心裡鼓掌三次"
+          }
         }
       }
     },
@@ -861,6 +1179,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "下次一起练吧（认真的）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下次一起練吧（認真的）"
           }
         }
       }
@@ -878,6 +1202,12 @@
             "state": "translated",
             "value": "欢迎，我们打字聊"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎，我們打字聊"
+          }
         }
       }
     },
@@ -893,6 +1223,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "刚才那个赞是我点的"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剛剛那個讚是我按的"
           }
         }
       }
@@ -910,6 +1246,12 @@
             "state": "translated",
             "value": "你好（已排练五遍）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你好（已經排練五遍）"
+          }
         }
       }
     },
@@ -925,6 +1267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "给你占了个好位置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "幫你佔了個好位置"
           }
         }
       }
@@ -942,6 +1290,12 @@
             "state": "translated",
             "value": "欢迎词我写在备忘录了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎詞我寫在備忘錄了"
+          }
         }
       }
     },
@@ -957,6 +1311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "我们可以一起安静地练"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我們可以一起安靜地練"
           }
         }
       }
@@ -974,6 +1334,12 @@
             "state": "translated",
             "value": "欢迎！说完了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎！講完了"
+          }
         }
       }
     },
@@ -989,6 +1355,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "我鼓掌了，你看见没"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我鼓掌了，你有看到嗎"
           }
         }
       }
@@ -1006,6 +1378,12 @@
             "state": "translated",
             "value": "一周练几天？"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一週練幾天？"
+          }
         }
       }
     },
@@ -1022,6 +1400,12 @@
             "state": "translated",
             "value": "上场"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上場"
+          }
         }
       }
     },
@@ -1034,6 +1418,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一步"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "下一步"
@@ -1054,6 +1444,12 @@
             "state": "translated",
             "value": "人人都是运动员"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人人都是運動員"
+          }
         }
       }
     },
@@ -1070,6 +1466,12 @@
             "state": "translated",
             "value": "以后再选"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "之後再選"
+          }
         }
       }
     },
@@ -1082,6 +1484,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "休息"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "休息"
@@ -1102,6 +1510,12 @@
             "state": "translated",
             "value": "你上场了，队友们在欢迎你"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你上場了，隊友們在歡迎你"
+          }
         }
       }
     },
@@ -1117,6 +1531,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "你已经在 3 个小队里了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已經在 3 個小隊裡了"
           }
         }
       }
@@ -1134,6 +1554,12 @@
             "state": "translated",
             "value": "你的小队"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的小隊"
+          }
         }
       }
     },
@@ -1146,6 +1572,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "其他"
@@ -1166,6 +1598,12 @@
             "state": "translated",
             "value": "加上「%@」"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加上「%@」"
+          }
         }
       }
     },
@@ -1181,6 +1619,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "加入小队"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加入小隊"
           }
         }
       }
@@ -1198,6 +1642,12 @@
             "state": "translated",
             "value": "同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖，不发照片。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同意使用 AI 功能：小隊裡的貼文說明和假單文字會傳送給第三方 AI（目前是 OpenAI 和 Anthropic），用來寫每週頒獎，不會傳送照片。"
+          }
         }
       }
     },
@@ -1213,6 +1663,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "周三不练腿俱乐部"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週三不練腿俱樂部"
           }
         }
       }
@@ -1230,6 +1686,12 @@
             "state": "translated",
             "value": "小队名"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊名稱"
+          }
         }
       }
     },
@@ -1245,6 +1707,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "平时练什么？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平常都練什麼？"
           }
         }
       }
@@ -1262,6 +1730,12 @@
             "state": "translated",
             "value": "建一个小队"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建立一個小隊"
+          }
         }
       }
     },
@@ -1277,6 +1751,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "建小队"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建立小隊"
           }
         }
       }
@@ -1294,6 +1774,12 @@
             "state": "translated",
             "value": "换一个小人"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換一個小人"
+          }
         }
       }
     },
@@ -1310,6 +1796,12 @@
             "state": "translated",
             "value": "搜索"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋"
+          }
         }
       }
     },
@@ -1322,6 +1814,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "更多"
@@ -1342,6 +1840,12 @@
             "state": "translated",
             "value": "最常见"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最常見"
+          }
         }
       }
     },
@@ -1357,6 +1861,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在找这个小队"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在找這個小隊"
           }
         }
       }
@@ -1374,6 +1884,12 @@
             "state": "translated",
             "value": "每周训练 %lld/%lld 天"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週訓練 %1$lld/%2$lld 天"
+          }
         }
       }
     },
@@ -1389,6 +1905,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "比如：飞盘"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如：飛盤"
           }
         }
       }
@@ -1406,6 +1928,12 @@
             "state": "translated",
             "value": "没存上，换个写法试试"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒存到，換個寫法試試"
+          }
         }
       }
     },
@@ -1421,6 +1949,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "没找到这个邀请码"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到這個邀請碼"
           }
         }
       }
@@ -1438,6 +1972,12 @@
             "state": "translated",
             "value": "第 %lld 周"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %lld 週"
+          }
         }
       }
     },
@@ -1453,6 +1993,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繼續即表示同意[使用條款](terms:)和[隱私權政策](privacy:)"
           }
         }
       }
@@ -1470,6 +2016,12 @@
             "state": "translated",
             "value": "网络开小差了，再试一次"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路怪怪的，再試一次"
+          }
         }
       }
     },
@@ -1485,6 +2037,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "训练"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "訓練"
           }
         }
       }
@@ -1502,6 +2060,12 @@
             "state": "translated",
             "value": "跳过"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳過"
+          }
         }
       }
     },
@@ -1517,6 +2081,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "这个小队满 8 人了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這個小隊已經滿 8 人了"
           }
         }
       }
@@ -1534,6 +2104,12 @@
             "state": "translated",
             "value": "通过 Apple 继续"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 Apple 繼續"
+          }
         }
       }
     },
@@ -1550,6 +2126,12 @@
             "state": "translated",
             "value": "邀请码"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邀請碼"
+          }
         }
       }
     },
@@ -1565,6 +2147,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "隐私政策"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隱私權政策"
           }
         }
       }

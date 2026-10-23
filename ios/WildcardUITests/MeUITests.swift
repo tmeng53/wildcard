@@ -82,6 +82,18 @@ final class MeUITests: XCTestCase {
         keepScreenshot(named: "44-me-en")
     }
 
+    func testMePageInTraditionalChinese() {
+        let app = launch(language: "zh-Hant")
+        XCTAssertTrue(app.staticTexts["me.nickname"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.buttons["編輯角色"].exists)
+        app.swipeUp()
+        let deleteAccount = app.buttons["me.deleteAccount"]
+        XCTAssertTrue(deleteAccount.waitForExistence(timeout: 30), "no delete-account row at the bottom of 我")
+        XCTAssertTrue(deleteAccount.label.contains("刪除帳號"), "the row reads \(deleteAccount.label)")
+        settle()
+        keepScreenshot(named: "45-me-zh-hant")
+    }
+
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

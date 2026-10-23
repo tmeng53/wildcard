@@ -9,16 +9,18 @@ struct SportCatalogTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("Sources/SportsUI/Resources/Localizable.xcstrings")
 
-    @Test func everySportAndCategoryHasAChineseAndEnglishName() throws {
+    @Test func everySportAndCategoryHasANameInEveryLanguage() throws {
         let keys =
             Sport.allCases.map { "sport.\($0.rawValue)" }
             + SportCategory.allCases.map { "sportCategory.\($0.rawValue)" }
         #expect(keys.count == 64)
         let missing = try keys.filter {
             try Self.value(for: $0, in: "en") == nil || Self.value(for: $0, in: "zh-Hans") == nil
+                || Self.value(for: $0, in: "zh-Hant") == nil
         }
-        #expect(missing.isEmpty, "sports without both names: \(missing)")
+        #expect(missing.isEmpty, "sports without a name in every language: \(missing)")
         #expect(try Self.value(for: "sport.pickleball", in: "zh-Hans") == "匹克球")
+        #expect(try Self.value(for: "sport.tableTennis", in: "zh-Hant") == "桌球")
         #expect(try Self.value(for: "sportCategory.everyday", in: "en") == "Everyday counts")
     }
 
