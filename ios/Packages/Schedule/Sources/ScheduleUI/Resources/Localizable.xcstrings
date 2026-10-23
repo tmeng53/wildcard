@@ -553,6 +553,16 @@
         }
       }
     },
+    "饮食": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Food"
+          }
+        }
+      }
+    },
     "饮食小目标": {
       "localizations": {
         "en": {

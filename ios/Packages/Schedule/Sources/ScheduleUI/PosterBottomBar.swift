@@ -63,7 +63,7 @@ struct PosterBottomBar: View {
                     .minimumScaleFactor(0.7)
             }
         } else {
-            Text("饮食小目标", bundle: .module)
+            Text("饮食", bundle: .module)
         }
     }
 
