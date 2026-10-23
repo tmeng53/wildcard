@@ -8,6 +8,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -24,7 +25,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -42,9 +43,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -59,6 +62,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),

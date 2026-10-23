@@ -6,6 +6,7 @@ import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
 import type { SquadTables } from '@wildcard/squads';
+import type { SportTables } from '@wildcard/sports';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -126,7 +127,8 @@ export type Tables = CheckInTables &
   SquadTables &
   AdminTables &
   AiConsentTables &
-  WeeklyAwardTables;
+  WeeklyAwardTables &
+  SportTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

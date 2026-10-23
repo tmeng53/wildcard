@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import type { CheckInTables } from '../adapters/postgres-check-in-store.js';
@@ -12,6 +13,7 @@ import { WeekStart, type PlanDays } from '../domain/weekly-plan.js';
 import {
   PlanDayStartedError,
   RestDaysFixedError,
+  SportNotListedError,
   TimeZoneNotSetError,
   WeekOverError,
   WeekStartedError,
@@ -19,7 +21,7 @@ import {
 import { createWeeklyPlans } from './weekly-plans.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables>({
+const db = new Kysely<CheckInTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -31,6 +33,7 @@ let now = new Date('2026-10-21T20:00:00.000Z');
 // Members' time zones and when they joined: their profiles, which the members module keeps.
 const calendars = new Map<string, { timeZone: string; joinedAt: Date }>();
 const plans = createWeeklyPlans({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresWeeklyPlanStore(db),
   calendarOf: (member) => Promise.resolve(calendars.get(member)),
   clock: () => now,
@@ -102,6 +105,25 @@ describe('reading a week’s plan', () => {
     const friend = await newMember();
     await plans.save({ member: tracy, weekStart: thisWeek, days: mine });
     expect((await plans.find({ member: friend, weekStart: thisWeek })).source).toBe('default');
+  });
+});
+
+describe('a planned day’s sport', () => {
+  it('is a listed sport or 其他; another id is refused', async () => {
+    const member = await newMember();
+    const days = (sport: string, customSport?: string): PlanDays => [
+      { kind: 'train', sport, ...(customSport === undefined ? {} : { customSport }) },
+      ...mine.slice(1),
+    ];
+    await expect(
+      plans.save({ member, weekStart: nextWeek, days: days('quidditch') }),
+    ).rejects.toThrow(SportNotListedError);
+    await plans.save({ member, weekStart: nextWeek, days: days('custom', '魁地奇') });
+    await plans.save({ member, weekStart: nextWeek, days: days('pickleball') });
+    expect((await plans.find({ member, weekStart: nextWeek })).days[0]).toStrictEqual({
+      kind: 'train',
+      sport: 'pickleball',
+    });
   });
 });
 

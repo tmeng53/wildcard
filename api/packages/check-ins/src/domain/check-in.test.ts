@@ -96,10 +96,13 @@ describe('CheckInDraft', () => {
     ]);
   });
 
-  it('takes a listed sport without a name, or custom with one', () => {
+  it('takes a sport id without a name, or custom with one', () => {
     const training = (fields: object) => issues({ ...trained, training: { ...fields } });
     expect(training({ sport: 'pickleball' })).toBe('ok');
-    expect(training({ sport: 'quidditch' })).toStrictEqual(['training.sport']);
+    // Whether an id is listed is the sports list's to say, when the check-in is saved.
+    expect(training({ sport: 'quidditch' })).toBe('ok');
+    expect(training({ sport: 'Quidditch' })).toStrictEqual(['training.sport']);
+    expect(training({ sport: 'trail run' })).toStrictEqual(['training.sport']);
     expect(training({ sport: 'custom' })).toStrictEqual(['training.customSport']);
     expect(training({ sport: 'run', customSport: '慢跑' })).toStrictEqual(['training.customSport']);
     expect(training({ sport: 'custom', customSport: '   ' })).toStrictEqual([
@@ -218,7 +221,11 @@ describe('a saved check-in', () => {
       entryFromStored({ kind: 'trained', payload: { version: 2, sport: 'run' }, photos: [] }),
     ).toThrow('version');
     expect(() =>
-      entryFromStored({ kind: 'trained', payload: { version: 1, sport: 'skydiving' }, photos: [] }),
+      entryFromStored({
+        kind: 'trained',
+        payload: { version: 1, sport: 'sky diving' },
+        photos: [],
+      }),
     ).toThrow('sport');
   });
 

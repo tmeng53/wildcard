@@ -22,6 +22,8 @@
     "@wildcard/members": "workspace:*",
     "@wildcard/memes": "workspace:*",
     "@wildcard/push": "workspace:*",
+    "@wildcard/sport-ids": "workspace:*",
+    "@wildcard/sports": "workspace:*",
     "@wildcard/squads": "workspace:*",
     "@wildcard/weekly-awards": "workspace:*",
     "hono": "4.13.13",

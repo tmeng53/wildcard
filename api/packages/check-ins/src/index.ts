@@ -39,7 +39,7 @@ export {
   type PlanSource,
   type WeeklyPlan,
 } from './domain/weekly-plan.js';
-export { SPORTS, SportKey } from './domain/sports.js';
+export { SportKey } from './domain/sports.js';
 export {
   CheckInDayMismatchError,
   CheckInIdConflictError,
@@ -55,6 +55,7 @@ export {
   PhotoNotYoursError,
   PlanDayStartedError,
   RestDaysFixedError,
+  SportNotListedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
@@ -70,6 +71,7 @@ export type {
   PhotoFiles,
   ReactionStore,
   ReplyStore,
+  SportList,
   SquadMembership,
   WeeklyPlanStore,
 } from './ports.js';

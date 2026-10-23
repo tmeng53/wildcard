@@ -40,6 +40,7 @@ import {
   createWeeklyAwards,
   type LanguageModel as AwardsModel,
 } from '@wildcard/weekly-awards';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
@@ -57,6 +58,7 @@ import { reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
+import { sportsSection } from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { createLog } from './log.js';
 import { memberCalendar } from './member-calendar.js';
@@ -137,10 +139,14 @@ const squads = createSquads({
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
 });
+// The sports list every picker shows, kept in the database.
+const sports = createSports({ store: createPostgresSportStore(db) });
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   // Who is in which squad is the squads module's to keep: check-ins ask it.
   membership: squads,
+  // Which sports exist is the sports module's to keep: check-ins and plans ask it.
+  sports,
   reactions: createPostgresReactionStore(db),
   replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
@@ -162,18 +168,27 @@ const app = createApp({
   checkIns,
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
+    sports,
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   members,
   squads,
   aiConsent,
+  // Data the app shows that lives in the database. Each module keeps its own section.
+  catalog: { sections: [sportsSection(sports)], clock: () => new Date() },
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes
     // billions of tries, so this only keeps the lookup from being hammered.
     inviteLookups: createMemoryRateLimit({
       limit: 30,
+      windowSeconds: 600,
+      clock: () => new Date(),
+    }),
+    // The app reads it about once a launch; a shared address may hold many phones.
+    catalogReads: createMemoryRateLimit({
+      limit: 300,
       windowSeconds: 600,
       clock: () => new Date(),
     }),

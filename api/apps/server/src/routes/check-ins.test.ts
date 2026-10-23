@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -26,7 +27,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -43,9 +44,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -61,6 +64,7 @@ const app = createApp({
   }),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -237,6 +241,24 @@ describe('PUT /check-ins/{id}', () => {
         day: '2020-01-01',
       }),
     ).toStrictEqual([400, 'application/problem+json', 'CHECK_IN_TOO_OLD']);
+    const trained = (sport: string) => ({
+      version: 1,
+      day,
+      createdAt,
+      audience: [squad],
+      kind: 'trained',
+      training: { sport },
+    });
+    expect(await put(randomUUID(), trained('quidditch'))).toStrictEqual([
+      400,
+      'application/problem+json',
+      'SPORT_NOT_LISTED',
+    ]);
+    expect(await put(randomUUID(), trained('not a sport id'))).toStrictEqual([
+      400,
+      'application/problem+json',
+      'REQUEST_INVALID',
+    ]);
     expect(await put(randomUUID(), { ...disclaimer('累'), calories: 300 })).toStrictEqual([
       400,
       'application/problem+json',

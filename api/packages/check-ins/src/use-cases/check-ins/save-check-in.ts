@@ -1,3 +1,5 @@
+import { CUSTOM_SPORT } from '@wildcard/sport-ids';
+
 import { checkCheckInTime } from '../../domain/check-in-time.js';
 import {
   isSameCheckIn,
@@ -15,6 +17,7 @@ import {
   PhotoInUseError,
   PhotoNotUploadedError,
   PhotoNotYoursError,
+  SportNotListedError,
   SquadNotJoinedError,
 } from '../../errors.js';
 import type {
@@ -22,6 +25,7 @@ import type {
   Clock,
   MemberCalendar,
   PhotoFiles,
+  SportList,
   SquadMembership,
 } from '../../ports.js';
 
@@ -47,12 +51,14 @@ export async function saveCheckIn(
     store,
     membership,
     photos,
+    sports,
     calendarOf,
     clock,
   }: {
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
+    readonly sports: SportList;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
@@ -67,6 +73,7 @@ export async function saveCheckIn(
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
   await checkPhotos(photos, checkIn);
+  if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
 
   const outcome = await store.insert(checkIn);
   if (outcome.saved) return { checkIn, created: true };
@@ -76,6 +83,13 @@ export async function saveCheckIn(
   if (outcome.taken === 'dailyDisclaimer') throw new DisclaimerAlreadyPostedError(checkIn.day);
   if (outcome.taken === 'photo') throw new PhotoInUseError();
   throw new CheckInIdConflictError(id);
+}
+
+/** A listed sport, or 其他. */
+export async function checkSport(sports: SportList, sport: string): Promise<void> {
+  if (sport !== CUSTOM_SPORT && !(await sports.isListed(sport))) {
+    throw new SportNotListedError(sport);
+  }
 }
 
 /** Each photo is the member's own and already uploaded. */

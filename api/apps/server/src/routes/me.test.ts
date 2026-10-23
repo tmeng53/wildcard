@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sign } from 'hono/jwt';
 import { sql } from 'kysely';
 import { describe, expect, it } from 'vitest';
@@ -28,7 +29,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 async function send(
@@ -42,8 +43,10 @@ async function send(
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl }),
     accounts: createSupabaseAccounts({ supabaseUrl, secretKey: config.supabaseSecretKey }),
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     checkIns: createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
         store: createPostgresSquadStore(db),
@@ -60,6 +63,7 @@ async function send(
     photos,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),

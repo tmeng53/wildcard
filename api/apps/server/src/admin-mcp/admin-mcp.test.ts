@@ -21,6 +21,7 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -41,7 +42,7 @@ import {
 import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { memeTools } from './tools/memes.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
@@ -81,8 +82,10 @@ beforeAll(async () => {
             secretKey: config.supabaseSecretKey,
           }),
           revokeAppleSignIn: undefined,
+          catalog: catalogOn(db),
           publicRoutes: unlimitedPublicRoutes,
           checkIns: createCheckIns({
+            sports: createSports({ store: createPostgresSportStore(db) }),
             store: createPostgresCheckInStore(db),
             membership: createSquads({
               store: createPostgresSquadStore(db),
@@ -97,6 +100,7 @@ beforeAll(async () => {
             clock: () => new Date(),
           }),
           weeklyPlans: createWeeklyPlans({
+            sports: createSports({ store: createPostgresSportStore(db) }),
             store: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),
             clock: () => new Date(),

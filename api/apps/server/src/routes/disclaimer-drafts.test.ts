@@ -14,6 +14,7 @@ import {
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -33,7 +34,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database, and each provider's
@@ -66,8 +67,10 @@ function appWith(model: LanguageModel) {
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     checkIns: createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
         store: createPostgresSquadStore(db),
@@ -92,6 +95,7 @@ function appWith(model: LanguageModel) {
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),

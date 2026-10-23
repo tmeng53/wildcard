@@ -27,6 +27,7 @@ import type {
 } from './ports.js';
 import { problemResponse } from './problem.js';
 import { aiConsent } from './routes/ai-consent.js';
+import { catalog, type CatalogSection } from './routes/catalog.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
 import { devices } from './routes/devices.js';
@@ -55,6 +56,8 @@ export interface AppDependencies {
   readonly squads: Squads;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
+  /** What `GET /public/catalog` serves: each section, as `main.ts` lists them. */
+  readonly catalog: { readonly sections: readonly CatalogSection[]; readonly clock: () => Date };
   /** Rate limits for the routes anyone can call without signing in. */
   readonly publicRoutes: PublicRoutes;
   readonly photos: PhotoStorage;
@@ -104,6 +107,7 @@ export function createApp(deps: AppDependencies) {
   });
 
   app.route('/', health(deps));
+  app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
   app.route('/', me(deps));
   app.route('/', aiConsent(deps));
   app.route('/', checkIns(deps));

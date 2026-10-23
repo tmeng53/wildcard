@@ -86,6 +86,12 @@ importers:
       '@wildcard/push':
         specifier: workspace:*
         version: link:../../packages/push
+      '@wildcard/sport-ids':
+        specifier: workspace:*
+        version: link:../../packages/sport-ids
+      '@wildcard/sports':
+        specifier: workspace:*
+        version: link:../../packages/sports
       '@wildcard/squads':
         specifier: workspace:*
         version: link:../../packages/squads
@@ -167,6 +173,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/sport-ids':
+        specifier: workspace:*
+        version: link:../sport-ids
       '@wildcard/typed-text':
         specifier: workspace:*
         version: link:../typed-text
@@ -180,6 +189,9 @@ importers:
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
+      '@wildcard/sports':
+        specifier: workspace:*
+        version: link:../sports
       '@wildcard/squads':
         specifier: workspace:*
         version: link:../squads
@@ -288,6 +300,34 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      kysely:
+        specifier: 0.29.7
+        version: 0.29.7
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))
+
+  packages/sport-ids:
+    dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+
+  packages/sports:
+    dependencies:
+      '@wildcard/sport-ids':
+        specifier: workspace:*
+        version: link:../sport-ids
       kysely:
         specifier: 0.29.7
         version: 0.29.7
