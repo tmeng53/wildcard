@@ -29,7 +29,7 @@ struct ReactionRow: View {
                 }
                 Spacer(minLength: 0)
                 if post.canRespond(model.viewer) {
-                    myButton(reactions.kind(of: model.viewer))
+                    myButton(reactions.kind(of: model.viewer), open: model.picking == post.id)
                 }
             }
             if showsWho, !reactions.isEmpty {
@@ -89,7 +89,9 @@ struct ReactionRow: View {
         return model.name(of: member) ?? String(localized: "队友", bundle: .module)
     }
 
-    private func myButton(_ mine: Emoji?) -> some View {
+    /// `open` is read here, in the body, so that opening the bar redraws the row: SwiftUI calls the
+    /// anchor's transform outside the body, where reading the model isn't observed.
+    private func myButton(_ mine: Emoji?, open: Bool) -> some View {
         Button {
             withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.picking = post.id }
         } label: {
@@ -109,7 +111,7 @@ struct ReactionRow: View {
         }
         .buttonStyle(PressableButtonStyle())
         .anchorPreference(key: EmojiBarAnchor.self, value: .bounds) { bounds in
-            model.picking == post.id ? EmojiBarAnchor.Target(post: post.id, button: bounds) : nil
+            open ? EmojiBarAnchor.Target(post: post.id, button: bounds) : nil
         }
         .accessibilityLabel(
             mine.map { Text("我的回应：\($0.text)", bundle: .module) } ?? Text("回应", bundle: .module)
