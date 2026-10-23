@@ -13,6 +13,16 @@ export type Int8 = ColumnType<string, bigint | number | string, bigint | number 
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface SquadEvents {
+  actor_id: string;
+  at: Generated<Timestamp>;
+  captain_id: string | null;
+  id: Generated<Int8>;
+  kind: string;
+  name: string;
+  squad_id: string;
+}
+
 export interface SquadMembers {
   joined_at: Generated<Timestamp>;
   member_id: string;
@@ -28,6 +38,7 @@ export interface SquadMembershipEvents {
 }
 
 export interface Squads {
+  captain_id: string | null;
   created_at: Generated<Timestamp>;
   created_by: string | null;
   id: Generated<string>;
@@ -35,8 +46,18 @@ export interface Squads {
   name: string;
 }
 
+export interface SquadScenePicks {
+  picked_at: Generated<Timestamp>;
+  picked_by: string | null;
+  scene: string;
+  squad_id: string;
+  week_start: string;
+}
+
 export interface DB {
+  squad_events: SquadEvents;
   squad_members: SquadMembers;
   squad_membership_events: SquadMembershipEvents;
+  squad_scene_picks: SquadScenePicks;
   squads: Squads;
 }

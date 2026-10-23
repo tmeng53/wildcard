@@ -274,7 +274,31 @@ if want squad; then
   expect 403 SQUAD_NOT_JOINED
   echo "squad: outsider reading the squad refused (403 SQUAD_NOT_JOINED)"
 
-  call DELETE "/squads/$squad/members/me" "$newcomer_token"
+  call PUT "/squads/$squad/name" "$newcomer_token" '{"version":1,"name":"乱改"}'
+  expect 403 NOT_SQUAD_CAPTAIN
+  call PUT "/squads/$squad/name" "$me_token" '{"version":1,"name":"夜跑团"}'
+  expect 200
+  [ "$(jq -r '.name + " " + .captain' <<<"$body")" = "夜跑团 $me" ] || fail "rename: $body"
+  call PUT "/squads/$squad/name" "$me_token" '{"version":1,"name":"早八跑团"}'
+  expect 200
+  call DELETE "/squads/$squad/members/$me" "$newcomer_token"
+  expect 403 NOT_SQUAD_CAPTAIN
+  echo "squad: only the captain renames (200, newcomer 403) or removes others"
+
+  call GET "/squads/$squad/scene" "$newcomer_token"
+  expect 200
+  [ "$(jq -r '.pickers.by + " " + (.canPick | tostring)' <<<"$body")" = "captain false" ] || fail "scene: $body"
+  call GET "/squads/$squad/scene" "$me_token"
+  expect 200
+  week="$(jq -r .week <<<"$body")"
+  [ "$(jq -r '.scene + " " + (.canPick | tostring)' <<<"$body")" = "track true" ] || fail "scene: $body"
+  call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"pool"}'
+  expect 201
+  call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"gym"}'
+  expect 409 SCENE_ALREADY_PICKED
+  echo "squad: nobody won the crown, so the captain picked the pool for $week, once (201, then 409)"
+
+  call DELETE "/squads/$squad/members/$newcomer" "$newcomer_token"
   expect 204
   call GET "/squads/$squad" "$newcomer_token"
   expect 403 SQUAD_NOT_JOINED

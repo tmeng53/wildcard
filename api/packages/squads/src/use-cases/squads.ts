@@ -1,6 +1,7 @@
 import type { InviteCodes } from '../domain/invite-code.js';
-import type { MemberId, Squad, SquadId } from '../domain/squad.js';
-import type { AiConsentCheck, SquadStore } from '../ports.js';
+import type { ScenePick, Scene, SceneWeek } from '../domain/scene.js';
+import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
+import type { AiConsentCheck, PickOutcome, SquadStore } from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
@@ -11,6 +12,7 @@ import {
   type PublicInvitePreview,
 } from './squads/preview-invite.js';
 import type { InviteCode } from '../domain/invite-code.js';
+import { handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
 
 /** Squads: creating one, joining by invite code, leaving, and who is in each. */
 export interface Squads {
@@ -33,6 +35,24 @@ export interface Squads {
    * deleted, even when its last member leaves: check-ins sent to it still point at it.
    */
   leave(input: { squad: SquadId; member: MemberId }): Promise<void>;
+  /** Renames the squad, for its captain. */
+  rename(input: { squad: SquadId; member: MemberId; name: SquadName }): Promise<Squad>;
+  /** Hands the captaincy to another member, for the captain. */
+  handCaptaincy(input: { squad: SquadId; member: MemberId; to: MemberId }): Promise<Squad>;
+  /**
+   * Takes `removed` out of the squad: themselves (leaving), or anyone, for the captain. Safe to
+   * repeat.
+   */
+  removeMember(input: { squad: SquadId; member: MemberId; removed: MemberId }): Promise<void>;
+  /** The squad's scene picks, the earliest week first: for its scene (`createSquadScenes`). */
+  scenePicks(squad: SquadId): Promise<ScenePick[]>;
+  /** Saves a week's scene unless it has one: the rules are `createSquadScenes`'s. */
+  savePick(input: {
+    squad: SquadId;
+    week: SceneWeek;
+    scene: Scene;
+    by: MemberId;
+  }): Promise<PickOutcome>;
 }
 
 export function createSquads(deps: {
@@ -51,5 +71,10 @@ export function createSquads(deps: {
     membersOf: (squad) => deps.store.membersOf(squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),
     leave: ({ squad, member }) => deps.store.leave(squad, member),
+    rename: (input) => renameSquad(deps, input),
+    handCaptaincy: (input) => handCaptaincy(deps, input),
+    removeMember: (input) => removeMember(deps, input),
+    scenePicks: (squad) => deps.store.scenePicks(squad),
+    savePick: (input) => deps.store.pickScene(input),
   };
 }

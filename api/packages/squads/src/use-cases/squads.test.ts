@@ -11,6 +11,13 @@ import { InviteCode } from '../domain/invite-code.js';
 import { MemberId, SquadId, SquadName } from '../domain/squad.js';
 import { createSquads } from './squads.js';
 
+/** The `index`th entry of a list a test made long enough. */
+function nth<T>(list: readonly T[], index: number): T {
+  const entry = list[index];
+  if (entry === undefined) throw new Error(`No entry ${String(index)}.`);
+  return entry;
+}
+
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
 const db = new Kysely<SquadTables>({
   dialect: new PostgresDialect({
@@ -59,6 +66,7 @@ describe('creating a squad', () => {
       inviteCode: undefined,
       createdAt: undefined,
       createdBy: creator,
+      captain: creator,
       members: [{ member: creator, joinedAt: squad.members[0]?.joinedAt }],
     });
     expect(squad.inviteCode).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/);
@@ -294,5 +302,112 @@ describe('leaving and listing', () => {
     await squads.leave({ squad: squad.id, member: ann });
     const rows = await sql`select 1 from public.squads where id = ${squad.id}`.execute(db);
     expect(rows.rows).toHaveLength(1);
+  });
+});
+
+describe('the captain', () => {
+  async function squadOf(count: number) {
+    const people = await Promise.all(Array.from({ length: count }, () => newMember()));
+    const [captain, ...rest] = people;
+    if (captain === undefined) throw new Error('No members.');
+    const squad = await newSquad(captain);
+    for (const member of rest) await squads.join({ inviteCode: squad.inviteCode, member });
+    return { squad, people };
+  }
+
+  async function settingsLog(squad: SquadId) {
+    const { rows } = await sql<{
+      actor_id: string;
+      kind: string;
+      name: string;
+      captain_id: string | null;
+    }>`
+      select actor_id, kind, name, captain_id from public.squad_events where squad_id = ${squad} order by id
+    `.execute(db);
+    return rows;
+  }
+
+  it('renames the squad, and logs each change with who made it and the full new settings', async () => {
+    const { squad, people } = await squadOf(2);
+    const [ann, bo] = [nth(people, 0), nth(people, 1)];
+    const renamed = await squads.rename({ squad: squad.id, member: ann, name: name(' 夜跑团 ') });
+    expect(renamed.name).toBe('夜跑团');
+    await squads.rename({ squad: squad.id, member: ann, name: name('夜跑团') });
+    await expect(
+      squads.rename({ squad: squad.id, member: bo, name: name('乱改') }),
+    ).rejects.toMatchObject({ reason: 'NOT_SQUAD_CAPTAIN' });
+    expect(await settingsLog(squad.id)).toStrictEqual([
+      { actor_id: ann, kind: 'created', name: '早八跑团', captain_id: ann },
+      { actor_id: ann, kind: 'renamed', name: '夜跑团', captain_id: ann },
+    ]);
+  });
+
+  it('hands the captaincy on only to a member, and only from the captain', async () => {
+    const { squad, people } = await squadOf(3);
+    const [ann, bo, cy] = [nth(people, 0), nth(people, 1), nth(people, 2)];
+    await expect(
+      squads.handCaptaincy({ squad: squad.id, member: ann, to: await newMember() }),
+    ).rejects.toMatchObject({ reason: 'SQUAD_MEMBER_UNKNOWN' });
+    const handed = await squads.handCaptaincy({ squad: squad.id, member: ann, to: cy });
+    expect(handed.captain).toBe(cy);
+    await expect(
+      squads.handCaptaincy({ squad: squad.id, member: ann, to: bo }),
+    ).rejects.toMatchObject({ reason: 'NOT_SQUAD_CAPTAIN' });
+    expect((await settingsLog(squad.id)).at(-1)).toStrictEqual({
+      actor_id: ann,
+      kind: 'captainChanged',
+      name: '早八跑团',
+      captain_id: cy,
+    });
+  });
+
+  it('lets the captain remove others, logged apart from leaving, and anyone remove themselves', async () => {
+    const { squad, people } = await squadOf(3);
+    const [ann, bo, cy] = [nth(people, 0), nth(people, 1), nth(people, 2)];
+    await expect(
+      squads.removeMember({ squad: squad.id, member: bo, removed: cy }),
+    ).rejects.toMatchObject({ reason: 'NOT_SQUAD_CAPTAIN' });
+    await squads.removeMember({ squad: squad.id, member: ann, removed: cy });
+    await squads.removeMember({ squad: squad.id, member: ann, removed: cy });
+    await squads.removeMember({ squad: squad.id, member: bo, removed: bo });
+    expect(await squads.membersOf(squad.id)).toStrictEqual([ann]);
+    const { rows } = await sql<{ member_id: string; kind: string }>`
+      select member_id, kind from public.squad_membership_events where squad_id = ${squad.id} order by id
+    `.execute(db);
+    expect(rows.slice(3)).toStrictEqual([
+      { member_id: cy, kind: 'removed' },
+      { member_id: bo, kind: 'left' },
+    ]);
+  });
+
+  it('passes to the earliest member left when the captain leaves', async () => {
+    const { squad, people } = await squadOf(3);
+    const [ann, bo] = [nth(people, 0), nth(people, 1)];
+    await squads.leave({ squad: squad.id, member: ann });
+    expect((await squads.find({ squad: squad.id, viewer: bo })).captain).toBe(bo);
+    expect((await settingsLog(squad.id)).at(-1)).toStrictEqual({
+      actor_id: ann,
+      kind: 'captainChanged',
+      name: '早八跑团',
+      captain_id: bo,
+    });
+  });
+
+  it('passes to the earliest member when the captain deletes their account', async () => {
+    const { squad, people } = await squadOf(2);
+    const [ann, bo] = [nth(people, 0), nth(people, 1)];
+    await sql`delete from auth.users where id = ${ann}`.execute(db);
+    expect((await squads.find({ squad: squad.id, viewer: bo })).captain).toBe(bo);
+    await squads.rename({ squad: squad.id, member: bo, name: name('新队名') });
+  });
+
+  it('keeps the settings log append-only', async () => {
+    const { squad } = await squadOf(1);
+    await expect(
+      sql`update public.squad_events set name = 'x' where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      sql`delete from public.squad_events where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
   });
 });
