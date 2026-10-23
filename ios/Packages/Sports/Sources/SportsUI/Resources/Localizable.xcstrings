@@ -14,6 +14,12 @@
             "state": "translated",
             "value": "Aerobics"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有氧舞蹈"
+          }
         }
       }
     },
@@ -29,6 +35,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Badminton"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "羽球"
           }
         }
       }
@@ -46,6 +58,12 @@
             "state": "translated",
             "value": "Barre"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "barre"
+          }
         }
       }
     },
@@ -61,6 +79,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Baseball and softball"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "棒壘球"
           }
         }
       }
@@ -78,6 +102,12 @@
             "state": "translated",
             "value": "Basketball"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "籃球"
+          }
         }
       }
     },
@@ -93,6 +123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bike commute"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "騎車通勤"
           }
         }
       }
@@ -110,6 +146,12 @@
             "state": "translated",
             "value": "Boxing"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拳擊"
+          }
         }
       }
     },
@@ -126,6 +168,12 @@
             "state": "translated",
             "value": "Climb"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "攀岩"
+          }
         }
       }
     },
@@ -138,6 +186,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CrossFit"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "CrossFit"
@@ -158,6 +212,12 @@
             "state": "translated",
             "value": "Dance"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "舞蹈"
+          }
         }
       }
     },
@@ -173,6 +233,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deep clean"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大掃除"
           }
         }
       }
@@ -190,6 +256,12 @@
             "state": "translated",
             "value": "Dog walk"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遛狗"
+          }
         }
       }
     },
@@ -205,6 +277,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Elliptical"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滑步機"
           }
         }
       }
@@ -222,6 +300,12 @@
             "state": "translated",
             "value": "Gardening"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "園藝"
+          }
         }
       }
     },
@@ -238,6 +322,12 @@
             "state": "translated",
             "value": "Golf"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高爾夫"
+          }
         }
       }
     },
@@ -250,6 +340,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HIIT"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "HIIT"
@@ -270,6 +366,12 @@
             "state": "translated",
             "value": "Hike"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健行"
+          }
         }
       }
     },
@@ -282,6 +384,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hyrox"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Hyrox"
@@ -302,6 +410,12 @@
             "state": "translated",
             "value": "Jiu-jitsu"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "巴西柔術"
+          }
         }
       }
     },
@@ -317,6 +431,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jump rope"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳繩"
           }
         }
       }
@@ -334,6 +454,12 @@
             "state": "translated",
             "value": "Kayak"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "獨木舟"
+          }
         }
       }
     },
@@ -349,6 +475,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kettlebell"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壺鈴"
           }
         }
       }
@@ -366,6 +498,12 @@
             "state": "translated",
             "value": "Kickboxing"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "泰拳踢拳"
+          }
         }
       }
     },
@@ -381,6 +519,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Martial arts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "武術"
           }
         }
       }
@@ -398,6 +542,12 @@
             "state": "translated",
             "value": "Mat Pilates"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "墊上皮拉提斯"
+          }
         }
       }
     },
@@ -413,6 +563,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mountain biking"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登山車"
           }
         }
       }
@@ -430,6 +586,12 @@
             "state": "translated",
             "value": "Moving"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搬家"
+          }
         }
       }
     },
@@ -445,6 +607,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paddleboard"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立槳"
           }
         }
       }
@@ -462,6 +630,12 @@
             "state": "translated",
             "value": "Pickleball"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹克球"
+          }
         }
       }
     },
@@ -477,6 +651,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reformer Pilates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "器械皮拉提斯"
           }
         }
       }
@@ -494,6 +674,12 @@
             "state": "translated",
             "value": "Road cycling"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公路車"
+          }
         }
       }
     },
@@ -509,6 +695,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rowing"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "划船機"
           }
         }
       }
@@ -526,6 +718,12 @@
             "state": "translated",
             "value": "Run"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步"
+          }
         }
       }
     },
@@ -541,6 +739,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skate"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "溜冰"
           }
         }
       }
@@ -558,6 +762,12 @@
             "state": "translated",
             "value": "Ski"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滑雪"
+          }
         }
       }
     },
@@ -573,6 +783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Snowboard"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "單板"
           }
         }
       }
@@ -590,6 +806,12 @@
             "state": "translated",
             "value": "Soccer"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "足球"
+          }
         }
       }
     },
@@ -605,6 +827,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Spin"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "飛輪"
           }
         }
       }
@@ -622,6 +850,12 @@
             "state": "translated",
             "value": "Squash"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壁球"
+          }
         }
       }
     },
@@ -637,6 +871,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Strength training"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重訓"
           }
         }
       }
@@ -654,6 +894,12 @@
             "state": "translated",
             "value": "Stretching"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "伸展"
+          }
         }
       }
     },
@@ -669,6 +915,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stroller walk"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推車散步"
           }
         }
       }
@@ -686,6 +938,12 @@
             "state": "translated",
             "value": "Surf"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "衝浪"
+          }
         }
       }
     },
@@ -701,6 +959,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Swim"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "游泳"
           }
         }
       }
@@ -718,6 +982,12 @@
             "state": "translated",
             "value": "Table tennis"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌球"
+          }
         }
       }
     },
@@ -733,6 +1003,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tennis"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球"
           }
         }
       }
@@ -750,6 +1026,12 @@
             "state": "translated",
             "value": "Trail run"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "越野跑"
+          }
         }
       }
     },
@@ -765,6 +1047,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ultimate"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "飛盤"
           }
         }
       }
@@ -782,6 +1070,12 @@
             "state": "translated",
             "value": "Volleyball"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "排球"
+          }
         }
       }
     },
@@ -797,6 +1091,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Walk"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快走"
           }
         }
       }
@@ -814,6 +1114,12 @@
             "state": "translated",
             "value": "Walk commute"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "走路通勤"
+          }
         }
       }
     },
@@ -829,6 +1135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yoga"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瑜伽"
           }
         }
       }
@@ -846,6 +1158,12 @@
             "state": "translated",
             "value": "Ball sports"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "球類"
+          }
         }
       }
     },
@@ -861,6 +1179,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cardio and classes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有氧和課程"
           }
         }
       }
@@ -878,6 +1202,12 @@
             "state": "translated",
             "value": "Combat"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "格鬥"
+          }
         }
       }
     },
@@ -893,6 +1223,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cycling"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "單車"
           }
         }
       }
@@ -910,6 +1246,12 @@
             "state": "translated",
             "value": "Dance"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "舞蹈"
+          }
         }
       }
     },
@@ -925,6 +1267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Everyday counts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生活也算練"
           }
         }
       }
@@ -942,6 +1290,12 @@
             "state": "translated",
             "value": "Mind and body"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "身心"
+          }
         }
       }
     },
@@ -957,6 +1311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Outdoor and winter"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "戶外和冬季"
           }
         }
       }
@@ -974,6 +1334,12 @@
             "state": "translated",
             "value": "Racket"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "球拍"
+          }
         }
       }
     },
@@ -989,6 +1355,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Run and walk"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步健走"
           }
         }
       }
@@ -1006,6 +1378,12 @@
             "state": "translated",
             "value": "Strength"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重訓"
+          }
         }
       }
     },
@@ -1021,6 +1399,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Water"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "水上"
           }
         }
       }

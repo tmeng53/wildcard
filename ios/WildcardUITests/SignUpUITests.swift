@@ -163,6 +163,49 @@ final class SignUpUITests: XCTestCase {
         keepScreenshot(named: "50-signup-week-en")
     }
 
+    /// Making a squad in Traditional Chinese, which reads in Taiwan's words, not converted ones.
+    func testStartingASquadInTraditionalChinese() {
+        let app = launch(language: "zh-Hant")
+        let signIn = app.buttons["signup.signIn"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
+        XCTAssertEqual(signIn.label, "使用 Apple 繼續")
+        XCTAssertTrue(app.links["使用條款"].exists, "the terms line has no link to the terms")
+        XCTAssertTrue(app.links["隱私權政策"].exists, "the terms line has no link to the privacy policy")
+        settle()
+        keepScreenshot(named: "51-signup-open-zh-hant")
+        signIn.tap()
+        let editorDone = app.buttons["editor.done"]
+        XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "the editor never appeared")
+        let nickname = app.textFields["editor.nickname"]
+        nickname.tap()
+        nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
+        nickname.typeText("Tracy")
+        waitFor(editorDone, "isEnabled == true", "就這樣 stays off with a nickname")
+        settle()
+        keepScreenshot(named: "52-signup-character-zh-hant")
+        editorDone.tap()
+
+        let squadDone = app.buttons["squad.done"]
+        XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "the squad step never appeared")
+        XCTAssertEqual(app.textFields["squad.name"].value as? String, "Tracy 的小隊")
+        XCTAssertEqual(squadDone.label, "建立小隊")
+        keepScreenshot(named: "53-signup-squad-zh-hant")
+        app.buttons["squad.aiConsent"].tap()
+        waitFor(squadDone, "isEnabled == true", "建立小隊 stays off after agreeing")
+        squadDone.tap()
+
+        let skip = app.buttons["sports.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the sports step never appeared")
+        settle()
+        keepScreenshot(named: "54-signup-sports-zh-hant")
+        skip.tap()
+        let count = app.staticTexts["week.count"]
+        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
+        XCTAssertEqual(count.label, "每週訓練 5/7 天")
+        settle()
+        keepScreenshot(named: "55-signup-week-zh-hant")
+    }
+
     private func launch(language: String) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

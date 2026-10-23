@@ -8,6 +8,12 @@
             "state": "translated",
             "value": "M"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一"
+          }
         }
       }
     },
@@ -17,6 +23,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "W"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三"
           }
         }
       }
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "Next"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一步"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Neutrals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中性色"
           }
         }
       }
@@ -48,6 +72,12 @@
             "state": "translated",
             "value": "Primary button, one per screen"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主按鈕，一個畫面一個"
+          }
         }
       }
     },
@@ -57,6 +87,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Primary button: the scene's color"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主按鈕：目前的場景色"
           }
         }
       }
@@ -68,6 +104,12 @@
             "state": "translated",
             "value": "Primary action, selected"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主要操作、已選取"
+          }
         }
       }
     },
@@ -77,6 +119,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Text"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主文字"
           }
         }
       }
@@ -88,6 +136,12 @@
             "state": "translated",
             "value": "T"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二"
+          }
         }
       }
     },
@@ -97,6 +151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "F"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五"
           }
         }
       }
@@ -108,6 +168,12 @@
             "state": "translated",
             "value": "Today"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
+          }
         }
       }
     },
@@ -117,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "3 trained today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天 3 人練了"
           }
         }
       }
@@ -128,6 +200,12 @@
             "state": "translated",
             "value": "Swam 2 km today, the water was a bit cold"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天游了 2 公里，水有點冰"
+          }
         }
       }
     },
@@ -137,6 +215,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Today's day-off note"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日假單"
           }
         }
       }
@@ -148,6 +232,12 @@
             "state": "translated",
             "value": "Later"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "之後再選"
+          }
         }
       }
     },
@@ -157,6 +247,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Task titles and controls"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "任務頁標題和控制項"
           }
         }
       }
@@ -168,6 +264,12 @@
             "state": "translated",
             "value": "Rest day"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "休息日"
+          }
         }
       }
     },
@@ -177,6 +279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "假"
           }
         }
       }
@@ -188,6 +296,12 @@
             "state": "translated",
             "value": "Clean meal"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康餐"
+          }
         }
       }
     },
@@ -197,6 +311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gym"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健身房"
           }
         }
       }
@@ -208,6 +328,12 @@
             "state": "translated",
             "value": "Page: changing screens"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全螢幕：換頁"
+          }
         }
       }
     },
@@ -217,6 +343,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "All"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部"
           }
         }
       }
@@ -228,6 +360,12 @@
             "state": "translated",
             "value": "S"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "六"
+          }
         }
       }
     },
@@ -237,6 +375,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Six text sizes, Semibold at most"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "六級中文字級，最粗 600"
           }
         }
       }
@@ -248,6 +392,12 @@
             "state": "translated",
             "value": "Close"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
+          }
         }
       }
     },
@@ -257,6 +407,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Blocks, unselected"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內區塊、未選取"
           }
         }
       }
@@ -268,6 +424,12 @@
             "state": "translated",
             "value": "Let's go!"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "衝衝衝！"
+          }
         }
       }
     },
@@ -277,6 +439,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lineup"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表"
           }
         }
       }
@@ -288,6 +456,12 @@
             "state": "translated",
             "value": "Dividers, to do"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分隔線、未完成"
+          }
         }
       }
     },
@@ -297,6 +471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Switches and picks"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切換和選擇"
           }
         }
       }
@@ -308,6 +488,12 @@
             "state": "translated",
             "value": "Lists"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列表"
+          }
         }
       }
     },
@@ -317,6 +503,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除"
           }
         }
       }
@@ -328,6 +520,12 @@
             "state": "translated",
             "value": "Strength"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重訓"
+          }
         }
       }
     },
@@ -337,6 +535,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Feed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "動態"
           }
         }
       }
@@ -348,6 +552,12 @@
             "state": "translated",
             "value": "Motion"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "動態效果"
+          }
         }
       }
     },
@@ -357,6 +567,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sheet: opening in place"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "半螢幕：展開、彈出"
           }
         }
       }
@@ -368,6 +584,12 @@
             "state": "translated",
             "value": "Cards"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡片"
+          }
         }
       }
     },
@@ -377,6 +599,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cards, status rings, progress"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡片、狀態圈、進度"
           }
         }
       }
@@ -388,6 +616,12 @@
             "state": "translated",
             "value": "Check in"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去打卡"
+          }
         }
       }
     },
@@ -397,6 +631,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Post"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發布"
           }
         }
       }
@@ -408,6 +648,12 @@
             "state": "translated",
             "value": "Change: selection, switches, no bounce"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "變色：選取、切換，不回彈"
+          }
         }
       }
     },
@@ -417,6 +663,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Catchphrase"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口頭禪"
           }
         }
       }
@@ -428,6 +680,12 @@
             "state": "translated",
             "value": "Sure"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以"
+          }
         }
       }
     },
@@ -437,6 +695,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skip Leg Day Club"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週三不練腿俱樂部"
           }
         }
       }
@@ -448,6 +712,12 @@
             "state": "translated",
             "value": "T"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四"
+          }
         }
       }
     },
@@ -457,6 +727,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Back to start"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回到起點"
           }
         }
       }
@@ -468,6 +744,12 @@
             "state": "translated",
             "value": "Picture picks and swatches"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圖片選項和色塊"
+          }
         }
       }
     },
@@ -477,6 +759,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corners: only buttons are capsules"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圓角：只有按鈕是膠囊"
           }
         }
       }
@@ -488,6 +776,12 @@
             "state": "translated",
             "value": "On the scene: solid white cards"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "場景上：實心白卡片"
+          }
         }
       }
     },
@@ -497,6 +791,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scene floor"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "場景底"
           }
         }
       }
@@ -508,6 +808,12 @@
             "state": "translated",
             "value": "Cheat meal confession"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坦白放縱餐"
+          }
         }
       }
     },
@@ -517,6 +823,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Type"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字體"
           }
         }
       }
@@ -528,6 +840,12 @@
             "state": "translated",
             "value": "The character's stage and speech bubble"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小人舞台和對話泡泡"
+          }
         }
       }
     },
@@ -537,6 +855,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mei · Excuse"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小美 · 假單"
           }
         }
       }
@@ -548,6 +872,12 @@
             "state": "translated",
             "value": "Squad"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊"
+          }
         }
       }
     },
@@ -557,6 +887,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "What do you usually do?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平常都練什麼？"
           }
         }
       }
@@ -568,6 +904,12 @@
             "state": "translated",
             "value": "Celebrate: bounces only when a check-in lands"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "慶祝：只在打卡成功那一下回彈"
+          }
         }
       }
     },
@@ -577,6 +919,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Placeholders"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "弱文字、預留位置"
           }
         }
       }
@@ -588,6 +936,12 @@
             "state": "translated",
             "value": "On accent"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強調色上的字"
+          }
         }
       }
     },
@@ -597,6 +951,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Accent wash"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強調淺底"
           }
         }
       }
@@ -608,6 +968,12 @@
             "state": "translated",
             "value": "Accent text"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強調色文字"
+          }
         }
       }
     },
@@ -617,6 +983,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Accent: the scene's color, one per screen"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強調：目前的場景色，一個畫面只有這一種"
           }
         }
       }
@@ -628,6 +1000,12 @@
             "state": "translated",
             "value": "Hiking"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健行"
+          }
         }
       }
     },
@@ -637,6 +1015,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Personality"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "個性"
           }
         }
       }
@@ -648,6 +1032,12 @@
             "state": "translated",
             "value": "Me"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我"
+          }
         }
       }
     },
@@ -657,6 +1047,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Where I am: ink capsule"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我在哪：墨色膠囊"
           }
         }
       }
@@ -668,6 +1064,12 @@
             "state": "translated",
             "value": "I checked in"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我打卡了"
+          }
         }
       }
     },
@@ -677,6 +1079,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "My week"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我這週"
           }
         }
       }
@@ -688,6 +1096,12 @@
             "state": "translated",
             "value": "What I picked: hairline, then an accent border and a check"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我選了什麼：白底細線，選取後是場景色外框加勾"
+          }
         }
       }
     },
@@ -697,6 +1111,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡"
           }
         }
       }
@@ -708,6 +1128,12 @@
             "state": "translated",
             "value": "Checked in"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡了"
+          }
         }
       }
     },
@@ -717,6 +1143,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check-in kinds"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡四類"
           }
         }
       }
@@ -728,6 +1160,12 @@
             "state": "translated",
             "value": "Check-in kind icons"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡四類圖示"
+          }
         }
       }
     },
@@ -737,6 +1175,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check-in kinds: the scene's wash"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡四類：用場景淺底"
           }
         }
       }
@@ -748,6 +1192,12 @@
             "state": "translated",
             "value": "Check-in, opened"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡展開"
+          }
         }
       }
     },
@@ -757,6 +1207,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Press: every button"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下：所有按鈕"
           }
         }
       }
@@ -768,6 +1224,12 @@
             "state": "translated",
             "value": "Buttons"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按鈕"
+          }
         }
       }
     },
@@ -777,6 +1239,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Buttons, headers and tab bar"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按鈕、頁首、標籤列"
           }
         }
       }
@@ -788,6 +1256,12 @@
             "state": "translated",
             "value": "Shuffle"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換一組"
+          }
         }
       }
     },
@@ -797,6 +1271,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Control heights: three only"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "控制項高度：只有三種"
           }
         }
       }
@@ -808,6 +1288,12 @@
             "state": "translated",
             "value": "Search"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋"
+          }
         }
       }
     },
@@ -817,6 +1303,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Play"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "播放"
           }
         }
       }
@@ -828,6 +1320,12 @@
             "state": "translated",
             "value": "Climbing"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "攀岩館"
+          }
         }
       }
     },
@@ -837,6 +1335,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起"
           }
         }
       }
@@ -848,6 +1352,12 @@
             "state": "translated",
             "value": "On the scene floor"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放在場景底"
+          }
         }
       }
     },
@@ -857,6 +1367,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "On white"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放在白底"
           }
         }
       }
@@ -868,6 +1384,12 @@
             "state": "translated",
             "value": "Cheat meal"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放縱餐"
+          }
         }
       }
     },
@@ -877,6 +1399,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Numbers: Barlow Condensed, for numbers only"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "數字：Barlow Condensed，只給數字"
           }
         }
       }
@@ -888,6 +1416,12 @@
             "state": "translated",
             "value": "S"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日"
+          }
         }
       }
     },
@@ -897,6 +1431,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pilates"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "皮拉提斯"
           }
         }
       }
@@ -908,6 +1448,12 @@
             "state": "translated",
             "value": "Buttons, fields, header buttons"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一般按鈕、輸入框、頁首按鈕"
+          }
         }
       }
     },
@@ -917,6 +1463,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "This week"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週"
           }
         }
       }
@@ -928,6 +1480,12 @@
             "state": "translated",
             "value": "Squad this week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週小隊訓練"
+          }
         }
       }
     },
@@ -937,6 +1495,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "My training this week"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週我的訓練"
           }
         }
       }
@@ -948,6 +1512,12 @@
             "state": "translated",
             "value": "Tags"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標籤"
+          }
         }
       }
     },
@@ -957,6 +1527,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tags and switches"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標籤和切換"
           }
         }
       }
@@ -968,6 +1544,12 @@
             "state": "translated",
             "value": "Tab bar: glass, the selected tab on light grey"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標籤列：玻璃，選取的是淺灰塊"
+          }
         }
       }
     },
@@ -977,6 +1559,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Secondary and text buttons"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次要按鈕、文字按鈕"
           }
         }
       }
@@ -988,6 +1576,12 @@
             "state": "translated",
             "value": "Secondary text"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次要文字"
+          }
         }
       }
     },
@@ -997,6 +1591,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Weekly plan"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週計畫"
           }
         }
       }
@@ -1008,6 +1608,12 @@
             "state": "translated",
             "value": "Daily reminder"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日提醒"
+          }
         }
       }
     },
@@ -1017,6 +1623,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chill"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "佛系"
           }
         }
       }
@@ -1028,6 +1640,12 @@
             "state": "translated",
             "value": "Clear"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除"
+          }
         }
       }
     },
@@ -1037,6 +1655,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Swimming"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "游泳"
           }
         }
       }
@@ -1048,6 +1672,12 @@
             "state": "translated",
             "value": "Swim 1 · Run 1"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "游泳 1 · 跑步 1"
+          }
         }
       }
     },
@@ -1057,6 +1687,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pool"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "游泳池"
           }
         }
       }
@@ -1068,6 +1704,12 @@
             "state": "translated",
             "value": "Tap a person: their status, all of it"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點人看狀態：整段顯示"
+          }
         }
       }
     },
@@ -1077,6 +1719,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Status ring"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "狀態圈"
           }
         }
       }
@@ -1088,6 +1736,12 @@
             "state": "translated",
             "value": "Confirm with Apple"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用 Apple 確認"
+          }
         }
       }
     },
@@ -1097,6 +1751,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "On a white page: subtle grey cards"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "白底頁面上：淺灰卡片"
           }
         }
       }
@@ -1108,6 +1768,12 @@
             "state": "translated",
             "value": "Removes this choice"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除這一項"
+          }
         }
       }
     },
@@ -1117,6 +1783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Outfit"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "穿搭"
           }
         }
       }
@@ -1128,6 +1800,12 @@
             "state": "translated",
             "value": "Step %1$lld of %2$lld"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %1$lld 步，共 %2$lld 步"
+          }
         }
       }
     },
@@ -1137,6 +1815,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Basketball"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "籃球"
           }
         }
       }
@@ -1148,6 +1832,12 @@
             "state": "translated",
             "value": "Trained in all"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "累計練了"
+          }
         }
       }
     },
@@ -1157,6 +1847,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "5 on, 2 off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練 5 休 2"
           }
         }
       }
@@ -1168,6 +1864,12 @@
             "state": "translated",
             "value": "Trained"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練了"
+          }
         }
       }
     },
@@ -1177,6 +1879,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thumbnails"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "縮圖"
           }
         }
       }
@@ -1188,6 +1896,12 @@
             "state": "translated",
             "value": "Tennis"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球"
+          }
         }
       }
     },
@@ -1197,6 +1911,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tennis"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球場"
           }
         }
       }
@@ -1208,6 +1928,12 @@
             "state": "translated",
             "value": "Badminton"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "羽球"
+          }
         }
       }
     },
@@ -1217,6 +1943,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Legs still sore, lying flat today, training tomorrow for sure."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "腿還在痠，今天先耍廢，明天一定練。"
           }
         }
       }
@@ -1228,6 +1960,12 @@
             "state": "translated",
             "value": "Pokes"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被戳提醒"
+          }
         }
       }
     },
@@ -1237,6 +1975,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
           }
         }
       }
@@ -1248,6 +1992,12 @@
             "state": "translated",
             "value": "Day off"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假"
+          }
         }
       }
     },
@@ -1257,6 +2007,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Running"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步"
           }
         }
       }
@@ -1268,6 +2024,12 @@
             "state": "translated",
             "value": "Track"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑道"
+          }
         }
       }
     },
@@ -1277,6 +2039,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fields"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輸入框"
           }
         }
       }
@@ -1288,6 +2056,12 @@
             "state": "translated",
             "value": "Back"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回"
+          }
         }
       }
     },
@@ -1297,6 +2071,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not checked in yet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒打卡"
           }
         }
       }
@@ -1308,6 +2088,12 @@
             "state": "translated",
             "value": "Not yet"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒練"
+          }
         }
       }
     },
@@ -1317,6 +2103,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Picks, fields"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選項、輸入框"
           }
         }
       }
@@ -1328,6 +2120,12 @@
             "state": "translated",
             "value": "Reset"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重來"
+          }
         }
       }
     },
@@ -1337,6 +2135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Spacing, corners, control heights"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "間距、圓角、控制項高度"
           }
         }
       }
@@ -1348,6 +2152,12 @@
             "state": "translated",
             "value": "Spacing: seven steps of 4"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "間距：4 的倍數，7 級"
+          }
         }
       }
     },
@@ -1357,6 +2167,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shuffle"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨機換一個"
           }
         }
       }
@@ -1368,6 +2184,12 @@
             "state": "translated",
             "value": "Headers: 44-point circles, at most one on the right"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頁首：44 的圓，右邊最多一個"
+          }
         }
       }
     },
@@ -1377,6 +2199,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Page"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頁面底"
           }
         }
       }
@@ -1388,6 +2216,12 @@
             "state": "translated",
             "value": "Color"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顏色"
+          }
         }
       }
     },
@@ -1397,6 +2231,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cycling"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "騎車"
           }
         }
       }
