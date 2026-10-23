@@ -82,15 +82,15 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
     }
 
-    /// The member's own check-ins on `days` (most recent first): a swim and a healthy meal, then
-    /// a run.
+    /// The member's own check-ins on `days` (most recent first): a run and a healthy meal, then
+    /// a swim. Yesterday's 练了 is the run, so the suggested sport is 跑步 on any weekday.
     private static func myEarlierCheckIns(
         by member: MemberID, on days: [LocalDay], in squad: SquadID, at time: (Double) -> Timestamp
     ) -> [CheckIn] {
         guard let audience = try? Audience([squad]) else { return [] }
         let entries: [[CheckIn.Entry]] = [
-            [.trained(Training(activity: .sport(.swim))), .healthyMeal(Meal())],
-            [.trained(Training(activity: .sport(.run)))],
+            [.trained(Training(activity: .sport(.run))), .healthyMeal(Meal())],
+            [.trained(Training(activity: .sport(.swim)))],
         ]
         return zip(days, entries).enumerated().flatMap { offset, pair in
             pair.1.map { entry in
