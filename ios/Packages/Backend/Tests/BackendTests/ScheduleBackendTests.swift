@@ -27,7 +27,8 @@ private var thisWeek: LocalDay {
     let profile = try await backend.profile()
 
     #expect(profile.nickname == "小林")
-    #expect(profile.timeZone.identifier == "UTC")
+    // Foundation on Linux names UTC "GMT", so compare the zones, not their names.
+    #expect(profile.timeZone == (try #require(TimeZone(identifier: "UTC"))))
     #expect(profile.firstWeek == (try thisWeek))
     #expect(profile.look == CharacterLook(persona: "shy", variants: ["body": "calico"], colors: [:]))
 }
