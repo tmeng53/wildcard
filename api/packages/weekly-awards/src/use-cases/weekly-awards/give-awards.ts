@@ -1,12 +1,12 @@
 import {
+  MiddlePage,
   ModelReply,
-  type Awards,
-  titlesOf,
   topCheckInOf,
-  type MemberId,
+  wordsOf,
+  type Awards,
   type MemberWeek,
   type SquadId,
-  type Title,
+  type SquadPages,
 } from '../../domain/awards.js';
 import { INSTRUCTIONS, promptFor } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
@@ -21,6 +21,8 @@ export interface GiveAwardsInput {
   readonly weekStart: WeekStart;
   /** Everyone in the squad, in the order they joined, with their check-ins before the awards. */
   readonly members: readonly MemberWeek[];
+  /** The squad's pages as the week stood at the awards, for the model to write on. */
+  readonly pages: SquadPages;
 }
 
 /**
@@ -35,7 +37,7 @@ export async function giveAwards(
     readonly store: AwardsStore;
     readonly aiConsented: AiConsented;
   },
-  { squad, weekStart, members }: GiveAwardsInput,
+  { squad, weekStart, members, pages }: GiveAwardsInput,
 ): Promise<Awards> {
   const saved = await deps.store.find(squad, weekStart);
   if (saved?.status === 'given') return saved.awards;
@@ -45,10 +47,10 @@ export async function giveAwards(
     checkedIn.length === 0 ? [] : await deps.aiConsented(checkedIn.map(({ member }) => member)),
   );
   const winners = checkedIn.filter(({ member }) => agreed.has(member));
-  let titles: Titles = new Map<MemberId, Title[]>();
+  let words: Words = { members: new Map(), story: { version: 1, order: [...MiddlePage.options] } };
   if (winners.length > 0) {
     try {
-      titles = await writeTitles(deps.model, { weekStart, winners });
+      words = await writeWords(deps.model, { weekStart, winners, pages });
     } catch (error) {
       await deps.store.recordFailure({ squad, weekStart, error: reasonOf(error) });
       throw error;
@@ -57,12 +59,16 @@ export async function giveAwards(
   const awards: Awards = {
     members: winners.map(({ member, checkIns }) => {
       const topCheckIn = topCheckInOf(checkIns);
+      const { titles = [], line, hottest } = words.members.get(member) ?? {};
       return {
         member,
-        titles: titles.get(member) ?? [],
+        titles,
+        ...(line === undefined ? {} : { line }),
         ...(topCheckIn === undefined ? {} : { topCheckIn }),
+        ...(hottest === undefined ? {} : { hottest }),
       };
     }),
+    story: words.story,
   };
   if (await deps.store.save({ squad, weekStart, awards })) return awards;
   // Another run saved first: theirs stand.
@@ -101,26 +107,31 @@ export function reasonOf(error: unknown): string {
   ].join(' ');
 }
 
-type Titles = NonNullable<ReturnType<typeof titlesOf>>;
+type Words = NonNullable<ReturnType<typeof wordsOf>>;
 
-/** Titles for every winner, asking the model up to twice for an answer that passes the checks. */
-async function writeTitles(
+/**
+ * The words for every winner and the squad's pages, asking the model up to twice for an answer
+ * that passes the checks.
+ */
+async function writeWords(
   model: LanguageModel,
   {
     weekStart,
     winners,
-  }: { readonly weekStart: WeekStart; readonly winners: readonly MemberWeek[] },
-): Promise<Titles> {
-  const prompt = promptFor({ weekStart, members: winners });
+    pages,
+  }: {
+    readonly weekStart: WeekStart;
+    readonly winners: readonly MemberWeek[];
+    readonly pages: SquadPages;
+  },
+): Promise<Words> {
+  const prompt = promptFor({ weekStart, members: winners, pages });
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {
       const reply = await model.answer({ instructions: INSTRUCTIONS, prompt, reply: ModelReply });
-      const titles = titlesOf(
-        reply,
-        winners.map(({ member }) => member),
-      );
-      if (titles !== undefined) return titles;
+      const words = wordsOf(reply, { members: winners, pages });
+      if (words !== undefined) return words;
       cause = FAILED_CHECKS;
     } catch (error) {
       cause = error;

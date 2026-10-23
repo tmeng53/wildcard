@@ -317,3 +317,104 @@ describe('a squad’s week summary', () => {
     ).rejects.toMatchObject({ reason: 'SQUAD_NOT_JOINED' });
   });
 });
+
+describe('a squad’s week for its awards', () => {
+  it('gives the 战报’s pages from the check-ins made before the awards', async () => {
+    const ace = await newMember('America/Los_Angeles');
+    const tokyo = await newMember('Asia/Tokyo');
+    const me = await newMember('America/Los_Angeles');
+    const quiet = await newMember();
+    const squad = await newSquad(ace, tokyo, me, quiet);
+
+    // Ace keeps the default plan (rest on Wednesday and Sunday) and trains its 5 days.
+    for (const day of ['2026-10-19', '2026-10-20', '2026-10-22', '2026-10-23', '2026-10-24']) {
+      await checkedIn(ace, { kind: 'trained', day, audience: [squad] });
+    }
+    // Tokyo plans 3 days and trains all 3.
+    await planned(tokyo, {
+      monday: '2026-10-19',
+      days: [train, train, train, rest, rest, rest, rest],
+    });
+    for (const day of ['2026-10-19', '2026-10-20', '2026-10-21']) {
+      await checkedIn(tokyo, { kind: 'trained', day, audience: [squad] });
+    }
+    // Me: one day trained, a 请假条, a 健康餐 and two 放纵餐; Sunday's 练了 comes after the awards.
+    await checkedIn(me, { kind: 'trained', day: '2026-10-19', audience: [squad] });
+    const note = await checkedIn(me, { kind: 'disclaimer', day: '2026-10-21', audience: [squad] });
+    await checkedIn(me, { kind: 'healthyMeal', day: '2026-10-22', audience: [squad] });
+    await checkedIn(me, { kind: 'cheatMeal', day: '2026-10-23', audience: [squad] });
+    await checkedIn(me, { kind: 'cheatMeal', day: '2026-10-24', audience: [squad] });
+    await checkedIn(me, { kind: 'trained', day: '2026-10-25', audience: [squad] });
+    await reacted(ace, [note, '😂']);
+
+    const { pages } = await checkIns.squadWeekCheckIns({
+      squad,
+      weekStart: week,
+      before: new Date('2026-10-25T12:00:00.000Z'),
+    });
+    const days = (...kinds: string[]) =>
+      kinds.map((kind, index) => ({
+        day: `2026-10-${String(19 + index)}`,
+        ...(kind === 'run' ? { kind: 'trained', sport: 'run' } : { kind }),
+      }));
+    expect(pages).toStrictEqual({
+      podium: { champion: ace, sides: [tokyo] },
+      members: [
+        {
+          member: ace,
+          plannedDays: 5,
+          trainedDays: 5,
+          days: days('run', 'run', 'rest', 'run', 'run', 'run', 'rest'),
+          healthyMeals: 0,
+          cheatMeals: 0,
+          reactionsReceived: 0,
+          checkedIn: true,
+        },
+        {
+          member: tokyo,
+          plannedDays: 3,
+          trainedDays: 3,
+          days: days('run', 'run', 'run', 'rest', 'rest', 'rest', 'rest'),
+          healthyMeals: 0,
+          cheatMeals: 0,
+          reactionsReceived: 0,
+          checkedIn: true,
+        },
+        {
+          member: me,
+          plannedDays: 5,
+          trainedDays: 1,
+          days: days('run', 'none', 'disclaimer', 'none', 'none', 'none', 'rest'),
+          healthyMeals: 1,
+          cheatMeals: 2,
+          reactionsReceived: 1,
+          checkedIn: true,
+        },
+        {
+          member: quiet,
+          plannedDays: 5,
+          trainedDays: 0,
+          days: days('none', 'none', 'rest', 'none', 'none', 'none', 'rest'),
+          healthyMeals: 0,
+          cheatMeals: 0,
+          reactionsReceived: 0,
+          checkedIn: false,
+        },
+      ],
+      meals: { healthy: 1, cheat: 2, eaters: [{ member: me, more: 'cheat' }] },
+      bestDisclaimer: { checkIn: note, author: me, text: '下雨', reactions: 1 },
+      ending: { done: 9, plan: 18 },
+    });
+  });
+
+  it('leaves out the pages a quiet week has nothing for', async () => {
+    const quiet = await newMember();
+    const squad = await newSquad(quiet);
+    const { pages } = await checkIns.squadWeekCheckIns({
+      squad,
+      weekStart: week,
+      before: new Date('2026-10-25T12:00:00.000Z'),
+    });
+    expect(Object.keys(pages)).toStrictEqual(['members']);
+  });
+});

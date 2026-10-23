@@ -31,6 +31,7 @@ export interface WeeklyAwards {
   notified_at: Timestamp | null;
   nudged_failures: number | null;
   squad_id: string;
+  story: Json | null;
   week_start: string;
 }
 

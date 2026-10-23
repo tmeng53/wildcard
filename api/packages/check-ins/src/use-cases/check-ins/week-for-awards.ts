@@ -1,8 +1,10 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
 import { weekOf } from '../../domain/days.js';
 import type { Reaction } from '../../domain/reaction.js';
-import type { WeekStart } from '../../domain/weekly-plan.js';
-import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
+import { weekPagesOf, type WeekPages } from '../../domain/week-pages.js';
+import { plannedTrainingDays, type WeekStart } from '../../domain/weekly-plan.js';
+import type { CheckInStore, ReactionStore, SquadMembership, WeeklyPlanStore } from '../../ports.js';
+import { findWeeklyPlan } from '../weekly-plans.js';
 
 /** A squad's week as it stood at a moment, for the week's awards. */
 export interface SquadWeekCheckIns {
@@ -13,6 +15,8 @@ export interface SquadWeekCheckIns {
   }[];
   /** Reactions on those check-ins from members of the squad now; one without any is left out. */
   readonly reactions: ReadonlyMap<CheckInId, readonly Reaction[]>;
+  /** The 战报's pages without AI, from these check-ins and the members' plans. */
+  readonly pages: WeekPages;
 }
 
 /** The squads that got a check-in for a day of the week made before `before`. */
@@ -34,6 +38,7 @@ export async function squadWeekCheckIns(
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly reactions: ReactionStore;
+    readonly plans: WeeklyPlanStore;
   },
   {
     squad,
@@ -41,8 +46,13 @@ export async function squadWeekCheckIns(
     before,
   }: { readonly squad: SquadId; readonly weekStart: WeekStart; readonly before: Date },
 ): Promise<SquadWeekCheckIns> {
-  const { from, to } = weekOf(weekStart);
+  const week = weekOf(weekStart);
+  const { from, to } = week;
   const memberIds = await deps.membership.membersOf(squad);
+  // A squad has at most 8 members, so one plan read each is fine.
+  const plans = await Promise.all(
+    memberIds.map((member) => findWeeklyPlan({ store: deps.plans }, { member, weekStart })),
+  );
   const checkIns = (await deps.store.listForSquad({ squad, members: memberIds, from, to }))
     .filter(({ createdAt }) => createdAt < before)
     .toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -53,11 +63,18 @@ export async function squadWeekCheckIns(
     const fromSquad = each.filter(({ member }) => inSquad.has(member));
     if (fromSquad.length > 0) reactions.set(checkIn, fromSquad);
   }
+  const members = memberIds.map((member, index) => ({
+    member,
+    plannedDays: plannedTrainingDays(plans[index]?.days ?? []),
+    checkIns: checkIns.filter((each) => each.member === member),
+  }));
+  const pages = weekPagesOf(
+    { week, members, reactions },
+    new Map(memberIds.map((member, index) => [member, plans[index]?.days ?? []])),
+  );
   return {
-    members: memberIds.map((member) => ({
-      member,
-      checkIns: checkIns.filter((each) => each.member === member),
-    })),
+    members: members.map(({ member, checkIns: theirs }) => ({ member, checkIns: theirs })),
     reactions,
+    pages,
   };
 }

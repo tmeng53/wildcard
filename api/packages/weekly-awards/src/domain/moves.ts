@@ -32,3 +32,11 @@ export const AwardMove = z.enum([
   'fullbelly',
 ]);
 export type AwardMove = z.infer<typeof AwardMove>;
+
+/** How teammates react to the best 请假条. */
+export const SquadMove = z.enum(['laugh', 'pump', 'wave']);
+export type SquadMove = z.infer<typeof SquadMove>;
+
+/** The squad's move on the ending: `pump` or `wave` when it hit its plan, else `warmup`, `stretch` or `pump`. */
+export const EndingMove = z.enum(['pump', 'wave', 'warmup', 'stretch']);
+export type EndingMove = z.infer<typeof EndingMove>;

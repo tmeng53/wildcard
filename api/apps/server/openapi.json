@@ -2477,8 +2477,23 @@
                 ],
                 "additionalProperties": false
               },
+              "podium": {
+                "$ref": "#/components/schemas/StoryPodium"
+              },
+              "myWeek": {
+                "$ref": "#/components/schemas/StoryMyWeek"
+              },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
+              },
+              "meals": {
+                "$ref": "#/components/schemas/StoryMeals"
+              },
+              "bestDisclaimer": {
+                "$ref": "#/components/schemas/StoryBestDisclaimer"
+              },
+              "ending": {
+                "$ref": "#/components/schemas/StoryEnding"
               },
               "status": {
                 "type": "string",
@@ -2512,6 +2527,22 @@
                   "additionalProperties": false
                 },
                 "description": "Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too."
+              },
+              "order": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "podium",
+                    "titles",
+                    "myWeek",
+                    "hottest",
+                    "meals",
+                    "bestDisclaimer",
+                    "ending"
+                  ]
+                },
+                "description": "The pages in the order the AI picked: `podium` and `titles` first, `ending` last. Skip a page whose data is missing. Missing when the AI picked none."
               }
             },
             "required": [
@@ -2568,8 +2599,23 @@
                 ],
                 "additionalProperties": false
               },
+              "podium": {
+                "$ref": "#/components/schemas/StoryPodium"
+              },
+              "myWeek": {
+                "$ref": "#/components/schemas/StoryMyWeek"
+              },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
+              },
+              "meals": {
+                "$ref": "#/components/schemas/StoryMeals"
+              },
+              "bestDisclaimer": {
+                "$ref": "#/components/schemas/StoryBestDisclaimer"
+              },
+              "ending": {
+                "$ref": "#/components/schemas/StoryEnding"
               },
               "status": {
                 "type": "string",
@@ -2585,9 +2631,127 @@
               "status"
             ],
             "additionalProperties": false,
-            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
+            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual, without the AI’s lines and moves, in the default order. Read again later."
           }
         ]
+      },
+      "StoryPodium": {
+        "type": "object",
+        "properties": {
+          "champion": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The crown winner, in the middle."
+          },
+          "sides": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 2,
+            "description": "Up to 2 others who finished their plan, left then right."
+          },
+          "speech": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The champion’s award line (颁奖词), at most 24 characters. Written by the AI: only once `ready`, and missing when it wrote none."
+          },
+          "championMove": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The champion’s move after the crown toss. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          },
+          "sideMove": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The sides’ move. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          }
+        },
+        "required": [
+          "champion",
+          "sides"
+        ],
+        "additionalProperties": false,
+        "description": "领奖台: missing when nobody trained at least as many days as they planned (and one)."
+      },
+      "StoryMyWeek": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Training days in the reader’s plan."
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryDay"
+            },
+            "minItems": 7,
+            "maxItems": 7,
+            "description": "Monday first."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A line about the reader’s week, at most 12 characters. Written by the AI: only once `ready`, and missing when it wrote none."
+          },
+          "healthyMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "健康餐 they checked in."
+          },
+          "cheatMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "坦白放纵餐 they checked in."
+          },
+          "reactionsReceived": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Teammates’ reactions on their check-ins."
+          }
+        },
+        "required": [
+          "plan",
+          "days",
+          "healthyMeals",
+          "cheatMeals",
+          "reactionsReceived"
+        ],
+        "additionalProperties": false,
+        "description": "你的一周, the signed-in member’s: missing when they checked in nothing."
+      },
+      "StoryDay": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained",
+              "rest",
+              "disclaimer",
+              "none"
+            ],
+            "description": "`trained` wins over `disclaimer` (a 请假条), which wins over a planned `rest` day; `none` is a day with nothing checked in."
+          },
+          "sport": {
+            "type": "string",
+            "description": "For a trained day: its first 练了’s sport key, or the name of the member’s own."
+          }
+        },
+        "required": [
+          "day",
+          "kind"
+        ],
+        "additionalProperties": false
       },
       "StoryHottest": {
         "type": "object",
@@ -2649,6 +2813,17 @@
               "additionalProperties": false
             },
             "description": "Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A line answering the check-in, at most 18 characters. Written by the AI: only once `ready`, and missing when it wrote none."
+          },
+          "move": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The reader’s move next to it. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
           }
         },
         "required": [
@@ -2659,7 +2834,7 @@
           "reactions"
         ],
         "additionalProperties": false,
-        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any."
+        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. Missing when none of theirs had any."
       },
       "StoryPhoto": {
         "type": "object",
@@ -2678,6 +2853,139 @@
           "url"
         ],
         "additionalProperties": false
+      },
+      "StoryMeals": {
+        "type": "object",
+        "properties": {
+          "healthy": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The squad’s 健康餐."
+          },
+          "cheat": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The squad’s 坦白放纵餐."
+          },
+          "eaters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "more": {
+                  "type": "string",
+                  "enum": [
+                    "healthy",
+                    "cheat"
+                  ],
+                  "description": "What they checked in more of, `healthy` on a tie."
+                }
+              },
+              "required": [
+                "member",
+                "more"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "Everyone who checked in a meal, in the order they joined."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A line about the squad’s meals, at most 14 characters. Written by the AI: only once `ready`, and missing when it wrote none."
+          }
+        },
+        "required": [
+          "healthy",
+          "cheat",
+          "eaters"
+        ],
+        "additionalProperties": false,
+        "description": "吃了: missing when nobody checked in a meal."
+      },
+      "StoryBestDisclaimer": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reactions": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Teammates’ reactions on it."
+          },
+          "authorMove": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The author acting the note out. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          },
+          "squadMove": {
+            "type": "string",
+            "minLength": 1,
+            "description": "How two teammates react: `laugh`, `pump` or `wave`. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          }
+        },
+        "required": [
+          "checkIn",
+          "author",
+          "text",
+          "reactions"
+        ],
+        "additionalProperties": false,
+        "description": "最佳请假条: the one with the most reactions (at least one), the earliest on a tie; missing when none had any."
+      },
+      "StoryEnding": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days the squad trained, added up over the members."
+          },
+          "plan": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days the squad planned, added up over the members."
+          },
+          "headline": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The headline, such as 稳了 or 差一点, at most 4 characters. Written by the AI: only once `ready`, and missing when it wrote none."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A funny line about the week, never guilt, at most 18 characters. Written by the AI: only once `ready`, and missing when it wrote none."
+          },
+          "move": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The squad’s move. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "example": "pump"
+          }
+        },
+        "required": [
+          "done",
+          "plan"
+        ],
+        "additionalProperties": false,
+        "description": "这一周: missing when nobody trained, so a quiet week isn’t told how short it fell."
       },
       "StoryTitle": {
         "type": "object",

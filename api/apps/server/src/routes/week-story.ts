@@ -3,18 +3,23 @@ import { Emoji, LocalDay, SquadId, WeekStart } from '@wildcard/check-ins';
 import {
   AWARD_MOVES,
   CheckInKind,
+  ENDING_LINE_MAX,
+  HEADLINE_MAX,
+  HOTTEST_LINE_MAX,
+  MEALS_LINE_MAX,
+  MY_WEEK_LINE_MAX,
   SPEECH_MAX,
   TITLE_MAX,
   TITLES_MAX,
   SquadId as AwardsSquad,
   WeekStart as AwardsWeek,
-  type TopCheckIn,
 } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
 import {
   nudgeOrganisers,
   squadStory,
+  type SquadStory,
   type WeeklyAwardsDependencies,
 } from '../flows/weekly-awards.js';
 import { PhotoPath, type PhotoStorage, type VerifyToken } from '../ports.js';
@@ -59,6 +64,105 @@ const Title = z
   })
   .openapi('StoryTitle');
 
+/** Words an AI writes on a page: only once `ready`, and only when it wrote them. */
+const line = (max: number, description: string) =>
+  z
+    .string()
+    .min(1)
+    .optional()
+    .meta({
+      description: `${description}, at most ${String(max)} characters. Written by the AI: only once \`ready\`, and missing when it wrote none.`,
+    });
+
+/** A move an AI picks for a page: only once `ready`. */
+const aiMove = (description: string) =>
+  move(`${description} Picked by the AI: only once \`ready\`.`).optional();
+
+const count = (description: string) => z.int().min(0).meta({ description });
+
+const Podium = z
+  .strictObject({
+    champion: z.uuid().meta({ description: 'The crown winner, in the middle.' }),
+    sides: z
+      .array(z.uuid())
+      .max(2)
+      .meta({ description: 'Up to 2 others who finished their plan, left then right.' }),
+    speech: line(SPEECH_MAX, 'The champion’s award line (颁奖词)'),
+    championMove: aiMove('The champion’s move after the crown toss.'),
+    sideMove: aiMove('The sides’ move.'),
+  })
+  .openapi('StoryPodium');
+
+const MyWeek = z
+  .strictObject({
+    plan: count('Training days in the reader’s plan.'),
+    days: z
+      .array(
+        z
+          .strictObject({
+            day: LocalDay,
+            kind: z.enum(['trained', 'rest', 'disclaimer', 'none']).meta({
+              description:
+                '`trained` wins over `disclaimer` (a 请假条), which wins over a planned `rest` day; ' +
+                '`none` is a day with nothing checked in.',
+            }),
+            sport: z.string().optional().meta({
+              description:
+                'For a trained day: its first 练了’s sport key, or the name of the member’s own.',
+            }),
+          })
+          .openapi('StoryDay'),
+      )
+      .min(7)
+      .max(7)
+      .meta({ description: 'Monday first.' }),
+    line: line(MY_WEEK_LINE_MAX, 'A line about the reader’s week'),
+    healthyMeals: count('健康餐 they checked in.'),
+    cheatMeals: count('坦白放纵餐 they checked in.'),
+    reactionsReceived: count('Teammates’ reactions on their check-ins.'),
+  })
+  .openapi('StoryMyWeek');
+
+const Meals = z
+  .strictObject({
+    healthy: count('The squad’s 健康餐.'),
+    cheat: count('The squad’s 坦白放纵餐.'),
+    eaters: z
+      .array(
+        z.strictObject({
+          member: z.uuid(),
+          more: z.enum(['healthy', 'cheat']).meta({
+            description: 'What they checked in more of, `healthy` on a tie.',
+          }),
+        }),
+      )
+      .min(1)
+      .meta({ description: 'Everyone who checked in a meal, in the order they joined.' }),
+    line: line(MEALS_LINE_MAX, 'A line about the squad’s meals'),
+  })
+  .openapi('StoryMeals');
+
+const BestDisclaimer = z
+  .strictObject({
+    checkIn: z.uuid(),
+    author: z.uuid(),
+    text: z.string().min(1),
+    reactions: z.int().min(1).meta({ description: 'Teammates’ reactions on it.' }),
+    authorMove: aiMove('The author acting the note out.'),
+    squadMove: aiMove('How two teammates react: `laugh`, `pump` or `wave`.'),
+  })
+  .openapi('StoryBestDisclaimer');
+
+const Ending = z
+  .strictObject({
+    done: count('Days the squad trained, added up over the members.'),
+    plan: count('Days the squad planned, added up over the members.'),
+    headline: line(HEADLINE_MAX, 'The headline, such as 稳了 or 差一点'),
+    line: line(ENDING_LINE_MAX, 'A funny line about the week, never guilt'),
+    move: aiMove('The squad’s move.'),
+  })
+  .openapi('StoryEnding');
+
 const Hottest = z
   .strictObject({
     checkIn: z.uuid(),
@@ -91,6 +195,8 @@ const Hottest = z
           'Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at ' +
           'the awards.',
       }),
+    line: line(HOTTEST_LINE_MAX, 'A line answering the check-in'),
+    move: aiMove('The reader’s move next to it.'),
   })
   .openapi('StoryHottest');
 
@@ -98,11 +204,27 @@ const storyFields = {
   version: bodyVersion(1),
   squad: z.strictObject({ id: z.uuid(), name: z.string() }),
   week: z.strictObject({ from: WeekStart, to: LocalDay }),
+  podium: Podium.optional().meta({
+    description:
+      '领奖台: missing when nobody trained at least as many days as they planned (and one).',
+  }),
+  myWeek: MyWeek.optional().meta({
+    description: '你的一周, the signed-in member’s: missing when they checked in nothing.',
+  }),
   hottest: Hottest.optional().meta({
     description:
       'The signed-in member’s check-in with the most reactions at the awards, the latest on a ' +
-      'tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs ' +
-      'had any.',
+      'tie; while `pending`, as it stands now. Missing when none of theirs had any.',
+  }),
+  meals: Meals.optional().meta({ description: '吃了: missing when nobody checked in a meal.' }),
+  bestDisclaimer: BestDisclaimer.optional().meta({
+    description:
+      '最佳请假条: the one with the most reactions (at least one), the earliest on a tie; ' +
+      'missing when none had any.',
+  }),
+  ending: Ending.optional().meta({
+    description:
+      '这一周: missing when nobody trained, so a quiet week isn’t told how short it fell.',
   }),
 };
 
@@ -129,14 +251,24 @@ export const WeekStoryBody = z
               'they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly ' +
               'poster’s stickers read these too.',
           }),
+        order: z
+          .array(
+            z.enum(['podium', 'titles', 'myWeek', 'hottest', 'meals', 'bestDisclaimer', 'ending']),
+          )
+          .optional()
+          .meta({
+            description:
+              'The pages in the order the AI picked: `podium` and `titles` first, `ending` last. ' +
+              'Skip a page whose data is missing. Missing when the AI picked none.',
+          }),
       })
       .meta({ description: 'The week’s titles are written.' }),
     z.strictObject({ ...storyFields, status: z.literal('pending') }).meta({
       description:
         'The titles are due but not written yet (the AI failed, or hasn’t reached the squad): ' +
         'only the titles page waits, showing that the organisers are out of funds with a ' +
-        'button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read ' +
-        'again later.',
+        'button that nudges them (`POST …/story/nudge`); every other page shows as usual, ' +
+        'without the AI’s lines and moves, in the default order. Read again later.',
     }),
   ])
   .openapi('WeekStory');
@@ -226,7 +358,7 @@ export function weekStory(
         (hottest?.photos ?? []).map((path) => PhotoPath.parse(path)),
         PHOTO_VIEW_SECONDS,
       );
-      const hottestView = (top: TopCheckIn) => ({
+      const hottestView = (top: NonNullable<SquadStory['hottest']>) => ({
         ...top,
         photos: top.photos.map((path) => {
           const url = urls.get(PhotoPath.parse(path));
@@ -242,7 +374,18 @@ export function weekStory(
         version: 1 as const,
         squad: story.squad,
         week: { from: weekStart, to },
+        ...(story.podium === undefined
+          ? {}
+          : { podium: { ...story.podium, sides: [...story.podium.sides] } }),
+        ...(story.myWeek === undefined
+          ? {}
+          : { myWeek: { ...story.myWeek, days: [...story.myWeek.days] } }),
         ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),
+        ...(story.meals === undefined
+          ? {}
+          : { meals: { ...story.meals, eaters: [...story.meals.eaters] } }),
+        ...(story.bestDisclaimer === undefined ? {} : { bestDisclaimer: story.bestDisclaimer }),
+        ...(story.ending === undefined ? {} : { ending: story.ending }),
       };
       return c.json(
         story.status === 'ready'
@@ -253,6 +396,7 @@ export function weekStory(
                 member,
                 titles: [...titles],
               })),
+              ...(story.order === undefined ? {} : { order: [...story.order] }),
             }
           : { ...fields, status: 'pending' as const },
         200,
