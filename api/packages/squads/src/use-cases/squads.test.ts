@@ -19,14 +19,20 @@ const db = new Kysely<SquadTables>({
 });
 afterAll(() => db.destroy());
 
+// Who has a current AI consent, as the AI consent module would answer: every new member,
+// unless a test makes one without.
+const consented = new Set<MemberId>();
+const aiConsent = (member: MemberId) => Promise.resolve(consented.has(member));
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
+  aiConsent,
 });
 
-async function newMember() {
+async function newMember({ consentsToAi = true } = {}) {
   const id = MemberId.parse(randomUUID());
   await sql`insert into auth.users (id) values (${id})`.execute(db);
+  if (consentsToAi) consented.add(id);
   return id;
 }
 
@@ -80,6 +86,7 @@ describe('creating a squad', () => {
     const retrying = createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: () => codes.shift() ?? fresh,
+      aiConsent,
     });
     const { squad } = await retrying.create({
       id: SquadId.parse(randomUUID()),
@@ -87,6 +94,21 @@ describe('creating a squad', () => {
       name: name('夜跑团'),
     });
     expect([squad.inviteCode, codes]).toStrictEqual([fresh, []]);
+  });
+
+  it('refuses a member without a current AI consent', async () => {
+    const member = await newMember({ consentsToAi: false });
+    await expect(newSquad(member)).rejects.toMatchObject({ reason: 'AI_CONSENT_REQUIRED' });
+    expect(await squads.listMine(member)).toStrictEqual([]);
+  });
+
+  it('answers a retry as before once the creator’s consent is to an older copy', async () => {
+    const creator = await newMember();
+    const squad = await newSquad(creator);
+    consented.delete(creator);
+    const again = await squads.create({ id: squad.id, creator, name: squad.name });
+    expect([again.created, again.squad]).toStrictEqual([false, squad]);
+    await expect(newSquad(creator)).rejects.toMatchObject({ reason: 'AI_CONSENT_REQUIRED' });
   });
 
   it('refuses a fourth squad, and allows one again after leaving', async () => {
@@ -117,6 +139,24 @@ describe('joining by invite code', () => {
     expect([isNew, joined.members.map(({ member }) => member)]).toStrictEqual([true, [ann, bo]]);
     const again = await squads.join({ inviteCode: squad.inviteCode, member: bo });
     expect([again.joined, again.squad]).toStrictEqual([false, joined]);
+  });
+
+  it('refuses a member without a current AI consent', async () => {
+    const squad = await newSquad(await newMember());
+    const member = await newMember({ consentsToAi: false });
+    await expect(squads.join({ inviteCode: squad.inviteCode, member })).rejects.toMatchObject({
+      reason: 'AI_CONSENT_REQUIRED',
+    });
+    expect((await squads.membersOf(squad.id)).includes(member)).toBe(false);
+  });
+
+  it('answers a repeat join as before once their consent is to an older copy', async () => {
+    const squad = await newSquad(await newMember());
+    const member = await newMember();
+    await squads.join({ inviteCode: squad.inviteCode, member });
+    consented.delete(member);
+    const again = await squads.join({ inviteCode: squad.inviteCode, member });
+    expect(again.joined).toBe(false);
   });
 
   it('refuses a code no squad has', async () => {
@@ -193,6 +233,44 @@ describe('leaving and listing', () => {
     await squads.leave({ squad: first.id, member: ann });
     await squads.leave({ squad: first.id, member: ann });
     expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['二']);
+  });
+
+  it('logs each join and leave, in order, and never a leave that changed nothing', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await newSquad(bo);
+    const log = async () =>
+      (
+        await sql<{ member: string; kind: string }>`select member_id as member, kind
+          from public.squad_membership_events where squad_id = ${squad.id} order by id`.execute(db)
+      ).rows;
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    // Joining again while in it changes nothing, so it logs nothing.
+    await squads.join({ inviteCode: squad.inviteCode, member: ann });
+    await squads.leave({ squad: squad.id, member: ann });
+    expect(await log()).toStrictEqual([
+      { member: bo, kind: 'joined' },
+      { member: ann, kind: 'joined' },
+      { member: ann, kind: 'left' },
+      { member: ann, kind: 'joined' },
+      { member: ann, kind: 'left' },
+    ]);
+    expect(await squads.membersOf(squad.id)).toStrictEqual([bo]);
+  });
+
+  it('keeps the log append-only', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann);
+    await expect(
+      sql`update public.squad_membership_events set kind = 'left' where squad_id = ${squad.id}`.execute(
+        db,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      sql`delete from public.squad_membership_events where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
   });
 
   it('shows a squad only to its members, the same way whether or not it exists', async () => {

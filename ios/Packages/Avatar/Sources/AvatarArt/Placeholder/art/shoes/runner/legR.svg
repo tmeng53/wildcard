@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 152.4 307.2 Q 152.4 294 135.6 294 Q 120 294 119.4 306 Q 118.8 312 124.8 312 L 146.4 312 Q 152.4 312 152.4 307.2 Z" fill="#2D5BA0" stroke="#254A82" stroke-width="2.4"/>
+  <path d="M 151.2 308.4 L 119.1 308.4 Q 118.8 312 124.8 312 L 146.4 312 Q 151.2 312 151.2 308.4 Z" fill="#FFFFFF" stroke="#254A82" stroke-width="2.0"/>
+  <path d="M 142.8 303.6 Q 134.4 301.2 127.2 296.4" fill="none" stroke="#FFFFFF" stroke-width="3.0" stroke-linecap="round"/>
+</svg>

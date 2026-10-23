@@ -11,6 +11,7 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { sign } from 'hono/jwt';
+import { sql } from 'kysely';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -19,7 +20,14 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -40,6 +48,7 @@ async function send(
       membership: createSquads({
         store: createPostgresSquadStore(db),
         inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
       replies: createPostgresReplyStore(db),
@@ -57,8 +66,13 @@ async function send(
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     push: pushOn(db),
-    squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
     weeklyAwards: unusedWeeklyAwards,
+    aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),
@@ -256,6 +270,37 @@ describe('PUT /me/profile', () => {
     variants: { body: 'tuxedo', top: 'hoodie', prop: 'racket' },
     colors: { top: '#2D5BA0' },
   };
+
+  it('logs each change to the whole profile, in order, and never a save that changed nothing', async () => {
+    const { token, userId } = await signUp();
+    const zone = 'America/Los_Angeles';
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: null });
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: null });
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: '冲冲冲' });
+    await putProfile(token, {
+      version: 1,
+      timeZone: zone,
+      catchphrase: '冲冲冲',
+      character: { nickname: '小周', look },
+    });
+    // Refused, so not logged.
+    await putProfile(token, { version: 1, timeZone: 'Mars/Olympus_Mons', catchphrase: null });
+    await putProfile(token, { version: 1, timeZone: 'America/Toronto', catchphrase: '冲冲冲' });
+    const db = createDatabase(config.databaseUrl);
+    try {
+      const { rows } =
+        await sql`select time_zone, catchphrase, nickname, look from public.profile_events
+        where member_id = ${userId} order by id`.execute(db);
+      expect(rows).toStrictEqual([
+        { time_zone: zone, catchphrase: null, nickname: null, look: null },
+        { time_zone: zone, catchphrase: '冲冲冲', nickname: null, look: null },
+        { time_zone: zone, catchphrase: '冲冲冲', nickname: '小周', look: { version: 1, ...look } },
+        { time_zone: 'America/Toronto', catchphrase: '冲冲冲', nickname: null, look: null },
+      ]);
+    } finally {
+      await db.destroy();
+    }
+  });
 
   it('saves the character with its nickname trimmed, and the next save replaces or clears it', async () => {
     const { token, userId } = await signUp();

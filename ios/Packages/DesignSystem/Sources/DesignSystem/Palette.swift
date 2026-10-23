@@ -13,6 +13,8 @@ public enum Palette {
     public static let inkSecondary = SRGBColor(red: 0x6B, green: 0x70, blue: 0x80)
     /// Denominators, placeholders and chevrons: large type and decoration only (2.1:1 on white).
     public static let inkTertiary = SRGBColor(red: 0xAE, green: 0xB2, blue: 0xBC)
+    /// Apple's own black, for the Sign in with Apple style button only.
+    public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
     // MARK: Pool scene
 

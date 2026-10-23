@@ -9,6 +9,8 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface DailyPushes {
@@ -25,15 +27,23 @@ export interface PushDevices {
   token: string;
 }
 
+export interface PushSettingEvents {
+  at: Generated<Timestamp>;
+  enabled: boolean;
+  id: Generated<Int8>;
+  member_id: string;
+  topic: string;
+}
+
 export interface PushSettings {
   enabled: boolean;
   member_id: string;
   topic: string;
-  updated_at: Generated<Timestamp>;
 }
 
 export interface DB {
   daily_pushes: DailyPushes;
   push_devices: PushDevices;
+  push_setting_events: PushSettingEvents;
   push_settings: PushSettings;
 }

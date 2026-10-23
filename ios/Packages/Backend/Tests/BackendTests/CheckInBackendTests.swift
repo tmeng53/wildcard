@@ -185,12 +185,12 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
 
     let mates = store(mate, directory: scratch())
     await mates.load()
-    try await mates.react(.highlight, to: saved.id)
-    try await mates.react(.lol, to: saved.id)
+    try await mates.react(.heart, to: saved.id)
+    try await mates.react(try Emoji("😂"), to: saved.id)
 
     try await authors.loadReactions(to: saved.id)
     #expect(authors.reactions[saved.id]?.map(\.member) == [mate.id])
-    #expect(authors.reactions[saved.id]?.map(\.kind) == [.lol])
+    #expect(authors.reactions[saved.id]?.map(\.emoji) == [try Emoji("😂")])
     #expect(authors.myReaction(on: saved.id) == nil)
 
     try await mates.removeReaction(from: saved.id)
@@ -208,6 +208,7 @@ private struct Dice: DisclaimerWriter {
 @Test func withoutTheAIWriterTheDiceAnswer() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
+    try await stack.agreeToAI(author)
     // The local API runs without ANTHROPIC_API_KEY, so it answers 503.
     await #expect(throws: APIError.unavailable) {
         try await author.api.disclaimerDrafts(reason: "早上没起来", style: .funny)

@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
+  AI_CONSENT_COPY_VERSION,
+  createAiConsent,
+  createPostgresConsentStore,
+} from '@wildcard/ai-consent';
+import {
   createOffSender,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
@@ -69,6 +74,15 @@ export function adminOn(tools: (db: Database) => readonly AdminTool[] = () => []
     },
     passwordSignIn: true,
   };
+}
+
+/** Members' AI consent on local Supabase, to the current copy. */
+export function aiConsentOn(db: Database) {
+  return createAiConsent({
+    store: createPostgresConsentStore(db),
+    copyVersion: AI_CONSENT_COPY_VERSION,
+    clock: () => new Date(),
+  });
 }
 
 /** Push on local Supabase's database, sending nothing (no APNs key in tests). */

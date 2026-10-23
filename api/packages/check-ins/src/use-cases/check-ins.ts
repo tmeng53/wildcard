@@ -1,7 +1,8 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
 import type { DayRange } from '../domain/day-range.js';
+import type { CheckInTotals } from '../domain/totals.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
-import type { Reaction, ReactionKind } from '../domain/reaction.js';
+import type { Reaction } from '../domain/reaction.js';
 import type { Reply } from '../domain/reply.js';
 import type {
   CheckInStore,
@@ -48,21 +49,20 @@ export interface CheckIns {
   save(input: SaveCheckInInput): Promise<SavedCheckIn>;
   listForSquad(input: ListSquadCheckInsInput): Promise<CheckInRecord[]>;
   listMine(input: { readonly member: MemberId; readonly days: DayRange }): Promise<CheckInRecord[]>;
+  /** Everything the member ever checked in, counted by kind, wherever it went. */
+  totals(member: MemberId): Promise<CheckInTotals>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
   listReactions(input: {
     readonly checkIn: CheckInId;
     readonly viewer: MemberId;
   }): Promise<Reaction[]>;
-  /**
-   * Teammates who reacted to the member's check-ins in `[since, until)`, by kind, each once per
-   * kind.
-   */
+  /** Teammates who reacted to the member's check-ins in `[since, until)`, with any emoji. */
   reactionsReceived(input: {
     readonly member: MemberId;
     readonly since: Date;
     readonly until: Date;
-  }): Promise<ReadonlyMap<ReactionKind, ReadonlySet<MemberId>>>;
+  }): Promise<ReadonlySet<MemberId>>;
   /** Replies are for 请假条 only, apart from reactions: a teammate may leave both. */
   reply(input: ReplyToDisclaimerInput): Promise<Replied>;
   removeReply(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
@@ -102,6 +102,7 @@ export function createCheckIns(deps: {
     save: (input) => saveCheckIn(deps, input),
     listForSquad: (input) => listSquadCheckIns(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),
+    totals: (member) => deps.store.totals(member),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
       removeResponse({ ...deps, remove: (...at) => deps.reactions.remove(...at) }, input),

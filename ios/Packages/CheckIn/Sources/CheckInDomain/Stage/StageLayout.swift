@@ -83,22 +83,26 @@ public struct Station: Hashable, Sendable {
     public let capacity: Int
     public let path: StationPath
     public let scale: Double?
+
+    /// The lap a slot runs on a `.loop`: the laps fill one after another.
+    func lap(ofSlot slot: Int) -> StationPath.Lap? {
+        guard case .loop(_, _, let lanes) = path, !lanes.isEmpty else { return nil }
+        let perLane = (capacity + lanes.count - 1) / lanes.count
+        return lanes[min(slot / perLane, lanes.count - 1)]
+    }
 }
 
 /// Where everyone can be on one scene, in screen points after the scene's art is lifted to
 /// make room for the 打卡 button. Every scene follows one plan: its own stations for people
-/// whose sport matches, its playing area for anyone training while the stations are empty,
-/// the open floor for everyone else, and me front and centre.
+/// whose sport matches, the rest of the scene for everyone else, scattered (the track and the
+/// court included, never a wall or the water), and me front and centre.
 public struct StageLayout: Hashable, Sendable {
     public let stations: [Station]
     /// Which stations a sport uses, in the order they fill.
     public let stationsBySport: [Sport: [StationKind]]
-    /// Spots on the playing area (the track, the court), from the middle out. Never on a wall
-    /// or in the water.
-    public let field: [StagePoint]
-    /// Spots on the open floor, best first: front row first, then from the middle out, like a
-    /// team photo. Never on equipment, walls, water or the court, and never right around me. A
-    /// few sit close to playing-area spots; `SquadStage` never fills both at once.
+    /// Every spot someone can stand on, front row first, then from the middle out. Never on
+    /// equipment, walls, water or the net, never on a station's own spot, and never right
+    /// around me. `SquadStage` leaves out the ones on a lane someone is running.
     public let floor: [StagePoint]
 
     /// The stage's width, the screen's in the design.
@@ -115,17 +119,13 @@ public struct StageLayout: Hashable, Sendable {
         return 0.21 + (0.29 - 0.21) * near
     }
 
-    init(
-        stations: [Station], stationsBySport: [Sport: [StationKind]], field: [StageRect], fieldGaps: [StageRect] = [],
-        open: [StageRect], props: [StageRect]
-    ) {
+    init(stations: [Station], stationsBySport: [Sport: [StationKind]], standing: [StageRect], props: [StageRect]) {
         self.stations = stations
         self.stationsBySport = stationsBySport
-        self.field = Self.fieldSpots(in: field, avoiding: props + fieldGaps)
         let busy = stations.flatMap { station -> [StagePoint] in
             if case .spots(let spots) = station.path { spots } else { [] }
         }
-        floor = Self.floorSpots(in: open, avoiding: props, busy: busy)
+        floor = Self.floorSpots(in: standing, avoiding: props, busy: busy)
     }
 
     /// Whether two people standing at `one` and `other` would be drawn over each other.
@@ -139,41 +139,20 @@ public struct StageLayout: Hashable, Sendable {
         stations.first { $0.kind == kind }
     }
 
-    /// The playing area on an even grid, 80 apart with every other row offset half a step,
-    /// nearest the middle first.
-    private static func fieldSpots(in areas: [StageRect], avoiding: [StageRect]) -> [StagePoint] {
-        var spots: [(StagePoint, Double)] = []
-        for area in areas {
-            let middle = StagePoint(x: (area.minX + area.maxX) / 2, y: (area.minY + area.maxY) / 2)
-            var row = 0
-            var y = area.maxY
-            while y >= area.minY {
-                var x = area.minX + (row.isMultiple(of: 2) ? 0 : 40)
-                while x <= area.maxX {
-                    let point = StagePoint(x: x, y: y)
-                    if !avoiding.contains(where: { $0.blocks(point) }) {
-                        let across = x - middle.x
-                        let deep = (y - middle.y) * 1.3
-                        spots.append((point, (across * across + deep * deep).squareRoot()))
-                    }
-                    x += 80
-                }
-                y -= 62
-                row += 1
-            }
-        }
-        return spots.enumerated().sorted { ($0.element.1, $0.offset) < ($1.element.1, $1.offset) }.map(\.element.0)
-    }
-
-    /// The open floor on a team-photo grid: rows 70 apart from the front, 92 apart across and
-    /// centred on the screen, every other row offset half a step, clear of the `busy` spots.
+    /// Where people can stand, on a team-photo grid: rows 70 apart from the front (closer on a
+    /// shallow floor, so three rows always fit), five across the whole width 76 apart and centred on
+    /// the screen, every other row offset half a step, clear of the `busy` spots.
     private static func floorSpots(in areas: [StageRect], avoiding: [StageRect], busy: [StagePoint]) -> [StagePoint] {
-        var spots: [StagePoint] = []
+        // 76 rather than the spec's 80, so the outer ones aren't cut off by the screen's edge.
+        let across = 76.0
+        var spots: [(point: StagePoint, row: Int)] = []
         for area in areas {
             var row = 0
             var y = area.maxY - 24
+            // Never under a character's width apart, so a floor too shallow for rows still ends.
+            let gap = max(24, min(70, (y - area.minY) / 2))
             while y >= area.minY {
-                var x = mySpot.x - (row.isMultiple(of: 2) ? 0 : 46) - 92
+                var x = mySpot.x - across * (row.isMultiple(of: 2) ? 2 : 1.5)
                 while x <= area.maxX - 30 {
                     let point = StagePoint(x: x, y: y)
                     let besideMe = abs(x - mySpot.x) < 60 && y > 590
@@ -181,18 +160,22 @@ public struct StageLayout: Hashable, Sendable {
                     let onProp = avoiding.contains { $0.blocks(point) }
                     let taken = busy.contains { crowds($0, point) }
                     if !besideMe && !offScreen && !onProp && !taken {
-                        spots.append(point)
+                        spots.append((point, row))
                     }
-                    x += 92
+                    x += across
                 }
-                y -= 70
+                y -= gap
                 row += 1
             }
         }
-        // Front first, then the middle: a spot's worth is its depth less half its distance from centre.
-        func worth(_ point: StagePoint) -> Double { point.y - abs(point.x - mySpot.x) * 0.5 }
-        return spots.enumerated().sorted { (-worth($0.element), $0.offset) < (-worth($1.element), $1.offset) }
-            .map(\.element)
+        // Front row first, then from the middle out.
+        func fromMiddle(_ point: StagePoint) -> Double { abs(point.x - mySpot.x) }
+        return spots.enumerated()
+            .sorted {
+                ($0.element.row, fromMiddle($0.element.point), $0.offset)
+                    < ($1.element.row, fromMiddle($1.element.point), $1.offset)
+            }
+            .map(\.element.point)
     }
 }
 // swiftlint:enable identifier_name

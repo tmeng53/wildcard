@@ -336,7 +336,7 @@ function weekCheckIn(
   reactions: SquadWeekCheckIns['reactions'],
 ): WeekCheckIn {
   const counts: Record<string, number> = {};
-  for (const { kind } of reactions.get(record.id) ?? []) counts[kind] = (counts[kind] ?? 0) + 1;
+  for (const { emoji } of reactions.get(record.id) ?? []) counts[emoji] = (counts[emoji] ?? 0) + 1;
   const base = {
     id: record.id,
     day: record.day,

@@ -19,7 +19,14 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
-import { adminOn, config, noJobs, pushOn, signUp } from '../test-kit/local-supabase.js';
+import {
+  adminOn,
+  aiConsentOn,
+  config,
+  noJobs,
+  pushOn,
+  signUp,
+} from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
@@ -46,6 +53,7 @@ const app = createApp({
     membership: createSquads({
       store: createPostgresSquadStore(db),
       inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
     replies: createPostgresReplyStore(db),
@@ -60,10 +68,15 @@ const app = createApp({
     clock: () => new Date(),
   }),
   members,
-  squads: createSquads({ store: createPostgresSquadStore(db), inviteCodes: randomInviteCodes }),
+  squads: createSquads({
+    store: createPostgresSquadStore(db),
+    inviteCodes: randomInviteCodes,
+    aiConsent: () => Promise.resolve(true),
+  }),
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyAwards: unusedWeeklyAwards,
+  aiConsent: aiConsentOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -222,7 +235,7 @@ describe('DELETE /check-ins/{checkInId}/replies/mine', () => {
     await call('PUT', {
       path: `/check-ins/${excuse}/reactions/mine`,
       token: ann.token,
-      body: { version: 1, kind: 'lol' },
+      body: { version: 1, emoji: '😂' },
     });
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -237,6 +250,6 @@ describe('DELETE /check-ins/{checkInId}/replies/mine', () => {
     ).toStrictEqual({ status: 200, body: { version: 1, replies: [] } });
     expect(
       await call('GET', { path: `/check-ins/${excuse}/reactions`, token: tracy.token }),
-    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, kind: 'lol' }] } });
+    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, emoji: '😂' }] } });
   });
 });

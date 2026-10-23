@@ -1,7 +1,8 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
+import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
-import type { Reaction, ReactionKind, SaveOutcome } from './domain/reaction.js';
+import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { Reply, ReplyKind } from './domain/reply.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 
@@ -16,8 +17,8 @@ export interface CheckInStore {
   find(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** Saves a new check-in with its audience and photos, or says which uniqueness rule stopped it. */
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
-  /** Days ever with a 练了 from `member`. Several 练了 on one day count once. */
-  countTrainedDays(member: MemberId): Promise<number>;
+  /** Everything `member` ever checked in, counted by kind. */
+  totals(member: MemberId): Promise<CheckInTotals>;
   /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
   listForSquad(
     query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },
@@ -46,7 +47,7 @@ export interface ReactionStore {
   /** Saves the member's reaction on a check-in, in place of any they left before. */
   save(
     checkIn: CheckInId,
-    reaction: { readonly member: MemberId; readonly kind: ReactionKind; readonly reactedAt: Date },
+    reaction: { readonly member: MemberId; readonly emoji: Emoji; readonly reactedAt: Date },
   ): Promise<SaveOutcome>;
   /** Takes the member's reaction off a check-in, if there is one. */
   remove(checkIn: CheckInId, member: MemberId): Promise<void>;

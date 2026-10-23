@@ -1,17 +1,12 @@
-/// A teammate's reaction on a check-in, one per member, like a kudos.
+/// A teammate's reaction on a check-in: one emoji per member, which they can change.
 public struct Reaction: Hashable, Sendable {
     public let member: MemberID
-    public let kind: ReactionKind
+    public let emoji: Emoji
     public let reactedAt: Timestamp
 
-    public init(member: MemberID, kind: ReactionKind, reactedAt: Timestamp) {
+    public init(member: MemberID, emoji: Emoji, reactedAt: Timestamp) {
         self.member = member
-        self.kind = kind
+        self.emoji = emoji
         self.reactedAt = reactedAt
     }
-}
-
-/// Which reaction: 加油, 名场面 or 笑死. The app shows each with its own copy.
-public enum ReactionKind: String, CaseIterable, Hashable, Sendable {
-    case cheer, highlight, lol
 }
