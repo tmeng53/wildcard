@@ -49,7 +49,7 @@ struct WelcomeScreen<SignIn: View>: View {
                 title(top: WelcomeCrowd.titleTop)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
-            .coordinateSpace(.named(Self.space))
+            .coordinateSpace(.named(WelcomeTitle.space))
             .task(id: word.map { Self.layout(word: $0, top: top, height: proxy.size.height, unit: unit) }) {
                 guard let word else { return }
                 await open(layout: Self.layout(word: word, top: top, height: proxy.size.height, unit: unit))
@@ -90,11 +90,6 @@ struct WelcomeScreen<SignIn: View>: View {
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
     }
 
-    private static let space = "welcome"
-    /// The capitals' top and the baseline, from the middle of the word's glyphs.
-    private static let capTop = -21.0
-    private static let baseline = 22.0
-
     /// WILDCARD, then the slogan under it. While the sprint plays the word is drawn where the
     /// sprint has it; its place is measured first, standing still and unseen.
     private func title(top: Double) -> some View {
@@ -105,12 +100,13 @@ struct WelcomeScreen<SignIn: View>: View {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .fixedSize()
                 .onGeometryChange(for: CGRect.self) {
-                    $0.frame(in: .named(Self.space))
+                    $0.frame(in: .named(WelcomeTitle.space))
                 } action: {
                     word = $0
                 }
                 .modifier(
-                    Sprinting(runner: sprint, settled: settled, baseline: (word?.height ?? 0) / 2 + Self.baseline)
+                    Sprinting(
+                        runner: sprint, settled: settled, baseline: (word?.height ?? 0) / 2 + WelcomeTitle.baseline)
                 )
                 .frame(height: WelcomeCrowd.wordLine)
             Text("人人都是运动员", bundle: .module)
@@ -126,7 +122,8 @@ struct WelcomeScreen<SignIn: View>: View {
     /// Where the sprint runs: the word's place and the floor, from the screen's top edge.
     private static func layout(word: CGRect, top: Double, height: Double, unit: Double) -> FinishLineSprint.Layout {
         FinishLineSprint.Layout(
-            wordRight: word.maxX, capTop: top + word.midY + capTop, baseline: top + word.midY + baseline,
+            wordRight: word.maxX, capTop: top + word.midY + WelcomeTitle.capTop,
+            baseline: top + word.midY + WelcomeTitle.baseline,
             floorTop: top + height - WelcomeCrowd.floorAbove * unit)
     }
 
@@ -353,3 +350,12 @@ private struct DozeZ: View {
     }
 }
 #endif
+
+/// The open screen's coordinate space and the word's metrics, outside the generic view, which
+/// can't hold static stored properties.
+private enum WelcomeTitle {
+    static let space = "welcome"
+    /// The capitals' top and the baseline, from the middle of the word's glyphs.
+    static let capTop = -21.0
+    static let baseline = 22.0
+}
