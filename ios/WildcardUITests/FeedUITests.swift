@@ -17,6 +17,10 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(react.waitForExistence(timeout: Self.wait), "no post to react to")
         settle()
         assertClearOfTheTabBar(app.staticTexts["feed.title"], in: app)
+        // A 练了 with its minutes shows them as the card's big number.
+        let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
+        XCTAssertTrue(minutes.exists, "no minutes on a 练了")
+        assertOnScreen(minutes, in: app)
         keepScreenshot(named: "40-feed")
 
         react.tap()
