@@ -33,6 +33,9 @@ public struct StagePosition: Hashable, Sendable {
     public let point: StagePoint
     public let facing: Double
     public let scale: Double
+
+    /// Where I stand: front and centre, facing right, a little bigger than the squad.
+    public static let mine = StagePosition(point: StageLayout.mySpot, facing: 1, scale: StageLayout.myScale)
 }
 
 extension SquadStage {
@@ -54,7 +57,7 @@ extension SquadStage {
     /// facing the middle.
     public func position(of member: MemberID, at seconds: Double) -> StagePosition? {
         switch placements[member] {
-        case .field(let point)?, .floor(let point)?:
+        case .floor(let point)?:
             return StagePosition(
                 point: point, facing: point.x > StageLayout.mySpot.x ? -1 : 1,
                 scale: StageLayout.scale(atDepth: point.y))
@@ -72,7 +75,7 @@ extension SquadStage {
         switch station.path {
         case .loop(let start, let end, let lanes):
             let perLane = (station.capacity + lanes.count - 1) / lanes.count
-            let lap = lanes[min(slot / perLane, lanes.count - 1)]
+            let lap = station.lap(ofSlot: slot) ?? lanes[0]
             let width = end - start
             let offset = Double(slot % perLane) / Double(perLane) * width
             point = StagePoint(x: start + wrap(offset + seconds * lap.speed * lap.direction, width), y: lap.y)

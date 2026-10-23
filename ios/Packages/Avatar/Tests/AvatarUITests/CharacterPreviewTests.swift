@@ -12,7 +12,9 @@ import UniformTypeIdentifiers
 /// Writes the placeholder characters' previews for reviewers: stills of the four looks, a
 /// strip of each persona's cheer, the five cheering together as the player shows it, each
 /// persona's idle loop, frame by frame as animated GIFs, a sheet of the color swatches, one
-/// of every body and hair, and one of every face part with each persona's cheer face.
+/// of every body and hair, one of every face part with each persona's cheer face, a character
+/// changing into each sport's kit, the 上场 entrance with the welcome after it, and 我's typing and
+/// crying.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -82,6 +84,7 @@ struct CharacterPreviewTests {
         try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
         try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
         try writeSpecies(to: folder.appendingPathComponent("08-species-moves.gif"))
+        try writeMoves(to: folder)
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
     }
@@ -191,14 +194,14 @@ struct CharacterPreviewTests {
             fps: 20, to: url)
     }
 
-    private func frames(
+    func frames(
         seconds: Double, fps: Double = CharacterPreviewTests.fps, _ render: (Double) throws -> CGImage
     ) throws -> [CGImage] {
         try (0..<Int((seconds * fps).rounded())).map { index in try render(Double(index) / fps) }
     }
 
     /// Images side by side, as one image.
-    private func sideBySide(_ images: [CGImage]) throws -> CGImage {
+    func sideBySide(_ images: [CGImage]) throws -> CGImage {
         let width = images.reduce(0) { $0 + $1.width }
         let height = images.map(\.height).max() ?? 0
         let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
@@ -242,7 +245,7 @@ struct CharacterPreviewTests {
         #expect(CGImageDestinationFinalize(destination))
     }
 
-    private func writeGIF(_ images: [CGImage], fps: Double = CharacterPreviewTests.fps, to url: URL) throws {
+    func writeGIF(_ images: [CGImage], fps: Double = CharacterPreviewTests.fps, to url: URL) throws {
         let destination = try #require(
             CGImageDestinationCreateWithURL(url as CFURL, UTType.gif.identifier as CFString, images.count, nil))
         let loopForever = [kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: 0]]

@@ -1095,16 +1095,6 @@
         }
       }
     },
-    "今天 %lld 人练了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld trained today"
-          }
-        }
-      }
-    },
     "今天是战略性休息": {
       "localizations": {
         "en": {
@@ -1135,12 +1125,32 @@
         }
       }
     },
+    "冲冲冲！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go go go!"
+          }
+        }
+      }
+    },
     "加班到十点，算脑力训练": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Worked till ten: brain training"
+          }
+        }
+      }
+    },
+    "加班到十点，腿说它也想下班": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worked till ten. My legs clocked out too"
           }
         }
       }
@@ -1191,6 +1201,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "可以": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nice"
+          }
+        }
+      }
+    },
+    "名场面": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iconic"
           }
         }
       }
@@ -1335,26 +1365,6 @@
         }
       }
     },
-    "本周小队训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad training this week"
-          }
-        }
-      }
-    },
-    "次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "sessions"
-          }
-        }
-      }
-    },
     "没发出去，再点一次发布": {
       "localizations": {
         "en": {
@@ -1371,6 +1381,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Didn't go through. Tap Check in again."
+          }
+        }
+      }
+    },
+    "泪目了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm crying"
           }
         }
       }
@@ -1411,16 +1431,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Use my words"
-          }
-        }
-      }
-    },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
           }
         }
       }
@@ -1485,6 +1495,16 @@
         }
       }
     },
+    "请假条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day off"
+          }
+        }
+      }
+    },
     "身体说不，我尊重它": {
       "localizations": {
         "en": {
@@ -1531,6 +1551,33 @@
           "stringUnit": {
             "state": "translated",
             "value": "Style"
+          }
+        }
+      }
+    },
+    "（小声）加油": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(quietly) go"
+          }
+        }
+      }
+    },
+    "%@ %lld": {
+      "comment": "An activity trained this week and on how many days, on my week's card: 游泳 2",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld"
           }
         }
       }

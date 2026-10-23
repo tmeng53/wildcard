@@ -9,8 +9,7 @@ import { z } from 'zod';
 
 export type Provider = 'anthropic' | 'openai';
 
-export type Fixture =
-  'drafts' | 'self-harm' | 'unsafe' | 'body-talk' | 'refusal' | 'max-tokens' | 'overloaded';
+export type Fixture = 'drafts' | 'self-harm' | 'unsafe' | 'refusal' | 'max-tokens' | 'overloaded';
 
 /** How each provider answers an overloaded request: both retry it. */
 const OVERLOADED: Record<Provider, number> = { anthropic: 529, openai: 503 };

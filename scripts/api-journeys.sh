@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [replies] [devices] [daily-push] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [replies] [devices] [daily-push] [weekly-awards] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions replies devices daily-push account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions replies devices daily-push weekly-awards account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | replies | devices | daily-push | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, replies, devices, daily-push, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | replies | devices | daily-push | weekly-awards | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, replies, devices, daily-push, weekly-awards, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -65,9 +65,20 @@ sign_up() {
     jq -r '"\(.user.id) \(.access_token)"'
 }
 
-# A squad the first token creates and the others join by its invite code, as the app does:
-# sets $squad and $invite_code.
+# The member agrees to the current AI consent copy, as the squad step of sign-up does before it
+# makes or joins a squad.
+agree_to_ai() {
+  call GET /me/ai-consent "$1"
+  expect 200
+  call PUT /me/ai-consent "$1" "$(jq -c '{version: 1, copyVersion}' <<<"$body")"
+  expect 200
+  [ "$(jq -r .current <<<"$body")" = true ] || fail "consent should be current: $body"
+}
+
+# A squad the first token creates and the others join by its invite code, as the app does
+# (each agreeing to the AI copy first): sets $squad and $invite_code.
 squad_of() {
+  for token in "$@"; do agree_to_ai "$token"; done
   call PUT "/squads/$(new_id)" "$1" '{"version":1,"name":" 早八跑团 "}'
   expect 201
   squad="$(jq -r .id <<<"$body")"
@@ -103,6 +114,11 @@ read -r me me_token <<<"$(sign_up)"
 read -r mate mate_token <<<"$(sign_up)"
 read -r outsider outsider_token <<<"$(sign_up)"
 for m in "$me" "$mate" "$outsider"; do [[ "$m" =~ ^[0-9a-f-]{36}$ ]] || fail "sign-up failed"; done
+if want squad; then
+  call PUT "/squads/$(new_id)" "$me_token" '{"version":1,"name":"早八跑团"}'
+  expect 400 AI_CONSENT_REQUIRED
+  echo "squad: making a squad before agreeing to the AI terms refused (400 AI_CONSENT_REQUIRED)"
+fi
 squad_of "$me_token" "$mate_token"
 echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
@@ -228,6 +244,22 @@ if want squad; then
   echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
 
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
+  expect 400 AI_CONSENT_REQUIRED
+  call GET /me/ai-consent "$newcomer_token"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":1,"current":false}' ] ||
+    fail "newcomer should have no consent yet: $body"
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
+  expect 400 REQUEST_INVALID
+  call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":2}'
+  expect 400 AI_CONSENT_COPY_OUTDATED
+  echo "squad: joining before agreeing refused (400 AI_CONSENT_REQUIRED); another copy version refused (400 AI_CONSENT_COPY_OUTDATED)"
+  agree_to_ai "$newcomer_token"
+  given_at="$(jq -r .given.givenAt <<<"$body")"
+  agree_to_ai "$newcomer_token"
+  [ "$(jq -r .given.givenAt <<<"$body")" = "$given_at" ] || fail "agreeing again should keep $given_at: $body"
+  echo "squad: newcomer agreed to the AI terms at $given_at; agreeing again keeps it"
+
+  call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 201
   [ "$(jq -r '.members | map(.userId) | last' <<<"$body")" = "$newcomer" ] || fail "newcomer isn't last: $body"
   call POST "/squad-invites/$invite_code/accept" "$newcomer_token"
@@ -249,6 +281,7 @@ if want squad; then
   call GET /me/squads "$newcomer_token"
   [ "$(jq '.squads | length' <<<"$body")" = 0 ] || fail "newcomer still lists a squad: $body"
   echo "squad: newcomer left (204) and can't read it any more"
+
 fi
 
 if want disclaimer-drafts; then
@@ -259,9 +292,12 @@ if want disclaimer-drafts; then
   echo "disclaimer-drafts: no key, so 503 DISCLAIMER_WRITER_UNAVAILABLE (the app shows its dice), no error logged"
 
   call POST /disclaimer-drafts "$me_token" "$(ask 我不想活了 funny)"
-  expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"kind":"care"}' ] || fail "expected the care line: $body"
-  echo "disclaimer-drafts: a self-harm reason gets the care line (200), with or without a key"
+  expect 503 DISCLAIMER_WRITER_UNAVAILABLE
+  echo "disclaimer-drafts: a self-harm reason is the model's to judge, so with no key it is 503 too"
+
+  call POST /disclaimer-drafts "$outsider_token" "$(ask 早上没起来 funny)"
+  expect 400 AI_CONSENT_REQUIRED
+  echo "disclaimer-drafts: a member who hasn't agreed to the AI terms refused (400 AI_CONSENT_REQUIRED)"
 
   call POST /disclaimer-drafts "$me_token" "$(ask 下雨了 poetic)"
   expect 400 REQUEST_INVALID
@@ -392,6 +428,17 @@ if want squad-today; then
     fail "napper's 练了 should win over the disclaimer, and the rester's rest day count toward everyone: $body"
   echo "squad-today: napper trained after all, so 练了 wins over the disclaimer; with rester resting, everyone trained"
 
+  # 我's lifetime counts: every check-in the member ever made, by kind.
+  call GET /me/check-in-totals "$runner_token"
+  expect 200
+  [ "$(jq -c '[.trainedDays, .healthyMeals, .cheatMeals, .disclaimers]' <<<"$body")" = '[1,1,0,0]' ] ||
+    fail "runner's totals should be 1 trained day and 1 healthy meal: $body"
+  call GET /me/check-in-totals "$napper_token"
+  expect 200
+  [ "$(jq -c '[.trainedDays, .healthyMeals, .cheatMeals, .disclaimers]' <<<"$body")" = '[1,0,0,1]' ] ||
+    fail "napper's totals should be 1 trained day and 1 disclaimer: $body"
+  echo "check-in-totals: runner 1 练了 day + 1 健康餐, napper 1 练了 day + 1 请假条"
+
   call GET "/squads/$squad/today" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
   echo "squad-today: outsider refused (403 SQUAD_NOT_JOINED)"
@@ -418,7 +465,7 @@ if want week-summary; then
   excuse="$(new_id)"
   call PUT "/check-ins/$excuse" "$writer_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}')"
   expect 201
-  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"kind":"lol"}'
+  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"emoji":"😂"}'
   expect 201
   echo "week-summary: squad=$squad in $zone ($today) ace trained on a week planned all rest, writer posted a 请假条, fan laughed at it"
 
@@ -429,10 +476,10 @@ if want week-summary; then
       '[false, [["planCompleted",[[$a,1,null]]],["crown",[[$a,1,null]]],["bestDisclaimer",[[$w,1,$e]]]]]')" ] ||
     fail "ace should complete the plan and wear the crown, and the writer's 请假条 be the best; not final yet: $body"
   echo "week-summary: still being played; podium and crown ace (1 day), best 请假条 writer's (1 reaction)"
-  [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.kind == "lol") | .count], [.me.reactions[] | select(.kind == "lol") | .given]]' <<<"$body")" = \
+  [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.emoji == "😂") | .count], [.me.reactions[] | select(.emoji == "😂") | .given]]' <<<"$body")" = \
     '[[1,10,2],[1],[1]]' ] ||
-    fail "the squad should have 1 of 10 days trained in 2 check-ins and 1 lol, given by the fan: $body"
-  echo "week-summary: squad 1/10 days in 2 check-ins, 1 笑死, which the fan sees as given"
+    fail "the squad should have 1 of 10 days trained in 2 check-ins and one 😂, given by the fan: $body"
+  echo "week-summary: squad 1/10 days in 2 check-ins, one 😂, which the fan sees as given"
 
   call GET "/squads/$squad/weeks/$(days_after "$monday" 7)/summary" "$fan_token"
   expect 400 WEEK_NOT_STARTED
@@ -446,30 +493,30 @@ if want reactions; then
   post="$(new_id)"
   call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
   expect 201
-  reaction() { echo "{\"version\":1,\"kind\":\"$1\"}"; }
-  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction cheer)"
+  reaction() { echo "{\"version\":1,\"emoji\":\"$1\"}"; }
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction ❤️)"
   expect 201
-  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction cheer)"
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction ❤️)"
   expect 200
-  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction lol)"
+  call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction 😂)"
   expect 200
-  echo "reactions: mate cheered (201), again (200), then changed it to lol (200)"
+  echo "reactions: mate left ❤️ (201), again (200), then changed it to 😂 (200)"
 
   call GET "/check-ins/$post/reactions" "$me_token"
   expect 200
-  [ "$(jq -c '[.reactions[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"lol"]]')" ] ||
-    fail "the author should see one reaction, mate's lol: $body"
-  echo "reactions: the author sees one reaction, mate's lol"
+  [ "$(jq -c '[.reactions[] | [.member, .emoji]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"😂"]]')" ] ||
+    fail "the author should see one reaction, mate's 😂: $body"
+  echo "reactions: the author sees one reaction, mate's 😂"
 
-  call PUT "/check-ins/$post/reactions/mine" "$me_token" "$(reaction cheer)"
+  call PUT "/check-ins/$post/reactions/mine" "$me_token" "$(reaction ❤️)"
   expect 400 OWN_CHECK_IN_REACTION
-  call PUT "/check-ins/$post/reactions/mine" "$outsider_token" "$(reaction cheer)"
+  call PUT "/check-ins/$post/reactions/mine" "$outsider_token" "$(reaction ❤️)"
   expect 404 CHECK_IN_NOT_FOUND
   call GET "/check-ins/$post/reactions" "$outsider_token"
   expect 404 CHECK_IN_NOT_FOUND
   call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction 稳)"
   expect 400 REQUEST_INVALID
-  echo "reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), unknown kind refused (400)"
+  echo "reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), text that isn't one emoji refused (400)"
 
   call DELETE "/check-ins/$post/reactions/mine" "$mate_token"
   expect 204
@@ -491,7 +538,7 @@ if want replies; then
   expect 200
   call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply hug)"
   expect 200
-  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"kind":"lol"}'
+  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"emoji":"😂"}'
   expect 201
   echo "replies: mate replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too"
 
@@ -588,9 +635,9 @@ if want daily-push; then
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$evening_day" trained '"training":{"sport":"run"}')"
   expect 201
   post="$(jq -r .id <<<"$body")"
-  call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"kind":"cheer"}'
+  call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"emoji":"❤️"}'
   expect 201
-  echo "daily-push: in $evening, runner trained and cheerer cheered them"
+  echo "daily-push: in $evening, runner trained and cheerer left them a ❤️"
 
   call POST /jobs/daily-progress-push "$runner_token"
   expect 401 JOB_TOKEN_INVALID
@@ -605,6 +652,17 @@ if want daily-push; then
   expect 200
   [ "$(handled)" = "$before" ] || fail "a second run should handle no one again: $(handled)"
   echo "daily-push: a second run handled no one again"
+fi
+
+if want weekly-awards; then
+  read -r _ awards_member_token <<<"$(sign_up)"
+  call POST /jobs/weekly-awards "$awards_member_token"
+  expect 401 JOB_TOKEN_INVALID
+  call POST /jobs/weekly-awards "$jobs_token"
+  expect 200
+  [ "$(jq -c '[.version, (.weeks | length), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,2,true]' ] ||
+    fail "the run says which two weeks it gave and how many squads: $body"
+  echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
 fi
 
 if want account; then
@@ -640,10 +698,11 @@ if want account; then
       (select count(*) from public.profiles where member_id = '$leaver') || ' ' ||
       (select count(*) from public.check_ins where member_id = '$leaver') || ' ' ||
       (select count(*) from public.squad_members where member_id = '$leaver') || ' ' ||
+      (select count(*) from public.ai_consents where member_id = '$leaver') || ' ' ||
       (select count(*) from storage.objects where name like '$leaver/%') || ' ' ||
       (select count(*) from public.squad_members where squad_id = '$squad')")"
-  [ "$left" = "0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, photos should be gone and the squad left to mate: $left"
-  echo "account: deleted (204): no user, profile, check-in, membership or photo left; the squad stays with mate"
+  [ "$left" = "0 0 0 0 0 0 1" ] || fail "user, profile, check-ins, memberships, AI consent, photos should be gone and the squad left to mate: $left"
+  echo "account: deleted (204): no user, profile, check-in, membership, AI consent or photo left; the squad stays with mate"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 401

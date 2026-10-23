@@ -1,0 +1,70 @@
+#if os(iOS)
+import CheckInDomain
+import Contracts
+import DesignSystem
+import DesignSystemUI
+import SwiftUI
+
+/// When the squad cheers me, each teammate who joins in shouts their line over their head at
+/// their persona's beat, for about two seconds.
+struct CheerBubbles: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let cast: SquadCast
+    let unit: Double
+
+    @State private var shown: Set<MemberID> = []
+
+    /// How long a line stays up.
+    private static let hold = 1.8
+    /// How far above the feet a bubble's tail ends, in the rig's points: just over the head.
+    private static let headHeight = 250.0
+    /// How far a bubble keeps from the screen's edge.
+    private static let margin = Space.s
+
+    /// Where a bubble `width` wide centres over a `head`, kept on the stage's width.
+    private static func centre(of width: Double, over head: Double, unit: Double) -> Double {
+        let stage = StageLayout.width * unit
+        return min(max(head, width / 2 + margin), stage - width / 2 - margin)
+    }
+
+    var body: some View {
+        ZStack {
+            ForEach(cast.mates.filter { shown.contains($0.id) }) { mate in
+                if let position = cast.stage.position(of: mate.id, at: 0) {
+                    let head = position.point.x * unit
+                    // Over the head, slid in just enough to stay on screen for someone at the side.
+                    Color.clear
+                        .frame(width: 0, height: 0)
+                        .overlay(alignment: .bottom) {
+                            SpeechBubble(Text(verbatim: mate.line))
+                                .fixedSize()
+                                .alignmentGuide(HorizontalAlignment.center) { bubble in
+                                    bubble.width / 2 + head - Self.centre(of: bubble.width, over: head, unit: unit)
+                                }
+                        }
+                        .position(x: head, y: (position.point.y - Self.headHeight * position.scale) * unit)
+                        .transition(.speech(reduceMotion: reduceMotion))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .task(id: cast.cheer) { await play(cast.cheer.order) }
+    }
+
+    /// `order` is already by beat.
+    private func play(_ order: [MemberID]) async {
+        guard !order.isEmpty else { return }
+        var elapsed = 0.0
+        for id in order {
+            guard let mate = cast.mates.first(where: { $0.id == id }) else { continue }
+            let beat = SquadCast.cheerDelay(mate.persona)
+            try? await Task.sleep(for: .seconds(beat - elapsed))
+            elapsed = beat
+            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { _ = shown.insert(id) }
+        }
+        try? await Task.sleep(for: .seconds(Self.hold))
+        withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { shown = [] }
+    }
+}
+#endif

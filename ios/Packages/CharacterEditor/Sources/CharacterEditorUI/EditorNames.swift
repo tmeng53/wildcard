@@ -11,6 +11,7 @@ enum EditorNames {
         switch tab {
         case .look: Text("样子", bundle: .module)
         case .hair: Text("发型", bundle: .module)
+        case .face: Text("脸", bundle: .module)
         case .outfit: Text("穿搭", bundle: .module)
         case .prop: Text("道具", bundle: .module)
         case .persona: Text("性格", bundle: .module)
@@ -32,14 +33,21 @@ enum EditorNames {
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
-    static func variant(_ variant: String) -> Text {
-        guard let key = variants[variant] else { return Text(verbatim: variant) }
+    /// A face part's name goes by its slot too, since a mouth and a body are both `cat`.
+    static func variant(_ variant: String, in slot: Slot) -> Text {
+        guard let key = faces["\(slot)/\(variant)"] ?? variants[variant] else { return Text(verbatim: variant) }
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
-    /// The tile that takes a piece off: 不戴 for a hat, 不拿 for a prop.
+    /// The tile that takes a piece off, for VoiceOver: 不戴 for a hat, 不拿 for a prop.
     static func nothing(in slot: Slot) -> Text {
-        slot == "prop" ? Text("不拿", bundle: .module) : Text("不戴", bundle: .module)
+        switch slot.rawValue {
+        case "prop": Text("不拿", bundle: .module)
+        case "glasses": Text("不戴眼镜", bundle: .module)
+        case "brows": Text("没有眉毛", bundle: .module)
+        case "cheeks": Text("脸蛋什么都不加", bundle: .module)
+        default: Text("不戴", bundle: .module)
+        }
     }
 
     private static let species = ["person": "人", "cat": "猫", "dog": "狗", "rabbit": "兔子", "bear": "熊"]
@@ -56,6 +64,14 @@ enum EditorNames {
         // Hats, clothes and props
         "cap": "棒球帽", "headband": "发带", "hoodie": "卫衣", "jersey": "球衣", "tank": "背心", "tee": "T恤",
         "greenshorts": "运动短裤", "leggings": "紧身裤", "shorts": "短裤", "dumbbell": "哑铃", "racket": "网球拍",
+    ]
+
+    private static let faces = [
+        "eyes/dot": "豆豆眼", "eyes/happy": "笑眼", "eyes/round": "圆眼", "eyes/sharp": "丹凤眼", "eyes/sleepy": "困困眼",
+        "eyes/sparkle": "星星眼", "brows/arched": "挑眉", "brows/bold": "浓眉", "brows/soft": "淡眉",
+        "brows/worried": "八字眉", "mouth/cat": "猫猫嘴", "mouth/grin": "咧嘴笑", "mouth/oh": "哦", "mouth/smile": "微笑",
+        "mouth/smirk": "坏笑", "cheeks/flushed": "红脸蛋", "cheeks/freckles": "雀斑", "cheeks/rosy": "腮红",
+        "glasses/round": "圆框", "glasses/square": "方框",
     ]
 }
 #endif

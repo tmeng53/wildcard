@@ -87,6 +87,14 @@ extension Activity {
         }
     }
 
+    /// The name as plain text, for lines that join several.
+    var localizedName: String {
+        switch self {
+        case .sport(let sport): sport.localizedName
+        case .custom(let custom): custom.name
+        }
+    }
+
     /// A stable key for identifiers and `ForEach`.
     var key: String {
         switch self {
