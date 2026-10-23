@@ -7,9 +7,12 @@
 # Free macOS runners are few and shared by every PR, so a PR that leaves the app and its build
 # and lint setup alone uses no Mac: `verify` runs on Linux (the Swift packages build there too,
 # and SwiftUI code didn't change), and `ios` and `avatar-preview` run only when it changes what
-# they build; otherwise they are skipped, which branch protection counts as passing. A PR that
-# changes only the marketing site (web/) also skips `verify` and `supabase`, which check nothing
-# the site uses. Pushes to main run everything on macOS.
+# they build; otherwise they are skipped, which branch protection counts as passing. Every job
+# runs only when the files a change touches can break what it checks: `verify` for the app's
+# Swift (and the OpenAPI file its generated types come from), `supabase` for the database, the
+# API and the app's Backend adapters, so a docs-only or web-only change runs neither. Pushes to
+# main use the same rule against the commit before the push (the PR already ran the full merge),
+# so a merge no longer queues the Mac jobs again for a change that doesn't need them.
 name: verify
 
 on:
@@ -29,11 +32,12 @@ concurrency:
 jobs:
   # Which macOS jobs this PR needs, from the files it changes against its base.
   changes:
-    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
-      other: ${{ steps.diff.outputs.other }}
+      swift: ${{ steps.diff.outputs.swift }}
+      backend: ${{ steps.diff.outputs.backend }}
       app: ${{ steps.diff.outputs.app }}
       ios: ${{ steps.diff.outputs.ios }}
       avatar: ${{ steps.diff.outputs.avatar }}
@@ -44,14 +48,19 @@ jobs:
           fetch-depth: 0
       - id: diff
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          files="$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD")"
+          # A push with no usable "before" (a new branch, a force push) checks everything.
+          if ! files="$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD" 2>/dev/null)"; then
+            files="$(git ls-files)"
+          fi
           printf '%s\n' "$files"
           touches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
-          # other: anything outside web/, i.e. whatever `verify` and `supabase` check.
-          echo "other=$(grep -qvE '^web/' <<<"$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # swift: the app's Swift checks, and the OpenAPI file its generated types must match.
+          echo "swift=$(touches '^(ios/|api/apps/server/openapi\.json$|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
+          # backend: the database, the API, and the app's adapters that run against them.
+          echo "backend=$(touches '^(supabase/|api/|ios/|scripts/|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
           echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
@@ -59,18 +68,16 @@ jobs:
 
   verify:
     needs: changes
-    # !cancelled(): on a push `changes` is skipped, which would skip this job too.
-    # A web-only PR skips it; if `changes` failed, run rather than skip.
+    # If `changes` failed, run rather than skip; a draft PR skips `changes`, and so this.
     if: >-
-      !cancelled() && (github.event_name == 'push' ||
-      (!github.event.pull_request.draft &&
-      (needs.changes.result != 'success' || needs.changes.outputs.other == 'true')))
+      !cancelled() && !github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.swift == 'true')
     # macOS also compiles the SwiftUI code (which Linux compiles out) and runs SwiftLint's custom
     # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
     # setup can't break those. If `changes` failed, take the Mac rather than guess.
     runs-on: >-
-      ${{ (github.event_name == 'push' || needs.changes.result != 'success' ||
-      needs.changes.outputs.app == 'true') && 'macos-26' || 'ubuntu-24.04' }}
+      ${{ (needs.changes.result != 'success' || needs.changes.outputs.app == 'true')
+      && 'macos-26' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -87,11 +94,9 @@ jobs:
 
   supabase:
     needs: changes
-    # !cancelled(): on a push `changes` is skipped, which would skip this job too.
     if: >-
-      !cancelled() && (github.event_name == 'push' ||
-      (!github.event.pull_request.draft &&
-      (needs.changes.result != 'success' || needs.changes.outputs.other == 'true')))
+      !cancelled() && !github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -114,11 +119,10 @@ jobs:
   # so reviewers and verifiers see every visible change without a Mac.
   ios:
     needs: changes
-    # !cancelled(): on a push `changes` is skipped, which would skip this job too. If `changes`
-    # itself fails, run anyway rather than report a skip that branch protection counts as passing.
+    # If `changes` itself fails, run anyway rather than report a skip that branch protection
+    # counts as passing.
     if: >-
-      !cancelled() && (github.event_name == 'push' || needs.changes.result == 'failure' ||
-      needs.changes.outputs.ios == 'true')
+      !cancelled() && (needs.changes.result == 'failure' || needs.changes.outputs.ios == 'true')
     runs-on: macos-26
     timeout-minutes: 45
     steps:
@@ -148,11 +152,10 @@ jobs:
   # uploads them, so reviewers see motion changes without a Mac.
   avatar-preview:
     needs: changes
-    # !cancelled(): on a push `changes` is skipped, which would skip this job too. If `changes`
-    # itself fails, run anyway rather than report a skip that branch protection counts as passing.
+    # If `changes` itself fails, run anyway rather than report a skip that branch protection
+    # counts as passing.
     if: >-
-      !cancelled() && (github.event_name == 'push' || needs.changes.result == 'failure' ||
-      needs.changes.outputs.avatar == 'true')
+      !cancelled() && (needs.changes.result == 'failure' || needs.changes.outputs.avatar == 'true')
     runs-on: macos-26
     timeout-minutes: 30
     steps:
