@@ -57,9 +57,8 @@ final class WelcomeCrowd {
     static let checkInStagger = 0.35
     static let firstChange = 6.0
     static let interval = 4.0
-    /// The slogan rises in this long after the break, and the button this long after it.
+    /// The slogan rises in this long after the break, and the button `Motion.revealStagger` after it.
     static let revealDelay = 0.2
-    static let buttonDelay = 0.08
     /// How many looks the crowd changes between.
     static let looks = 8
     /// The canvas is 240 by 320; its feet stand at 96% of its height.

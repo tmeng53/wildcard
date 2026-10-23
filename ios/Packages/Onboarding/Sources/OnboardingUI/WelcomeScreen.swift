@@ -72,7 +72,7 @@ struct WelcomeScreen<SignIn: View>: View {
             .padding(.horizontal, Space.pageMargin)
             // Phones with a home indicator sit the terms right on it, as the design does.
             .padding(.bottom, homeIndicator > 0 ? 0 : Space.xs)
-            .modifier(Reveal(shown: revealed, delay: WelcomeCrowd.buttonDelay, reduceMotion: reduceMotion))
+            .modifier(Reveal(shown: revealed, delay: Motion.revealStagger, reduceMotion: reduceMotion))
         }
         .background {
             // Reaching under the home indicator, the page knows how tall it is.
@@ -237,8 +237,7 @@ private struct Sprinting: ViewModifier {
         } else {
             content
                 .opacity(settled ? 1 : 0)
-                // The approved open screen fades the word in over 0.25 s when there's no sprint.
-                .animation(.linear(duration: 0.25), value: settled)
+                .animation(.wildcard(Motion.fadeIn), value: settled)
         }
     }
 
@@ -275,19 +274,17 @@ private struct FinishTape: View {
     }
 }
 
-/// Rises 8 points and fades in once shown, after `delay`; with Reduce Motion it only fades.
+/// Rises and fades in once shown, after `delay`; with Reduce Motion it only fades.
 private struct Reveal: ViewModifier {
     let shown: Bool
     let delay: Double
     let reduceMotion: Bool
-    /// The approved open screen's own curve: 0.3 s, ease-out cubic (1 - (1 - k)³).
-    static let curve = Animation.timingCurve(0.33, 1, 0.68, 1, duration: 0.3)
 
     func body(content: Content) -> some View {
         content
             .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 8)
-            .animation(Self.curve.delay(delay), value: shown)
+            .offset(y: shown || reduceMotion ? 0 : Motion.revealRise)
+            .animation(.wildcard(Motion.reveal).delay(delay), value: shown)
     }
 }
 
