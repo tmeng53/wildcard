@@ -10,13 +10,22 @@ import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 export const TODAY_POSTS = 4;
 /** The most reactions a post carries, newest first, besides the member's own. */
 export const POST_REACTIONS = 8;
-/** A post's words are cut to this many characters as people see them, with `…`. */
-export const POST_TEXT = 40;
 /**
- * The most bytes `today` may take as JSON. APNs takes 4KB in all; at their fullest (8 members with
- * 12-emoji nicknames, 60-character captions, the widest emoji) the alert and the rest of the event
- * take under 500 bytes and four posts about 3.2KB. A safety net: posts are dropped from the end
- * (and counted in `more`) until it fits.
+ * A post's words are cut to this many characters as people see them, and to `POST_TEXT_BYTES`,
+ * with `…`; a custom sport and a nickname to their own bytes. Emoji take up to 25 bytes each, so
+ * the bytes bound what the characters can't.
+ */
+export const POST_TEXT = 40;
+export const POST_TEXT_BYTES = 160;
+export const SPORT_BYTES = 60;
+export const NAME_BYTES = 48;
+/** The most patters the push names in its view's header. */
+export const POKERS = 3;
+/**
+ * The most bytes `today` may take as JSON. APNs takes 4KB in all; at their fullest (8 members, every
+ * name, sport and caption at its byte cut, the widest emoji everywhere) the alert and the rest of
+ * the event take under 700 bytes and `today` about 3.3KB. A safety net: posts are dropped from
+ * the end (and counted in `more`) until it fits.
  */
 export const TODAY_BYTES = 3400;
 
@@ -33,6 +42,8 @@ export type PushToday = {
   readonly posts: readonly PushPost[];
   /** Teammates' posts today beyond those in `posts`. */
   readonly more: number;
+  /** Who patted the member since their last push (indices in `members`), at most `POKERS`. */
+  readonly pokedBy?: readonly number[];
 };
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -44,7 +55,7 @@ export type PushPost = {
   readonly sport?: string;
   readonly customSport?: string;
   readonly at: string;
-  /** The caption, or the 请假条's text, cut to `POST_TEXT`. */
+  /** The caption, or the 请假条's text, cut to `POST_TEXT` and `POST_TEXT_BYTES`. */
   readonly text?: string;
   /** `[member index, emoji]`, newest first: the newest `POST_REACTIONS`, and the member's own always. */
   readonly reactions: readonly (readonly [number, string])[];
@@ -54,9 +65,20 @@ export type PushPost = {
 
 const graphemes = new Intl.Segmenter('und', { granularity: 'grapheme' });
 
-function cut(text: string): string {
+/** `text` cut to `characters` graphemes and `bytes` bytes of UTF-8, ending in `…` when cut. */
+function cut(
+  text: string,
+  { characters = Infinity, bytes }: { readonly characters?: number; readonly bytes: number },
+): string {
   const all = Array.from(graphemes.segment(text), ({ segment }) => segment);
-  return all.length <= POST_TEXT ? text : `${all.slice(0, POST_TEXT - 1).join('')}…`;
+  if (all.length <= characters && Buffer.byteLength(text) <= bytes) return text;
+  // Room for the `…`, 3 bytes.
+  let kept = '';
+  for (const segment of all.slice(0, characters - 1)) {
+    if (Buffer.byteLength(kept + segment) > bytes - 3) break;
+    kept += segment;
+  }
+  return `${kept}…`;
 }
 
 /** What the daily push carries of `viewer`'s squad's day, from the squad's today. */
@@ -69,7 +91,14 @@ export async function pushToday(
     viewer,
     squad,
     today,
-  }: { readonly viewer: string; readonly squad: SquadId; readonly today: SquadToday },
+    pokers,
+  }: {
+    readonly viewer: string;
+    readonly squad: SquadId;
+    readonly today: SquadToday;
+    /** Who patted the member, first first. */
+    readonly pokers: readonly string[];
+  },
 ): Promise<PushToday> {
   // Each teammate's own today, in their time zone.
   const dayOf = new Map<string, string>(today.members.map(({ member, day }) => [member, day]));
@@ -94,6 +123,10 @@ export async function pushToday(
     ids.push(member);
     return ids.length - 1;
   };
+  const patted = pokers
+    .filter((each) => each !== viewer)
+    .slice(0, POKERS)
+    .map(index);
   const shown = posts.map(({ checkIn, reactions }): PushPost => {
     const newest = [...reactions].sort((a, b) => b.reactedAt.getTime() - a.reactedAt.getTime());
     const kept = newest.filter((each, at) => at < POST_REACTIONS || each.member === viewer);
@@ -112,11 +145,13 @@ export async function pushToday(
             sport: checkIn.training.sport,
             ...(checkIn.training.customSport === undefined
               ? {}
-              : { customSport: checkIn.training.customSport }),
+              : { customSport: cut(checkIn.training.customSport, { bytes: SPORT_BYTES }) }),
           }
         : {}),
       at: checkIn.createdAt.toISOString(),
-      ...(words === undefined ? {} : { text: cut(words) }),
+      ...(words === undefined
+        ? {}
+        : { text: cut(words, { characters: POST_TEXT, bytes: POST_TEXT_BYTES }) }),
       reactions: kept.map(({ member, emoji }) => [index(member), emoji] as const),
       reactionCount: reactions.length,
     };
@@ -127,7 +162,11 @@ export async function pushToday(
   const build = (): PushToday => {
     // Only the members the carried posts name, renumbered.
     const used = [
-      ...new Set([0, ...carried.flatMap((post) => [post.by, ...post.reactions.map(([at]) => at)])]),
+      ...new Set([
+        0,
+        ...patted,
+        ...carried.flatMap((post) => [post.by, ...post.reactions.map(([at]) => at)]),
+      ]),
     ];
     const renumber = new Map(used.map((old, at) => [old, at]));
     const at = (old: number) => renumber.get(old) ?? 0;
@@ -135,7 +174,7 @@ export async function pushToday(
       members: used.map((old) => {
         const id = ids[old] ?? viewer;
         const name = profiles.get(ProfileMember.parse(id))?.character?.nickname;
-        return name === undefined ? { id } : { id, name };
+        return name === undefined ? { id } : { id, name: cut(name, { bytes: NAME_BYTES }) };
       }),
       posts: carried.map((post) => ({
         ...post,
@@ -143,6 +182,7 @@ export async function pushToday(
         reactions: post.reactions.map(([who, emoji]) => [at(who), emoji] as const),
       })),
       more: posts.length - carried.length,
+      ...(patted.length === 0 ? {} : { pokedBy: patted.map(at) }),
     };
   };
   let built = build();

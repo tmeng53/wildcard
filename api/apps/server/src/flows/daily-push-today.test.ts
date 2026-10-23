@@ -13,7 +13,7 @@ import { apnsPayload } from '@wildcard/push';
 import { describe, expect, it } from 'vitest';
 
 import { dailyProgressNotification } from './daily-progress-push.js';
-import { TODAY_BYTES, TODAY_POSTS, pushToday } from './daily-push-today.js';
+import { POKERS, TODAY_BYTES, TODAY_POSTS, pushToday } from './daily-push-today.js';
 
 // The size of the push at its fullest, without a database: the most squad, names, words and
 // reactions the rules allow.
@@ -24,8 +24,8 @@ const mates = Array.from({ length: 7 }, () => MemberId.parse(randomUUID()));
 const everyone = [viewer, ...mates];
 // The widest emoji: a family, 7 code points and 25 bytes.
 const family = Emoji.parse('👨‍👩‍👧‍👦');
-// 12 characters of 4 bytes each.
-const nickname = Nickname.parse('🏋🏋🏋🏋🏋🏋🏋🏋🏋🏋🏋🏋');
+// Every name, sport and caption at its longest, all in the widest emoji.
+const nickname = Nickname.parse(family.repeat(12));
 const look = Look.parse({ persona: 'deadpan', variants: { body: 'peach' }, colors: {} });
 
 const today: SquadToday = {
@@ -57,8 +57,8 @@ function post(author: MemberId, minute: number): SquadPost {
       kind: 'trained',
       training: {
         sport: 'custom',
-        customSport: '超长名字的自己的运动超长名字的自己的运动',
-        caption: '很长很长的一句话'.repeat(8).slice(0, 60),
+        customSport: family.repeat(20),
+        caption: family.repeat(60),
       },
     },
     reactions: everyone
@@ -87,7 +87,8 @@ describe('the push’s today', () => {
             ),
         },
       },
-      { viewer, squad, today },
+      // Every teammate patted the member: the view names three.
+      { viewer, squad, today, pokers: mates },
     );
     const payload = apnsPayload(
       dailyProgressNotification({
@@ -98,6 +99,7 @@ describe('the push’s today', () => {
           ['reaction', new Set(mates)],
           ['poke', new Set(mates)],
         ]),
+        named: { kind: 'poke', nickname },
         today: carried,
       }),
     );
@@ -105,6 +107,10 @@ describe('the push’s today', () => {
     // Even at its fullest, all four fit; the rest are counted.
     expect(carried.posts).toHaveLength(TODAY_POSTS);
     expect(carried.more).toBe(posts.length - TODAY_POSTS);
+    expect(carried.pokedBy).toHaveLength(POKERS);
+    // Cut by bytes, so they still say something.
+    expect(carried.posts[0]?.text).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
+    expect(carried.members[1]?.name).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
     expect(Buffer.byteLength(JSON.stringify(carried))).toBeLessThanOrEqual(TODAY_BYTES);
   });
 });
