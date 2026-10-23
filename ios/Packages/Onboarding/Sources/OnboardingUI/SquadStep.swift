@@ -37,15 +37,16 @@ struct SquadStep: View {
             // Back here after joining or making the squad: it shows what was chosen, read-only.
             .disabled(model.joined != nil)
         } actions: {
-            if model.asksForAIConsent {
-                AIConsentLine(privacyPolicy: privacyPolicy)
-            }
             FailureLine(failure: model.failure)
             StepButton(
                 title: isJoining ? Text("加入小队", bundle: .module) : Text("建小队", bundle: .module),
                 isWorking: model.isWorking, isEnabled: model.canFinishSquad, action: model.finishSquad
             )
             .accessibilityIdentifier("squad.done")
+            if model.asksForAIConsent {
+                AIConsentLine(privacyPolicy: privacyPolicy)
+                    .padding(.top, Space.xxs)
+            }
         }
     }
 
