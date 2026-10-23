@@ -12,8 +12,8 @@ import { Look, Nickname, type MemberId as ProfileMember, type Squadmate } from '
 import { apnsPayload } from '@wildcard/push';
 import { describe, expect, it } from 'vitest';
 
-import { dailyProgressNotification } from './daily-progress-push.js';
-import { POKERS, POST_REACTIONS, TODAY_BYTES, TODAY_POSTS, pushToday } from './daily-push-today.js';
+import { APNS_BYTES, dailyProgressNotification, roomForToday } from './daily-progress-push.js';
+import { POKERS, POST_REACTIONS, TODAY_POSTS, pushToday } from './daily-push-today.js';
 
 // The size of the push at its fullest, without a database: the most squad, names, words and
 // reactions the rules allow.
@@ -70,48 +70,72 @@ function post(author: MemberId, minute: number): SquadPost {
 
 const posts = mates.flatMap((mate, at) => [post(mate, at * 2), post(mate, at * 2 + 1)]);
 
+// Every member named at the longest a name can be.
+const everyoneNamed = {
+  checkIns: { listForSquad: () => Promise.resolve(posts) },
+  members: {
+    squadmates: (members: readonly ProfileMember[]) =>
+      Promise.resolve(
+        new Map<ProfileMember, Squadmate>(
+          members.map((member) => [member, { catchphrase: null, character: { nickname, look } }]),
+        ),
+      ),
+  },
+};
+
 describe('the push’s today', () => {
   it('keeps the whole push under APNs’ 4KB at its fullest', async () => {
-    const carried = await pushToday(
-      {
-        checkIns: { listForSquad: () => Promise.resolve(posts) },
-        members: {
-          squadmates: (members) =>
-            Promise.resolve(
-              new Map<ProfileMember, Squadmate>(
-                members.map((member) => [
-                  member,
-                  { catchphrase: null, character: { nickname, look } },
-                ]),
-              ),
-            ),
-        },
-      },
-      // Every teammate patted the member: the view names three.
-      { viewer, squad, today, pokers: mates },
-    );
-    const payload = apnsPayload(
-      dailyProgressNotification({
-        day,
-        squad,
-        squadWeek: today.squadWeek,
-        received: new Map([
-          ['reaction', new Set(mates)],
-          ['poke', new Set(mates)],
-        ]),
-        named: { kind: 'poke', nickname },
-        today: carried,
-      }),
-    );
-    expect(Buffer.byteLength(JSON.stringify(payload))).toBeLessThanOrEqual(4096);
+    const told = {
+      day,
+      squad,
+      squadWeek: today.squadWeek,
+      received: new Map([
+        ['reaction', new Set<string>(mates)],
+        ['poke', new Set<string>(mates)],
+      ]),
+      named: { kind: 'poke', nickname },
+    };
+    // Every teammate patted the member: the view names three.
+    const carried = await pushToday(everyoneNamed, {
+      viewer,
+      squad,
+      today,
+      pokers: mates,
+      bytes: roomForToday(told),
+    });
+    const payload = apnsPayload(dailyProgressNotification({ ...told, today: carried }));
+    expect(Buffer.byteLength(JSON.stringify(payload))).toBeLessThanOrEqual(APNS_BYTES);
     // Even at its fullest, all four fit; the rest are counted.
-    expect(carried.posts).toHaveLength(TODAY_POSTS);
-    expect(carried.more).toBe(posts.length - TODAY_POSTS);
-    expect(carried.pokedBy).toHaveLength(POKERS);
+    expect(carried?.posts).toHaveLength(TODAY_POSTS);
+    expect(carried?.more).toBe(posts.length - TODAY_POSTS);
+    expect(carried?.pokedBy).toHaveLength(POKERS);
     // Cut by bytes, so they still say something.
-    expect(carried.posts[0]?.text).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
-    expect(carried.members[1]?.name).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
-    expect(Buffer.byteLength(JSON.stringify(carried))).toBeLessThanOrEqual(TODAY_BYTES);
+    expect(carried?.posts[0]?.text).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
+    expect(carried?.members[1]?.name).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
+  });
+
+  it('leaves room for an alert that names someone with a long name', async () => {
+    // One letter with many combining marks: a single character to the nickname rule.
+    const long = Nickname.parse(`a${'\u0301'.repeat(999)}`);
+    const told = {
+      day,
+      squad,
+      squadWeek: today.squadWeek,
+      received: new Map([['poke', new Set<string>(mates)]]),
+      named: { kind: 'poke', nickname: long },
+    };
+    const carried = await pushToday(everyoneNamed, {
+      viewer,
+      squad,
+      today,
+      pokers: mates,
+      bytes: roomForToday(told),
+    });
+    const payload = apnsPayload(dailyProgressNotification({ ...told, today: carried }));
+    expect(Buffer.byteLength(JSON.stringify(payload))).toBeLessThanOrEqual(APNS_BYTES);
+    // Fewer posts fit; the rest are counted.
+    expect(carried?.posts.length).toBeLessThan(TODAY_POSTS);
+    expect(carried?.more).toBe(posts.length - (carried?.posts.length ?? 0));
   });
 
   it('keeps the newest reactions and always the member’s own', async () => {
@@ -133,11 +157,16 @@ describe('the push’s today', () => {
         checkIns: { listForSquad: () => Promise.resolve([reacted]) },
         members: { squadmates: () => Promise.resolve(new Map<ProfileMember, Squadmate>()) },
       },
-      { viewer, squad, today, pokers: [] },
+      { viewer, squad, today, pokers: [], bytes: APNS_BYTES },
     );
-    const [shown] = carried.posts;
-    const who = shown?.reactions.map(([at]) => carried.members[at]?.id);
+    const [shown] = carried?.posts ?? [];
+    const who = shown?.reactions.map(([at]) => carried?.members[at]?.id);
     expect(who).toEqual([...others].reverse().slice(0, POST_REACTIONS).concat(viewer));
     expect(shown?.reactionCount).toBe(POST_REACTIONS + 3);
+  });
+
+  it('carries nothing when there is no room even without posts', async () => {
+    const carried = await pushToday(everyoneNamed, { viewer, squad, today, pokers: [], bytes: 40 });
+    expect(carried).toBeUndefined();
   });
 });

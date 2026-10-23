@@ -7,6 +7,7 @@ import {
   type DailyCandidate,
   type Push,
   type PushNotification,
+  apnsPayload,
 } from '@wildcard/push';
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
 
@@ -186,23 +187,39 @@ async function compose(
   const byKind = mergeInteractions(received);
   const squadCheckedIn = today.members.some(({ firstCheckInAt }) => firstCheckInAt !== undefined);
   if (!squadCheckedIn && byKind.size === 0) return undefined;
-  return dailyProgressNotification({
+  const told = {
     day,
     squad: squad.id,
     squadWeek: today.squadWeek,
     received: byKind,
     named: await namedSender(deps.members, byKind),
+  };
+  return dailyProgressNotification({
+    ...told,
     today: await pushToday(deps, {
       viewer: member,
       squad: squadId,
       today,
       pokers: [...(byKind.get('poke') ?? [])],
+      bytes: roomForToday(told),
     }).catch((error: unknown) => {
       // The long-press view is extra: the push still goes, and the phone shows its words alone.
       deps.log.warn('daily push sent without today', { member, day, error });
       return undefined;
     }),
   });
+}
+
+/** The most bytes APNs takes in a push's payload. */
+export const APNS_BYTES = 4096;
+
+/** What APNs' 4KB leaves for `today` beside the rest of the push, whose alert can be long. */
+export function roomForToday(
+  told: Omit<Parameters<typeof dailyProgressNotification>[0], 'today'>,
+): number {
+  const rest = JSON.stringify(apnsPayload(dailyProgressNotification(told)));
+  // `today` goes in the event object as `,"today":…`.
+  return APNS_BYTES - Buffer.byteLength(rest) - Buffer.byteLength(',"today":');
 }
 
 /** Who the push names: the first sender of the most telling kind who has a nickname. */

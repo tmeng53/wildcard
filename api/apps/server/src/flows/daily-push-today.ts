@@ -21,13 +21,6 @@ export const SPORT_BYTES = 60;
 export const NAME_BYTES = 48;
 /** The most patters the push names in its view's header. */
 export const POKERS = 3;
-/**
- * The most bytes `today` may take as JSON. APNs takes 4KB in all; at their fullest (8 members, every
- * name, sport and caption at its byte cut, the widest emoji everywhere) the alert and the rest of
- * the event take under 700 bytes and `today` about 3.3KB. A safety net: posts are dropped from
- * the end (and counted in `more`) until it fits.
- */
-export const TODAY_BYTES = 3400;
 
 /**
  * Today's check-ins in the daily push, for the push's long-press view on the phone, which must
@@ -81,7 +74,7 @@ function cut(
   return `${kept}…`;
 }
 
-/** What the daily push carries of `viewer`'s squad's day, from the squad's today. */
+/** What the daily push carries of `viewer`'s squad's day, from the squad's today, in `bytes`. */
 export async function pushToday(
   deps: {
     readonly checkIns: Pick<CheckIns, 'listForSquad'>;
@@ -92,14 +85,22 @@ export async function pushToday(
     squad,
     today,
     pokers,
+    bytes,
   }: {
     readonly viewer: string;
     readonly squad: SquadId;
     readonly today: SquadToday;
     /** Who patted the member, first first. */
     readonly pokers: readonly string[];
+    /**
+     * The most bytes `today` may take as JSON: what APNs' 4KB leaves beside the alert and the rest
+     * of the event. At their fullest (8 members, every name, sport and caption at its byte cut, the
+     * widest emoji everywhere) four posts take about 3.2KB and fit; posts are dropped from the end
+     * (and counted in `more`) until it fits.
+     */
+    readonly bytes: number;
   },
-): Promise<PushToday> {
+): Promise<PushToday | undefined> {
   // Each teammate's own today, in their time zone.
   const dayOf = new Map<string, string>(today.members.map(({ member, day }) => [member, day]));
   const days = [...dayOf.values()].sort();
@@ -186,9 +187,11 @@ export async function pushToday(
     };
   };
   let built = build();
-  while (carried.length > 0 && Buffer.byteLength(JSON.stringify(built)) > TODAY_BYTES) {
+  const fits = () => Buffer.byteLength(JSON.stringify(built)) <= bytes;
+  while (carried.length > 0 && !fits()) {
     carried = carried.slice(0, -1);
     built = build();
   }
-  return built;
+  // No room even without posts (an alert that takes nearly all of it): the push goes without.
+  return fits() ? built : undefined;
 }
