@@ -240,7 +240,8 @@ private struct Sprinting: ViewModifier {
         } else {
             content
                 .opacity(settled ? 1 : 0)
-                .animation(.wildcard(Motion.page, reduceMotion: true), value: settled)
+                // The approved open screen fades the word in over 0.25 s when there's no sprint.
+                .animation(.linear(duration: 0.25), value: settled)
         }
     }
 
@@ -282,12 +283,14 @@ private struct Reveal: ViewModifier {
     let shown: Bool
     let delay: Double
     let reduceMotion: Bool
+    /// The approved open screen's own curve: 0.3 s, ease-out cubic (1 - (1 - k)³).
+    static let curve = Animation.timingCurve(0.33, 1, 0.68, 1, duration: 0.3)
 
     func body(content: Content) -> some View {
         content
             .opacity(shown ? 1 : 0)
             .offset(y: shown || reduceMotion ? 0 : 8)
-            .animation(.wildcard(Motion.page, reduceMotion: reduceMotion).delay(delay), value: shown)
+            .animation(Self.curve.delay(delay), value: shown)
     }
 }
 
