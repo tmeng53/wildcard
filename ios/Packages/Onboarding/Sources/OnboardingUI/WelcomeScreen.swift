@@ -29,7 +29,7 @@ struct WelcomeScreen<SignIn: View>: View {
                     Text("WILDCARD", bundle: .module)
                         .typeStyle(TypeRamp.scoreHero)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    Text("拉上朋友，一起上场", bundle: .module)
+                    Text("人人都是运动员", bundle: .module)
                         .typeStyle(TypeRamp.headline)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                 }

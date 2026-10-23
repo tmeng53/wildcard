@@ -1041,6 +1041,22 @@
         }
       }
     },
+    "人人都是运动员": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Become everyday athletes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人人都是运动员"
+          }
+        }
+      }
+    },
     "以后再选": {
       "localizations": {
         "en": {
@@ -1261,22 +1277,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "建小队"
-          }
-        }
-      }
-    },
-    "拉上朋友，一起上场": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bring your friends. Take the field together."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拉上朋友，一起上场"
           }
         }
       }
