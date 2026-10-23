@@ -19,6 +19,7 @@ struct ComposeView: View {
     @State private var activity: Activity?
     @State private var isPickingSport = false
     @State private var minutes: WorkoutMinutes?
+    @State private var isWritingMinutes = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,7 +30,8 @@ struct ComposeView: View {
                         MediaBlock(model: model)
                         if kind == .trained {
                             SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
-                            MinutesRow(minutes: $minutes)
+                            MinutesRow(minutes: $minutes) { isWritingMinutes = $0 }
+                                .id(Self.minutesID)
                         }
                         captionField.id(Self.captionID)
                         if model.sendFailed {
@@ -50,6 +52,13 @@ struct ComposeView: View {
                         proxy.scrollTo(Self.captionID, anchor: .bottom)
                     }
                 }
+                // And the minutes being typed under 其他.
+                .onChange(of: isWritingMinutes) { _, writing in
+                    guard writing else { return }
+                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                        proxy.scrollTo(Self.minutesID, anchor: .bottom)
+                    }
+                }
             }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
@@ -63,6 +72,7 @@ struct ComposeView: View {
     }
 
     private static let captionID = "caption"
+    private static let minutesID = "minutes"
 
     /// The board's last sport until the member picks one; detection from the cover comes later.
     private var currentActivity: Activity {
@@ -252,9 +262,10 @@ private struct SportRow: View {
 }
 
 /// How long it took, if the member wants to say: the usual lengths one tap each (tap again to
-/// clear), and 其他 for any other number of minutes.
+/// clear), and 其他 for any other number of minutes, held to `WorkoutMinutes.range`.
 private struct MinutesRow: View {
     @Binding var minutes: WorkoutMinutes?
+    let onWriting: (Bool) -> Void
     @State private var isTyping = false
     @State private var typed = ""
 
@@ -283,15 +294,21 @@ private struct MinutesRow: View {
             .scrollIndicators(.hidden)
             .horizontalScrollFade()
             if isTyping {
-                InputField(text: $typed, label: Text("分钟", bundle: .module))
+                InputField(text: $typed, label: Text("分钟", bundle: .module), onFocusChange: onWriting)
                     .keyboardType(.numberPad)
                     .onChange(of: typed) { _, text in
-                        let digits = String(text.filter { ("0"..."9").contains($0) }.prefix(3))
-                        if digits != text { typed = digits }
-                        minutes = Int(digits).flatMap { try? WorkoutMinutes($0) }
+                        // Digits only, and never past the most the API takes.
+                        let digits = text.filter { ("0"..."9").contains($0) }
+                        let fitted = Int(digits).map { String(min($0, WorkoutMinutes.range.upperBound)) } ?? ""
+                        if fitted != text { typed = fitted }
+                        minutes = Int(fitted).flatMap { try? WorkoutMinutes($0) }
                     }
                     .accessibilityIdentifier("compose.minutes.field")
             }
+        }
+        // A field closed by picking a pill never says it stopped being typed in.
+        .onChange(of: isTyping) { _, typing in
+            if !typing { onWriting(false) }
         }
     }
 

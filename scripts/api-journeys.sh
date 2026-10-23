@@ -124,11 +124,16 @@ echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
 if want check-in; then
   id="$(new_id)"
-  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"caption\":\"累但爽\"}}"
+  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"minutes\":40,\"caption\":\"累但爽\"}}"
   call PUT "/check-ins/$id" "$me_token" "$trained"
   expect 201
   [ "$(jq -r .training.customSport <<<"$body")" = "飞盘" ] || fail "custom sport not trimmed: $body"
-  echo "check-in: saved trained $id (201)"
+  [ "$(jq -r .training.minutes <<<"$body")" = "40" ] || fail "minutes not kept: $body"
+  echo "check-in: saved trained $id with 40 minutes (201)"
+
+  call PUT "/check-ins/$(new_id)" "$me_token" "${trained/\"minutes\":40/\"minutes\":601}"
+  expect 400 REQUEST_INVALID
+  echo "check-in: 601 minutes refused (400 REQUEST_INVALID)"
 
   call PUT "/check-ins/$id" "$me_token" "$trained"
   expect 200
@@ -155,7 +160,9 @@ if want check-in; then
   expect 200
   [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
     fail "squad list should hold exactly $id and $first: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins)"
+  [ "$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .training.minutes' <<<"$body")" = "40" ] ||
+    fail "mate should see the 练了's 40 minutes: $body"
+  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED

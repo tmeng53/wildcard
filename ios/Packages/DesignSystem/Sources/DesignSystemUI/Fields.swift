@@ -4,7 +4,8 @@ import SwiftUI
 
 /// A one-line text field: white with a hairline, 44 tall, an accent border while typing, and a
 /// count like `3/10` when it has a limit. The field doesn't cut the text; the caller enforces
-/// `limit` where it saves.
+/// `limit` where it saves. `onFocusChange` tells the screen when typing starts and stops, so it
+/// can keep the field above the keyboard.
 public struct InputField: View {
     @Environment(\.sceneTheme) private var theme
     @Binding private var text: String
@@ -12,13 +13,18 @@ public struct InputField: View {
     private let label: Text
     private let prompt: Text?
     private let limit: Int?
+    private let onFocusChange: (Bool) -> Void
 
     /// `label` names the field for VoiceOver; `prompt` is the placeholder.
-    public init(text: Binding<String>, label: Text, prompt: Text? = nil, limit: Int? = nil) {
+    public init(
+        text: Binding<String>, label: Text, prompt: Text? = nil, limit: Int? = nil,
+        onFocusChange: @escaping (Bool) -> Void = { _ in }
+    ) {
         _text = text
         self.label = label
         self.prompt = prompt
         self.limit = limit
+        self.onFocusChange = onFocusChange
     }
 
     public var body: some View {
@@ -45,6 +51,7 @@ public struct InputField: View {
         .overlay { PickBorder(shape: shape, isSelected: isFocused) }
         .contentShape(shape)
         .onTapGesture { isFocused = true }
+        .onChange(of: isFocused) { _, focused in onFocusChange(focused) }
         .animation(.wildcard(Motion.change), value: isFocused)
     }
 }

@@ -324,6 +324,10 @@ extension TodayUITests {
         minutes.typeText("75")
         settle()
         keepScreenshot(named: "15-compose-minutes-other")
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.exists, "no keyboard for the minutes")
+        XCTAssertLessThanOrEqual(
+            minutes.frame.maxY, keyboard.frame.minY, "the minutes field is under the keyboard: \(minutes.frame)")
         app.buttons["compose.minutes.45"].tap()
         XCTAssertTrue(app.buttons["compose.minutes.45"].isSelected, "45 minutes isn't picked")
         XCTAssertTrue(minutes.waitForNonExistence(timeout: Self.wait), "the minutes field stayed open after picking 45")
