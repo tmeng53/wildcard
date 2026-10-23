@@ -206,9 +206,10 @@ func everyFrameStaysOnTheCanvas(persona: Persona, outfit: Outfit) throws {
 }
 
 /// Checks every frame of a clip, 50 a second, keeps the figure inside its canvas. Only the
-/// shadow may touch the bottom edge.
+/// shadow may touch the bottom edge, unless the move lies down (`below`).
 func expectOnCanvas(
-    _ figure: Figure, _ bound: BoundClip, for seconds: Double, _ label: String, sideways: Double = 0, above: Double = 0
+    _ figure: Figure, _ bound: BoundClip, for seconds: Double, _ label: String, sideways: Double = 0, above: Double = 0,
+    below: Double = 0
 ) {
     for frame in 0...Int(seconds * 50) {
         let time = Double(frame) / 50
@@ -217,7 +218,7 @@ func expectOnCanvas(
             for shape in part.art.flatMap(\.shapes) {
                 let margin = (shape.stroke?.width ?? 0) / 2
                 for point in outline(shape.path).map(placement.transform.apply(to:)) {
-                    let bottom = part.id == "shadow" || point.y + margin <= figure.height
+                    let bottom = part.id == "shadow" || point.y + margin <= figure.height + below
                     #expect(
                         point.x - margin >= -sideways && point.x + margin <= figure.width + sideways
                             && point.y - margin >= -above && bottom,

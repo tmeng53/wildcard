@@ -98,6 +98,22 @@ enum LaunchOptions {
         return size
     }
 
+    /// `-uitest-patted`: on the sample squad, 小米 and 阿杰 patted me an hour ago, so the home
+    /// plays their pats on opening. It plays on every launch: what was shown is kept apart from
+    /// the app's own settings and forgotten each time.
+    static var pattedMe: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-patted")
+    }
+
+    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
+    /// suite emptied at launch.
+    static var todayDefaults: UserDefaults {
+        let suite = "uitest-today"
+        guard pattedMe, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
+
     /// `-uitest-scene track`: the sample squad's home on another scene than the gym.
     static var scene: SceneTheme {
         let arguments = ProcessInfo.processInfo.arguments

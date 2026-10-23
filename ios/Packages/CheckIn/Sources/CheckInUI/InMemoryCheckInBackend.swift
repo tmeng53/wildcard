@@ -1,3 +1,4 @@
+import AvatarArt
 import CheckInDomain
 import Contracts
 import Foundation
@@ -8,9 +9,11 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var current: Home?
     private var reactionsByCheckIn: [CheckInID: [Reaction]] = [:]
     private var photoCount = 0
+    private var squadPokes: SquadPokes
 
-    public init(home: Home?) {
+    public init(home: Home?, pokes: SquadPokes = .none) {
         current = home
+        squadPokes = pokes
     }
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
@@ -18,8 +21,11 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// and the member not checked in, today being `now`'s day in the device's zone. A smaller
     /// `size` (1 to 8, me included) keeps the 请假条, then the runner, the rest day and so on. Pass
     /// `member` and `squad` to share them with another screen's sample, such as 动态's.
+    /// Everyone goes by the approved home's names (小米, 阿杰, 豆豆, …). With `patted`, the
+    /// runner (小米) and the 请假条 (阿杰) patted me an hour ago, so the home plays it.
     public static func sampleSquad(
-        now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID())
+        now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
+        patted: Bool = false
     ) -> InMemoryCheckInBackend {
         let zone = TimeZone.current
         let day = LocalDay(at: now, in: zone)
@@ -31,9 +37,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             -> SquadmateToday
         {
             SquadmateToday(
-                member: id, catchphrase: nil, character: nil, day: day, training: training, latestMeal: nil,
-                plannedRest: rest,
-                firstCheckInAt: first)
+                member: id, catchphrase: nil, character: character(of: id, everyone: everyone), day: day,
+                training: training, latestMeal: nil, plannedRest: rest, firstCheckInAt: first)
         }
         let members =
             [
@@ -66,7 +71,32 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                             week: WeekCount(trainedDays: earlier.count, plannedDays: 5), lifetimeTrainedDays: 40),
                         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
+            },
+            pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none)
+    }
+
+    /// `patters` patted me, the first an hour ago and each next one ten minutes later.
+    private static func pats(by patters: [MemberID], at time: (Double) -> Timestamp) -> SquadPokes {
+        SquadPokes(
+            sent: [],
+            received: patters.enumerated().map { offset, from in
+                ReceivedPoke(from: from, patAt: time(1 - Double(offset) / 6))
             })
+    }
+
+    /// The sample squad's names, from the approved home, in the order of `everyone`: the three
+    /// who trained, the 请假条, the rest day and the two not yet.
+    private static let names = ["小米", "豆豆", "大卫", "阿杰", "Coco", "Leo", "Mia"]
+
+    /// A sample teammate's nickname, on the stand-in look and persona the scene gives them.
+    private static func character(of member: MemberID, everyone: [MemberID]) -> MemberCharacter? {
+        guard let index = everyone.firstIndex(of: member),
+            let nickname = try? Nickname(Bundle.module.localizedString(forKey: names[index], value: nil, table: nil))
+        else { return nil }
+        return MemberCharacter(
+            nickname: nickname,
+            look: CharacterLook(
+                outfit: StandInCharacter.look(of: member), persona: StandInCharacter.persona(of: member)))
     }
 
     /// Today's counts of the sample squad's `members`, never 全员上场.
@@ -156,6 +186,15 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     public func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
         guard let member = current?.member else { throw .notInSquad }
         reactionsByCheckIn[checkIn]?.removeAll { $0.member == member }
+    }
+
+    public func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
+        squadPokes
+    }
+
+    public func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
+        guard current?.squad.members.contains(member) ?? false else { throw .notInSquad }
+        squadPokes.sent.insert(member)
     }
 }
 

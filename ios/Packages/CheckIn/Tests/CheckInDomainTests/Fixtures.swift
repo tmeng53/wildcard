@@ -125,6 +125,21 @@ actor ScriptedBackend: CheckInBackend {
         if let failure { throw failure }
         reactionList[checkIn] = []
     }
+
+    var serverPokes = SquadPokes.none
+    private(set) var pats: [MemberID] = []
+    func set(pokes: SquadPokes) { serverPokes = pokes }
+
+    func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
+        if let failure { throw failure }
+        return serverPokes
+    }
+
+    func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
+        if let failure { throw failure }
+        pats.append(member)
+        serverPokes.sent.insert(member)
+    }
 }
 
 actor MemoryOutbox: Outbox {

@@ -20,6 +20,8 @@ public enum Haptic: String, CaseIterable, Sendable {
     case land
     /// A teammate's reaction arriving on your check-in: a soft tap.
     case reaction
+    /// A pat landing on a teammate (拍一拍): a short, light tap at the moment of contact.
+    case poke
     /// A carton bursting open on a scene pick, as its flaps fly: one heavy hit, the reveal's only
     /// one.
     case unbox

@@ -229,6 +229,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
     func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
+    /// The caller’s pokes in a squad (拍一拍)
+    ///
+    /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/get(listSquadNudges)`.
+    func listSquadNudges(_ input: Operations.ListSquadNudges.Input) async throws -> Operations.ListSquadNudges.Output
     /// Poke a squadmate (拍一拍)
     ///
     /// At most one of each kind a day (on the caller’s clock) to each squadmate: the same nudge again the same day changes nothing, so it is safe to repeat. Not pushed at once: the squadmate’s 6pm daily push names who nudged them.
@@ -748,6 +755,23 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The caller’s pokes in a squad (拍一拍)
+    ///
+    /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/get(listSquadNudges)`.
+    public func listSquadNudges(
+        path: Operations.ListSquadNudges.Input.Path,
+        query: Operations.ListSquadNudges.Input.Query,
+        headers: Operations.ListSquadNudges.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadNudges.Output {
+        try await listSquadNudges(Operations.ListSquadNudges.Input(
+            path: path,
+            query: query,
+            headers: headers
         ))
     }
     /// Poke a squadmate (拍一拍)
