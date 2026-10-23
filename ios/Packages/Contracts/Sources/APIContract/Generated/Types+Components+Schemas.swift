@@ -4734,6 +4734,12 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             public var source: Components.Schemas.WeeklyPlan.SourcePayload
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/fuelGoals`.
+            public var fuelGoals: Components.Schemas.FuelGoals
+            /// The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/firstWeek`.
+            public var firstWeek: Swift.String?
             /// Creates a new `WeeklyPlan`.
             ///
             /// - Parameters:
@@ -4742,18 +4748,24 @@ extension Components {
             ///   - weekStart: The week’s Monday.
             ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
             ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            ///   - fuelGoals:
+            ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
             public init(
                 version: Components.Schemas.WeeklyPlan.VersionPayload,
                 member: Swift.String,
                 weekStart: Swift.String,
                 days: Components.Schemas.WeeklyPlan.DaysPayload,
-                source: Components.Schemas.WeeklyPlan.SourcePayload
+                source: Components.Schemas.WeeklyPlan.SourcePayload,
+                fuelGoals: Components.Schemas.FuelGoals,
+                firstWeek: Swift.String? = nil
             ) {
                 self.version = version
                 self.member = member
                 self.weekStart = weekStart
                 self.days = days
                 self.source = source
+                self.fuelGoals = fuelGoals
+                self.firstWeek = firstWeek
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -4761,6 +4773,8 @@ extension Components {
                 case weekStart
                 case days
                 case source
+                case fuelGoals
+                case firstWeek
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -4784,15 +4798,159 @@ extension Components {
                     Components.Schemas.WeeklyPlan.SourcePayload.self,
                     forKey: .source
                 )
+                self.fuelGoals = try container.decode(
+                    Components.Schemas.FuelGoals.self,
+                    forKey: .fuelGoals
+                )
+                self.firstWeek = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .firstWeek
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "member",
                     "weekStart",
                     "days",
-                    "source"
+                    "source",
+                    "fuelGoals",
+                    "firstWeek"
                 ])
             }
         }
+        /// - Remark: Generated from `#/components/schemas/FuelGoals`.
+        @frozen public enum FuelGoalsPayload: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case1`.
+            public struct Case1Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case suggested = "suggested"
+                }
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/kind`.
+                public var kind: Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/suggestion`.
+                @frozen public enum SuggestionPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case water = "water"
+                    case cookAtHome = "cookAtHome"
+                    case veggies = "veggies"
+                    case lessBubbleTea = "lessBubbleTea"
+                    case breakfast = "breakfast"
+                    case earlyDinner = "earlyDinner"
+                }
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case1/suggestion`.
+                public var suggestion: Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload
+                /// Creates a new `Case1Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                ///   - suggestion:
+                public init(
+                    kind: Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload,
+                    suggestion: Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload
+                ) {
+                    self.kind = kind
+                    self.suggestion = suggestion
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case suggestion
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.kind = try container.decode(
+                        Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.suggestion = try container.decode(
+                        Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload.self,
+                        forKey: .suggestion
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "kind",
+                        "suggestion"
+                    ])
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case1`.
+            case case1(Components.Schemas.FuelGoalsPayload.Case1Payload)
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case2`.
+            public struct Case2Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case2/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case own = "own"
+                }
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case2/kind`.
+                public var kind: Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload
+                /// Trimmed, then 1 to 8 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/FuelGoals/case2/text`.
+                public var text: Swift.String
+                /// Creates a new `Case2Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                ///   - text: Trimmed, then 1 to 8 characters as people see them, on one line.
+                public init(
+                    kind: Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload,
+                    text: Swift.String
+                ) {
+                    self.kind = kind
+                    self.text = text
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case text
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.kind = try container.decode(
+                        Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload.self,
+                        forKey: .kind
+                    )
+                    self.text = try container.decode(
+                        Swift.String.self,
+                        forKey: .text
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "kind",
+                        "text"
+                    ])
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/FuelGoals/case2`.
+            case case2(Components.Schemas.FuelGoalsPayload.Case2Payload)
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
+                do {
+                    self = .case1(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case2(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .case1(value):
+                    try value.encode(to: encoder)
+                case let .case2(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// The week’s 饮食小目标, at most 3 in the order picked, each once: `{"kind": "suggested", "suggestion": "water"}` for one the app suggests, or `{"kind": "own", "text": "少喝冰美式"}` in the member’s own words (1 to 8 characters, one line). Only those saved for this week; goals don’t carry over.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FuelGoals`.
+        public typealias FuelGoals = [Components.Schemas.FuelGoalsPayload]
         /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft`.
         public struct WeeklyPlanDraft: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/version`.
@@ -4957,6 +5115,48 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "days"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft`.
+        public struct FuelGoalsDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft/version`.
+            public var version: Components.Schemas.FuelGoalsDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft/goals`.
+            public var goals: Components.Schemas.FuelGoals
+            /// Creates a new `FuelGoalsDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - goals:
+            public init(
+                version: Components.Schemas.FuelGoalsDraft.VersionPayload,
+                goals: Components.Schemas.FuelGoals
+            ) {
+                self.version = version
+                self.goals = goals
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case goals
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.FuelGoalsDraft.VersionPayload.self,
+                    forKey: .version
+                )
+                self.goals = try container.decode(
+                    Components.Schemas.FuelGoals.self,
+                    forKey: .goals
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "version",
+                    "goals"
                 ])
             }
         }

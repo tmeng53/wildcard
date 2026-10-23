@@ -14,6 +14,7 @@ import {
   RestDaysFixedError,
   TimeZoneNotSetError,
   WeekOverError,
+  WeekStartedError,
 } from '../errors.js';
 import { createWeeklyPlans } from './weekly-plans.js';
 
@@ -51,6 +52,9 @@ const thisWeek = week('2026-10-19');
 const lastWeek = week('2026-10-12');
 const nextWeek = week('2026-10-26');
 
+/** What every week of a member who joined this week, without 饮食小目标, adds to its plan. */
+const joinedThisWeek = { fuelGoals: [], firstWeek: '2026-10-19' };
+
 const train = { kind: 'train' } as const;
 const rest = { kind: 'rest' } as const;
 const swim = { kind: 'train', sport: 'swim' } as const;
@@ -71,6 +75,7 @@ describe('reading a week’s plan', () => {
       weekStart: '2026-10-19',
       days: [train, train, rest, train, train, train, rest],
       source: 'default',
+      ...joinedThisWeek,
     });
   });
 
@@ -81,11 +86,13 @@ describe('reading a week’s plan', () => {
       weekStart: '2026-10-19',
       days: mine,
       source: 'saved',
+      ...joinedThisWeek,
     });
     expect(await plans.find({ member, weekStart: week('2026-11-09') })).toStrictEqual({
       weekStart: '2026-11-09',
       days: mine,
       source: 'carriedOver',
+      ...joinedThisWeek,
     });
     expect((await plans.find({ member, weekStart: lastWeek })).source).toBe('default');
   });
@@ -101,7 +108,7 @@ describe('reading a week’s plan', () => {
 describe('saving a week’s plan', () => {
   it('stores it as versioned JSON, once per week, and a repeat changes nothing', async () => {
     const member = await newMember();
-    const saved = { weekStart: '2026-10-19', days: mine, source: 'saved' };
+    const saved = { weekStart: '2026-10-19', days: mine, source: 'saved', ...joinedThisWeek };
     expect(await plans.save({ member, weekStart: thisWeek, days: mine })).toStrictEqual(saved);
     expect(await plans.save({ member, weekStart: thisWeek, days: mine })).toStrictEqual(saved);
     expect(await storedRows(member)).toStrictEqual([
@@ -215,5 +222,55 @@ describe('saving a week’s plan', () => {
       new TimeZoneNotSetError(),
     );
     expect(await storedRows(member)).toStrictEqual([]);
+  });
+});
+
+describe('a week’s 饮食小目标', () => {
+  const water = { kind: 'suggested', suggestion: 'water' } as const;
+  const own = { kind: 'own', text: '少喝冰美式' } as const;
+
+  it('sets next week’s, keeps them to that week, and logs each change but no repeat', async () => {
+    const member = await newMember();
+    await plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [water] });
+    await plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [water] });
+    const saved = await plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [own, water] });
+    expect(saved).toMatchObject({ weekStart: nextWeek, fuelGoals: [own, water] });
+    expect(await plans.find({ member, weekStart: nextWeek })).toStrictEqual(saved);
+    expect(await plans.find({ member, weekStart: week('2026-11-02') })).toMatchObject({
+      fuelGoals: [],
+    });
+    const { rows } = await sql<{ week_start: string; payload: unknown }>`
+      select week_start::text, payload from fuel_goal_events where member_id = ${member} order by id
+    `.execute(db);
+    expect(rows).toStrictEqual([
+      { week_start: '2026-10-26', payload: { version: 1, goals: [water] } },
+      { week_start: '2026-10-26', payload: { version: 1, goals: [own, water] } },
+    ]);
+  });
+
+  it('refuses this week’s and past weeks’, and needs the member’s time zone', async () => {
+    const member = await newMember();
+    await expect(
+      plans.saveFuelGoals({ member, weekStart: thisWeek, goals: [water] }),
+    ).rejects.toThrow(new WeekStartedError('2026-10-19'));
+    await expect(
+      plans.saveFuelGoals({ member, weekStart: lastWeek, goals: [water] }),
+    ).rejects.toThrow(new WeekStartedError('2026-10-12'));
+    calendars.delete(member);
+    await expect(
+      plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [water] }),
+    ).rejects.toThrow(new TimeZoneNotSetError());
+  });
+
+  it('gives the Monday of the week the member joined, in their time zone', async () => {
+    // Monday 2026-10-19 01:00 in Los Angeles is still Sunday there, before the 3am turn.
+    const member = await newMember({ joinedAt: new Date('2026-10-19T08:00:00.000Z') });
+    expect(await plans.find({ member, weekStart: thisWeek })).toMatchObject({
+      firstWeek: '2026-10-12',
+    });
+    calendars.delete(member);
+    expect(await plans.find({ member, weekStart: thisWeek })).toMatchObject({
+      firstWeek: undefined,
+    });
   });
 });
