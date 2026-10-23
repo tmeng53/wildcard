@@ -61,7 +61,9 @@ struct WildcardApp: App {
             if let editor {
                 CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
             } else if let signUp, signUp.finished == nil {
-                SignUpView(model: signUp) { StandInSignIn { signUp.signedIn(name: nil) } }
+                SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
+                    StandInSignIn { signUp.signedIn(name: nil) }
+                }
             } else if LaunchOptions.showsStyleGuide {
                 StyleGuideView()
             } else {

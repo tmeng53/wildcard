@@ -15,13 +15,13 @@ public struct MeDestinations {
     public var squad: () -> Void
     public var pastRecaps: () -> Void
     public var editCharacter: () -> Void
-    /// The published policy pages; a row shows only once its page is there.
-    public var privacyPolicy: URL?
-    public var terms: URL?
+    /// The published policy pages.
+    public var privacyPolicy: URL
+    public var terms: URL
 
     public init(
         squad: @escaping () -> Void, pastRecaps: @escaping () -> Void, editCharacter: @escaping () -> Void,
-        privacyPolicy: URL?, terms: URL?
+        privacyPolicy: URL, terms: URL
     ) {
         self.squad = squad
         self.pastRecaps = pastRecaps
@@ -143,22 +143,16 @@ public struct MeView: View {
             .accessibilityIdentifier("me.notifications")
             ListRow(
                 Text("语言", bundle: .module), systemImage: "globe",
-                value: Text("language.current", bundle: .module),
-                showsDivider: destinations.privacyPolicy != nil || destinations.terms != nil
+                value: Text("language.current", bundle: .module)
             ) {
                 // iOS keeps each app's language in Settings; the app follows it.
                 if let settings = Self.appSettings { openURL(settings) }
             }
-            if let privacy = destinations.privacyPolicy {
-                ListRow(
-                    Text("隐私政策", bundle: .module), systemImage: "hand.raised",
-                    showsDivider: destinations.terms != nil
-                ) { openURL(privacy) }
+            ListRow(Text("隐私政策", bundle: .module), systemImage: "hand.raised") {
+                openURL(destinations.privacyPolicy)
             }
-            if let terms = destinations.terms {
-                ListRow(Text("用户条款", bundle: .module), systemImage: "doc.text", showsDivider: false) {
-                    openURL(terms)
-                }
+            ListRow(Text("用户条款", bundle: .module), systemImage: "doc.text", showsDivider: false) {
+                openURL(destinations.terms)
             }
         }
         .card()

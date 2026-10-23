@@ -1441,18 +1441,18 @@
         }
       }
     },
-    "继续即表示同意用户协议和隐私政策": {
+    "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "By continuing you agree to the Terms and Privacy Policy"
+            "value": "By continuing you agree to the [Terms](terms:) and [Privacy Policy](privacy:)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "继续即表示同意用户协议和隐私政策"
+            "value": "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)"
           }
         }
       }

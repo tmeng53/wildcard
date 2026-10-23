@@ -9,6 +9,7 @@ import SwiftUI
 /// name. The character just made stands beside the title.
 struct SquadStep: View {
     let model: SignUpModel
+    let privacyPolicy: URL
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -37,7 +38,7 @@ struct SquadStep: View {
             .disabled(model.joined != nil)
         } actions: {
             if model.asksForAIConsent {
-                AIConsentRow(isOn: model.agreesToAI, toggle: model.toggleAIConsent)
+                AIConsentRow(isOn: model.agreesToAI, privacyPolicy: privacyPolicy, toggle: model.toggleAIConsent)
                     .disabled(model.joined != nil)
             }
             FailureLine(failure: model.failure)
@@ -179,14 +180,32 @@ private struct SquadFound: View {
 }
 
 /// 同意使用 AI 功能 (Tracy's approved copy), ticked by the member before they can join or make a squad; off
-/// at first. The privacy policy gets its link once it is published.
+/// at first. 隐私政策 under it opens the policy; it sits outside the toggle, so tapping it never
+/// ticks the box.
 private struct AIConsentRow: View {
     let isOn: Bool
+    let privacyPolicy: URL
     let toggle: () -> Void
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            toggleRow
+            Link(destination: privacyPolicy) {
+                Text("隐私政策", bundle: .module)
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .foregroundStyle(Color(role: .fgAccent, in: theme))
+                    .frame(minHeight: Sizing.minimumTapTarget)
+                    .contentShape(Rectangle())
+            }
+            .padding(.leading, Sizing.checkBadge + Space.xs)
+            .padding(.top, -Space.xs)
+            .accessibilityIdentifier("squad.privacyPolicy")
+        }
+    }
+
+    private var toggleRow: some View {
         Button(action: toggle) {
             HStack(alignment: .top, spacing: Space.xs) {
                 ZStack {
@@ -199,16 +218,10 @@ private struct AIConsentRow: View {
                     }
                 }
                 .frame(width: Sizing.checkBadge, height: Sizing.checkBadge)
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖和编请假条，不发照片。", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    // Becomes a link once the privacy policy is published.
-                    Text("隐私政策", bundle: .module)
-                        .typeStyle(TypeRamp.footnoteEmphasis)
-                        .foregroundStyle(Color(role: .fgAccent, in: theme))
-                }
-                .multilineTextAlignment(.leading)
+                Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖和编请假条，不发照片。", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .multilineTextAlignment(.leading)
                 Spacer(minLength: 0)
             }
             .frame(minHeight: Sizing.minimumTapTarget)

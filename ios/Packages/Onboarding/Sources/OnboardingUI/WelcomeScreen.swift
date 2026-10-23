@@ -15,6 +15,7 @@ import SwiftUI
 /// starts. Then 通过 Apple 继续, and the terms under it.
 struct WelcomeScreen<SignIn: View>: View {
     let model: SignUpModel
+    let policies: PolicyLinks
     let signIn: SignIn
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -49,11 +50,12 @@ struct WelcomeScreen<SignIn: View>: View {
                     .frame(height: Sizing.primaryControl)
                     .clipShape(Capsule())
                     .accessibilityIdentifier("signup.signIn")
-                // The terms and privacy policy get their links once they are published.
-                Text("继续即表示同意用户协议和隐私政策", bundle: .module)
+                Text(termsLine)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .tint(Color(role: .fgDefault, in: theme))
                     .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("signup.terms")
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.bottom, Space.xs)
@@ -62,6 +64,19 @@ struct WelcomeScreen<SignIn: View>: View {
         .task { await crowd.start(reduceMotion: reduceMotion) }
         .onDisappear { crowd.stop() }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
+    }
+
+    /// 继续即表示同意用户协议和隐私政策, with 用户协议 and 隐私政策 underlined links to their pages.
+    /// The catalog marks them `terms:` and `privacy:`, which become the pages the app passes.
+    private var termsLine: AttributedString {
+        var line = AttributedString(
+            localized: "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module)
+        for (link, range) in line.runs[\.link] {
+            guard let link else { continue }
+            line[range].link = link.scheme == "terms" ? policies.terms : policies.privacyPolicy
+            line[range].underlineStyle = .single
+        }
+        return line
     }
 
     /// The scene's floor across the lower part of the screen, under the characters' feet.

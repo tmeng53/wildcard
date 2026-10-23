@@ -21,6 +21,8 @@ final class SignUpUITests: XCTestCase {
         for member in crowd {
             XCTAssertLessThanOrEqual(member.frame.maxY, signIn.frame.minY, "the sign-in button covers a character")
         }
+        XCTAssertTrue(app.links["用户协议"].exists, "the terms line has no link to the terms")
+        XCTAssertTrue(app.links["隐私政策"].exists, "the terms line has no link to the privacy policy")
         signIn.tap()
         makeCharacter(in: app)
         joinBySquadCode(in: app)
@@ -61,6 +63,8 @@ final class SignUpUITests: XCTestCase {
             "the squad wasn't found")
         let squadDone = app.buttons["squad.done"]
         XCTAssertFalse(squadDone.isEnabled, "加入小队 is on before agreeing to AI")
+        XCTAssertTrue(
+            app.descendants(matching: .any)["squad.privacyPolicy"].exists, "the AI consent has no privacy policy link")
         app.buttons["squad.aiConsent"].tap()
         waitFor(squadDone, "isEnabled == true", "加入小队 stays off with a squad found and consent given")
         keepScreenshot(named: "43-signup-squad-join")
