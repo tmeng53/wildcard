@@ -289,11 +289,11 @@ struct TypographyTests {
         #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func numbersAreBarlowAtFourSizes() {
+    @Test func numbersAreBarlowAtFiveSizes() {
         #expect(
-            [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall].map(\.size) == [
-                60, 32, 22, 18,
-            ])
+            [TypeRamp.scoreStory, TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline, TypeRamp.scoreSmall]
+                .map(\.size) == [132, 60, 32, 22, 18])
+        #expect(TypeRamp.denominator(of: TypeRamp.scoreStory).size == 73)
         #expect(
             [TypeRamp.scoreHero, TypeRamp.scoreCard, TypeRamp.scoreInline].map {
                 TypeRamp.denominator(of: $0).size
@@ -303,7 +303,7 @@ struct TypographyTests {
             if case .scoreboard = $0.style.face { return true }
             return false
         }
-        let names = ["scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption", "posterWeek"]
+        let names = ["scoreStory", "scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption", "posterWeek"]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
         // The 出赛表 poster's W42, as the approved design sets it.
@@ -316,7 +316,7 @@ struct HapticTests {
     @Test func everyMomentHasOneName() {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
-                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "unbox",
+                "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown", "poke", "unbox",
             ])
         #expect(Haptic.ringTicks == 3)
     }

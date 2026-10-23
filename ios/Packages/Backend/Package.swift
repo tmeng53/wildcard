@@ -9,6 +9,7 @@ import PackageDescription
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
 // - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to.
+// - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
 // - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
 //   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the
 //   posts still to go out kept on the device.
@@ -18,6 +19,8 @@ import PackageDescription
 //   switch and deleting the account.
 // - `APIFeedSource`, the adapter behind `FeedDomain`'s `FeedSource`: 动态's posts with their
 //   reactions, the squad's characters and the photos.
+// - `APISquadSettingsService`, behind `SquadDomain`'s `SquadSettingsService`: 小队设置; and
+//   `APIScenePickService`, behind `ScenePickDomain`'s `ScenePickService`: the 战报's scene pick.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -28,9 +31,13 @@ let package = Package(
         .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
         .package(path: "../Feed"),
+        .package(path: "../DesignSystem"),
         .package(path: "../Me"),
         .package(path: "../Notifications"),
+        .package(path: "../Recap"),
         .package(path: "../Onboarding"),
+        .package(path: "../ScenePick"),
+        .package(path: "../Squad"),
         .package(url: "https://github.com/apple/swift-http-types", from: "1.8.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.13.1"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.2.0"),
@@ -46,7 +53,11 @@ let package = Package(
                 .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
+                .product(name: "RecapDomain", package: "Recap"),
                 .product(name: "OnboardingDomain", package: "Onboarding"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "ScenePickDomain", package: "ScenePick"),
+                .product(name: "SquadDomain", package: "Squad"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
@@ -55,12 +66,17 @@ let package = Package(
             name: "BackendTests",
             dependencies: [
                 "Backend", .product(name: "AccountDomain", package: "Account"),
+                .product(name: "APIContract", package: "Contracts"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
+                .product(name: "RecapDomain", package: "Recap"),
                 .product(name: "OnboardingDomain", package: "Onboarding"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "ScenePickDomain", package: "ScenePick"),
+                .product(name: "SquadDomain", package: "Squad"),
             ]),
     ]
 )

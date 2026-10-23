@@ -99,19 +99,18 @@ struct DayPicks: View {
     }
 }
 
-/// What became of the last save or 存图, for a moment.
-struct PanelNote: View {
-    let model: ScheduleModel
+/// What became of 存图, for a moment, under the top bar where the member just tapped.
+struct SaveNote: View {
+    let saving: ScheduleModel.Saving
     @Environment(\.sceneTheme) private var theme
 
-    private var store: ScheduleStore { model.store }
-
     var body: some View {
-        if model.saving == .saved {
+        switch saving {
+        case .saved:
             Text("存好了，去相册看看", bundle: .module)
                 .noteStyle(theme)
                 .accessibilityIdentifier("schedule.saved")
-        } else if model.saving == .notAllowed {
+        case .notAllowed:
             HStack(spacing: Space.xs) {
                 Text("要先允许存到相册", bundle: .module)
                     .noteStyle(theme)
@@ -122,10 +121,22 @@ struct PanelNote: View {
                     .buttonStyle(TextButtonStyle(.plain))
                 }
             }
-        } else if model.saving == .failed {
+        case .failed:
             Text("没存上，再试一次", bundle: .module)
                 .noteStyle(theme)
-        } else if let failure = store.failure {
+        default:
+            EmptyView()
+        }
+    }
+}
+
+/// Why the last change to the week didn't go through, under the panel it came from.
+struct PanelNote: View {
+    let store: ScheduleStore
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        if let failure = store.failure {
             ScheduleLabels.failure(failure)
                 .noteStyle(theme)
                 .accessibilityIdentifier("schedule.failure")

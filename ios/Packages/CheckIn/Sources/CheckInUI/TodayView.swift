@@ -61,6 +61,9 @@ public struct TodayView: View {
         }
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
+        // 拍一拍 landing: mine on a teammate, or a teammate's on me.
+        .haptic(.poke, trigger: model.pats.landed)
+        .haptic(.reaction, trigger: model.pats.landedOnMe)
         .task { await model.load() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
@@ -73,7 +76,8 @@ public struct TodayView: View {
         ZStack {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
-                celebration: model.celebrations
+                celebration: model.celebrations, pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
+                patMate: model.patMate
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -108,6 +112,16 @@ public struct TodayView: View {
                 }
                 Spacer()
             }
+
+            // A tapped teammate's bubble, over the card like the approved design's, laid out on
+            // the scene's own stage.
+            GeometryReader { proxy in
+                PatOverlay(
+                    layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
+                    canPat: model.canPat, pat: model.patMate)
+            }
+            .ignoresSafeArea()
+            .opacity(model.step == .disclaimer ? 0 : 1)
 
             if model.isBurstOpen {
                 // A tap anywhere outside the capsules closes the burst.
