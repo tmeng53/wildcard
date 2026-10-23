@@ -132,7 +132,7 @@ public final class TodayModel {
     /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
     var recap: DayRecap? {
         guard let home, home.showsRecap(at: now()) else { return nil }
-        return home.recap
+        return home.recap(pending: store.pending)
     }
 
     /// Noon of the member's today in their time zone: the day the recap's title names.

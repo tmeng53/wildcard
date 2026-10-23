@@ -28,7 +28,7 @@ private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: Tra
             try post(5, by: myID, .cheatMeal(Meal())),
             try post(6, by: myID, .trained(Training(activity: .sport(.yoga)))),
         ])
-    let recap = home.recap
+    let recap = home.recap()
     #expect(recap.showedUp == 3)
     #expect(recap.members == 3)
     #expect(
@@ -45,9 +45,32 @@ private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: Tra
     let home = sampleHome(
         today: today(.notCheckedIn, .notCheckedIn, .notCheckedIn),
         checkIns: [try post(1, by: mate, .healthyMeal(Meal()))])
-    let recap = home.recap
+    let recap = home.recap()
     #expect(recap.showedUp == 0)
     #expect(recap.rows == [.init(member: resting, kind: .restDay)])
+    #expect(recap.healthyMeals == 1)
+}
+
+@Test func myPostsStillWaitingToGoOutHaveTheirRow() throws {
+    // Offline after 21:00: the squad's today already counts my 练了 and meal, waiting in the outbox.
+    let home = sampleHome(today: today(.notCheckedIn, .trained, .notCheckedIn), checkIns: [])
+    let waiting = [
+        PendingCheckIn(
+            id: CheckInID(id(7)), member: myID, day: tuesday,
+            createdAt: Timestamp(millisecondsSince1970: 1_792_500_000_007), audience: try Audience([squadID]),
+            draft: .trained(.sport(.run), PostBody(photos: [], caption: ""))),
+        PendingCheckIn(
+            id: CheckInID(id(8)), member: myID, day: tuesday,
+            createdAt: Timestamp(millisecondsSince1970: 1_792_500_000_008), audience: try Audience([squadID]),
+            draft: .healthyMeal(PostBody(photos: [], caption: ""))),
+    ]
+    let recap = home.recap(pending: waiting)
+    #expect(recap.showedUp == 1)
+    #expect(
+        recap.rows == [
+            .init(member: myID, kind: .trained(.sport(.run), meal: .healthyMeal)),
+            .init(member: resting, kind: .restDay),
+        ])
     #expect(recap.healthyMeals == 1)
 }
 

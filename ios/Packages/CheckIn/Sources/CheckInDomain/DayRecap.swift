@@ -39,33 +39,29 @@ public struct DayRecap: Hashable, Sendable {
 }
 
 extension Home {
-    /// Today's recap, from the squad's today and its check-ins the home holds.
-    public var recap: DayRecap {
+    /// Today's recap, from the squad's today and its check-ins the home holds, with my posts
+    /// still waiting to go out, which the squad's today already counts.
+    public func recap(pending: [PendingCheckIn] = []) -> DayRecap {
         var trained: [(at: Timestamp, row: DayRecap.Row)] = []
         var disclaimers: [(at: Timestamp, row: DayRecap.Row)] = []
         var resting: [DayRecap.Row] = []
         var healthy = 0
         var cheat = 0
         for mate in today.members {
-            let posts = todaysCheckIns(of: mate.member)
-            healthy += posts.count { if case .healthyMeal = $0.entry { true } else { false } }
-            cheat += posts.count { if case .cheatMeal = $0.entry { true } else { false } }
-            let firstTraining = posts.first { if case .trained = $0.entry { true } else { false } }
-            if let firstTraining, let activity = todaysSport(of: mate.member) {
-                let meal = posts.reversed().lazy.compactMap { post -> MealKind? in
-                    switch post.entry {
-                    case .healthyMeal: .healthyMeal
-                    case .cheatMeal: .cheatMeal
-                    default: nil
-                    }
-                }
-                .first
-                trained.append(
-                    (firstTraining.createdAt, .init(member: mate.member, kind: .trained(activity, meal: meal))))
-            } else if let note = todaysDisclaimer(of: mate.member),
-                let posted = posts.first(where: { if case .disclaimer = $0.entry { true } else { false } })
+            let posts = recapPosts(of: mate, pending: pending)
+            healthy += posts.count { $0.post == .healthyMeal }
+            cheat += posts.count { $0.post == .cheatMeal }
+            let sports = posts.compactMap { if case .trained(let activity) = $0.post { activity } else { nil } }
+            let notes = posts.compactMap { if case .disclaimer(let note) = $0.post { note } else { nil } }
+            if let first = posts.first(where: { if case .trained = $0.post { true } else { false } }),
+                let sport = sports.last
             {
-                disclaimers.append((posted.createdAt, .init(member: mate.member, kind: .disclaimer(note))))
+                let meal = posts.reversed().lazy.compactMap(\.post.meal).first
+                trained.append((first.at, .init(member: mate.member, kind: .trained(sport, meal: meal))))
+            } else if let posted = posts.first(where: { if case .disclaimer = $0.post { true } else { false } }),
+                let note = notes.last
+            {
+                disclaimers.append((posted.at, .init(member: mate.member, kind: .disclaimer(note))))
             } else if mate.plannedRest {
                 resting.append(.init(member: mate.member, kind: .restDay))
             }
@@ -75,6 +71,31 @@ extension Home {
             rows: trained.sorted { $0.at < $1.at }.map(\.row) + disclaimers.sorted { $0.at < $1.at }.map(\.row)
                 + resting,
             healthyMeals: healthy, cheatMeals: cheat)
+    }
+
+    /// A member's posts today to this squad, saved or waiting to go out, oldest first.
+    private func recapPosts(of mate: SquadmateToday, pending: [PendingCheckIn]) -> [(at: Timestamp, post: RecapPost)] {
+        let saved = todaysCheckIns(of: mate.member).map { checkIn -> (at: Timestamp, post: RecapPost) in
+            switch checkIn.entry {
+            case .trained(let training): (checkIn.createdAt, .trained(training.activity))
+            case .healthyMeal: (checkIn.createdAt, .healthyMeal)
+            case .cheatMeal: (checkIn.createdAt, .cheatMeal)
+            case .disclaimer(let note): (checkIn.createdAt, .disclaimer(note.text))
+            }
+        }
+        let waiting = pending.filter { post in
+            post.member == mate.member && post.day == mate.day && post.audience.squads.contains(squad.id)
+                && !checkIns.contains { $0.id == post.id }
+        }
+        .map { post -> (at: Timestamp, post: RecapPost) in
+            switch post.draft {
+            case .trained(let activity, _): (post.createdAt, .trained(activity))
+            case .healthyMeal: (post.createdAt, .healthyMeal)
+            case .cheatMeal: (post.createdAt, .cheatMeal)
+            case .disclaimer(let note): (post.createdAt, .disclaimer(note.text))
+            }
+        }
+        return (saved + waiting).sorted { $0.at < $1.at }
     }
 
     /// Whether the recap shows at `now`: from `DayRecap.hour` on the member's own clock until
@@ -88,5 +109,21 @@ extension Home {
                 from: DateComponents(year: day.year, month: day.month, day: day.day, hour: DayRecap.hour))
         else { return false }
         return now >= evening && LocalDay(at: now, in: timeZone) == day
+    }
+}
+
+/// What a post says on 今日赛况, saved or still waiting to go out.
+private enum RecapPost: Equatable {
+    case trained(Activity)
+    case healthyMeal
+    case cheatMeal
+    case disclaimer(String)
+
+    var meal: MealKind? {
+        switch self {
+        case .healthyMeal: .healthyMeal
+        case .cheatMeal: .cheatMeal
+        case .trained, .disclaimer: nil
+        }
     }
 }
