@@ -23,7 +23,7 @@ public enum Move: String, CaseIterable, Sendable {
     case fullbelly
     /// 撞头庆祝: leans in for a head bump.
     case bump
-    /// Waves hello.
+    /// 打招呼: hops with both arms flung up, a big "hi!" (as designed, not a side-to-side wave).
     case wave
 }
 
