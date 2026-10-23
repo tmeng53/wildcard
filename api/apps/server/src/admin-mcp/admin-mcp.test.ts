@@ -14,7 +14,10 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
+  createPostgresWeekSummaryWords,
+
   createPostgresWeeklyPlanStore,
+  createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createDraftSettings, createPostgresDraftSettings } from '@wildcard/disclaimer-drafts';
@@ -43,8 +46,9 @@ import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { memeTools } from './tools/memes.js';
+import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
@@ -113,6 +117,7 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           weeklyAwards: unusedWeeklyAwards,
+          weekSummaryWords: unusedWeekSummaryWords,
           log: createLog(() => undefined),
           jobs: noJobs,
           admin: {
@@ -142,6 +147,9 @@ beforeAll(async () => {
               ...aiWritingTools({
                 drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
                 awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
+              }),
+              ...weekSummaryWordTools({
+                words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
               }),
               // A tool that changes something, standing in for the meme tools.
               adminTool({
@@ -300,6 +308,8 @@ describe('the admin MCP server', () => {
       ['change_disclaimer_draft_settings', false],
       ['get_weekly_award_settings', true],
       ['change_weekly_award_settings', false],
+      ['get_week_summary_words', true],
+      ['change_week_summary_words', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -435,13 +445,30 @@ describe('the admin MCP server', () => {
       const changed = await call('change_disclaimer_draft_settings', {
         model: 'anthropic/claude-haiku-5-5',
         batchesPerDay: 7,
+        // Not exact in a 4-byte float: the row and its log must still agree.
+        memeChance: 0.15,
       });
-      const expected = { ...drafts, model: 'anthropic/claude-haiku-5-5', batchesPerDay: 7 };
+      const expected = {
+        ...drafts,
+        model: 'anthropic/claude-haiku-5-5',
+        batchesPerDay: 7,
+        memeChance: 0.15,
+      };
       expect(JSON.parse(changed.text)).toStrictEqual(expected);
       expect(await read('get_disclaimer_draft_settings')).toStrictEqual(expected);
       // The same change again saves nothing new.
-      await call('change_disclaimer_draft_settings', { batchesPerDay: 7 });
+      await call('change_disclaimer_draft_settings', { batchesPerDay: 7, memeChance: 0.15 });
       expect(await events('disclaimer_draft_setting_events')).toStrictEqual([expected]);
+
+      // Two admins at once, each changing one thing: both changes stand.
+      await Promise.all([
+        call('change_disclaimer_draft_settings', { batchesPerDay: 8 }),
+        call('change_disclaimer_draft_settings', { writing: false }),
+      ]);
+      expect(await read('get_disclaimer_draft_settings')).toMatchObject({
+        batchesPerDay: 8,
+        writing: false,
+      });
 
       const moved = await call('change_weekly_award_settings', {
         moves: { pump: '握拳，跳起来' },
@@ -463,13 +490,74 @@ describe('the admin MCP server', () => {
       expect(await events('weekly_award_setting_events')).toHaveLength(1);
     } finally {
       await call('change_disclaimer_draft_settings', {
+        writing: drafts.writing,
         model: drafts.model,
         batchesPerDay: drafts.batchesPerDay,
+        memeChance: drafts.memeChance,
       });
       await call('change_weekly_award_settings', { moves: awards.moves });
     }
     expect(await read('get_disclaimer_draft_settings')).toStrictEqual(drafts);
     expect(await read('get_weekly_award_settings')).toStrictEqual(awards);
+    await client.close();
+  });
+
+  it('reads and changes the 战报 words, logging each change once', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const Words = z.object({
+      awards: z.record(z.string(), z.json()),
+      stats: z.record(z.string(), z.json()),
+    });
+    const before = Words.parse(JSON.parse((await call('get_week_summary_words')).text));
+    expect(before.stats.checkIns).toStrictEqual({ 'zh-Hans': '打卡', en: 'Check-ins' });
+    const logged = async () =>
+      (
+        await sql<{ words: unknown }>`
+          select words from public.week_summary_word_events
+          where changed_by = ${admin.userId} order by id
+        `.execute(db)
+      ).rows.map(({ words }) => words);
+
+    try {
+      const checkIns = { 'zh-Hans': '打卡次数', en: 'Check-ins logged' };
+      const changed = Words.parse(
+        JSON.parse((await call('change_week_summary_words', { stats: { checkIns } })).text),
+      );
+      expect(changed).toStrictEqual({ ...before, stats: { ...before.stats, checkIns } });
+      await call('change_week_summary_words', { stats: { checkIns } });
+      expect(await logged()).toStrictEqual([{ version: 1, ...changed }]);
+
+      // An award or count the API doesn't have, a winner's words without the number, or nothing.
+      for (const args of [
+        { stats: { laps: checkIns } },
+        {
+          awards: {
+            crown: {
+              symbol: 'crown.fill',
+              title: { 'zh-Hans': '皇冠', en: 'Crown' },
+              winner: {
+                'zh-Hans': { one: '练了几天', other: '练了 {n} 天' },
+                en: { one: '{n} day', other: '{n} days' },
+              },
+            },
+          },
+        },
+        {},
+      ]) {
+        expect((await call('change_week_summary_words', args)).isError).toBe(true);
+      }
+      expect(await logged()).toHaveLength(1);
+    } finally {
+      await call('change_week_summary_words', { stats: { checkIns: before.stats.checkIns } });
+    }
+    expect(Words.parse(JSON.parse((await call('get_week_summary_words')).text))).toStrictEqual(
+      before,
+    );
     await client.close();
   });
 

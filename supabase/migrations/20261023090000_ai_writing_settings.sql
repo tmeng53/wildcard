@@ -36,7 +36,7 @@ create table public.disclaimer_draft_settings (
   model text not null check (model ~ '^(openai|anthropic)/[A-Za-z0-9._:-]{1,100}$'),
   instructions text not null check (char_length(instructions) between 1 and 20000),
   batches_per_day integer not null check (batches_per_day between 1 and 100),
-  meme_chance real not null check (meme_chance between 0 and 1)
+  meme_chance double precision not null check (meme_chance between 0 and 1)
 );
 
 create table public.disclaimer_draft_setting_events (

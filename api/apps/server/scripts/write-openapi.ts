@@ -79,6 +79,7 @@ const app = createApp({
     hasCurrent: unused,
     currentAmong: unused,
   },
+  weekSummaryWords: () => Promise.reject(new Error('unused')),
   weeklyAwards: {
     awards: {
       give: unused,

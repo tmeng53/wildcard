@@ -25,7 +25,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
@@ -74,6 +74,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    weekSummaryWords: unusedWeekSummaryWords,
     aiConsent: aiConsentOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
