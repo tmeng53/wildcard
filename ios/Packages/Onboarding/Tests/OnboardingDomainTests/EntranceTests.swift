@@ -106,6 +106,26 @@ struct EntranceScriptTests {
         #expect(second == Point(x: 200, y: 520))
         #expect(first.y <= second.y - 36 - 4)
     }
+
+    @Test func aBubbleThatWouldReachTheCardMovesAside() {
+        // Home's card reaches 470 down, so no bubble's top goes above 474: neither teammate's
+        // bubble can climb over the new member's, so each moves to the nearest clear side.
+        let script = EntranceScript(
+            spot: spot,
+            teammates: [
+                .init(feet: Point(x: 150, y: 600), height: 80),
+                .init(feet: Point(x: 200, y: 600), height: 80),
+            ])
+        let points = script.bubbles(
+            sizes: [(60, 36), (100, 36), (100, 36)], myHeight: 200, width: 390, ceiling: 470)
+        #expect(points == [Point(x: 195, y: 510), Point(x: 110, y: 520), Point(x: 280, y: 520)])
+    }
+
+    @Test func aSpeakerBehindTheCardTalksFromUnderIt() {
+        let script = EntranceScript(spot: spot, teammates: [.init(feet: Point(x: 60, y: 300), height: 80)])
+        let points = script.bubbles(sizes: [(80, 36), (80, 36)], myHeight: 90, width: 390, ceiling: 400)
+        #expect(points[1] == Point(x: 60, y: 440))
+    }
 }
 
 struct EntranceMotionTests {

@@ -38,59 +38,78 @@ struct WeekStep: View {
     }
 }
 
-/// The week on an accent card: who and which dates, the week's number, a row a day, the
-/// character in the corner and 每周训练 N/7 天 along the bottom.
+/// The week on an accent card, laid out as the approved board draws it: who and which dates,
+/// the week's number in italic, a row a day, the character in the corner and 每周训练 N/7 天
+/// along the bottom. A picture with a fixed layout, like the 出赛表 poster.
 private struct WeekPoster: View {
     let model: SignUpModel
     let week: WeekDraft
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// The character in the poster's corner, as in the design.
-    private let characterSize = CGSize(width: 132, height: 157)
+    // Positions from the approved board, in poster points.
+    /// The poster's height; its width is the page's.
+    private let height: Double = 460
+    /// The week's number: italic, 112 points, set tight.
+    private let weekNumberStyle = TypeStyle(
+        face: .scoreboard(.extraBoldItalic), size: 112, tracking: -4, anchor: .largeTitle)
+    /// Puts the number's baseline where the board's 0.86 line height does.
+    private let weekNumberTop: Double = 15
+    /// Where the rows start, under the week's number, and how wide they run.
+    private let rowsTop: Double = 138
+    private let rowsWidth: Double = 180
+    private let rowHeight: Double = 38
+    /// The day's name in front of its sport.
+    private let dayLabelWidth: Double = 32
+    /// The character in the poster's corner, clear of the strip.
+    private let characterSize = CGSize(width: 92, height: 120)
+    private let characterInset = CGSize(width: 30, height: 56)
     /// Days that are 休息 fade back, so the training days read first.
     private let restOpacity = 0.55
     /// The selected day's row: white over the accent, faintly.
     private let selectedFill = 0.22
-    /// The total's strip along the bottom: the accent, a shade darker.
-    private let stripShade = 0.18
 
     var body: some View {
-        let ink = Color(role: .fgOnAccent, in: theme)
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: Space.xxs) {
-                Text(verbatim: "\(model.nickname) · \(dates)")
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .lineLimit(1)
-                Text(verbatim: "W\(model.weekNumber)")
-                    .typeStyle(TypeRamp.scoreHero)
-                    .accessibilityLabel(Text("第 \(model.weekNumber) 周", bundle: .module))
+        ZStack(alignment: .topLeading) {
+            Color(role: .bgAccent, in: theme)
+            Text(verbatim: "\(model.nickname) · \(dates)")
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .lineLimit(1)
+                .padding(.leading, Space.m + 2)
+                .padding(.top, Space.s + 2)
+            Text(verbatim: "W\(model.weekNumber)")
+                .typeStyle(weekNumberStyle)
+                .fixedSize()
+                .padding(.leading, Space.s + 2)
+                .padding(.top, weekNumberTop)
+                .allowsHitTesting(false)
+                .accessibilityLabel(Text("第 \(model.weekNumber) 周", bundle: .module))
+            if let player = model.myCharacter?.player {
+                CharacterView(player: player)
+                    .frame(width: characterSize.width, height: characterSize.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, characterInset.width)
+                    .padding(.bottom, characterInset.height)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
             }
-            .padding(.horizontal, Space.m)
-            .padding(.top, Space.m)
             VStack(spacing: 0) {
                 ForEach(week.days.indices, id: \.self) { index in
                     dayRow(index)
                 }
             }
-            .padding(.horizontal, Space.xs)
-            .padding(.vertical, Space.xs)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(alignment: .bottomTrailing) {
-                if let player = model.myCharacter?.player {
-                    CharacterView(player: player)
-                        .frame(width: characterSize.width, height: characterSize.height)
-                        .allowsHitTesting(false)
-                }
-            }
+            .frame(width: rowsWidth)
+            .padding(.leading, Space.xs + 2)
+            .padding(.top, rowsTop)
             WeekTotal(trainingDays: week.trainingDays)
-                .background(Color(role: .fgDefault, in: theme).opacity(stripShade))
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
-        .foregroundStyle(ink)
-        .background(
-            Color(role: .bgAccent, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-        )
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .foregroundStyle(Color(role: .fgOnAccent, in: theme))
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        // A picture with a fixed layout: its type doesn't grow with Dynamic Type.
+        .dynamicTypeSize(.large)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: week)
         .onChange(of: model.hops) { _, _ in model.myCharacter?.play("cheer") }
     }
@@ -101,16 +120,18 @@ private struct WeekPoster: View {
         return Button {
             model.selectDay(index)
         } label: {
-            HStack(spacing: Space.s) {
+            HStack(spacing: 0) {
                 Text(model.weekDays[safe: index].map(Self.weekday) ?? "")
                     .typeStyle(TypeRamp.footnoteEmphasis)
-                    .frame(minWidth: Sizing.control, alignment: .leading)
+                    .frame(width: dayLabelWidth, alignment: .leading)
+                // The board sets the sport at 19 points, semibold: the action's size.
                 DayName(day: day)
-                    .typeStyle(TypeRamp.pick)
+                    .typeStyle(TypeRamp.action)
+                    .lineLimit(1)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, Space.xs)
-            .frame(minHeight: Sizing.minimumTapTarget)
+            .frame(height: rowHeight)
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
@@ -145,27 +166,38 @@ private struct WeekPoster: View {
     }
 }
 
-/// 每周训练 on the left, small, and the count on the right, big, turning over as a day changes.
+/// The strip along the poster's bottom: 每周训练, the count turning over as a day changes, and
+/// 天, all set to the right as the board has them.
 private struct WeekTotal: View {
     let trainingDays: Int
+    @Environment(\.sceneTheme) private var theme
+
+    /// The strip: the accent, a shade darker.
+    private let height: Double = 44
+    private let shade = 0.16
+    private let labelOpacity = 0.85
+    private let denominatorOpacity = 0.6
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
+        HStack(alignment: .firstTextBaseline, spacing: Space.xxs + 2) {
+            Spacer(minLength: 0)
             Text("每周训练", bundle: .module)
                 .typeStyle(TypeRamp.label)
-            Spacer(minLength: 0)
+                .opacity(labelOpacity)
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text(verbatim: "\(trainingDays)")
                     .typeStyle(TypeRamp.scoreCard)
                     .contentTransition(.numericText(value: Double(trainingDays)))
                 Text(verbatim: "/\(WeeklyPlan.dayCount)")
                     .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
+                    .opacity(denominatorOpacity)
             }
             Text("天", bundle: .module)
                 .typeStyle(TypeRamp.footnoteEmphasis)
         }
-        .padding(.horizontal, Space.m)
-        .padding(.vertical, Space.xs)
+        .padding(.horizontal, Space.s + 2)
+        .frame(height: height)
+        .background(Color(role: .fgDefault, in: theme).opacity(shade))
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isStaticText)
         .accessibilityLabel(Text("每周训练 \(trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module))

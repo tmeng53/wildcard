@@ -11,7 +11,7 @@ import Foundation
 import OnboardingDomain
 import SwiftUI
 
-/// 上场, on the scene home opens on: the squad stands where home will put them and turns to
+/// 上场, on the gym: the squad stands where home will put them and turns to
 /// look, the new member runs in from the right kicking up dust, skids, jumps with one and a half
 /// turns and lands on their spot as the camera jolts, a shockwave crosses the floor and the ring
 /// closes with confetti. The teammates cheer one after another, nearest first, each with a
@@ -26,9 +26,12 @@ struct EntranceScreen<Bar: View>: View {
     @State private var stage = EntranceStage()
     @State private var bubbleSizes: [Int: CGSize] = [:]
     @State private var cardPage = SquadCardPage.squad
+    /// Where home's card reaches down the screen, in global points, measured before it drops in
+    /// so the bubbles stay clear of it.
+    @State private var cardBottom: Double?
 
-    /// Home's scene, so the entrance lands where home opens.
-    private let scene = TodayModel.scene
+    /// The gym, as for all of sign-up; home opens on it too until each squad picks its scene.
+    private let scene = SceneTheme.gym
 
     var body: some View {
         ZStack {
@@ -67,7 +70,9 @@ struct EntranceScreen<Bar: View>: View {
                         origin: CGPoint(x: StageLayout.mySpot.x * unit, y: StageLayout.mySpot.y * unit), unit: unit
                     )
                     .allowsHitTesting(false)
-                    bubbles(script: stage.script(unit: unit), unit: unit, width: proxy.size.width)
+                    bubbles(
+                        script: stage.script(unit: unit), unit: unit, width: proxy.size.width,
+                        ceiling: cardBottom.map { $0 - proxy.frame(in: .global).minY } ?? 0)
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
             }
@@ -76,11 +81,23 @@ struct EntranceScreen<Bar: View>: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if stage.showsCard {
+                ZStack(alignment: .top) {
+                    // Where the card will land, unseen, for the bubbles to keep clear of.
                     card
-                        .padding(.top, Space.xs)
-                        .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                        .hidden()
+                        .accessibilityHidden(true)
+                        .onGeometryChange(for: Double.self) {
+                            $0.frame(in: .global).maxY
+                        } action: {
+                            cardBottom = $0
+                        }
+                    if stage.showsCard {
+                        card
+                            .accessibilityIdentifier("entrance.card")
+                            .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                    }
                 }
+                .padding(.top, Space.xs)
                 Spacer()
             }
 
@@ -122,7 +139,6 @@ struct EntranceScreen<Bar: View>: View {
                     CharacterHead(player: player)
                 }
             }
-            .accessibilityIdentifier("entrance.card")
         }
     }
 
@@ -175,15 +191,17 @@ struct EntranceScreen<Bar: View>: View {
     }
 
     /// Each speaker's line over their head, laid out once every bubble has been measured so none
-    /// covers another; each shows from its cheer for `EntranceScript.lineDuration`.
-    private func bubbles(script: EntranceScript, unit: Double, width: Double) -> some View {
+    /// covers another or goes under the card below `ceiling`; each shows from its cheer for
+    /// `EntranceScript.lineDuration`.
+    private func bubbles(script: EntranceScript, unit: Double, width: Double, ceiling: Double) -> some View {
         let lines = stage.lines
         let sizes = lines.indices.compactMap {
             bubbleSizes[$0].map { (width: Double($0.width), height: Double($0.height)) }
         }
         let tips =
             sizes.count == lines.count
-            ? script.bubbles(sizes: sizes, myHeight: EntranceStage.myHeight(unit: unit), width: width) : []
+            ? script.bubbles(
+                sizes: sizes, myHeight: EntranceStage.myHeight(unit: unit), width: width, ceiling: ceiling) : []
         return ZStack(alignment: .topLeading) {
             ForEach(lines.indices, id: \.self) { index in
                 let bubble = SpeechBubble(Text(LocalizedStringKey(lines[index]), bundle: .module))
