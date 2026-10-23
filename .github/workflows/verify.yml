@@ -9,6 +9,9 @@
 # (Actions -> verify -> Run workflow) and a PR carrying the `ios-ci` label. Every other PR runs
 # `verify` on Linux, which builds and tests the Swift packages, and skips `ios` and
 # `avatar-preview`. Owners check screens on main's Mac run and fix forward.
+# The Mac keeps only what needs it: `ios` (the app build and UI tests) on main, manual runs and
+# `ios-ci` PRs. The macOS `verify` (the same swift test Linux runs, plus a SwiftUI compile `ios`
+# already does) and `avatar-preview` (GIFs for reviewers) run on manual runs only.
 # Free macOS runners are few and shared by every PR, so a PR that leaves the app and its build
 # and lint setup alone uses no Mac: `verify` runs on Linux (the Swift packages build there too,
 # and SwiftUI code didn't change), and `ios` and `avatar-preview` run only when it changes what
@@ -97,7 +100,7 @@ jobs:
     # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
     # setup can't break those. If `changes` failed, stay on Linux; main's run covers the Mac.
     runs-on: >-
-      ${{ (needs.changes.outputs.mac == 'true' && needs.changes.outputs.app == 'true')
+      ${{ (github.event_name == 'workflow_dispatch' && needs.changes.outputs.app == 'true')
       && 'macos-26' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     steps:
@@ -200,7 +203,7 @@ jobs:
   avatar-preview:
     needs: changes
     if: >-
-      !cancelled() && needs.changes.outputs.mac == 'true' && needs.changes.outputs.avatar == 'true'
+      !cancelled() && github.event_name == 'workflow_dispatch' && needs.changes.outputs.avatar == 'true'
     runs-on: macos-26
     timeout-minutes: 30
     steps:
