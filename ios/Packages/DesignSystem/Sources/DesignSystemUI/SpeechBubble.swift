@@ -64,7 +64,7 @@ public struct SpeechBubble: View {
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .lineLimit(1)
-                .frame(maxWidth: Self.lineWidth - 2 * Self.horizontalPadding)
+                .hugging(maxWidth: Self.lineWidth - 2 * Self.horizontalPadding)
         case .info(let title):
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
                 if let title {
@@ -78,12 +78,38 @@ public struct SpeechBubble: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding, alignment: .leading)
+            .hugging(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding)
         }
     }
 
     private var fill: Color {
         Color(role: surface == .scene ? .bgCanvas : .bgSubtle, in: theme)
+    }
+}
+
+/// Offers its content at most `maxWidth` and takes only the width the content uses, so the
+/// bubble hugs short words. A `frame(maxWidth:)` would instead grow to `maxWidth` whenever the
+/// space around offers more, leaving the bubble wider than its text.
+private struct HuggingWidth: Layout {
+    let maxWidth: Double
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let content = subviews.first else { return .zero }
+        return content.sizeThatFits(offer(proposal))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+    }
+
+    private func offer(_ proposal: ProposedViewSize) -> ProposedViewSize {
+        ProposedViewSize(width: min(proposal.width ?? maxWidth, maxWidth), height: proposal.height)
+    }
+}
+
+extension View {
+    fileprivate func hugging(maxWidth: Double) -> some View {
+        HuggingWidth(maxWidth: maxWidth) { self }
     }
 }
 
