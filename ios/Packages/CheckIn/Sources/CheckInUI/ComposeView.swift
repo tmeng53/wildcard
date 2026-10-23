@@ -6,8 +6,8 @@ import DesignSystemUI
 import SwiftUI
 
 /// One page like a social app's new post (spec rev 186, section 1): 取消 / title / 发布, the
-/// photos with their cover, the sport for a 练了, and a line up to 60 characters. No minutes,
-/// no meal type.
+/// photos with their cover, the sport and minutes for a 练了, and a line up to 60 characters.
+/// Minutes are optional; no meal type.
 struct ComposeView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -17,6 +17,7 @@ struct ComposeView: View {
     @FocusState private var isWriting: Bool
     @State private var activity: Activity?
     @State private var isPickingSport = false
+    @State private var minutes: WorkoutMinutes?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +28,7 @@ struct ComposeView: View {
                         MediaBlock(model: model)
                         if kind == .trained {
                             SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
+                            MinutesRow(minutes: $minutes)
                         }
                         captionField.id(Self.captionID)
                         if model.sendFailed {
@@ -137,7 +139,7 @@ struct ComposeView: View {
     private var draft: CheckInDraft {
         let body = PostBody(photos: model.photos, caption: caption)
         return switch kind {
-        case .trained: .trained(currentActivity, body)
+        case .trained: .trained(currentActivity, minutes, body)
         case .healthyMeal: .healthyMeal(body)
         case .cheatMeal, .disclaimer: .cheatMeal(body)
         }
@@ -246,5 +248,52 @@ private struct SportRow: View {
     private var choices: [Activity] {
         [selected] + Sport.quickPicks.map(Activity.sport).filter { $0 != selected }
     }
+}
+
+/// How long it took, if the member wants to say: the usual lengths one tap each (tap again to
+/// clear), and 其他 for any other number of minutes.
+private struct MinutesRow: View {
+    @Binding var minutes: WorkoutMinutes?
+    @State private var isTyping = false
+    @State private var typed = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.xxs) {
+            SectionLabel(Text("时长 · 分钟", bundle: .module))
+            ScrollView(.horizontal) {
+                HStack(spacing: Space.xs) {
+                    ForEach(Self.quickPicks, id: \.self) { value in
+                        let isPicked = !isTyping && minutes?.value == value
+                        PickPill(Text(verbatim: "\(value)"), isSelected: isPicked) {
+                            isTyping = false
+                            minutes = isPicked ? nil : try? WorkoutMinutes(value)
+                        }
+                        .accessibilityLabel(Text("\(value) 分钟", bundle: .module))
+                        .accessibilityIdentifier("compose.minutes.\(value)")
+                    }
+                    PickPill(Text("其他", bundle: .module), isSelected: isTyping) {
+                        isTyping.toggle()
+                        typed = ""
+                        minutes = nil
+                    }
+                    .accessibilityIdentifier("compose.minutes.other")
+                }
+            }
+            .scrollIndicators(.hidden)
+            .horizontalScrollFade()
+            if isTyping {
+                InputField(text: $typed, label: Text("分钟", bundle: .module))
+                    .keyboardType(.numberPad)
+                    .onChange(of: typed) { _, text in
+                        let digits = String(text.filter { ("0"..."9").contains($0) }.prefix(3))
+                        if digits != text { typed = digits }
+                        minutes = Int(digits).flatMap { try? WorkoutMinutes($0) }
+                    }
+                    .accessibilityIdentifier("compose.minutes.field")
+            }
+        }
+    }
+
+    private static let quickPicks = [15, 30, 45, 60, 90]
 }
 #endif

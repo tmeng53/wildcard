@@ -424,6 +424,12 @@
             "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
             "x-max-characters": 20
           },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 600,
+            "description": "How long the workout took, in whole minutes."
+          },
           "caption": {
             "type": "string",
             "maxLength": 1000,
@@ -821,6 +827,12 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
             "x-max-characters": 20
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 600,
+            "description": "How long the workout took, in whole minutes."
           },
           "caption": {
             "type": "string",
