@@ -10,7 +10,7 @@ insert into storage.objects (bucket_id, name, owner_id) values
 -- Every table the migrations create, so a new one without the lock fails here.
 select is(
   (select array_agg(tablename::text order by tablename) from pg_tables where schemaname = 'public'),
-  array['admin_actions', 'admins', 'ai_consents', 'check_in_photos', 'check_in_reactions', 'check_in_squads', 'check_ins', 'daily_pushes', 'disclaimer_draft_requests', 'disclaimer_replies', 'fuel_goal_events', 'fuel_goals', 'memes', 'profile_events', 'profiles', 'push_devices', 'push_setting_events', 'push_settings', 'sport_catalog_events', 'sport_categories', 'sport_picks', 'sports', 'squad_members', 'squad_membership_events', 'squads', 'weekly_award_winners', 'weekly_awards', 'weekly_plan_events', 'weekly_plans'],
+  array['admin_actions', 'admins', 'ai_consents', 'check_in_photos', 'check_in_reactions', 'check_in_squads', 'check_ins', 'daily_pushes', 'disclaimer_draft_requests', 'disclaimer_draft_setting_events', 'disclaimer_draft_settings', 'disclaimer_replies', 'fuel_goal_events', 'fuel_goals', 'memes', 'profile_events', 'profiles', 'push_devices', 'push_setting_events', 'push_settings', 'sport_catalog_events', 'sport_categories', 'sport_picks', 'sports', 'squad_members', 'squad_membership_events', 'squads', 'weekly_award_setting_events', 'weekly_award_settings', 'weekly_award_winners', 'weekly_awards', 'weekly_plan_events', 'weekly_plans'],
   'these are all the tables'
 );
 select is(

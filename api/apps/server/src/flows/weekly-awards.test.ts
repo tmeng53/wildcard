@@ -22,6 +22,7 @@ import {
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
+  createPostgresAwardSettings,
   createPostgresAwardsStore,
   createWeeklyAwards,
   type LanguageModel,
@@ -129,6 +130,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
   });
   const awards = createWeeklyAwards({
     model,
+    settings: createPostgresAwardSettings(db),
     store: createPostgresAwardsStore(db),
     aiConsented: (members) =>
       aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
