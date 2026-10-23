@@ -1,5 +1,5 @@
 /// A member's 拍一拍 in a squad, as the home shows it: whom they patted today (each once a day)
-/// and who patted them in the last day, each once, the earliest first.
+/// and who patted them in the last day, each once at their latest pat, the earliest first.
 public struct SquadPokes: Hashable, Sendable {
     public var sent: Set<MemberID>
     public let received: [ReceivedPoke]

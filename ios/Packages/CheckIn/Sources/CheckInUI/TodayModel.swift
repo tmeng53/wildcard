@@ -203,17 +203,21 @@ public final class TodayModel {
         Task { try? await store.pat(id) }
     }
 
-    /// The key under which the latest pat already shown is kept.
-    private static let patsShownKey = "today.patsShownUntil"
+    /// The key under which the latest pat already shown to `member` is kept, apart for each
+    /// account signed in on this phone.
+    private static func patsShownKey(for member: MemberID) -> String {
+        "today.patsShownUntil.\(member)"
+    }
 
     /// Whoever patted me since the last pat shown pats me now, from where they stand: the
     /// earliest, with the next one named on their bubble. Each pat plays once on this phone.
     private func playPatsOnMe() async {
-        let shown = defaults.double(forKey: Self.patsShownKey)
+        guard let member = store.home?.member else { return }
+        let shown = defaults.double(forKey: Self.patsShownKey(for: member))
         let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
         let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
         guard let latest = fresh.last, let first = patters.first else { return }
-        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey)
+        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
         try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
         pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
     }

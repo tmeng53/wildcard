@@ -3835,11 +3835,11 @@ extension Components {
                     ])
                 }
             }
-            /// Who sent the caller one in the last 24 hours, each once, oldest first.
+            /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadNudges/received`.
             public typealias ReceivedPayload = [Components.Schemas.SquadNudges.ReceivedPayloadPayload]
-            /// Who sent the caller one in the last 24 hours, each once, oldest first.
+            /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadNudges/received`.
             public var received: Components.Schemas.SquadNudges.ReceivedPayload
@@ -3849,7 +3849,7 @@ extension Components {
             ///   - version:
             ///   - kind: A poke (拍一拍, `poke`). The app shows each kind with its own copy.
             ///   - sent: The squadmates the caller sent one to today, on the caller’s clock.
-            ///   - received: Who sent the caller one in the last 24 hours, each once, oldest first.
+            ///   - received: Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
             public init(
                 version: Components.Schemas.SquadNudges.VersionPayload,
                 kind: Components.Schemas.SquadNudges.KindPayload,

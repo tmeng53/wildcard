@@ -314,8 +314,9 @@ public final class TodayStore {
         guard let squad = savedHome?.squad.id, phase == .current else { return }
         do {
             let fresh = try await backend.pokes(in: squad)
-            // A pat sent while the load was on its way stays counted.
-            pokes = SquadPokes(sent: fresh.sent.union(patting), received: fresh.received)
+            // A pat sent today while the load was on its way stays counted.
+            let mine = patsSent?.day == day ? patsSent?.members ?? [] : []
+            pokes = SquadPokes(sent: fresh.sent.union(mine), received: fresh.received)
         } catch {}
     }
 
@@ -326,20 +327,23 @@ public final class TodayStore {
         return !pokes.sent.contains(member)
     }
 
-    /// Pats are on their way, so a load that misses them doesn't show them as not sent.
-    private var patting: Set<MemberID> = []
+    /// The pats sent from this phone today, so a load that read the server before one landed
+    /// doesn't show it as not sent.
+    private var patsSent: (day: LocalDay, members: Set<MemberID>)?
 
     /// Pats a teammate (拍一拍): counted as patted at once, so the button turns 拍过了, and taken
     /// back if the server says no or can't be reached, so it can be tried again.
     public func pat(_ member: MemberID) async throws(CheckInError) {
-        guard canPat(member), let squad = savedHome?.squad.id else { return }
+        guard canPat(member), let squad = savedHome?.squad.id, let today = day else { return }
         pokes.sent.insert(member)
-        patting.insert(member)
-        defer { patting.remove(member) }
+        var sentToday = patsSent?.day == today ? patsSent?.members ?? [] : []
+        sentToday.insert(member)
+        patsSent = (today, sentToday)
         do {
             try await backend.pat(member, in: squad)
         } catch {
             pokes.sent.remove(member)
+            patsSent?.members.remove(member)
             throw error
         }
     }

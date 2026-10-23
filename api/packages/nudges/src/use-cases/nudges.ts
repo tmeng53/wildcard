@@ -35,8 +35,8 @@ export interface Nudges {
   /**
    * The member's nudges of `kind` in `squad`, as the home shows them: whom they sent one to
    * today (on their own clock), and who sent them one in the 24 hours up to now, each sender
-   * once, oldest first. Only current squadmates count. Throws `SquadNotJoinedError` when the
-   * member isn't in the squad.
+   * once at their latest, oldest first. Only current squadmates count. Throws
+   * `SquadNotJoinedError` when the member isn't in the squad.
    */
   inSquad(input: {
     readonly member: MemberId;
@@ -104,12 +104,16 @@ export function createNudges(deps: {
         deps.store.receivedBy({ member, since, until, kind }),
       ]);
       const sent = [...new Set(sentRows.filter((n) => members.has(n.to)).map((n) => n.to))];
-      const received: { from: MemberId; at: Date }[] = [];
+      // Each sender once, at their latest, so a pat on a new day is a new one to show.
+      const latest = new Map<MemberId, Date>();
       for (const nudge of receivedRows) {
         if (nudge.squad !== squad || !members.has(nudge.from)) continue;
-        if (received.some(({ from }) => from === nudge.from)) continue;
-        received.push({ from: nudge.from, at: nudge.at });
+        const seen = latest.get(nudge.from);
+        if (seen === undefined || nudge.at > seen) latest.set(nudge.from, nudge.at);
       }
+      const received = [...latest]
+        .map(([from, at]) => ({ from, at }))
+        .sort((a, b) => a.at.getTime() - b.at.getTime());
       return { sent, received };
     },
   };

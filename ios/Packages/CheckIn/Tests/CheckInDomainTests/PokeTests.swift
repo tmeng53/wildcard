@@ -46,3 +46,15 @@ import Testing
     await today.load()
     #expect(today.pokes.sent == [mate])
 }
+
+@MainActor @Test func aLoadThatReadBeforeAPatLandedKeepsItPatted() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    try await today.pat(mate)
+    // The server's answer was read before the pat reached it.
+    await backend.set(pokes: .none)
+    await today.loadPokes()
+    #expect(today.pokes.sent == [mate])
+    #expect(!today.canPat(mate))
+}

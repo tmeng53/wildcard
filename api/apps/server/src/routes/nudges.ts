@@ -32,7 +32,8 @@ export const SquadNudges = z
         }),
       )
       .meta({
-        description: 'Who sent the caller one in the last 24 hours, each once, oldest first.',
+        description:
+          'Who sent the caller one in the last 24 hours, each once at their latest, oldest first.',
       }),
   })
   .openapi('SquadNudges');

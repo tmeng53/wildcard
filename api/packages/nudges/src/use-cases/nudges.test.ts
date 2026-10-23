@@ -229,6 +229,21 @@ describe('a member’s nudges in a squad', () => {
     });
   });
 
+  it('gives a sender who poked again on a new day at their latest, so it shows again', async () => {
+    const rosters = new Map<SquadId, MemberId[]>();
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await squadOf(rosters, [ann, bo]);
+    const { nudges, at } = nudgesAt(rosters, { start: '2026-10-22T23:00:00.000Z' });
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
+    at('2026-10-23T09:00:00.000Z');
+    await nudges.send({ from: bo, to: ann, squad, kind: 'poke' });
+    at('2026-10-23T10:00:00.000Z');
+    expect(await nudges.inSquad({ member: ann, squad, kind: 'poke' })).toStrictEqual({
+      sent: [],
+      received: [{ from: bo, at: new Date('2026-10-23T09:00:00.000Z') }],
+    });
+  });
+
   it('leaves out someone who left, and refuses a squad the member isn’t in', async () => {
     const rosters = new Map<SquadId, MemberId[]>();
     const [ann, bo, cy] = [await newMember(), await newMember(), await newMember()];
