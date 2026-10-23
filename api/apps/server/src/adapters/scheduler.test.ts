@@ -1,6 +1,5 @@
 import { generateKeyPairSync, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
-import type { AddressInfo } from 'node:net';
 
 import { sign } from 'hono/jwt';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -37,9 +36,18 @@ const keys = createServer((_, response) => {
 let keysUrl = '';
 beforeAll(async () => {
   await new Promise<void>((resolve) => keys.listen(0, '127.0.0.1', resolve));
-  keysUrl = `http://127.0.0.1:${String((keys.address() as AddressInfo).port)}/certs`;
+  const address = keys.address();
+  if (address === null || typeof address === 'string') throw new Error('no port to serve keys on');
+  keysUrl = `http://127.0.0.1:${String(address.port)}/certs`;
 });
-afterAll(() => new Promise<void>((resolve) => keys.close(() => resolve())));
+afterAll(
+  () =>
+    new Promise<void>((resolve) => {
+      keys.close(() => {
+        resolve();
+      });
+    }),
+);
 
 const now = () => Math.floor(Date.now() / 1000);
 function idToken(
