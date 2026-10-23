@@ -1,3 +1,4 @@
+import Contracts
 import DesignSystem
 import ScenePickDomain
 import Testing
@@ -24,6 +25,19 @@ private let options = [
 
 @MainActor
 struct ScenePickerTests {
+    @Test func tilesFromTheSquadsScenesAsTheAPIListsThem() {
+        let history = [
+            SceneHistory(scene: .track, weeksAgo: 0), SceneHistory(scene: .pool, weeksAgo: 5),
+            SceneHistory(scene: .gym, weeksAgo: nil), SceneHistory(scene: .tennis, weeksAgo: 1),
+        ]
+        #expect(
+            SceneOption.options(from: history) == [
+                SceneOption(scene: .track, lastTrained: .thisWeek),
+                SceneOption(scene: .pool, lastTrained: .weeksAgo(5)),
+                SceneOption(scene: .gym, lastTrained: .never), SceneOption(scene: .tennis, lastTrained: .weeksAgo(1)),
+            ])
+    }
+
     @Test func aCartonPicksOnceAndPlaysTheBoxedReveal() async {
         let service = FakeService()
         let picker = ScenePicker(options: options, service: service)

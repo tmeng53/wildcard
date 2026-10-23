@@ -23,8 +23,8 @@ import SwiftUI
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor, `-scene-pick` the scene pick and `-recap` the 战报's
-/// tile and sample story instead. After the first check-in it asks for notifications; a tapped one
+/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
+/// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
 /// about.
 @main
@@ -47,20 +47,20 @@ struct WildcardApp: App {
         LaunchOptions.forgetSeenRecapIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
-        _today = State(
-            initialValue: TodayModel(
-                store: TodayStore(
-                    backend: InMemoryCheckInBackend.sampleSquad(
-                        now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                        patted: LaunchOptions.pattedMe),
-                    outbox: InMemoryOutbox(),
-                    now: LaunchOptions.now, newID: { UUID() }),
-                writer: LaunchOptions.disclaimerWriter,
-                photoSource: LaunchOptions.photoSource,
-                scene: LaunchOptions.scene,
-                now: LaunchOptions.now,
-                defaults: LaunchOptions.todayDefaults,
-                posted: Self.askForNotifications))
+        let today = TodayModel(
+            store: TodayStore(
+                backend: InMemoryCheckInBackend.sampleSquad(
+                    now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
+                    patted: LaunchOptions.pattedMe),
+                outbox: InMemoryOutbox(),
+                now: LaunchOptions.now, newID: { UUID() }),
+            writer: LaunchOptions.disclaimerWriter,
+            photoSource: LaunchOptions.photoSource,
+            scene: LaunchOptions.scene,
+            now: LaunchOptions.now,
+            defaults: LaunchOptions.todayDefaults,
+            posted: Self.askForNotifications)
+        _today = State(initialValue: today)
         _profile = State(
             initialValue: MeModel(
                 service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
@@ -76,11 +76,7 @@ struct WildcardApp: App {
                     backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
                     now: LaunchOptions.scheduleNow),
                 photos: LaunchOptions.posterSaver))
-        // The sample squad's story, as the in-memory squad has no awards of its own.
-        _recap = State(
-            initialValue: RecapShelf(
-                service: RecapSample.Service(),
-                squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) }))
+        _recap = State(initialValue: Self.sampleRecap(today: today))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
         #else
@@ -97,6 +93,16 @@ struct WildcardApp: App {
                     now: LaunchOptions.signUpTime))
         }
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad))
+    }
+
+    /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on
+    /// its last page puts 今天 there.
+    private static func sampleRecap(today: TodayModel) -> RecapShelf {
+        RecapShelf(
+            service: RecapSample.Service(),
+            squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
+            scenePicker: { _ in LaunchOptions.recapPicker ? RecapSample.scenePicker() : nil },
+            scenePicked: { scene in today.scene = scene })
     }
 
     /// 动态 on the sample squad's week, or with no posts at all (`-uitest-empty-feed`).
@@ -127,8 +133,6 @@ struct WildcardApp: App {
         WindowGroup {
             if let editor {
                 CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
-            } else if ScenePickDemo.isOn {
-                ScenePickDemoView()
             } else if let signUp, signUp.finished == nil {
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     StandInSignIn { signUp.signedIn(name: nil) }

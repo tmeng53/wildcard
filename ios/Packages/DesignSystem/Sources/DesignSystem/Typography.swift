@@ -94,6 +94,8 @@ public enum TypeRamp {
 
     /// The 战报's full-screen numbers (你的一周 2/5, the squad's 23/22): one per story page.
     public static let scoreStory = TypeStyle(face: .scoreboard(.extraBold), size: 132, anchor: .largeTitle)
+    /// The squad's count on the 战报's last page when the scene pick shares it (23/22).
+    public static let scoreEnding = TypeStyle(face: .scoreboard(.extraBold), size: 88, anchor: .largeTitle)
     /// The one hero number on a screen (the squad's 14/22).
     public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 60, anchor: .largeTitle)
     /// A number on a card.
@@ -120,7 +122,7 @@ public enum TypeRamp {
         ("body", body), ("field", field), ("pick", pick), ("footnote", footnote),
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
         ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("caption", caption),
-        ("scoreStory", scoreStory),
+        ("scoreStory", scoreStory), ("scoreEnding", scoreEnding),
         ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),

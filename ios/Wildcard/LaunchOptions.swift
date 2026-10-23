@@ -28,6 +28,22 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-recap-missed")
     }
 
+    /// `-recap-picker`: the sample reader picks next week's scene, so the story's last page
+    /// carries 冠军专属's sticker.
+    static var recapPicker: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-picker")
+    }
+
+    /// `-recap-reveal pool 0.8`: open the sample story on its last page with the reveal of that
+    /// scene held at that second, for UI tests' screenshots.
+    static var recapReveal: (scene: SceneTheme, at: Double)? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-recap-reveal"), flag + 2 < arguments.count,
+            let scene = SceneTheme(rawValue: arguments[flag + 1]), let time = Double(arguments[flag + 2])
+        else { return nil }
+        return (scene, time)
+    }
+
     /// `-uitest-recap-manual`: the story's pages move on only when tapped, so UI tests can
     /// screenshot each one on a slow simulator.
     static var recapManual: Bool {
