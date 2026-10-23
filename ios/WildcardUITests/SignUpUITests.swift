@@ -65,6 +65,9 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(
             app.descendants(matching: .any)["squad.aiConsent"].exists, "no AI consent line under 加入小队")
         waitFor(squadDone, "isEnabled == true", "加入小队 stays off with a squad found")
+        XCTAssertLessThanOrEqual(
+            app.descendants(matching: .any)["squad.found"].frame.maxY, squadDone.frame.minY,
+            "加入小队 covers the squad found")
         keepScreenshot(named: "43-signup-squad-join")
         squadDone.tap()
     }
