@@ -87,7 +87,6 @@ struct WelcomeScreen<SignIn: View>: View {
                     homeIndicator = $0
                 }
         }
-        .accentTone(.brand)
         .haptic(.land, trigger: landed)
         .onDisappear { crowd.stop() }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }

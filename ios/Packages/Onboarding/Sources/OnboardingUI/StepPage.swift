@@ -73,7 +73,7 @@ struct StepButton: View {
             ZStack {
                 title.opacity(isWorking ? 0 : 1)
                 if isWorking {
-                    ProgressView().tint(Color(role: .fgOnAccent, in: theme))
+                    ProgressView().tint(Color(role: .fgOnBrand, in: theme))
                 }
             }
             .frame(maxWidth: .infinity)

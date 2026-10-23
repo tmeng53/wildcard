@@ -59,7 +59,7 @@ custom_rules:
   scene_role_on_brand_screen:
     name: "Scene colour on a brand screen"
     message: "Brand screens use bgBrand/fgOnBrand, neutrals and .accentTone(.brand), never the scene's roles."
-    included: '.*/(Packages/Me/Sources/.*|Packages/CheckIn/Sources/CheckInUI/(ComposeView|DisclaimerComposer|PhotoStep|SportPicker)\.swift|Packages/DesignSystem/Sources/DesignSystemUI/TabBar\.swift)$'
+    included: '.*/(Packages/Me/Sources/.*|Packages/CharacterEditor/Sources/.*|Packages/Onboarding/Sources/OnboardingUI/(?!EntranceScreen\.swift)[^/]*|Packages/CheckIn/Sources/CheckInUI/(ComposeView|DisclaimerComposer|PhotoStep|SportPicker)\.swift|Packages/DesignSystem/Sources/DesignSystemUI/TabBar\.swift)$'
     regex: '\.(bgAccent|bgAccentSubtle|fgOnAccent|fgAccent|bgScene|fgOnScene|ring|bgKind|bgKindOnScene|fgKind)\b'
     severity: error
   raw_corner_radius:

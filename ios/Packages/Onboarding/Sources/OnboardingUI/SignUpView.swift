@@ -49,6 +49,8 @@ public struct SignUpView<SignIn: View>: View {
                     .transition(.opacity)
             }
         }
+        // Sign-up is a brand screen; only 上场 stands on the squad's scene.
+        .accentTone(.brand)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
     }
 
