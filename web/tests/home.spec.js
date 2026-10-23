@@ -107,8 +107,10 @@ test('with reduced motion there is no tape and the squad stands still', async ({
   expect(await frame()).toBe(before);
 });
 
-test('the legal pages keep their URLs', async ({ request }) => {
+test('the legal pages keep their URLs and lead home in their own language', async ({ page }) => {
   for (const lang of ['', 'zh/', 'zh-hant/'])
-    for (const doc of ['privacy', 'terms'])
-      expect((await request.get(`/${lang}${doc}`)).status()).toBe(200);
+    for (const doc of ['privacy', 'terms']) {
+      expect((await page.goto(`/${lang}${doc}`)).status()).toBe(200);
+      await expect(page.locator('.mark')).toHaveAttribute('href', `/${lang}`);
+    }
 });
