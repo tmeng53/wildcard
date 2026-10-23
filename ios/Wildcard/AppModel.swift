@@ -122,6 +122,17 @@ final class AppModel {
             screen = .signUp(model)
         case .signedOut:
             await signedOut()
+        case .offline where store.home == nil:
+            // Nothing kept on the phone to show, so it isn't known yet whether the member has a
+            // squad. Rather than open an empty 今天: after signing in on the open screen, say it
+            // didn't work so they can try again; at launch, wait and try again.
+            if let signUp {
+                signUp.signInFailed()
+                return
+            }
+            screen = .starting
+            try? await Task.sleep(for: .seconds(3))
+            await openHome()
         case .loading, .current, .offline:
             screen = .tabs(
                 today: TodayModel(
