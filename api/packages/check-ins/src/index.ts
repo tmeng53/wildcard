@@ -109,3 +109,4 @@ export {
 } from './domain/week-summary.js';
 export type { SquadWeekSummary } from './use-cases/check-ins/week-summary.js';
 export type { SquadWeekCheckIns } from './use-cases/check-ins/week-for-awards.js';
+export type { MemberPage, StoryDay, WeekPages } from './domain/week-pages.js';

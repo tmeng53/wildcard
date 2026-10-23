@@ -11,7 +11,13 @@ import {
   createPostgresAwardsStore,
   type WeeklyAwardTables,
 } from '../adapters/postgres-awards-store.js';
-import { MemberId, SquadId, type MemberWeek, type ModelReply } from '../domain/awards.js';
+import {
+  MemberId,
+  SquadId,
+  type MemberWeek,
+  type ModelReply,
+  type SquadPages,
+} from '../domain/awards.js';
 import { WeekStart } from '../domain/schedule.js';
 import { AwardsModelMissingError, AwardsWriterUnavailableError } from '../errors.js';
 import type { LanguageModel } from '../ports.js';
@@ -30,14 +36,30 @@ const week = WeekStart.parse('2026-10-19');
 
 const reply: ModelReply = {
   version: 1,
+  order: ['meals', 'hottest', 'myWeek', 'bestDisclaimer'],
   awards: [
-    { member: 'A', titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' }] },
+    {
+      member: 'A',
+      titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' }],
+      line: '雨天也出勤',
+      hottest: { line: '这条点赞两个', move: 'pose' },
+    },
     {
       member: 'B',
       titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat' }],
+      line: null,
+      // B has no check-in with a reaction: this one is dropped.
+      hottest: { line: '没人点赞', move: 'pose' },
     },
   ],
+  podium: { speech: '周三下着雨还去跑了 5 公里。', championMove: 'pose', sideMove: 'pump' },
+  meals: null,
+  bestDisclaimer: null,
+  ending: { headline: '差一点', line: '还差 3 天，腿已经在热身了', move: 'warmup' },
 };
+
+/** The squad's pages, none unless a test sets them. */
+const pages: SquadPages = {};
 
 function setup(
   answers: (() => Promise<unknown>)[] = [() => Promise.resolve(reply)],
@@ -93,9 +115,15 @@ const checkIn = (reactions: Record<string, number> = {}) => ({
 });
 
 const weekOf = ([ana, bo, cy]: readonly [MemberId, MemberId, MemberId]): MemberWeek[] => [
-  { member: ana, timeZone: 'UTC', checkIns: [checkIn({ '❤️': 2 }), checkIn()] },
-  { member: cy, timeZone: 'UTC', checkIns: [] },
-  { member: bo, timeZone: 'UTC', checkIns: [checkIn()] },
+  {
+    member: ana,
+    timeZone: 'UTC',
+    plannedDays: 2,
+    trainedDays: 2,
+    checkIns: [checkIn({ '❤️': 2 }), checkIn()],
+  },
+  { member: cy, timeZone: 'UTC', plannedDays: 3, trainedDays: 0, checkIns: [] },
+  { member: bo, timeZone: 'UTC', plannedDays: 3, trainedDays: 1, checkIns: [checkIn()] },
 ];
 
 async function reasonOf(promise: Promise<unknown>) {
@@ -112,11 +140,17 @@ describe('createWeeklyAwards', () => {
     const { awards, asked, settingsAsked } = setup();
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const members = weekOf([ana, bo, cy]);
-    const given = await awards.give({ squad, weekStart: week, members });
+    // Ana on the podium, the squad short of its plan.
+    const given = await awards.give({
+      squad,
+      weekStart: week,
+      members,
+      pages: { podium: { champion: ana, sides: [] }, ending: { done: 3, plan: 8 } },
+    });
     // The settings' model and instructions, and the moves as the settings describe them.
     expect(settingsAsked[0]?.model).toBe('openai/gpt-6-luna');
     expect(settingsAsked[0]?.instructions).toMatch(
-      /^你在给一个朋友运动打卡 App 的小队写「本周颁奖」/u,
+      /^你在给一个朋友运动打卡 App 的小队写周日「本周战报」/u,
     );
     expect(asked[0]).toContain(
       '{"id":"pump","description":"握拳两下，第二下跳起来（拼、狠、坚持）"}',
@@ -126,6 +160,8 @@ describe('createWeeklyAwards', () => {
         {
           member: ana,
           titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' }],
+          line: '雨天也出勤',
+          hottest: { line: '这条点赞两个', move: 'pose' },
           topCheckIn: {
             checkIn: members[0]?.checkIns[0]?.id,
             day: '2026-10-21',
@@ -140,11 +176,28 @@ describe('createWeeklyAwards', () => {
           titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat' }],
         },
       ],
+      story: {
+        version: 1,
+        order: ['meals', 'hottest', 'myWeek', 'bestDisclaimer'],
+        podium: {
+          champion: ana,
+          speech: '周三下着雨还去跑了 5 公里。',
+          championMove: 'pose',
+          sideMove: 'pump',
+        },
+        ending: {
+          hit: false,
+          headline: '差一点',
+          line: '还差 3 天，腿已经在热身了',
+          move: 'warmup',
+        },
+      },
     });
     expect(asked).toHaveLength(1);
     expect(asked[0]).not.toContain(cy);
+    expect(asked[0]).toContain('"podium":{"champion":"A","sides":[]}');
     // Asked again, the same awards, without asking the model.
-    expect(await awards.give({ squad, weekStart: week, members })).toStrictEqual(given);
+    expect(await awards.give({ squad, weekStart: week, members, pages })).toStrictEqual(given);
     expect(await awards.find({ squad, weekStart: week })).toStrictEqual({
       status: 'given',
       awards: given,
@@ -158,7 +211,12 @@ describe('createWeeklyAwards', () => {
       [() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })],
       (each) => each === ana,
     );
-    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    const given = await awards.give({
+      squad,
+      weekStart: week,
+      members: weekOf([ana, bo, cy]),
+      pages,
+    });
     expect(consentAsked).toStrictEqual([[ana, bo]]);
     expect(given.members.map(({ member: each }) => each)).toStrictEqual([ana]);
     expect(asked).toHaveLength(1);
@@ -170,8 +228,11 @@ describe('createWeeklyAwards', () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const { awards, asked } = setup(undefined, () => false);
     expect(
-      await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) }),
-    ).toStrictEqual({ members: [] });
+      await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]), pages }),
+    ).toStrictEqual({
+      members: [],
+      story: { version: 1, order: ['myWeek', 'hottest', 'meals', 'bestDisclaimer'] },
+    });
     expect(asked).toHaveLength(0);
   });
 
@@ -180,7 +241,9 @@ describe('createWeeklyAwards', () => {
     const { awards, asked } = setup([() => Promise.resolve(bad), () => Promise.resolve(reply)]);
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     expect(
-      await reasonOf(awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) })),
+      await reasonOf(
+        awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]), pages }),
+      ),
     ).toBe('ok');
     expect(asked).toHaveLength(2);
   });
@@ -189,7 +252,7 @@ describe('createWeeklyAwards', () => {
     const down = setup([() => Promise.reject(new Error('down'))]);
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const members = weekOf([ana, bo, cy]);
-    expect(await reasonOf(down.awards.give({ squad, weekStart: week, members }))).toBe(
+    expect(await reasonOf(down.awards.give({ squad, weekStart: week, members, pages }))).toBe(
       'AWARDS_WRITER_UNAVAILABLE',
     );
     expect(down.asked).toHaveLength(2);
@@ -199,15 +262,18 @@ describe('createWeeklyAwards', () => {
     });
     expect(await down.awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
     const { awards } = setup();
-    expect((await awards.give({ squad, weekStart: week, members })).members).toHaveLength(2);
+    expect((await awards.give({ squad, weekStart: week, members, pages })).members).toHaveLength(2);
   });
 
   it('gives a squad where nobody checked in no awards, without asking the model', async () => {
     const { awards, asked } = setup();
     const squad = await newSquad();
-    const members = [{ member: await member(), timeZone: 'UTC', checkIns: [] }];
-    expect(await awards.give({ squad, weekStart: week, members })).toStrictEqual({
+    const members = [
+      { member: await member(), timeZone: 'UTC', plannedDays: 5, trainedDays: 0, checkIns: [] },
+    ];
+    expect(await awards.give({ squad, weekStart: week, members, pages })).toStrictEqual({
       members: [],
+      story: { version: 1, order: ['myWeek', 'hottest', 'meals', 'bestDisclaimer'] },
     });
     expect(asked).toStrictEqual([]);
     expect(await awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
@@ -226,8 +292,8 @@ describe('createWeeklyAwards', () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const members = weekOf([ana, bo, cy]);
     const [a, b] = await Promise.all([
-      first.awards.give({ squad, weekStart: week, members }),
-      second.awards.give({ squad, weekStart: week, members }),
+      first.awards.give({ squad, weekStart: week, members, pages }),
+      second.awards.give({ squad, weekStart: week, members, pages }),
     ]);
     expect(a).toStrictEqual(b);
     expect(await first.awards.find({ squad, weekStart: week })).toStrictEqual({
@@ -240,7 +306,7 @@ describe('createWeeklyAwards', () => {
     const { awards } = setup();
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     expect(await awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
-    await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]), pages });
     const claims = await Promise.all(
       [1, 2, 3].map(() => awards.claimWinners({ squad, weekStart: week })),
     );
@@ -252,7 +318,7 @@ describe('createWeeklyAwards', () => {
     const [ana, bo, cy] = [await member(), await member(), await member()];
     const squads = [await newSquad(), await newSquad()];
     for (const squad of squads) {
-      await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+      await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]), pages });
     }
     await sql`delete from auth.users where id = ${ana}`.execute(db);
     for (const squad of squads) {
@@ -268,11 +334,11 @@ describe('createWeeklyAwards', () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const members = weekOf([ana, bo, cy]);
     await sql`delete from auth.users where id = ${bo}`.execute(db);
-    await expect(awards.give({ squad, weekStart: week, members })).rejects.toThrow();
+    await expect(awards.give({ squad, weekStart: week, members, pages })).rejects.toThrow();
     expect(await awards.find({ squad, weekStart: week })).toBeUndefined();
     const fresh = members.filter(({ member: each }) => each !== bo);
     const alone = setup([() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })]);
-    const given = await alone.awards.give({ squad, weekStart: week, members: fresh });
+    const given = await alone.awards.give({ squad, weekStart: week, members: fresh, pages });
     expect(given.members.map((each) => each.member)).toStrictEqual([ana]);
   });
 
@@ -283,7 +349,7 @@ describe('createWeeklyAwards', () => {
     ]);
     const squad = await newSquad();
     const members = weekOf([await member(), await member(), await member()]);
-    await reasonOf(off.awards.give({ squad, weekStart: week, members }));
+    await reasonOf(off.awards.give({ squad, weekStart: week, members, pages }));
     expect(await off.awards.claimNudge({ squad, weekStart: week })).toStrictEqual({
       count: 1,
       lastError: 'AwardsModelMissingError',
@@ -303,20 +369,20 @@ describe('createWeeklyAwards', () => {
     expect(await nudge()).toStrictEqual({ count: 0 });
     expect(await nudge()).toBeUndefined();
 
-    await reasonOf(down.awards.give({ squad, weekStart: week, members }));
+    await reasonOf(down.awards.give({ squad, weekStart: week, members, pages }));
     const nudges = await Promise.all([nudge(), nudge(), nudge()]);
     // The provider's name, status and code, never its message.
     const lastError = 'RateLimitError 429 insufficient_quota';
     expect(nudges.filter((each) => each !== undefined)).toStrictEqual([{ count: 1, lastError }]);
-    await reasonOf(down.awards.give({ squad, weekStart: week, members }));
+    await reasonOf(down.awards.give({ squad, weekStart: week, members, pages }));
     expect(await nudge()).toStrictEqual({ count: 2, lastError });
     expect(await nudge()).toBeUndefined();
 
     const { awards } = setup();
-    await awards.give({ squad: given, weekStart: week, members });
+    await awards.give({ squad: given, weekStart: week, members, pages });
     expect(await awards.claimNudge({ squad: given, weekStart: week })).toBeUndefined();
     // A nudged week still takes its awards when a try passes, and isn't nudged after.
-    await awards.give({ squad, weekStart: week, members });
+    await awards.give({ squad, weekStart: week, members, pages });
     expect((await awards.find({ squad, weekStart: week }))?.status).toBe('given');
     expect(await nudge()).toBeUndefined();
   });
@@ -329,7 +395,7 @@ describe('createWeeklyAwards', () => {
     ]);
     const squad = await newSquad();
     const members = weekOf([await member(), await member(), await member()]);
-    await reasonOf(awards.give({ squad, weekStart: week, members }));
+    await reasonOf(awards.give({ squad, weekStart: week, members, pages }));
     expect(await awards.find({ squad, weekStart: week })).toStrictEqual({
       status: 'failing',
       failures: { count: 1, lastError: 'FailedChecks' },

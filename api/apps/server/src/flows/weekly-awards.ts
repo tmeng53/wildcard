@@ -4,6 +4,7 @@ import {
   photosOf,
   type CheckInRecord,
   type CheckIns,
+  type StoryDay,
   type SquadWeekCheckIns,
 } from '@wildcard/check-ins';
 import type { Admins } from '@wildcard/admins';
@@ -15,10 +16,14 @@ import {
   awardsTimeOf,
   latestAwardedWeek,
   topCheckInOf,
+  type AwardMove,
   type Failures,
+  type HottestWords,
   type MemberAwards,
   type MemberWeek,
+  type MiddlePage,
   type SquadId,
+  type SquadPages,
   type TopCheckIn,
   type WeekCheckIn,
   WeekStart,
@@ -144,8 +149,8 @@ async function giveWeek(
       squads.slice(start, start + AT_ONCE).map(async (squad) => {
         try {
           if ((await deps.awards.find({ squad, weekStart: week }))?.status !== 'given') {
-            const members = await memberWeeks(deps, { squad, week, before });
-            await deps.awards.give({ squad, weekStart: week, members });
+            const { members, pages } = await memberWeeks(deps, { squad, week, before });
+            await deps.awards.give({ squad, weekStart: week, members, pages });
             given += 1;
           }
           const winners = await deps.awards.claimWinners({ squad, weekStart: week });
@@ -176,23 +181,67 @@ async function giveWeek(
   return { squads: squads.length, given, failed, told };
 }
 
+/** The pages of the story, in the order they play: the awards first, the ending last. */
+export type StoryPage = 'podium' | 'titles' | MiddlePage | 'ending';
+
 /** A squad's week story as one of its members reads it: the awards, once they are due. */
 export interface SquadStory {
   readonly squad: { readonly id: SquadId; readonly name: string };
   /**
    * `pending`: due, but the titles aren't written yet (the run hasn't reached the squad, or the
-   * model failed). Only the titles wait: the pages without AI are there either way.
+   * model failed). Only the titles wait: the pages without AI are there either way, without
+   * the AI's words and moves.
    */
   readonly status: 'ready' | 'pending';
   /** Members still in the squad, in the order they joined; empty until ready, or when nobody checked in. */
   readonly members: readonly MemberAwards[];
+  /** The AI's page order, once ready. */
+  readonly order?: readonly StoryPage[];
+  readonly podium?: {
+    readonly champion: string;
+    readonly sides: readonly string[];
+    readonly speech?: string;
+    readonly championMove?: AwardMove;
+    readonly sideMove?: AwardMove;
+  };
+  /** The viewer's week, when they checked in before the awards. */
+  readonly myWeek?: {
+    readonly plan: number;
+    readonly days: readonly StoryDay[];
+    readonly line?: string;
+    readonly healthyMeals: number;
+    readonly cheatMeals: number;
+    readonly reactionsReceived: number;
+  };
   /** The viewer's check-in with the most reactions before the awards, when one had any. */
-  readonly hottest?: TopCheckIn;
+  readonly hottest?: TopCheckIn & Partial<HottestWords>;
+  readonly meals?: {
+    readonly healthy: number;
+    readonly cheat: number;
+    readonly eaters: readonly { readonly member: string; readonly more: 'healthy' | 'cheat' }[];
+    readonly line?: string;
+  };
+  readonly bestDisclaimer?: {
+    readonly checkIn: string;
+    readonly author: string;
+    readonly text: string;
+    readonly reactions: number;
+    readonly authorMove?: AwardMove;
+    readonly squadMove?: AwardMove;
+  };
+  readonly ending?: {
+    readonly done: number;
+    readonly plan: number;
+    readonly headline?: string;
+    readonly line?: string;
+    readonly move?: AwardMove;
+  };
 }
 
 /**
  * A squad's week story for one of its members. Throws `WeekStoryNotReadyError` before the
- * week's awards (Sunday 8pm Eastern), `SquadNotJoinedError` for anyone not in the squad.
+ * week's awards (Sunday 8pm Eastern), `SquadNotJoinedError` for anyone not in the squad. The
+ * pages' facts are read from the week as the awards saw it, so the AI's words still fit them.
  */
 export async function squadStory(
   deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'awards' | 'clock'>,
@@ -203,26 +252,113 @@ export async function squadStory(
   }: { readonly viewer: string; readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<SquadStory> {
   const found = await dueSquad(deps, { viewer, squad, weekStart });
-  const header = { squad: { id: squad, name: found.name } };
-  const state = await deps.awards.find({ squad, weekStart });
-  if (state?.status === 'given') {
-    // Members who left take their awards with them, as their check-ins leave the feed.
-    const inSquad = new Set<string>(found.members.map(({ member }) => member));
-    const members = state.awards.members.filter(({ member }) => inSquad.has(member));
-    const hottest = members.find(({ member }) => member === MemberId.parse(viewer))?.topCheckIn;
-    return { ...header, status: 'ready', members, ...(hottest === undefined ? {} : { hottest }) };
-  }
-  // Not written yet: the hottest check-in as the awards will see it, from the week so far.
-  const week = await weekBeforeAwards(deps, { squad, weekStart });
-  const anyone = week.members.some(({ checkIns }) => checkIns.length > 0);
+  const [state, week] = await Promise.all([
+    deps.awards.find({ squad, weekStart }),
+    weekBeforeAwards(deps, { squad, weekStart }),
+  ]);
+  const { pages } = week;
   const mine = week.members.find(({ member }) => member === viewer)?.checkIns ?? [];
-  const hottest = topCheckInOf(mine.map((record) => weekCheckIn(record, week.reactions)));
-  return {
-    ...header,
-    status: anyone ? 'pending' : 'ready',
-    members: [],
-    ...(hottest === undefined ? {} : { hottest }),
+  const page = pages.members.find(({ member }) => member === viewer);
+  const facts = {
+    squad: { id: squad, name: found.name },
+    ...(pages.podium === undefined ? {} : { podium: pages.podium }),
+    ...(page?.checkedIn === true
+      ? {
+          myWeek: {
+            plan: page.plannedDays,
+            days: page.days,
+            healthyMeals: page.healthyMeals,
+            cheatMeals: page.cheatMeals,
+            reactionsReceived: page.reactionsReceived,
+          },
+        }
+      : {}),
+    ...(pages.meals === undefined ? {} : { meals: pages.meals }),
+    ...(pages.bestDisclaimer === undefined ? {} : { bestDisclaimer: pages.bestDisclaimer }),
+    ...(pages.ending === undefined ? {} : { ending: pages.ending }),
   };
+
+  if (state?.status !== 'given') {
+    // Not written yet: the hottest check-in as the awards will see it, from the week so far.
+    const anyone = week.members.some(({ checkIns }) => checkIns.length > 0);
+    const hottest = topCheckInOf(mine.map((record) => weekCheckIn(record, week.reactions)));
+    return {
+      ...facts,
+      status: anyone ? 'pending' : 'ready',
+      members: [],
+      ...(hottest === undefined ? {} : { hottest }),
+    };
+  }
+
+  // Members who left take their awards with them, as their check-ins leave the feed.
+  const inSquad = new Set<string>(found.members.map(({ member }) => member));
+  const members = state.awards.members.filter(({ member }) => inSquad.has(member));
+  const own = members.find(({ member }) => member === MemberId.parse(viewer));
+  const words = state.awards.story;
+  // The AI's words only on the page they were written for: a member leaving or a later
+  // reaction can change the champion, the best note or whether the squad hit its plan.
+  const podiumWords =
+    words?.podium?.champion === facts.podium?.champion ? words?.podium : undefined;
+  const noteWords =
+    words?.bestDisclaimer?.checkIn === facts.bestDisclaimer?.checkIn
+      ? words?.bestDisclaimer
+      : undefined;
+  const endingWords =
+    facts.ending !== undefined && words?.ending?.hit === facts.ending.done >= facts.ending.plan
+      ? words.ending
+      : undefined;
+  const story: SquadStory = {
+    ...facts,
+    status: 'ready',
+    members,
+    ...(facts.podium === undefined || podiumWords === undefined
+      ? {}
+      : {
+          podium: {
+            ...facts.podium,
+            speech: podiumWords.speech,
+            championMove: podiumWords.championMove,
+            sideMove: podiumWords.sideMove,
+          },
+        }),
+    ...(facts.myWeek === undefined
+      ? {}
+      : { myWeek: { ...facts.myWeek, ...(own?.line === undefined ? {} : { line: own.line }) } }),
+    ...(own?.topCheckIn === undefined ? {} : { hottest: { ...own.topCheckIn, ...own.hottest } }),
+    ...(facts.meals === undefined ? {} : { meals: { ...facts.meals, ...words?.meals } }),
+    ...(facts.bestDisclaimer === undefined || noteWords === undefined
+      ? {}
+      : {
+          bestDisclaimer: {
+            ...facts.bestDisclaimer,
+            authorMove: noteWords.authorMove,
+            squadMove: noteWords.squadMove,
+          },
+        }),
+    ...(facts.ending === undefined || endingWords === undefined
+      ? {}
+      : {
+          ending: {
+            ...facts.ending,
+            headline: endingWords.headline,
+            line: endingWords.line,
+            move: endingWords.move,
+          },
+        }),
+  };
+  if (words === undefined) return story;
+  // The AI's order, less the pages this reader's story doesn't have.
+  const has: Record<StoryPage, boolean> = {
+    podium: story.podium !== undefined,
+    titles: members.length > 0,
+    myWeek: story.myWeek !== undefined,
+    hottest: story.hottest !== undefined,
+    meals: story.meals !== undefined,
+    bestDisclaimer: story.bestDisclaimer !== undefined,
+    ending: story.ending !== undefined,
+  };
+  const order: StoryPage[] = ['podium', 'titles', ...words.order, 'ending'];
+  return { ...story, order: order.filter((page) => has[page]) };
 }
 
 /**
@@ -304,7 +440,10 @@ async function dueSquad(
   return found;
 }
 
-/** Everyone in the squad with their check-ins before the awards, as the awards read them. */
+/**
+ * Everyone in the squad with their check-ins before the awards, as the awards read them, and
+ * the squad's pages they write on.
+ */
 async function memberWeeks(
   deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'members'>,
   {
@@ -312,23 +451,51 @@ async function memberWeeks(
     week,
     before,
   }: { readonly squad: SquadId; readonly week: WeekStart; readonly before: Date },
-): Promise<MemberWeek[]> {
+): Promise<{ readonly members: MemberWeek[]; readonly pages: SquadPages }> {
   const squadWeek = await deps.checkIns.squadWeekCheckIns({
     squad: CheckInSquad.parse(squad),
     weekStart: CheckInWeek.parse(week),
     before,
   });
-  return Promise.all(
+  const { podium, meals, bestDisclaimer, ending } = squadWeek.pages;
+  const members = await Promise.all(
     squadWeek.members.map(async ({ member, checkIns }) => {
       const profile = await deps.members.findProfile(member);
+      const page = squadWeek.pages.members.find((each) => each.member === member);
       return {
         member: MemberId.parse(member),
         // A member who checked in has saved a time zone; UTC only for one who never did.
         timeZone: profile?.timeZone ?? 'UTC',
+        plannedDays: page?.plannedDays ?? 0,
+        trainedDays: page?.trainedDays ?? 0,
         checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek.reactions)),
       };
     }),
   );
+  return {
+    members,
+    pages: {
+      ...(podium === undefined
+        ? {}
+        : {
+            podium: {
+              champion: MemberId.parse(podium.champion),
+              sides: podium.sides.map((side) => MemberId.parse(side)),
+            },
+          }),
+      ...(meals === undefined ? {} : { meals: { healthy: meals.healthy, cheat: meals.cheat } }),
+      ...(bestDisclaimer === undefined
+        ? {}
+        : {
+            bestDisclaimer: {
+              checkIn: bestDisclaimer.checkIn,
+              author: MemberId.parse(bestDisclaimer.author),
+              text: bestDisclaimer.text,
+            },
+          }),
+      ...(ending === undefined ? {} : { ending }),
+    },
+  };
 }
 
 function weekCheckIn(

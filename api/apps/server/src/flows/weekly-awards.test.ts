@@ -12,7 +12,9 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
   Emoji,
+  WeekStart as CheckInWeek,
   type CheckInRecord,
+  type PlanDay,
 } from '@wildcard/check-ins';
 import {
   MemberId as MembersMember,
@@ -66,6 +68,9 @@ const squads = createSquads({
 });
 const aiConsent = aiConsentOn(db);
 const checkInStore = createPostgresCheckInStore(db);
+const planStore = createPostgresWeeklyPlanStore(db);
+const train: PlanDay = { kind: 'train' };
+const rest: PlanDay = { kind: 'rest' };
 const reactions = createPostgresReactionStore(db);
 const checkIns = createCheckIns({
   store: checkInStore,
@@ -100,13 +105,20 @@ const lettersIn = (prompt: string) =>
     .parse(JSON.parse(prompt))
     .members.map(({ member }) => member);
 
-/** The model's answer for a squad's members by letter, one title each. */
+/** The model's answer for a squad's members by letter, one title each, and every page's words. */
 const titlesFor = (letters: readonly string[]) => ({
   version: 1,
+  order: ['hottest', 'myWeek', 'meals', 'bestDisclaimer'],
   awards: letters.map((letter, index) => ({
     member: letter,
     titles: [{ title: `狠人${String(index)}号`, speech: '周三下着雨还去跑了。', move: 'pump' }],
+    line: '雨天也出勤',
+    hottest: { line: '这条火了', move: 'pose' },
   })),
+  podium: { speech: '一周练够了计划', championMove: 'pose', sideMove: 'wave' },
+  meals: { line: '吃得很开心' },
+  bestDisclaimer: { authorMove: 'flat', squadMove: 'laugh' },
+  ending: { headline: '差一点', line: '下周的腿已经在热身了', move: 'warmup' },
 });
 
 function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) {
@@ -296,6 +308,18 @@ const Story = z.object({
       }),
     )
     .optional(),
+  order: z.array(z.string()).optional(),
+  podium: z.record(z.string(), z.unknown()).optional(),
+  myWeek: z
+    .object({
+      plan: z.int(),
+      days: z.array(z.object({ day: z.string(), kind: z.string(), sport: z.string().optional() })),
+      line: z.string().optional(),
+      healthyMeals: z.int(),
+      cheatMeals: z.int(),
+      reactionsReceived: z.int(),
+    })
+    .optional(),
   hottest: z
     .object({
       checkIn: z.string(),
@@ -304,8 +328,13 @@ const Story = z.object({
       caption: z.string().optional(),
       photos: z.array(z.object({ path: z.string(), url: z.url() })),
       reactions: z.array(z.object({ emoji: z.string(), count: z.int() })),
+      line: z.string().optional(),
+      move: z.string().optional(),
     })
     .optional(),
+  meals: z.unknown().optional(),
+  bestDisclaimer: z.unknown().optional(),
+  ending: z.record(z.string(), z.unknown()).optional(),
 });
 
 describe('weekly awards', () => {
@@ -326,6 +355,12 @@ describe('weekly awards', () => {
     const { run, read, sent, prompts } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];
     const squad = await squadOf(ana, bo, cy);
+    // Ana plans one day and trains it: she stands on the podium.
+    await planStore.save({
+      member: CheckInMember.parse(ana.userId),
+      weekStart: CheckInWeek.parse(WEEK),
+      days: [rest, rest, train, rest, rest, rest, rest],
+    });
     const photo = await uploadedPhoto(ana);
     // A caption no other squad has, to find this squad's prompt among the run's.
     const caption = `下雨也跑 ${randomUUID().slice(0, 8)}`;
@@ -375,13 +410,51 @@ describe('weekly awards', () => {
     expect(forCy.titles?.[0]?.titles).toStrictEqual([
       { title: '狠人0号', speech: '周三下着雨还去跑了。', move: 'pump' },
     ]);
-    // Cy's only check-in came after the awards: nothing of theirs is hottest.
+    // Cy's only check-in came after the awards: nothing of theirs is hottest, nor their week.
     expect(forCy.hottest).toBeUndefined();
+    expect(forCy.myWeek).toBeUndefined();
+    // The AI's order, less the pages Cy's story doesn't have (no week, no hottest, no meals, no note).
+    expect(forCy.order).toStrictEqual(['podium', 'titles', 'ending']);
+    expect(forCy.podium).toStrictEqual({
+      champion: ana.userId,
+      sides: [],
+      speech: '一周练够了计划',
+      championMove: 'pose',
+      sideMove: 'wave',
+    });
+    // No meals and no 请假条 that week: no pages, so none of the model's words for them.
+    expect([forCy.meals, forCy.bestDisclaimer]).toStrictEqual([undefined, undefined]);
+    // Ana's day and Bo's Sunday before the awards, against 1 + 5 + 5 planned.
+    expect(forCy.ending).toStrictEqual({
+      done: 2,
+      plan: 11,
+      headline: '差一点',
+      line: '下周的腿已经在热身了',
+      move: 'warmup',
+    });
 
     const forAna = Story.parse((await read({ token: ana.token, squad })).body);
     expect(forAna.hottest?.checkIn).toBe(top);
     expect(forAna.hottest?.caption).toBe(caption);
     expect(forAna.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
+    expect(forAna.order).toStrictEqual(['podium', 'titles', 'hottest', 'myWeek', 'ending']);
+    expect([forAna.hottest?.line, forAna.hottest?.move]).toStrictEqual(['这条火了', 'pose']);
+    expect(forAna.myWeek).toStrictEqual({
+      plan: 1,
+      days: [
+        { day: '2026-10-19', kind: 'rest' },
+        { day: '2026-10-20', kind: 'rest' },
+        { day: '2026-10-21', kind: 'trained', sport: 'run' },
+        { day: '2026-10-22', kind: 'rest' },
+        { day: '2026-10-23', kind: 'rest' },
+        { day: '2026-10-24', kind: 'rest' },
+        { day: '2026-10-25', kind: 'rest' },
+      ],
+      line: '雨天也出勤',
+      healthyMeals: 0,
+      cheatMeals: 0,
+      reactionsReceived: 1,
+    });
     const view = forAna.hottest?.photos[0];
     expect(view?.path).toBe(photo);
     expect((await fetch(view?.url ?? '')).ok).toBe(true);
@@ -446,6 +519,18 @@ describe('weekly awards', () => {
       top,
     ]);
     expect(pending.hottest?.reactions).toStrictEqual([{ emoji: '😂', count: 1 }]);
+    // The pages without AI play while the titles wait, without the AI's order, lines or moves.
+    expect([pending.order, pending.hottest?.line, pending.myWeek?.line]).toStrictEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    expect(pending.myWeek?.days[2]).toStrictEqual({
+      day: '2026-10-21',
+      kind: 'trained',
+      sport: 'run',
+    });
+    expect(pending.ending).toStrictEqual({ done: 1, plan: 10 });
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(0);
 
     // 催一下主办方: the first nudge tells each admin which squad, how many tries failed and why.
@@ -474,6 +559,7 @@ describe('weekly awards', () => {
       1,
       top,
     ]);
+    expect(ready.ending?.headline).toBe('差一点');
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(await nudge({ token: ana.token, squad })).toBe(204);
     expect(toAdmin()).toHaveLength(1);
@@ -526,6 +612,46 @@ describe('weekly awards', () => {
     );
     const left = Story.parse((await read({ token: ana.token, squad })).body);
     expect(left.titles?.map((each) => each.member)).toStrictEqual([ana.userId]);
+  });
+
+  it('drops the AI’s words from a page whose facts changed after the awards', async () => {
+    const { run, read } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    // Both plan one day and train it: Ana takes the crown (the first to join), Bo stands beside.
+    for (const each of [ana, bo]) {
+      await planStore.save({
+        member: CheckInMember.parse(each.userId),
+        weekStart: CheckInWeek.parse(WEEK),
+        days: [rest, rest, train, rest, rest, rest, rest],
+      });
+      await trained(each, { squad });
+    }
+    await run();
+    const before = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(before.podium).toStrictEqual({
+      champion: ana.userId,
+      sides: [bo.userId],
+      speech: '一周练够了计划',
+      championMove: 'pose',
+      sideMove: 'wave',
+    });
+    expect(before.ending?.headline).toBe('差一点');
+
+    // Ana leaves: Bo is the champion now, and the 颁奖词 written for Ana's week isn't his.
+    await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${ana.userId}`.execute(
+      db,
+    );
+    const after = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(after.podium).toStrictEqual({ champion: bo.userId, sides: [] });
+    // The squad still hit its plan, so the ending keeps its words.
+    expect(after.ending).toStrictEqual({
+      done: 1,
+      plan: 1,
+      headline: '差一点',
+      line: '下周的腿已经在热身了',
+      move: 'warmup',
+    });
   });
 
   it('keeps trying a squad still failing into the next week', async () => {

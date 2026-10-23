@@ -5972,8 +5972,18 @@ extension Components {
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
                 public var week: Components.Schemas.WeekStory.Case1Payload.WeekPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/podium`.
+                public var podium: Components.Schemas.StoryPodium?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek`.
+                public var myWeek: Components.Schemas.StoryMyWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals`.
+                public var meals: Components.Schemas.StoryMeals?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer`.
+                public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending`.
+                public var ending: Components.Schemas.StoryEnding?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case ready = "ready"
@@ -6028,37 +6038,79 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/titles`.
                 public var titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/OrderPayload`.
+                @frozen public enum OrderPayloadPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case podium = "podium"
+                    case titles = "titles"
+                    case myWeek = "myWeek"
+                    case hottest = "hottest"
+                    case meals = "meals"
+                    case bestDisclaimer = "bestDisclaimer"
+                    case ending = "ending"
+                }
+                /// The pages this story has, in the order the AI picked: `podium` and `titles` first, `ending` last. Missing when the AI picked none (play the default order).
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/order`.
+                public typealias OrderPayload = [Components.Schemas.WeekStory.Case1Payload.OrderPayloadPayload]
+                /// The pages this story has, in the order the AI picked: `podium` and `titles` first, `ending` last. Missing when the AI picked none (play the default order).
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/order`.
+                public var order: Components.Schemas.WeekStory.Case1Payload.OrderPayload?
                 /// Creates a new `Case1Payload`.
                 ///
                 /// - Parameters:
                 ///   - version:
                 ///   - squad:
                 ///   - week:
+                ///   - podium:
+                ///   - myWeek:
                 ///   - hottest:
+                ///   - meals:
+                ///   - bestDisclaimer:
+                ///   - ending:
                 ///   - status:
                 ///   - titles: Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                ///   - order: The pages this story has, in the order the AI picked: `podium` and `titles` first, `ending` last. Missing when the AI picked none (play the default order).
                 public init(
                     version: Components.Schemas.WeekStory.Case1Payload.VersionPayload,
                     squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload,
                     week: Components.Schemas.WeekStory.Case1Payload.WeekPayload,
+                    podium: Components.Schemas.StoryPodium? = nil,
+                    myWeek: Components.Schemas.StoryMyWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
+                    meals: Components.Schemas.StoryMeals? = nil,
+                    bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
+                    ending: Components.Schemas.StoryEnding? = nil,
                     status: Components.Schemas.WeekStory.Case1Payload.StatusPayload,
-                    titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
+                    titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload,
+                    order: Components.Schemas.WeekStory.Case1Payload.OrderPayload? = nil
                 ) {
                     self.version = version
                     self.squad = squad
                     self.week = week
+                    self.podium = podium
+                    self.myWeek = myWeek
                     self.hottest = hottest
+                    self.meals = meals
+                    self.bestDisclaimer = bestDisclaimer
+                    self.ending = ending
                     self.status = status
                     self.titles = titles
+                    self.order = order
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
                     case squad
                     case week
+                    case podium
+                    case myWeek
                     case hottest
+                    case meals
+                    case bestDisclaimer
+                    case ending
                     case status
                     case titles
+                    case order
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -6074,9 +6126,29 @@ extension Components {
                         Components.Schemas.WeekStory.Case1Payload.WeekPayload.self,
                         forKey: .week
                     )
+                    self.podium = try container.decodeIfPresent(
+                        Components.Schemas.StoryPodium.self,
+                        forKey: .podium
+                    )
+                    self.myWeek = try container.decodeIfPresent(
+                        Components.Schemas.StoryMyWeek.self,
+                        forKey: .myWeek
+                    )
                     self.hottest = try container.decodeIfPresent(
                         Components.Schemas.StoryHottest.self,
                         forKey: .hottest
+                    )
+                    self.meals = try container.decodeIfPresent(
+                        Components.Schemas.StoryMeals.self,
+                        forKey: .meals
+                    )
+                    self.bestDisclaimer = try container.decodeIfPresent(
+                        Components.Schemas.StoryBestDisclaimer.self,
+                        forKey: .bestDisclaimer
+                    )
+                    self.ending = try container.decodeIfPresent(
+                        Components.Schemas.StoryEnding.self,
+                        forKey: .ending
                     )
                     self.status = try container.decode(
                         Components.Schemas.WeekStory.Case1Payload.StatusPayload.self,
@@ -6086,13 +6158,23 @@ extension Components {
                         Components.Schemas.WeekStory.Case1Payload.TitlesPayload.self,
                         forKey: .titles
                     )
+                    self.order = try container.decodeIfPresent(
+                        Components.Schemas.WeekStory.Case1Payload.OrderPayload.self,
+                        forKey: .order
+                    )
                     try decoder.ensureNoAdditionalProperties(knownKeys: [
                         "version",
                         "squad",
                         "week",
+                        "podium",
+                        "myWeek",
                         "hottest",
+                        "meals",
+                        "bestDisclaimer",
+                        "ending",
                         "status",
-                        "titles"
+                        "titles",
+                        "order"
                     ])
                 }
             }
@@ -6100,7 +6182,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case1`.
             case case1(Components.Schemas.WeekStory.Case1Payload)
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
+            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual, without the AI’s lines and moves, in the default order. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             public struct Case2Payload: Codable, Hashable, Sendable {
@@ -6190,8 +6272,18 @@ extension Components {
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
                 public var week: Components.Schemas.WeekStory.Case2Payload.WeekPayload
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/podium`.
+                public var podium: Components.Schemas.StoryPodium?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek`.
+                public var myWeek: Components.Schemas.StoryMyWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals`.
+                public var meals: Components.Schemas.StoryMeals?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer`.
+                public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending`.
+                public var ending: Components.Schemas.StoryEnding?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case pending = "pending"
@@ -6204,26 +6296,46 @@ extension Components {
                 ///   - version:
                 ///   - squad:
                 ///   - week:
+                ///   - podium:
+                ///   - myWeek:
                 ///   - hottest:
+                ///   - meals:
+                ///   - bestDisclaimer:
+                ///   - ending:
                 ///   - status:
                 public init(
                     version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
                     squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload,
                     week: Components.Schemas.WeekStory.Case2Payload.WeekPayload,
+                    podium: Components.Schemas.StoryPodium? = nil,
+                    myWeek: Components.Schemas.StoryMyWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
+                    meals: Components.Schemas.StoryMeals? = nil,
+                    bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
+                    ending: Components.Schemas.StoryEnding? = nil,
                     status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
                 ) {
                     self.version = version
                     self.squad = squad
                     self.week = week
+                    self.podium = podium
+                    self.myWeek = myWeek
                     self.hottest = hottest
+                    self.meals = meals
+                    self.bestDisclaimer = bestDisclaimer
+                    self.ending = ending
                     self.status = status
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
                     case squad
                     case week
+                    case podium
+                    case myWeek
                     case hottest
+                    case meals
+                    case bestDisclaimer
+                    case ending
                     case status
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -6240,9 +6352,29 @@ extension Components {
                         Components.Schemas.WeekStory.Case2Payload.WeekPayload.self,
                         forKey: .week
                     )
+                    self.podium = try container.decodeIfPresent(
+                        Components.Schemas.StoryPodium.self,
+                        forKey: .podium
+                    )
+                    self.myWeek = try container.decodeIfPresent(
+                        Components.Schemas.StoryMyWeek.self,
+                        forKey: .myWeek
+                    )
                     self.hottest = try container.decodeIfPresent(
                         Components.Schemas.StoryHottest.self,
                         forKey: .hottest
+                    )
+                    self.meals = try container.decodeIfPresent(
+                        Components.Schemas.StoryMeals.self,
+                        forKey: .meals
+                    )
+                    self.bestDisclaimer = try container.decodeIfPresent(
+                        Components.Schemas.StoryBestDisclaimer.self,
+                        forKey: .bestDisclaimer
+                    )
+                    self.ending = try container.decodeIfPresent(
+                        Components.Schemas.StoryEnding.self,
+                        forKey: .ending
                     )
                     self.status = try container.decode(
                         Components.Schemas.WeekStory.Case2Payload.StatusPayload.self,
@@ -6252,12 +6384,17 @@ extension Components {
                         "version",
                         "squad",
                         "week",
+                        "podium",
+                        "myWeek",
                         "hottest",
+                        "meals",
+                        "bestDisclaimer",
+                        "ending",
                         "status"
                     ])
                 }
             }
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
+            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual, without the AI’s lines and moves, in the default order. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             case case2(Components.Schemas.WeekStory.Case2Payload)
@@ -6290,7 +6427,248 @@ extension Components {
                 }
             }
         }
-        /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any.
+        /// 领奖台: missing when nobody trained at least as many days as they planned (and one).
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryPodium`.
+        public struct StoryPodium: Codable, Hashable, Sendable {
+            /// The crown winner, in the middle.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/champion`.
+            public var champion: Swift.String
+            /// Up to 2 others who finished their plan, left then right.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/sides`.
+            public var sides: [Swift.String]
+            /// The champion’s award line (颁奖词), at most 24 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/speech`.
+            public var speech: Swift.String?
+            /// The champion’s move after the crown toss. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/championMove`.
+            public var championMove: Swift.String?
+            /// The sides’ move. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/sideMove`.
+            public var sideMove: Swift.String?
+            /// Creates a new `StoryPodium`.
+            ///
+            /// - Parameters:
+            ///   - champion: The crown winner, in the middle.
+            ///   - sides: Up to 2 others who finished their plan, left then right.
+            ///   - speech: The champion’s award line (颁奖词), at most 24 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///   - championMove: The champion’s move after the crown toss. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///   - sideMove: The sides’ move. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            public init(
+                champion: Swift.String,
+                sides: [Swift.String],
+                speech: Swift.String? = nil,
+                championMove: Swift.String? = nil,
+                sideMove: Swift.String? = nil
+            ) {
+                self.champion = champion
+                self.sides = sides
+                self.speech = speech
+                self.championMove = championMove
+                self.sideMove = sideMove
+            }
+            public enum CodingKeys: String, CodingKey {
+                case champion
+                case sides
+                case speech
+                case championMove
+                case sideMove
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.champion = try container.decode(
+                    Swift.String.self,
+                    forKey: .champion
+                )
+                self.sides = try container.decode(
+                    [Swift.String].self,
+                    forKey: .sides
+                )
+                self.speech = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .speech
+                )
+                self.championMove = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .championMove
+                )
+                self.sideMove = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .sideMove
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "champion",
+                    "sides",
+                    "speech",
+                    "championMove",
+                    "sideMove"
+                ])
+            }
+        }
+        /// 你的一周, the signed-in member’s: missing when they checked in nothing.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryMyWeek`.
+        public struct StoryMyWeek: Codable, Hashable, Sendable {
+            /// Training days in the reader’s plan.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/plan`.
+            public var plan: Swift.Int
+            /// Monday first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/days`.
+            public var days: [Components.Schemas.StoryDay]
+            /// A line about the reader’s week, at most 12 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/line`.
+            public var line: Swift.String?
+            /// 健康餐 they checked in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// 坦白放纵餐 they checked in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// Teammates’ reactions on their check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/reactionsReceived`.
+            public var reactionsReceived: Swift.Int
+            /// Creates a new `StoryMyWeek`.
+            ///
+            /// - Parameters:
+            ///   - plan: Training days in the reader’s plan.
+            ///   - days: Monday first.
+            ///   - line: A line about the reader’s week, at most 12 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///   - healthyMeals: 健康餐 they checked in.
+            ///   - cheatMeals: 坦白放纵餐 they checked in.
+            ///   - reactionsReceived: Teammates’ reactions on their check-ins.
+            public init(
+                plan: Swift.Int,
+                days: [Components.Schemas.StoryDay],
+                line: Swift.String? = nil,
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                reactionsReceived: Swift.Int
+            ) {
+                self.plan = plan
+                self.days = days
+                self.line = line
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.reactionsReceived = reactionsReceived
+            }
+            public enum CodingKeys: String, CodingKey {
+                case plan
+                case days
+                case line
+                case healthyMeals
+                case cheatMeals
+                case reactionsReceived
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.plan = try container.decode(
+                    Swift.Int.self,
+                    forKey: .plan
+                )
+                self.days = try container.decode(
+                    [Components.Schemas.StoryDay].self,
+                    forKey: .days
+                )
+                self.line = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .line
+                )
+                self.healthyMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .healthyMeals
+                )
+                self.cheatMeals = try container.decode(
+                    Swift.Int.self,
+                    forKey: .cheatMeals
+                )
+                self.reactionsReceived = try container.decode(
+                    Swift.Int.self,
+                    forKey: .reactionsReceived
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "plan",
+                    "days",
+                    "line",
+                    "healthyMeals",
+                    "cheatMeals",
+                    "reactionsReceived"
+                ])
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryDay`.
+        public struct StoryDay: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryDay/day`.
+            public var day: Swift.String
+            /// `trained` wins over `disclaimer` (a 请假条), which wins over a planned `rest` day; `none` is a day with nothing checked in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case trained = "trained"
+                case rest = "rest"
+                case disclaimer = "disclaimer"
+                case none = "none"
+            }
+            /// `trained` wins over `disclaimer` (a 请假条), which wins over a planned `rest` day; `none` is a day with nothing checked in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/kind`.
+            public var kind: Components.Schemas.StoryDay.KindPayload
+            /// For a trained day: its first 练了’s sport key, or the name of the member’s own.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/sport`.
+            public var sport: Swift.String?
+            /// Creates a new `StoryDay`.
+            ///
+            /// - Parameters:
+            ///   - day:
+            ///   - kind: `trained` wins over `disclaimer` (a 请假条), which wins over a planned `rest` day; `none` is a day with nothing checked in.
+            ///   - sport: For a trained day: its first 练了’s sport key, or the name of the member’s own.
+            public init(
+                day: Swift.String,
+                kind: Components.Schemas.StoryDay.KindPayload,
+                sport: Swift.String? = nil
+            ) {
+                self.day = day
+                self.kind = kind
+                self.sport = sport
+            }
+            public enum CodingKeys: String, CodingKey {
+                case day
+                case kind
+                case sport
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.day = try container.decode(
+                    Swift.String.self,
+                    forKey: .day
+                )
+                self.kind = try container.decode(
+                    Components.Schemas.StoryDay.KindPayload.self,
+                    forKey: .kind
+                )
+                self.sport = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .sport
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "day",
+                    "kind",
+                    "sport"
+                ])
+            }
+        }
+        /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. Missing when none of theirs had any.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryHottest`.
         public struct StoryHottest: Codable, Hashable, Sendable {
@@ -6369,6 +6747,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryHottest/reactions`.
             public var reactions: Components.Schemas.StoryHottest.ReactionsPayload
+            /// A line answering the check-in, at most 18 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/line`.
+            public var line: Swift.String?
+            /// The reader’s move next to it. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryHottest/move`.
+            public var move: Swift.String?
             /// Creates a new `StoryHottest`.
             ///
             /// - Parameters:
@@ -6380,6 +6766,8 @@ extension Components {
             ///   - text: For a 请假条: its text.
             ///   - photos: Up to 3 photos, the cover first; empty when there are none.
             ///   - reactions: Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
+            ///   - line: A line answering the check-in, at most 18 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///   - move: The reader’s move next to it. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
             public init(
                 checkIn: Swift.String,
                 day: Swift.String,
@@ -6388,7 +6776,9 @@ extension Components {
                 caption: Swift.String? = nil,
                 text: Swift.String? = nil,
                 photos: [Components.Schemas.StoryPhoto],
-                reactions: Components.Schemas.StoryHottest.ReactionsPayload
+                reactions: Components.Schemas.StoryHottest.ReactionsPayload,
+                line: Swift.String? = nil,
+                move: Swift.String? = nil
             ) {
                 self.checkIn = checkIn
                 self.day = day
@@ -6398,6 +6788,8 @@ extension Components {
                 self.text = text
                 self.photos = photos
                 self.reactions = reactions
+                self.line = line
+                self.move = move
             }
             public enum CodingKeys: String, CodingKey {
                 case checkIn
@@ -6408,6 +6800,8 @@ extension Components {
                 case text
                 case photos
                 case reactions
+                case line
+                case move
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -6443,6 +6837,14 @@ extension Components {
                     Components.Schemas.StoryHottest.ReactionsPayload.self,
                     forKey: .reactions
                 )
+                self.line = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .line
+                )
+                self.move = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .move
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "checkIn",
                     "day",
@@ -6451,7 +6853,9 @@ extension Components {
                     "caption",
                     "text",
                     "photos",
-                    "reactions"
+                    "reactions",
+                    "line",
+                    "move"
                 ])
             }
         }
@@ -6492,6 +6896,300 @@ extension Components {
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "path",
                     "url"
+                ])
+            }
+        }
+        /// 吃了: missing when nobody checked in a meal.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryMeals`.
+        public struct StoryMeals: Codable, Hashable, Sendable {
+            /// The squad’s 健康餐.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/healthy`.
+            public var healthy: Swift.Int
+            /// The squad’s 坦白放纵餐.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/cheat`.
+            public var cheat: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload`.
+            public struct EatersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/member`.
+                public var member: Swift.String
+                /// What they checked in more of, `healthy` on a tie.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/more`.
+                @frozen public enum MorePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case healthy = "healthy"
+                    case cheat = "cheat"
+                }
+                /// What they checked in more of, `healthy` on a tie.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/more`.
+                public var more: Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload
+                /// Creates a new `EatersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - more: What they checked in more of, `healthy` on a tie.
+                public init(
+                    member: Swift.String,
+                    more: Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload
+                ) {
+                    self.member = member
+                    self.more = more
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case more
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.member = try container.decode(
+                        Swift.String.self,
+                        forKey: .member
+                    )
+                    self.more = try container.decode(
+                        Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload.self,
+                        forKey: .more
+                    )
+                    try decoder.ensureNoAdditionalProperties(knownKeys: [
+                        "member",
+                        "more"
+                    ])
+                }
+            }
+            /// Everyone who checked in a meal, in the order they joined.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/eaters`.
+            public typealias EatersPayload = [Components.Schemas.StoryMeals.EatersPayloadPayload]
+            /// Everyone who checked in a meal, in the order they joined.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/eaters`.
+            public var eaters: Components.Schemas.StoryMeals.EatersPayload
+            /// A line about the squad’s meals, at most 14 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/line`.
+            public var line: Swift.String?
+            /// Creates a new `StoryMeals`.
+            ///
+            /// - Parameters:
+            ///   - healthy: The squad’s 健康餐.
+            ///   - cheat: The squad’s 坦白放纵餐.
+            ///   - eaters: Everyone who checked in a meal, in the order they joined.
+            ///   - line: A line about the squad’s meals, at most 14 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            public init(
+                healthy: Swift.Int,
+                cheat: Swift.Int,
+                eaters: Components.Schemas.StoryMeals.EatersPayload,
+                line: Swift.String? = nil
+            ) {
+                self.healthy = healthy
+                self.cheat = cheat
+                self.eaters = eaters
+                self.line = line
+            }
+            public enum CodingKeys: String, CodingKey {
+                case healthy
+                case cheat
+                case eaters
+                case line
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.healthy = try container.decode(
+                    Swift.Int.self,
+                    forKey: .healthy
+                )
+                self.cheat = try container.decode(
+                    Swift.Int.self,
+                    forKey: .cheat
+                )
+                self.eaters = try container.decode(
+                    Components.Schemas.StoryMeals.EatersPayload.self,
+                    forKey: .eaters
+                )
+                self.line = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .line
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "healthy",
+                    "cheat",
+                    "eaters",
+                    "line"
+                ])
+            }
+        }
+        /// 最佳请假条: the one with the most reactions (at least one), the earliest on a tie; missing when none had any.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer`.
+        public struct StoryBestDisclaimer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/checkIn`.
+            public var checkIn: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/author`.
+            public var author: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/text`.
+            public var text: Swift.String
+            /// Teammates’ reactions on it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/reactions`.
+            public var reactions: Swift.Int
+            /// The author acting the note out. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/authorMove`.
+            public var authorMove: Swift.String?
+            /// How two teammates react: `laugh`, `pump` or `wave`. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/squadMove`.
+            public var squadMove: Swift.String?
+            /// Creates a new `StoryBestDisclaimer`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - author:
+            ///   - text:
+            ///   - reactions: Teammates’ reactions on it.
+            ///   - authorMove: The author acting the note out. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///   - squadMove: How two teammates react: `laugh`, `pump` or `wave`. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            public init(
+                checkIn: Swift.String,
+                author: Swift.String,
+                text: Swift.String,
+                reactions: Swift.Int,
+                authorMove: Swift.String? = nil,
+                squadMove: Swift.String? = nil
+            ) {
+                self.checkIn = checkIn
+                self.author = author
+                self.text = text
+                self.reactions = reactions
+                self.authorMove = authorMove
+                self.squadMove = squadMove
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case author
+                case text
+                case reactions
+                case authorMove
+                case squadMove
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.checkIn = try container.decode(
+                    Swift.String.self,
+                    forKey: .checkIn
+                )
+                self.author = try container.decode(
+                    Swift.String.self,
+                    forKey: .author
+                )
+                self.text = try container.decode(
+                    Swift.String.self,
+                    forKey: .text
+                )
+                self.reactions = try container.decode(
+                    Swift.Int.self,
+                    forKey: .reactions
+                )
+                self.authorMove = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .authorMove
+                )
+                self.squadMove = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .squadMove
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "checkIn",
+                    "author",
+                    "text",
+                    "reactions",
+                    "authorMove",
+                    "squadMove"
+                ])
+            }
+        }
+        /// 这一周: missing when nobody trained, so a quiet week isn’t told how short it fell.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryEnding`.
+        public struct StoryEnding: Codable, Hashable, Sendable {
+            /// Days the squad trained, added up over the members.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/done`.
+            public var done: Swift.Int
+            /// Days the squad planned, added up over the members.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/plan`.
+            public var plan: Swift.Int
+            /// The headline, such as 稳了 or 差一点, at most 4 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/headline`.
+            public var headline: Swift.String?
+            /// A funny line about the week, never guilt, at most 18 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/line`.
+            public var line: Swift.String?
+            /// The squad’s move. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/move`.
+            public var move: Swift.String?
+            /// Creates a new `StoryEnding`.
+            ///
+            /// - Parameters:
+            ///   - done: Days the squad trained, added up over the members.
+            ///   - plan: Days the squad planned, added up over the members.
+            ///   - headline: The headline, such as 稳了 or 差一点, at most 4 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///   - line: A funny line about the week, never guilt, at most 18 characters. Written by the AI: only once `ready`, and missing when it wrote none.
+            ///   - move: The squad’s move. Picked by the AI: only once `ready`. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            public init(
+                done: Swift.Int,
+                plan: Swift.Int,
+                headline: Swift.String? = nil,
+                line: Swift.String? = nil,
+                move: Swift.String? = nil
+            ) {
+                self.done = done
+                self.plan = plan
+                self.headline = headline
+                self.line = line
+                self.move = move
+            }
+            public enum CodingKeys: String, CodingKey {
+                case done
+                case plan
+                case headline
+                case line
+                case move
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.done = try container.decode(
+                    Swift.Int.self,
+                    forKey: .done
+                )
+                self.plan = try container.decode(
+                    Swift.Int.self,
+                    forKey: .plan
+                )
+                self.headline = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .headline
+                )
+                self.line = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .line
+                )
+                self.move = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .move
+                )
+                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                    "done",
+                    "plan",
+                    "headline",
+                    "line",
+                    "move"
                 ])
             }
         }

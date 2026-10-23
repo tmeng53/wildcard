@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, StoredAward } from '../domain/awards.js';
+import { MemberId, StoredAward, StoryWords } from '../domain/awards.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -16,7 +16,7 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
     async find(squad, weekStart) {
       const row = await db
         .selectFrom('weekly_awards')
-        .select(['given_at', 'failed_attempts', 'last_error'])
+        .select(['given_at', 'failed_attempts', 'last_error', 'story'])
         .where('squad_id', '=', squad)
         .where('week_start', '=', weekStart)
         .executeTakeFirst();
@@ -41,13 +41,16 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
         status: 'given',
         awards: {
           members: winners.map(({ member_id, award }) => {
-            const { titles, topCheckIn } = StoredAward.parse(award);
+            const { titles, line, topCheckIn, hottest } = StoredAward.parse(award);
             return {
               member: MemberId.parse(member_id),
               titles,
+              ...(line === undefined ? {} : { line }),
               ...(topCheckIn === undefined ? {} : { topCheckIn }),
+              ...(hottest === undefined ? {} : { hottest }),
             };
           }),
+          ...(row.story === null ? {} : { story: StoryWords.parse(row.story) }),
         },
       };
     },
@@ -56,11 +59,16 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
       db.transaction().execute(async (trx) => {
         const given = await trx
           .insertInto('weekly_awards')
-          .values({ squad_id: squad, week_start: weekStart, given_at: sql`now()` })
+          .values({
+            squad_id: squad,
+            week_start: weekStart,
+            given_at: sql`now()`,
+            story: awards.story === undefined ? null : JSON.stringify(awards.story),
+          })
           .onConflict((conflict) =>
             conflict
               .columns(['squad_id', 'week_start'])
-              .doUpdateSet({ given_at: sql`now()` })
+              .doUpdateSet((eb) => ({ given_at: sql`now()`, story: eb.ref('excluded.story') }))
               .where('weekly_awards.given_at', 'is', null),
           )
           .returning('squad_id')
@@ -72,12 +80,8 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
           await trx
             .insertInto('weekly_award_winners')
             .values(
-              awards.members.map(({ member, titles, topCheckIn }, position) => {
-                const award: StoredAward = {
-                  version: 1,
-                  titles: [...titles],
-                  ...(topCheckIn === undefined ? {} : { topCheckIn }),
-                };
+              awards.members.map(({ member, titles, ...words }, position) => {
+                const award: StoredAward = { version: 1, titles: [...titles], ...words };
                 return {
                   squad_id: squad,
                   week_start: weekStart,
