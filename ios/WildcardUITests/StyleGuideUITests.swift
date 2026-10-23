@@ -48,6 +48,14 @@ final class StyleGuideUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "13-picks")
 
+        let gym = app.buttons["styleguide.scenetile.gym"]
+        scrollUntilHittable(gym, in: app)
+        XCTAssertTrue(gym.isSelected, "the gym carton isn't picked to start")
+        app.buttons["styleguide.scenetile.pool"].tap()
+        waitFor(app.buttons["styleguide.scenetile.pool"], "isSelected == true", "tapping 游泳池 didn't pick it")
+        Thread.sleep(forTimeInterval: 0.4)
+        keepScreenshot(named: "13-scene-tiles")
+
     }
 
     /// The check-in kinds, the capsules opening, and my status ring closing.

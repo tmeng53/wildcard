@@ -23,7 +23,7 @@ public enum Palette {
     /// so the brand can change without touching a scene.
     public static let brand = SRGBColor(red: 0x1F, green: 0x21, blue: 0x28)
     /// Labels and icons on `brand`.
-    public static let onBrand = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
+    public static let onBrand = SRGBColor(red: 0xFF, green: 0xFF, blue: 0xFF)
 
     // MARK: Pool scene
 
@@ -50,6 +50,11 @@ public enum Palette {
     public static let volt = SRGBColor(red: 0xC6, green: 0xF4, blue: 0x32)
     /// The check-in kind buttons on the gym's dark floor: graphite with a hint of volt.
     public static let gymKind = SRGBColor(red: 0x2E, green: 0x33, blue: 0x24)
+    /// The brand's light gym, where the open screen and the website stand (`--gym-sky`,
+    /// `--gym-floor` and `--gym-tile` in `web/public/wildcard.css`).
+    public static let gymSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
+    public static let gymLightFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
+    public static let gymTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
 
     // MARK: Tennis scene (grass, not blue hard court)
 
@@ -65,6 +70,23 @@ public enum Palette {
     public static let climbingWash = SRGBColor(red: 0xF6, green: 0xED, blue: 0xE8)
     public static let climbingText = SRGBColor(red: 0x7A, green: 0x3E, blue: 0x24)
     public static let climbingFloor = SRGBColor(red: 0xEB, green: 0xDD, blue: 0xD5)
+
+    // MARK: Kraft: the carton a scene nobody in the squad has opened comes in (scene pick)
+
+    /// The carton's sides.
+    public static let kraft = SRGBColor(red: 0xD2, green: 0xAE, blue: 0x80)
+    /// Its base edge and the tile's band line.
+    public static let kraftShade = SRGBColor(red: 0xC3, green: 0x9C, blue: 0x6C)
+    public static let kraftBandLine = SRGBColor(red: 0xB8, green: 0x8E, blue: 0x5E)
+    /// The closed flaps: the left one, the right one in shadow.
+    public static let kraftFlap = SRGBColor(red: 0xC7, green: 0x9E, blue: 0x6D)
+    public static let kraftFlapShade = SRGBColor(red: 0xBE, green: 0x95, blue: 0x63)
+    /// Packing tape across the flaps.
+    public static let kraftTape = SRGBColor(red: 0xE6, green: 0xCD, blue: 0xA4)
+    /// The printed "this way up" arrows and handle.
+    public static let kraftInk = SRGBColor(red: 0x9E, green: 0x78, blue: 0x49)
+    /// The ink over a page while a carton is opened on it.
+    public static let dusk = SRGBColor(red: 0x1A, green: 0x1C, blue: 0x22)
 
     // MARK: Clothes: outfit swatches for the character only, never UI color
 

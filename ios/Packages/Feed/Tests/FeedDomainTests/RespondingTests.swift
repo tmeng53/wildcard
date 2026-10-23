@@ -28,12 +28,16 @@ let doudou = member(5)
             .init(kind: emoji("🤤"), members: [doudou]),
             .init(kind: emoji("😮"), members: [author]),
         ])
-    #expect(responses.topKinds(3) == [emoji("❤️"), emoji("😂"), emoji("🤤")])
 }
 
-@Test func theFacesAreTheLatestThreeNewestFirst() {
-    let responses = reactions([(coco, "❤️", 10), (mia, "😂", 20), (jay, "❤️", 30), (doudou, "💪", 40)])
-    #expect(responses.latestMembers(3) == [doudou, jay, mia])
+@Test func theRowShowsTheLatestFourHeadsNewestFirstThenTheRest() {
+    let responses = reactions([
+        (coco, "❤️", 10), (mia, "😂", 20), (jay, "❤️", 30), (doudou, "💪", 40), (author, "😮", 50),
+    ])
+    #expect(responses.newest(4).map(\.member) == [author, doudou, jay, mia])
+    #expect(responses.newest(4).map(\.kind) == [emoji("😮"), emoji("💪"), emoji("❤️"), emoji("😂")])
+    #expect(responses.more(than: 4) == 1)
+    #expect(reactions([(coco, "❤️", 10)]).more(than: 4) == 0)
 }
 
 @Test func anyEmojiCanBeLeft() throws {
