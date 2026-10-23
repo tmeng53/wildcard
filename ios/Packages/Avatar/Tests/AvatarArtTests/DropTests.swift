@@ -25,6 +25,9 @@ func theDropFallsInAndLandsAtRest(look: Outfit) throws {
     #expect(abs((0 - half) / (half - start.parts[root].y) - 3) < 0.1)
     let squash = (0...20).map { figure.pose(drop, at: PlaceholderCharacter.dropLands + Double($0) / 100) }
     #expect(squash.map { $0.parts[root].scaleY }.min() ?? 1 < 0.75)
+    // Dust kicks up from both sides on touch-down.
+    let dust = figure.layout(figure.pose(drop, at: PlaceholderCharacter.dropLands + 0.15))
+    #expect(try dust[figure.index("dustL")].opacity > 0 && dust[figure.index("dustR")].opacity > 0)
     #expect(nearlyEqual(figure.pose(drop, at: drop.clip.duration), figure.restPose))
     for frame in Int((PlaceholderCharacter.dropLands * 50).rounded(.up))...Int(drop.clip.duration * 50) {
         let time = Double(frame) / 50
