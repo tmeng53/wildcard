@@ -95,7 +95,7 @@ const app = createApp({
     clock: unused,
   },
   log: createLog(unused),
-  jobs: { token: undefined, interactions: [], clock: unused },
+  jobs: { isScheduler: undefined, interactions: [], clock: unused },
   admin: {
     admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],

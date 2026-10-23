@@ -32,6 +32,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
+import { jobsTokenScheduler } from '../adapters/scheduler.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
@@ -160,7 +161,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
-    jobs: { ...noJobs, token: JOBS_TOKEN },
+    jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN) },
     admin: adminOn(),
   });
   const read = async ({
