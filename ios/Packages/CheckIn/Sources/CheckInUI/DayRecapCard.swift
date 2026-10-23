@@ -7,7 +7,7 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// The 今日赛况 tag, the squad card's last row from the evening on: graphite with a volt dot
+/// The 今日赛况 tag, the squad card's last row from the evening on: the brand's colour with a dot
 /// until today's recap has been opened, quiet grey after (the approved 今日赛况, version 4).
 struct RecapTag: View {
     @Environment(\.sceneTheme) private var theme
@@ -20,26 +20,25 @@ struct RecapTag: View {
             HStack(spacing: Space.xxs) {
                 Image(systemName: "moon.fill")
                     .font(.system(size: RecapMetrics.moon))
-                    .foregroundStyle(Color(role: isSeen ? .fgSubtle : .fgOnAccent, in: theme))
+                    .foregroundStyle(Color(role: isSeen ? .fgSubtle : .fgOnBrand, in: theme))
                 Text("今日赛况", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
-                    // White on the scene's accent, as the design draws it; ink once seen.
-                    .foregroundStyle(Color(role: isSeen ? .fgDefault : .bgCanvas, in: theme))
+                    .foregroundStyle(Color(role: isSeen ? .fgDefault : .fgOnBrand, in: theme))
                 Text(verbatim: "\(recap.showedUp)/\(recap.members)")
                     .typeStyle(TypeRamp.scoreSmall)
                     .monospacedDigit()
-                    .foregroundStyle(Color(role: isSeen ? .fgDefault : .fgOnAccent, in: theme))
+                    .foregroundStyle(Color(role: isSeen ? .fgDefault : .fgOnBrand, in: theme))
             }
             .padding(.leading, Space.xs)
             .padding(.trailing, Space.s)
             .frame(height: Sizing.tag)
-            .background(Color(role: isSeen ? .bgSubtle : .bgAccent, in: theme), in: Capsule())
+            .background(Color(role: isSeen ? .bgSubtle : .bgBrand, in: theme), in: Capsule())
             .overlay(alignment: .topTrailing) {
                 if !isSeen {
                     Circle()
-                        .fill(Color(role: .ring, in: theme))
+                        .fill(Color(role: .fgOnBrand, in: theme))
                         .frame(width: RecapMetrics.dot, height: RecapMetrics.dot)
-                        .overlay(Circle().strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: 2))
+                        .overlay(Circle().strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: 2))
                         .offset(x: 2, y: -2)
                 }
             }
