@@ -40,6 +40,150 @@
           }
         }
       }
+    },
+    "push.dailyProgress": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad's at %1$@/%2$@ this week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本周小队已练 %1$@/%2$@ 次"
+          }
+        }
+      }
+    },
+    "push.dailyProgress.received": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad's at %1$@/%2$@ this week · cheers from %3$@ teammates today"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本周小队已练 %1$@/%2$@ 次 · 今天 %3$@ 位队友给你打了气"
+          }
+        }
+      }
+    },
+    "push.dailyProgress.rest": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ says take it easy today · squad's at %1$@/%2$@ this week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ 叫你今天好好休息 · 本周小队已练 %1$@/%2$@ 次"
+          }
+        }
+      }
+    },
+    "push.dailyProgress.rest.more": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ says take it easy, plus cheers from %4$@ more · squad's at %1$@/%2$@ this week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ 叫你今天好好休息，还有 %4$@ 位队友给你打了气 · 本周小队已练 %1$@/%2$@ 次"
+          }
+        }
+      }
+    },
+    "push.dailyProgress.train": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ says it's go time · squad's at %1$@/%2$@ this week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ 催你练了 · 本周小队已练 %1$@/%2$@ 次"
+          }
+        }
+      }
+    },
+    "push.dailyProgress.train.more": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ says it's go time, plus cheers from %4$@ more · squad's at %1$@/%2$@ this week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ 催你练了，还有 %4$@ 位队友给你打了气 · 本周小队已练 %1$@/%2$@ 次"
+          }
+        }
+      }
+    },
+    "push.weeklyAwards.ready": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week's awards are in. Come see what you won"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本周颁奖出炉了，快来看看你拿了什么"
+          }
+        }
+      }
+    },
+    "push.weeklyAwards.stuck": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@'s awards are stuck: %2$@ tries, last one %3$@. Time to top up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 的本周颁奖卡住了：试了 %2$@ 次，最后一次是 %3$@。去充个值吧"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
