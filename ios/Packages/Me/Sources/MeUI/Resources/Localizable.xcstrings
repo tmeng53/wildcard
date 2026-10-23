@@ -192,7 +192,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Edit your athlete"
+            "value": "Edit your Wildcard athlete"
           }
         }
       }
@@ -242,7 +242,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your athlete, nickname and catchphrase go"
+            "value": "Your Wildcard athlete, nickname and catchphrase go"
           }
         }
       }
