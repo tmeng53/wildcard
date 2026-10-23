@@ -64,7 +64,10 @@ final class ScheduleUITests: XCTestCase {
     func testNextWeekChangesFreelyWithFoodGoals() {
         let app = launch()
         let tabBar = app.buttons["tab.schedule"]
-        app.buttons["下周"].tap()
+        // The bar opens on 本周 with 下周 beside it, in view and tappable.
+        let nextWeek = app.buttons["下周"]
+        waitFor(nextWeek, "hittable == true", "下周 isn't in view", timeout: 10)
+        nextWeek.tap()
         let countdown = find(app, "schedule.countdown")
         XCTAssertTrue(countdown.waitForExistence(timeout: 10), "no countdown on next week")
         XCTAssertLessThanOrEqual(countdown.frame.maxY, tabBar.frame.minY, "the countdown sits under the tab bar")
