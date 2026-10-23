@@ -5,3 +5,6 @@ export const unusedWeeklyAwards = {
   awards: { give: unused, find: unused, claimNudge: unused, claimWinners: unused },
   clock: () => new Date(),
 };
+
+/** The Sunday summary's words, for an app whose test never reads them. */
+export const unusedWeekSummaryWords = unused;

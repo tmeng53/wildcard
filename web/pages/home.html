@@ -29,9 +29,9 @@
 <body class="home">
 <div class="site">
   <div class="floor">
-    <div class="ground" aria-hidden="true"></div>
+    <div class="wc-ground" aria-hidden="true"></div>
     <header class="wrap nav">
-      <a class="logo" href="{{path}}"><img src="/logo.svg" width="30" height="30" alt="">WILDCARD</a>
+      <a class="wc-logo" href="{{path}}"><img src="/logo.svg" width="30" height="30" alt="">WILDCARD</a>
       <nav class="wc-lang" aria-label="{{languageLabel}}">
         <a href="/zh/" hreflang="zh-Hans" lang="zh-Hans"{{currentHans}}>简体</a>
         <a href="/zh-hant/" hreflang="zh-Hant" lang="zh-Hant"{{currentHant}}>繁體</a>
@@ -42,7 +42,7 @@
       <div class="hero">
         <h1 aria-label="{{headlineLabel}}"><span id="word">WILDCARD</span>{{cn}}</h1>
         <p class="sub" data-settle>{{slogan}}</p>
-        <a class="btn" href="#join" data-settle>{{button}}</a>
+        <a class="btn wc-cta" href="https://apps.apple.com/app/id6826015677" data-settle>{{apple}}{{button}}</a>
       </div>
       <div class="squad" id="squad"></div>
     </main>

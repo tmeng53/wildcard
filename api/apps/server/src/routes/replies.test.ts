@@ -28,7 +28,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 // 请假条 replies, through the routes the app calls, on local Supabase.
 const db = createDatabase(config.databaseUrl);
@@ -76,6 +76,7 @@ const app = createApp({
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyAwards: unusedWeeklyAwards,
+  weekSummaryWords: unusedWeekSummaryWords,
   aiConsent: aiConsentOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,

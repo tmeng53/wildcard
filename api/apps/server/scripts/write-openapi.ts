@@ -13,6 +13,7 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import {
   createOffSender,
+  createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -68,6 +69,7 @@ const app = createApp({
     store: createPostgresDeviceStore(db),
     settings: createPostgresSettingsStore(db),
     daily: createPostgresDailyPushStore(db),
+    dailySettings: createPostgresDailyPushSettings(db),
     sender: createOffSender(),
   }),
   squads: createSquads({
@@ -81,6 +83,7 @@ const app = createApp({
     hasCurrent: unused,
     currentAmong: unused,
   },
+  weekSummaryWords: () => Promise.reject(new Error('unused')),
   weeklyAwards: {
     awards: {
       give: unused,
