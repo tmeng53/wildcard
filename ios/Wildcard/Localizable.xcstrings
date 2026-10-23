@@ -77,74 +77,38 @@
         }
       }
     },
-    "push.dailyProgress.rest": {
+    "push.dailyProgress.poke": {
       "comment": "Push notification (APNs loc-key); the API sends the arguments.",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ says take it easy today · squad's at %1$@/%2$@ this week"
+            "value": "%3$@ poked you · squad's at %1$@/%2$@ this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ 叫你今天好好休息 · 本周小队已练 %1$@/%2$@ 次"
+            "value": "%3$@ 戳了你一下 · 本周小队已练 %1$@/%2$@ 次"
           }
         }
       }
     },
-    "push.dailyProgress.rest.more": {
+    "push.dailyProgress.poke.more": {
       "comment": "Push notification (APNs loc-key); the API sends the arguments.",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ says take it easy, plus cheers from %4$@ more · squad's at %1$@/%2$@ this week"
+            "value": "%3$@ poked you, plus cheers from %4$@ more · squad's at %1$@/%2$@ this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ 叫你今天好好休息，还有 %4$@ 位队友给你打了气 · 本周小队已练 %1$@/%2$@ 次"
-          }
-        }
-      }
-    },
-    "push.dailyProgress.train": {
-      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%3$@ says it's go time · squad's at %1$@/%2$@ this week"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%3$@ 催你练了 · 本周小队已练 %1$@/%2$@ 次"
-          }
-        }
-      }
-    },
-    "push.dailyProgress.train.more": {
-      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%3$@ says it's go time, plus cheers from %4$@ more · squad's at %1$@/%2$@ this week"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%3$@ 催你练了，还有 %4$@ 位队友给你打了气 · 本周小队已练 %1$@/%2$@ 次"
+            "value": "%3$@ 戳了你一下，还有 %4$@ 位队友给你打了气 · 本周小队已练 %1$@/%2$@ 次"
           }
         }
       }
