@@ -148,7 +148,7 @@ private func saved(_ kindAndFields: String) -> String {
     }
     #expect(throws: DecodingError.self) { try decode(saved(#""kind":"trained","training":{"sport":"padel"}"#)) }
     #expect(throws: DecodingError.self) {
-        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":30}"#))
+        try decode(saved(#""kind":"trained","training":{"sport":"run","calories":300}"#))
     }
 }
 
