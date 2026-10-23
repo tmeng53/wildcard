@@ -9,7 +9,7 @@ import SwiftUI
 /// 你的一周: your character hops Monday to Sunday and does each day: that day's sport, a doze on
 /// a rest day, lying flat (躺平) on a 请假条 day. The count goes up as each trained day lights.
 struct MyWeekPage: View {
-    let week: MyWeek
+    let week: RecapDomain.MyWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
 

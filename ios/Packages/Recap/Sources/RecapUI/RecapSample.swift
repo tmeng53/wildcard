@@ -30,7 +30,7 @@ public enum RecapSample {
                     title(jay, "请假条文豪", "两张请假条，篇篇有人笑死", .laugh),
                     title(reader, "稳定输出", "4 天，不多不少，比上班打卡还准", .wave),
                 ] : [],
-            myWeek: MyWeek(
+            myWeek: RecapDomain.MyWeek(
                 plan: 5,
                 days: [
                     .init(day: day(12), kind: .trained(.run)), .init(day: day(13), kind: .trained(.tennis)),

@@ -2,6 +2,7 @@
 import AvatarArt
 import AvatarDomain
 import AvatarUI
+import Contracts
 import Foundation
 import RecapDomain
 import SwiftUI
