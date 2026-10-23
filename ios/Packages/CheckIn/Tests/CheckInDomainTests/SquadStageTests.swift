@@ -114,8 +114,12 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
                     #expect(!StageLayout.crowds(spot, other), "\(scene) \(trainers): \(spot) \(other)")
                 }
             }
-            // Runners fill lane 1 (354), then lane 2 (405); nobody's feet are in their way.
-            let lanes = scene == .track ? [354.0, 405].prefix(trainers > 2 ? 2 : trainers > 0 ? 1 : 0) : []
+            // Nobody's feet are in the way of a lane someone runs or swims.
+            let lanes = stage.placements.values.compactMap { placement -> Double? in
+                guard case .station(let kind, let slot) = placement else { return nil }
+                return stage.layout.station(kind)?.lane(ofSlot: slot)?.y
+            }
+            #expect(scene != .track || lanes.count == min(trainers, 7), "\(scene) \(trainers)")
             for spot in spots {
                 #expect(!lanes.contains { spot.y > $0 - 46 && spot.y < $0 + 30 }, "\(scene) \(trainers): \(spot)")
             }
