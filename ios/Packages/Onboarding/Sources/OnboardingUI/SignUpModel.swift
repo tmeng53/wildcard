@@ -102,14 +102,14 @@ public final class SignUpModel {
         show(.character)
     }
 
-    /// Carries on, from 平时练什么？, a sign-up closed after 你的小队; false (home) if unreadable.
+    /// Carries on a sign-up closed after 你的小队, at 平时练什么？ with its saved character; false if not.
     public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
         guard let resumed = try? await service.resume(in: squad) else { return false }
         (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
         teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
         if let made = resumed.character {
-            nickname = made.nickname.text
-            myCharacter = CastMember(outfit: made.outfit, persona: made.persona)
+            (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
+            editor = try? CharacterEditorModel.placeholder(look: made.outfit, persona: made.persona, nickname: nickname)
             await myCharacter?.load(idle: false)
         }
         show(.sports)
