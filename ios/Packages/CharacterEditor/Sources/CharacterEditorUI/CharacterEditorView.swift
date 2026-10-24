@@ -5,23 +5,26 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The character editor: the character on its stage at the top, with its nickname under its
-/// feet; tabs of choices below; and one button to finish. In sign-up it shows the step, a back
-/// button and the title 创建你的外卡运动员; from 我 it shows 取消 and saves.
+/// The character editor: the character on its ticket at the top, with its nickname on the stub
+/// under its feet and the day the member signed up in the corner; tabs of choices below; and one
+/// button to finish. In sign-up it shows the step, a back button and the title 创建你的外卡运动员;
+/// from 我 it shows 取消 and saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
+    private let issued: Date?
     private let onBack: () -> Void
     private let onDone: (EditedCharacter) -> Void
     @FocusState private var isNaming: Bool
     @Environment(\.sceneTheme) private var theme
 
     public init(
-        model: CharacterEditorModel, context: EditorContext, onBack: @escaping () -> Void,
+        model: CharacterEditorModel, context: EditorContext, issued: Date?, onBack: @escaping () -> Void,
         onDone: @escaping (EditedCharacter) -> Void
     ) {
         self.model = model
         self.context = context
+        self.issued = issued
         self.onBack = onBack
         self.onDone = onDone
     }
@@ -38,10 +41,14 @@ public struct CharacterEditorView: View {
                     .padding(.horizontal, Space.pageMargin)
                     .padding(.bottom, Space.s)
             }
-            CharacterStage {
-                EditorStage(model: model, isNaming: $isNaming)
+            CharacterStage(issued: issued) {
+                EditorStage(model: model)
+            } stub: {
+                NicknameField(nickname: $model.nickname, isFocused: $isNaming)
             }
             .frame(height: EditorStage.height)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("editor.stage")
             .padding(.horizontal, Space.pageMargin)
             // The title, tabs and choices make room while the nickname is typed, so the page fits
             // above the keyboard and 就这样 stays in reach.
@@ -70,6 +77,9 @@ public struct CharacterEditorView: View {
             DoneBar(context: context, result: model.result, onDone: onDone)
         }
         .onAppear { model.start() }
+        // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
+        // 我's tone. Its button, tabs, picks and swatches never wear the squad's scene.
+        .accentTone(.brand)
     }
 }
 

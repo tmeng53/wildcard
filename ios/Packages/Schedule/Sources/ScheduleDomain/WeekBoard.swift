@@ -4,7 +4,8 @@ import Contracts
 public enum WeekTense: Hashable, Sendable {
     /// Over: read-only.
     case past
-    /// This week: only days still to come change, and its rest days only move.
+    /// This week: today and the days still to come change, and its rest days only move, except
+    /// that a rest today may become a training day.
     case current
     /// Next week or later: every day changes freely.
     case upcoming
@@ -16,7 +17,8 @@ public enum WeekTense: Hashable, Sendable {
 /// - Next week: tap a day to select it, then pick its sport or 休息 under the poster.
 /// - This week, a day still to come: tap a training day to pick another sport (never 休息, so
 ///   the rest days keep their number); tap a rest day to lift it, then a training day to swap
-///   the two. Today and the days before it stay as they are.
+///   the two. Today picks a sport too, never 休息 and never a swap: a rest today becomes a
+///   training day, one rest day fewer. The days before today stay as they are.
 /// - A past week: nothing changes.
 public struct WeekBoard: Hashable, Sendable {
     /// What the board has hold of.
@@ -30,7 +32,7 @@ public struct WeekBoard: Hashable, Sendable {
 
     /// What a tap did, so the screen can answer with the right haptic.
     public enum TapOutcome: Hashable, Sendable {
-        /// The day can't change: past, or today or before in this week.
+        /// The day can't change: past, or before today in this week.
         case locked
         case selected
         case lifted
@@ -69,13 +71,15 @@ public struct WeekBoard: Hashable, Sendable {
         switch tense {
         case .past: return false
         case .upcoming: return true
-        case .current: return index > (today ?? WeeklyPlan.dayCount)
+        case .current:
+            guard let today else { return false }
+            return index >= today
         }
     }
 
-    /// While a rest day is lifted: the training days it can swap with.
+    /// While a rest day is lifted: the training days it can swap with, never today's.
     public func isSwapTarget(_ index: Int) -> Bool {
-        guard case .lifted = focus, isEditable(index) else { return false }
+        guard case .lifted = focus, isEditable(index), index != today else { return false }
         return days[index] != .rest
     }
 
@@ -91,12 +95,12 @@ public struct WeekBoard: Hashable, Sendable {
         case (.current, .lifted(let lifted)) where lifted == index:
             focus = .none
             return .released
-        case (.current, .lifted(let lifted)) where days[index] != .rest:
+        case (.current, .lifted(let lifted)) where isSwapTarget(index):
             days[lifted] = days[index]
             days[index] = .rest
             focus = .none
             return .swapped
-        case (.current, _) where days[index] == .rest:
+        case (.current, _) where days[index] == .rest && index != today:
             focus = .lifted(index)
             return .lifted
         case (_, .selected(let selected)) where selected == index:

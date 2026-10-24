@@ -29,6 +29,12 @@ public enum Palette {
     public static let brandSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
     public static let brandFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
     public static let brandTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
+    /// The character's ticket, where it is dressed (sign-up and 我): the stub below the tear,
+    /// a step lighter than `brand`; the lamp's housing; the sign-up date; and the pen by the name.
+    public static let brandStub = SRGBColor(red: 0x27, green: 0x2A, blue: 0x32)
+    public static let brandLamp = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x48)
+    public static let brandStamp = SRGBColor(red: 0x7D, green: 0x82, blue: 0x8D)
+    public static let brandPen = SRGBColor(red: 0x9A, green: 0xA0, blue: 0xAA)
 
     // MARK: Pool scene
 

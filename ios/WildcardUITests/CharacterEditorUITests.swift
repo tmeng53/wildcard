@@ -133,6 +133,14 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
+        // The name sits on the ticket's stub, under the tear line (44 above the ticket's bottom),
+        // centred on the ticket.
+        let stage = app.otherElements["editor.stage"].frame
+        let field = nickname.frame
+        XCTAssertGreaterThanOrEqual(field.minY, stage.maxY - 44, "the nickname rose above the tear line")
+        XCTAssertLessThanOrEqual(field.maxY, stage.maxY, "the nickname fell off the ticket")
+        XCTAssertEqual(field.midY, stage.maxY - 22, accuracy: 1, "the nickname isn't centred on the stub")
+        XCTAssertEqual(field.midX, stage.midX, accuracy: 1, "the nickname isn't centred on the ticket")
         let undo = app.buttons["editor.undo"]
         let headerTop = undo.frame.minY
         // The first tap on a field puts the cursor after its text; delete more than it holds.

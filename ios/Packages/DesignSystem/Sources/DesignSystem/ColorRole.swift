@@ -125,6 +125,14 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case bgBrandFloor
     case borderBrandFloor
 
+    /// The character's ticket in the editor, the same in every scene: its stub under the tear
+    /// line, the lamp over the character, the sign-up date and the pen by the nickname. The
+    /// ticket itself is `bgBrand`, and its light and lines are `fgOnBrand`.
+    case bgBrandStub
+    case bgBrandLamp
+    case fgBrandStamp
+    case fgBrandPen
+
     /// The color this role takes in a scene.
     public func color(in theme: SceneTheme) -> SRGBColor {
         switch source {
@@ -161,6 +169,10 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .bgBrandPage: .fixed(Palette.brandSky)
         case .bgBrandFloor: .fixed(Palette.brandFloor)
         case .borderBrandFloor: .fixed(Palette.brandTile)
+        case .bgBrandStub: .fixed(Palette.brandStub)
+        case .bgBrandLamp: .fixed(Palette.brandLamp)
+        case .fgBrandStamp: .fixed(Palette.brandStamp)
+        case .fgBrandPen: .fixed(Palette.brandPen)
         }
     }
 }
