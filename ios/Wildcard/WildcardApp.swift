@@ -163,7 +163,6 @@ struct WildcardApp: App {
                 }
             }
         }
-        }
     }
 }
 
