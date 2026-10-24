@@ -5,10 +5,11 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
-# no merge uses a Mac on its own. `ios` and `avatar-preview` run on a schedule, every 3 hours,
+# no merge uses a Mac on its own. `ios` runs on a schedule, every 3 hours,
 # for what main changed since the last scheduled run (nothing when main didn't change), on a
 # manual run (Actions -> verify -> Run workflow) and on a PR carrying the `ios-ci` label; the
-# macOS `verify` only on the last two. Owners check screens on the next scheduled run and fix
+# macOS `verify` only on the last two, and `avatar-preview` (GIFs for reviewers, no checks of
+# its own) on manual runs only. Owners check screens on the next scheduled run and fix
 # forward. Pushes to main and every other PR run the Linux checks only (`verify` on Linux builds
 # and tests the Swift packages).
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
@@ -224,7 +225,7 @@ jobs:
   avatar-preview:
     needs: changes
     if: >-
-      !cancelled() && needs.changes.outputs.mac == 'true' && needs.changes.outputs.avatar == 'true'
+      !cancelled() && github.event_name == 'workflow_dispatch' && needs.changes.outputs.avatar == 'true'
     runs-on: macos-26
     timeout-minutes: 30
     steps:
