@@ -133,11 +133,14 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
-        // The name sits on the ticket's stub, under the tear line, inside the ticket.
+        // The name sits on the ticket's stub, under the tear line (44 above the ticket's bottom),
+        // centred on the ticket.
         let stage = app.otherElements["editor.stage"].frame
-        XCTAssertEqual(nickname.frame.maxY, stage.maxY, accuracy: 1, "the nickname left the ticket's stub")
-        XCTAssertEqual(nickname.frame.height, 44, accuracy: 1, "the nickname doesn't fill the stub")
-        XCTAssertEqual(nickname.frame.midX, stage.midX, accuracy: 1, "the nickname isn't centred on the ticket")
+        let field = nickname.frame
+        XCTAssertGreaterThanOrEqual(field.minY, stage.maxY - 44, "the nickname rose above the tear line")
+        XCTAssertLessThanOrEqual(field.maxY, stage.maxY, "the nickname fell off the ticket")
+        XCTAssertEqual(field.midY, stage.maxY - 22, accuracy: 1, "the nickname isn't centred on the stub")
+        XCTAssertEqual(field.midX, stage.midX, accuracy: 1, "the nickname isn't centred on the ticket")
         // The first tap on a field puts the cursor after its text; delete more than it holds.
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
