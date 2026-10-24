@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "常用运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usual sports"
+          }
+        }
+      }
+    },
+    "搜索运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search sports"
+          }
+        }
+      }
+    },
     "sport.aerobics": {
       "localizations": {
         "zh-Hans": {

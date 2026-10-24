@@ -141,6 +141,16 @@
         }
       }
     },
+    "创建你的外卡运动员": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your Wildcard athlete"
+          }
+        }
+      }
+    },
     "卫衣": {
       "localizations": {
         "en": {

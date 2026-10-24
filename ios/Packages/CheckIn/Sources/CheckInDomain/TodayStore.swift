@@ -50,6 +50,8 @@ public final class TodayStore {
     public private(set) var refused: [Refused] = []
     /// Reactions on check-ins loaded with `loadReactions(to:)`, by check-in.
     public private(set) var reactions: [CheckInID: [Reaction]] = [:]
+    /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
+    public private(set) var pokes = SquadPokes.none
 
     private let backend: any CheckInBackend
     private let outbox: any Outbox
@@ -98,6 +100,9 @@ public final class TodayStore {
         return home.suggestedActivity(on: day)
     }
 
+    /// 常用运动, for the sport picker.
+    public var recentActivities: [Activity] { home?.recentActivities() ?? [] }
+
     // MARK: - Loading
 
     /// Shows the copy kept on the device at once, then loads the server's and sends any post
@@ -108,6 +113,7 @@ public final class TodayStore {
             pending = await outbox.load()
         }
         await refresh()
+        await loadPokes()
         await sendPending()
     }
 
@@ -299,6 +305,48 @@ public final class TodayStore {
             try await backend.removeReaction(from: checkIn)
         } catch {
             reactions[checkIn] = before
+            throw error
+        }
+    }
+
+    // MARK: - 拍一拍
+
+    /// Loads whom the member patted today and who patted them; keeps what was shown when the
+    /// server can't be reached.
+    public func loadPokes() async {
+        guard let squad = savedHome?.squad.id, phase == .current else { return }
+        do {
+            let fresh = try await backend.pokes(in: squad)
+            // A pat sent today while the load was on its way stays counted.
+            let mine = patsSent?.day == day ? patsSent?.members ?? [] : []
+            pokes = SquadPokes(sent: fresh.sent.union(mine), received: fresh.received)
+        } catch {}
+    }
+
+    /// Whether the member can pat `member` now: a teammate on the home not patted yet today.
+    public func canPat(_ member: MemberID) -> Bool {
+        guard let home, member != home.member, home.today.members.contains(where: { $0.member == member })
+        else { return false }
+        return !pokes.sent.contains(member)
+    }
+
+    /// The pats sent from this phone today, so a load that read the server before one landed
+    /// doesn't show it as not sent.
+    private var patsSent: (day: LocalDay, members: Set<MemberID>)?
+
+    /// Pats a teammate (拍一拍): counted as patted at once, so the button turns 拍过了, and taken
+    /// back if the server says no or can't be reached, so it can be tried again.
+    public func pat(_ member: MemberID) async throws(CheckInError) {
+        guard canPat(member), let squad = savedHome?.squad.id, let today = day else { return }
+        pokes.sent.insert(member)
+        var sentToday = patsSent?.day == today ? patsSent?.members ?? [] : []
+        sentToday.insert(member)
+        patsSent = (today, sentToday)
+        do {
+            try await backend.pat(member, in: squad)
+        } catch {
+            pokes.sent.remove(member)
+            patsSent?.members.remove(member)
             throw error
         }
     }

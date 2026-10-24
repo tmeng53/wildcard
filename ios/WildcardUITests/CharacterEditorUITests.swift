@@ -59,7 +59,6 @@ final class CharacterEditorUITests: XCTestCase {
         let sparkle = app.buttons["editor.tile.eyes.sparkle"]
         XCTAssertTrue(sparkle.waitForExistence(timeout: Self.wait), "no 星星眼 tile")
         XCTAssertTrue(app.buttons["editor.tile.eyes.round"].isSelected, "the rig's round eyes aren't picked")
-        XCTAssertTrue(app.buttons["editor.tile.brows.soft"].isSelected, "the sample's brows aren't picked")
         sparkle.tap()
         waitUntilSelected(sparkle, "picking 星星眼 didn't select it")
         app.buttons["editor.swatch.eyes.2"].tap()
@@ -67,6 +66,11 @@ final class CharacterEditorUITests: XCTestCase {
         settle()
         keepScreenshot(named: "29-editor-face")
 
+        // Sign-up's title above the editor leaves the brows below the fold, where the grid
+        // hasn't made their tiles yet.
+        let softBrows = app.buttons["editor.tile.brows.soft"]
+        scrollUntilHittable(softBrows, in: app)
+        XCTAssertTrue(softBrows.isSelected, "the sample's brows aren't picked")
         let smirk = app.buttons["editor.tile.mouth.smirk"]
         scrollUntilHittable(smirk, in: app)
         smirk.tap()
@@ -129,12 +133,15 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
+        let undo = app.buttons["editor.undo"]
+        let headerTop = undo.frame.minY
         // The first tap on a field puts the cursor after its text; delete more than it holds.
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
         waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
         nickname.typeText("小汤")
         waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
+        XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
         keepScreenshot(named: "27-editor-nickname")
     }
 
@@ -179,10 +186,13 @@ final class CharacterEditorUITests: XCTestCase {
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
-        for _ in 0..<8 where !(element.exists && element.isHittable) {
+        // Clear of 就这样 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
+        let done = app.buttons["editor.done"]
+        func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
+        for _ in 0..<8 where !inView() {
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
-        XCTAssertTrue(element.exists && element.isHittable, "\(element.identifier) never scrolled into view")
+        XCTAssertTrue(inView(), "\(element.identifier) never scrolled into view")
     }
 
     /// Lets thumbnails build and the character's one move finish before a screenshot.

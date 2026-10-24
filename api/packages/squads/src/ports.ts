@@ -1,4 +1,5 @@
 import type { InviteCode } from './domain/invite-code.js';
+import type { Scene, ScenePick, SceneWeek } from './domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
 
 /**
@@ -22,12 +23,36 @@ export type CreateOutcome =
   | { readonly created: true }
   | { readonly created: false; readonly refused: 'idTaken' | 'inviteCodeTaken' | 'squadLimit' };
 
-/** What joining a squad did. */
-export type JoinOutcome = 'joined' | 'alreadyMember' | 'squadFull' | 'squadLimit';
+/**
+ * The members who won last week's crown (皇冠), as the Sunday 战报 names them, in the order they
+ * joined; empty when nobody did. `viewer` is a member of the squad asking.
+ */
+export type CrownHolders = (input: {
+  readonly squad: SquadId;
+  readonly week: SceneWeek;
+  readonly viewer: MemberId;
+}) => Promise<readonly MemberId[]>;
+
+/**
+ * The week a squad picks its scene for at `moment`: from Sunday 8pm Eastern, when a week's
+ * awards are given, it is the next week, so the crown winner picks the week after the one they
+ * won.
+ */
+export type SceneWeekAt = (moment: Date) => SceneWeek;
+
+/** What a captain's change did. `notCaptain`: the actor isn't the captain now. */
+export type CaptainOutcome = 'changed' | 'unchanged' | 'notCaptain' | 'notMember';
+
+/** What picking a scene did. `taken`: the week has a pick already. */
+export type PickOutcome = 'picked' | 'taken';
+
+/** What joining a squad did. `ended`: everyone left it, so its invite no longer works. */
+export type JoinOutcome = 'joined' | 'alreadyMember' | 'squadFull' | 'squadLimit' | 'ended';
 
 /** Where squads and their members are kept. */
 export interface SquadStore {
   find(id: SquadId): Promise<Squad | undefined>;
+  /** The squad with this invite code, unless it ended: everyone left it. */
   findByInviteCode(code: InviteCode): Promise<Squad | undefined>;
   /** The squads `member` is in now, the earliest joined first. */
   squadsOf(member: MemberId): Promise<Squad[]>;
@@ -47,6 +72,39 @@ export interface SquadStore {
    * members, or they are in `SQUADS_PER_MEMBER` squads.
    */
   join(squad: SquadId, member: MemberId): Promise<JoinOutcome>;
-  /** Takes `member` out of the squad. Nothing happens if they aren't in it. */
+  /**
+   * Takes `member` out of the squad. Nothing happens if they aren't in it. A captain who leaves
+   * hands the captaincy to the earliest member left.
+   */
   leave(squad: SquadId, member: MemberId): Promise<void>;
+  /** Renames the squad, if `actor` is its captain. */
+  rename(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly name: SquadName;
+  }): Promise<CaptainOutcome>;
+  /** Makes `to` the captain, if `actor` is the captain and `to` is in the squad. */
+  handCaptaincy(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly to: MemberId;
+  }): Promise<CaptainOutcome>;
+  /**
+   * Takes `member` out of the squad, if `actor` is its captain; `unchanged` when they weren't in
+   * it.
+   */
+  remove(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly member: MemberId;
+  }): Promise<CaptainOutcome>;
+  /** The squad's scene picks, every week's, the earliest first. */
+  scenePicks(squad: SquadId): Promise<ScenePick[]>;
+  /** Saves the week's scene, unless the week has one already. */
+  pickScene(input: {
+    readonly squad: SquadId;
+    readonly week: SceneWeek;
+    readonly scene: Scene;
+    readonly by: MemberId;
+  }): Promise<PickOutcome>;
 }

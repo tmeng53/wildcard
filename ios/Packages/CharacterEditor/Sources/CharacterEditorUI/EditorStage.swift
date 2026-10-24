@@ -6,10 +6,12 @@ import DesignSystemUI
 import SwiftUI
 
 /// The character standing on its stage's floor, its nickname under its feet. A tap makes it
-/// cheer; on the 性格 tab a swipe across it tries the next persona. The editor puts it in a
-/// `CharacterStage`.
+/// cheer; on the 性格 tab a swipe across it tries the next persona, and a held prop plays its
+/// move now and then. The editor puts it in a `CharacterStage`.
 struct EditorStage: View {
     @Bindable var model: CharacterEditorModel
+    var isNaming: FocusState<Bool>.Binding
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     static let height: Double = 300
     private let character = CGSize(width: 200, height: 267)
@@ -32,11 +34,18 @@ struct EditorStage: View {
             .onTapGesture { model.cheer() }
             .gesture(personaSwipe, isEnabled: model.tab == .persona)
             .padding(.bottom, feet)
-            NicknameField(nickname: $model.nickname)
+            NicknameField(nickname: $model.nickname, isFocused: isNaming)
                 .padding(.bottom, Space.xs)
         }
         .frame(maxWidth: .infinity)
         .frame(height: Self.height)
+        .task(id: model.tab == .persona && !reduceMotion) {
+            guard model.tab == .persona, !reduceMotion else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                model.propMoveIfIdle()
+            }
+        }
     }
 
     private var personaSwipe: some Gesture {
@@ -52,6 +61,7 @@ struct EditorStage: View {
 /// The nickname, typed straight onto a white tag under the character's feet.
 private struct NicknameField: View {
     @Binding var nickname: String
+    var isFocused: FocusState<Bool>.Binding
     @Environment(\.sceneTheme) private var theme
     private let width: Double = 180
     /// Room for the pen on the trailing side, mirrored on the leading side to keep the name centered.
@@ -66,6 +76,8 @@ private struct NicknameField: View {
         .foregroundStyle(Color(role: .fgDefault, in: theme))
         .multilineTextAlignment(.center)
         .submitLabel(.done)
+        .focused(isFocused)
+        .onSubmit { isFocused.wrappedValue = false }
         .autocorrectionDisabled()
         .padding(.horizontal, inset)
         .frame(width: width, height: Sizing.minimumTapTarget)

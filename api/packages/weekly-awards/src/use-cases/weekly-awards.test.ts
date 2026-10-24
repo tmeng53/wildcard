@@ -6,6 +6,7 @@ import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { createPostgresAwardSettings } from '../adapters/postgres-award-settings.js';
 import {
   createPostgresAwardsStore,
   type WeeklyAwardTables,
@@ -43,10 +44,12 @@ function setup(
   agreed: (member: MemberId) => boolean = () => true,
 ) {
   const asked: string[] = [];
+  const settingsAsked: { model: string; instructions: string }[] = [];
   const model: LanguageModel = {
-    answer: async ({ prompt, reply: shape }) => {
+    answer: async ({ model, instructions, prompt, reply: shape }) => {
       const next = answers[Math.min(asked.length, answers.length - 1)];
       asked.push(prompt);
+      settingsAsked.push({ model, instructions });
       if (next === undefined) throw new Error('no answer set');
       return shape.parse(await next());
     },
@@ -54,13 +57,14 @@ function setup(
   const consentAsked: (readonly MemberId[])[] = [];
   const awards = createWeeklyAwards({
     model,
+    settings: createPostgresAwardSettings(db),
     store: createPostgresAwardsStore(db),
     aiConsented: (members) => {
       consentAsked.push(members);
       return Promise.resolve(members.filter(agreed));
     },
   });
-  return { awards, asked, consentAsked };
+  return { awards, asked, settingsAsked, consentAsked };
 }
 
 async function newSquad() {
@@ -105,10 +109,18 @@ async function reasonOf(promise: Promise<unknown>) {
 
 describe('createWeeklyAwards', () => {
   it('gives titles to members who checked in, nothing to anyone who didn’t, once', async () => {
-    const { awards, asked } = setup();
+    const { awards, asked, settingsAsked } = setup();
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const members = weekOf([ana, bo, cy]);
     const given = await awards.give({ squad, weekStart: week, members });
+    // The settings' model and instructions, and the moves as the settings describe them.
+    expect(settingsAsked[0]?.model).toBe('openai/gpt-6-luna');
+    expect(settingsAsked[0]?.instructions).toMatch(
+      /^你在给一个朋友运动打卡 App 的小队写「本周颁奖」/u,
+    );
+    expect(asked[0]).toContain(
+      '{"id":"pump","description":"握拳两下，第二下跳起来（拼、狠、坚持）"}',
+    );
     expect(given).toStrictEqual({
       members: [
         {

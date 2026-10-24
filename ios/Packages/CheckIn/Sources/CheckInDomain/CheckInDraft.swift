@@ -39,7 +39,8 @@ public struct PostBody: Hashable, Sendable {
 /// A check-in as the compose step and the 请假条 card hand it over. `TodayStore` adds the
 /// id, the member, the day, the time and the squad.
 public enum CheckInDraft: Hashable, Sendable {
-    case trained(Activity, PostBody)
+    /// 练了: the sport, how many minutes if the member said, and the post.
+    case trained(Activity, WorkoutMinutes?, PostBody)
     case healthyMeal(PostBody)
     case cheatMeal(PostBody)
     case disclaimer(Disclaimer)
@@ -47,7 +48,7 @@ public enum CheckInDraft: Hashable, Sendable {
     /// The photos to upload before the check-in is saved, the cover first.
     public var photos: [PreparedPhoto] {
         switch self {
-        case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body): body.photos
+        case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body): body.photos
         case .disclaimer: []
         }
     }

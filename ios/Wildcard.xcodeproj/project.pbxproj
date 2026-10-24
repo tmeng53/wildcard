@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		A1C0DE00000000000000001D /* DesignSystemUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001C /* DesignSystemUI */; };
 		A1C0DE000000000000000020 /* CheckInUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000001F /* CheckInUI */; };
+		A1C0DE000000000000000182 /* RecapUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000181 /* RecapUI */; };
+		A1C0DE000000000000000184 /* RecapDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000183 /* RecapDomain */; };
 		A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000031 /* CharacterEditorUI */; };
 		A1C0DE000000000000000034 /* CheckInDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000033 /* CheckInDomain */; };
 		A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000041 /* NotificationsDomain */; };
@@ -16,11 +18,22 @@
 		A1C0DE000000000000000056 /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000055 /* DesignSystem */; };
 		A1C0DE000000000000000052 /* MeDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000051 /* MeDomain */; };
 		A1C0DE000000000000000054 /* MeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000053 /* MeUI */; };
+		A1C0DE0000000000000000B2 /* ScenePickDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B1 /* ScenePickDomain */; };
+		A1C0DE0000000000000000B4 /* ScenePickUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B3 /* ScenePickUI */; };
+		A1C0DE0000000000000000A2 /* SquadDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000A1 /* SquadDomain */; };
+		A1C0DE0000000000000000A4 /* SquadUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000A3 /* SquadUI */; };
+		A1C0DE0000000000000000B6 /* AvatarDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B5 /* AvatarDomain */; };
+		A1C0DE0000000000000000B8 /* AvatarArt in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B7 /* AvatarArt */; };
+		A1C0DE0000000000000000BA /* AvatarUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B9 /* AvatarUI */; };
 		A1C0DE000000000000000062 /* OnboardingUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000061 /* OnboardingUI */; };
+		A1C0DE000000000000000082 /* FeedDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000081 /* FeedDomain */; };
+		A1C0DE000000000000000084 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000083 /* FeedUI */; };
 		A1C0DE000000000000000077 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* AccountDomain */; };
 		A1C0DE000000000000000078 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000074 /* AccountUI */; };
 		A1C0DE000000000000000079 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000075 /* Backend */; };
 		A1C0DE00000000000000007A /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000076 /* Contracts */; };
+		A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C1 /* ScheduleDomain */; };
+		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +71,8 @@
 			files = (
 				A1C0DE00000000000000001D /* DesignSystemUI in Frameworks */,
 				A1C0DE000000000000000020 /* CheckInUI in Frameworks */,
+				A1C0DE000000000000000182 /* RecapUI in Frameworks */,
+				A1C0DE000000000000000184 /* RecapDomain in Frameworks */,
 				A1C0DE000000000000000032 /* CharacterEditorUI in Frameworks */,
 				A1C0DE000000000000000034 /* CheckInDomain in Frameworks */,
 				A1C0DE000000000000000042 /* NotificationsDomain in Frameworks */,
@@ -65,11 +80,22 @@
 				A1C0DE000000000000000056 /* DesignSystem in Frameworks */,
 				A1C0DE000000000000000052 /* MeDomain in Frameworks */,
 				A1C0DE000000000000000054 /* MeUI in Frameworks */,
+				A1C0DE0000000000000000B2 /* ScenePickDomain in Frameworks */,
+				A1C0DE0000000000000000B4 /* ScenePickUI in Frameworks */,
+				A1C0DE0000000000000000A2 /* SquadDomain in Frameworks */,
+				A1C0DE0000000000000000A4 /* SquadUI in Frameworks */,
+				A1C0DE0000000000000000B6 /* AvatarDomain in Frameworks */,
+				A1C0DE0000000000000000B8 /* AvatarArt in Frameworks */,
+				A1C0DE0000000000000000BA /* AvatarUI in Frameworks */,
 				A1C0DE000000000000000062 /* OnboardingUI in Frameworks */,
+				A1C0DE000000000000000082 /* FeedDomain in Frameworks */,
+				A1C0DE000000000000000084 /* FeedUI in Frameworks */,
 				A1C0DE000000000000000077 /* AccountDomain in Frameworks */,
 				A1C0DE000000000000000078 /* AccountUI in Frameworks */,
 				A1C0DE000000000000000079 /* Backend in Frameworks */,
 				A1C0DE00000000000000007A /* Contracts in Frameworks */,
+				A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */,
+				A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,6 +149,8 @@
 			packageProductDependencies = (
 				A1C0DE00000000000000001C /* DesignSystemUI */,
 				A1C0DE00000000000000001F /* CheckInUI */,
+				A1C0DE000000000000000181 /* RecapUI */,
+				A1C0DE000000000000000183 /* RecapDomain */,
 				A1C0DE000000000000000031 /* CharacterEditorUI */,
 				A1C0DE000000000000000033 /* CheckInDomain */,
 				A1C0DE000000000000000041 /* NotificationsDomain */,
@@ -130,11 +158,22 @@
 				A1C0DE000000000000000055 /* DesignSystem */,
 				A1C0DE000000000000000051 /* MeDomain */,
 				A1C0DE000000000000000053 /* MeUI */,
+				A1C0DE0000000000000000B1 /* ScenePickDomain */,
+				A1C0DE0000000000000000B3 /* ScenePickUI */,
+				A1C0DE0000000000000000A1 /* SquadDomain */,
+				A1C0DE0000000000000000A3 /* SquadUI */,
+				A1C0DE0000000000000000B5 /* AvatarDomain */,
+				A1C0DE0000000000000000B7 /* AvatarArt */,
+				A1C0DE0000000000000000B9 /* AvatarUI */,
 				A1C0DE000000000000000061 /* OnboardingUI */,
+				A1C0DE000000000000000081 /* FeedDomain */,
+				A1C0DE000000000000000083 /* FeedUI */,
 				A1C0DE000000000000000073 /* AccountDomain */,
 				A1C0DE000000000000000074 /* AccountUI */,
 				A1C0DE000000000000000075 /* Backend */,
 				A1C0DE000000000000000076 /* Contracts */,
+				A1C0DE0000000000000000C1 /* ScheduleDomain */,
+				A1C0DE0000000000000000C3 /* ScheduleUI */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -193,13 +232,19 @@
 			packageReferences = (
 				A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */,
 				A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */,
+				A1C0DE000000000000000180 /* XCLocalSwiftPackageReference "Packages/Recap" */,
 				A1C0DE000000000000000030 /* XCLocalSwiftPackageReference "Packages/CharacterEditor" */,
 				A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */,
 				A1C0DE000000000000000050 /* XCLocalSwiftPackageReference "Packages/Me" */,
+				A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */,
+				A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */,
+				A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
+				A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */,
 				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */,
 				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
 				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
+				A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -320,6 +365,7 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报存到你的相册。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -349,6 +395,7 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报存到你的相册。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -437,6 +484,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/CheckIn;
 		};
+		A1C0DE000000000000000180 /* XCLocalSwiftPackageReference "Packages/Recap" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Recap;
+		};
 		A1C0DE000000000000000030 /* XCLocalSwiftPackageReference "Packages/CharacterEditor" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/CharacterEditor;
@@ -449,9 +500,25 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Me;
 		};
+		A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/ScenePick;
+		};
+		A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Squad;
+		};
+		A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Avatar;
+		};
 		A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Onboarding;
+		};
+		A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Feed;
 		};
 		A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -465,9 +532,23 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Contracts;
 		};
+		A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Schedule;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A1C0DE000000000000000081 /* FeedDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			productName = FeedDomain;
+		};
+		A1C0DE000000000000000083 /* FeedUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;
+			productName = FeedUI;
+		};
 		A1C0DE00000000000000001C /* DesignSystemUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
@@ -477,6 +558,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */;
 			productName = CheckInUI;
+		};
+		A1C0DE000000000000000181 /* RecapUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000180 /* XCLocalSwiftPackageReference "Packages/Recap" */;
+			productName = RecapUI;
+		};
+		A1C0DE000000000000000183 /* RecapDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000180 /* XCLocalSwiftPackageReference "Packages/Recap" */;
+			productName = RecapDomain;
 		};
 		A1C0DE000000000000000031 /* CharacterEditorUI */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -518,6 +609,41 @@
 			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
 			productName = DesignSystem;
 		};
+		A1C0DE0000000000000000B1 /* ScenePickDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */;
+			productName = ScenePickDomain;
+		};
+		A1C0DE0000000000000000B3 /* ScenePickUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000B0 /* XCLocalSwiftPackageReference "Packages/ScenePick" */;
+			productName = ScenePickUI;
+		};
+		A1C0DE0000000000000000A1 /* SquadDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */;
+			productName = SquadDomain;
+		};
+		A1C0DE0000000000000000A3 /* SquadUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000A0 /* XCLocalSwiftPackageReference "Packages/Squad" */;
+			productName = SquadUI;
+		};
+		A1C0DE0000000000000000B5 /* AvatarDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */;
+			productName = AvatarDomain;
+		};
+		A1C0DE0000000000000000B7 /* AvatarArt */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */;
+			productName = AvatarArt;
+		};
+		A1C0DE0000000000000000B9 /* AvatarUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */;
+			productName = AvatarUI;
+		};
 		A1C0DE000000000000000073 /* AccountDomain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
@@ -537,6 +663,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
 			productName = Contracts;
+		};
+		A1C0DE0000000000000000C1 /* ScheduleDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */;
+			productName = ScheduleDomain;
+		};
+		A1C0DE0000000000000000C3 /* ScheduleUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */;
+			productName = ScheduleUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

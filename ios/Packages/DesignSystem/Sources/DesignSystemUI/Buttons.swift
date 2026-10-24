@@ -2,20 +2,10 @@
 import DesignSystem
 import SwiftUI
 
-/// What fills a primary or switched-on control: the scene's accent, or ink on the pages that stay
-/// out of the scene's colours (我, 设置, 注销账号).
-public enum ControlTint: Sendable {
-    case scene
-    case ink
-
-    var fill: ColorRole { self == .scene ? .bgAccent : .fgDefault }
-    var onFill: ColorRole { self == .scene ? .fgOnAccent : .bgCanvas }
-}
-
-/// The one primary action on a screen (下一步, 打卡, 发布): a solid capsule in the scene's
-/// accent (or ink, with `tint: .ink`), flat, that shrinks while held. `.large` is 52 points tall and fills its width when the
-/// label asks for it; `.regular` is 44, for an action inside content (去打卡). Disabled, it turns a
-/// quiet grey.
+/// The one primary action on a screen (下一步, 打卡, 发布): a solid capsule in the accent tone's
+/// colour (the scene's, the brand's under `.accentTone(.brand)`, or ink under `.accentTone(.ink)`), flat, that shrinks while held.
+/// `.large` is 52 points tall and fills its width when the label asks for it; `.regular` is 44,
+/// for an action inside content (去打卡). Disabled, it turns a quiet grey.
 public struct PrimaryButtonStyle: ButtonStyle {
     public enum Size: Sendable {
         case large
@@ -23,23 +13,22 @@ public struct PrimaryButtonStyle: ButtonStyle {
     }
 
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     @Environment(\.isEnabled) private var isEnabled
     private let size: Size
-    private let tint: ControlTint
 
-    public init(_ size: Size = .large, tint: ControlTint = .scene) {
+    public init(_ size: Size = .large) {
         self.size = size
-        self.tint = tint
     }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .typeStyle(size == .large ? TypeRamp.action : TypeRamp.calloutEmphasis)
             .lineLimit(1)
-            .foregroundStyle(Color(role: isEnabled ? tint.onFill : .fgSubtle, in: theme))
+            .foregroundStyle(Color(role: isEnabled ? tone.onFill : .fgSubtle, in: theme))
             .padding(.horizontal, size == .large ? Space.l : Space.m + Space.xxs)
             .frame(minHeight: size == .large ? Sizing.primaryControl : Sizing.control)
-            .background(Color(role: isEnabled ? tint.fill : .borderDefault, in: theme), in: Capsule())
+            .background(Color(role: isEnabled ? tone.fill : .borderDefault, in: theme), in: Capsule())
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }

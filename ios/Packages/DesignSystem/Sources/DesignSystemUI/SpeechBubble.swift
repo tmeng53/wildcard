@@ -9,11 +9,32 @@ import SwiftUI
 /// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest. White on the scene, light grey on a page.
 /// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
 /// Given an `action`, it is a button that opens what it says (a caption opens its post) and
-/// shrinks while held like every other control.
+/// shrinks while held like every other control. `.status` is a teammate's status with one thing
+/// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
+/// accent capsule under them; once done, the capsule turns grey and does nothing.
 public struct SpeechBubble: View {
     public enum Kind {
         case line
         case info(title: Text?)
+        case status(detail: Text?, button: StatusButton)
+    }
+
+    /// The capsule under a `.status` bubble's words.
+    public struct StatusButton {
+        let label: Text
+        let isDone: Bool
+        let identifier: String?
+        let action: () -> Void
+
+        /// - Parameters:
+        ///   - isDone: already done: grey, and a tap does nothing.
+        ///   - identifier: the button's accessibility identifier, for UI tests.
+        public init(_ label: Text, isDone: Bool, identifier: String? = nil, action: @escaping () -> Void) {
+            self.label = label
+            self.isDone = isDone
+            self.identifier = identifier
+            self.action = action
+        }
     }
 
     @Environment(\.sceneTheme) private var theme
@@ -46,8 +67,8 @@ public struct SpeechBubble: View {
 
     private var bubble: some View {
         content
-            .padding(.vertical, Self.verticalPadding)
-            .padding(.horizontal, Self.horizontalPadding)
+            .padding(.vertical, isStatus ? Space.s - Space.xxs / 2 : Self.verticalPadding)
+            .padding(.horizontal, isStatus ? Space.s : Self.horizontalPadding)
             .background(fill, in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
             .padding(.bottom, Self.tail.height)
             .background(alignment: .bottom) {
@@ -60,56 +81,107 @@ public struct SpeechBubble: View {
     @ViewBuilder private var content: some View {
         switch kind {
         case .line:
-            text
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-                .hugging(maxWidth: Self.lineWidth - 2 * Self.horizontalPadding)
-        case .info(let title):
-            VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                if let title {
-                    title
-                        .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                }
+            HuggingWidth(max: Self.lineWidth - 2 * Self.horizontalPadding) {
                 text
-                    .typeStyle(TypeRamp.footnote)
+                    .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
             }
-            .hugging(maxWidth: Self.infoWidth - 2 * Self.horizontalPadding)
+        case .info(let title):
+            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+                VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                    if let title {
+                        title
+                            .typeStyle(TypeRamp.label)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .lineLimit(1)
+                    }
+                    text
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        case .status(let detail, let button):
+            HuggingWidth(min: Self.statusMinWidth - 2 * Space.s, max: Self.statusWidth - 2 * Space.s) {
+                VStack(spacing: Space.xxs / 2) {
+                    text
+                        .typeStyle(TypeRamp.footnoteEmphasis)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .lineLimit(1)
+                    if let detail {
+                        detail
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    StatusCapsule(button: button)
+                        .padding(.top, Space.xs - Space.xxs / 2)
+                }
+            }
         }
     }
+
+    private var isStatus: Bool {
+        if case .status = kind { true } else { false }
+    }
+
+    /// A `.status` bubble's narrowest and widest, from the approved home 拍一拍.
+    private static let statusMinWidth: Double = 120
+    private static let statusWidth: Double = 220
 
     private var fill: Color {
         Color(role: surface == .scene ? .bgCanvas : .bgSubtle, in: theme)
     }
 }
 
-/// Offers its content at most `maxWidth` and takes only the width the content uses, so the
-/// bubble hugs short words. A `frame(maxWidth:)` would instead grow to `maxWidth` whenever the
-/// space around offers more, leaving the bubble wider than its text.
+/// Offers its content at most `max` wide and takes only the width the content uses (at least
+/// `min`), so a bubble hugs its words however wide its caller offers it. A
+/// `.frame(maxWidth:)` would instead stretch to whatever it is offered, up to its max.
 private struct HuggingWidth: Layout {
-    let maxWidth: Double
+    var min: Double = 0
+    let max: Double
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         guard let content = subviews.first else { return .zero }
-        return content.sizeThatFits(offer(proposal))
+        let size = content.sizeThatFits(offer(proposal))
+        return CGSize(width: Swift.max(min, size.width), height: size.height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+        subviews.first?.place(at: CGPoint(x: bounds.midX, y: bounds.minY), anchor: .top, proposal: offer(proposal))
     }
 
     private func offer(_ proposal: ProposedViewSize) -> ProposedViewSize {
-        ProposedViewSize(width: min(proposal.width ?? maxWidth, maxWidth), height: proposal.height)
+        ProposedViewSize(width: Swift.min(proposal.width ?? max, max), height: nil)
     }
 }
 
-extension View {
-    fileprivate func hugging(maxWidth: Double) -> some View {
-        HuggingWidth(maxWidth: maxWidth) { self }
+/// The accent capsule in a `.status` bubble, `compactControl` tall; grey once done.
+private struct StatusCapsule: View {
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
+    let button: SpeechBubble.StatusButton
+
+    var body: some View {
+        Button {
+            if !button.isDone { button.action() }
+        } label: {
+            button.label
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .lineLimit(1)
+                .foregroundStyle(Color(role: button.isDone ? .fgSubtle : tone.onFill, in: theme))
+                .padding(.horizontal, Space.m)
+                .frame(height: Sizing.compactControl)
+                .background(Color(role: button.isDone ? .bgSubtle : tone.fill, in: theme), in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .allowsHitTesting(!button.isDone)
+        .accessibilityIdentifier(button.identifier ?? "")
+        .accessibilityAddTraits(button.isDone ? [.isStaticText] : [])
+        .accessibilityRemoveTraits(button.isDone ? [.isButton] : [])
     }
 }
 

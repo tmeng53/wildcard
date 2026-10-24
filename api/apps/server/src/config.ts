@@ -21,15 +21,9 @@ const Environment = z.object({
   // server: 1 for Cloud Run on its own, more behind a load balancer. Public routes rate-limit by
   // the client address found this many entries from the end.
   PROXY_HOPS: z.coerce.number().pipe(z.int().min(1).max(5)).default(1),
-  // Which provider writes AI 请假条 drafts, and with which of its models (each adapter has a
-  // default). Without that provider's key the server still runs and the app shows its dice.
-  LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
-  LLM_MODEL: z.string().min(1).optional(),
-  // Which provider writes each squad's weekly awards (the Sunday 战报), and with which model.
-  // Tracy picked OpenAI's GPT-6 Luna for it (2026-10-20): close to Claude Sonnet 5.5 in her
-  // blind test, for far less. Without that provider's key the awards stay pending.
-  AWARDS_LLM_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
-  AWARDS_LLM_MODEL: z.string().min(1).optional(),
+  // Each language model provider's key. Which model writes what is a setting in the database
+  // (provider/model), so it changes without a deploy; a model whose provider has no key here
+  // writes nothing: the app shows its dice, and the weekly awards stay pending.
   OPENAI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   // Sign in with Apple's key, for revoking a deleted member's Apple tokens: all four, or none
@@ -75,10 +69,16 @@ const Environment = z.object({
   // What the scheduler sends to start jobs such as the daily progress push. Without it no job
   // runs. Long and random, like any secret.
   JOBS_TOKEN: z.string().min(32).optional(),
+  // The service account Cloud Scheduler signs its OIDC tokens as, on the hosted server. When
+  // set, only its tokens (for PUBLIC_URL) start jobs, and JOBS_TOKEN isn't used.
+  JOBS_SCHEDULER_ACCOUNT: z.email().optional(),
+  // The Google Cloud project the server runs in (set by the deploy), so each log entry names its
+  // request's trace and Cloud Logging groups a request's entries. Unset off Google Cloud.
+  GOOGLE_CLOUD_PROJECT: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/)
+    .optional(),
 });
-
-/** Each provider's model for the weekly awards, unless AWARDS_LLM_MODEL names another. */
-const AWARDS_MODELS = { openai: 'gpt-6-luna', anthropic: 'claude-sonnet-5-5' } as const;
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
 const APNS = [
@@ -102,24 +102,8 @@ export interface Config {
   readonly adminPasswordSignIn: boolean;
   /** How many of our proxies add to `X-Forwarded-For`; see `clientAddress`. */
   readonly proxyHops: number;
-  /** The model that writes AI 请假条 drafts; undefined while its provider has no key. */
-  readonly languageModel:
-    | {
-        readonly provider: 'openai' | 'anthropic';
-        readonly apiKey: string;
-        /** Undefined for the adapter's default. */
-        readonly model: string | undefined;
-      }
-    | undefined;
-  /** The model that writes each squad's weekly awards; undefined while its provider has no key. */
-  readonly awardsModel:
-    | {
-        readonly provider: 'openai' | 'anthropic';
-        readonly apiKey: string;
-        /** Undefined for the adapter's default. */
-        readonly model: string | undefined;
-      }
-    | undefined;
+  /** Each language model provider's key; undefined for a provider without one. */
+  readonly languageModelKeys: Readonly<Record<'openai' | 'anthropic', string | undefined>>;
   /** Sign in with Apple's key; undefined until it is set up. */
   readonly appleSignInKey:
     | {
@@ -129,8 +113,11 @@ export interface Config {
         readonly clientId: string;
       }
     | undefined;
-  /** The token that starts jobs; undefined until a scheduler is set up. */
-  readonly jobsToken: string | undefined;
+  /** How the scheduler proves itself; undefined until one is set up, and then no job runs. */
+  readonly scheduler:
+    | { readonly kind: 'google'; readonly serviceAccount: string }
+    | { readonly kind: 'token'; readonly token: string }
+    | undefined;
   /** Undefined until there are APNs keys: then no pushes are sent. */
   readonly apns:
     | {
@@ -141,6 +128,8 @@ export interface Config {
         >;
       }
     | undefined;
+  /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
+  readonly traceProject: string | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -184,11 +173,6 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     );
   }
   const apns = readApns(result.data);
-  const { LLM_PROVIDER, LLM_MODEL } = result.data;
-  const keys = { openai: result.data.OPENAI_API_KEY, anthropic: result.data.ANTHROPIC_API_KEY };
-  const llmKey = keys[LLM_PROVIDER];
-  const { AWARDS_LLM_PROVIDER, AWARDS_LLM_MODEL } = result.data;
-  const awardsKey = keys[AWARDS_LLM_PROVIDER];
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -198,21 +182,19 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     publicUrl: new URL(result.data.PUBLIC_URL ?? `http://localhost:${String(result.data.PORT)}`),
     adminPasswordSignIn: result.data.ADMIN_PASSWORD_SIGN_IN === 'on',
     proxyHops: result.data.PROXY_HOPS,
-    languageModel:
-      llmKey === undefined
-        ? undefined
-        : { provider: LLM_PROVIDER, apiKey: llmKey, model: LLM_MODEL },
-    awardsModel:
-      awardsKey === undefined
-        ? undefined
-        : {
-            provider: AWARDS_LLM_PROVIDER,
-            apiKey: awardsKey,
-            model: AWARDS_LLM_MODEL ?? AWARDS_MODELS[AWARDS_LLM_PROVIDER],
-          },
+    languageModelKeys: {
+      openai: result.data.OPENAI_API_KEY,
+      anthropic: result.data.ANTHROPIC_API_KEY,
+    },
     appleSignInKey,
-    jobsToken: result.data.JOBS_TOKEN,
+    scheduler:
+      result.data.JOBS_SCHEDULER_ACCOUNT !== undefined
+        ? { kind: 'google', serviceAccount: result.data.JOBS_SCHEDULER_ACCOUNT }
+        : result.data.JOBS_TOKEN !== undefined
+          ? { kind: 'token', token: result.data.JOBS_TOKEN }
+          : undefined,
     apns,
+    traceProject: result.data.GOOGLE_CLOUD_PROJECT,
   };
 }
 

@@ -65,8 +65,7 @@ struct SettingsView: View {
                 Text("通知", bundle: .module),
                 isOn: Binding(
                     get: { model.dailyPushOn },
-                    set: { isOn in Task { await model.setDailyPush(isOn) } }),
-                tint: .ink
+                    set: { isOn in Task { await model.setDailyPush(isOn) } })
             )
             .accessibilityIdentifier("me.notifications")
             ListRow(

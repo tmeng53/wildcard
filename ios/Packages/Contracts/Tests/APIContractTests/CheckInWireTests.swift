@@ -67,6 +67,18 @@ private func saved(_ kindAndFields: String) -> String {
             .hasSuffix(#""disclaimer":{"text":"下雨了，跑道在哭"},"kind":"disclaimer","version":1}"#))
 }
 
+@Test func minutesGoWithTheSportBothWays() throws {
+    let training = Training(activity: .sport(.run), minutes: try WorkoutMinutes(45))
+    #expect(
+        try encode(try checkIn(.trained(training)).draft)
+            .hasSuffix(#""kind":"trained","training":{"minutes":45,"sport":"run"},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":45}"#)) == checkIn(.trained(training)))
+    #expect(throws: ContractsError.workoutMinutes(0)) {
+        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":0}"#))
+    }
+}
+
 @Test func savedTrainingReadsWithItsPhotoURLs() throws {
     let json = saved(
         #""kind":"trained","training":{"sport":"swim","caption":"一千米","photos":[{"path":"\#(photoA)","url":"https://storage.example.com/a?token=1"}]}"#
@@ -129,15 +141,18 @@ private func saved(_ kindAndFields: String) -> String {
 }
 
 @Test func whatTheContractDoesNotAllowFailsToDecode() {
-    // A version this build doesn't know, a sport that isn't listed, a field from no version.
+    // A version this build doesn't know, a sport that isn't listed.
     #expect(throws: DecodingError.self) {
         try decode(
             saved(#""kind":"healthyMeal","meal":{}"#).replacingOccurrences(of: #""version":1"#, with: #""version":2"#))
     }
     #expect(throws: DecodingError.self) { try decode(saved(#""kind":"trained","training":{"sport":"padel"}"#)) }
-    #expect(throws: DecodingError.self) {
-        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":30}"#))
-    }
+}
+
+@Test func aFieldThisBuildDoesNotKnowIsSkipped() throws {
+    // The API adds fields without a new version; a build already on phones must keep reading.
+    let checkIn = try decode(saved(#""kind":"trained","training":{"sport":"run","addedLater":300}"#))
+    #expect(checkIn.entry == .trained(Training(activity: .sport(.run))))
 }
 
 @Test(arguments: [0, 1, 7, 123, 499, 500, 501, 998, 999])

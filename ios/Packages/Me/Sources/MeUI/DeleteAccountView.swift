@@ -69,7 +69,7 @@ struct DeleteAccountView: View {
             Button(action: close) {
                 Text("先不注销", bundle: .module).frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle(tint: .ink))
+            .buttonStyle(PrimaryButtonStyle())
             .disabled(model.deletion == .deleting)
             .accessibilityIdentifier("delete.cancel")
             Button {

@@ -1,0 +1,77 @@
+#if os(iOS)
+import Contracts
+import DesignSystem
+import DesignSystemUI
+import SwiftUI
+
+/// Every sport, by category with search (spec P4), for a sheet. One pick closes it: the caller
+/// dismisses the sheet in `pick`.
+public struct SportPicker: View {
+    @Environment(\.sceneTheme) private var theme
+    let selected: Activity
+    /// 常用运动: what the member usually does, shown first, at most `recentLimit`.
+    let recent: [Activity]
+    let pick: (Activity) -> Void
+    @State private var query = ""
+    @State private var category = SportCategory.runWalk
+
+    static let recentLimit = 6
+
+    public init(selected: Activity, recent: [Activity] = [], pick: @escaping (Activity) -> Void) {
+        self.selected = selected
+        self.recent = Array(recent.prefix(Self.recentLimit))
+        self.pick = pick
+    }
+
+    public var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.m) {
+                SearchField(text: $query, prompt: Text("搜索运动", bundle: .module))
+                    .padding(.horizontal, Space.pageMargin)
+                    .accessibilityIdentifier("sports.search")
+                if query.isEmpty, !recent.isEmpty {
+                    VStack(alignment: .leading, spacing: Space.labelGap) {
+                        SectionLabel(Text("常用运动", bundle: .module))
+                        FlowRow {
+                            ForEach(recent, id: \.key) { activity in
+                                PickPill(activity.name, isSelected: selected == activity) { pick(activity) }
+                                    .accessibilityIdentifier("sports.recent.\(activity.key)")
+                            }
+                        }
+                    }
+                    .padding(.horizontal, Space.pageMargin)
+                }
+                if query.isEmpty {
+                    CategoryBar(categories, selection: $category)
+                }
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 2),
+                    spacing: Space.xs
+                ) {
+                    ForEach(shown, id: \.self) { sport in
+                        PickRow(sport.name, systemImage: sport.symbol, isSelected: selected == .sport(sport)) {
+                            pick(.sport(sport))
+                        }
+                        .accessibilityIdentifier("sports.tile.\(sport.rawValue)")
+                    }
+                }
+                .padding(.horizontal, Space.pageMargin)
+            }
+            .padding(.vertical, Space.m)
+        }
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private var shown: [Sport] {
+        query.trimmingCharacters(in: .whitespaces).isEmpty ? category.sports : Sport.matching(query)
+    }
+
+    private var categories: [CategoryBarItem<SportCategory>] {
+        SportCategory.allCases.map {
+            CategoryBarItem(id: $0, title: $0.name, accessibilityIdentifier: "sports.category.\($0.rawValue)")
+        }
+    }
+}
+#endif

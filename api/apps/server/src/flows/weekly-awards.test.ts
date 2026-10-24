@@ -22,6 +22,7 @@ import {
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
+  createPostgresAwardSettings,
   createPostgresAwardsStore,
   createWeeklyAwards,
   type LanguageModel,
@@ -31,6 +32,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
+import { jobsTokenScheduler } from '../adapters/scheduler.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
@@ -42,6 +44,7 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -127,6 +130,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
   });
   const awards = createWeeklyAwards({
     model,
+    settings: createPostgresAwardSettings(db),
     store: createPostgresAwardsStore(db),
     aiConsented: (members) =>
       aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
@@ -153,9 +157,11 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
+    weekSummaryWords: () => Promise.reject(new Error('unused')),
     aiConsent,
+    nudges: nudgesOn(db),
     log: createLog(() => undefined),
-    jobs: { ...noJobs, token: JOBS_TOKEN },
+    jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN) },
     admin: adminOn(),
   });
   const read = async ({

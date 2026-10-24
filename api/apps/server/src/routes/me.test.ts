@@ -25,11 +25,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 async function send(
   path: string,
@@ -72,7 +73,9 @@ async function send(
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    weekSummaryWords: unusedWeekSummaryWords,
     aiConsent: aiConsentOn(db),
+    nudges: nudgesOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),

@@ -281,6 +281,16 @@
         }
       }
     },
+    "分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
+          }
+        }
+      }
+    },
     "分隔线、未完成": {
       "localizations": {
         "en": {
@@ -317,6 +327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        }
+      }
+    },
+    "刻度尺：滑动选数字，每过一格轻震一下": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruler: slide to a number, one light tick per mark"
           }
         }
       }
@@ -437,6 +457,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skip Leg Day Club"
+          }
+        }
+      }
+    },
+    "品牌色上的字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text on brand"
+          }
+        }
+      }
+    },
+    "品牌色：主操作、选中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brand: primary actions, selection"
+          }
+        }
+      }
+    },
+    "品牌：开场、注册、我、发动态、请假条、动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brand: opening, sign-up, Me, posting, excuse notes, feed"
           }
         }
       }
@@ -887,6 +937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "S"
+          }
+        }
+      }
+    },
+    "时长 · 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
           }
         }
       }
@@ -1397,6 +1457,76 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cycling"
+          }
+        }
+      }
+    },
+    "下周场地：去过的是色卡，没开过的是纸箱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next week's scene: a colour card once visited, a carton until then"
+          }
+        }
+      }
+    },
+    "点队友：状态和拍一拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a teammate: status and a pat"
+          }
+        }
+      }
+    },
+    "小米 · 跑步 中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mia · Running"
+          }
+        }
+      }
+    },
+    "今天练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained today"
+          }
+        }
+      }
+    },
+    "拍一拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pat"
+          }
+        }
+      }
+    },
+    "阿杰 · 今天还没打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jay · Not checked in yet"
+          }
+        }
+      }
+    },
+    "拍过了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Patted"
           }
         }
       }

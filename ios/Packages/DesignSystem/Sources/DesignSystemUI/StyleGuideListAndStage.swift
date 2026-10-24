@@ -24,8 +24,9 @@ struct ListSection: View {
             // A plain menu (设置): no icons, no chevrons, an ink switch.
             VStack(spacing: 0) {
                 ListRow(Text("性格", bundle: .module), value: Text("淡人", bundle: .module), showsChevron: false) {}
-                SwitchRow(Text("每日提醒", bundle: .module), isOn: $dailyReminder, showsDivider: false, tint: .ink)
+                SwitchRow(Text("每日提醒", bundle: .module), isOn: $dailyReminder, showsDivider: false)
             }
+            .accentTone(.ink)
         }
     }
 }
