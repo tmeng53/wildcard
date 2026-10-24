@@ -6,13 +6,14 @@ import XCTest
 /// rest, tennis this week.
 @MainActor
 final class ScheduleUITests: XCTestCase {
-    private func launch(_ language: String = "zh-Hans") -> XCUIApplication {
+    private func launch(_ language: String = "zh-Hans", scene: String? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-tab", "schedule",
             "-uitest-thursday", "-uitest-save-poster",
         ]
+        if let scene { app.launchArguments += ["-uitest-scene", scene] }
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         XCTAssertTrue(app.buttons["schedule.lane.0"].waitForExistence(timeout: 30), "the poster never showed")
@@ -152,6 +153,17 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertLessThanOrEqual(
             saved.frame.maxY, find(app, "schedule.poster").frame.minY, "the note isn't over the poster")
         keepScreenshot(named: "68-schedule-saved")
+    }
+
+    /// The poster on every other scene, for comparing its props and the character's sport with
+    /// the approved design; the gym is in the other screenshots.
+    func testEveryScene() {
+        for scene in ["tennis", "pool", "track", "climbing"] {
+            _ = launch(scene: scene)
+            settle()
+            keepScreenshot(named: "60-schedule-scene-\(scene)")
+            XCUIApplication().terminate()
+        }
     }
 
     func testEnglish() {
