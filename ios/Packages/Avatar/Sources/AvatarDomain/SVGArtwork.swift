@@ -8,7 +8,8 @@ extension Artwork {
     /// Reads one flat SVG art file: `path`, `circle`, `ellipse` and `rect` elements, grouped
     /// with `g` if you like, colored with hex fills and strokes. Anything else is an error,
     /// so art never looks different on the phone from how it looked in the design tool.
-    /// Internal: callers load art through `Figure`, which reports `AvatarError.invalidSVG`.
+    /// Internal: callers go through `read(svg:path:)` or `Figure`, which report
+    /// `AvatarError.invalidSVG`.
     init(svg: String) throws(SVGProblem) {
         let reader = SVGReader()
         let parser = XMLParser(data: Data(svg.utf8))
@@ -18,6 +19,16 @@ extension Artwork {
         guard parsed else { throw .notXML(parser.parserError.map { "\($0)" } ?? "unreadable") }
         guard let viewBox = reader.viewBox else { throw .missingViewBox }
         self.init(width: viewBox.width, height: viewBox.height, shapes: reader.shapes)
+    }
+
+    /// Reads art that stands on its own, outside a figure, such as a store's badge; `path`
+    /// names it in the error.
+    public static func read(svg: String, path: String) throws(AvatarError) -> Artwork {
+        do {
+            return try Artwork(svg: svg)
+        } catch {
+            throw .invalidSVG(art: path, problem: error)
+        }
     }
 }
 

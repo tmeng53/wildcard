@@ -214,3 +214,14 @@ private func changed(_ editing: inout CharacterDraft, _ change: (inout Character
     }
     #expect(withBrows > 150)
 }
+
+/// A store's rack holds only its own clothes, tops first, whatever order they were listed in.
+@Test func aRackHoldsItsStoresClothesInSlotOrder() {
+    var street = catalog
+    street.variants["hat"] = ["cap", "visor"]
+    street.storeOf = ["shorts": "warmup", "tee": "warmup", "cap": "warmup", "visor": "lap"]
+    #expect(street.rack(of: "warmup").map(\.variant) == ["tee", "shorts", "cap"])
+    #expect(street.rack(of: "warmup").map(\.slot) == ["top", "bottom", "hat"])
+    #expect(street.rack(of: "lap").map(\.variant) == ["visor"])
+    #expect(street.rack(of: "deuce").isEmpty)
+}
