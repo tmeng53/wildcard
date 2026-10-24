@@ -58,7 +58,7 @@ private struct WeekPoster: View {
     private let weekNumberTop: Double = 15
     /// Where the rows start, under the week's number, and how wide they run.
     private let rowsTop: Double = 138
-    private let rowsWidth: Double = 208
+    private let rowsWidth: Double = 196
     private let rowHeight: Double = 38
     /// The day's name in front of its sport.
     private let dayLabelWidth: Double = 32
