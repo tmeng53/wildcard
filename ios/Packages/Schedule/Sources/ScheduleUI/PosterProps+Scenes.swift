@@ -91,6 +91,10 @@ extension PosterProps {
                         (CGPoint(x: 0, y: -33), CGPoint(x: 0, y: -15)), (CGPoint(x: 0, y: 15), CGPoint(x: 0, y: 33)),
                         (CGPoint(x: -33, y: 0), CGPoint(x: -15, y: 0)), (CGPoint(x: 15, y: 0), CGPoint(x: 33, y: 0)),
                     ]), ink: .cutStroke(4)),
+                // The rope round the ring, a dotted line cut out.
+                Part(
+                    path: circle(0, 0, 24).strokedPath(StrokeStyle(lineWidth: 1.2, dash: [2, 4])),
+                    ink: .cut),
             ])
     }
 

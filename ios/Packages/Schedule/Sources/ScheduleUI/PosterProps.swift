@@ -43,8 +43,11 @@ enum PosterProps {
     /// Draws the props into one layer, in `color` at `opacity`, with each prop's details cut out.
     static func draw(_ props: [Prop], in context: GraphicsContext, color: Color, opacity: Double) {
         let shading = GraphicsContext.Shading.color(color)
-        context.drawLayer { layer in
-            layer.opacity = opacity
+        // The opacity goes on the layer as a whole: set inside it, it would apply to each fill and
+        // cut, so overlaps would darken and cut-outs only fade.
+        var faded = context
+        faded.opacity = opacity
+        faded.drawLayer { layer in
             for prop in props {
                 var local = layer
                 local.translateBy(x: prop.center.x, y: prop.center.y)
