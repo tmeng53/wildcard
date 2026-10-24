@@ -1,5 +1,11 @@
-# Builds the app, signs it and uploads it to TestFlight. Run it by hand from `main`
-# (Actions → testflight → Run workflow); it never runs on its own, since macOS minutes are scarce.
+# Builds the app, signs it and uploads it to TestFlight. It runs on every push to `main` that
+# changes ios/ or this workflow, and by hand from `main` (Actions → testflight → Run workflow).
+# TEMPORARY, until full launch: while the repo is public GitHub's Macs are free, and internal
+# testers get every build. At launch (repo goes private, releases get gated) revisit this: switch
+# back to manual runs, or to a schedule, so macOS minutes and tester notices stay under control.
+# A burst of merges collapses into one build of the latest main: a newer push cancels the running
+# and the pending upload. It shares the one free Mac with verify's scheduled `ios` job, but runs
+# at most one at a time (about 6 minutes), so that job waits at most one build.
 # Signing is automatic and Apple-managed: xcodebuild signs in to App Store Connect with an API key
 # and Apple's cloud-managed distribution certificate signs the export, so no certificate or
 # profile is kept anywhere. The key must have the Admin role: App Manager keys get "Cloud signing
@@ -12,6 +18,11 @@
 name: testflight
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - ".github/workflows/testflight.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,7 +30,7 @@ permissions:
 
 concurrency:
   group: testflight
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 # None of these is secret.
 env:
