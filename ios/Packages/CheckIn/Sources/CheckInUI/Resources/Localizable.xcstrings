@@ -947,6 +947,16 @@
           }
         }
       }
+    },
+    "全屏看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens full screen"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

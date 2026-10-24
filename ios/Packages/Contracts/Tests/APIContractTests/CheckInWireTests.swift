@@ -114,6 +114,31 @@ private func saved(_ kindAndFields: String) -> String {
     #expect(try decode(json) == checkIn(.disclaimer(try Disclaimer("躺平也是训练", photos: viewed))))
 }
 
+@Test func aPhotosSizeGoesBothWays() throws {
+    let portrait = try PhotoSize(width: 1080, height: 1350)
+    let photos = try Photos([try PhotoRef(path: photoA, size: portrait), try PhotoRef(path: photoB)])
+    #expect(
+        try encode(try checkIn(.healthyMeal(Meal(photos: photos))).draft)
+            .contains(
+                #""photos":[{"path":"\#(photoA)","size":{"height":1350,"width":1080}},{"path":"\#(photoB)"}]"#))
+    let json = saved(
+        #""kind":"healthyMeal","meal":{"photos":[{"path":"\#(photoA)","url":"https://s.example.com/a","size":{"width":1080,"height":1350}},{"path":"\#(photoB)","url":"https://s.example.com/b"}]}"#
+    )
+    guard case .healthyMeal(let meal) = try decode(json).entry else {
+        Issue.record("not a meal")
+        return
+    }
+    #expect(meal.photos?.all.map(\.size) == [portrait, nil])
+}
+
+@Test func aPhotoSizeOutsideTheRangeIsRefused() throws {
+    #expect(throws: ContractsError.photoSize(width: 0, height: 1350)) { try PhotoSize(width: 0, height: 1350) }
+    #expect(throws: ContractsError.photoSize(width: 1080, height: 10_001)) {
+        try PhotoSize(width: 1080, height: 10_001)
+    }
+    #expect(try PhotoSize(width: 1080, height: 1350).aspectRatio == 0.8)
+}
+
 @Test func aSixtyCharacterCaptionFromTheAPIReads() throws {
     let caption = String(repeating: "爽", count: 60)
     let read = try decode(saved(#""kind":"healthyMeal","meal":{"caption":"\#(caption)"}"#))

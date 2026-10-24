@@ -39,7 +39,8 @@ import Testing
 @MainActor @Test func theSampleSquadTakesOneDisclaimerBeforeTraining() async throws {
     let store = sampleStore()
     await store.load()
-    try await store.post(.cheatMeal(PostBody(photos: [PreparedPhoto(id: UUID(), jpeg: Data([1]))], caption: "火锅")))
+    try await store.post(
+        .cheatMeal(PostBody(photos: [PreparedPhoto(id: UUID(), jpeg: Data([1]), size: nil)], caption: "火锅")))
     #expect(store.home?.today.squadWeek.trainedDays == 14)
     try await store.post(.disclaimer(try Disclaimer("加班到十点")))
     #expect(store.myStatus == .disclaimer)

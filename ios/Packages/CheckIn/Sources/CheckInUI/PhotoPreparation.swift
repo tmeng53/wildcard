@@ -1,5 +1,6 @@
 #if canImport(ImageIO)
 import CheckInDomain
+import Contracts
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
@@ -34,8 +35,10 @@ public enum PhotoPreparation {
         else { throw .unreadablePhoto }
         CGImageDestinationAddImage(
             destination, image, [kCGImageDestinationLossyCompressionQuality: jpegQuality] as CFDictionary)
-        guard CGImageDestinationFinalize(destination) else { throw .unreadablePhoto }
-        return PreparedPhoto(id: UUID(), jpeg: output as Data)
+        guard CGImageDestinationFinalize(destination),
+            let size = try? PhotoSize(width: image.width, height: image.height)
+        else { throw .unreadablePhoto }
+        return PreparedPhoto(id: UUID(), jpeg: output as Data, size: size)
     }
 }
 #endif

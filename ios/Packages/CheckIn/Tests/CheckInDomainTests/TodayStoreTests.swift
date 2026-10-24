@@ -117,6 +117,8 @@ private let run = CheckInDraft.trained(.sport(.run), nil, PostBody(photos: [], c
     }
     // The cover stays first.
     #expect(training.photos?.all.map(\.path) == photos.map { "\(myID)/\($0.id.uuidString.lowercased())" })
+    // Each photo's size goes with it, even for the one uploaded before the network dropped.
+    #expect(training.photos?.all.map(\.size) == Array(repeating: try PhotoSize(width: 1080, height: 1350), count: 3))
 }
 
 @MainActor @Test func aDisclaimerIsOnceADayAndNeverAfterTraining() async throws {

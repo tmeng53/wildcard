@@ -1690,6 +1690,16 @@
           }
         }
       }
+    },
+    "第 %lld 张，共 %lld 张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo %1$lld of %2$lld"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

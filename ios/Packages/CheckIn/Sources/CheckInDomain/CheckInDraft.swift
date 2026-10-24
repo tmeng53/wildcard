@@ -8,10 +8,14 @@ public struct PreparedPhoto: Hashable, Sendable, Identifiable {
     public let id: UUID
     /// JPEG, at most `PhotoPreparation.maxPixelSize` on the long edge.
     public let jpeg: Data
+    /// The JPEG's size in pixels, sent with the check-in so the feed shows the photo at its
+    /// shape. Nil only on a post kept from before sizes were sent.
+    public let size: PhotoSize?
 
-    public init(id: UUID, jpeg: Data) {
+    public init(id: UUID, jpeg: Data, size: PhotoSize?) {
         self.id = id
         self.jpeg = jpeg
+        self.size = size
     }
 }
 
