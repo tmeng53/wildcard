@@ -4,6 +4,7 @@ import AvatarDomain
 import AvatarUI
 import Contracts
 import DesignSystem
+import DesignSystemUI
 import FeedDomain
 import Foundation
 import Observation
@@ -123,7 +124,7 @@ public final class FeedModel {
         }
         arrivals += 1
         let who = name(of: newest.member) ?? Self.teammate
-        announce(String(localized: "\(who)回应了你：\(newest.emoji.text)", bundle: .module))
+        announce(String(localized: "\(who)回应了你：\(newest.emoji.text)", bundle: .module.inAppLanguage))
     }
 
     /// The bubble has shown long enough.
@@ -195,7 +196,7 @@ public final class FeedModel {
                     play(move, on: post)
                 }
                 let author = name(of: post.author) ?? Self.teammate
-                announce(String(localized: "\(author)收到了\(mine.text)", bundle: .module))
+                announce(String(localized: "\(author)收到了\(mine.text)", bundle: .module.inAppLanguage))
             }
             picks += 1
         } catch {
@@ -213,7 +214,7 @@ public final class FeedModel {
         AccessibilityNotification.Announcement(AttributedString(text)).post()
     }
 
-    private static var teammate: String { String(localized: "队友", bundle: .module) }
+    private static var teammate: String { String(localized: "队友", bundle: .module.inAppLanguage) }
     private static let recentKey = "feed.recentEmoji"
     private static let recentLimit = 24
     private static func seenKey(_ viewer: MemberID) -> String { "feed.reactionsSeen.\(viewer)" }

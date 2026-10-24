@@ -5,6 +5,7 @@ import CheckInDomain
 import CheckInUI
 import Contracts
 import DesignSystem
+import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
@@ -56,7 +57,7 @@ final class AppModel {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(), now: { Date() })
-        api = WildcardAPI(url: config.apiURL, account: account)
+        api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
         folders = MemberFolders(
             root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
         catalog = CatalogClient(

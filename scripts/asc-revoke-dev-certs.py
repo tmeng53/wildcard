@@ -5,22 +5,23 @@ Every build runs on a fresh machine, so Xcode's cloud signing makes a new Apple 
 certificate each time and nothing reuses it; the account's limit then fills up and archiving
 fails ("maximum number of certificates"). testflight.yml runs this after the upload.
 
-It revokes only a certificate that is a development one, was created at or after ASC_SINCE (an
-ISO time a few minutes before the build began) and is named "Created via API", which is how cloud
-signing names its own. Distribution certificates and ones made in Xcode on someone's Mac are
-never touched. It prints each certificate's type, name and time, never an id or a key.
+Run it twice. `snapshot FILE` writes the ids of the certificates that exist before the build.
+`revoke FILE` revokes the certificates that are not in that file, and only those that are
+development ones named "Created via API", which is how cloud signing names its own. The API gives
+a certificate no creation time, so the snapshot is how "made by this build" is known.
+Distribution certificates and ones made in Xcode are never touched. It prints each certificate's
+type and name, never an id or a key.
 
-Needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH (the Admin key's .p8), ASC_SINCE, and PyJWT with
-cryptography.
+Needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH (the Admin key's .p8), and PyJWT with cryptography.
 https://developer.apple.com/documentation/appstoreconnectapi/delete-a-certificate
 """
 
 import json
 import os
+import sys
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime
 
 import jwt
 
@@ -47,29 +48,29 @@ def call(method: str, path: str, auth: str) -> dict:
         return json.loads(body) if body else {}
 
 
-def parse(time_text: str) -> datetime:
-    return datetime.fromisoformat(time_text.replace("Z", "+00:00"))
+def certificates(auth: str) -> list[dict]:
+    query = urllib.parse.urlencode({"limit": 200, "fields[certificates]": "certificateType,displayName,name"})
+    return call("GET", f"/certificates?{query}", auth)["data"]
 
 
-def main() -> None:
+def snapshot(path: str) -> None:
+    ids = [certificate["id"] for certificate in certificates(token())]
+    with open(path, "w", encoding="utf-8") as file:
+        json.dump(ids, file)
+    print(f"{len(ids)} certificates exist before the build.")
+
+
+def revoke(path: str) -> None:
     auth = token()
-    since = parse(os.environ["ASC_SINCE"])
-    query = urllib.parse.urlencode({"limit": 200, "fields[certificates]": "certificateType,displayName,name,createdDate"})
-    certificates = call("GET", f"/certificates?{query}", auth)["data"]
-    print(f"{len(certificates)} certificates in the account; revoking only new cloud-signing ones.")
+    with open(path, encoding="utf-8") as file:
+        before = set(json.load(file))
     revoked = 0
-    for certificate in certificates:
+    for certificate in certificates(auth):
         attributes = certificate["attributes"]
         name = attributes.get("displayName") or attributes.get("name") or ""
-        created = attributes.get("createdDate")
         kind = attributes.get("certificateType", "?")
-        mine = (
-            kind in DEVELOPMENT_TYPES
-            and CLOUD_SIGNING_NAME in name
-            and created is not None
-            and parse(created) >= since
-        )
-        print(f"{'revoke' if mine else 'keep  '} {kind} | {name} | {created}")
+        mine = certificate["id"] not in before and kind in DEVELOPMENT_TYPES and CLOUD_SIGNING_NAME in name
+        print(f"{'revoke' if mine else 'keep  '} {kind} | {name}")
         if mine:
             call("DELETE", f"/certificates/{certificate['id']}", auth)
             revoked += 1
@@ -77,4 +78,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    command, file_path = sys.argv[1], sys.argv[2]
+    {"snapshot": snapshot, "revoke": revoke}[command](file_path)

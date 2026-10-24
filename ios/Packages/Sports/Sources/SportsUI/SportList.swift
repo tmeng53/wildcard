@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystemUI
 import Foundation
 import Observation
 import Synchronization
@@ -28,8 +29,9 @@ public final class SportList: Observable, Sendable {
 }
 
 extension SportCatalog.Names {
-    /// The name in the language the app shows, as `Bundle.main` picks it.
-    public var localized: String { localized(in: Bundle.main.preferredLocalizations) }
+    /// The name in the language the app speaks now (`AppLanguage`, which a pick in the app
+    /// changes at once).
+    public var localized: String { localized(in: [AppLanguage.current.rawValue]) }
 
     /// The name in the first of `languages` the list has a name in, else Simplified Chinese.
     public func localized(in languages: [String]) -> String {

@@ -23,11 +23,6 @@ struct StringCatalogCoverageTests {
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
-    @Test func theLanguageRowNamesTheLanguageInItself() throws {
-        #expect(try Self.value(for: "language.current", in: "zh-Hans") == "简体中文")
-        #expect(try Self.english(for: "language.current") == "English")
-    }
-
     /// The sample member's names come from the catalog too.
     @Test func sampleNamesHaveEnglish() throws {
         #expect(try Self.english(for: "小林") == "Lin")

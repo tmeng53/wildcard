@@ -47,6 +47,24 @@ struct BearerToken: ClientMiddleware {
     }
 }
 
+/// The language the app speaks now, as a tag (`zh-Hans`, `en`).
+public typealias LanguageTag = @Sendable () -> String
+
+/// Asks for the API's words in the language the app speaks now, which a pick in the app can
+/// change after the system's own header was set.
+struct AcceptLanguage: ClientMiddleware {
+    let language: LanguageTag
+
+    func intercept(
+        _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
+        next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        var request = request
+        request.headerFields[.acceptLanguage] = language()
+        return try await next(request, body, baseURL)
+    }
+}
+
 /// Turns the API's failures, RFC 9457 problems with a stable `reason`, into `APIError`s, so the
 /// calls only read the answers they asked for.
 struct Problems: ClientMiddleware {

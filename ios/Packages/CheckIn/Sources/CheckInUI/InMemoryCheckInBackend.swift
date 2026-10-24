@@ -1,6 +1,7 @@
 import AvatarArt
 import CheckInDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 
 /// A squad kept in memory, for previews, UI tests and builds that don't talk to the API. It
@@ -61,7 +62,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     member: member, timeZone: zone,
                     squad: Squad(
                         id: squadID,
-                        name: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                        name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
                         inviteCode: "K7M2QX9P", members: mates + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
@@ -91,7 +92,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// A sample teammate's nickname, on the stand-in look and persona the scene gives them.
     private static func character(of member: MemberID, everyone: [MemberID]) -> MemberCharacter? {
         guard let index = everyone.firstIndex(of: member),
-            let nickname = try? Nickname(Bundle.module.localizedString(forKey: names[index], value: nil, table: nil))
+            let nickname = try? Nickname(
+                Bundle.module.inAppLanguage.localizedString(forKey: names[index], value: nil, table: nil))
         else { return nil }
         return MemberCharacter(
             nickname: nickname,
@@ -119,7 +121,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 entry: entry)
         }
         let leave = try? Disclaimer(
-            Bundle.module.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
+            Bundle.module.inAppLanguage.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
         return [
             checkIn(mates[0], 5, .trained(Training(activity: .sport("run")))),
             checkIn(mates[1], 4, .trained(Training(activity: .sport("yoga")))),
