@@ -896,7 +896,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -963,6 +963,19 @@ if want admin-mcp; then
   hours="$(psql "$DB_URL" -tAc "select string_agg(settings->>'hour', ',' order by id) from public.daily_push_setting_events where changed_by = '$admin'")"
   [ "$hours" = "20,18" ] || fail "the daily push log should hold the two changes, not the refusal: $hours"
   echo "admin-mcp: moved the daily push to 8pm and back, logged once each ($hours); hour 24 refused"
+
+  # The sports list: put a sport back as it is (the list stays the seed other checks read), and
+  # a short list with a sport the list doesn't have is refused.
+  tool get_sports '{}'
+  strength="$(jq -c '.categories[] as $c | $c.sports[] | select(.id == "strength") | . + {category: $c.id}' <<<"$result")"
+  [ "$(jq -r .names.en <<<"$strength")" = Strength ] || fail "get_sports: $result"
+  tool put_sport "$strength"
+  [ "$is_error" = false ] || fail "put_sport: $result"
+  tool set_sport_picks '{"list":"checkInQuick","sports":["quidditch"]}'
+  [[ "$is_error" = true && "$result" == SPORT_NOT_OFFERED:* ]] || fail "a short list with an unlisted sport: $result"
+  sport_calls="$(psql "$DB_URL" -tAc "select string_agg(action->>'tool', ',' order by at) from public.admin_actions where admin_id = '$admin' and action->>'tool' like '%sport%'")"
+  [ "$sport_calls" = put_sport ] || fail "admin_actions should hold the put, not the refusal: $sport_calls"
+  echo "admin-mcp: read the sports list (Strength), put a sport back as it was, logged once; an unlisted sport refused (SPORT_NOT_OFFERED)"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED
