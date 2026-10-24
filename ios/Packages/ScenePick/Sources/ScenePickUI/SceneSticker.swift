@@ -35,7 +35,7 @@ public struct SceneSticker: View {
     public var body: some View {
         VStack(spacing: 0) {
             header
-            tiles
+            SceneTileRow(picker: picker, height: 68, spacing: Self.tileGap)
                 .padding(.top, Space.s)
             lastTrained
             Button {
@@ -81,21 +81,6 @@ public struct SceneSticker: View {
         }
     }
 
-    private var tiles: some View {
-        HStack(alignment: .top, spacing: Self.tileGap) {
-            ForEach(picker.options) { option in
-                SceneTile(
-                    scene: option.scene, name: option.scene.name, isOpened: option.isOpened,
-                    isSelected: picker.selection == option.scene
-                ) {
-                    picker.select(option.scene)
-                }
-                .accessibilityLabel(option.isOpened ? option.scene.name : SceneName.boxed(option.scene))
-                .accessibilityIdentifier("scenePick.\(option.scene.rawValue)")
-            }
-        }
-    }
-
     /// 「小队 N 周前在这里练过」 and the like: closed until a tile is chosen, then opening 8 under
     /// the tiles.
     private var lastTrained: some View {
@@ -109,6 +94,33 @@ public struct SceneSticker: View {
         .clipped()
         .padding(.top, picker.selectionLastTrained == nil ? 0 : Space.xs)
         .animation(reduceMotion ? nil : Self.open, value: picker.selectionLastTrained)
+    }
+}
+
+/// The picker's scenes side by side, a tap choosing one: on the sticker, and on sign-up's
+/// 这周在哪练？. `height` is each face's.
+public struct SceneTileRow: View {
+    private let picker: ScenePicker
+    private let height: Double
+    private let spacing: Double
+
+    public init(picker: ScenePicker, height: Double, spacing: Double) {
+        (self.picker, self.height, self.spacing) = (picker, height, spacing)
+    }
+
+    public var body: some View {
+        HStack(alignment: .top, spacing: spacing) {
+            ForEach(picker.options) { option in
+                SceneTile(
+                    scene: option.scene, name: option.scene.name, isOpened: option.isOpened,
+                    isSelected: picker.selection == option.scene, height: height
+                ) {
+                    picker.select(option.scene)
+                }
+                .accessibilityLabel(option.isOpened ? option.scene.name : SceneName.boxed(option.scene))
+                .accessibilityIdentifier("scenePick.\(option.scene.rawValue)")
+            }
+        }
     }
 }
 

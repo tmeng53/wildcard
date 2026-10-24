@@ -53,7 +53,9 @@ public struct WildcardAPI: Sendable {
     public func me() async throws(APIError) -> Member {
         let answer = try await meWire()
         guard let id = UUID(uuidString: answer.userId) else { throw .unreadableResponse }
-        return Member(id: MemberID(id), profile: try answer.profile.map(Profile.init))
+        return Member(
+            id: MemberID(id), profile: try answer.profile.map(Profile.init),
+            joinedAt: answer.profile.map { Timestamp($0.joinedAt) })
     }
 
     /// Creates the profile, right after the first sign-in, or replaces it.
@@ -321,6 +323,8 @@ public struct Member: Hashable, Sendable {
     public let id: MemberID
     /// Nil until it is first saved, right after signing up.
     public let profile: Profile?
+    /// When the profile was first saved, right after signing up. Nil until then.
+    public let joinedAt: Timestamp?
 }
 
 /// What the member tells the API about themselves.

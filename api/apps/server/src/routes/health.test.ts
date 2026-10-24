@@ -117,7 +117,7 @@ describe('GET /health', () => {
           severity: 'ERROR',
           message: 'request failed',
           method: 'GET',
-          path: '/health',
+          route: '/health',
           error: {
             name: 'DatabaseUnavailableError',
             cause: { message: 'connect ECONNREFUSED 127.0.0.1:1' },

@@ -281,6 +281,16 @@
         }
       }
     },
+    "分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
+          }
+        }
+      }
+    },
     "分隔线、未完成": {
       "localizations": {
         "en": {
@@ -317,6 +327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        }
+      }
+    },
+    "刻度尺：滑动选数字，每过一格轻震一下": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruler: slide to a number, one light tick per mark"
           }
         }
       }
@@ -547,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Type"
+          }
+        }
+      }
+    },
+    "小林": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lin"
           }
         }
       }
@@ -917,6 +947,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "S"
+          }
+        }
+      }
+    },
+    "时长 · 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
           }
         }
       }
@@ -1497,6 +1537,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Patted"
+          }
+        }
+      }
+    },
+    "开灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights on"
+          }
+        }
+      }
+    },
+    "关灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights off"
+          }
+        }
+      }
+    },
+    "开灯的拉绳：关着是白的，开着是暖黄": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The light cord: white when off, warm when on"
           }
         }
       }

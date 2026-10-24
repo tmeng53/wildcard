@@ -10,7 +10,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "tail", "legL", "legR", "torso", "medal", "acc", "earL", "earR", "head",
+            "shadow", "dustL", "dustR", "root", "propBack", "tail", "legL", "legR", "torso", "medal", "acc", "earL",
+            "earR", "head",
             "flapL",
             "flapR", "crown", "award",
             "nose",
@@ -18,8 +19,10 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
             "heartR", "sparkle",
             "tearL", "tearR",
-            "propR", "food0", "food1", "food2",
-            "armL", "flexL", "muscleL", "armR", "chin", "flexR", "muscleR", "heart", "desk",
+            "food0", "food1", "food2",
+            "armL", "flexL", "muscleL", "armR", "chin", "propR", "gripR", "flexR", "muscleR", "heart", "propFront",
+            "propOver",
+            "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
@@ -73,7 +76,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 55)
+    #expect(figure.parts.count == 59)
 }
 
 @Test(arguments: Persona.allCases)
@@ -293,7 +296,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(choices.props == ["dumbbell", "racket"])
+    #expect(choices.props == ["bottle", "dumbbell"])
     #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.map(\.id) } == [

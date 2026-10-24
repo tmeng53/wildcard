@@ -27,7 +27,15 @@ const list = (dir) => readdirSync(dir).sort();
 const rig = json(join(art, 'rig.json'));
 
 // All of the app's art, as public/character/dress.js takes it.
-const wardrobe = { parts: rig.parts, defaults: rig.defaults, variants: {}, art: {}, tones: {} };
+const wardrobe = {
+  parts: rig.parts,
+  defaults: rig.defaults,
+  skin: rig.skin,
+  variants: {},
+  art: {},
+  tones: {},
+  holds: {},
+};
 for (const file of list(join(art, 'art', 'base')).filter((f) => f.endsWith('.svg')))
   wardrobe.art[`base/${basename(file, '.svg')}`] = svgInner(join(art, 'art', 'base', file));
 for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
@@ -40,6 +48,8 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
       const { base, shades } = json(join(dir, 'tones.json'));
       wardrobe.tones[`${slot}/${variant}`] = { base, shades: shades ?? [] };
     }
+    if (existsSync(join(dir, 'hold.json')))
+      wardrobe.holds[`${slot}/${variant}`] = json(join(dir, 'hold.json')).level;
   }
 }
 
@@ -73,7 +83,6 @@ const bundle = {
   moves: Object.fromEntries(
     moves.map((m) => [m, clip(join(web, 'character', 'moves', `${m}.json`))]),
   ),
-  dumbbell: svgInner(join(art, 'art', 'prop', 'dumbbell', 'propR.svg')),
 };
 
 // The invite page dresses any look the API sends, so it gets the whole wardrobe and every idle.

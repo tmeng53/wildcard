@@ -5,11 +5,11 @@ import CharacterEditorUI
 import Testing
 
 /// The bundled art gives the editor what the design shows: five species, WARM-UP's twelve pieces,
-/// two props, and swatches with a 原色 for exactly the pieces that recolor.
+/// the two props every member starts with, and swatches with a 原色 for exactly the pieces that recolor.
 @Test func thePlaceholderCatalogComesFromTheArt() throws {
     let catalog = try Catalog.placeholder()
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
-    #expect(catalog.props == ["dumbbell", "racket"])
+    #expect(catalog.props == ["bottle", "dumbbell"])
     #expect(catalog.variants["top"] == ["warmup-tee", "warmup-tank", "warmup-hoodie"])
     #expect(catalog.variants["bottom"] == ["warmup-shorts", "warmup-joggers", "warmup-leggings"])
     #expect(catalog.variants["shoes"] == ["warmup-canvas", "warmup-runner"])

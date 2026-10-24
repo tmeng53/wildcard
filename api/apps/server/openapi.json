@@ -128,10 +128,16 @@
               },
               "character": {
                 "$ref": "#/components/schemas/Character"
+              },
+              "joinedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket."
               }
             },
             "required": [
-              "timeZone"
+              "timeZone",
+              "joinedAt"
             ],
             "additionalProperties": false,
             "description": "Null until the member first saves one, right after signing up."

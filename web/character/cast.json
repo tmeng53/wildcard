@@ -37,7 +37,7 @@
         "top": "lap-jacket",
         "bottom": "lap-pants",
         "shoes": "lap-runner",
-        "prop": "stopwatch"
+        "prop": "bottle"
       },
       "colors": {}
     },
@@ -95,7 +95,8 @@
         "top": "halfmoon-tank",
         "bottom": "halfmoon-flare",
         "shoes": "halfmoon-studio",
-        "acc": "halfmoon-tied"
+        "acc": "halfmoon-tied",
+        "prop": "yogamat"
       },
       "colors": {}
     }

@@ -65,7 +65,7 @@ enum EditorNames {
         "warmup-tee": "圆领短袖 T", "warmup-tank": "运动背心", "warmup-hoodie": "连帽卫衣", "warmup-shorts": "抽绳运动短裤",
         "warmup-joggers": "束脚卫裤", "warmup-leggings": "基础紧身裤", "warmup-canvas": "帆布鞋", "warmup-runner": "基础跑鞋",
         "warmup-cap": "棒球帽", "warmup-headband": "飘带发带", "warmup-towel": "挂脖毛巾", "warmup-waistbag": "运动腰包",
-        "dumbbell": "哑铃", "racket": "网球拍",
+        "dumbbell": "哑铃", "bottle": "外卡水杯",
     ]
 
     private static let faces = [

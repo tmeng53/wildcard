@@ -13,6 +13,8 @@ public enum Palette {
     public static let inkSecondary = SRGBColor(red: 0x6B, green: 0x70, blue: 0x80)
     /// Denominators, placeholders and chevrons: large type and decoration only (2.1:1 on white).
     public static let inkTertiary = SRGBColor(red: 0xAE, green: 0xB2, blue: 0xBC)
+    /// Dividers on an ink surface.
+    public static let inkLine = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x49)
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
@@ -29,6 +31,12 @@ public enum Palette {
     public static let brandSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
     public static let brandFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
     public static let brandTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
+    /// The character's ticket, where it is dressed (sign-up and 我): the stub below the tear,
+    /// a step lighter than `brand`; the lamp's housing; the sign-up date; and the pen by the name.
+    public static let brandStub = SRGBColor(red: 0x27, green: 0x2A, blue: 0x32)
+    public static let brandLamp = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x48)
+    public static let brandStamp = SRGBColor(red: 0x7D, green: 0x82, blue: 0x8D)
+    public static let brandPen = SRGBColor(red: 0x9A, green: 0xA0, blue: 0xAA)
 
     // MARK: Pool scene
 
@@ -85,6 +93,18 @@ public enum Palette {
     public static let kraftInk = SRGBColor(red: 0x9E, green: 0x78, blue: 0x49)
     /// The ink over a page while a carton is opened on it.
     public static let dusk = SRGBColor(red: 0x1A, green: 0x1C, blue: 0x22)
+
+    // MARK: Pull cord: the light switch hanging under the home's card at night (开灯)
+
+    /// The ball chain, and the bulb's outline and filament while the lights are off.
+    public static let cordChain = SRGBColor(red: 0xC9, green: 0xCE, blue: 0xD6)
+    /// The cap over the bulb, and the screw base's rings.
+    public static let cordCap = SRGBColor(red: 0x9A, green: 0xA2, blue: 0xAE)
+    public static let cordScrew = SRGBColor(red: 0xB9, green: 0xC0, blue: 0xCA)
+    /// The bulb lit: its glass, outline and filament.
+    public static let bulbLit = SRGBColor(red: 0xFF, green: 0xE9, blue: 0xA8)
+    public static let bulbLitLine = SRGBColor(red: 0xF2, green: 0xC1, blue: 0x4E)
+    public static let bulbFilament = SRGBColor(red: 0xE0, green: 0xA5, blue: 0x26)
 
     // MARK: Clothes: outfit swatches for the character only, never UI color
 

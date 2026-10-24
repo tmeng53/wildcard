@@ -101,6 +101,30 @@ test('leaves out a look whose body this art doesn’t have, and ignores slots an
   expect(await page.locator('.lineup svg > g').innerHTML()).not.toBe('');
 });
 
+test('a held prop takes the wearer’s hand, and a prop that hangs keeps level as the arm swings', async ({
+  page,
+}) => {
+  await stub(page, 200, squad(1));
+  await page.goto('/join/K7M2QX9P');
+  const { grips, level } = await page.evaluate(async () => {
+    const { dress, leveled } = await import('/character/dress.js');
+    const C = window.WILDCARD_CHARACTERS;
+    const gripR = C.parts.findIndex(({ id }) => id === 'gripR');
+    const grip = (body) => dress(C, { body, prop: 'bottle' })[gripR];
+    return {
+      grips: { peach: grip('peach'), cat: grip('cat') },
+      level: { bottle: leveled(C, { prop: 'bottle' }), dumbbell: leveled(C, { prop: 'dumbbell' }) },
+    };
+  });
+  // The fist is drawn in the rig's skin and repainted to each body's own hand.
+  expect(grips.peach).toContain('#F5CDAE');
+  expect(grips.cat).toContain('#F2A65A');
+  expect(grips.cat).not.toContain('#F5CDAE');
+  // The tumbler hangs level from the arm; the dumbbell is gripped and swings with it.
+  expect(level.bottle.length).toBeGreaterThan(0);
+  expect(level.dumbbell).toEqual([]);
+});
+
 test('five stand still in a row; six or more walk through in a loop', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await stub(page, 200, squad(5));

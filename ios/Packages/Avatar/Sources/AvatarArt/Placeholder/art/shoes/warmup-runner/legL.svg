@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <path d="M 87.6 307.2 Q 87.6 294 104.4 294 Q 120 294 120.6 306 Q 121.2 312 115.2 312 L 93.6 312 Q 87.6 312 87.6 307.2 Z" fill="#3A3F4B" stroke="#22252E" stroke-width="2.4"/>
-  <path d="M 98.4 300.6 L 111 299.4 M 100.2 304.2 L 113.4 303" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M 113.8 294.8 Q 118.4 296.6 119.6 300" fill="none" stroke="#E8EBF0" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 86.4 305.4 L 122 305.4 L 122 310.2 Q 122 313.2 118.8 313.2 L 89.6 313.2 Q 86.4 313.2 86.4 310.2 Z" fill="#E8EBF0" stroke="#AEB2BC" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M 87.6 306 Q 87.6 292.8 104.4 292.8 Q 120 292.8 120.6 304.8 Q 121.2 310.8 115.2 310.8 L 93.6 310.8 Q 87.6 310.8 87.6 306 Z" fill="#3A3F4B" stroke="#22252E" stroke-width="2.4"/>
+  <path d="M 98.4 299.4 L 111 298.2 M 100.2 303 L 113.4 301.8" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 113.8 293.6 Q 118.4 295.4 119.6 298.8" fill="none" stroke="#E8EBF0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 86.4 304.2 L 122 304.2 L 122 309 Q 122 312 118.8 312 L 89.6 312 Q 86.4 312 86.4 309 Z" fill="#E8EBF0" stroke="#AEB2BC" stroke-width="1.8" stroke-linejoin="round"/>
 </svg>

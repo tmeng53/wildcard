@@ -46,6 +46,7 @@ struct WildcardApp: App {
     init() {
         _ = DefaultLanguage.applies
         LaunchOptions.forgetSeenRecapIfAsked()
+        LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(
@@ -138,7 +139,8 @@ struct WildcardApp: App {
 
     @ViewBuilder private var root: some View {
         if let editor {
-            CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
+            CharacterEditorView(
+                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
         } else if let signUp, signUp.finished == nil {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 StandInSignIn { signUp.signedIn(name: nil) }
@@ -157,6 +159,8 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
+                // Whoever made their squad in `-onboarding` drops onto the scene they picked.
+                if let scene = signUp?.landing { Task { await today.dropIn(on: scene, coveredAt: .now) } }
                 delegate.opened = { [today, $tab] _ in
                     $tab.wrappedValue = .today
                     Task { await today.load() }
@@ -185,7 +189,7 @@ private struct AppRoot: View {
                     MainTabs.entranceTabBar
                 }
                 .onChange(of: signUp.finished) { _, finished in
-                    if finished != nil { Task { await app.finishSignUp() } }
+                    if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
                 }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(

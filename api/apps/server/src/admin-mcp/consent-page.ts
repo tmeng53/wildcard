@@ -5,6 +5,7 @@ import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import { Hono, type Context } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { html } from 'hono/html';
+import { routePath } from 'hono/route';
 import type { HtmlEscapedString } from 'hono/utils/html';
 import { z } from 'zod';
 
@@ -173,7 +174,7 @@ export function consentPage(deps: ConsentPageDependencies) {
       );
     }
     if (known) return htmlResponse(problemPage(error.message), HTTP_STATUS[error.status]);
-    deps.log.error('consent page failed', { method: c.req.method, path: c.req.path, error });
+    deps.log.error('consent page failed', { method: c.req.method, route: routePath(c), error });
     return htmlResponse(problemPage('Something went wrong on our side. Try again shortly.'), 503);
   });
   return app;
