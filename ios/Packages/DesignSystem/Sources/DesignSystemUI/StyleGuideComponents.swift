@@ -129,6 +129,7 @@ struct PickSection: View {
     @State private var swatch = 2
     @State private var catchphrase = ""
     @State private var query = ""
+    @State private var minutes = 45
 
     private let moreNames: [Text] = [
         Text("骑车", bundle: .module), Text("普拉提", bundle: .module), Text("羽毛球", bundle: .module),
@@ -184,6 +185,11 @@ struct PickSection: View {
                         }
                     }
                 }
+            }
+            GuideGroup(Text("刻度尺：滑动选数字，每过一格轻震一下", bundle: .module)) {
+                TickRuler(
+                    value: $minutes, scale: RulerScale(range: 1...360, step: 1, midEvery: 5, labelEvery: 15),
+                    label: Text("时长 · 分钟", bundle: .module), unit: Text("分钟", bundle: .module))
             }
             GuideGroup(Text("输入框", bundle: .module)) {
                 InputField(
