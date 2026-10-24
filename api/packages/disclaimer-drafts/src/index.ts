@@ -7,7 +7,7 @@ export {
 } from './adapters/postgres-draft-allowance.js';
 export { createPostgresDiceLines } from './adapters/postgres-dice-lines.js';
 export { createPostgresDraftSettings } from './adapters/postgres-draft-settings.js';
-export { DiceLine, DiceLines } from './domain/dice.js';
+export { DiceLine, DiceLineList, DiceLines } from './domain/dice.js';
 export { DraftReason, MemberId, type PromptMeme } from './domain/draft-request.js';
 export { DraftSettings, DraftSettingsChange, ModelName } from './domain/settings.js';
 export type { DraftsOutcome } from './domain/drafts.js';

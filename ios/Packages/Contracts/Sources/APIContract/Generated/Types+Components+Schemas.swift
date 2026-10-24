@@ -118,9 +118,9 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/Catalog/version`.
             public var version: Components.Schemas.Catalog.VersionPayload
             /// - Remark: Generated from `#/components/schemas/Catalog/sports`.
-            public var sports: Components.Schemas.SportsCatalog
+            public var sports: Components.Schemas.SportsCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/disclaimerDice`.
-            public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog
+            public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog?
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -132,8 +132,8 @@ extension Components {
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
-                sports: Components.Schemas.SportsCatalog,
-                disclaimerDice: Components.Schemas.DisclaimerDiceCatalog,
+                sports: Components.Schemas.SportsCatalog? = nil,
+                disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
@@ -152,11 +152,11 @@ extension Components {
                     Components.Schemas.Catalog.VersionPayload.self,
                     forKey: .version
                 )
-                self.sports = try container.decode(
+                self.sports = try container.decodeIfPresent(
                     Components.Schemas.SportsCatalog.self,
                     forKey: .sports
                 )
-                self.disclaimerDice = try container.decode(
+                self.disclaimerDice = try container.decodeIfPresent(
                     Components.Schemas.DisclaimerDiceCatalog.self,
                     forKey: .disclaimerDice
                 )
@@ -172,11 +172,11 @@ extension Components {
                     self.version,
                     forKey: .version
                 )
-                try container.encode(
+                try container.encodeIfPresent(
                     self.sports,
                     forKey: .sports
                 )
-                try container.encode(
+                try container.encodeIfPresent(
                     self.disclaimerDice,
                     forKey: .disclaimerDice
                 )

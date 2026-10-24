@@ -625,9 +625,10 @@ describe('the admin MCP server', () => {
       await call('change_disclaimer_dice', { lines });
       expect(await logged()).toStrictEqual([{ version: 1, lines }]);
 
-      // Too few lines, one missing a language, one too long, or nothing.
+      // Too few lines, the same line twice, one missing a language, one too long, or nothing.
       for (const args of [
         { lines: lines.slice(0, 2) },
+        { lines: [lines[0], ...lines.slice(0, 3)] },
         { lines: [{ zhHans: '腿说休息', en: 'Legs said rest' }, ...lines.slice(1)] },
         { lines: [{ ...lines[0], en: 'x'.repeat(61) }, ...lines.slice(1)] },
         {},

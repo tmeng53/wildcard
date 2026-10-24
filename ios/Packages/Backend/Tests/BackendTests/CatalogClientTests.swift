@@ -90,18 +90,23 @@ import Testing
     #expect(catalog.diceLines.map(\.english) == ["Legs said rest"])
 }
 
-@Test func aCopyThisBuildCantReadGivesWayToTheShippedCatalog() throws {
+@Test func aCopyKeptBeforeTheDiceLinesKeepsItsSportsAndRollsTheShippedDice() throws {
     let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    // Kept by an older build, from before the catalog had its dice lines.
+    // Read from a server from before the catalog had its dice lines.
     let kept = #"""
         {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1,
-          "sports": {"categories": [], "picks": {"signUpCommon": [], "checkInQuick": []}}}}
+          "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
+            "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
+              "icon": "figure.tennis", "offered": true}]}],
+            "picks": {"signUpCommon": [], "checkInQuick": []}}}}
         """#
     try Data(kept.utf8).write(to: directory.appending(path: "catalog.json"))
     let stack = try LocalStack()
     let api = WildcardAPI(
         url: stack.apiURL,
         account: AccountSession(provider: stack.supabase.auth, store: MemorySessionStore(), now: { Date() }))
-    #expect(CatalogClient(api: api, directory: directory).kept() == CatalogClient.bundled)
+    let catalog = CatalogClient(api: api, directory: directory).kept()
+    #expect(catalog.sports.entry(for: "padel")?.names.english == "Padel")
+    #expect(catalog.diceLines == CatalogClient.bundled.diceLines)
 }

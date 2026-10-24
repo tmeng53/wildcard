@@ -13,9 +13,19 @@ export const DiceLine = z.strictObject({
 });
 export type DiceLine = z.infer<typeof DiceLine>;
 
+/** 3 to 50 lines, no two alike in any language, so the three the app rolls always differ. */
+export const DiceLineList = z
+  .array(DiceLine)
+  .min(3)
+  .max(50)
+  .refine(
+    (lines) =>
+      (['zhHans', 'en', 'zhHant'] as const).every(
+        (language) => new Set(lines.map((line) => line[language])).size === lines.length,
+      ),
+    { message: 'Two lines say the same thing' },
+  );
+
 /** Every line, as stored and logged. The app rolls three different ones at a time. */
-export const DiceLines = z.strictObject({
-  version: z.literal(1),
-  lines: z.array(DiceLine).min(3).max(50),
-});
+export const DiceLines = z.strictObject({ version: z.literal(1), lines: DiceLineList });
 export type DiceLines = z.infer<typeof DiceLines>;

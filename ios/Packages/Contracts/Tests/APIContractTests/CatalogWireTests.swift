@@ -19,7 +19,7 @@ private let newer = #"""
 
 @Test func aCatalogWithMoreThanThisBuildKnowsStillReads() throws {
     let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(newer.utf8))
-    let catalog = AppCatalog(wire)
+    let catalog = AppCatalog(wire, otherwise: .empty)
     #expect(
         catalog.diceLines
             == [CatalogNames(simplifiedChinese: "腿说休息", english: "Legs said rest", traditionalChinese: "腿說休息")])
@@ -29,4 +29,14 @@ private let newer = #"""
     #expect(sports.entry(for: "padel")?.shortNames?.simplifiedChinese == "板网")
     #expect(sports.signUpCommon == ["padel"])
     #expect(sports.checkInQuick == ["padel"])
+}
+
+/// A catalog from a server from before a section was added: what it lacks is the build's own.
+@Test func aSectionTheServerDidntSendIsTheBuildsOwn() throws {
+    let older = #"{"version": 1, "disclaimerDice": {"lines": []}}"#
+    let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(older.utf8))
+    let own = AppCatalog(
+        sports: SportCatalog(categories: [], signUpCommon: [], checkInQuick: []),
+        diceLines: [CatalogNames(simplifiedChinese: "累了", english: "Tired", traditionalChinese: "累了")])
+    #expect(AppCatalog(wire, otherwise: own) == own)
 }

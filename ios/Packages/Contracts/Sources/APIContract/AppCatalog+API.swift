@@ -2,9 +2,13 @@ import Contracts
 
 extension AppCatalog {
     /// What this build reads of `GET /public/catalog`. A section, list or field it doesn't know is
-    /// passed over, and a dice line without its words in a language is still shown in the others.
-    public init(_ wire: Components.Schemas.Catalog) {
-        self.init(sports: SportCatalog(wire.sports), diceLines: wire.disclaimerDice.lines.map(CatalogNames.init))
+    /// passed over, and a section the server didn't send (one from before it was added), or a
+    /// dice section with no lines, is `fallback`'s, so the app never loses its sports or its dice.
+    public init(_ wire: Components.Schemas.Catalog, otherwise fallback: AppCatalog) {
+        let dice = wire.disclaimerDice?.lines.map(CatalogNames.init) ?? []
+        self.init(
+            sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
+            diceLines: dice.isEmpty ? fallback.diceLines : dice)
     }
 }
 

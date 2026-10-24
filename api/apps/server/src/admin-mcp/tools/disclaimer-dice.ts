@@ -1,4 +1,4 @@
-import { DiceLine, MemberId, type DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
+import { DiceLineList, MemberId, type DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import { z } from 'zod';
 
 import { adminTool } from '../admin-tool.js';
@@ -32,11 +32,11 @@ export function changeDisclaimerDice({ dice }: DisclaimerDiceToolDependencies) {
     title: 'Change the 请假条 dice lines',
     description:
       'Replaces every dice line with `lines` (3 to 50, each up to 60 characters in every ' +
-      'language): read them first, then send the whole list with your edits. The app rolls ' +
+      'language, no two alike): read them first, then send the whole list with your edits. The app rolls ' +
       'three different lines at a time and picks the new list up on its next catalog read. ' +
       'Returns the lines now.',
     changes: true,
-    input: z.strictObject({ lines: z.array(DiceLine).min(3).max(50) }),
+    input: z.strictObject({ lines: DiceLineList }),
     run: async ({ lines }, { admin }) => dice.replace(lines, MemberId.parse(admin)),
   });
 }

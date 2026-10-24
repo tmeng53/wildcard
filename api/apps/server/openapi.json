@@ -105,9 +105,7 @@
           }
         },
         "required": [
-          "version",
-          "sports",
-          "disclaimerDice"
+          "version"
         ],
         "additionalProperties": {}
       },

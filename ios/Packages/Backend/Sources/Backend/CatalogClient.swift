@@ -21,7 +21,7 @@ public actor CatalogClient {
     /// The catalog to show before the API answers: the last one read, else the one this build
     /// ships with.
     public nonisolated func kept() -> AppCatalog {
-        Self.read(saved).map { AppCatalog($0.catalog) } ?? Self.bundled
+        Self.read(saved).map { AppCatalog($0.catalog, otherwise: Self.bundled) } ?? Self.bundled
     }
 
     /// Reads the API's catalog and keeps it; the catalog, or nil when it is unchanged since the
@@ -31,8 +31,8 @@ public actor CatalogClient {
         guard let read = try? await api.catalogWire(ifNoneMatch: copy?.etag) else { return nil }
         let fresh = SavedCatalog(version: 1, etag: read.etag, catalog: read.catalog)
         if let data = try? JSONEncoder().encode(fresh) { try? DeviceJSON.write(data, to: saved) }
-        let catalog = AppCatalog(read.catalog)
-        return catalog == (copy.map { AppCatalog($0.catalog) } ?? Self.bundled) ? nil : catalog
+        let catalog = AppCatalog(read.catalog, otherwise: Self.bundled)
+        return catalog == (copy.map { AppCatalog($0.catalog, otherwise: Self.bundled) } ?? Self.bundled) ? nil : catalog
     }
 
     /// The catalog this build ships with.
@@ -44,11 +44,11 @@ public actor CatalogClient {
             // The build's own file; a test reads it.
             return .empty
         }
-        return AppCatalog(catalog)
+        return AppCatalog(catalog, otherwise: .empty)
     }()
 
-    /// The copy kept at `url`; nil when there is none, or it is in a shape this build can't read
-    /// (one kept by an older build, say), so the bundled one stands in.
+    /// The copy kept at `url`; nil when there is none, or it is in a shape this build can't read,
+    /// so the bundled one stands in.
     private static func read(_ url: URL) -> SavedCatalog? {
         guard let data = try? Data(contentsOf: url),
             let copy = try? JSONDecoder().decode(SavedCatalog.self, from: data),

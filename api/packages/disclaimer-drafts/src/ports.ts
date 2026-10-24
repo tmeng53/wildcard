@@ -22,7 +22,6 @@ export interface LanguageModel {
   }): Promise<Reply>;
 }
 
-/** Where the draft settings are kept: one value, and a log of every change to it. */
 /** Where the dice lines are kept: one value, and a log of every change. */
 export interface DiceLinesStore {
   /**
@@ -37,6 +36,7 @@ export interface DiceLinesStore {
   save(dice: DiceLines, by: MemberId): Promise<boolean>;
 }
 
+/** Where the draft settings are kept: one value, and a log of every change to it. */
 export interface DraftSettingsStore {
   /**
    * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two
