@@ -11,6 +11,10 @@ struct JerseyNumberView: View {
     @Bindable var model: MeModel
     let close: () -> Void
     @State private var picked: Int
+    /// Set once this page has saved: a failure shows only for a save made here, never for an
+    /// earlier one on another page, and 保存 waits while one is on its way.
+    @State private var saving = false
+    @State private var saved = false
     @Environment(\.sceneTheme) private var theme
 
     init(model: MeModel, close: @escaping () -> Void) {
@@ -46,20 +50,23 @@ struct JerseyNumberView: View {
             .pickerStyle(.wheel)
             .accessibilityIdentifier("number.picker")
             Spacer(minLength: Space.l)
-            if model.saveFailed {
+            if saved && model.saveFailed {
                 SaveFailed().frame(maxWidth: .infinity).padding(.bottom, Space.s)
             }
             Button {
                 // The wheel offers only 00 to 99.
                 guard let number = try? JerseyNumber(picked) else { return }
+                saving = true
                 Task {
                     await model.save(jerseyNumber: number)
+                    (saving, saved) = (false, true)
                     if !model.saveFailed { close() }
                 }
             } label: {
                 Text("保存", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
+            .disabled(saving)
             .accessibilityIdentifier("number.save")
         }
         .padding(.horizontal, Space.pageMargin)

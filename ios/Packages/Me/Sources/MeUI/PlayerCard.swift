@@ -83,30 +83,33 @@ private struct CardFront: View {
             MeStage(character: overview.character, floor: .borderDefault)
                 .padding(.bottom, -Space.xxs)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .overlay(alignment: .topLeading) {
-                    if let number = overview.cardNumber {
-                        Text(verbatim: number.text)
-                            .typeStyle(TypeRamp.scoreHero)
-                            .foregroundStyle(Color(role: .fgDefault, in: theme))
-                            .monospacedDigit()
-                            .padding(.leading, Space.s)
-                            .padding(.top, Space.xs)
-                            .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
-                            .accessibilityIdentifier("me.cardNumber")
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if let latest = overview.titles.latest {
-                        Text(verbatim: latest.title)
-                            .typeStyle(TypeRamp.footnoteEmphasis)
-                            .foregroundStyle(Color(role: .fgDefault, in: theme))
-                            .lineLimit(1)
-                            .padding(.horizontal, Space.xs)
-                            .padding(.vertical, Space.xxs)
-                            .background(Color(role: .bgCanvas, in: theme), in: Capsule())
-                            .padding(.trailing, Space.xs)
-                            .padding(.top, Space.s)
-                            .accessibilityIdentifier("me.latestTitle")
+                .overlay(alignment: .top) {
+                    // One row, so a long title gives way (truncating) before it can reach the number.
+                    HStack(alignment: .top, spacing: Space.xs) {
+                        if let number = overview.cardNumber {
+                            Text(verbatim: number.text)
+                                .typeStyle(TypeRamp.scoreHero)
+                                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                                .monospacedDigit()
+                                .fixedSize()
+                                .padding(.leading, Space.s)
+                                .padding(.top, Space.xs)
+                                .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
+                                .accessibilityIdentifier("me.cardNumber")
+                        }
+                        Spacer(minLength: 0)
+                        if let latest = overview.titles.latest {
+                            Text(verbatim: latest.title)
+                                .typeStyle(TypeRamp.footnoteEmphasis)
+                                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                                .lineLimit(1)
+                                .padding(.horizontal, Space.xs)
+                                .padding(.vertical, Space.xxs)
+                                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                                .padding(.trailing, Space.xs)
+                                .padding(.top, Space.s)
+                                .accessibilityIdentifier("me.latestTitle")
+                        }
                     }
                 }
                 .background(

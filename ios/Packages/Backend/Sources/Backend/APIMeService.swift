@@ -21,12 +21,13 @@ public struct APIMeService: MeService {
             let member = try await api.me()
             let character = member.profile?.character
             let totals = try await api.checkInTotals()
-            let titles = try await api.awardTotals()
             let squad = try await api.mySquads().first
             // 本周 is counted against the plan the squad's today carries; no squad, no week. A today
             // that doesn't load leaves the week out rather than the whole page.
             var week: WeekCount?
             if let squad { week = try? await api.today(of: squad.id).myWeek.week }
+            // So do the titles: the card shows none rather than no card.
+            let titles = try? await api.awardTotals()
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -42,9 +43,11 @@ public struct APIMeService: MeService {
                 // Members are listed in the order they joined.
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 mostTrained: totals.topSport.map { MostTrained(activity: $0.activity, checkIns: $0.checkIns) },
-                titles: TitlesWon(
-                    count: titles.titles,
-                    latest: titles.latest.map { TitlesWon.Latest(title: $0.title, times: $0.times) }))
+                titles: titles.map { titles in
+                    TitlesWon(
+                        count: titles.titles,
+                        latest: titles.latest.map { TitlesWon.Latest(title: $0.title, times: $0.times) })
+                } ?? .none)
         }
     }
 
