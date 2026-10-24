@@ -43,16 +43,22 @@ public struct CharacterEditorView: View {
             }
             .frame(height: EditorStage.height)
             .padding(.horizontal, Space.pageMargin)
-            CategoryBar(
-                model.tabs.map {
-                    CategoryBarItem(
-                        id: $0, title: EditorNames.tab($0), accessibilityIdentifier: "editor.tab.\($0.rawValue)")
-                },
-                selection: $model.tab
-            )
-            .padding(.top, Space.s)
-            ChoicesPanel(model: model)
+            // The tabs and choices make room while the nickname is typed, so the page fits above
+            // the keyboard and 就这样 stays in reach.
+            if !isNaming {
+                CategoryBar(
+                    model.tabs.map {
+                        CategoryBarItem(
+                            id: $0, title: EditorNames.tab($0), accessibilityIdentifier: "editor.tab.\($0.rawValue)")
+                    },
+                    selection: $model.tab
+                )
+                .padding(.top, Space.s)
+                ChoicesPanel(model: model)
+            }
+            Spacer(minLength: 0)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .background {
             // A tap on the empty page puts the keyboard away; buttons and tiles keep their taps.
             Color(role: .bgCanvas, in: theme)
@@ -63,11 +69,6 @@ public struct CharacterEditorView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             DoneBar(context: context, result: model.result, onDone: onDone)
         }
-        // The page is taller than the room above the keyboard, so making way for it pushed the
-        // header under the status bar. The nickname sits high enough to stay clear of the
-        // keyboard, which covers the tabs and 就这样 until Return, a tap outside or a scroll puts
-        // it away.
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear { model.start() }
     }
 }
