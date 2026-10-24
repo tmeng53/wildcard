@@ -30,22 +30,6 @@ export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): T
   return 'notCheckedIn';
 }
 
-/**
- * The check-ins the squad sees: a 请假条 whose author trained the same day is taken back. The
- * day simply isn't a day off, so it leaves the feed, the 战报 and the awards; the database keeps
- * it, for the record.
- */
-export function withoutTakenBackDisclaimers<CheckIn extends CheckInRecord>(
-  checkIns: readonly CheckIn[],
-): CheckIn[] {
-  const trained = new Set(
-    checkIns.filter(({ kind }) => kind === 'trained').map(({ member, day }) => `${member} ${day}`),
-  );
-  return checkIns.filter(
-    ({ kind, member, day }) => kind !== 'disclaimer' || !trained.has(`${member} ${day}`),
-  );
-}
-
 /** The kind of the latest meal checked in on `day`, if any. */
 export function latestMealOn(
   checkIns: readonly CheckInRecord[],
