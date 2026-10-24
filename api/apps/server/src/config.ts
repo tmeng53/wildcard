@@ -72,6 +72,12 @@ const Environment = z.object({
   // The service account Cloud Scheduler signs its OIDC tokens as, on the hosted server. When
   // set, only its tokens (for PUBLIC_URL) start jobs, and JOBS_TOKEN isn't used.
   JOBS_SCHEDULER_ACCOUNT: z.email().optional(),
+  // The Google Cloud project the server runs in (set by the deploy), so each log entry names its
+  // request's trace and Cloud Logging groups a request's entries. Unset off Google Cloud.
+  GOOGLE_CLOUD_PROJECT: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/)
+    .optional(),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
@@ -122,6 +128,8 @@ export interface Config {
         >;
       }
     | undefined;
+  /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
+  readonly traceProject: string | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -186,6 +194,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
           ? { kind: 'token', token: result.data.JOBS_TOKEN }
           : undefined,
     apns,
+    traceProject: result.data.GOOGLE_CLOUD_PROJECT,
   };
 }
 
