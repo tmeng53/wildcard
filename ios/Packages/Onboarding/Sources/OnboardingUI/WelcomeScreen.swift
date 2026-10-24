@@ -186,11 +186,12 @@ struct WelcomeScreen<SignIn: View>: View {
         sprint = nil
     }
 
-    /// Waits until `deadline`; false when the screen moved on, taking `runner` down unless a
-    /// newer layout's sprint has already replaced it.
+    /// Waits until `deadline`; false when the screen moved on or went to the background (a task
+    /// asleep through a suspension can wake before it is cancelled), taking `runner` down
+    /// unless a newer layout's sprint has already replaced it.
     private func wait(until deadline: ContinuousClock.Instant, _ runner: SprintRunner) async -> Bool {
         try? await Task.sleep(until: deadline, clock: .continuous)
-        guard Task.isCancelled else { return true }
+        guard Task.isCancelled || away else { return true }
         if sprint === runner { sprint = nil }
         return false
     }
