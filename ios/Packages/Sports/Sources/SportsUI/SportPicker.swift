@@ -9,13 +9,18 @@ import SwiftUI
 public struct SportPicker: View {
     @Environment(\.sceneTheme) private var theme
     let selected: Activity
+    /// 常用运动: what the member usually does, shown first, at most `recentLimit`.
+    let recent: [Activity]
     let pick: (Activity) -> Void
     @State private var query = ""
     /// The tab shown: the first until one is picked.
     @State private var picked: String?
 
-    public init(selected: Activity, pick: @escaping (Activity) -> Void) {
+    static let recentLimit = 6
+
+    public init(selected: Activity, recent: [Activity] = [], pick: @escaping (Activity) -> Void) {
         self.selected = selected
+        self.recent = Array(recent.prefix(Self.recentLimit))
         self.pick = pick
     }
 
@@ -25,6 +30,18 @@ public struct SportPicker: View {
                 SearchField(text: $query, prompt: Text("搜索运动", bundle: .module))
                     .padding(.horizontal, Space.pageMargin)
                     .accessibilityIdentifier("sports.search")
+                if query.isEmpty, !recent.isEmpty {
+                    VStack(alignment: .leading, spacing: Space.labelGap) {
+                        SectionLabel(Text("常用运动", bundle: .module))
+                        FlowRow {
+                            ForEach(recent, id: \.key) { activity in
+                                PickPill(activity.name, isSelected: selected == activity) { pick(activity) }
+                                    .accessibilityIdentifier("sports.recent.\(activity.key)")
+                            }
+                        }
+                    }
+                    .padding(.horizontal, Space.pageMargin)
+                }
                 if query.isEmpty, let category {
                     CategoryBar(
                         categories,

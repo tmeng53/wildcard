@@ -82,7 +82,9 @@ import type { Database } from './ports.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
-const log = createLog((line) => process.stdout.write(line));
+const log = createLog((line) => process.stdout.write(line), {
+  traceProject: config.traceProject,
+});
 const db = createDatabase(config.databaseUrl, {
   ca: config.databaseCaFile === undefined ? undefined : readFileSync(config.databaseCaFile, 'utf8'),
   onIdleError: (error) => {

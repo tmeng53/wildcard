@@ -215,7 +215,7 @@ export class WeekTooFarAheadError extends AppError {
 
 /**
  * Thrown for a change to a day of the current week that has already started: earlier days stay
- * as planned, and today stays a training or a rest day.
+ * as planned, and a training today stays a training day.
  */
 export class PlanDayStartedError extends AppError {
   override readonly name = 'PlanDayStartedError';
@@ -227,7 +227,10 @@ export class PlanDayStartedError extends AppError {
   }
 }
 
-/** Thrown when a change to the current week's plan adds or removes a rest day. Swap days instead. */
+/**
+ * Thrown when a change to the current week's plan adds or removes a rest day, other than a rest
+ * today becoming a training day. Swap days instead.
+ */
 export class RestDaysFixedError extends AppError {
   override readonly name = 'RestDaysFixedError';
   readonly reason = 'REST_DAYS_FIXED';

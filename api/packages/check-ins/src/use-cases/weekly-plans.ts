@@ -5,6 +5,7 @@ import {
   checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
+  trainedOnRestDay,
   weekStartOf,
   type PlanDays,
   type WeekStart,
@@ -68,6 +69,27 @@ export async function findWeeklyPlan(
     days: latest.days,
     source: latest.weekStart === weekStart ? 'saved' : 'carriedOver',
   };
+}
+
+/**
+ * Makes `day` a training day of the 练了's sport in the member's plan when it was a rest day, so
+ * training on a planned rest day counts in the week like any training day. Safe to repeat.
+ */
+export async function planTrainedDay(
+  { store }: { readonly store: WeeklyPlanStore },
+  {
+    member,
+    day,
+    training,
+  }: {
+    readonly member: MemberId;
+    readonly day: LocalDay;
+    readonly training: Parameters<typeof trainedOnRestDay>[0]['training'];
+  },
+): Promise<void> {
+  const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
+  const days = trainedOnRestDay({ plan, day, training });
+  if (days !== undefined) await store.save({ member, weekStart: plan.weekStart, days });
 }
 
 export function createWeeklyPlans(deps: Deps): WeeklyPlans {
