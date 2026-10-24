@@ -82,14 +82,16 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         var sheet = try await week(starting: weekStart)
         if weekStart == thisWeek {
             let before = sheet.plan
-            // Days before today stay as they were; today may change its sport, not its kind.
+            // Days before today stay as they were; a training today stays a training day, and a
+            // rest today may become one, one rest day fewer.
             let todayIndex = today.weekday - 1
-            guard days.prefix(todayIndex) == before.prefix(todayIndex),
-                (days[todayIndex] == .rest) == (before[todayIndex] == .rest)
+            guard days.count == before.count, days.prefix(todayIndex) == before.prefix(todayIndex),
+                before[todayIndex] == .rest || days[todayIndex] != .rest
             else { throw .dayStarted }
-            guard days.count(where: { $0 == .rest }) == before.count(where: { $0 == .rest }) else {
-                throw .restDaysFixed
-            }
+            let tookUpToday = before[todayIndex] == .rest && days[todayIndex] != .rest
+            let rests = days.count(where: { $0 == .rest })
+            let kept = before.count(where: { $0 == .rest })
+            guard rests == kept || (tookUpToday && rests == kept - 1) else { throw .restDaysFixed }
         }
         sheet.plan = days
         sheets[weekStart] = sheet
