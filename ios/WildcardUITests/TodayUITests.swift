@@ -253,6 +253,10 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
         settle()
         keepScreenshot(named: "13-today-my-week")
+        // Tapping a day shows its line under the calendar.
+        pickADayNotToday(in: app)
+        settle()
+        keepScreenshot(named: "13b-today-my-week-picked")
         // Leave the card as the other tests expect it.
         app.buttons["squadcard.page.squad"].tap()
     }
@@ -334,4 +338,14 @@ extension TodayUITests {
         XCTAssertTrue(app.buttons["compose.minutes.45"].isSelected, "45 minutes isn't picked")
         XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "the ruler stayed open after picking 45")
     }
+}
+
+/// Taps Monday, or Tuesday when Monday is today and so already picked, and checks the line under
+/// the calendar follows it.
+private func pickADayNotToday(in app: XCUIApplication) {
+    let day = app.buttons["squadcard.day.0"].isSelected ? 1 : 0
+    app.buttons["squadcard.day.\(day)"].tap()
+    XCTAssertTrue(app.buttons["squadcard.day.\(day)"].isSelected, "the tapped day isn't picked")
+    let line = app.descendants(matching: .any).matching(identifier: "squadcard.dayLine").firstMatch.label
+    XCTAssertTrue(line.hasPrefix(day == 0 ? "周一" : "周二"), "the line isn't the tapped day's: \(line)")
 }

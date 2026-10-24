@@ -917,6 +917,36 @@
           }
         }
       }
+    },
+    "%@ %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld min"
+          }
+        }
+      }
+    },
+    "训练日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training day"
+          }
+        }
+      }
+    },
+    "请假了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day off"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

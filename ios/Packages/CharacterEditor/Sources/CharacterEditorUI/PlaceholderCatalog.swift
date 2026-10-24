@@ -3,21 +3,22 @@ import AvatarDomain
 import CharacterEditorDomain
 
 extension Catalog {
-    /// What the placeholder character's bundled art offers: the species, hats and props in its
-    /// `editor.json`, every bundled hair, face part, top and bottom, and their preset colors.
+    /// What the placeholder character's bundled art offers: the species, clothes and props in
+    /// its `editor.json`, every bundled hair and face part, and their preset colors.
     public static func placeholder() throws(AvatarError) -> Catalog {
         let choices = try PlaceholderCharacter.editorChoices()
-        var variants: [Slot: [String]] = ["hat": choices.hats]
-        for slot in Catalog.dressSlots where slot != "prop" && slot != "hat" {
+        var variants = choices.wear.mapValues { $0.map(\.id) }
+        for slot in ["hair"] + PlaceholderCharacter.faceSlots {
             variants[slot] = PlaceholderCharacter.variants(for: slot)
         }
         var swatches: [Slot: [String: [RGBAColor]]] = [:]
         var originals: [Slot: [String: RGBAColor]] = [:]
-        let recolorable: [(Slot, [String])] = [
-            ("body", choices.species.flatMap(\.bodies)), ("hair", variants["hair"] ?? []),
-            ("eyes", variants["eyes"] ?? []), ("brows", variants["brows"] ?? []), ("top", variants["top"] ?? []),
-            ("bottom", variants["bottom"] ?? []),
-        ]
+        // Typed piece by piece: as one literal, Xcode's type checker gives up on it.
+        let bodies: [String] = choices.species.flatMap(\.bodies)
+        var recolorable: [(Slot, [String])] = [("body", bodies)]
+        for slot: Slot in ["hair", "eyes", "brows"] + Catalog.clothingSlots {
+            recolorable.append((slot, variants[slot] ?? []))
+        }
         for (slot, names) in recolorable {
             for name in names {
                 let colors = PlaceholderCharacter.swatches(for: slot, wearing: name)

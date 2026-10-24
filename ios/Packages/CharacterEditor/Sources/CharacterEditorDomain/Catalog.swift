@@ -36,5 +36,8 @@ public struct Catalog: Hashable, Sendable {
     }
 
     /// The slots picked by tiles, besides `body`: what a look may wear.
-    public static let dressSlots: [Slot] = ["hair"] + PlaceholderCharacter.faceSlots + ["hat", "top", "bottom", "prop"]
+    public static let dressSlots: [Slot] = ["hair"] + PlaceholderCharacter.faceSlots + clothingSlots + ["prop"]
+
+    /// The clothes, in the order the editor's racks show them.
+    public static let clothingSlots: [Slot] = ["top", "bottom", "shoes", "hat", "acc"]
 }

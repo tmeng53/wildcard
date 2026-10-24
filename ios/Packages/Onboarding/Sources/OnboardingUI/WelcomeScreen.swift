@@ -44,10 +44,13 @@ struct WelcomeScreen<SignIn: View>: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .ignoresSafeArea(edges: .bottom)
                 if let sprint {
-                    // The tape, from above the screen's top down to the floor.
+                    // The tape, from above the screen's top down to the floor. It reaches past
+                    // the top inside a frame of the screen's own height, so the stack keeps its
+                    // size: a taller stack is centred in its frame, which lifted the floor and
+                    // the squad by half the status bar until the tape went and they dropped back.
                     FinishTape(runner: sprint, theme: theme)
                         .frame(width: proxy.size.width, height: proxy.size.height + top)
-                        .offset(y: -top)
+                        .frame(height: proxy.size.height, alignment: .bottom)
                 }
                 ForEach(crowd.spots.indices, id: \.self) { index in
                     crowdMember(index, unit: unit, bottom: proxy.size.height)

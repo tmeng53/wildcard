@@ -12,7 +12,7 @@ import Testing
     #expect(try seated.part("desk").art.count == 1)
     #expect(try seated.part("propR").art.isEmpty)
     #expect(seated.parts.last?.id == "desk")
-    #expect(PlaceholderCharacter.atDesk(Looks.cat).variants["hat"] == "cap")
+    #expect(PlaceholderCharacter.atDesk(Looks.cat).variants["hat"] == "deuce-visor")
 }
 
 /// Typing and crying loop without a jump and stay on the canvas, on every look and persona.

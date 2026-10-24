@@ -61,19 +61,17 @@ struct ScheduleStoreTests {
         #expect(offline.weeks.isEmpty)
     }
 
-    @Test func aSwapIsSavedAtOnce() async {
+    @Test func aDayStillToComeThisWeekRestsAndIsSavedAtOnce() async {
         let backend = FakeBackend()
         let store = store(backend)
         await store.load()
-        #expect(await store.tap(5) == .lifted)
-        #expect(await backend.savedPlans.isEmpty, "lifting saves nothing")
-        #expect(await store.tap(6) == .swapped)
-        let swapped: [PlanDay] = [
-            .train(.sport(.run)), .train(.sport(.tennis)), .rest, .train(.sport(.strength)), .train(.sport(.run)),
-            .train(.sport(.tennis)), .rest,
-        ]
-        #expect(await backend.savedPlans == [swapped])
-        #expect(store.sheet?.plan == swapped)
+        #expect(await store.tap(4) == .selected)
+        #expect(await backend.savedPlans.isEmpty, "selecting saves nothing")
+        await store.rest()
+        var rested = Fixtures.plan
+        rested[4] = .rest
+        #expect(await backend.savedPlans == [rested])
+        #expect(store.sheet?.plan == rested)
         #expect(store.failure == nil)
     }
 
@@ -112,12 +110,13 @@ struct ScheduleStoreTests {
         )
     }
 
-    @Test func fuelGoalsChangeOnlyBeforeTheWeekAndHoldThree() async throws {
+    @Test func fuelGoalsChangeThisWeekAndLaterAndHoldThree() async throws {
         let backend = FakeBackend()
         let store = store(backend)
         await store.load()
+        #expect(store.canEditFuel, "this week's goals change too")
         await store.toggleFuel(.suggested(.water))
-        #expect(await backend.savedFuel.isEmpty, "this week's goals are set")
+        #expect(await backend.savedFuel.count == 1)
 
         await store.show(thisWeek.adding(days: 7))
         #expect(store.canEditFuel)
@@ -128,7 +127,7 @@ struct ScheduleStoreTests {
         #expect(store.sheet?.fuel == [.suggested(.water), .suggested(.veggies), .own("少喝咖啡")])
         await store.toggleFuel(.suggested(.water))
         #expect(store.sheet?.fuel == [.suggested(.veggies), .own("少喝咖啡")])
-        #expect(await backend.savedFuel.count == 4)
+        #expect(await backend.savedFuel.count == 5)
     }
 
     @Test func anOwnFuelGoalIsOneShortLine() throws {

@@ -16,6 +16,9 @@ public struct TodayView: View {
     @State private var model: TodayModel
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
+    /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
+    /// view is made anew on coming back to the tab, and going to the background clears it.
+    @State private var pickedDay: Int?
     /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
     /// shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
@@ -76,6 +79,7 @@ public struct TodayView: View {
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
+            if phase == .background { pickedDay = nil }
         }
     }
 
@@ -179,7 +183,7 @@ public struct TodayView: View {
             Group {
                 if let recap {
                     SquadCard(
-                        squad: squad, mine: mine, page: $cardPage, avatar: { head($0) },
+                        squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay, avatar: { head($0) },
                         footer: {
                             RecapTag(recap: recap, isSeen: recapSeen == day.description) {
                                 recapSeen = day.description
@@ -189,7 +193,7 @@ public struct TodayView: View {
                             }
                         })
                 } else {
-                    SquadCard(squad: squad, mine: mine, page: $cardPage) { head($0) }
+                    SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                 }
             }
             .accessibilityIdentifier("today.card")
@@ -230,8 +234,9 @@ public struct TodayView: View {
         if let player = model.head(of: member.id) { CharacterHead(player: player) }
     }
 
-    /// My week for the card's second page: this week's days, what I trained and my meals, with
-    /// the counts the squad's today carries.
+    /// My week for the card's second page: this week's days, what I trained, and each day's line
+    /// (what I trained or the plan's sport, and my meals up to today), with the count the squad's
+    /// today carries.
     private func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
@@ -249,8 +254,37 @@ public struct TodayView: View {
                 case .open: .planned(symbol: activity?.symbol ?? "figure.run")
                 }
             },
-            today: record.today, healthyMeals: record.healthyMeals, cheatMeals: record.cheatMeals,
-            lifetimeTrained: home.today.myWeek.lifetimeTrainedDays)
+            today: record.today,
+            details: record.days.indices.map { index in
+                dayDetail(
+                    record.days[index], activity: record.activities[index], log: record.logs[index],
+                    isToCome: index > record.today)
+            })
+    }
+
+    /// A day's line: what I trained with its minutes, 请假了 or 休息日, else the plan's sport, light.
+    private func dayDetail(
+        _ status: WeekRecord.Day, activity: Activity?, log: WeekRecord.DayLog, isToCome: Bool
+    ) -> WeekDayDetail {
+        let meals = isToCome ? nil : WeekDayDetail.Meals(healthy: log.healthyMeals, cheat: log.cheatMeals)
+        switch status {
+        case .trained:
+            let line = log.sessions.map { session in
+                if let minutes = session.minutes {
+                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module)
+                } else {
+                    session.activity.localizedName
+                }
+            }
+            return WeekDayDetail(line: line.joined(separator: " · "), isPlan: false, meals: meals)
+        case .disclaimer:
+            return WeekDayDetail(line: String(localized: "请假了", bundle: .module), isPlan: false, meals: meals)
+        case .restDay:
+            return WeekDayDetail(line: String(localized: "休息日", bundle: .module), isPlan: false, meals: meals)
+        case .open:
+            return WeekDayDetail(
+                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module), isPlan: true, meals: meals)
+        }
     }
 
     private var isPickingPhotos: Binding<Bool> {

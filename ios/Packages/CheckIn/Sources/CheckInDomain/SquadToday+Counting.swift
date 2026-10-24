@@ -65,7 +65,6 @@ extension SquadToday {
         member.training = .trained
         today.trained += 1
         squadWeek.trainedDays += 1
-        myWeek.lifetimeTrainedDays += 1
         if (myWeek.firstDay...myWeek.lastDay).contains(day) { myWeek.week.trainedDays += 1 }
     }
 

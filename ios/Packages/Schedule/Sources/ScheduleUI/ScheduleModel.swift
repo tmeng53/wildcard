@@ -40,9 +40,6 @@ public final class ScheduleModel {
     /// Typing a 饮食小目标 of their own.
     var writingFuel = false
     private(set) var saving = Saving.idle
-    /// Bumps when a rest day is lifted off the poster, for its haptic; a plain select has none.
-    private(set) var lifts = 0
-    private(set) var swaps = 0
 
     private let photos: any PosterSaver
 
@@ -89,14 +86,7 @@ public final class ScheduleModel {
 
     func tap(_ day: Int) {
         fuelOpen = false
-        Task {
-            let outcome = await store.tap(day)
-            switch outcome {
-            case .locked, .selected, .released: break
-            case .lifted: lifts += 1
-            case .swapped: swaps += 1
-            }
-        }
+        Task { await store.tap(day) }
     }
 
     func pick(_ activity: Activity) {

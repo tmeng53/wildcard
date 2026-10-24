@@ -40,12 +40,15 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "21-editor-hair")
 
         app.buttons["editor.tab.outfit"].tap()
-        let hoodie = app.buttons["editor.tile.top.hoodie"]
-        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 卫衣 tile")
+        let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]
+        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 连帽卫衣 tile")
         hoodie.tap()
-        waitUntilSelected(hoodie, "picking 卫衣 didn't select it")
+        waitUntilSelected(hoodie, "picking 连帽卫衣 didn't select it")
         app.buttons["editor.swatch.top.2"].tap()
-        app.buttons["editor.tile.hat.cap"].tap()
+        // Hats come after the tops, bottoms and shoes, below the fold.
+        let cap = app.buttons["editor.tile.hat.warmup-cap"]
+        scrollUntilHittable(cap, in: app)
+        cap.tap()
         settle()
         keepScreenshot(named: "22-editor-outfit")
     }
@@ -167,7 +170,9 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
         XCTAssertEqual(app.buttons["editor.tab.look"].label, "Look")
         app.buttons["editor.tab.outfit"].tap()
-        XCTAssertEqual(app.buttons["editor.tile.hat.none"].label, "No hat")
+        let noHat = app.buttons["editor.tile.hat.none"]
+        scrollUntilHittable(noHat, in: app)
+        XCTAssertEqual(noHat.label, "No hat")
         settle()
         keepScreenshot(named: "28-editor-profile-en")
     }
@@ -203,7 +208,7 @@ final class CharacterEditorUITests: XCTestCase {
         // Clear of 就这样 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
         let done = app.buttons["editor.done"]
         func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
-        for _ in 0..<8 where !inView() {
+        for _ in 0..<12 where !inView() {
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(inView(), "\(element.identifier) never scrolled into view")
