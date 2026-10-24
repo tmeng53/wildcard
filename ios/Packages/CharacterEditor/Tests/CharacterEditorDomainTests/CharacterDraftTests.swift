@@ -225,3 +225,32 @@ private func changed(_ editing: inout CharacterDraft, _ change: (inout Character
     #expect(street.rack(of: "lap").map(\.variant) == ["visor"])
     #expect(street.rack(of: "deuce").isEmpty)
 }
+
+/// Swapping a piece keeps the color it showed, its art's own included, when the new piece
+/// offers it, and the new piece's own color stays its 原色.
+@Test func clothesKeepTheirColorAcrossPieces() {
+    let white = RGBAColor(red: 0xF4, green: 0xF6, blue: 0xFA)
+    let grey = RGBAColor(red: 0x6B, green: 0x70, blue: 0x80)
+    var store = catalog
+    store.variants["top"] = ["tee", "hoodie", "jersey"]
+    store.swatches["top"] = ["tee": [white, grey, blue], "hoodie": [grey, white, blue], "jersey": [blue]]
+    store.originals["top"] = ["tee": white, "hoodie": grey, "jersey": blue]
+    var editing = CharacterDraft(catalog: store, look: lifter, persona: .energetic, nickname: "Tracy")
+    // The tee in its own white: the hoodie comes white too, not its own grey.
+    #expect(changed(&editing) { $0.pick("hoodie", for: "top") })
+    #expect(editing.outfit.colors["top"] == white)
+    // Back to the tee: white is the tee's own again.
+    #expect(changed(&editing) { $0.pick("tee", for: "top") })
+    #expect(editing.outfit.colors["top"] == nil)
+    // A blue tee makes a blue hoodie, and the jersey, blue by itself, wears its own.
+    editing.pickColor(blue, for: "top")
+    editing.pick("hoodie", for: "top")
+    #expect(editing.outfit.colors["top"] == blue)
+    editing.pick("jersey", for: "top")
+    #expect(editing.outfit.colors["top"] == nil)
+    // A grey hoodie swapped for the jersey, which has no grey, wears the jersey's own.
+    editing.pick("hoodie", for: "top")
+    editing.pickColor(nil, for: "top")
+    editing.pick("jersey", for: "top")
+    #expect(editing.outfit.colors["top"] == nil)
+}

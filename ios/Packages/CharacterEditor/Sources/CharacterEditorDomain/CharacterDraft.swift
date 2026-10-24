@@ -60,22 +60,29 @@ public struct CharacterDraft: Hashable, Sendable {
     }
 
     /// Wears `variant` in `slot`, or nothing there when nil. A color stays when the new
-    /// variant can wear it too: hair keeps its color across styles, skin across people. An
-    /// animal's coat starts from its own colors. Brows put on without a color take the hair's.
+    /// variant can wear it too: hair keeps its color across styles, skin across people, and a
+    /// piece of clothing the color it showed, even its own (a white tee swapped for a hoodie
+    /// gives a white hoodie). An animal's coat starts from its own colors. Brows put on without
+    /// a color take the hair's.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
-        guard picks.variants[slot] != variant else { return false }
+        let worn = picks.variants[slot]
+        guard worn != variant else { return false }
         var next = picks
         next.variants[slot] = variant
-        let keepsColor: Bool
-        if let variant, let color = picks.colors[slot] {
-            let sameSpecies =
-                slot != "body" || picks.variants["body"].flatMap(catalog.species(of:)) == catalog.species(of: variant)
-            keepsColor = sameSpecies && catalog.swatches(for: slot, wearing: variant).contains(color)
+        // What the slot showed: its color, or for clothes the art's own.
+        let shown =
+            picks.colors[slot]
+            ?? (Catalog.clothingSlots.contains(slot) ? worn.flatMap { catalog.originals[slot]?[$0] } : nil)
+        if let variant, let color = shown,
+            slot != "body" || worn.flatMap(catalog.species(of:)) == catalog.species(of: variant)
+        {
+            let own = catalog.originals[slot]?[variant]
+            let offered = catalog.swatches(for: slot, wearing: variant).contains(color)
+            next.colors[slot] = offered && color != own ? color : nil
         } else {
-            keepsColor = false
+            next.colors[slot] = nil
         }
-        if !keepsColor { next.colors[slot] = nil }
         if slot == "brows", variant != nil, next.colors["brows"] == nil { next.colors["brows"] = picks.colors["hair"] }
         commit(next)
         return true
