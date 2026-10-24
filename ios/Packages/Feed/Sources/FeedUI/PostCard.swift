@@ -46,7 +46,10 @@ struct PostCard: View {
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         )
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        .gesture(holdAndSlide, isEnabled: canRespond)
+        // Alongside the feed's scroll, not in place of it: a plain gesture with a drag in it keeps
+        // the list from scrolling when a swipe starts on a card. The feed stops scrolling once the
+        // card lifts, so the slide then only picks.
+        .simultaneousGesture(holdAndSlide, including: canRespond ? .all : .subviews)
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
         .blur(radius: model.lifted && !isLifted ? Scrim.blurRadius : 0)
         .zIndex(isLifted ? 1 : 0)
