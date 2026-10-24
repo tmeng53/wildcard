@@ -62,8 +62,8 @@ public final class SignUpModel {
 
     /// This week's days, Monday first, for the poster's dates.
     let weekDays: [LocalDay]
-    /// The week's number in the year, the poster's W43.
-    let weekNumber: Int
+    /// The poster's W1: weeks count from the one the member signs up in.
+    let weekNumber = 1
 
     @ObservationIgnored private let service: any SignUpService
     /// How many of this week's days are over: 0 on its first day.
@@ -85,7 +85,6 @@ public final class SignUpModel {
         let today = LocalDay(at: now, in: timeZone)
         weekDays = (0..<WeeklyPlan.dayCount).map { today.weekStart.adding(days: $0) }
         daysGone = today.weekday - 1
-        weekNumber = today.weekOfYear
     }
 
     /// The nickname so far, for the squad's suggested name and the poster.
@@ -120,6 +119,11 @@ public final class SignUpModel {
         }
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, daysGone: daysGone).choices {
             week = WeekDraft(sports: sports.picked, daysGone: daysGone)
+        }
+        if step == .week, next == .sports {
+            // Back to the sports: the character wears the one picked last again, not the
+            // scene's kit the week's poster put on it.
+            myCharacter?.dress(for: sports.wearing)
         }
         if next == .scene, scenePicker == nil, let joined {
             scenePicker = .newSquad(service: SignUpScenePick(service: service, squad: joined.id))

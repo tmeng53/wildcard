@@ -29,7 +29,7 @@ public final class RecapShelf {
     }
 
     /// The newest story out: this week's once Sunday's awards are in, else last week's. Nil
-    /// until one is read, or when the squad is too new to have one.
+    /// until one is read, or when neither week's 战报 came out (a squad too new to have one).
     public private(set) var latest: WeekStory?
     /// The story on screen.
     public var open: RecapModel?
@@ -68,17 +68,18 @@ public final class RecapShelf {
         self.scenePicked = scenePicked
     }
 
-    /// Reads the newest story: this week's, which is out from Sunday 8pm Eastern, else last
-    /// week's. A failed read keeps the one already shown.
+    /// Reads the newest story out: this week's, from Sunday 8pm Eastern, else last week's; a week
+    /// whose 战报 never came out shows none. A failed read keeps the one already shown.
     public func refresh() async {
         guard let squad = readSquad() else { return }
         cast = squad.cast
         let thisWeek = squad.today.weekStart
         do {
-            if let story = try await service.story(squad: squad.id, week: thisWeek) {
+            if let story = try await service.story(squad: squad.id, week: thisWeek), story.isPublished {
                 latest = story
             } else {
-                latest = try await service.story(squad: squad.id, week: thisWeek.adding(days: -7))
+                let lastWeek = try await service.story(squad: squad.id, week: thisWeek.adding(days: -7))
+                latest = lastWeek?.isPublished == true ? lastWeek : nil
             }
         } catch {
             return

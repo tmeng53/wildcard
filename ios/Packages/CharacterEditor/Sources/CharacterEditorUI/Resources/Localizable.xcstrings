@@ -331,6 +331,16 @@
         }
       }
     },
+    "外卡水杯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wildcard tumbler"
+          }
+        }
+      }
+    },
     "奶牛猫": {
       "localizations": {
         "en": {
@@ -757,16 +767,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Flushed"
-          }
-        }
-      }
-    },
-    "网球拍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tennis racket"
           }
         }
       }

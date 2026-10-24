@@ -20,4 +20,12 @@ extension PlaceholderCharacter {
     public static func sleeping(persona: Persona) throws(AvatarError) -> Clip {
         try Clip.decode(file("moves/sleep.json")).atTempo(persona.accentTempo)
     }
+
+    /// Woken by the lights at night (开灯), once (`moves/woken.json`, 2.5 seconds, the approved
+    /// prototype's timing for every persona): from asleep, a jolt, a fist rubbing one eye, a glare
+    /// up at the lamps with `browsMad`, the throbbing `vein` and the sad mouth, a huff, then
+    /// standing up slowly, at rest. The screen then loops the teammate's day pose.
+    public static func woken() throws(AvatarError) -> Clip {
+        try Clip.decode(file("moves/woken.json"))
+    }
 }

@@ -53,7 +53,8 @@ public struct APISignUpService: SignUpService {
                     timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
                     character: MemberCharacter(
                         nickname: character.nickname,
-                        look: CharacterLook(outfit: character.outfit, persona: character.persona))))
+                        look: CharacterLook(outfit: character.outfit, persona: character.persona)),
+                    jerseyNumber: profile?.jerseyNumber))
         }
     }
 

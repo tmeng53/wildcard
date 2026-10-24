@@ -55,7 +55,7 @@ public struct APIMeService: MeService {
                     timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
                     character: MemberCharacter(
                         nickname: nickname, look: CharacterLook(outfit: character.outfit, persona: character.persona)
-                    )))
+                    ), jerseyNumber: profile?.jerseyNumber))
         }
     }
 

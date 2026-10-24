@@ -848,6 +848,76 @@
         }
       }
     },
+    "开灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights on"
+          }
+        }
+      }
+    },
+    "关灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights off"
+          }
+        }
+      }
+    },
+    "……谁开的灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…who turned the lights on"
+          }
+        }
+      }
+    },
+    "谁啊！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Who's that?!"
+          }
+        }
+      }
+    },
+    "…好亮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…so bright"
+          }
+        }
+      }
+    },
+    "我的美容觉！！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My beauty sleep!!"
+          }
+        }
+      }
+    },
+    "关了关了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off, off, off"
+          }
+        }
+      }
+    },
     "%@ %lld 分钟": {
       "localizations": {
         "en": {

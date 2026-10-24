@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { createLog, inRequest, logAlso } from './log.js';
+import { createLog, inRequest, logAlso, reportingErrors } from './log.js';
+import type { ErrorContext } from './ports.js';
 
 const Entry = z.record(z.string(), z.unknown());
 
@@ -102,5 +103,53 @@ describe('createLog', () => {
     ]) {
       expect(line).not.toContain(secret);
     }
+  });
+});
+
+describe('reportingErrors', () => {
+  it('reports each error with its request’s trace and only the fields a report may carry', () => {
+    const { log: written, logged } = capture();
+    const reported: { error: unknown; context: ErrorContext }[] = [];
+    const log = reportingErrors(written, {
+      report: (error, context) => reported.push({ error, context }),
+      flush: () => Promise.resolve(),
+    });
+    const error = new Error('connect ECONNREFUSED');
+
+    inRequest({ traceId: '105445aa7843bc8bf206b12000100000', spanId: undefined }, () => {
+      logAlso({ member });
+      log.error('request failed', { method: 'GET', route: '/squads/:squadId', path: photo, error });
+    });
+    log.error('daily push not sent', { member });
+    log.warn('request refused', { route: '/me' });
+    log.info('listening', { port: 8080 });
+
+    expect(reported).toStrictEqual([
+      {
+        error,
+        context: {
+          message: 'request failed',
+          method: 'GET',
+          route: '/squads/:squadId',
+          traceId: '105445aa7843bc8bf206b12000100000',
+        },
+      },
+      {
+        error: new Error('daily push not sent'),
+        context: {
+          message: 'daily push not sent',
+          method: undefined,
+          route: undefined,
+          traceId: undefined,
+        },
+      },
+    ]);
+    // The log itself is written as before, request scope and all.
+    expect(logged).toMatchObject([
+      { severity: 'ERROR', message: 'request failed', member, path: '[redacted]' },
+      { severity: 'ERROR', message: 'daily push not sent', member },
+      { severity: 'WARNING', message: 'request refused' },
+      { severity: 'INFO', message: 'listening' },
+    ]);
   });
 });

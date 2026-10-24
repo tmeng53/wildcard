@@ -129,6 +129,16 @@
               "character": {
                 "$ref": "#/components/schemas/Character"
               },
+              "jerseyNumber": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 99,
+                "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
+                "example": 22
+              },
               "joinedAt": {
                 "type": "string",
                 "format": "date-time",
@@ -234,6 +244,16 @@
           },
           "character": {
             "$ref": "#/components/schemas/Character"
+          },
+          "jerseyNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 99,
+            "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
+            "example": 22
           }
         },
         "required": [
@@ -1215,6 +1235,9 @@
             "type": "integer",
             "minimum": 0,
             "description": "今日请假条 check-ins, at most one a day."
+          },
+          "topSport": {
+            "$ref": "#/components/schemas/TopSport"
           }
         },
         "required": [
@@ -1225,6 +1248,29 @@
           "disclaimers"
         ],
         "additionalProperties": false
+      },
+      "TopSport": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/Sport"
+          },
+          "customSport": {
+            "type": "string",
+            "description": "The name of a `custom` sport; a listed sport has none."
+          },
+          "checkIns": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "练了 check-ins of this sport."
+          }
+        },
+        "required": [
+          "sport",
+          "checkIns"
+        ],
+        "additionalProperties": false,
+        "description": "The sport with the most 练了 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 练了."
       },
       "PhotoUpload": {
         "type": "object",
@@ -3071,6 +3117,54 @@
           "move"
         ],
         "additionalProperties": false
+      },
+      "AwardTotals": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "titles": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every title (周奖) the member has won, in all their squads and weeks.",
+            "example": 3
+          },
+          "latest": {
+            "$ref": "#/components/schemas/LatestTitle"
+          }
+        },
+        "required": [
+          "version",
+          "titles"
+        ],
+        "additionalProperties": false
+      },
+      "LatestTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The title, at most 6 characters.",
+            "example": "早八战神"
+          },
+          "times": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "How many times the member has won this title.",
+            "example": 2
+          }
+        },
+        "required": [
+          "title",
+          "times"
+        ],
+        "additionalProperties": false,
+        "description": "The latest title they won. Left out before the first."
       }
     },
     "parameters": {}
@@ -6291,6 +6385,50 @@
           },
           "404": {
             "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/award-totals": {
+      "get": {
+        "operationId": "getMyAwardTotals",
+        "summary": "The weekly titles the signed-in member has won",
+        "description": "Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The titles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardTotals"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

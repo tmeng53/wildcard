@@ -113,6 +113,8 @@ private struct WeekPoster: View {
         .dynamicTypeSize(.large)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: week)
         .onChange(of: model.hops) { _, _ in model.myCharacter?.play("cheer") }
+        // On the poster the character trains at the scene's sport, as on the scene.
+        .task(id: theme) { model.myCharacter?.train(on: theme) }
     }
 
     private func dayRow(_ index: Int) -> some View {
@@ -229,17 +231,8 @@ private struct DayChoices: View {
                 .accessibilityIdentifier("week.choice.\(Self.key(for: choice))")
             }
             // A sport that wasn't picked as 常练: the shared picker has every one.
-            Button {
-                isChoosing = true
-            } label: {
-                Label {
-                    Text("更多", bundle: .module)
-                } icon: {
-                    Image(systemName: "plus")
-                }
-            }
-            .buttonStyle(SecondaryButtonStyle())
-            .accessibilityIdentifier("week.choice.more")
+            MoreChip { isChoosing = true }
+                .accessibilityIdentifier("week.choice.more")
         }
         .sheet(isPresented: $isChoosing) {
             SportPicker(selected: selectedActivity, recent: model.sports.picked) { activity in
@@ -302,6 +295,38 @@ private struct DayChip: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// 更多 beside the day chips, drawn like them: it opens the shared sport picker.
+private struct MoreChip: View {
+    let action: () -> Void
+    @Environment(\.sceneTheme) private var theme
+
+    private let height = 34.0
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Space.xxs) {
+                Image(systemName: "plus")
+                    .font(.system(size: Sizing.smallIcon, weight: .medium))
+                    .accessibilityHidden(true)
+                Text("更多", bundle: .module)
+                    .typeStyle(TypeRamp.callout)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .padding(.horizontal, Space.s)
+            .frame(minHeight: height)
+            .background(
+                Color(role: .bgSubtle, in: theme),
+                in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+            )
+            .frame(minHeight: Sizing.minimumTapTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 }
 

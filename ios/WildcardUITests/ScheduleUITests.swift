@@ -32,6 +32,7 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertTrue(squad.waitForExistence(timeout: 10))
         XCTAssertLessThanOrEqual(squad.frame.maxY, tabBar.frame.minY, "the counts sit under the tab bar")
         XCTAssertTrue(lane(app, 3).label.hasPrefix("今天"), "Thursday isn't today: \(lane(app, 3).label)")
+        XCTAssertTrue(lane(app, 3).label.contains("力量训练"), "strength's short name is missing: \(lane(app, 3).label)")
         settle()
         keepScreenshot(named: "60-schedule-this-week")
 

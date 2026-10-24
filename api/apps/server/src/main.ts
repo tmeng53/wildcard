@@ -71,18 +71,26 @@ import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
+import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
-import { createLog } from './log.js';
+import { createLog, redactText, reportingErrors } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
-const log = createLog((line) => process.stdout.write(line), {
+// Every error the server logs also goes to Sentry, once the API project's DSN is set.
+const errorReports =
+  config.errorReports === undefined
+    ? undefined
+    : createSentryErrorReports({ ...config.errorReports, redact: redactText });
+const stdoutLog = createLog((line) => process.stdout.write(line), {
   traceProject: config.traceProject,
 });
+const log = errorReports === undefined ? stdoutLog : reportingErrors(stdoutLog, errorReports);
+if (errorReports === undefined) log.info('no Sentry DSN (SENTRY_DSN_API): errors are only logged');
 const db = createDatabase(config.databaseUrl, {
   ca: config.databaseCaFile === undefined ? undefined : readFileSync(config.databaseCaFile, 'utf8'),
   onIdleError: (error) => {
@@ -283,4 +291,6 @@ process.once('SIGTERM', () => {
   server.close(() => {
     void db.destroy();
   });
+  // Cloud Run gives an instance 10 seconds after SIGTERM: send the reports still queued.
+  void errorReports?.flush(2000);
 });

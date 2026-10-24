@@ -17,3 +17,8 @@ import Testing
         try StagePose.standing.loop(persona: .drama, species: "cat")
             != PlaceholderCharacter.clip("idle", persona: .drama))
 }
+
+/// The lights' timeline waits for the `woken` move to end before a sleeper's 请假条 comes back.
+@Test func theWakeUpLastsAsLongAsTheTimelineSays() throws {
+    #expect(try PlaceholderCharacter.woken().duration == LightsFlip.wokenDuration)
+}
