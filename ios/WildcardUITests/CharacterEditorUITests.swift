@@ -84,16 +84,17 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "30-editor-face-glasses")
     }
 
-    /// The racket plays its move; undo brings the dumbbell back.
+    /// The tumbler, the other prop every member starts with, plays its move; undo brings the
+    /// dumbbell back.
     func testPickingAPropAndUndoing() {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.prop"].tap()
-        let racket = app.buttons["editor.tile.prop.racket"]
-        XCTAssertTrue(racket.waitForExistence(timeout: Self.wait), "no 网球拍 tile")
+        let bottle = app.buttons["editor.tile.prop.bottle"]
+        XCTAssertTrue(bottle.waitForExistence(timeout: Self.wait), "no 外卡水杯 tile")
         XCTAssertTrue(app.buttons["editor.tile.prop.dumbbell"].isSelected)
-        racket.tap()
-        waitUntilSelected(racket, "picking 网球拍 didn't select it")
+        bottle.tap()
+        waitUntilSelected(bottle, "picking 外卡水杯 didn't select it")
         settle()
         keepScreenshot(named: "23-editor-prop")
         app.buttons["editor.undo"].tap()
