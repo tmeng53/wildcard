@@ -228,6 +228,8 @@ struct MemberRow: View {
                     .frame(height: Sizing.hairline)
             }
         }
+        // Contain, so the row's identifier doesn't replace its ··· button's.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squad.member")
     }
 }
