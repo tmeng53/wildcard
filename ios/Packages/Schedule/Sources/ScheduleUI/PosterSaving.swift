@@ -24,12 +24,19 @@ public struct PhotoLibrarySaver: PosterSaver {
         default: return .notAllowed
         }
         do {
-            try await PHPhotoLibrary.shared().performChanges {
-                PHAssetCreationRequest.creationRequestForAsset(from: image)
-            }
+            try await Self.add(image)
             return .saved
         } catch {
             return .failed
+        }
+    }
+
+    /// Photos runs the change block on its own queue. Written inside `save`, the block would be
+    /// main-actor isolated and Swift 6 would stop the app when Photos called it off the main
+    /// thread, so it is made here, outside the main actor.
+    private nonisolated static func add(_ image: PosterImage) async throws {
+        try await PHPhotoLibrary.shared().performChanges {
+            PHAssetCreationRequest.creationRequestForAsset(from: image)
         }
     }
 }

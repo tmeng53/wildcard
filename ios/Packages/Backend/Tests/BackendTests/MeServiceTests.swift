@@ -20,11 +20,13 @@ import Testing
     try await signUp.agreeToAI()
     _ = try await signUp.create(named: try SquadName("早八健身"))
     let service = APIMeService(api: member.api)
+    let joinedAt = try #require(try await member.api.me().joinedAt)
 
     #expect(
         try await service.overview()
             == MeOverview(
                 character: MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama),
+                joinedAt: joinedAt.date,
                 counts: .zero, squadName: "早八健身", dailyPushOn: true))
 
     try await service.setDailyPush(false)

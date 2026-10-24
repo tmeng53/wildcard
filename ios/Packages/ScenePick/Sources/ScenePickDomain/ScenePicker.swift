@@ -89,6 +89,14 @@ public final class ScenePicker {
         self.service = service
     }
 
+    /// A squad made just now picking its first scene: it has trained nowhere, so every scene is
+    /// a carton, in the order the 战报's sticker shows them.
+    public static func newSquad(service: any ScenePickService) -> ScenePicker {
+        ScenePicker(
+            options: [.track, .pool, .gym, .tennis, .climbing].map { SceneOption(scene: $0, lastTrained: .never) },
+            service: service)
+    }
+
     /// Chooses a tile, while nothing has been picked yet.
     public func select(_ scene: SceneTheme) {
         guard canChoose, options.contains(where: { $0.scene == scene }) else { return }

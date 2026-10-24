@@ -176,7 +176,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
   it('gives the week’s awards and counts', async () => {
     const [me, friend] = [await member(), await member()];
     const squad = await squadOf(me, friend);
-    // Me plans a week of rest, so one 练了 completes it.
+    // Me plans a week of rest; the 练了 makes today a training day, and completes the week.
     await planAll(me.token, { day: today(), kind: 'rest' });
     await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
     const excuse = await checkIn(friend.token, {
@@ -223,8 +223,8 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       squadTotals: {
         stats: [
           { kind: 'trainedDays', label: '训练天数', value: 1 },
-          // Me plans none; friend keeps the default 5.
-          { kind: 'plannedDays', label: '计划天数', value: 5 },
+          // Me's 练了 day, and friend's default 5.
+          { kind: 'plannedDays', label: '计划天数', value: 6 },
           { kind: 'checkIns', label: '打卡', value: 2 },
           { kind: 'disclaimers', label: '请假条', value: 1 },
           { kind: 'healthyMeals', label: '健康餐', value: 0 },
@@ -236,7 +236,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       me: {
         stats: [
           { kind: 'trainedDays', value: 1 },
-          { kind: 'plannedDays', value: 0 },
+          { kind: 'plannedDays', value: 1 },
           { kind: 'checkIns', value: 1 },
           { kind: 'disclaimers', value: 0 },
           { kind: 'healthyMeals', value: 0 },

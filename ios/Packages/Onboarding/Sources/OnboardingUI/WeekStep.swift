@@ -218,6 +218,7 @@ private struct WeekTotal: View {
 private struct DayChoices: View {
     let model: SignUpModel
     let week: WeekDraft
+    @State private var isChoosing = false
 
     var body: some View {
         FlowRow {
@@ -227,7 +228,29 @@ private struct DayChoices: View {
                 }
                 .accessibilityIdentifier("week.choice.\(Self.key(for: choice))")
             }
+            // A sport that wasn't picked as 常练: the shared picker has every one.
+            Button {
+                isChoosing = true
+            } label: {
+                Label {
+                    Text("更多", bundle: .module)
+                } icon: {
+                    Image(systemName: "plus")
+                }
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .accessibilityIdentifier("week.choice.more")
         }
+        .sheet(isPresented: $isChoosing) {
+            SportPicker(selected: selectedActivity, recent: model.sports.picked) { activity in
+                isChoosing = false
+                model.setDay(.train(activity))
+            }
+        }
+    }
+
+    private var selectedActivity: Activity {
+        if case .train(let activity?) = week.days[week.selected] { activity } else { .sport(.run) }
     }
 
     static func key(for day: PlanDay) -> String {

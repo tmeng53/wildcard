@@ -34,9 +34,19 @@ extension TodayModel {
     /// drops onto it one after another, me last, then the card, 打卡 and the tab bar come back
     /// (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」). The drop's
     /// moments count from `coveredAt`, when the scene filled the screen: a boxed reveal hands
-    /// over after its confetti, a moment later.
-    public func dropIn(on scene: SceneTheme, coveredAt: Date) {
+    /// over after its confetti, a moment later. A home not loaded yet (the member went straight
+    /// to 我 and picked there) loads first, so the squad is there to drop, and the drop counts
+    /// from then.
+    public func dropIn(on scene: SceneTheme, coveredAt: Date) async {
+        var coveredAt = coveredAt
+        if home == nil {
+            await load()
+            coveredAt = .now
+        }
         self.scene = scene
+        // Placed now even when the scene stays the same, so a home just opened drops the
+        // members as they are, not its stand-ins.
+        placeSquad()
         isBurstOpen = false
         pats.dismissBubble()
         guard let clip = try? PlaceholderCharacter.drop() else { return }

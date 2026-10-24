@@ -265,6 +265,9 @@ const everything = {
   files: 2,
 };
 
+// Each request's entries carry its id, made up off Cloud Run.
+const aRequestId: unknown = expect.stringMatching(/^[0-9a-f]{32}$/);
+
 describe('DELETE /me', () => {
   it('deletes the account and all that is the member’s, and leaves the squad to the others', async () => {
     const { call } = appWith(undefined);
@@ -385,11 +388,12 @@ describe('DELETE /me', () => {
       severity: 'WARNING',
       message: 'Sign in with Apple not revoked: no Apple key is configured',
       member: me.userId,
+      requestId: aRequestId,
     });
   });
 
-  it('refuses a body not sent as JSON, and deletes nothing', async () => {
-    const { call } = appWith(undefined);
+  it('refuses a body not sent as JSON, logs why, and deletes nothing', async () => {
+    const { call, logged } = appWith(undefined);
     const me = await signUp();
     const response = await call('DELETE', '/me', me.token, { version: 1 }, 'text/plain');
     expect([response.status, reasonOf(response.body)]).toStrictEqual([
@@ -397,6 +401,19 @@ describe('DELETE /me', () => {
       'MEDIA_TYPE_UNSUPPORTED',
     ]);
     expect((await whatIsLeftOf(me.userId)).user).toBe(1);
+    expect(logged).toStrictEqual([
+      {
+        severity: 'WARNING',
+        message: 'request refused',
+        method: 'DELETE',
+        route: '/me',
+        status: 415,
+        reason: 'MEDIA_TYPE_UNSUPPORTED',
+        // Each entry a signed-in request writes names the member by id and the request.
+        member: me.userId,
+        requestId: aRequestId,
+      },
+    ]);
   });
 
   it.each([
