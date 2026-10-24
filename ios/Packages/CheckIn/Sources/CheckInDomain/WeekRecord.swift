@@ -20,6 +20,8 @@ public struct WeekRecord: Hashable, Sendable {
 
     /// Monday first, seven days.
     public let days: [Day]
+    /// The sport planned for each day, Monday first; nil for a rest day or a training day without one.
+    public let plannedActivities: [Activity?]
     /// Today's index in `days`.
     public let today: Int
     /// Most days first; ties in the order first trained.
@@ -41,6 +43,14 @@ extension Home {
             return isRestDay(date) ? .restDay : .open
         }
 
+        let plannedActivities = (0..<7).map { offset -> Activity? in
+            let date = monday.adding(days: offset)
+            guard date.weekStart == plan.weekStart, plan.days.indices.contains(offset),
+                case .train(let planned?) = plan.days[offset]
+            else { return nil }
+            return planned
+        }
+
         // Several of the same activity on one day count as one day of it.
         var activities: [Activity] = []
         var daysOf: [Activity: Set<LocalDay>] = [:]
@@ -57,7 +67,7 @@ extension Home {
             .map(\.item)
 
         return WeekRecord(
-            days: days, today: day.weekday - 1, trained: trained,
+            days: days, plannedActivities: plannedActivities, today: day.weekday - 1, trained: trained,
             healthyMeals: mine.count { if case .healthyMeal = $0.entry { true } else { false } },
             cheatMeals: mine.count { if case .cheatMeal = $0.entry { true } else { false } })
     }

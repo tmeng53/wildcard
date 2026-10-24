@@ -45,6 +45,9 @@ public enum WeekDayStatus: Sendable, Hashable {
     case restDay
     /// A training day not done (yet, or missed): a thin grey ring, never red.
     case open
+    /// A training day not done yet with a sport planned: the same ring with the sport's icon in
+    /// the scene's color.
+    case planned(symbol: String)
 }
 
 /// My week: what I trained, my count against my plan, Monday to Sunday, and counts that only go
@@ -310,12 +313,23 @@ private struct DayCircle: View {
                 .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())
+        case .planned(let symbol):
+            ring
+                .overlay {
+                    Image(systemName: symbol)
+                        .font(.system(size: SquadCardMetrics.dayGlyph, weight: .semibold))
+                        .foregroundStyle(Color(role: .fgAccent, in: theme))
+                }
         case .open:
-            Circle()
-                .strokeBorder(
-                    Color(role: isToday ? .fgDefault : .borderDefault, in: theme),
-                    lineWidth: isToday ? SquadCardMetrics.todayStroke : Sizing.selectionStroke)
+            ring
         }
+    }
+
+    private var ring: some View {
+        Circle()
+            .strokeBorder(
+                Color(role: isToday ? .fgDefault : .borderDefault, in: theme),
+                lineWidth: isToday ? SquadCardMetrics.todayStroke : Sizing.selectionStroke)
     }
 
     private var value: Text {
@@ -323,8 +337,8 @@ private struct DayCircle: View {
         case .trained: Text("练了", bundle: .module)
         case .excused: Text("请假", bundle: .module)
         case .restDay: Text("休息日", bundle: .module)
-        case .open where isToday: Text("今天", bundle: .module)
-        case .open: Text("还没练", bundle: .module)
+        case .open where isToday, .planned where isToday: Text("今天", bundle: .module)
+        case .open, .planned: Text("还没练", bundle: .module)
         }
     }
 
