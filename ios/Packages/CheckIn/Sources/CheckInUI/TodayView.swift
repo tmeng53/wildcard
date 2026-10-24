@@ -213,6 +213,8 @@ public struct TodayView: View {
             // Hangs from the card's bottom edge.
             .alignmentGuide(.bottom) { $0[.top] }
             .opacity(model.isBurstOpen ? 0 : 1)
+            .allowsHitTesting(!model.isBurstOpen)
+            .accessibilityHidden(model.isBurstOpen)
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.isBurstOpen)
             .transition(.opacity)
         }
