@@ -188,7 +188,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
         skipSports.tap()
         let skipWeek = app.buttons["week.skip"]
-        XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "一周练几天？ never appeared")
+        XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
         skipWeek.tap()
 
         let confirm = app.buttons["scene.done"]

@@ -29,7 +29,7 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
 
     public var next: SignUpStep? { SignUpStep(rawValue: rawValue + 1) }
 
-    /// Where 一周练几天？ goes: whoever made the squad picks its scene; whoever joined one goes
+    /// Where 本周目标 goes: whoever made the squad picks its scene; whoever joined one goes
     /// straight to 上场 and the squad's welcome (Tracy, 2026-10-23: 「joining a new team should
     /// always do the join and teammates welcome effect」).
     public static func afterWeek(madeTheSquad: Bool) -> SignUpStep {
