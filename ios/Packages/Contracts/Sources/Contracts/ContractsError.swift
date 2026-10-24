@@ -36,6 +36,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case unknownSport(String)
     /// A `customSport` name next to a listed sport, or `custom` with no name.
     case strayCustomSport
+    /// A player card number outside `JerseyNumber.range`.
+    case jerseyNumberOutOfRange(Int)
     /// A catchphrase that is empty or longer than `Catchphrase.maxLength` characters.
     case catchphraseLength(Int)
     /// A catchphrase with a line break; it is one line.

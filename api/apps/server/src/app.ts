@@ -30,6 +30,7 @@ import type {
 } from './ports.js';
 import { problemResponse } from './problem.js';
 import { requestTrace } from './request-trace.js';
+import { awardTotals } from './routes/award-totals.js';
 import { aiConsent } from './routes/ai-consent.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
@@ -132,6 +133,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
+  app.route('/', awardTotals({ ...deps, ...deps.weeklyAwards }));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.
   app.route(
     '/',

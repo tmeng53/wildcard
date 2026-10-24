@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, StoredAward } from '../domain/awards.js';
+import { MemberId, StoredAward, titlesWonOf } from '../domain/awards.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -50,6 +50,17 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
           }),
         },
       };
+    },
+
+    async titlesWon(member) {
+      const rows = await db
+        .selectFrom('weekly_award_winners')
+        .select('award')
+        .where('member_id', '=', member)
+        .orderBy('week_start', 'desc')
+        .orderBy('squad_id')
+        .execute();
+      return titlesWonOf(rows.map(({ award }) => StoredAward.parse(award)));
     },
 
     save: ({ squad, weekStart, awards }) =>
