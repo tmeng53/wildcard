@@ -71,7 +71,6 @@ enum ScheduleLabels {
         case .signedOut: Text("登录过期了，重新登录再来排", bundle: .module)
         case .weekOver: Text("这周已经结束了，就让它留在这儿吧", bundle: .module)
         case .dayStarted: Text("已经开始的日子改不了啦", bundle: .module)
-        case .restDaysFixed: Text("这周的休息天数定好了，只能挪", bundle: .module)
         case .invalidFuelGoal: Text("小目标写 1 到 8 个字就好", bundle: .module)
         case .refused: Text("没存上，换个排法试试", bundle: .module)
         }

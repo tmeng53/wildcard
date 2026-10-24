@@ -6,15 +6,13 @@ import ScheduleDomain
 import SwiftUI
 
 /// One day's swim lane on the poster: its number, weekday, plan and mark, shaded by how it is
-/// held. A button, so the member picks, lifts or swaps the day by tapping it.
+/// held. A button, so the member picks the day by tapping it.
 struct PosterLane: View {
     static let height: Double = 40
 
     let lane: PosterContent.Lane
     let theme: SceneTheme
     let onTap: (Int) -> Void
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // From the approved design, in poster points.
     /// Lanes alternate with a faint shade; today's is darker.
@@ -28,10 +26,6 @@ struct PosterLane: View {
     private let leaveTagHeight: Double = 20
     private let numberWidth: Double = 20
     private let weekdayWidth: Double = 30
-    /// A lifted rest day grows a touch, picked up off the poster.
-    private let liftedScale = 1.02
-    /// A swap target's faint white fill.
-    private let targetFill = 0.12
 
     private var isHeld: Bool { lane.look == .held }
     private var isFaded: Bool { lane.plan == .rest && !isHeld }
@@ -58,10 +52,8 @@ struct PosterLane: View {
         // Pressable, not plain: a plain button fades while disabled, and a locked day reads as
         // clearly as one still to come.
         .buttonStyle(PressableButtonStyle())
-        .scaleEffect(lane.isLifted ? liftedScale : 1)
         .zIndex(isHeld ? 1 : 0)
         .disabled(!lane.isEditable)
-        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: lane.isLifted)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityAddTraits(isHeld ? .isSelected : [])
         .accessibilityIdentifier("schedule.lane.\(lane.index)")
@@ -90,11 +82,6 @@ struct PosterLane: View {
                 .lineLimit(1)
                 .opacity(isFaded ? restOpacity : 1)
             mark
-            if lane.look == .swapTarget {
-                Image(systemName: "arrow.up.arrow.down")
-                    .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                    .accessibilityHidden(true)
-            }
             Spacer(minLength: 0)
         }
     }
@@ -103,9 +90,6 @@ struct PosterLane: View {
     private var fill: some View {
         switch lane.look {
         case .held: ink
-        case .swapTarget:
-            ink.opacity(targetFill)
-                .overlay { Rectangle().strokeBorder(ink, lineWidth: Sizing.selectionStroke) }
         case .today: shade.opacity(todayShade)
         case .plain: lane.index.isMultiple(of: 2) ? Color.clear : shade.opacity(stripeShade)
         }

@@ -34,17 +34,17 @@ struct PosterContentTests {
         #expect(content.lanes.map(\.isEditable) == [false, false, false, true, true, true, true])
         #expect(content.tally == .trained(2, planned: 5, isPast: false))
         #expect(content.titles.isEmpty, "titles wait for the week's awards")
-        #expect(!content.fuelOpen, "this week's goals stay shut")
+        #expect(content.fuelOpen, "this week's goals open too")
+        #expect(content.fuelEditable)
         #expect(content.weekEnd == Self.day("2026-10-25"))
     }
 
-    @Test func aLiftedRestDayOutlinesWhereItCanGo() throws {
+    @Test func aSelectedDayThisWeekIsHeld() throws {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         board.tap(5)
         let content = PosterContent(
             sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
-        #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .swapTarget, .held, .swapTarget])
-        #expect(content.lanes[5].isLifted)
+        #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .held, .plain])
     }
 
     @Test func nextWeekCountsThePlanAndOpensItsGoals() throws {
@@ -55,7 +55,6 @@ struct PosterContentTests {
             sheet: try sheet(next), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true)
         #expect(content.tally == .planned(train: 5, rest: 2))
         #expect(content.lanes[2].look == .held)
-        #expect(!content.lanes[2].isLifted, "next week selects; only this week lifts")
         #expect(content.fuelOpen)
         #expect(content.fuelEditable)
     }
@@ -91,7 +90,7 @@ struct PosterContentTests {
             sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false
         ).forSaving
         #expect(held.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
-        #expect(held.lanes.allSatisfy { !$0.isEditable && !$0.isLifted })
+        #expect(held.lanes.allSatisfy { !$0.isEditable })
         let award = PosterContent(
             sheet: try sheet(last), board: WeekBoard(weekStart: last, days: plan, today: thursday), nickname: "Tracy",
             weekNumber: 3,
@@ -125,7 +124,7 @@ struct InMemoryScheduleBackendTests {
         #expect(try await backend.trainedDays() == 46)
     }
 
-    @Test func thisWeekKeepsItsStartedDaysAndRestCount() async throws {
+    @Test func thisWeekKeepsItsStartedDaysAndChangesTheRest() async throws {
         let backend = InMemoryScheduleBackend.sample(now: thursday, timeZone: losAngeles)
         let monday = LocalDay(at: thursday, in: losAngeles).weekStart
         var plan = try await backend.week(starting: monday).plan
@@ -134,16 +133,14 @@ struct InMemoryScheduleBackendTests {
         await #expect(throws: ScheduleError.dayStarted) { try await backend.savePlan(plan, weekStart: monday) }
         plan = original
         plan[4] = .rest
-        await #expect(throws: ScheduleError.restDaysFixed) { try await backend.savePlan(plan, weekStart: monday) }
-        plan = original
-        plan.swapAt(5, 6)
         #expect(try await backend.savePlan(plan, weekStart: monday) == plan)
         await #expect(throws: ScheduleError.weekOver) {
             try await backend.savePlan(original, weekStart: monday.adding(days: -7))
         }
         await #expect(throws: ScheduleError.weekOver) {
-            try await backend.saveFuel([.suggested(.water)], weekStart: monday)
+            try await backend.saveFuel([.suggested(.water)], weekStart: monday.adding(days: -7))
         }
+        try await backend.saveFuel([.suggested(.water)], weekStart: monday)
         try await backend.saveFuel([.suggested(.veggies)], weekStart: monday.adding(days: 7))
         #expect(try await backend.week(starting: monday.adding(days: 7)).fuel == [.suggested(.veggies)])
     }

@@ -110,9 +110,10 @@ export function weeklyPlans(deps: {
       'Replaces the week’s plan; repeating a save gives the same result. Past weeks are ' +
       'read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the ' +
       'current week, from the day the member joined: days before today stay as they were, ' +
-      'today stays a training or a rest day (its sport may change), and the number of rest ' +
-      'days is fixed. On the day a member joins, a week still on the default changes freely. ' +
-      'Days are read in the member’s profile time zone, and a day lasts until 3am.',
+      'a training today stays a training day (its sport may change), a rest today may ' +
+      'become one, and later days change freely. On the day a member joins, a week still on ' +
+      'the default changes freely. Days are read in the member’s profile time zone, and a ' +
+      'day lasts until 3am.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -123,9 +124,8 @@ export function weeklyPlans(deps: {
       200: { description: 'Saved', content: { 'application/json': { schema: WeeklyPlanBody } } },
       400: problem(
         'Not a valid plan or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead ' +
-          '(`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`) or ' +
-          'to this week’s number of rest days (`REST_DAYS_FIXED`); or no profile yet ' +
-          '(`TIME_ZONE_NOT_SET`)',
+          '(`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`); or ' +
+          'no profile yet (`TIME_ZONE_NOT_SET`)',
       ),
       ...jsonBodyFailures,
       ...signedInFailures,
@@ -138,8 +138,8 @@ export function weeklyPlans(deps: {
     operationId: 'saveMyFuelGoals',
     summary: 'Set the signed-in member’s 饮食小目标 for a week',
     description:
-      'Replaces the week’s goals; repeating a save gives the same result. Only for a week that ' +
-      'hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.',
+      'Replaces the week’s goals; repeating a save gives the same result. For this week on the ' +
+      'member’s clock or a later one, up to 4 weeks ahead. Answers with the whole week.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -149,8 +149,8 @@ export function weeklyPlans(deps: {
     responses: {
       200: { description: 'Saved', content: { 'application/json': { schema: WeeklyPlanBody } } },
       400: problem(
-        'Not valid goals or not a Monday; a week that has started (`WEEK_STARTED`) or is too ' +
-          'far ahead (`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)',
+        'Not valid goals or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead ' +
+          '(`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)',
       ),
       ...jsonBodyFailures,
       ...signedInFailures,
