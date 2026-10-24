@@ -261,3 +261,17 @@ private struct RefusedTokens: AuthProvider {
             expiresAt: session.expiresAt)
     }
 }
+
+@Test func thePlayerCardsRecordsStartEmptyAndCountTheSportTrainedMost() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let squad = try await stack.squad(of: member)
+
+    #expect(try await member.api.checkInTotals().topSport == nil)
+    #expect(try await member.api.awardTotals() == AwardTotals(titles: 0, latest: nil))
+
+    for activity in [Activity.sport(.run), .custom(try CustomSport("飞盘")), .sport(.run)] {
+        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))
+    }
+    #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport(.run), checkIns: 2))
+}

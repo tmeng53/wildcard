@@ -47,6 +47,8 @@ public struct FeedView: View {
                 .padding(.bottom, Space.l)
             }
             .scrollDismissesKeyboard(.immediately)
+            // A held card's slide picks an emoji; the list stays put under it.
+            .scrollDisabled(model.lifted)
             .refreshable { await model.load() }
             .onChange(of: model.focus) { _, focus in
                 guard let focus else { return }

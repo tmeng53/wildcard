@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <circle cx="106" cy="204" r="12.6" fill="#D5D9E0"/>
+  <circle cx="120" cy="196" r="15.6" fill="#D5D9E0"/>
+  <circle cx="135" cy="203" r="12.6" fill="#D5D9E0"/>
+  <circle cx="115" cy="209" r="11.6" fill="#D5D9E0"/>
+  <circle cx="128" cy="210" r="10.6" fill="#D5D9E0"/>
+  <circle cx="106" cy="204" r="11" fill="#FFFFFF"/>
+  <circle cx="120" cy="196" r="14" fill="#FFFFFF"/>
+  <circle cx="135" cy="203" r="11" fill="#FFFFFF"/>
+  <circle cx="115" cy="209" r="10" fill="#FFFFFF"/>
+  <circle cx="128" cy="210" r="9" fill="#FFFFFF"/>
+  <circle cx="92" cy="192" r="2.6" fill="#FFFFFF" stroke="#D5D9E0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="147" cy="190" r="2.2" fill="#FFFFFF" stroke="#D5D9E0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="96" cy="214" r="1.8" fill="#FFFFFF" stroke="#D5D9E0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="150" cy="214" r="2.4" fill="#FFFFFF" stroke="#D5D9E0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="122" cy="178" r="2" fill="#FFFFFF" stroke="#D5D9E0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

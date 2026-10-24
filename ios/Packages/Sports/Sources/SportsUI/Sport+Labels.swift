@@ -18,7 +18,10 @@ extension Sport {
 
     /// The name on a card or poster, where a long one would clip.
     public var cardName: Text {
-        Self.shortOnCards.contains(self) ? Text(LocalizedStringKey("sportCard.\(rawValue)"), bundle: .module) : name
+        // The key is built as a String first: an interpolated literal would make the key
+        // `sportCard.%@`, which the catalog doesn't have.
+        let key = "sportCard.\(rawValue)"
+        return Self.shortOnCards.contains(self) ? Text(LocalizedStringKey(key), bundle: .module) : name
     }
 
     /// The localized name as a string, for search.

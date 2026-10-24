@@ -1,4 +1,11 @@
-import type { Awards, AwardsState, Failures, MemberId, SquadId } from '../domain/awards.js';
+import type {
+  Awards,
+  AwardsState,
+  Failures,
+  MemberId,
+  SquadId,
+  TitlesWon,
+} from '../domain/awards.js';
 import type { WeekStart } from '../domain/schedule.js';
 import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../ports.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
@@ -29,6 +36,8 @@ export interface WeeklyAwards {
     readonly squad: SquadId;
     readonly weekStart: WeekStart;
   }): Promise<MemberId[]>;
+  /** Every title the member has won, in all their squads (周奖 on their player card). */
+  titlesWon(member: MemberId): Promise<TitlesWon>;
 }
 
 export function createWeeklyAwards(deps: {
@@ -47,5 +56,6 @@ export function createWeeklyAwards(deps: {
       if (!(await deps.store.markNotified(squad, weekStart))) return [];
       return state.awards.members.map(({ member }) => member);
     },
+    titlesWon: (member) => deps.store.titlesWon(member),
   };
 }

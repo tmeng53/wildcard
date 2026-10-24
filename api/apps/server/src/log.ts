@@ -1,5 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
+import type { ErrorReports } from './ports.js';
+
 /**
  * Structured logs: one JSON object per line on stdout, in the shape Cloud Run's logging reads
  * (`severity`, `message`, then any fields). Never the console.
@@ -128,16 +130,42 @@ const REDACTED_PATTERNS: readonly (readonly [RegExp, string])[] = [
   [/\b[0-9a-f]{64,}\b/gi, '[device]'],
 ];
 
+/** Masks what may hide in any string (emails, tokens, keys, photo paths...); the log's own rule. */
+export function redactText(text: string): string {
+  return REDACTED_PATTERNS.reduce((masked, [pattern, mark]) => masked.replace(pattern, mark), text);
+}
+
 /** `JSON.stringify`'s replacer: describes errors and redacts every field and string it meets. */
 function redact(key: string, value: unknown): unknown {
   if (REDACTED_KEYS.has(key.toLowerCase()) && value !== undefined && value !== null) {
     return '[redacted]';
   }
-  if (typeof value === 'string') {
-    return REDACTED_PATTERNS.reduce((text, [pattern, mark]) => text.replace(pattern, mark), value);
-  }
+  if (typeof value === 'string') return redactText(value);
   // `JSON.stringify` drops an Error's message and stack, which are what a log needs.
   return value instanceof Error
     ? { name: value.name, message: value.message, stack: value.stack, cause: value.cause }
     : value;
+}
+
+/**
+ * A log whose errors also go to `reports`, so every failure the server logs as an error is
+ * reported without each caller knowing about it. Only the message, `method`, `route` and the
+ * request's trace id (the `requestId` its log lines carry) go: never ids, paths or anything else
+ * a caller or the request scope logged. An error entry without an `error` field is reported as an
+ * Error of its message.
+ */
+export function reportingErrors(log: Log, reports: ErrorReports): Log {
+  return {
+    ...log,
+    error(message, fields = {}) {
+      log.error(message, fields);
+      const text = (key: string) => (typeof fields[key] === 'string' ? fields[key] : undefined);
+      reports.report(fields.error ?? new Error(message), {
+        message,
+        method: text('method'),
+        route: text('route'),
+        traceId: requests.getStore()?.traceId,
+      });
+    },
+  };
 }

@@ -1,15 +1,20 @@
 import Contracts
 
-/// Day or night on the scene. At night the lights come on, anyone training keeps going and
-/// everyone else sleeps where they are, 请假条 put away.
+/// Day or night on the scene. At night the venue goes dark, anyone training keeps going and
+/// everyone else sleeps where they are, 请假条 put away, until someone pulls the cord to switch
+/// the lights on (`LightsFlip`).
 public enum DayPhase: Hashable, Sendable {
     case day
     case night
 
-    /// Night runs from 7pm to 6am, on the member's own clock.
+    /// Night runs from 11pm to 6am, on the member's own clock.
     public init(hour: Int) {
-        self = (6..<19).contains(hour) ? .day : .night
+        self = (Self.dayStarts..<Self.nightStarts).contains(hour) ? .day : .night
     }
+
+    /// The hours day and night begin.
+    public static let dayStarts = 6
+    public static let nightStarts = 23
 }
 
 /// What a teammate is doing where they are.

@@ -4,12 +4,12 @@ import CharacterEditorDomain
 import CharacterEditorUI
 import Testing
 
-/// The bundled art gives the editor what the design shows: five species, two props, and swatches
-/// with a 原色 for exactly the pieces that recolor.
+/// The bundled art gives the editor what the design shows: five species, the two props every
+/// member starts with, and swatches with a 原色 for exactly the pieces that recolor.
 @Test func thePlaceholderCatalogComesFromTheArt() throws {
     let catalog = try Catalog.placeholder()
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
-    #expect(catalog.props == ["dumbbell", "racket"])
+    #expect(catalog.props == ["bottle", "dumbbell"])
     #expect(catalog.variants["hat"] == ["cap", "headband"])
     #expect(catalog.swatches(for: "body", wearing: "peach").count == 7)
     #expect(catalog.swatches(for: "body", wearing: "calico").isEmpty)

@@ -91,6 +91,11 @@ extension Meal {
 }
 
 extension Activity {
+    /// The sport the member trained most (最常练).
+    public init(_ wire: Components.Schemas.TopSport) throws(ContractsError) {
+        try self.init(sport: wire.sport, customSport: wire.customSport)
+    }
+
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {
         switch (sport, customSport) {
         case (.custom, let name?): self = .custom(try CustomSport(name))

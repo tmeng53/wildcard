@@ -39,10 +39,6 @@ final class ScenePickUITests: XCTestCase {
         confirm.tap()
         // The reveal hides the page from VoiceOver as it starts, and ends on the scene by 3 s.
         waitFor(confirm, "exists == false", "the reveal didn't start")
-        // The scene's card filling the screen, just before the story closes onto home (the
-        // reveal ends at 2.96 s, and the page is gone a moment after the tap).
-        Thread.sleep(forTimeInterval: 1.6)
-        keepScreenshot(named: "53-scenepick-covering")
         // Once the scene fills the screen the story is done.
         XCTAssertTrue(app.buttons["recap.entry"].waitForExistence(timeout: Self.wait), "the story didn't close")
         XCTAssertFalse(confirm.exists, "the page came back after the reveal")
@@ -70,9 +66,9 @@ final class ScenePickUITests: XCTestCase {
     }
 
     /// A carton opening, held at the prototype's frames: the shake, the flaps flying, the card
-    /// rising and filling the screen.
+    /// rising and filling the screen (covered at 2.8 s).
     func testCartonRevealFrames() {
-        for time in [0.6, 1.3, 1.8, 2.4] {
+        for time in [0.6, 1.3, 1.8, 2.4, 2.8] {
             holdReveal(of: "tennis", at: time)
         }
     }
