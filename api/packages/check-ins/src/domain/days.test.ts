@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { CheckInId, Disclaimer, Meal, MemberId, Training, type CheckInRecord } from './check-in.js';
-import { latestMealOn, trainedDays, trainingOn, weekOf } from './days.js';
+import {
+  latestMealOn,
+  trainedDays,
+  trainingOn,
+  weekOf,
+  withoutTakenBackDisclaimers,
+} from './days.js';
 
 const at = (iso: string) => new Date(iso);
 const member = MemberId.parse('00000000-0000-4000-8000-000000000001');
@@ -86,5 +92,34 @@ describe('a day’s check-ins', () => {
       checkIn('trained', { day: '2026-10-18' }),
     ];
     expect(trainedDays(checkIns, week)).toBe(2);
+  });
+});
+
+describe('taken-back 请假条', () => {
+  it('leaves out a 请假条 whose author trained the same day, and keeps the rest', () => {
+    const offDay = checkIn('disclaimer', { day: '2026-10-20' });
+    const trained = checkIn('trained', {
+      day: '2026-10-20',
+      createdAt: '2026-10-20T22:00:00.000Z',
+    });
+    const otherDay = checkIn('disclaimer', { day: '2026-10-21' });
+    const meal = checkIn('healthyMeal', { day: '2026-10-21' });
+    expect(withoutTakenBackDisclaimers([offDay, trained, otherDay, meal])).toStrictEqual([
+      trained,
+      otherDay,
+      meal,
+    ]);
+  });
+
+  it('only takes back the trainer’s own 请假条', () => {
+    const someoneElse = {
+      ...checkIn('disclaimer', { day: '2026-10-20' }),
+      member: MemberId.parse('00000000-0000-4000-8000-000000000002'),
+    };
+    const trained = checkIn('trained', { day: '2026-10-20' });
+    expect(withoutTakenBackDisclaimers([someoneElse, trained])).toStrictEqual([
+      someoneElse,
+      trained,
+    ]);
   });
 });
