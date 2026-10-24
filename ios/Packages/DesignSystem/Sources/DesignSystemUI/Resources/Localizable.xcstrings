@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
     "一": {
       "localizations": {
         "en": {

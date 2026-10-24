@@ -1,5 +1,6 @@
 #if os(iOS)
 import Contracts
+import DesignSystemUI
 import Foundation
 import SwiftUI
 
@@ -12,7 +13,7 @@ extension Sport {
     /// Sports whose name is too long for a poster row and have a short one in the catalog
     /// (`sportCard.<id>`); the rest use their name.
     static let shortOnCards: Set<Sport> = [
-        .strength, .baseballSoftball, .reformerPilates, .mountainBiking, .roadCycling, .bikeCommute,
+        .baseballSoftball, .reformerPilates, .mountainBiking, .roadCycling, .bikeCommute,
         .walkCommute, .strollerWalk, .tableTennis, .kickboxing, .martialArts,
     ]
 
@@ -25,7 +26,9 @@ extension Sport {
     }
 
     /// The localized name as a string, for search.
-    public var localizedName: String { Bundle.module.localizedString(forKey: nameKey, value: nil, table: nil) }
+    public var localizedName: String {
+        Bundle.module.inAppLanguage.localizedString(forKey: nameKey, value: nil, table: nil)
+    }
 
     /// The SF Symbol drawn beside the name.
     public var symbol: String {

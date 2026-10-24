@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystemUI
 import FeedDomain
 import Foundation
 
@@ -90,7 +91,7 @@ extension InMemoryFeedSource {
     ]
 
     fileprivate static func localized(_ key: String) -> String {
-        Bundle.module.localizedString(forKey: key, value: nil, table: nil)
+        Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
     }
 }
 
