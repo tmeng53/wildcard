@@ -1,8 +1,8 @@
 import Foundation
 
-/// For now the app opens in Simplified Chinese even on a phone set to English, until the member
-/// picks a language in iOS Settings (which writes the app's own `AppleLanguages`). To undo it,
-/// delete this file and its call in `Launch`.
+/// The app opens in Simplified Chinese even on a phone set to English, until the member picks a
+/// language (`AppLanguage.pick`, or iOS Settings; both write the app's own `AppleLanguages`). To
+/// undo it, delete this file and its call in `Launch`.
 enum DefaultLanguage {
     static let identifier = "zh-Hans"
     private static let key = "AppleLanguages"

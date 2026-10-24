@@ -21,7 +21,7 @@ struct WelcomeScreen<SignIn: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.openURL) private var openURL
+    @State private var picksLanguage = false
     @State private var crowd = WelcomeCrowd()
     @State private var word: CGRect?
     @State private var sprint: SprintRunner?
@@ -105,14 +105,12 @@ struct WelcomeScreen<SignIn: View>: View {
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
     }
 
-    /// The app's language: iOS keeps it in Settings and opens the app again in the one picked,
-    /// so every word, Sign in with Apple included, changes at once.
+    /// The globe that picks the app's language, before signing up.
     private var language: some View {
-        HeaderButton(Text("语言", bundle: .module), systemImage: "globe", on: .scene) {
-            if let settings = URL(string: UIApplication.openSettingsURLString) { openURL(settings) }
-        }
-        .padding(.trailing, Space.pageMargin)
-        .accessibilityIdentifier("signup.language")
+        HeaderButton(Text("语言", bundle: .module), systemImage: "globe", on: .scene) { picksLanguage = true }
+            .padding(.trailing, Space.pageMargin)
+            .accessibilityIdentifier("signup.language")
+            .languagePicker(isPresented: $picksLanguage)
     }
 
     /// WILDCARD, then the slogan under it. While the sprint plays the word is drawn where the
@@ -216,7 +214,7 @@ struct WelcomeScreen<SignIn: View>: View {
     /// The catalog marks them `terms:` and `privacy:`, which become the pages the app passes.
     private var termsLine: AttributedString {
         var line = AttributedString(
-            localized: "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module)
+            localized: "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module.inAppLanguage)
         for (link, range) in line.runs[\.link] {
             guard let link else { continue }
             line[range].link = link.scheme == "terms" ? policies.terms : policies.privacyPolicy

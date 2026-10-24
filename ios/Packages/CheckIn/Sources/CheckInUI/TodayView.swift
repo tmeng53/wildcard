@@ -241,7 +241,7 @@ public struct TodayView: View {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
             summary: record.trained.map {
-                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module)
+                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module.inAppLanguage)
             }
             .joined(separator: " · "),
             done: week.trainedDays, planned: week.plannedDays,
@@ -271,19 +271,22 @@ public struct TodayView: View {
         case .trained:
             let line = log.sessions.map { session in
                 if let minutes = session.minutes {
-                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module)
+                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module.inAppLanguage)
                 } else {
                     session.activity.localizedName
                 }
             }
             return WeekDayDetail(line: line.joined(separator: " · "), isPlan: false, meals: meals)
         case .disclaimer:
-            return WeekDayDetail(line: String(localized: "请假了", bundle: .module), isPlan: false, meals: meals)
+            return WeekDayDetail(
+                line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
         case .restDay:
-            return WeekDayDetail(line: String(localized: "休息日", bundle: .module), isPlan: false, meals: meals)
+            return WeekDayDetail(
+                line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
         case .open:
             return WeekDayDetail(
-                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module), isPlan: true, meals: meals)
+                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module.inAppLanguage), isPlan: true,
+                meals: meals)
         }
     }
 
