@@ -4,8 +4,8 @@ import SwiftUI
 
 /// A 52-point row that turns a setting on or off (每日提醒): an icon, the title and a switch, in
 /// the same list as `ListRow`. The whole row is the tap target. On, the switch fills with the
-/// scene's accent; off, the hairline grey (muted ink with Increase Contrast on, so it stands out
-/// on a white card); the knob is white with no shadow. VoiceOver reads it as a switch.
+/// accent tone's colour; off, the hairline grey (muted ink with Increase Contrast on, so it stands
+/// out on a white card); the knob is white with no shadow. VoiceOver reads it as a switch.
 public struct SwitchRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let title: Text

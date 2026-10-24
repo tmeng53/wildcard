@@ -18,8 +18,12 @@ import Testing
     try await signUp.save(
         NewCharacter(outfit: Outfit(["body": "shiba"]), persona: .drama, nickname: try Nickname("阿杰")))
     try await signUp.agreeToAI()
-    _ = try await signUp.create(named: try SquadName("早八健身"))
+    let squad = try await signUp.create(named: try SquadName("早八健身"))
     let service = APIMeService(api: member.api)
+    // 本周 is the squad's today's count for the member; how many days the plan holds depends on
+    // the weekday the test runs, since a week counts only from the day the member joined.
+    let week = try await member.api.today(of: squad.id).myWeek.week
+    #expect(week.trainedDays == 0)
     let joinedAt = try #require(try await member.api.me().joinedAt)
 
     #expect(
@@ -27,7 +31,7 @@ import Testing
             == MeOverview(
                 character: MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama),
                 joinedAt: joinedAt.date,
-                counts: .zero, squadName: "早八健身", dailyPushOn: true))
+                counts: .zero, week: week, squadName: "早八健身", dailyPushOn: true))
 
     try await service.setDailyPush(false)
     #expect(try await service.overview().dailyPushOn == false)
