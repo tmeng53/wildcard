@@ -38,7 +38,9 @@ public struct SquadWeek: Sendable, Hashable {
 /// How one day of my week stands, as the second page's calendar draws it.
 public enum WeekDayStatus: Sendable, Hashable {
     /// 练了: the scene's color with a check.
-    case trained
+    /// With the sport's icon (the same one the planned day showed) and a small check, or a bare
+    /// check without one.
+    case trained(symbol: String?)
     /// A 请假条: the scene's color with 假; it counts as checked in.
     case excused
     /// A rest day in the plan: light grey with a moon.
@@ -171,7 +173,7 @@ extension View {
 }
 
 /// Sizes that belong to the squad card alone.
-private enum SquadCardMetrics {
+enum SquadCardMetrics {
     /// Inside each page's padding: 186 tall in all, on both pages.
     static let pageContent: Double = 186 - 2 * Space.cardPadding
     /// Between rings: eight 38-point rings fit a 358-point card.
@@ -182,6 +184,8 @@ private enum SquadCardMetrics {
     /// The second page's day circles.
     static let day: Double = 30
     static let dayGlyph: Double = 14
+    static let badge: Double = 13
+    static let badgeGlyph: Double = 7
     /// Today's circle is drawn in ink, a little heavier than a planned day's hairline ring.
     static let todayStroke: Double = 2
     static let dot: Double = 6
@@ -269,86 +273,6 @@ private struct MyWeekPage: View {
             }
         }
         .accessibilityElement(children: .contain)
-    }
-}
-
-/// One day: its circle over its name. Today's name is ink and heavier.
-private struct DayCircle: View {
-    @Environment(\.sceneTheme) private var theme
-    let status: WeekDayStatus
-    let isToday: Bool
-    let weekday: Int
-
-    var body: some View {
-        VStack(spacing: Space.xxs) {
-            circle
-                .frame(width: SquadCardMetrics.day, height: SquadCardMetrics.day)
-            Self.name(weekday)
-                .typeStyle(isToday ? TypeRamp.tabSelected : TypeRamp.tab)
-                .foregroundStyle(Color(role: isToday ? .fgDefault : .fgMuted, in: theme))
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Self.name(weekday))
-        .accessibilityValue(value)
-    }
-
-    @ViewBuilder private var circle: some View {
-        switch status {
-        case .trained:
-            Image(systemName: "checkmark")
-                .font(.system(size: SquadCardMetrics.dayGlyph, weight: .bold))
-                .foregroundStyle(Color(role: .fgOnAccent, in: theme))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(role: .bgAccent, in: theme), in: Circle())
-        case .excused:
-            Text("假", bundle: .module)
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgOnAccent, in: theme))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(role: .bgAccent, in: theme), in: Circle())
-        case .restDay:
-            Image(systemName: "moon.fill")
-                .font(.system(size: SquadCardMetrics.dayGlyph * 0.85))
-                .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(role: .bgSubtle, in: theme), in: Circle())
-        case .planned(let symbol):
-            ring.overlay {
-                Image(systemName: symbol)
-                    .font(.system(size: SquadCardMetrics.dayGlyph, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-            }
-        case .open: ring
-        }
-    }
-
-    private var ring: some View {
-        Circle()
-            .strokeBorder(
-                Color(role: isToday ? .fgDefault : .borderDefault, in: theme),
-                lineWidth: isToday ? SquadCardMetrics.todayStroke : Sizing.selectionStroke)
-    }
-
-    private var value: Text {
-        switch status {
-        case .trained: Text("练了", bundle: .module)
-        case .excused: Text("请假", bundle: .module)
-        case .restDay: Text("休息日", bundle: .module)
-        case .open where isToday, .planned where isToday: Text("今天", bundle: .module)
-        case .open, .planned: Text("还没练", bundle: .module)
-        }
-    }
-
-    static func name(_ weekday: Int) -> Text {
-        switch weekday {
-        case 0: Text("一", bundle: .module)
-        case 1: Text("二", bundle: .module)
-        case 2: Text("三", bundle: .module)
-        case 3: Text("四", bundle: .module)
-        case 4: Text("五", bundle: .module)
-        case 5: Text("六", bundle: .module)
-        default: Text("日", bundle: .module)
-        }
     }
 }
 

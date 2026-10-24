@@ -209,13 +209,13 @@ public struct TodayView: View {
             }
             .joined(separator: " · "),
             done: week.trainedDays, planned: week.plannedDays,
-            days: zip(record.days, record.plannedActivities).map { status, planned in
+            days: zip(record.days, record.activities).map { status, activity in
                 switch status {
-                case .trained: .trained
+                case .trained: .trained(symbol: activity?.symbol)
                 case .disclaimer: .excused
                 case .restDay: .restDay
-                // A planned sport shows its icon; a training day without one gets a generic one.
-                case .open: .planned(symbol: planned?.symbol ?? "figure.run")
+                // A training day without a sport gets a generic icon.
+                case .open: .planned(symbol: activity?.symbol ?? "figure.run")
                 }
             },
             today: record.today, healthyMeals: record.healthyMeals, cheatMeals: record.cheatMeals,
