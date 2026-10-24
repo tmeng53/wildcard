@@ -30,6 +30,7 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -82,6 +83,7 @@ const app = createApp({
   members: createMembers({ store: createPostgresProfileStore(db) }),
   squads,
   aiConsent,
+  nudges: nudgesOn(db),
   disclaimerDrafts: createDisclaimerDrafts({
     model: {
       answer: ({ prompt }) => {

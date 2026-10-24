@@ -45,7 +45,8 @@ func sampleHome(today: SquadToday = sampleToday(), checkIns: [CheckIn] = []) -> 
         days: [.train(nil), .train(.sport("yoga")), .rest, .train(nil), .train(nil), .train(nil), .rest])
     return Home(
         member: myID, timeZone: losAngeles,
-        squad: Squad(id: squadID, name: "周三不练腿", inviteCode: "K7M2QX9P", members: [mate, myID, resting]),
+        squad: Squad(
+            id: squadID, name: "周三不练腿", inviteCode: "K7M2QX9P", members: [mate, myID, resting], captain: myID),
         today: today, plan: plan ?? { fatalError("a seven-day plan") }(), checkIns: checkIns)
 }
 
@@ -123,6 +124,21 @@ actor ScriptedBackend: CheckInBackend {
     func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
         if let failure { throw failure }
         reactionList[checkIn] = []
+    }
+
+    var serverPokes = SquadPokes.none
+    private(set) var pats: [MemberID] = []
+    func set(pokes: SquadPokes) { serverPokes = pokes }
+
+    func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
+        if let failure { throw failure }
+        return serverPokes
+    }
+
+    func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
+        if let failure { throw failure }
+        pats.append(member)
+        serverPokes.sent.insert(member)
     }
 }
 

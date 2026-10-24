@@ -179,8 +179,17 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let kits = try PlaceholderCharacter.sportKits()
     let hop = try PlaceholderCharacter.kitHop()
     var clips = [hop.out, hop.in, try PlaceholderCharacter.entrance(), try PlaceholderCharacter.drop()]
+    clips += try PlaceholderCharacter.editorChoices().props.compactMap {
+        try PlaceholderCharacter.propMove(for: Outfit(["prop": $0]))
+    }
+    clips += PlaceholderCharacter.reactionMoves.compactMap(PlaceholderCharacter.reactionMove)
     for persona in Persona.allCases {
         clips += [try PlaceholderCharacter.typing(persona: persona), try PlaceholderCharacter.teary(persona: persona)]
+        clips += try Move.allCases.map { try PlaceholderCharacter.clip(for: $0, persona: persona) }
+        clips += [
+            try PlaceholderCharacter.sitting(persona: persona), try PlaceholderCharacter.holdingSign(persona: persona),
+            try PlaceholderCharacter.sleeping(persona: persona),
+        ]
         clips += try ["idle", "cheer", "welcome"].map { try PlaceholderCharacter.clip($0, persona: persona) }
         clips += try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: persona) }
     }
@@ -194,5 +203,23 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
                 #expect(abs(pose.parts[part].rotation) <= 15, "\(clip.name) at \(frame)")
             }
         }
+    }
+}
+
+/// A teammate's reaction makes the author's character play a move from the feed's library: each
+/// one drawn plays once on every look, stays on the canvas and ends at rest, so the character
+/// holds still again until the next reaction.
+@Test func reactionMovesPlayOnceAndEndAtRest() throws {
+    #expect(
+        PlaceholderCharacter.reactionMoves == ["chin-up", "drool", "flex", "heart", "laugh-bend", "pout", "shocked"])
+    #expect(PlaceholderCharacter.reactionMove("happy-hop") == nil)
+    #expect(PlaceholderCharacter.reactionMove("../moves/entrance") == nil)
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
+    for id in PlaceholderCharacter.reactionMoves {
+        let clip = try #require(PlaceholderCharacter.reactionMove(id))
+        #expect(!clip.loops, "\(id)")
+        let bound = try figure.bind(clip)
+        expectOnCanvas(figure, bound, for: clip.duration, id)
+        #expect(nearlyEqual(figure.pose(bound, at: clip.duration), figure.restPose), "\(id)")
     }
 }

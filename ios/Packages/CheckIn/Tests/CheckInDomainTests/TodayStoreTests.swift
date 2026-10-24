@@ -3,7 +3,7 @@ import Contracts
 import Foundation
 import Testing
 
-private let run = CheckInDraft.trained(.sport("run"), PostBody(photos: [], caption: "雨中五公里"))
+private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], caption: "雨中五公里"))
 
 @MainActor @Test func opensOnTheSavedCopyThenTheServers() async throws {
     var stale = sampleHome()
@@ -55,7 +55,7 @@ private let run = CheckInDraft.trained(.sport("run"), PostBody(photos: [], capti
     #expect(today.home?.today.today.trained == 2)
     #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
 
-    try await today.post(.trained(.sport("yoga"), PostBody(photos: [], caption: "")))
+    try await today.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))
     #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
     #expect(today.home?.today.today.trained == 2)
     #expect(await backend.saves.count == 2)
@@ -104,7 +104,7 @@ private let run = CheckInDraft.trained(.sport("run"), PostBody(photos: [], capti
     await backend.set(uploadsBeforeFailing: 1)
 
     let photos = [photo(3), photo(1), photo(2)]
-    #expect(try await today.post(.trained(.sport("climb"), PostBody(photos: photos, caption: ""))) == .queued)
+    #expect(try await today.post(.trained(.sport("climb"), nil, PostBody(photos: photos, caption: ""))) == .queued)
     #expect(today.pending.first?.uploaded.keys.sorted() == [id(3)])
 
     await backend.set(uploadsBeforeFailing: .max)

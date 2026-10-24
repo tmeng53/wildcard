@@ -17,6 +17,9 @@
       "path": "../../packages/ai-consent"
     },
     {
+      "path": "../../packages/nudges"
+    },
+    {
       "path": "../../packages/check-ins"
     },
     {

@@ -124,11 +124,16 @@ echo "members: me=$me mate=$mate outsider=$outsider squad=$squad"
 
 if want check-in; then
   id="$(new_id)"
-  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"caption\":\"累但爽\"}}"
+  trained="{\"version\":1,\"day\":\"$day\",\"createdAt\":\"$now\",\"audience\":[\"$squad\"],\"kind\":\"trained\",\"training\":{\"sport\":\"custom\",\"customSport\":\" 飞盘 \",\"minutes\":40,\"caption\":\"累但爽\"}}"
   call PUT "/check-ins/$id" "$me_token" "$trained"
   expect 201
   [ "$(jq -r .training.customSport <<<"$body")" = "飞盘" ] || fail "custom sport not trimmed: $body"
-  echo "check-in: saved trained $id (201)"
+  [ "$(jq -r .training.minutes <<<"$body")" = "40" ] || fail "minutes not kept: $body"
+  echo "check-in: saved trained $id with 40 minutes (201)"
+
+  call PUT "/check-ins/$(new_id)" "$me_token" "${trained/\"minutes\":40/\"minutes\":601}"
+  expect 400 REQUEST_INVALID
+  echo "check-in: 601 minutes refused (400 REQUEST_INVALID)"
 
   call PUT "/check-ins/$id" "$me_token" "$trained"
   expect 200
@@ -155,7 +160,9 @@ if want check-in; then
   expect 200
   [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
     fail "squad list should hold exactly $id and $first: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins)"
+  [ "$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .training.minutes' <<<"$body")" = "40" ] ||
+    fail "mate should see the 练了's 40 minutes: $body"
+  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
@@ -229,7 +236,7 @@ if want squad; then
   typed="$(tr '[:upper:]' '[:lower:]' <<<"${invite_code:0:4}")-${invite_code:4}"
   call GET "/squad-invites/$typed" "$newcomer_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false,"looks":[]}' ] ||
     fail "preview should show the name and 2 members only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
@@ -274,7 +281,31 @@ if want squad; then
   expect 403 SQUAD_NOT_JOINED
   echo "squad: outsider reading the squad refused (403 SQUAD_NOT_JOINED)"
 
-  call DELETE "/squads/$squad/members/me" "$newcomer_token"
+  call PUT "/squads/$squad/name" "$newcomer_token" '{"version":1,"name":"乱改"}'
+  expect 403 NOT_SQUAD_CAPTAIN
+  call PUT "/squads/$squad/name" "$me_token" '{"version":1,"name":"夜跑团"}'
+  expect 200
+  [ "$(jq -r '.name + " " + .captain' <<<"$body")" = "夜跑团 $me" ] || fail "rename: $body"
+  call PUT "/squads/$squad/name" "$me_token" '{"version":1,"name":"早八跑团"}'
+  expect 200
+  call DELETE "/squads/$squad/members/$me" "$newcomer_token"
+  expect 403 NOT_SQUAD_CAPTAIN
+  echo "squad: only the captain renames (200, newcomer 403) or removes others"
+
+  call GET "/squads/$squad/scene" "$newcomer_token"
+  expect 200
+  [ "$(jq -r '.pickers.by + " " + (.canPick | tostring)' <<<"$body")" = "captain false" ] || fail "scene: $body"
+  call GET "/squads/$squad/scene" "$me_token"
+  expect 200
+  week="$(jq -r .week <<<"$body")"
+  [ "$(jq -r '.scene + " " + (.canPick | tostring)' <<<"$body")" = "gym true" ] || fail "scene: $body"
+  call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"pool"}'
+  expect 201
+  call PUT "/squads/$squad/weeks/$week/scene" "$me_token" '{"version":1,"scene":"gym"}'
+  expect 409 SCENE_ALREADY_PICKED
+  echo "squad: nobody won the crown, so the captain picked the pool for $week, once (201, then 409)"
+
+  call DELETE "/squads/$squad/members/$newcomer" "$newcomer_token"
   expect 204
   call GET "/squads/$squad" "$newcomer_token"
   expect 403 SQUAD_NOT_JOINED
@@ -661,6 +692,16 @@ if want daily-push; then
   call PUT "/check-ins/$post/reactions/mine" "$cheerer_token" '{"version":1,"emoji":"❤️"}'
   expect 201
   echo "daily-push: in $evening, runner trained and cheerer left them a ❤️"
+  nudge="{\"version\":1,\"to\":\"$runner\",\"kind\":\"poke\"}"
+  call POST "/squads/$squad/nudges" "$resting_token" "$nudge"
+  expect 201
+  call POST "/squads/$squad/nudges" "$resting_token" "$nudge"
+  expect 200
+  call POST "/squads/$squad/nudges" "$loner_token" "$nudge"
+  expect 403 SQUAD_NOT_JOINED
+  [ "$(psql "$DB_URL" -tAc "select count(*) from public.nudges where to_member_id = '$runner'")" = 1 ] ||
+    fail "one poke for runner"
+  echo "daily-push: resting poked runner once (201, then 200); loner, not in the squad, refused (403)"
 
   call POST /jobs/daily-progress-push "$runner_token"
   expect 401 JOB_TOKEN_INVALID
@@ -840,7 +881,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_week_summary_words,change_week_summary_words" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -897,6 +938,16 @@ if want admin-mcp; then
   words="$(psql "$DB_URL" -tAc "select string_agg(words#>>'{stats,checkIns,zh-Hans}', ',' order by id) from public.week_summary_word_events where changed_by = '$admin'")"
   [ "$words" = "打卡次数,打卡" ] || fail "the words log should hold the two changes, not the refusal: $words"
   echo "admin-mcp: renamed a 战报 count and back, logged once each ($words); an unknown award refused"
+
+  tool get_daily_push_settings '{}'
+  [ "$(jq -r '"\(.sending) \(.hour)"' <<<"$result")" = "true 18" ] || fail "get_daily_push_settings: $result"
+  tool change_daily_push_settings '{"hour":20}'
+  tool change_daily_push_settings '{"hour":18}'
+  tool change_daily_push_settings '{"hour":24}'
+  [ "$is_error" = true ] || fail "an hour past 23: $result"
+  hours="$(psql "$DB_URL" -tAc "select string_agg(settings->>'hour', ',' order by id) from public.daily_push_setting_events where changed_by = '$admin'")"
+  [ "$hours" = "20,18" ] || fail "the daily push log should hold the two changes, not the refusal: $hours"
+  echo "admin-mcp: moved the daily push to 8pm and back, logged once each ($hours); hour 24 refused"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED

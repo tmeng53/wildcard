@@ -34,6 +34,7 @@ final class SignUpUITests: XCTestCase {
     private func makeCharacter(in app: XCUIApplication) {
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
+        XCTAssertTrue(app.staticTexts["创建你的外卡运动员"].exists, "step 1 has no title")
         XCTAssertEqual(
             app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 4 步")
         let nickname = app.textFields["editor.nickname"]
@@ -58,9 +59,9 @@ final class SignUpUITests: XCTestCase {
         code.tap()
         code.typeText("k7q2m9xd")
         // The found squad is one combined element, which reads as text rather than a group.
-        XCTAssertTrue(
-            app.descendants(matching: .any)["squad.found"].waitForExistence(timeout: Self.wait),
-            "the squad wasn't found")
+        let found = app.descendants(matching: .any)["squad.found"]
+        XCTAssertTrue(found.waitForExistence(timeout: Self.wait), "the squad wasn't found")
+        settle()
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(
             app.descendants(matching: .any)["squad.aiConsent"].exists, "no AI consent line under 加入小队")
@@ -86,7 +87,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     private func planTheWeek(in app: XCUIApplication) {
-        let count = app.staticTexts["week.count"]
+        let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "一周练几天？ never appeared")
         settle()
         keepScreenshot(named: "45-signup-week")
@@ -94,7 +95,7 @@ final class SignUpUITests: XCTestCase {
         let rest = app.buttons["week.choice.rest"]
         XCTAssertLessThanOrEqual(count.frame.maxY, rest.frame.minY, "the week's total is under the choices")
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
-        XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 44, "a day is a full tap target")
+        XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
         rest.tap()
         settle()
         keepScreenshot(named: "46-signup-week-changed")
@@ -102,7 +103,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     /// Frames of 上场 as fast as the simulator takes them, for the MP4; the squad card has
-    /// dropped in by three seconds, and home takes over at the end.
+    /// dropped in by four seconds, and home takes over at the end.
     private func watchTheEntrance(in app: XCUIApplication) {
         let entrance = app.descendants(matching: .any)["entrance"]
         XCTAssertTrue(entrance.waitForExistence(timeout: Self.wait), "上场 never started")
@@ -112,7 +113,7 @@ final class SignUpUITests: XCTestCase {
         while Date.now.timeIntervalSince(start) < 7 {
             keepScreenshot(named: String(format: "47-signup-entrance-%02d", frame))
             frame += 1
-            if !checkedCard, Date.now.timeIntervalSince(start) > 3.5 {
+            if !checkedCard, Date.now.timeIntervalSince(start) > 4 {
                 XCTAssertTrue(
                     app.descendants(matching: .any)["entrance.card"].exists, "the squad card never dropped in")
                 checkedCard = true
@@ -132,6 +133,7 @@ final class SignUpUITests: XCTestCase {
         signIn.tap()
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "the editor never appeared")
+        XCTAssertTrue(app.staticTexts["Create your Wildcard athlete"].exists, "step 1 has no title")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
@@ -156,7 +158,7 @@ final class SignUpUITests: XCTestCase {
         squadDone.tap()
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the squad step didn't carry on to sports")
         skip.tap()
-        let count = app.staticTexts["week.count"]
+        let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "Training 5/7 days a week")
         settle()

@@ -26,6 +26,7 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -78,6 +79,7 @@ async function send(
     weeklyAwards: unusedWeeklyAwards,
     weekSummaryWords: unusedWeekSummaryWords,
     aiConsent: aiConsentOn(db),
+    nudges: nudgesOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),

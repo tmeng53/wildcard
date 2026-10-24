@@ -19,9 +19,11 @@ private final class Schema: Decodable, Sendable {
     let minItems: Int?
     let maxItems: Int?
     let maxCharacters: Int?
+    let minimum: Int?
+    let maximum: Int?
 
     enum CodingKeys: String, CodingKey {
-        case properties, minItems, maxItems
+        case properties, minItems, maxItems, minimum, maximum
         case maxCharacters = "x-max-characters"
     }
 }
@@ -43,6 +45,13 @@ func captionLimitIsTheAPIs(schema: String) throws {
 @Test(arguments: ["Training", "TrainingView"])
 func customSportLimitIsTheAPIs(schema: String) throws {
     #expect(try property("customSport", of: schema)?.maxCharacters == CustomSport.maxLength)
+}
+
+@Test(arguments: ["Training", "TrainingView"])
+func workoutMinutesRangeIsTheAPIs(schema: String) throws {
+    let minutes = try property("minutes", of: schema)
+    #expect(minutes?.minimum == WorkoutMinutes.range.lowerBound)
+    #expect(minutes?.maximum == WorkoutMinutes.range.upperBound)
 }
 
 @Test func disclaimerLimitIsTheAPIs() throws {

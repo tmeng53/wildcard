@@ -63,22 +63,6 @@ struct ScenePattern: View {
     }
 }
 
-/// The scene's floor full screen, in the scene's color with its markings: where sign-up's crowd
-/// and 上场 stand.
-public struct SceneFloor: View {
-    @Environment(\.sceneTheme) private var theme
-
-    public init() {}
-
-    public var body: some View {
-        ZStack {
-            Color(role: .bgScene, in: theme)
-            ScenePattern(floorTop: 0.55, ink: Color(role: .bgCanvas, in: theme).opacity(theme == .gym ? 0.12 : 0.7))
-        }
-        .accessibilityHidden(true)
-    }
-}
-
 /// Where the character stands while it is being dressed or shown off: a subtle block with
 /// 12-point corners and a grey floor band carrying the scene's markings, so the scene shows
 /// without its color competing with the accent. The content stands with its feet on the floor.

@@ -18,6 +18,16 @@
           }
         }
       }
+    },
+    "搜索运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search sports"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

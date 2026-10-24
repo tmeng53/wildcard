@@ -5,6 +5,7 @@ import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-in
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
@@ -20,6 +21,7 @@ import type { Log } from './log.js';
 import type {
   Accounts,
   Database,
+  IsScheduler,
   OAuthConsent,
   PhotoStorage,
   RevokeAppleSignIn,
@@ -34,11 +36,13 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
+import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
 import { reactions } from './routes/reactions.js';
 import { replies } from './routes/replies.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
+import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
 import { weekStory } from './routes/week-story.js';
 import { weekSummary } from './routes/week-summary.js';
@@ -54,6 +58,8 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
+  /** Squadmates' pokes, which the daily push counts. */
+  readonly nudges: Nudges;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** What `GET /public/catalog` serves: each section, as `main.ts` lists them. */
@@ -70,8 +76,8 @@ export interface AppDependencies {
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {
-    /** What the scheduler sends; undefined until one is set up, and then no job runs. */
-    readonly token: string | undefined;
+    /** Tells the scheduler's token; undefined until one is set up, and then no job runs. */
+    readonly isScheduler: IsScheduler | undefined;
     /** Where the daily push finds what teammates did for a member. */
     readonly interactions: readonly InteractionSource[];
     readonly clock: () => Date;
@@ -120,6 +126,8 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
+  app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
+  app.route('/', nudges(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
@@ -128,7 +136,7 @@ export function createApp(deps: AppDependencies) {
   app.route(
     '/',
     jobs({
-      jobsToken: deps.jobs.token,
+      isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
     }),

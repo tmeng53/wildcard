@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -92,7 +93,7 @@ private struct JoinPanel: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { isTyping = true }
-            SquadFound(lookup: model.preview)
+            SquadFound(lookup: model.preview, heads: model.previewHeads)
                 .padding(.top, Space.xxs)
         }
         .padding(.vertical, Space.xs)
@@ -108,6 +109,7 @@ private struct CodeBox: View {
     let letter: Character?
     let isNext: Bool
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     private let height: Double = 52
 
     var body: some View {
@@ -120,15 +122,17 @@ private struct CodeBox: View {
             .background(Color(role: .bgSubtle, in: theme), in: shape)
             .overlay {
                 if isNext {
-                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                    shape.strokeBorder(Color(role: tone.fill, in: theme), lineWidth: Sizing.selectionStroke)
                 }
             }
     }
 }
 
-/// The squad a whole code finds: its name and how many are in it, or why there's none.
+/// The squad a whole code finds: its name, its members' heads and how many are in it, or why
+/// there's none.
 private struct SquadFound: View {
     let lookup: SignUpModel.Lookup
+    let heads: [CastMember]
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -145,20 +149,15 @@ private struct SquadFound: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .card()
         case .found(let squad):
-            HStack(spacing: Space.s) {
-                Image(systemName: "flag.checkered")
-                    .font(.system(size: Sizing.icon, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-                    .frame(width: Sizing.control, height: Sizing.control)
-                    .background(
-                        Color(role: .bgAccentSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.thumbnail)
-                    )
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    Text(verbatim: squad.name)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .lineLimit(1)
+            VStack(alignment: .leading, spacing: Space.xs) {
+                Text(verbatim: squad.name)
+                    .typeStyle(TypeRamp.headline)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                HStack(spacing: Space.xs) {
+                    if !heads.isEmpty {
+                        HeadRow(heads: heads)
+                    }
                     Group {
                         if squad.isFull {
                             Text("\(squad.memberCount) 人 · 满员了", bundle: .module)
@@ -169,8 +168,8 @@ private struct SquadFound: View {
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
-                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .card()
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("squad.found")
@@ -178,6 +177,30 @@ private struct SquadFound: View {
             FailureLine(failure: failure)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// The squad's members as heads in a row, each a little over the one before, like the squad
+/// card's avatars: the face on a canvas circle, with a rim in the card's grey between them.
+private struct HeadRow: View {
+    let heads: [CastMember]
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        HStack(spacing: -Space.xxs) {
+            ForEach(heads.indices, id: \.self) { index in
+                ZStack {
+                    if let player = heads[index].player {
+                        CharacterHead(player: player)
+                    }
+                }
+                .frame(width: Sizing.characterHead, height: Sizing.characterHead)
+                .background(Color(role: .bgCanvas, in: theme))
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(Color(role: .bgSubtle, in: theme), lineWidth: Sizing.selectionStroke))
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 

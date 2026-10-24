@@ -14,7 +14,7 @@ import FoundationNetworking
 
 /// A minute ago, inside the API's 48-hour window, and its UTC day: what the app sends for a
 /// member in UTC.
-private func moment() throws -> (day: LocalDay, createdAt: Timestamp) {
+func moment() throws -> (day: LocalDay, createdAt: Timestamp) {
     let createdAt = Timestamp(Date().addingTimeInterval(-60))
     var utc = Calendar(identifier: .gregorian)
     utc.timeZone = try #require(TimeZone(identifier: "UTC"))
@@ -24,7 +24,7 @@ private func moment() throws -> (day: LocalDay, createdAt: Timestamp) {
     return (day, createdAt)
 }
 
-private func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry) throws -> CheckIn {
+func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry) throws -> CheckIn {
     let now = try moment()
     return CheckIn(
         id: CheckInID(UUID()), member: member.id, day: now.day, createdAt: now.createdAt,
@@ -32,7 +32,7 @@ private func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: Chec
 }
 
 /// 2 KiB of noise standing in for a photo: storage checks the declared type, not the bytes.
-private func photoBytes() -> Data {
+func photoBytes() -> Data {
     Data((0..<2048).map { _ in UInt8.random(in: 0...255) })
 }
 

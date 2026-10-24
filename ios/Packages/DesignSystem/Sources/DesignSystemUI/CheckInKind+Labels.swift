@@ -49,7 +49,7 @@ extension CheckInKind {
 
 /// A check-in kind as a round button with its word under it. The four kinds share the scene's
 /// colors, so only the icon and the word tell them apart: the wash on white, white on the
-/// scene's floor (the gym's are dark with volt). Unavailable, it greys out and shakes when tapped.
+/// scene's floor. Unavailable, it greys out and shakes when tapped.
 public struct KindButton: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -93,15 +93,23 @@ public struct KindButton: View {
     }
 }
 
-/// A tag in the scene's wash with accent text, such as a check-in's kind in a list.
+/// A tag in the scene's wash with accent text, such as a check-in's kind in a list; a 请假条's is grey.
 public struct Tag: View {
+    /// The scene's colour, or grey like a rest day's ring (a 请假条).
+    public enum Style: Sendable {
+        case accent
+        case rest
+    }
+
     @Environment(\.sceneTheme) private var theme
     private let title: Text
     private let systemImage: String?
+    private let style: Style
 
-    public init(_ title: Text, systemImage: String? = nil) {
+    public init(_ title: Text, systemImage: String? = nil, style: Style = .accent) {
         self.title = title
         self.systemImage = systemImage
+        self.style = style
     }
 
     public var body: some View {
@@ -115,10 +123,10 @@ public struct Tag: View {
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .lineLimit(1)
         }
-        .foregroundStyle(Color(role: .fgAccent, in: theme))
+        .foregroundStyle(Color(role: style == .accent ? .fgAccent : .fgMuted, in: theme))
         .padding(.horizontal, Space.s)
         .frame(minHeight: Sizing.tag)
-        .background(Color(role: .bgAccentSubtle, in: theme), in: Capsule())
+        .background(Color(role: style == .accent ? .bgAccentSubtle : .borderDefault, in: theme), in: Capsule())
         .accessibilityElement(children: .combine)
     }
 }

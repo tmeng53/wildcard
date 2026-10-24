@@ -15,6 +15,8 @@ final class SquadCast {
     /// A teammate on the scene.
     struct Mate: Identifiable {
         let member: StageMember
+        /// Their nickname; nil before they make their character.
+        let name: String?
         let persona: Persona
         /// The species whose moves their clips play with.
         let species: String?
@@ -26,7 +28,7 @@ final class SquadCast {
         var id: MemberID { member.id }
     }
 
-    private(set) var stage = SquadStage(layout: .of(.track))
+    private(set) var stage = SquadStage(layout: .of(.gym))
     private(set) var mates: [Mate] = []
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
@@ -36,7 +38,16 @@ final class SquadCast {
         var order: [MemberID]
     }
 
-    private var players: [MemberID: (look: Outfit, persona: Persona, player: CharacterPlayer)] = [:]
+    /// A teammate's character and what it was made from.
+    private struct Made {
+        let look: Outfit
+        let persona: Persona
+        /// The name of the loop it plays in its pose.
+        var idle: String
+        let player: CharacterPlayer
+    }
+
+    private var players: [MemberID: Made] = [:]
 
     /// Places the squad from the store's home: everyone but `me`.
     func update(home: Home, scene: SceneTheme, phase: DayPhase) {
@@ -56,10 +67,11 @@ final class SquadCast {
             let persona = Self.persona(of: mate)
             let look = Self.look(of: mate)
             let species = PlaceholderCharacter.species(of: look)
-            guard let player = player(for: member.id, wearing: look, persona: persona, species: species)
+            let pose = stage.pose(of: member, at: phase)
+            guard let player = player(for: member.id, wearing: look, persona: persona, species: species, in: pose)
             else { return nil }
             return Mate(
-                member: member, persona: persona, species: species, player: player,
+                member: member, name: mate.character?.nickname.text, persona: persona, species: species, player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
                 disclaimer: home.todaysDisclaimer(of: member.id))
         }
@@ -93,62 +105,33 @@ final class SquadCast {
         }
     }
 
-    /// The member's character, made again when their look or persona changes.
-    private func player(for member: MemberID, wearing look: Outfit, persona: Persona, species: String?)
-        -> CharacterPlayer?
-    {
+    /// The member's character, made again when their look or persona changes; when only their
+    /// pose does, it carries on from the pose on screen into the new loop.
+    private func player(
+        for member: MemberID, wearing look: Outfit, persona: Persona, species: String?, in pose: StagePose
+    ) -> CharacterPlayer? {
+        guard let idle = try? pose.loop(persona: persona, species: species) else { return nil }
         if let existing = players[member], existing.look == look, existing.persona == persona {
+            if existing.idle != idle.name, (try? existing.player.wear(existing.player.figure, idle: idle)) != nil {
+                players[member]?.idle = idle.name
+            }
             return existing.player
         }
-        // The persona's idle, which everyone plays until the sport, sitting, sign and sleeping
-        // moves land; the scene adds the sign and the sleep.
         guard let figure = try? PlaceholderCharacter.figure(wearing: look),
-            let clip = try? PlaceholderCharacter.clip("idle", persona: persona, species: species),
-            let player = try? CharacterPlayer(figure: figure, idle: clip)
+            let player = try? CharacterPlayer(figure: figure, idle: idle)
         else { return nil }
-        players[member] = (look, persona, player)
+        players[member] = Made(look: look, persona: persona, idle: idle.name, player: player)
         return player
     }
 
     /// The persona the member picked, or a stand-in before they made their character.
     static func persona(of mate: SquadmateToday) -> Persona {
-        mate.character.map { Persona($0.look) } ?? persona(of: mate.member)
+        mate.character.map { Persona($0.look) } ?? StandInCharacter.persona(of: mate.member)
     }
 
     /// The look the member made, or a stand-in before they made their character.
     static func look(of mate: SquadmateToday) -> Outfit {
-        mate.character.map { Outfit($0.look) } ?? look(of: mate.member)
-    }
-
-    // MARK: Stand-ins for a member who hasn't made their character yet.
-
-    /// A persona per member, the same on every launch.
-    static func persona(of member: MemberID) -> Persona {
-        Persona.allCases[seed(member, 0) % Persona.allCases.count]
-    }
-
-    /// A look per member, the same on every launch.
-    static func look(of member: MemberID) -> Outfit {
-        func pick(_ slot: Slot, _ salt: Int) -> String? {
-            let variants = PlaceholderCharacter.variants(for: slot)
-            return variants.isEmpty ? nil : variants[seed(member, salt) % variants.count]
-        }
-        var variants: [Slot: String] = ["body": "peach", "brows": "soft", "cheeks": "rosy"]
-        variants["hair"] = pick("hair", 1)
-        variants["top"] = pick("top", 2)
-        variants["bottom"] = pick("bottom", 3)
-        var colors: [Slot: RGBAColor] = [:]
-        for (salt, slot) in [Slot("body"), "hair", "top", "bottom"].enumerated() {
-            guard let variant = variants[slot] else { continue }
-            let swatches = PlaceholderCharacter.swatches(for: slot, wearing: variant)
-            if !swatches.isEmpty { colors[slot] = swatches[seed(member, salt + 4) % swatches.count] }
-        }
-        return Outfit(variants, colors: colors)
-    }
-
-    private static func seed(_ member: MemberID, _ salt: Int) -> Int {
-        let bytes = withUnsafeBytes(of: member.uuid.uuid) { Array($0) }
-        return Int(bytes[(salt * 3) % bytes.count]) &+ Int(bytes[(salt * 3 + 1) % bytes.count]) &* 7
+        mate.character.map { Outfit($0.look) } ?? StandInCharacter.look(of: mate.member)
     }
 
     /// The line a persona shouts when its member hasn't set a 口头禅 (spec rev 221).
