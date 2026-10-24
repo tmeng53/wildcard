@@ -128,10 +128,15 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 }
 
 @Test func aWeekNobodyCheckedInHasNoRecap() throws {
-    #expect(try story(titles: false).isPublished == false)
+    let empty = WeekStory(
+        status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
+        week: Week(monday: try day(13), sunday: try day(19)), ending: Ending(done: 0, plan: 0))
+    #expect(empty.isPublished == false)
 }
 
 @Test func aStoryWithItsAwardsOrWaitingForThemIsOut() throws {
     #expect(try story().isPublished)
     #expect(try story(.pending, titles: false).isPublished)
+    // Awards given to nobody (no one had agreed to AI use) still leave the week's facts.
+    #expect(try story(titles: false).isPublished)
 }

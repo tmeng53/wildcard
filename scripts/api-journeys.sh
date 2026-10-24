@@ -576,7 +576,8 @@ if want reactions; then
 fi
 
 if want replies; then
-  # A squad of its own: a 请假条 is taken back once its author trains that day, and me has.
+  # A squad of its own: a 请假条 is taken back once its author trains that day, as me and mate
+  # may have in the journeys before.
   shared_squad="$squad"
   read -r writer writer_token <<<"$(sign_up)"
   read -r fan fan_token <<<"$(sign_up)"
