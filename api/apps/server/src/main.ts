@@ -21,7 +21,9 @@ import {
 import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
+  createDiceLines,
   createDraftSettings,
+  createPostgresDiceLines,
   createPostgresDraftAllowance,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
@@ -69,13 +71,14 @@ import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
+import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
-import { sportsSection } from './routes/catalog.js';
+import { disclaimerDiceSection, sportsSection } from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { createLog, redactText, reportingErrors } from './log.js';
 import { memberCalendar } from './member-calendar.js';
@@ -223,7 +226,13 @@ const app = createApp({
   nudges,
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
-  catalog: { sections: [sportsSection(sports)], clock: () => new Date() },
+  catalog: {
+    sections: [
+      sportsSection(sports),
+      disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    ],
+    clock: () => new Date(),
+  },
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes
@@ -278,6 +287,9 @@ const app = createApp({
       ...aiWritingTools({
         drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
         awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
+      }),
+      ...disclaimerDiceTools({
+        dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
       }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),

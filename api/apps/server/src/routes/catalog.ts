@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { SportCatalog, Sports } from '@wildcard/sports';
 
 import { bodyVersion } from '../body-version.js';
@@ -98,6 +99,25 @@ const wireSports = (catalog: SportCatalog): z.input<typeof SportsCatalog> => ({
     checkInQuick: [...catalog.picks.checkInQuick],
   },
 });
+
+export const DisclaimerDiceCatalog = z
+  .looseObject({
+    lines: z.array(Names).meta({
+      description: 'Every line, in no set order: the app rolls three different ones at a time.',
+    }),
+  })
+  .openapi('DisclaimerDiceCatalog');
+
+/** The `disclaimerDice` section: the 请假条 lines the app rolls when the AI can't write. */
+export function disclaimerDiceSection(
+  dice: Pick<DiceLinesAdmin, 'current'>,
+): CatalogSection<typeof DisclaimerDiceCatalog> {
+  return {
+    name: 'disclaimerDice',
+    schema: DisclaimerDiceCatalog,
+    load: async () => ({ lines: (await dice.current()).lines.map((line) => ({ ...line })) }),
+  };
+}
 
 /**
  * The catalog's body: its version, then each section under its name. Every object in it is

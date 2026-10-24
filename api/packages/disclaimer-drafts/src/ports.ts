@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 
 import type { MemberId, PromptMeme } from './domain/draft-request.js';
+import type { DiceLines } from './domain/dice.js';
 import type { DraftSettings, ModelName } from './domain/settings.js';
 
 /**
@@ -22,6 +23,20 @@ export interface LanguageModel {
 }
 
 /** Where the draft settings are kept: one value, and a log of every change to it. */
+/** Where the dice lines are kept: one value, and a log of every change. */
+export interface DiceLinesStore {
+  /**
+   * The lines now. `forUpdate` holds the row until the caller's transaction ends, so two admins
+   * changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<DiceLines>;
+  /**
+   * Saves `dice` with `by` as who changed them, unless they are the lines already: then nothing
+   * is saved or logged. Says whether anything changed.
+   */
+  save(dice: DiceLines, by: MemberId): Promise<boolean>;
+}
+
 export interface DraftSettingsStore {
   /**
    * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two

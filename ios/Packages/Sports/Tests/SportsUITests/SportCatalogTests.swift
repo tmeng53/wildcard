@@ -25,7 +25,7 @@ struct SportCatalogTests {
     }
 
     @Test func namesFollowTheAppsLanguage() {
-        let names = SportCatalog.Names(simplifiedChinese: "羽毛球", english: "Badminton", traditionalChinese: "羽球")
+        let names = CatalogNames(simplifiedChinese: "羽毛球", english: "Badminton", traditionalChinese: "羽球")
         #expect(names.localized(in: ["zh-Hans"]) == "羽毛球")
         #expect(names.localized(in: ["zh-Hant"]) == "羽球")
         #expect(names.localized(in: ["zh-Hant-TW"]) == "羽球")
@@ -41,11 +41,11 @@ struct SportCatalogTests {
             categories: [
                 SportCatalog.Category(
                     id: "racket",
-                    names: SportCatalog.Names(simplifiedChinese: "球拍", english: "Racket", traditionalChinese: "球拍"),
+                    names: CatalogNames(simplifiedChinese: "球拍", english: "Racket", traditionalChinese: "球拍"),
                     entries: [
                         SportCatalog.Entry(
                             sport: "padel",
-                            names: SportCatalog.Names(
+                            names: CatalogNames(
                                 simplifiedChinese: "板式网球", english: "Padel", traditionalChinese: "板式網球"),
                             icon: "figure.tennis", offered: true, category: "racket")
                     ])

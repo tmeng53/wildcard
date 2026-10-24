@@ -119,6 +119,8 @@ extension Components {
             public var version: Components.Schemas.Catalog.VersionPayload
             /// - Remark: Generated from `#/components/schemas/Catalog/sports`.
             public var sports: Components.Schemas.SportsCatalog
+            /// - Remark: Generated from `#/components/schemas/Catalog/disclaimerDice`.
+            public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -126,19 +128,23 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - sports:
+            ///   - disclaimerDice:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
                 sports: Components.Schemas.SportsCatalog,
+                disclaimerDice: Components.Schemas.DisclaimerDiceCatalog,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
                 self.sports = sports
+                self.disclaimerDice = disclaimerDice
                 self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case sports
+                case disclaimerDice
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -150,9 +156,14 @@ extension Components {
                     Components.Schemas.SportsCatalog.self,
                     forKey: .sports
                 )
+                self.disclaimerDice = try container.decode(
+                    Components.Schemas.DisclaimerDiceCatalog.self,
+                    forKey: .disclaimerDice
+                )
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
-                    "sports"
+                    "sports",
+                    "disclaimerDice"
                 ])
             }
             public func encode(to encoder: any Swift.Encoder) throws {
@@ -164,6 +175,10 @@ extension Components {
                 try container.encode(
                     self.sports,
                     forKey: .sports
+                )
+                try container.encode(
+                    self.disclaimerDice,
+                    forKey: .disclaimerDice
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -542,6 +557,48 @@ extension Components {
                 try container.encode(
                     self.zhHant,
                     forKey: .zhHant
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DisclaimerDiceCatalog`.
+        public struct DisclaimerDiceCatalog: Codable, Hashable, Sendable {
+            /// Every line, in no set order: the app rolls three different ones at a time.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDiceCatalog/lines`.
+            public var lines: [Components.Schemas.CatalogNames]
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `DisclaimerDiceCatalog`.
+            ///
+            /// - Parameters:
+            ///   - lines: Every line, in no set order: the app rolls three different ones at a time.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                lines: [Components.Schemas.CatalogNames],
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.lines = lines
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case lines
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.lines = try container.decode(
+                    [Components.Schemas.CatalogNames].self,
+                    forKey: .lines
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "lines"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.lines,
+                    forKey: .lines
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }

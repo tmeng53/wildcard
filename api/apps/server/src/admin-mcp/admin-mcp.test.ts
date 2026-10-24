@@ -21,7 +21,12 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createDailyPushSettings, createPostgresDailyPushSettings } from '@wildcard/push';
-import { createDraftSettings, createPostgresDraftSettings } from '@wildcard/disclaimer-drafts';
+import {
+  createDiceLines,
+  createDraftSettings,
+  createPostgresDiceLines,
+  createPostgresDraftSettings,
+} from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -49,6 +54,7 @@ import { adminTool } from './admin-tool.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
+import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { memeTools } from './tools/memes.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -156,6 +162,9 @@ beforeAll(async () => {
               ...aiWritingTools({
                 drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
                 awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
+              }),
+              ...disclaimerDiceTools({
+                dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
               }),
               ...dailyPushTools({
                 settings: createDailyPushSettings({
@@ -322,6 +331,8 @@ describe('the admin MCP server', () => {
       ['change_disclaimer_draft_settings', false],
       ['get_weekly_award_settings', true],
       ['change_weekly_award_settings', false],
+      ['get_disclaimer_dice', true],
+      ['change_disclaimer_dice', false],
       ['get_daily_push_settings', true],
       ['change_daily_push_settings', false],
       ['get_week_summary_words', true],
@@ -574,6 +585,60 @@ describe('the admin MCP server', () => {
     expect(Words.parse(JSON.parse((await call('get_week_summary_words')).text))).toStrictEqual(
       before,
     );
+    await client.close();
+  });
+
+  it('reads and replaces the 请假条 dice lines, logging each change once', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const Dice = z.object({
+      version: z.literal(1),
+      lines: z.array(z.object({ zhHans: z.string(), en: z.string(), zhHant: z.string() })),
+    });
+    const before = Dice.parse(JSON.parse((await call('get_disclaimer_dice')).text));
+    expect(before.lines[0]).toStrictEqual({
+      zhHans: '昨天的腿还没回来',
+      en: "My legs haven't come back from yesterday",
+      zhHant: '昨天的腿還沒回來',
+    });
+    const logged = async () =>
+      (
+        await sql<{ dice: unknown }>`
+          select dice from public.disclaimer_dice_events
+          where changed_by = ${admin.userId} order by id
+        `.execute(db)
+      ).rows.map(({ dice }) => dice);
+
+    try {
+      const lines = [
+        { zhHans: '腿说休息', en: 'Legs said rest', zhHant: '腿說休息' },
+        ...before.lines.slice(1),
+      ];
+      const changed = Dice.parse(
+        JSON.parse((await call('change_disclaimer_dice', { lines })).text),
+      );
+      expect(changed).toStrictEqual({ version: 1, lines });
+      await call('change_disclaimer_dice', { lines });
+      expect(await logged()).toStrictEqual([{ version: 1, lines }]);
+
+      // Too few lines, one missing a language, one too long, or nothing.
+      for (const args of [
+        { lines: lines.slice(0, 2) },
+        { lines: [{ zhHans: '腿说休息', en: 'Legs said rest' }, ...lines.slice(1)] },
+        { lines: [{ ...lines[0], en: 'x'.repeat(61) }, ...lines.slice(1)] },
+        {},
+      ]) {
+        expect((await call('change_disclaimer_dice', args)).isError).toBe(true);
+      }
+      expect(await logged()).toHaveLength(1);
+    } finally {
+      await call('change_disclaimer_dice', { lines: before.lines });
+    }
+    expect(Dice.parse(JSON.parse((await call('get_disclaimer_dice')).text))).toStrictEqual(before);
     await client.close();
   });
 
