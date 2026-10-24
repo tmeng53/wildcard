@@ -6,7 +6,7 @@ import PackageDescription
 // the API once someone is signed in. It reaches iOS and the API only through its ports, so it
 // is pure Swift and tests on Linux. `NotificationsUI` is the Apple side: the permission prompt,
 // APNs registration, which APNs servers this build's tokens are for, and taps on a
-// notification.
+// notification, read into what they point at (`OpenedNotification`).
 let package = Package(
     name: "Notifications",
     platforms: [.iOS("26.0"), .macOS("26.0")],
@@ -14,10 +14,13 @@ let package = Package(
         .library(name: "NotificationsDomain", targets: ["NotificationsDomain"]),
         .library(name: "NotificationsUI", targets: ["NotificationsUI"]),
     ],
+    dependencies: [.package(path: "../Contracts")],
     targets: [
-        .target(name: "NotificationsDomain"),
+        .target(name: "NotificationsDomain", dependencies: [.product(name: "Contracts", package: "Contracts")]),
         .target(name: "NotificationsUI", dependencies: ["NotificationsDomain"]),
-        .testTarget(name: "NotificationsDomainTests", dependencies: ["NotificationsDomain"]),
+        .testTarget(
+            name: "NotificationsDomainTests",
+            dependencies: ["NotificationsDomain", .product(name: "Contracts", package: "Contracts")]),
         // Reading the provisioning profile; the iOS-only parts are covered by the app's build.
         .testTarget(name: "NotificationsUITests", dependencies: ["NotificationsUI", "NotificationsDomain"]),
     ]

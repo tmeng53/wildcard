@@ -18,7 +18,7 @@ public struct WildcardAPI: Sendable {
     /// `AccountSession.accessToken(rejected:)` is the app's.
     public typealias AccessToken = @Sendable (_ rejected: String?) async throws(AccountError) -> String
 
-    private let client: Client
+    let client: Client
     private let http: URLSession
 
     /// - Parameters:
@@ -53,7 +53,9 @@ public struct WildcardAPI: Sendable {
     public func me() async throws(APIError) -> Member {
         let answer = try await meWire()
         guard let id = UUID(uuidString: answer.userId) else { throw .unreadableResponse }
-        return Member(id: MemberID(id), profile: try answer.profile.map(Profile.init))
+        return Member(
+            id: MemberID(id), profile: try answer.profile.map(Profile.init),
+            joinedAt: answer.profile.map { Timestamp($0.joinedAt) })
     }
 
     /// Creates the profile, right after the first sign-in, or replaces it.
@@ -113,6 +115,17 @@ public struct WildcardAPI: Sendable {
     /// last week's carried over, else the default.
     public func weeklyPlan(weekStart: LocalDay) async throws(APIError) -> WeeklyPlan {
         let wire = try await weeklyPlanWire(weekStart: weekStart)
+        return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
+    }
+
+    /// Saves the member's plan for the week starting on `weekStart`, a Monday: seven days, its
+    /// first day first.
+    public func save(_ days: [PlanDay], weekStart: LocalDay) async throws(APIError) -> WeeklyPlan {
+        let wire = try await call {
+            try await client.saveMyWeeklyPlan(
+                path: .init(weekStart: weekStart.description), body: .json(.init(days))
+            ).ok.body.json
+        }
         return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
     }
 
@@ -209,6 +222,15 @@ public struct WildcardAPI: Sendable {
 
     // MARK: - Photos
 
+    /// A check-in's photo from the URL the API signed for it, or nil when it can't be had now
+    /// (offline, or the URL ran out: listing again signs fresh ones).
+    public func photo(at url: URL) async -> Data? {
+        guard let (data, response) = try? await http.data(from: url),
+            (response as? HTTPURLResponse)?.statusCode == 200
+        else { return nil }
+        return data
+    }
+
     /// Uploads a photo straight to storage, never through the API, and returns it for a
     /// check-in to list. Each upload is used by one check-in only.
     public func upload(_ photo: Data, as type: PhotoType) async throws(APIError) -> PhotoRef {
@@ -262,7 +284,7 @@ public struct WildcardAPI: Sendable {
     // MARK: - Private
 
     /// Runs a generated call, turning whatever it throws into an `APIError`.
-    private func call<T>(_ body: () async throws -> T) async throws(APIError) -> T {
+    func call<T>(_ body: () async throws -> T) async throws(APIError) -> T {
         do {
             return try await body()
         } catch let error as APIError {
@@ -301,6 +323,8 @@ public struct Member: Hashable, Sendable {
     public let id: MemberID
     /// Nil until it is first saved, right after signing up.
     public let profile: Profile?
+    /// When the profile was first saved, right after signing up. Nil until then.
+    public let joinedAt: Timestamp?
 }
 
 /// What the member tells the API about themselves.
@@ -336,26 +360,6 @@ public struct Profile: Hashable, Sendable {
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
         try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character)
-    }
-}
-
-extension MemberCharacter {
-    init(_ wire: Components.Schemas.Character) throws(ContractsError) {
-        self.init(
-            nickname: try Nickname(wire.nickname),
-            look: CharacterLook(
-                persona: wire.look.persona, variants: wire.look.variants.additionalProperties,
-                colors: wire.look.colors.additionalProperties))
-    }
-}
-
-extension Components.Schemas.Character {
-    init(_ character: MemberCharacter) {
-        self.init(
-            nickname: character.nickname.text,
-            look: .init(
-                persona: character.look.persona, variants: .init(additionalProperties: character.look.variants),
-                colors: .init(additionalProperties: character.look.colors)))
     }
 }
 

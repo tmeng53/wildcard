@@ -39,6 +39,36 @@ public enum Refusal: Equatable, Sendable {
     case checkInNotFound
     /// Today's AI 请假条 drafts are used up.
     case disclaimerDraftsUsedUp
+    /// The week's 战报 isn't out yet: its awards come on Sunday at 8pm Eastern.
+    case weekStoryNotReady
+    /// No squad has this invite code.
+    case inviteCodeUnknown
+    /// The squad has its 8 members.
+    case squadFull
+    /// The member is in as many squads as they may be.
+    case squadLimitReached
+    /// The squad id is already another squad's.
+    case squadIDConflict
+    /// The member hasn't agreed to the AI consent copy, which squads and AI drafts need.
+    case aiConsentRequired
+    /// The AI consent copy this build shows is older than the API's: the app is out of date.
+    case aiConsentCopyOutdated
+    /// Only the squad's captain may do this; someone else is captain now.
+    case notSquadCaptain
+    /// The member named isn't in the squad (any more).
+    case squadMemberUnknown
+    /// Only last week's crown winners, or the captain when nobody won, pick the week's scene.
+    case notScenePicker
+    /// Someone already picked this week's scene.
+    case sceneAlreadyPicked
+    /// The week named isn't the one open for picking: a new week started meanwhile.
+    case sceneWeekClosed
+    /// The week is over (a plan), or has started (its 饮食小目标): it stays as it is.
+    case weekClosed
+    /// A day of this week that has started keeps its plan.
+    case planDayStarted
+    /// This week keeps its number of rest days; they only move.
+    case restDaysFixed
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -59,5 +89,21 @@ public enum Refusal: Equatable, Sendable {
         "TIME_ZONE_UNKNOWN": .timeZoneUnknown,
         "CHECK_IN_NOT_FOUND": .checkInNotFound,
         "DISCLAIMER_DRAFTS_USED_UP": .disclaimerDraftsUsedUp,
+        "WEEK_STORY_NOT_READY": .weekStoryNotReady,
+        "INVITE_CODE_UNKNOWN": .inviteCodeUnknown,
+        "SQUAD_FULL": .squadFull,
+        "SQUAD_LIMIT_REACHED": .squadLimitReached,
+        "SQUAD_ID_CONFLICT": .squadIDConflict,
+        "AI_CONSENT_REQUIRED": .aiConsentRequired,
+        "AI_CONSENT_COPY_OUTDATED": .aiConsentCopyOutdated,
+        "NOT_SQUAD_CAPTAIN": .notSquadCaptain,
+        "SQUAD_MEMBER_UNKNOWN": .squadMemberUnknown,
+        "NOT_SCENE_PICKER": .notScenePicker,
+        "SCENE_ALREADY_PICKED": .sceneAlreadyPicked,
+        "SCENE_WEEK_CLOSED": .sceneWeekClosed,
+        "WEEK_OVER": .weekClosed,
+        "WEEK_STARTED": .weekClosed,
+        "PLAN_DAY_STARTED": .planDayStarted,
+        "REST_DAYS_FIXED": .restDaysFixed,
     ]
 }

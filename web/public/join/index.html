@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>外卡 Wildcard：加入小队</title>
+<meta name="description" content="你被邀请加入一个外卡小队。人人都是运动员。">
+<meta property="og:title" content="外卡 Wildcard：加入小队">
+<meta property="og:description" content="你被邀请加入一个外卡小队。人人都是运动员。">
+<meta name="theme-color" content="#F2F3F5">
+<meta name="robots" content="noindex">
+<link rel="preload" href="/fonts/BarlowCondensed-ExtraBold.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/wildcard.css">
+<link rel="stylesheet" href="/join/join.css">
+<script src="/join/characters.js" defer></script>
+<script src="/home/avatar.js" defer></script>
+<script src="/join/join.js" type="module"></script>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body class="join">
+<div class="site">
+  <div class="floor">
+    <div class="wc-ground" aria-hidden="true"></div>
+    <header class="wrap nav">
+      <a class="wc-logo" href="/zh/" data-home><img src="/logo.svg" width="30" height="30" alt="">WILDCARD</a>
+      <nav class="wc-lang" aria-label="语言" data-words="language">
+        <a href="?lang=zh-Hans" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh-Hans">简体</a>
+        <a href="?lang=zh-Hant" hreflang="zh-Hant" lang="zh-Hant" data-lang="zh-Hant">繁體</a>
+        <a href="?lang=en" hreflang="en" lang="en" data-lang="en">EN</a>
+      </nav>
+    </header>
+    <main class="main">
+      <div class="wrap hero" id="hero" hidden>
+        <p class="eyebrow" id="eyebrow"></p>
+        <h1 id="name"></h1>
+        <p class="sub" id="sub"></p>
+        <a class="btn wc-cta" id="get" href="https://apps.apple.com/app/id6826015677"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><span id="get-words"></span></a>
+        <button type="button" class="code" id="code" hidden><span id="code-label"></span> <b id="code-value"></b></button>
+      </div>
+      <div class="lineup" id="lineup" aria-hidden="true"></div>
+    </main>
+  </div>
+  <footer>
+    <div class="wrap wc-footer">
+      <span>© 2026 Wildcard</span>
+      <span class="grow"></span>
+      <a href="/zh/privacy" id="privacy">隐私政策</a>
+      <a href="/zh/terms" id="terms">使用条款</a>
+      <span class="mail">support@wildcardsquad.com</span>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

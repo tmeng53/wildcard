@@ -333,6 +333,9 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+# The app asks Apple for the email, but Apple sends it only on an account's first authorization, so
+# an account made before the app asked has none and still has to sign in. Keep this on, here and in
+# the hosted project.
 email_optional = true
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.

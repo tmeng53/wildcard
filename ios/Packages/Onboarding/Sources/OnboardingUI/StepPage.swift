@@ -23,7 +23,7 @@ struct StepPage<Content: View, Actions: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            StepHeader(step: step.number ?? 1, of: SignUpStep.counted.count, onBack: onBack)
+            StepHeader(step: step.number, of: SignUpStep.counted.count, onBack: onBack)
                 .padding(.horizontal, Space.pageMargin)
                 .padding(.top, Space.xs)
             ScrollView {
@@ -63,6 +63,7 @@ struct StepPage<Content: View, Actions: View>: View {
 /// The step's one primary action, full width; it shows a spinner while its call is under way.
 struct StepButton: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     let title: Text
     let isWorking: Bool
     let isEnabled: Bool
@@ -73,7 +74,7 @@ struct StepButton: View {
             ZStack {
                 title.opacity(isWorking ? 0 : 1)
                 if isWorking {
-                    ProgressView().tint(Color(role: .fgOnAccent, in: theme))
+                    ProgressView().tint(Color(role: tone.onFill, in: theme))
                 }
             }
             .frame(maxWidth: .infinity)

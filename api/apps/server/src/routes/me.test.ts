@@ -25,11 +25,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 async function send(
   path: string,
@@ -72,7 +73,9 @@ async function send(
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    weekSummaryWords: unusedWeekSummaryWords,
     aiConsent: aiConsentOn(db),
+    nudges: nudgesOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),
@@ -104,6 +107,9 @@ const problem = (reason: string, detail: string) => ({
   reason,
   errorStatus: 'UNAUTHENTICATED',
 });
+/** A moment as the API sends one: an ISO 8601 time in UTC. */
+const anInstant: unknown = expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+
 const invalid = problem(
   'AUTH_TOKEN_INVALID',
   'The sign-in has expired or is not valid. Sign in again.',
@@ -194,7 +200,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
-        profile: { timeZone: 'America/Los_Angeles', catchphrase: null },
+        profile: { timeZone: 'America/Los_Angeles', catchphrase: null, joinedAt: anInstant },
       },
     ]);
   });
@@ -210,9 +216,20 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
-        profile: { timeZone: 'America/Toronto', catchphrase: null },
+        profile: { timeZone: 'America/Toronto', catchphrase: null, joinedAt: anInstant },
       },
     ]);
+  });
+
+  it('keeps the day the member joined when they save again', async () => {
+    const { token } = await signUp();
+    await putProfile(token, { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null });
+    const [, first] = await getMe({ authorization: `Bearer ${token}` });
+    await putProfile(token, { version: 1, timeZone: 'America/Toronto', catchphrase: null });
+    const [, later] = await getMe({ authorization: `Bearer ${token}` });
+    const joinedAt = (body: unknown) =>
+      z.object({ profile: z.object({ joinedAt: z.string() }) }).parse(body).profile.joinedAt;
+    expect(joinedAt(later)).toBe(joinedAt(first));
   });
 
   it('saves a catchphrase trimmed, counting an emoji as one character, and clears it with null', async () => {
@@ -225,7 +242,7 @@ describe('PUT /me/profile', () => {
     ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: shout }]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: zone, catchphrase: shout } },
+      { version: 1, userId, profile: { timeZone: zone, catchphrase: shout, joinedAt: anInstant } },
     ]);
     // The body is the whole profile, so leaving the catchphrase out clears it too.
     await putProfile(token, { version: 1, timeZone: zone, catchphrase: shout });
@@ -239,7 +256,7 @@ describe('PUT /me/profile', () => {
     ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: null }]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: zone, catchphrase: null } },
+      { version: 1, userId, profile: { timeZone: zone, catchphrase: null, joinedAt: anInstant } },
     ]);
   });
 
@@ -316,7 +333,12 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
-        profile: { timeZone: zone, catchphrase: null, character: { nickname, look } },
+        profile: {
+          timeZone: zone,
+          catchphrase: null,
+          character: { nickname, look },
+          joinedAt: anInstant,
+        },
       },
     ]);
     // A new look in place of the old one: slots and colors it leaves out are gone.
@@ -331,7 +353,7 @@ describe('PUT /me/profile', () => {
     ]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: zone, catchphrase: null } },
+      { version: 1, userId, profile: { timeZone: zone, catchphrase: null, joinedAt: anInstant } },
     ]);
   });
 

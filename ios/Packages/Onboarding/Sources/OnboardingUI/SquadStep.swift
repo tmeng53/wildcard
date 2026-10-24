@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -37,16 +38,16 @@ struct SquadStep: View {
             // Back here after joining or making the squad: it shows what was chosen, read-only.
             .disabled(model.joined != nil)
         } actions: {
-            if model.asksForAIConsent {
-                AIConsentRow(isOn: model.agreesToAI, privacyPolicy: privacyPolicy, toggle: model.toggleAIConsent)
-                    .disabled(model.joined != nil)
-            }
             FailureLine(failure: model.failure)
             StepButton(
                 title: isJoining ? Text("加入小队", bundle: .module) : Text("建小队", bundle: .module),
                 isWorking: model.isWorking, isEnabled: model.canFinishSquad, action: model.finishSquad
             )
             .accessibilityIdentifier("squad.done")
+            if model.asksForAIConsent {
+                AIConsentLine(privacyPolicy: privacyPolicy)
+                    .padding(.top, Space.xxs)
+            }
         }
     }
 
@@ -76,6 +77,8 @@ private struct JoinPanel: View {
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)
+                .submitLabel(.done)
+                .onSubmit { isTyping = false }
                 .focused($isTyping)
                 // The boxes show what is typed; the field only takes the keys.
                 .opacity(0.02)
@@ -92,11 +95,13 @@ private struct JoinPanel: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { isTyping = true }
-            SquadFound(lookup: model.preview)
+            SquadFound(lookup: model.preview, heads: model.previewHeads)
                 .padding(.top, Space.xxs)
         }
         .padding(.vertical, Space.xs)
         .onAppear { if model.squad.code == nil { isTyping = true } }
+        // A whole code puts the keyboard away, so the squad it finds shows above the button.
+        .onChange(of: model.squad.code) { _, code in if code != nil { isTyping = false } }
     }
 }
 
@@ -106,6 +111,7 @@ private struct CodeBox: View {
     let letter: Character?
     let isNext: Bool
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
     private let height: Double = 52
 
     var body: some View {
@@ -118,15 +124,17 @@ private struct CodeBox: View {
             .background(Color(role: .bgSubtle, in: theme), in: shape)
             .overlay {
                 if isNext {
-                    shape.strokeBorder(Color(role: .bgAccent, in: theme), lineWidth: Sizing.selectionStroke)
+                    shape.strokeBorder(Color(role: tone.fill, in: theme), lineWidth: Sizing.selectionStroke)
                 }
             }
     }
 }
 
-/// The squad a whole code finds: its name and how many are in it, or why there's none.
+/// The squad a whole code finds: its name, its members' heads and how many are in it, or why
+/// there's none.
 private struct SquadFound: View {
     let lookup: SignUpModel.Lookup
+    let heads: [CastMember]
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -143,20 +151,15 @@ private struct SquadFound: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .card()
         case .found(let squad):
-            HStack(spacing: Space.s) {
-                Image(systemName: "flag.checkered")
-                    .font(.system(size: Sizing.icon, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-                    .frame(width: Sizing.control, height: Sizing.control)
-                    .background(
-                        Color(role: .bgAccentSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.thumbnail)
-                    )
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    Text(verbatim: squad.name)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .lineLimit(1)
+            VStack(alignment: .leading, spacing: Space.xs) {
+                Text(verbatim: squad.name)
+                    .typeStyle(TypeRamp.headline)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                HStack(spacing: Space.xs) {
+                    if !heads.isEmpty {
+                        HeadRow(heads: heads)
+                    }
                     Group {
                         if squad.isFull {
                             Text("\(squad.memberCount) 人 · 满员了", bundle: .module)
@@ -167,8 +170,8 @@ private struct SquadFound: View {
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
-                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .card()
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("squad.found")
@@ -179,59 +182,55 @@ private struct SquadFound: View {
     }
 }
 
-/// 同意使用 AI 功能 (Tracy's approved copy), ticked by the member before they can join or make a squad; off
-/// at first. 隐私政策 under it opens the policy; it sits outside the toggle, so tapping it never
-/// ticks the box.
-private struct AIConsentRow: View {
-    let isOn: Bool
-    let privacyPolicy: URL
-    let toggle: () -> Void
+/// The squad's members as heads in a row, each a little over the one before, like the squad
+/// card's avatars: the face on a canvas circle, with a rim in the card's grey between them.
+private struct HeadRow: View {
+    let heads: [CastMember]
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            toggleRow
-            Link(destination: privacyPolicy) {
-                Text("隐私政策", bundle: .module)
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: .fgAccent, in: theme))
-                    .frame(minHeight: Sizing.minimumTapTarget)
-                    .contentShape(Rectangle())
-            }
-            .padding(.leading, Sizing.checkBadge + Space.xs)
-            .padding(.top, -Space.xs)
-            .accessibilityIdentifier("squad.privacyPolicy")
-        }
-    }
-
-    private var toggleRow: some View {
-        Button(action: toggle) {
-            HStack(alignment: .top, spacing: Space.xs) {
+        HStack(spacing: -Space.xxs) {
+            ForEach(heads.indices, id: \.self) { index in
                 ZStack {
-                    if isOn {
-                        CheckBadge()
-                            .transition(reduceMotion ? .opacity : .scale.combined(with: .opacity))
-                    } else {
-                        Circle()
-                            .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.selectionStroke)
+                    if let player = heads[index].player {
+                        CharacterHead(player: player)
                     }
                 }
-                .frame(width: Sizing.checkBadge, height: Sizing.checkBadge)
-                Text("同意使用 AI 功能：小队里的配文和请假条文字会发给第三方 AI（目前是 OpenAI 和 Anthropic），用来写每周颁奖，不发照片。", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
+                .frame(width: Sizing.characterHead, height: Sizing.characterHead)
+                .background(Color(role: .bgCanvas, in: theme))
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(Color(role: .bgSubtle, in: theme), lineWidth: Sizing.selectionStroke))
             }
-            .frame(minHeight: Sizing.minimumTapTarget)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(PressableButtonStyle())
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isOn)
-        .haptic(.pick, trigger: isOn)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
-        .accessibilityIdentifier("squad.aiConsent")
+        .accessibilityHidden(true)
+    }
+}
+
+/// The AI consent, one small grey line under the button (Tracy, 2026-10-23): going on agrees to
+/// send the text the member writes to third-party AI, and 隐私政策 says which and what for. The
+/// catalog marks the link `privacy:`, which becomes the page the app passes.
+private struct AIConsentLine: View {
+    let privacyPolicy: URL
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Text(line)
+            .typeStyle(TypeRamp.footnote)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+            .tint(Color(role: .fgDefault, in: theme))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("squad.aiConsent")
+    }
+
+    private var line: AttributedString {
+        var line = AttributedString(
+            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module)
+        for (link, range) in line.runs[\.link] where link != nil {
+            line[range].link = privacyPolicy
+            line[range].underlineStyle = .single
+        }
+        return line
     }
 }
 

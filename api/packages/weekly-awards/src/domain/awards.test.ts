@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { MemberId, ModelReply, titlesOf, topCheckInOf, type WeekCheckIn } from './awards.js';
+import { AwardMove } from './moves.js';
 import { promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
@@ -148,14 +149,22 @@ describe('topCheckInOf', () => {
   });
 });
 
-const Prompt = z.object({ members: z.unknown(), moves: z.array(z.object({ id: z.string() })) });
+const Prompt = z.object({
+  members: z.unknown(),
+  moves: z.array(z.object({ id: z.string(), description: z.string() })),
+});
+
+const moves = z
+  .record(AwardMove, z.string())
+  .parse(Object.fromEntries(AwardMove.options.map((move) => [move, `${move} 的样子`])));
 
 describe('promptFor', () => {
-  it('lists members by letter with their days, times on their own clock, and the moves, never words about self-harm', () => {
+  it('lists members by letter with their days, times on their own clock, and the moves', () => {
     const prompt = Prompt.parse(
       JSON.parse(
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
+          moves,
           members: [
             {
               member: bo,
@@ -182,7 +191,9 @@ describe('promptFor', () => {
     expect(prompt.members).toStrictEqual([
       {
         member: 'A',
-        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '请假条', reason: '（略）' }],
+        checkIns: [
+          { day: '2026-10-21 周三', time: '12:00', kind: '请假条', reason: '最近不想活了' },
+        ],
       },
       {
         member: 'B',
@@ -199,31 +210,31 @@ describe('promptFor', () => {
         ],
       },
     ]);
-    expect(prompt.moves.map(({ id }) => id)).toContain('flat');
+    expect(prompt.moves).toContainEqual({ id: 'flat', description: 'flat 的样子' });
+    expect(prompt.moves).toHaveLength(AwardMove.options.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
   });
-});
 
-describe('promptFor, a sport the member named', () => {
-  it('is left out when it is about self-harm, like their other words', () => {
-    const prompt = z
-      .object({
-        members: z.array(z.object({ checkIns: z.array(z.object({ sport: z.string() })) })),
-      })
-      .parse(
-        JSON.parse(
-          promptFor({
-            weekStart: WeekStart.parse('2026-10-19'),
-            members: [
-              {
-                member: ana,
-                timeZone: 'UTC',
-                checkIns: [checkIn({ sport: '不想活了' }), checkIn({})],
-              },
-            ],
-          }),
-        ),
-      );
-    expect(prompt.members[0]?.checkIns.map(({ sport }) => sport)).toStrictEqual(['（略）', 'run']);
+  it('lists the moves in their own order, whatever order the settings keep them in', () => {
+    const reversed = z
+      .record(AwardMove, z.string())
+      .parse(Object.fromEntries(Object.entries(moves).reverse()));
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({ weekStart: WeekStart.parse('2026-10-19'), moves: reversed, members: [] }),
+      ),
+    );
+    expect(prompt.moves.map(({ id }) => id)).toStrictEqual([
+      'cheer',
+      'pump',
+      'pose',
+      'warmup',
+      'stretch',
+      'doze',
+      'flat',
+      'laugh',
+      'wave',
+      'fullbelly',
+    ]);
   });
 });

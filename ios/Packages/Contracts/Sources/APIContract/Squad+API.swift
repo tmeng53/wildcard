@@ -8,7 +8,42 @@ extension Squad {
     public init(_ wire: Components.Schemas.Squad) throws(ContractsError) {
         self.init(
             id: try SquadID(wire: wire.id), name: wire.name, inviteCode: wire.inviteCode,
-            members: try wire.members.map { member throws(ContractsError) in try MemberID(wire: member.userId) })
+            members: try wire.members.map { member throws(ContractsError) in try MemberID(wire: member.userId) },
+            captain: try wire.captain.map { captain throws(ContractsError) in try MemberID(wire: captain) })
+    }
+}
+
+extension SquadScene {
+    public init(_ wire: Components.Schemas.SquadScene) throws(ContractsError) {
+        let pickers = try wire.pickers.members.map { member throws(ContractsError) in try MemberID(wire: member) }
+        self.init(
+            week: try LocalDay(wire.week), scene: try SceneID(wire: wire.scene.rawValue),
+            pickers: wire.pickers.by == .crown ? .crown(pickers) : .captain(pickers.first),
+            picked: try wire.picked.map { picked throws(ContractsError) in
+                SquadScene.Pick(
+                    scene: try SceneID(wire: picked.scene.rawValue),
+                    picker: try picked.by.map { picker throws(ContractsError) in try MemberID(wire: picker) })
+            },
+            canPick: wire.canPick,
+            history: try wire.scenes.map { scene throws(ContractsError) in
+                SceneHistory(scene: try SceneID(wire: scene.scene.rawValue), weeksAgo: scene.weeksAgo)
+            })
+    }
+}
+
+extension SceneID {
+    init(wire: String) throws(ContractsError) {
+        guard let scene = SceneID(rawValue: wire) else { throw .unknownScene(wire) }
+        self = scene
+    }
+
+    /// The body of `PUT /squads/{squadId}/weeks/{weekStart}/scene`; a scene the API doesn't know
+    /// is refused here rather than sent as another one.
+    public func pick() throws(ContractsError) -> Components.Schemas.ScenePick {
+        guard let scene = Components.Schemas.ScenePick.ScenePayload(rawValue: rawValue) else {
+            throw .unknownScene(rawValue)
+        }
+        return .init(version: ._1, scene: scene)
     }
 }
 
@@ -32,6 +67,7 @@ extension SquadmateToday {
     init(_ wire: Components.Schemas.SquadToday.MembersPayloadPayload) throws(ContractsError) {
         self.init(
             member: try MemberID(wire: wire.member), catchphrase: try wire.catchphrase.map(Catchphrase.init),
+            character: try wire.character.map(MemberCharacter.init),
             day: try LocalDay(wire.day),
             training: TrainingStatus(wire.training), latestMeal: wire.latestMeal.map(MealKind.init),
             plannedRest: wire.plannedRest, firstCheckInAt: wire.firstCheckInAt.map(Timestamp.init(wire:)))
@@ -48,6 +84,22 @@ extension WeeklyPlan {
                     guard let sport = train.sport else { return .train(nil) }
                     return .train(try Activity(sport: sport, customSport: train.customSport))
                 case .case2: return .rest
+                }
+            })
+    }
+}
+
+extension Components.Schemas.WeeklyPlanDraft {
+    /// The body of `PUT /me/weekly-plans/{weekStart}` that saves these days, the week's first
+    /// day first, with the week in the path.
+    public init(_ days: [PlanDay]) {
+        self.init(
+            version: ._1,
+            days: days.map { day in
+                switch day {
+                case .train(let activity):
+                    .case1(.init(kind: .train, sport: activity?.wireSport, customSport: activity?.wireCustomSport))
+                case .rest: .case2(.init(kind: .rest))
                 }
             })
     }
@@ -91,4 +143,14 @@ extension MealKind {
 extension Emoji {
     /// The body of `PUT /check-ins/{id}/reactions/mine`.
     public var draft: Components.Schemas.ReactionDraft { .init(version: ._1, emoji: text) }
+}
+
+extension SquadPokes {
+    public init(_ wire: Components.Schemas.SquadNudges) throws(ContractsError) {
+        self.init(
+            sent: Set(try wire.sent.map(MemberID.init(wire:))),
+            received: try wire.received.map { received throws(ContractsError) in
+                ReceivedPoke(from: try MemberID(wire: received.from), patAt: Timestamp(wire: received.at))
+            })
+    }
 }

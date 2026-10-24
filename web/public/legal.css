@@ -18,7 +18,7 @@
   .legal td::before { content: attr(data-label); display: block; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-2); }
 }
 
-/* Header and footer shared with the home page (gym theme, calm grey). */
+/* Header and footer shared with the home page (brand surface, calm grey). */
 @font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-display: swap; src: url('/fonts/BarlowCondensed-ExtraBold.ttf') format('truetype'); }
 .legal-chrome { --sky: #F2F3F5; --num: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
 .legal-chrome .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }

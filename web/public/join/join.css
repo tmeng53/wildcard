@@ -1,0 +1,39 @@
+/* The invite page (wildcardsquad.com/join/<code>): the home page's gym, with the squad's name and one
+   button above, and the squad's own characters along the floor (排队入场). Tokens and the shared gym pieces
+   from /wildcard.css. Light only. */
+.join { container: site / inline-size; }
+.join :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.site { min-height: 100svh; display: flex; flex-direction: column; }
+.wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+@container site (min-width: 720px) { .wrap { padding-left: max(48px, env(safe-area-inset-left, 0px)); padding-right: max(48px, env(safe-area-inset-right, 0px)); } }
+
+/* --fh is a figure's height: five side by side fit the width; --gh the floor band's, so the squad's feet stand on it */
+.floor { --fh: max(64px, min(calc((100cqw - 32px) / 3.75), 200px, 26svh)); --gh: calc(var(--fh) * .3 + 28px); position: relative; flex: 1; background: var(--brand-sky); display: flex; flex-direction: column; }
+.nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }
+
+.main { flex: 1; display: grid; grid-template-rows: 1fr auto; gap: 32px; padding-top: 32px; }
+.hero { align-self: center; }
+.hero[hidden] { display: block; visibility: hidden; }
+.eyebrow { margin: 0; font-size: clamp(15px, 3.6cqw, 20px); line-height: 1.4; font-weight: 600; color: var(--ink-2); }
+/* the squad's name: Chinese stays at 600 */
+h1 { margin: 6px 0 0; font-size: clamp(34px, 10cqw, 88px); line-height: 1.12; font-weight: 600; letter-spacing: 0; overflow-wrap: anywhere; text-wrap: balance; }
+.sub { margin: 10px 0 0; font-size: clamp(17px, 4cqw, 24px); line-height: 1.35; font-weight: 600; text-wrap: balance; }
+.btn { margin-top: 28px; height: 54px; padding: 0 1.6em; font-size: 17px; }
+/* the invite code, for someone who already has the app: a tap copies it */
+.code { display: flex; align-items: baseline; gap: 8px; margin-top: 18px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--ink-2); font: 500 14px/44px var(--sans); cursor: pointer; }
+.code[hidden] { display: none; }
+.code b { font-family: var(--num); font-weight: 800; font-size: 22px; letter-spacing: .08em; color: var(--ink); }
+
+/* 排队入场: full width, the figures' feet on the floor; walkers past either edge are clipped */
+.lineup { position: relative; z-index: 1; height: var(--fh); margin-bottom: 28px; overflow: hidden; }
+.lineup svg { position: absolute; left: 0; top: 0; height: var(--fh); width: calc(var(--fh) * .75); overflow: visible; will-change: transform; }
+
+@container site (min-width: 1100px) {
+  .main { padding-top: 48px; }
+  .btn { height: 60px; font-size: 19px; padding: 0 1.8em; }
+}
+footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
+.mail { user-select: all; }
+
+@media (prefers-reduced-motion: reduce) { .join * { transition: none !important; } }

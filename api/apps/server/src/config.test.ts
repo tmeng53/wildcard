@@ -38,50 +38,51 @@ describe('readConfig', () => {
       publicUrl: new URL('http://localhost:8080'),
       adminPasswordSignIn: false,
       proxyHops: 1,
-      languageModel: undefined,
-      awardsModel: undefined,
+      languageModelKeys: { openai: undefined, anthropic: undefined },
       appleSignInKey: undefined,
-      jobsToken: undefined,
+      scheduler: undefined,
       apns: undefined,
+      traceProject: undefined,
     });
   });
 
-  it('picks OpenAI for drafts unless told otherwise, with the adapter’s default model', () => {
-    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
-    expect(readConfig({ ...base, ...keys }).languageModel).toStrictEqual({
-      provider: 'openai',
-      apiKey: 'sk-openai',
-      model: undefined,
-    });
-    expect(
-      readConfig({ ...base, ...keys, LLM_PROVIDER: 'anthropic', LLM_MODEL: 'claude-sonnet-5-5' })
-        .languageModel,
-    ).toStrictEqual({ provider: 'anthropic', apiKey: 'sk-ant', model: 'claude-sonnet-5-5' });
-  });
-
-  it('turns drafts off while the chosen provider has no key, and refuses an unknown one', () => {
-    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModel).toBeUndefined();
-    expect(() => readConfig({ ...base, LLM_PROVIDER: 'gemini' })).toThrow('LLM_PROVIDER');
-  });
-
-  it('writes the weekly awards with GPT-6 Luna unless told otherwise, apart from drafts', () => {
-    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
-    expect(readConfig({ ...base, ...keys, LLM_PROVIDER: 'anthropic' }).awardsModel).toStrictEqual({
-      provider: 'openai',
-      apiKey: 'sk-openai',
-      model: 'gpt-6-luna',
-    });
-    expect(
-      readConfig({ ...base, ...keys, AWARDS_LLM_PROVIDER: 'anthropic' }).awardsModel,
-    ).toStrictEqual({
-      provider: 'anthropic',
-      apiKey: 'sk-ant',
-      model: 'claude-sonnet-5-5',
-    });
-    expect(readConfig({ ...base, ...keys, AWARDS_LLM_MODEL: 'gpt-6' }).awardsModel?.model).toBe(
-      'gpt-6',
+  it('names log traces in the Google Cloud project the deploy says', () => {
+    const project = 'soy-transducer-512501-h1';
+    expect(readConfig({ ...base, GOOGLE_CLOUD_PROJECT: project }).traceProject).toBe(project);
+    expect(() => readConfig({ ...base, GOOGLE_CLOUD_PROJECT: 'Not/A project' })).toThrow(
+      /GOOGLE_CLOUD_PROJECT/,
     );
-    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).awardsModel).toBeUndefined();
+  });
+
+  it('keeps each provider’s key, and no longer reads which model writes what', () => {
+    const keys = { OPENAI_API_KEY: 'sk-openai', ANTHROPIC_API_KEY: 'sk-ant' };
+    expect(readConfig({ ...base, ...keys }).languageModelKeys).toStrictEqual({
+      openai: 'sk-openai',
+      anthropic: 'sk-ant',
+    });
+    expect(readConfig({ ...base, ANTHROPIC_API_KEY: 'sk-ant' }).languageModelKeys).toStrictEqual({
+      openai: undefined,
+      anthropic: 'sk-ant',
+    });
+    // The model is a setting in the database now: a leftover variable changes nothing.
+    expect(
+      readConfig({ ...base, LLM_PROVIDER: 'gemini' }).languageModelKeys.openai,
+    ).toBeUndefined();
+  });
+
+  it('takes Cloud Scheduler’s account over a jobs token, and either alone', () => {
+    const token = 'a'.repeat(32);
+    const account = 'wildcard-scheduler@project.iam.gserviceaccount.com';
+    expect(readConfig({ ...base, JOBS_TOKEN: token }).scheduler).toStrictEqual({
+      kind: 'token',
+      token,
+    });
+    expect(
+      readConfig({ ...base, JOBS_TOKEN: token, JOBS_SCHEDULER_ACCOUNT: account }).scheduler,
+    ).toStrictEqual({ kind: 'google', serviceAccount: account });
+    expect(() => readConfig({ ...base, JOBS_SCHEDULER_ACCOUNT: 'not an email' })).toThrow(
+      /JOBS_SCHEDULER_ACCOUNT/,
+    );
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {

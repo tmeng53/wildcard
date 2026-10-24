@@ -166,13 +166,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
     func createSquad(_ input: Operations.CreateSquad.Input) async throws -> Operations.CreateSquad.Output
-    /// Leave a squad
+    /// Rename a squad
     ///
-    /// Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the member isn’t in changes nothing.
+    /// Only its captain. The same name again changes nothing.
     ///
-    /// - Remark: HTTP `DELETE /squads/{squadId}/members/me`.
-    /// - Remark: Generated from `#/paths//squads/{squadId}/members/me/delete(leaveSquad)`.
-    func leaveSquad(_ input: Operations.LeaveSquad.Input) async throws -> Operations.LeaveSquad.Output
+    /// - Remark: HTTP `PUT /squads/{squadId}/name`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/name/put(renameSquad)`.
+    func renameSquad(_ input: Operations.RenameSquad.Input) async throws -> Operations.RenameSquad.Output
+    /// Hand the captaincy to another member
+    ///
+    /// Only the captain. Naming the captain again changes nothing.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/captain`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/captain/put(handSquadCaptaincy)`.
+    func handSquadCaptaincy(_ input: Operations.HandSquadCaptaincy.Input) async throws -> Operations.HandSquadCaptaincy.Output
+    /// Leave a squad, or remove a member from it
+    ///
+    /// Anyone may take themselves out (leaving); only the captain may take out someone else. A captain who leaves hands the captaincy to the earliest member left. Their check-ins leave the squad’s list with them. Safe to repeat: someone not in the squad changes nothing.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/members/{memberId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/delete(removeSquadMember)`.
+    func removeSquadMember(_ input: Operations.RemoveSquadMember.Input) async throws -> Operations.RemoveSquadMember.Output
     /// The squad an invite code belongs to
     ///
     /// What the join screen shows before joining. Case, spaces and dashes in the code don’t matter.
@@ -201,6 +215,34 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/today`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/today/get(getSquadToday)`.
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
+    /// A squad’s scene this week, and who picks it
+    ///
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/scene`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
+    func getSquadScene(_ input: Operations.GetSquadScene.Input) async throws -> Operations.GetSquadScene.Output
+    /// Pick the squad’s scene for the week
+    ///
+    /// Once a week, by one of `pickers` (`GET /squads/{squadId}/scene`), for the week open now. The pick takes effect at once and can’t be changed. Safe to repeat: the same pick by the same member again answers 200.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
+    func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
+    /// The caller’s pokes in a squad (拍一拍)
+    ///
+    /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/get(listSquadNudges)`.
+    func listSquadNudges(_ input: Operations.ListSquadNudges.Input) async throws -> Operations.ListSquadNudges.Output
+    /// Poke a squadmate (拍一拍)
+    ///
+    /// At most one of each kind a day (on the caller’s clock) to each squadmate: the same nudge again the same day changes nothing, so it is safe to repeat. Not pushed at once: the squadmate’s 6pm daily push names who nudged them.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
+    func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
     /// A squad’s week: its awards and counts (周日战报)
     ///
     /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
@@ -574,17 +616,51 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// Leave a squad
+    /// Rename a squad
     ///
-    /// Their check-ins leave the squad’s list with them. Safe to repeat: leaving a squad the member isn’t in changes nothing.
+    /// Only its captain. The same name again changes nothing.
     ///
-    /// - Remark: HTTP `DELETE /squads/{squadId}/members/me`.
-    /// - Remark: Generated from `#/paths//squads/{squadId}/members/me/delete(leaveSquad)`.
-    public func leaveSquad(
-        path: Operations.LeaveSquad.Input.Path,
-        headers: Operations.LeaveSquad.Input.Headers = .init()
-    ) async throws -> Operations.LeaveSquad.Output {
-        try await leaveSquad(Operations.LeaveSquad.Input(
+    /// - Remark: HTTP `PUT /squads/{squadId}/name`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/name/put(renameSquad)`.
+    public func renameSquad(
+        path: Operations.RenameSquad.Input.Path,
+        headers: Operations.RenameSquad.Input.Headers = .init(),
+        body: Operations.RenameSquad.Input.Body
+    ) async throws -> Operations.RenameSquad.Output {
+        try await renameSquad(Operations.RenameSquad.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Hand the captaincy to another member
+    ///
+    /// Only the captain. Naming the captain again changes nothing.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/captain`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/captain/put(handSquadCaptaincy)`.
+    public func handSquadCaptaincy(
+        path: Operations.HandSquadCaptaincy.Input.Path,
+        headers: Operations.HandSquadCaptaincy.Input.Headers = .init(),
+        body: Operations.HandSquadCaptaincy.Input.Body
+    ) async throws -> Operations.HandSquadCaptaincy.Output {
+        try await handSquadCaptaincy(Operations.HandSquadCaptaincy.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Leave a squad, or remove a member from it
+    ///
+    /// Anyone may take themselves out (leaving); only the captain may take out someone else. A captain who leaves hands the captaincy to the earliest member left. Their check-ins leave the squad’s list with them. Safe to repeat: someone not in the squad changes nothing.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/members/{memberId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/delete(removeSquadMember)`.
+    public func removeSquadMember(
+        path: Operations.RemoveSquadMember.Input.Path,
+        headers: Operations.RemoveSquadMember.Input.Headers = .init()
+    ) async throws -> Operations.RemoveSquadMember.Output {
+        try await removeSquadMember(Operations.RemoveSquadMember.Input(
             path: path,
             headers: headers
         ))
@@ -647,6 +723,72 @@ extension APIProtocol {
         try await getSquadToday(Operations.GetSquadToday.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// A squad’s scene this week, and who picks it
+    ///
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/scene`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
+    public func getSquadScene(
+        path: Operations.GetSquadScene.Input.Path,
+        headers: Operations.GetSquadScene.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadScene.Output {
+        try await getSquadScene(Operations.GetSquadScene.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Pick the squad’s scene for the week
+    ///
+    /// Once a week, by one of `pickers` (`GET /squads/{squadId}/scene`), for the week open now. The pick takes effect at once and can’t be changed. Safe to repeat: the same pick by the same member again answers 200.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
+    public func pickSquadScene(
+        path: Operations.PickSquadScene.Input.Path,
+        headers: Operations.PickSquadScene.Input.Headers = .init(),
+        body: Operations.PickSquadScene.Input.Body
+    ) async throws -> Operations.PickSquadScene.Output {
+        try await pickSquadScene(Operations.PickSquadScene.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The caller’s pokes in a squad (拍一拍)
+    ///
+    /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/get(listSquadNudges)`.
+    public func listSquadNudges(
+        path: Operations.ListSquadNudges.Input.Path,
+        query: Operations.ListSquadNudges.Input.Query,
+        headers: Operations.ListSquadNudges.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadNudges.Output {
+        try await listSquadNudges(Operations.ListSquadNudges.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Poke a squadmate (拍一拍)
+    ///
+    /// At most one of each kind a day (on the caller’s clock) to each squadmate: the same nudge again the same day changes nothing, so it is safe to repeat. Not pushed at once: the squadmate’s 6pm daily push names who nudged them.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
+    public func nudgeSquadmate(
+        path: Operations.NudgeSquadmate.Input.Path,
+        headers: Operations.NudgeSquadmate.Input.Headers = .init(),
+        body: Operations.NudgeSquadmate.Input.Body
+    ) async throws -> Operations.NudgeSquadmate.Output {
+        try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
     /// A squad’s week: its awards and counts (周日战报)

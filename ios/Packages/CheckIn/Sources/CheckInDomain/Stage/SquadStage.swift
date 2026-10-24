@@ -97,10 +97,10 @@ public struct SquadStage: Hashable, Sendable {
     /// The lanes someone is running in `placements`, as a strip across the scene.
     private func runningLanes(_ placements: [MemberID: StagePlacement]) -> [StageRect] {
         placements.values.compactMap { placement in
-            guard case .station(let kind, let slot) = placement, let lap = layout.station(kind)?.lap(ofSlot: slot)
+            guard case .station(let kind, let slot) = placement, let lane = layout.station(kind)?.lane(ofSlot: slot)
             else { return nil }
             // Clear of the runners' bodies too, which rise above the lane.
-            return StageRect(x: 0...StageLayout.width, y: (lap.y - 40)...lap.y)
+            return StageRect(x: 0...StageLayout.width, y: (lane.y - 40)...lane.y)
         }
     }
 

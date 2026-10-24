@@ -21,11 +21,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -72,7 +73,9 @@ const app = createApp({
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
+  nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  weekSummaryWords: unusedWeekSummaryWords,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

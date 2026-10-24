@@ -1,5 +1,6 @@
 import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
+import type { NudgeTables } from '@wildcard/nudges';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
@@ -33,6 +34,12 @@ export interface Caller {
  * for a token that isn't a current sign-in, `AuthKeysUnavailableError` when it can't be checked.
  */
 export type VerifyToken = (token: string) => Promise<Caller>;
+
+/**
+ * Whether a bearer token is the scheduler's, which alone may start jobs such as the daily push.
+ * Never throws for a wrong token: it answers false.
+ */
+export type IsScheduler = (token: string) => Promise<boolean>;
 
 /** The sign-in provider's own records of its users, for what a token alone can't settle. */
 export interface Accounts {
@@ -126,6 +133,7 @@ export type Tables = CheckInTables &
   SquadTables &
   AdminTables &
   AiConsentTables &
+  NudgeTables &
   WeeklyAwardTables;
 
 /** The database: any Postgres, through Kysely. */

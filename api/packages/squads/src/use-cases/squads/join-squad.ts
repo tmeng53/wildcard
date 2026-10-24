@@ -38,6 +38,7 @@ export async function joinSquad(
   if (isMemberOf(squad, member)) return { squad, joined: false };
   if (!(await aiConsent(member))) throw new AiConsentRequiredError();
   const outcome = await store.join(squad.id, member);
+  if (outcome === 'ended') throw new InviteCodeUnknownError();
   if (outcome === 'squadFull') throw new SquadFullError(SQUAD_MEMBER_LIMIT);
   if (outcome === 'squadLimit') throw new SquadLimitReachedError(SQUADS_PER_MEMBER);
   const now = await store.find(squad.id);
