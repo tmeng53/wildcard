@@ -92,6 +92,14 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case fgMuted
     /// Placeholders, denominators and chevrons: large type and decoration only.
     case fgSubtle
+    /// An ink surface on a white page, such as 我's player card.
+    case bgInk
+    /// Text and numbers on `bgInk`.
+    case fgOnInk
+    /// Secondary text on `bgInk`.
+    case fgOnInkMuted
+    /// Dividers on `bgInk`.
+    case borderOnInk
 
     /// The brand's colour: primary buttons and selection on brand screens. Never changes with the scene.
     case bgBrand
@@ -154,6 +162,10 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgDefault: .fixed(Palette.ink)
         case .fgMuted: .fixed(Palette.inkSecondary)
         case .fgSubtle: .fixed(Palette.inkTertiary)
+        case .bgInk: .fixed(Palette.ink)
+        case .fgOnInk: .fixed(Palette.white)
+        case .fgOnInkMuted: .fixed(Palette.inkTertiary)
+        case .borderOnInk: .fixed(Palette.inkLine)
         case .bgBrand: .fixed(Palette.brand)
         case .fgOnBrand: .fixed(Palette.onBrand)
         case .bgAccent: .scene(\.accent)
@@ -179,16 +191,19 @@ public enum ColorRole: String, CaseIterable, Sendable {
 
 /// Whose colour a screen's primary button and selection marks wear. Brand screens (opening,
 /// sign-up, 我, the tab bar, writing a post, 请假条, the feed) use `.brand`; the squad's own turf
-/// (home, the check-in burst, the 出赛表 poster, 战报) uses `.scene`.
+/// (home, the check-in burst, the 出赛表 poster, 战报) uses `.scene`. 我's 设置 and 注销账号
+/// pages stay ink and white, so they use `.ink`.
 public enum AccentTone: Sendable {
     case scene
     case brand
+    case ink
 
     /// The solid fill: a primary button, a check badge, a picked border, a switch that is on.
     public var fill: ColorRole {
         switch self {
         case .scene: .bgAccent
         case .brand: .bgBrand
+        case .ink: .fgDefault
         }
     }
 
@@ -197,6 +212,7 @@ public enum AccentTone: Sendable {
         switch self {
         case .scene: .fgOnAccent
         case .brand: .fgOnBrand
+        case .ink: .bgCanvas
         }
     }
 }

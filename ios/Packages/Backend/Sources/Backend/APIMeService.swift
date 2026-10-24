@@ -22,6 +22,10 @@ public struct APIMeService: MeService {
             let character = member.profile?.character
             let totals = try await api.checkInTotals()
             let squad = try await api.mySquads().first
+            // 本周 is counted against the plan the squad's today carries; no squad, no week. A today
+            // that doesn't load leaves the week out rather than the whole page.
+            var week: WeekCount?
+            if let squad { week = try? await api.today(of: squad.id).myWeek.week }
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -32,7 +36,7 @@ public struct APIMeService: MeService {
                 counts: LifetimeCounts(
                     trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
                     disclaimers: totals.disclaimers),
-                squadName: squad?.name, dailyPushOn: dailyPushOn)
+                week: week, squadName: squad?.name, dailyPushOn: dailyPushOn)
         }
     }
 

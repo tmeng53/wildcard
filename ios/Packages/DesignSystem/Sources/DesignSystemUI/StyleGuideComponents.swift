@@ -33,6 +33,22 @@ struct ButtonSection: View {
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(true)
+                    // Ink, on the pages that keep out of the scene's colours (我, 设置, 注销账号).
+                    Button {
+                    } label: {
+                        Text("下一步", bundle: .module).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .accentTone(.ink)
+                    Button {
+                    } label: {
+                        Label {
+                            Text("用 Apple 确认", bundle: .module)
+                        } icon: {
+                            Image(systemName: "apple.logo")
+                        }
+                    }
+                    .buttonStyle(AppleButtonStyle(.outlined))
                 }
             }
             GuideGroup(Text("次要按钮、文字按钮", bundle: .module)) {
@@ -340,29 +356,6 @@ struct GuideFace: View {
         )
         .font(.system(size: Sizing.characterHead * 0.55))
         .foregroundStyle(Color(role: .fgMuted, in: theme))
-    }
-}
-
-// MARK: - 8 List
-
-struct ListSection: View {
-    @State private var dailyReminder = true
-    @State private var pokes = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 8, title: Text("列表", bundle: .module))
-            VStack(spacing: 0) {
-                ListRow(Text("性格", bundle: .module), systemImage: "sparkles", value: Text("淡人", bundle: .module)) {}
-                ListRow(Text("穿搭", bundle: .module), systemImage: "tshirt") {}
-                ListRow(
-                    Text("每周计划", bundle: .module), systemImage: "calendar", value: Text("练 5 休 2", bundle: .module)
-                ) {}
-                SwitchRow(Text("每日提醒", bundle: .module), systemImage: "bell", isOn: $dailyReminder)
-                    .accessibilityIdentifier("styleguide.switch")
-                SwitchRow(Text("被戳提醒", bundle: .module), systemImage: "hand.tap", isOn: $pokes, showsDivider: false)
-            }
-        }
     }
 }
 #endif
