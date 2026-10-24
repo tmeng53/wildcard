@@ -1,0 +1,45 @@
+# Prints the newest TestFlight crash reports (scripts/asc-feedback.py), so agents can read a crash
+# without the App Store Connect key. The repo is public: the script prints no tester details, only
+# the device, OS and the crashed thread. Run it by hand (Actions → testflight-feedback); it also
+# runs when the script or this file changes, as a check that it still works.
+name: testflight-feedback
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: How many of the newest crash reports to print
+        default: "3"
+  push:
+    paths:
+      - scripts/asc-feedback.py
+      - .github/workflows/testflight-feedback.yml
+
+permissions:
+  contents: read
+
+# None of these is secret (see testflight.yml).
+env:
+  ASC_KEY_ID: PLP7SKSLAZ
+  ASC_ISSUER_ID: c1d7ff41-22e2-482b-95e2-fd4f71b5efb1
+  ASC_APP_ID: "6826015677"
+
+jobs:
+  crashes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: pip install --quiet "pyjwt[crypto]==2.10.1"
+      - name: Print crash reports
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_LIMIT: ${{ inputs.limit || '3' }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey.p8"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$key"
+          chmod 600 "$key"
+          ASC_KEY_PATH="$key" python3 scripts/asc-feedback.py
+          rm -f "$key"
