@@ -78,14 +78,14 @@ public final class ScheduleStore {
     }
 
     /// The sports the picks under the poster offer: the shown week's, then this week's, then
-    /// a few common ones, without repeats.
-    public var suggestedActivities: [Activity] {
+    /// `common` (the sports list's quick picks), without repeats.
+    public func suggestedActivities(common: [Sport]) -> [Activity] {
         var seen: [Activity] = []
         let thisWeek = today.flatMap { sheets[$0.weekStart]?.plan } ?? []
         for day in (board?.days ?? []) + thisWeek {
             if case .train(let activity?) = day, !seen.contains(activity) { seen.append(activity) }
         }
-        for sport in ["run", "strength", "yoga", "swim", "tennis"] as [Sport] where !seen.contains(.sport(sport)) {
+        for sport in common where !seen.contains(.sport(sport)) {
             seen.append(.sport(sport))
         }
         return Array(seen.prefix(Self.suggestedSportCount))

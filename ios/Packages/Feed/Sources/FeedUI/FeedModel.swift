@@ -7,6 +7,7 @@ import DesignSystem
 import FeedDomain
 import Foundation
 import Observation
+import SportsUI
 import SwiftUI
 
 /// The 动态 screen's state over its `FeedStore`: which post's emoji bar is open, the moves the
@@ -225,7 +226,7 @@ public final class FeedModel {
         let character = store.characters[post.author]
         var outfit = character?.look.outfit ?? PlaceholderCharacter.lifter
         if case .trained(let training) = post.checkIn.entry, let kits = try? PlaceholderCharacter.sportKits() {
-            outfit = kits.kit(for: training.activity).dress(outfit)
+            outfit = kits.kit(for: training.activity, in: SportList.shared.catalog).dress(outfit)
         }
         if let cached = players[post.id], cached.outfit == outfit { return cached.player }
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),

@@ -106,7 +106,7 @@ struct ScheduleStoreTests {
         let store = store(FakeBackend())
         await store.load()
         #expect(
-            store.suggestedActivities == [
+            store.suggestedActivities(common: ["run", "strength", "yoga", "swim", "tennis", "hike"]) == [
                 .sport("run"), .sport("tennis"), .sport("strength"), .sport("yoga"), .sport("swim"),
             ]
         )

@@ -5,6 +5,7 @@ import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// No posts yet: a window onto the squad's own scene, with my character there in the scene's kit
@@ -70,7 +71,7 @@ struct EmptyFeed: View {
         let look = model.store.characters[model.viewer]?.look
         let persona = look?.moves ?? .energetic
         guard let kits = try? PlaceholderCharacter.sportKits() else { return nil }
-        let kit = kits.kit(for: .sport(theme.sport))
+        let kit = kits.kit(for: .sport(theme.sport), in: SportList.shared.catalog)
         guard
             let figure = try? PlaceholderCharacter.figure(
                 wearing: kit.dress(look?.outfit ?? PlaceholderCharacter.lifter)),
@@ -84,11 +85,11 @@ extension SceneTheme {
     /// The sport the scene is for.
     var sport: Sport {
         switch self {
-        case .pool: .swim
-        case .track: .run
-        case .gym: .strength
-        case .tennis: .tennis
-        case .climbing: .climb
+        case .pool: "swim"
+        case .track: "run"
+        case .gym: "strength"
+        case .tennis: "tennis"
+        case .climbing: "climb"
         }
     }
 }

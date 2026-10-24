@@ -33,13 +33,13 @@ public enum RecapSample {
             myWeek: RecapDomain.MyWeek(
                 plan: 5,
                 days: [
-                    .init(day: day(12), kind: .trained(.run)), .init(day: day(13), kind: .trained(.tennis)),
-                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained(.strength)),
-                    .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained(.yoga)),
+                    .init(day: day(12), kind: .trained("run")), .init(day: day(13), kind: .trained("tennis")),
+                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained("strength")),
+                    .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained("yoga")),
                     .init(day: day(18), kind: .rest),
                 ], line: ready ? "周二那场网球最有灵魂" : nil, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),
             hottest: Hottest(
-                checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: .run, words: "晨跑 8 公里，腿还在",
+                checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: "run", words: "晨跑 8 公里，腿还在",
                 reactions: [
                     ReactionCount(emoji: "💪", count: 5),
                     ReactionCount(emoji: "😂", count: 3),
