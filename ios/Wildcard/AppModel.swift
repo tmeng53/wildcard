@@ -118,6 +118,7 @@ final class AppModel {
     /// 上场 has played, or the scene the member's new squad picked has filled the screen: the
     /// squad's home takes over, and on a picked scene the member drops onto it.
     func finishSignUp(landingOn scene: SceneTheme?) async {
+        SignUpProgress.clear()
         await openHome(landingOn: scene)
     }
 
@@ -186,31 +187,44 @@ final class AppModel {
         case .loading, .current, .offline:
             // The case above has every load without a home.
             guard let home = store.home else { return }
-            let today = TodayModel(
-                store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
-            let profile = MeModel(
-                service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-                confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
-            let squad = SquadSettingsModel(
-                service: APISquadSettingsService(api: api),
-                changed: { [weak self] in Task { await self?.squadChanged() } },
-                signOut: { [weak self] in await self?.signOut() })
-            let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
-            let recap = RecapShelf(
-                service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
-                scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
-                scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
-            // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
-            // from now rather than from when the scene covered the screen.
-            if let scene { await today.dropIn(on: scene, coveredAt: .now) }
-            screen = .tabs(
-                today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
-                recap: recap)
-            await readScene(of: home.squad.id, into: today)
-            if let pending = pendingRecap {
-                pendingRecap = nil
-                await openRecap(squad: pending.squad, week: pending.week)
+            // The app was closed during sign-up, after 你的小队: carry on from the next step.
+            if signUp == nil, let resumed = await resumedSignUp(in: home.squad.id) {
+                screen = .signUp(resumed)
+                return
             }
+            // Signed up some other way since, or for another squad: nothing left to carry on.
+            SignUpProgress.clear()
+            await openTabs(on: home, store: store, landingOn: scene)
+        }
+    }
+
+    /// 今天 under the tab bar, on the member's squad's home; on a picked scene the member drops
+    /// onto it.
+    private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
+        let today = TodayModel(
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
+        let profile = MeModel(
+            service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
+            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
+        let squad = SquadSettingsModel(
+            service: APISquadSettingsService(api: api),
+            changed: { [weak self] in Task { await self?.squadChanged() } },
+            signOut: { [weak self] in await self?.signOut() })
+        let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
+        let recap = RecapShelf(
+            service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
+            scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
+            scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
+        // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
+        // from now rather than from when the scene covered the screen.
+        if let scene { await today.dropIn(on: scene, coveredAt: .now) }
+        screen = .tabs(
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+            recap: recap)
+        await readScene(of: home.squad.id, into: today)
+        if let pending = pendingRecap {
+            pendingRecap = nil
+            await openRecap(squad: pending.squad, week: pending.week)
         }
     }
 
@@ -261,9 +275,17 @@ final class AppModel {
     }
 
     private func signedOut() async {
+        SignUpProgress.clear()
         folders.forgetAll()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
+    }
+
+    /// The sign-up the app was closed during, carried on, when it had joined or made `squad`.
+    private func resumedSignUp(in squad: SquadID) async -> SignUpModel? {
+        guard let progress = SignUpProgress.saved, progress.squad == squad else { return nil }
+        let model = newSignUp(hasAgreedToAI: true)
+        return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
     }
 
     private func newSignUp(hasAgreedToAI: Bool) -> SignUpModel {

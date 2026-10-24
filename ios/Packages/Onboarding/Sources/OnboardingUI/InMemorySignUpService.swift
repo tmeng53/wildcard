@@ -75,4 +75,9 @@ public actor InMemorySignUpService: SignUpService {
         guard squad == self.squad?.id, self.scene == nil || self.scene == scene else { throw .rejected }
         self.scene = scene
     }
+
+    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
+        guard let joined = self.squad, joined.id == squad else { throw .rejected }
+        return ResumedSignUp(squad: joined, character: character)
+    }
 }

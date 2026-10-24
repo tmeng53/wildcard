@@ -288,6 +288,10 @@ public struct ScheduleView: View {
         if await model.addFuel(typed: ownFuel) {
             ownFuel = ""
             typingFuel = false
+        } else {
+            // The tap on 加上 put the keyboard away; bring the typed goal back to try again.
+            model.writingFuel = true
+            typingFuel = true
         }
     }
 }
