@@ -32,8 +32,8 @@ export interface Squads {
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**
    * Takes the member out of the squad; nothing happens if they aren't in it. When the last member
-   * leaves, the squad ends: its invite stops working. It is never deleted, since check-ins sent
-   * to it still point at it.
+   * leaves, the squad ends: its invite stops working, and it stays. A squad is deleted only with
+   * the account of its last member.
    */
   leave(input: { squad: SquadId; member: MemberId }): Promise<void>;
   /** Renames the squad, for its captain. */

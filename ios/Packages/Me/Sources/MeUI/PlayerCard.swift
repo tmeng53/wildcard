@@ -6,8 +6,7 @@ import SportsUI
 import SwiftUI
 
 /// 我's player card, like a baseball card: the front has the character, the name and squad and the
-/// headline numbers; a tap turns it over to the career numbers, and two dots under it say which
-/// side is up. Ink card stock with white type, the character in a light grey window.
+/// headline numbers; a tap turns it over to the career numbers, as the line under it says. Ink card stock with white type, the character in a light grey window.
 struct PlayerCard: View {
     let overview: MeOverview
     @State private var showsBack = false
@@ -38,11 +37,11 @@ struct PlayerCard: View {
             .buttonStyle(PressableButtonStyle())
             .accessibilityHint(Text("轻点翻面", bundle: .module))
             .accessibilityIdentifier("me.card")
-            HStack(spacing: Space.xs) {
-                Dot(isOn: !showsBack)
-                Dot(isOn: showsBack)
-            }
-            .accessibilityHidden(true)
+            // It turns over rather than swipes, so it says so.
+            Text("轻点翻面", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .accessibilityHidden(true)
         }
     }
 
@@ -310,18 +309,6 @@ private struct Hairline: View {
         Rectangle()
             .fill(Color(role: .borderOnInk, in: theme))
             .frame(height: Sizing.hairline)
-    }
-}
-
-/// Which side of the card is up: ink for this one, grey for the other.
-private struct Dot: View {
-    let isOn: Bool
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        Circle()
-            .fill(Color(role: isOn ? .fgDefault : .borderDefault, in: theme))
-            .frame(width: Space.xs - 2, height: Space.xs - 2)
     }
 }
 #endif
