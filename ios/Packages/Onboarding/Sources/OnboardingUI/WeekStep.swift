@@ -173,7 +173,7 @@ private struct WeekPoster: View {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .current
         let noon = calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
-        return noon?.formatted(.dateTime.weekday(.abbreviated)) ?? ""
+        return noon?.formatted(.dateTime.weekday(.abbreviated).locale(AppLanguage.current.locale)) ?? ""
     }
 }
 
@@ -244,7 +244,7 @@ private struct DayChoices: View {
     }
 
     private var selectedActivity: Activity {
-        if case .train(let activity?) = week.days[week.selected] { activity } else { .sport(.run) }
+        if case .train(let activity?) = week.days[week.selected] { activity } else { .sport("run") }
     }
 
     static func key(for day: PlanDay) -> String {

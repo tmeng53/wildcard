@@ -61,7 +61,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     #expect(plan.weekStart.description == "2026-10-19")
     #expect(
         plan.days == [
-            .train(.sport(.run)), .train(nil), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .train(nil),
+            .train(.sport("run")), .train(nil), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .train(nil),
             .rest,
         ])
 }

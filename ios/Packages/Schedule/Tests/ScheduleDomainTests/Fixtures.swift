@@ -11,8 +11,9 @@ enum Fixtures {
 
     /// Run, tennis, rest, strength, run, rest, tennis.
     static let plan: [PlanDay] = [
-        .train(.sport(.run)), .train(.sport(.tennis)), .rest, .train(.sport(.strength)), .train(.sport(.run)), .rest,
-        .train(.sport(.tennis)),
+        .train(.sport("run")), .train(.sport("tennis")), .rest, .train(.sport("strength")), .train(.sport("run")),
+        .rest,
+        .train(.sport("tennis")),
     ]
 
     static let losAngeles = TimeZone(identifier: "America/Los_Angeles") ?? .gmt

@@ -262,7 +262,7 @@ private struct SportRow: View {
     }
 
     private var choices: [Activity] {
-        [selected] + Sport.quickPicks.map(Activity.sport).filter { $0 != selected }
+        [selected] + SportList.shared.catalog.checkInQuick.map(Activity.sport).filter { $0 != selected }
     }
 }
 

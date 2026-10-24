@@ -74,11 +74,12 @@ struct DayPicks: View {
     var body: some View {
         let day = sheet.weekStart.adding(days: index)
         let plan = sheet.plan[index]
+        let picks = store.suggestedActivities(common: SportList.shared.catalog.checkInQuick)
         VStack(alignment: .leading, spacing: Space.labelGap) {
             SectionLabel(
                 Text("\(ScheduleLabels.weekday(day)) · \(ScheduleLabels.shortDate(day))", bundle: .module))
             FlowRow {
-                ForEach(store.suggestedActivities, id: \.key) { activity in
+                ForEach(picks, id: \.key) { activity in
                     PickPill(activity.name, systemImage: activity.symbol, isSelected: plan == .train(activity)) {
                         onPick(activity)
                     }

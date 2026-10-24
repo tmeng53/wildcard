@@ -1,13 +1,14 @@
 import AvatarArt
 import AvatarDomain
+import AvatarLooks
 import DesignSystem
 import Testing
 
 /// A character on a scene puts on its sport's kit and loops that sport's move.
 @Test func aCharacterOnTheSceneTrainsAtItsSport() throws {
     let look = Outfit(["body": "peach"])
-    let (outfit, clip) = try PlaceholderCharacter.sceneLoop(for: .pool, look: look, persona: .drama)
-    let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+    let (outfit, clip) = try PlaceholderCharacter.sceneLoop(for: .pool, look: look, persona: .drama, in: Looks.sports)
+    let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
     #expect(swim.id == "swim")
     #expect(outfit == swim.dress(look))
     #expect(clip == (try PlaceholderCharacter.move(for: swim, persona: .drama)))
@@ -19,7 +20,7 @@ import Testing
 @Test(arguments: SceneTheme.allCases)
 func eachScenesKeyPoseIsAtTheEndOfItsWidestSwing(scene: SceneTheme) throws {
     let look = Outfit(["body": "peach"])
-    let (_, clip) = try PlaceholderCharacter.sceneLoop(for: scene, look: look, persona: .drama)
+    let (_, clip) = try PlaceholderCharacter.sceneLoop(for: scene, look: look, persona: .drama, in: Looks.sports)
     let time = PlaceholderCharacter.keyPose(of: clip) * clip.duration
     let swings = clip.tracks.filter { $0.channel == .rotation }.map { track in
         let values = track.keys.map(\.value)

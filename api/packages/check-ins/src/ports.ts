@@ -44,6 +44,12 @@ export interface SquadMembership {
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
 }
 
+/** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */
+export interface SportList {
+  /** Whether `id` names a listed sport (`custom` never does). */
+  isListed(id: string): Promise<boolean>;
+}
+
 /** Where reactions on check-ins are kept. */
 export interface ReactionStore {
   /** Saves the member's reaction on a check-in, in place of any they left before. */

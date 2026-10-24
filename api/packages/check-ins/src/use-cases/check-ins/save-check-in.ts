@@ -22,9 +22,11 @@ import type {
   Clock,
   MemberCalendar,
   PhotoFiles,
+  SportList,
   SquadMembership,
   WeeklyPlanStore,
 } from '../../ports.js';
+import { checkSport } from '../check-sport.js';
 import { planTrainedDay } from '../weekly-plans.js';
 
 export interface SaveCheckInInput {
@@ -51,6 +53,7 @@ export async function saveCheckIn(
     store,
     membership,
     photos,
+    sports,
     plans,
     calendarOf,
     clock,
@@ -58,6 +61,7 @@ export async function saveCheckIn(
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
+    readonly sports: SportList;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
@@ -65,7 +69,10 @@ export async function saveCheckIn(
   { id, member, draft }: SaveCheckInInput,
 ): Promise<SavedCheckIn> {
   const checkIn = recordFromDraft(draft, { id, member });
-  const saved = await insertCheckIn({ store, membership, photos, calendarOf, clock }, checkIn);
+  const saved = await insertCheckIn(
+    { store, membership, photos, sports, calendarOf, clock },
+    checkIn,
+  );
   if (saved.checkIn.kind === 'trained') {
     await planTrainedDay(
       { store: plans },
@@ -80,12 +87,14 @@ async function insertCheckIn(
     store,
     membership,
     photos,
+    sports,
     calendarOf,
     clock,
   }: {
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
+    readonly sports: SportList;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
@@ -100,6 +109,7 @@ async function insertCheckIn(
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
   await checkPhotos(photos, checkIn);
+  if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
 
   const outcome = await store.insert(checkIn);
   if (outcome.saved) return { checkIn, created: true };

@@ -51,12 +51,14 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     }
 
     private static let planA: [PlanDay] = [
-        .train(.sport(.run)), .train(.sport(.tennis)), .rest, .train(.sport(.strength)), .train(.sport(.run)), .rest,
-        .train(.sport(.tennis)),
+        .train(.sport("run")), .train(.sport("tennis")), .rest, .train(.sport("strength")), .train(.sport("run")),
+        .rest,
+        .train(.sport("tennis")),
     ]
     private static let planB: [PlanDay] = [
-        .train(.sport(.run)), .rest, .train(.sport(.strength)), .train(.sport(.tennis)), .rest, .train(.sport(.swim)),
-        .train(.sport(.run)),
+        .train(.sport("run")), .rest, .train(.sport("strength")), .train(.sport("tennis")), .rest,
+        .train(.sport("swim")),
+        .train(.sport("run")),
     ]
 
     /// What the weekly awards might say; the real ones come from the API.

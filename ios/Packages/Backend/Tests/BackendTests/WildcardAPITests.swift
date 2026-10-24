@@ -168,7 +168,7 @@ func photoBytes() -> Data {
     let author = try await stack.signedInMember()
     let outsider = try await stack.signedInMember()
     let squad = try await stack.squad(of: author)
-    let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport(.run))))
+    let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport("run"))))
 
     await #expect(throws: APIError.refused(.squadNotJoined)) { try await outsider.api.save(trained) }
     await #expect(throws: APIError.refused(.squadNotJoined)) {
@@ -270,8 +270,8 @@ private struct RefusedTokens: AuthProvider {
     #expect(try await member.api.checkInTotals().topSport == nil)
     #expect(try await member.api.awardTotals() == AwardTotals(titles: 0, latest: nil))
 
-    for activity in [Activity.sport(.run), .custom(try CustomSport("飞盘")), .sport(.run)] {
+    for activity in [Activity.sport("run"), .custom(try CustomSport("飞盘")), .sport("run")] {
         _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))
     }
-    #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport(.run), checkIns: 2))
+    #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
 }

@@ -7,6 +7,7 @@ import DesignSystem
 import Foundation
 import Observation
 import ScheduleDomain
+import SportsUI
 
 /// The 出赛表 screen's state over its store: what is open under the poster, the title whose
 /// award line shows, the member's character on the poster and saving the poster to Photos.
@@ -59,7 +60,8 @@ public final class ScheduleModel {
     private func makePlayer() {
         let outfit = look.map { Outfit($0) } ?? PlaceholderCharacter.lifter
         let persona = look.map { Persona($0) } ?? .energetic
-        if let training = try? PlaceholderCharacter.sceneLoop(for: scene, look: outfit, persona: persona),
+        if let training = try? PlaceholderCharacter.sceneLoop(
+            for: scene, look: outfit, persona: persona, in: SportList.shared.catalog),
             let figure = try? PlaceholderCharacter.figure(wearing: training.outfit),
             let player = try? CharacterPlayer(figure: figure, idle: training.clip)
         {

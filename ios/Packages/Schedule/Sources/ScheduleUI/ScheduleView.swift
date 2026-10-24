@@ -226,7 +226,7 @@ public struct ScheduleView: View {
     private var selectedActivity: Activity {
         guard let sheet = store.sheet, case .selected(let index) = store.board?.focus,
             case .train(let activity?) = sheet.plan[index]
-        else { return .sport(.run) }
+        else { return .sport("run") }
         return activity
     }
 

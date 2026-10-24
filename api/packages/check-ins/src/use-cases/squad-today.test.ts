@@ -9,6 +9,7 @@ import {
   randomInviteCodes,
   type SquadTables,
 } from '@wildcard/squads';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import {
@@ -23,7 +24,7 @@ import { WeekStart, type PlanDay } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables & SquadTables>({
+const db = new Kysely<CheckInTables & SquadTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -44,6 +45,7 @@ const plans = createPostgresWeeklyPlanStore(db);
 /** The check-ins module with its clock at `moment`. */
 const checkInsAt = (moment: Date) =>
   createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership,
     reactions: createPostgresReactionStore(db),

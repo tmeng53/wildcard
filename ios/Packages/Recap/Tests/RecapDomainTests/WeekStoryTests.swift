@@ -89,7 +89,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 }
 
 @Test func eachDayPlaysItsSportRestOrDisclaimerMove() throws {
-    #expect(DayKind.trained(.tennis).clip == .sport(.tennis))
+    #expect(DayKind.trained("tennis").clip == .sport("tennis"))
     #expect(DayKind.trained(nil).clip == .sport(nil))
     #expect(DayKind.rest.clip?.name == "doze")
     #expect(DayKind.disclaimer.clip?.name == "flat")
@@ -120,7 +120,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     let week = MyWeek(
         plan: 5,
         days: [
-            .init(day: try day(13), kind: .trained(.run)), .init(day: try day(14), kind: .trained(nil)),
+            .init(day: try day(13), kind: .trained("run")), .init(day: try day(14), kind: .trained(nil)),
             .init(day: try day(15), kind: .rest), .init(day: try day(16), kind: .disclaimer),
             .init(day: try day(17), kind: .none),
         ], healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)

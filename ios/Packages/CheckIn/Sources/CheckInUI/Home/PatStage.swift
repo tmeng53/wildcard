@@ -4,6 +4,7 @@ import AvatarDomain
 import AvatarUI
 import CheckInDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 import Observation
 
@@ -130,15 +131,15 @@ final class PatStage {
             self?.landedOnMe += 1
         } finished: { [weak self] in
             guard let self else { return }
-            let name = mate.name ?? String(localized: "队友", bundle: .module)
+            let name = mate.name ?? String(localized: "队友", bundle: .module.inAppLanguage)
             show(
                 Bubble(
                     mate: mate.id, kind: .pattedMe,
-                    title: String(localized: "\(name)拍了拍你", bundle: .module),
+                    title: String(localized: "\(name)拍了拍你", bundle: .module.inAppLanguage),
                     detail: others.first.map {
                         String(
-                            localized: "\($0.name ?? String(localized: "队友", bundle: .module)) 也拍了拍你",
-                            bundle: .module)
+                            localized: "\($0.name ?? String(localized: "队友", bundle: .module.inAppLanguage)) 也拍了拍你",
+                            bundle: .module.inAppLanguage)
                     },
                     id: nextBubble()), for: Self.bubbleHold)
         }
@@ -186,30 +187,33 @@ final class PatStage {
     /// 「小米 · 今天还没打卡」, or the status alone for someone without a nickname yet.
     static func titled(_ name: String?, _ status: String) -> String {
         guard let name else { return status }
-        return String(localized: "\(name) · \(status)", bundle: .module)
+        return String(localized: "\(name) · \(status)", bundle: .module.inAppLanguage)
     }
 
     /// What a teammate is up to today, as the approved home says it: the status, and a second
     /// line where there is one.
     static func status(of mate: SquadCast.Mate, pose: StagePose) -> (title: String, detail: String?) {
-        if pose == .asleep { return (String(localized: "睡着了", bundle: .module), nil) }
+        if pose == .asleep { return (String(localized: "睡着了", bundle: .module.inAppLanguage), nil) }
         switch mate.member.status {
         case .trained(let activity?):
             return (
-                String(localized: "\(activity.localizedName) 中", bundle: .module),
-                String(localized: "今天练了", bundle: .module)
+                String(localized: "\(activity.localizedName) 中", bundle: .module.inAppLanguage),
+                String(localized: "今天练了", bundle: .module.inAppLanguage)
             )
         case .trained(nil):
-            return (String(localized: "今天练了", bundle: .module), nil)
+            return (String(localized: "今天练了", bundle: .module.inAppLanguage), nil)
         case .disclaimer:
             return (
-                String(localized: "请假条", bundle: .module),
-                mate.disclaimer ?? String(localized: "今天休息", bundle: .module)
+                String(localized: "请假条", bundle: .module.inAppLanguage),
+                mate.disclaimer ?? String(localized: "今天休息", bundle: .module.inAppLanguage)
             )
         case .restDay:
-            return (String(localized: "今天是休息日", bundle: .module), String(localized: "按计划休息", bundle: .module))
+            return (
+                String(localized: "今天是休息日", bundle: .module.inAppLanguage),
+                String(localized: "按计划休息", bundle: .module.inAppLanguage)
+            )
         case .notYet:
-            return (String(localized: "今天还没打卡", bundle: .module), nil)
+            return (String(localized: "今天还没打卡", bundle: .module.inAppLanguage), nil)
         }
     }
 }

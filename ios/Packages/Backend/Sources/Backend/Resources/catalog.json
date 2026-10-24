@@ -1,0 +1,716 @@
+{
+  "version": 1,
+  "sports": {
+    "categories": [
+      {
+        "id": "runWalk",
+        "names": {
+          "zhHans": "跑走",
+          "en": "Run and walk",
+          "zhHant": "跑步健走"
+        },
+        "sports": [
+          {
+            "id": "run",
+            "names": {
+              "zhHans": "跑步",
+              "en": "Run",
+              "zhHant": "跑步"
+            },
+            "icon": "figure.run",
+            "offered": true
+          },
+          {
+            "id": "walk",
+            "names": {
+              "zhHans": "快走",
+              "en": "Walk",
+              "zhHant": "快走"
+            },
+            "icon": "figure.walk",
+            "offered": true
+          },
+          {
+            "id": "hike",
+            "names": {
+              "zhHans": "徒步",
+              "en": "Hike",
+              "zhHant": "健行"
+            },
+            "icon": "figure.hiking",
+            "offered": true
+          },
+          {
+            "id": "trailRun",
+            "names": {
+              "zhHans": "越野跑",
+              "en": "Trail run",
+              "zhHant": "越野跑"
+            },
+            "icon": "figure.run",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "strength",
+        "names": {
+          "zhHans": "力量",
+          "en": "Strength",
+          "zhHant": "重訓"
+        },
+        "sports": [
+          {
+            "id": "strength",
+            "names": {
+              "zhHans": "力量训练",
+              "en": "Strength",
+              "zhHant": "重訓"
+            },
+            "icon": "figure.strengthtraining.traditional",
+            "offered": true
+          },
+          {
+            "id": "crossfit",
+            "names": {
+              "zhHans": "CrossFit",
+              "en": "CrossFit",
+              "zhHant": "CrossFit"
+            },
+            "icon": "figure.cross.training",
+            "offered": true
+          },
+          {
+            "id": "hyrox",
+            "names": {
+              "zhHans": "Hyrox",
+              "en": "Hyrox",
+              "zhHant": "Hyrox"
+            },
+            "icon": "figure.highintensity.intervaltraining",
+            "offered": true
+          },
+          {
+            "id": "kettlebell",
+            "names": {
+              "zhHans": "壶铃",
+              "en": "Kettlebell",
+              "zhHant": "壺鈴"
+            },
+            "icon": "figure.strengthtraining.traditional",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "cardio",
+        "names": {
+          "zhHans": "有氧和课程",
+          "en": "Cardio and classes",
+          "zhHant": "有氧和課程"
+        },
+        "sports": [
+          {
+            "id": "spin",
+            "names": {
+              "zhHans": "动感单车",
+              "en": "Spin",
+              "zhHant": "飛輪"
+            },
+            "icon": "figure.indoor.cycle",
+            "offered": true
+          },
+          {
+            "id": "elliptical",
+            "names": {
+              "zhHans": "椭圆机",
+              "en": "Elliptical",
+              "zhHant": "滑步機"
+            },
+            "icon": "figure.elliptical",
+            "offered": true
+          },
+          {
+            "id": "rowing",
+            "names": {
+              "zhHans": "划船机",
+              "en": "Rowing",
+              "zhHant": "划船機"
+            },
+            "icon": "figure.rower",
+            "offered": true
+          },
+          {
+            "id": "hiit",
+            "names": {
+              "zhHans": "HIIT",
+              "en": "HIIT",
+              "zhHant": "HIIT"
+            },
+            "icon": "figure.highintensity.intervaltraining",
+            "offered": true
+          },
+          {
+            "id": "jumpRope",
+            "names": {
+              "zhHans": "跳绳",
+              "en": "Jump rope",
+              "zhHant": "跳繩"
+            },
+            "icon": "figure.jumprope",
+            "offered": true
+          },
+          {
+            "id": "aerobics",
+            "names": {
+              "zhHans": "有氧操",
+              "en": "Aerobics",
+              "zhHant": "有氧舞蹈"
+            },
+            "icon": "figure.step.training",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "mindBody",
+        "names": {
+          "zhHans": "身心",
+          "en": "Mind and body",
+          "zhHant": "身心"
+        },
+        "sports": [
+          {
+            "id": "yoga",
+            "names": {
+              "zhHans": "瑜伽",
+              "en": "Yoga",
+              "zhHant": "瑜伽"
+            },
+            "icon": "figure.yoga",
+            "offered": true
+          },
+          {
+            "id": "matPilates",
+            "names": {
+              "zhHans": "普拉提垫上",
+              "en": "Mat Pilates",
+              "zhHant": "墊上皮拉提斯"
+            },
+            "icon": "figure.pilates",
+            "offered": true
+          },
+          {
+            "id": "reformerPilates",
+            "names": {
+              "zhHans": "普拉提器械",
+              "en": "Reformer Pilates",
+              "zhHant": "器械皮拉提斯"
+            },
+            "shortNames": {
+              "zhHans": "普拉提器械",
+              "en": "Reformer",
+              "zhHant": "器械皮拉提斯"
+            },
+            "icon": "figure.pilates",
+            "offered": true
+          },
+          {
+            "id": "barre",
+            "names": {
+              "zhHans": "barre",
+              "en": "Barre",
+              "zhHant": "barre"
+            },
+            "icon": "figure.barre",
+            "offered": true
+          },
+          {
+            "id": "stretching",
+            "names": {
+              "zhHans": "拉伸",
+              "en": "Stretching",
+              "zhHant": "伸展"
+            },
+            "icon": "figure.flexibility",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "water",
+        "names": {
+          "zhHans": "水上",
+          "en": "Water",
+          "zhHant": "水上"
+        },
+        "sports": [
+          {
+            "id": "swim",
+            "names": {
+              "zhHans": "游泳",
+              "en": "Swim",
+              "zhHant": "游泳"
+            },
+            "icon": "figure.pool.swim",
+            "offered": true
+          },
+          {
+            "id": "surf",
+            "names": {
+              "zhHans": "冲浪",
+              "en": "Surf",
+              "zhHant": "衝浪"
+            },
+            "icon": "figure.surfing",
+            "offered": true
+          },
+          {
+            "id": "paddleboard",
+            "names": {
+              "zhHans": "桨板",
+              "en": "Paddleboard",
+              "zhHant": "立槳"
+            },
+            "icon": "figure.surfing",
+            "offered": true
+          },
+          {
+            "id": "kayak",
+            "names": {
+              "zhHans": "皮划艇",
+              "en": "Kayak",
+              "zhHant": "獨木舟"
+            },
+            "icon": "figure.rower",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "racket",
+        "names": {
+          "zhHans": "球拍",
+          "en": "Racket",
+          "zhHant": "球拍"
+        },
+        "sports": [
+          {
+            "id": "tennis",
+            "names": {
+              "zhHans": "网球",
+              "en": "Tennis",
+              "zhHant": "網球"
+            },
+            "icon": "figure.tennis",
+            "offered": true
+          },
+          {
+            "id": "badminton",
+            "names": {
+              "zhHans": "羽毛球",
+              "en": "Badminton",
+              "zhHant": "羽球"
+            },
+            "icon": "figure.badminton",
+            "offered": true
+          },
+          {
+            "id": "pickleball",
+            "names": {
+              "zhHans": "匹克球",
+              "en": "Pickleball",
+              "zhHant": "匹克球"
+            },
+            "icon": "figure.pickleball",
+            "offered": true
+          },
+          {
+            "id": "tableTennis",
+            "names": {
+              "zhHans": "乒乓球",
+              "en": "Table tennis",
+              "zhHant": "桌球"
+            },
+            "shortNames": {
+              "zhHans": "乒乓球",
+              "en": "Ping pong",
+              "zhHant": "桌球"
+            },
+            "icon": "figure.table.tennis",
+            "offered": true
+          },
+          {
+            "id": "squash",
+            "names": {
+              "zhHans": "壁球",
+              "en": "Squash",
+              "zhHant": "壁球"
+            },
+            "icon": "figure.squash",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "ball",
+        "names": {
+          "zhHans": "球类",
+          "en": "Ball sports",
+          "zhHant": "球類"
+        },
+        "sports": [
+          {
+            "id": "basketball",
+            "names": {
+              "zhHans": "篮球",
+              "en": "Basketball",
+              "zhHant": "籃球"
+            },
+            "icon": "figure.basketball",
+            "offered": true
+          },
+          {
+            "id": "soccer",
+            "names": {
+              "zhHans": "足球",
+              "en": "Soccer",
+              "zhHant": "足球"
+            },
+            "icon": "figure.indoor.soccer",
+            "offered": true
+          },
+          {
+            "id": "volleyball",
+            "names": {
+              "zhHans": "排球",
+              "en": "Volleyball",
+              "zhHant": "排球"
+            },
+            "icon": "figure.volleyball",
+            "offered": true
+          },
+          {
+            "id": "golf",
+            "names": {
+              "zhHans": "高尔夫",
+              "en": "Golf",
+              "zhHant": "高爾夫"
+            },
+            "icon": "figure.golf",
+            "offered": true
+          },
+          {
+            "id": "baseballSoftball",
+            "names": {
+              "zhHans": "棒垒球",
+              "en": "Baseball and softball",
+              "zhHant": "棒壘球"
+            },
+            "shortNames": {
+              "zhHans": "棒垒球",
+              "en": "Baseball",
+              "zhHant": "棒壘球"
+            },
+            "icon": "figure.baseball",
+            "offered": true
+          },
+          {
+            "id": "ultimate",
+            "names": {
+              "zhHans": "飞盘",
+              "en": "Ultimate",
+              "zhHant": "飛盤"
+            },
+            "icon": "figure.disc.sports",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "cycling",
+        "names": {
+          "zhHans": "骑行",
+          "en": "Cycling",
+          "zhHant": "單車"
+        },
+        "sports": [
+          {
+            "id": "roadCycling",
+            "names": {
+              "zhHans": "公路骑行",
+              "en": "Road cycling",
+              "zhHant": "公路車"
+            },
+            "shortNames": {
+              "zhHans": "公路骑行",
+              "en": "Cycling",
+              "zhHant": "公路車"
+            },
+            "icon": "figure.outdoor.cycle",
+            "offered": true
+          },
+          {
+            "id": "mountainBiking",
+            "names": {
+              "zhHans": "山地车",
+              "en": "Mountain biking",
+              "zhHant": "登山車"
+            },
+            "shortNames": {
+              "zhHans": "山地车",
+              "en": "Mtn bike",
+              "zhHant": "登山車"
+            },
+            "icon": "bicycle",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "outdoorWinter",
+        "names": {
+          "zhHans": "户外和冬季",
+          "en": "Outdoor and winter",
+          "zhHant": "戶外和冬季"
+        },
+        "sports": [
+          {
+            "id": "climb",
+            "names": {
+              "zhHans": "攀岩",
+              "en": "Climb",
+              "zhHant": "攀岩"
+            },
+            "icon": "figure.climbing",
+            "offered": true
+          },
+          {
+            "id": "ski",
+            "names": {
+              "zhHans": "滑雪",
+              "en": "Ski",
+              "zhHant": "滑雪"
+            },
+            "icon": "figure.skiing.downhill",
+            "offered": true
+          },
+          {
+            "id": "snowboard",
+            "names": {
+              "zhHans": "单板",
+              "en": "Snowboard",
+              "zhHant": "單板"
+            },
+            "icon": "figure.snowboarding",
+            "offered": true
+          },
+          {
+            "id": "skate",
+            "names": {
+              "zhHans": "滑冰",
+              "en": "Skate",
+              "zhHant": "溜冰"
+            },
+            "icon": "figure.skating",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "combat",
+        "names": {
+          "zhHans": "格斗",
+          "en": "Combat",
+          "zhHant": "格鬥"
+        },
+        "sports": [
+          {
+            "id": "boxing",
+            "names": {
+              "zhHans": "拳击",
+              "en": "Boxing",
+              "zhHant": "拳擊"
+            },
+            "icon": "figure.boxing",
+            "offered": true
+          },
+          {
+            "id": "kickboxing",
+            "names": {
+              "zhHans": "泰拳踢拳",
+              "en": "Kickboxing",
+              "zhHant": "泰拳踢拳"
+            },
+            "shortNames": {
+              "zhHans": "泰拳踢拳",
+              "en": "Kickbox",
+              "zhHant": "泰拳踢拳"
+            },
+            "icon": "figure.kickboxing",
+            "offered": true
+          },
+          {
+            "id": "jiuJitsu",
+            "names": {
+              "zhHans": "巴西柔术",
+              "en": "Jiu-jitsu",
+              "zhHant": "巴西柔術"
+            },
+            "icon": "figure.wrestling",
+            "offered": true
+          },
+          {
+            "id": "martialArts",
+            "names": {
+              "zhHans": "武术",
+              "en": "Martial arts",
+              "zhHant": "武術"
+            },
+            "shortNames": {
+              "zhHans": "武术",
+              "en": "Martial",
+              "zhHant": "武術"
+            },
+            "icon": "figure.martial.arts",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "dance",
+        "names": {
+          "zhHans": "舞蹈",
+          "en": "Dance",
+          "zhHant": "舞蹈"
+        },
+        "sports": [
+          {
+            "id": "dance",
+            "names": {
+              "zhHans": "舞蹈",
+              "en": "Dance",
+              "zhHant": "舞蹈"
+            },
+            "icon": "figure.dance",
+            "offered": true
+          }
+        ]
+      },
+      {
+        "id": "everyday",
+        "names": {
+          "zhHans": "生活也算练",
+          "en": "Everyday counts",
+          "zhHant": "生活也算練"
+        },
+        "sports": [
+          {
+            "id": "dogWalk",
+            "names": {
+              "zhHans": "遛狗",
+              "en": "Dog walk",
+              "zhHant": "遛狗"
+            },
+            "icon": "dog.fill",
+            "offered": true
+          },
+          {
+            "id": "walkCommute",
+            "names": {
+              "zhHans": "走路通勤",
+              "en": "Walk commute",
+              "zhHant": "走路通勤"
+            },
+            "shortNames": {
+              "zhHans": "走路通勤",
+              "en": "Commute",
+              "zhHant": "走路通勤"
+            },
+            "icon": "figure.walk",
+            "offered": true
+          },
+          {
+            "id": "bikeCommute",
+            "names": {
+              "zhHans": "骑车通勤",
+              "en": "Bike commute",
+              "zhHant": "騎車通勤"
+            },
+            "shortNames": {
+              "zhHans": "骑车通勤",
+              "en": "Bike ride",
+              "zhHant": "騎車通勤"
+            },
+            "icon": "figure.outdoor.cycle",
+            "offered": true
+          },
+          {
+            "id": "deepClean",
+            "names": {
+              "zhHans": "大扫除",
+              "en": "Deep clean",
+              "zhHant": "大掃除"
+            },
+            "icon": "bubbles.and.sparkles.fill",
+            "offered": true
+          },
+          {
+            "id": "moving",
+            "names": {
+              "zhHans": "搬家",
+              "en": "Moving",
+              "zhHant": "搬家"
+            },
+            "icon": "shippingbox.fill",
+            "offered": true
+          },
+          {
+            "id": "strollerWalk",
+            "names": {
+              "zhHans": "带娃散步",
+              "en": "Stroller walk",
+              "zhHant": "推車散步"
+            },
+            "shortNames": {
+              "zhHans": "带娃散步",
+              "en": "Stroller",
+              "zhHant": "推車散步"
+            },
+            "icon": "stroller.fill",
+            "offered": true
+          },
+          {
+            "id": "gardening",
+            "names": {
+              "zhHans": "园艺",
+              "en": "Gardening",
+              "zhHant": "園藝"
+            },
+            "icon": "leaf.fill",
+            "offered": true
+          }
+        ]
+      }
+    ],
+    "picks": {
+      "signUpCommon": [
+        "swim",
+        "run",
+        "strength",
+        "tennis",
+        "climb",
+        "yoga"
+      ],
+      "checkInQuick": [
+        "run",
+        "strength",
+        "yoga",
+        "swim",
+        "spin",
+        "hike",
+        "tennis"
+      ]
+    }
+  }
+}

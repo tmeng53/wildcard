@@ -138,7 +138,7 @@ public final class TodayModel {
     }
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
-    var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
+    var suggestedActivity: Activity { store.suggestedActivity ?? .sport("run") }
     var recentActivities: [Activity] { store.recentActivities }
 
     /// Day or night on the scene, on the member's own clock.
@@ -167,9 +167,9 @@ public final class TodayModel {
     /// A member's head and name on 今日赛况: 我 for me, else their nickname, or 队友 before they
     /// made their character.
     func recapMember(_ member: MemberID) -> (head: CharacterPlayer?, name: String) {
-        if member == home?.member { return (player, String(localized: "我", bundle: .module)) }
+        if member == home?.member { return (player, String(localized: "我", bundle: .module.inAppLanguage)) }
         let nickname = home?.today.members.first { $0.member == member }?.character?.nickname.text
-        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module))
+        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module.inAppLanguage))
     }
 
     /// The ring under my feet.

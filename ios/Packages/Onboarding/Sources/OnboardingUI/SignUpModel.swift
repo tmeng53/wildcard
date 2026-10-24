@@ -4,6 +4,7 @@ import AvatarDomain
 import CharacterEditorDomain
 import CharacterEditorUI
 import Contracts
+import DesignSystemUI
 import Foundation
 import DesignSystem
 import Observation
@@ -157,7 +158,7 @@ public final class SignUpModel {
 
     /// 「Tracy 的小队」.
     static func suggestedName(for nickname: String) -> String {
-        String(localized: "\(nickname) 的小队", bundle: .module)
+        String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
     }
 
     // MARK: 你的小队
