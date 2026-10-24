@@ -203,8 +203,9 @@ struct MedalMark: View {
 
 /// Where the story's shared pieces sit, from the approved v6 design (a 390 by 844 phone).
 enum StoryLayout {
-    /// The page title's top, under the segments and the header.
-    static let titleTop: Double = 112
+    /// The page title's top, under the segments and the header (which the page is already
+    /// padded clear of).
+    static let titleTop: Double = Space.m
     /// The cloth's fold lines, at the design's width.
     static let clothStroke: Double = 1
     /// How tall the white ground is on each kind of page.
