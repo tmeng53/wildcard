@@ -165,8 +165,8 @@ struct EntranceScreen<Bar: View>: View {
         let days = model.week?.days ?? Array(repeating: .rest, count: WeeklyPlan.dayCount)
         return DesignSystemUI.MyWeek(
             summary: "", done: 0, planned: model.week?.trainingDays ?? 0,
-            days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone, healthyMeals: 0,
-            cheatMeals: 0, lifetimeTrained: 0)
+            days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone,
+            details: Array(repeating: WeekDayDetail(line: "", isPlan: true, meals: nil), count: days.count))
     }
 
     /// A character with its feet at `position`, in stage points scaled by `unit`, drawn as home

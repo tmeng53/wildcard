@@ -253,6 +253,13 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
         settle()
         keepScreenshot(named: "13-today-my-week")
+        // Tapping a day shows its line under the calendar.
+        app.buttons["squadcard.day.0"].tap()
+        XCTAssertTrue(app.buttons["squadcard.day.0"].isSelected, "the tapped day isn't picked")
+        let line = app.descendants(matching: .any).matching(identifier: "squadcard.dayLine").firstMatch.label
+        XCTAssertTrue(line.hasPrefix("周一") || line.hasPrefix("今天"), "the line isn't Monday's: \(line)")
+        settle()
+        keepScreenshot(named: "13b-today-my-week-monday")
         // Leave the card as the other tests expect it.
         app.buttons["squadcard.page.squad"].tap()
     }

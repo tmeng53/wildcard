@@ -81,8 +81,7 @@ public struct Home: Hashable, Sendable {
         if day > today.myWeek.lastDay {
             home.today.myWeek = MyWeek(
                 firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
-                week: WeekCount(trainedDays: 0, plannedDays: today.myWeek.week.plannedDays),
-                lifetimeTrainedDays: today.myWeek.lifetimeTrainedDays)
+                week: WeekCount(trainedDays: 0, plannedDays: today.myWeek.week.plannedDays))
             home.today.squadWeek.trainedDays = 0
         }
         home.today.today.everyoneTrained =
