@@ -13,6 +13,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
 
+    /// `-loading`: the launch page with its loader, the character jogging, which a fast load
+    /// never shows long enough to see.
+    static var showsLoading: Bool {
+        ProcessInfo.processInfo.arguments.contains("-loading")
+    }
+
     /// `-recap`: open the 战报's entry tile and sample story instead of 今天.
     static var showsRecap: Bool {
         ProcessInfo.processInfo.arguments.contains("-recap")

@@ -25,7 +25,7 @@ import SwiftUI
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
+/// `-character-editor` the character editor, `-loading` the launch page's loader and `-recap` the 战报's tile and sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
 /// about.
@@ -163,6 +163,8 @@ struct WildcardApp: App {
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
+        } else if LaunchOptions.showsLoading {
+            Starting().loadingCover(true) { OpeningLoader() }
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {

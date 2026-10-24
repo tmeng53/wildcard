@@ -29,6 +29,8 @@ struct LoadingGuide: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("styleguide.loading")
     }
 }
 #endif
