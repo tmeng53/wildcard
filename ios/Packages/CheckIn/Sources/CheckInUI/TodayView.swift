@@ -210,8 +210,9 @@ public struct TodayView: View {
             .accessibilityIdentifier("today.lights")
             .padding(.trailing, Self.cordInset)
             .frame(maxWidth: .infinity, alignment: .trailing)
-            // Hangs from the card's bottom edge.
-            .alignmentGuide(.bottom) { $0[.top] }
+            // Hangs from the card's bottom edge: the overlay puts its bottom there, so it moves
+            // down by its own height (an offset moves its taps and VoiceOver frame with it).
+            .offset(y: PullCord.size.height)
             .opacity(model.isBurstOpen ? 0 : 1)
             .allowsHitTesting(!model.isBurstOpen)
             .accessibilityHidden(model.isBurstOpen)
