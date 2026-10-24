@@ -85,6 +85,7 @@ public struct ScheduleView: View {
             }
         }
         .task { await model.load() }
+        .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
             SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
                 picksAll = false
@@ -187,7 +188,7 @@ public struct ScheduleView: View {
 
     @MainActor private func save() async {
         guard let sheet = store.sheet else { return }
-        let still = WeekPoster(content: content(sheet).forSaving, player: model.player, isStill: true)
+        let still = WeekPoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
         await model.savePoster { WeekPoster.picture(of: still, theme: theme, locale: locale) }
     }
 

@@ -3,6 +3,7 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import Contracts
+import DesignSystem
 import Foundation
 import Observation
 import ScheduleDomain
@@ -32,10 +33,15 @@ public final class ScheduleModel {
     }
 
     public let store: ScheduleStore
-    /// The member's character, cheering in the poster's corner.
+    /// The member's character in the poster's corner, in the kit of the squad's scene, looping
+    /// its sport.
     private(set) var player: CharacterPlayer?
     /// The look `player` wears: the stand-in until the profile brings the member's own.
     private var look: CharacterLook?
+    /// The squad's scene, whose sport `player` trains at.
+    private var scene = SceneTheme.gym
+    /// What `player` was made from, for drawing its key pose when the poster is saved.
+    private var loop: (figure: Figure, clip: Clip)?
     private(set) var fuelOpen = false
     /// Typing a 饮食小目标 of their own.
     var writingFuel = false
@@ -49,11 +55,22 @@ public final class ScheduleModel {
     public init(store: ScheduleStore, photos: any PosterSaver = PhotoLibrarySaver()) {
         self.store = store
         self.photos = photos
-        player = Self.player(wearing: PlaceholderCharacter.lifter, persona: .energetic)
+        makePlayer()
     }
 
-    private static func player(wearing outfit: Outfit, persona: Persona) -> CharacterPlayer? {
-        try? CharacterPlayer(
+    /// The look in the scene's kit, looping its sport; cheering as worn if the kit can't be read.
+    private func makePlayer() {
+        let outfit = look.map { Outfit($0) } ?? PlaceholderCharacter.lifter
+        let persona = look.map { Persona($0) } ?? .energetic
+        if let training = try? PlaceholderCharacter.sceneLoop(for: scene, look: outfit, persona: persona),
+            let figure = try? PlaceholderCharacter.figure(wearing: training.outfit),
+            let player = try? CharacterPlayer(figure: figure, idle: training.clip)
+        {
+            (self.player, loop) = (player, (figure, training.clip))
+            return
+        }
+        loop = nil
+        player = try? CharacterPlayer(
             figure: PlaceholderCharacter.figure(wearing: outfit),
             idle: PlaceholderCharacter.clip(
                 "cheer", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
@@ -63,7 +80,24 @@ public final class ScheduleModel {
     private func dressPlayer() {
         guard let mine = store.profile?.look, mine != look else { return }
         look = mine
-        player = Self.player(wearing: Outfit(mine), persona: Persona(mine))
+        makePlayer()
+    }
+
+    /// Puts the character to the squad's scene's sport, once the screen knows the scene.
+    func train(on scene: SceneTheme) {
+        guard scene != self.scene else { return }
+        self.scene = scene
+        makePlayer()
+    }
+
+    /// The character as the saved poster shows it: holding its sport's signature pose, never
+    /// whichever frame was on screen.
+    var keyPose: (drawing: FigureDrawing, placements: [Placement])? {
+        guard let loop else { return player?.restFrame }
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        guard let still = try? CharacterPlayer(figure: loop.figure, idle: loop.clip, now: start) else { return nil }
+        let into = PlaceholderCharacter.keyPose(for: scene) * loop.clip.duration
+        return still.frame(at: start.addingTimeInterval(into))
     }
 
     var panel: Panel {

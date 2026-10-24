@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarDomain
 import AvatarUI
 import Contracts
 import DesignSystem
@@ -7,8 +8,8 @@ import ScheduleDomain
 import SwiftUI
 
 /// The week as a 3:4 poster in the scene's color: who and which dates, the week's number, a
-/// swim lane a day, the member's character cheering in the corner, the titles the weekly awards
-/// gave them as stickers (their 颁奖词 sit under the poster), and the week's 饮食小目标 and
+/// swim lane a day, the member's character in the corner doing the scene's sport, the titles
+/// the weekly awards gave them as stickers (their 颁奖词 sit under the poster), and the week's 饮食小目标 and
 /// count along the bottom. Drawn at 360 × 480 points and scaled to fit, so the saved picture
 /// and the screen are the same drawing.
 struct WeekPoster: View {
@@ -17,8 +18,8 @@ struct WeekPoster: View {
 
     let content: PosterContent
     let player: CharacterPlayer?
-    /// Saving: the character holds one pose, since a picture can't move.
-    var isStill = false
+    /// Saving: the one pose the character holds, since a picture can't move.
+    var still: (drawing: FigureDrawing, placements: [Placement])?
     var onTapLane: (Int) -> Void = { _ in }
     var onTapFuel: () -> Void = {}
 
@@ -104,14 +105,11 @@ struct WeekPoster: View {
 
     private var character: some View {
         Group {
-            if let player {
-                if isStill {
-                    let frame = player.frame(at: .now)
-                    CharacterCanvas(drawing: frame.drawing, placements: frame.placements)
-                        .aspectRatio(player.drawing.width / player.drawing.height, contentMode: .fit)
-                } else {
-                    CharacterView(player: player)
-                }
+            if let still {
+                CharacterCanvas(drawing: still.drawing, placements: still.placements)
+                    .aspectRatio(still.drawing.width / still.drawing.height, contentMode: .fit)
+            } else if let player {
+                CharacterView(player: player)
             }
         }
         .frame(width: characterSize.width, height: characterSize.height)
