@@ -19,7 +19,7 @@ struct ComposeView: View {
     @State private var activity: Activity?
     @State private var isPickingSport = false
     @State private var minutes: WorkoutMinutes?
-    @State private var isWritingMinutes = false
+    @State private var isRulingMinutes = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,7 +30,7 @@ struct ComposeView: View {
                         MediaBlock(model: model)
                         if kind == .trained {
                             SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
-                            MinutesRow(minutes: $minutes) { isWritingMinutes = $0 }
+                            MinutesRow(minutes: $minutes, isRuling: $isRulingMinutes)
                                 .id(Self.minutesID)
                         }
                         captionField.id(Self.captionID)
@@ -52,9 +52,9 @@ struct ComposeView: View {
                         proxy.scrollTo(Self.captionID, anchor: .bottom)
                     }
                 }
-                // And the minutes being typed under 其他.
-                .onChange(of: isWritingMinutes) { _, writing in
-                    guard writing else { return }
+                // And the ruler 其他 opens.
+                .onChange(of: isRulingMinutes) { _, ruling in
+                    guard ruling else { return }
                     withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                         proxy.scrollTo(Self.minutesID, anchor: .bottom)
                     }
@@ -63,7 +63,7 @@ struct ComposeView: View {
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
-            SportPicker(selected: currentActivity) { picked in
+            SportPicker(selected: currentActivity, recent: model.recentActivities) { picked in
                 activity = picked
                 isPickingSport = false
             }
@@ -267,12 +267,11 @@ private struct SportRow: View {
 }
 
 /// How long it took, if the member wants to say: the usual lengths one tap each (tap again to
-/// clear), and 其他 for any other number of minutes, held to `WorkoutMinutes.range`.
+/// clear), and 其他 for any other length on a ruler, which starts on the length last picked.
 private struct MinutesRow: View {
     @Binding var minutes: WorkoutMinutes?
-    let onWriting: (Bool) -> Void
-    @State private var isTyping = false
-    @State private var typed = ""
+    @Binding var isRuling: Bool
+    @State private var ruled = Self.rulerStart
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
@@ -280,43 +279,45 @@ private struct MinutesRow: View {
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(Self.quickPicks, id: \.self) { value in
-                        let isPicked = !isTyping && minutes?.value == value
-                        PickPill(Text(verbatim: "\(value)"), isSelected: isPicked) {
-                            isTyping = false
+                        let isPicked = !isRuling && minutes?.value == value
+                        PickPill(Text(verbatim: "\(value)"), look: .solid, isSelected: isPicked) {
+                            isRuling = false
                             minutes = isPicked ? nil : try? WorkoutMinutes(value)
                         }
                         .accessibilityLabel(Text("\(value) 分钟", bundle: .module))
                         .accessibilityIdentifier("compose.minutes.\(value)")
                     }
-                    PickPill(Text("其他", bundle: .module), isSelected: isTyping) {
-                        isTyping.toggle()
-                        typed = ""
-                        minutes = nil
+                    PickPill(Text("其他", bundle: .module), look: .solid, isSelected: isRuling) {
+                        if isRuling {
+                            isRuling = false
+                            minutes = nil
+                        } else {
+                            ruled = Self.scale.snapped(minutes?.value ?? Self.rulerStart)
+                            minutes = try? WorkoutMinutes(ruled)
+                            isRuling = true
+                        }
                     }
                     .accessibilityIdentifier("compose.minutes.other")
                 }
             }
             .scrollIndicators(.hidden)
             .horizontalScrollFade()
-            if isTyping {
-                InputField(text: $typed, label: Text("分钟", bundle: .module), onFocusChange: onWriting)
-                    .keyboardType(.numberPad)
-                    .onChange(of: typed) { _, text in
-                        // Digits only, and never past the most the API takes.
-                        let digits = text.filter { ("0"..."9").contains($0) }
-                        let fitted = Int(digits).map { String(min($0, WorkoutMinutes.range.upperBound)) } ?? ""
-                        if fitted != text { typed = fitted }
-                        minutes = Int(fitted).flatMap { try? WorkoutMinutes($0) }
-                    }
-                    .accessibilityIdentifier("compose.minutes.field")
+            if isRuling {
+                TickRuler(
+                    value: $ruled, scale: Self.scale, label: Text("时长 · 分钟", bundle: .module),
+                    unit: Text("分钟", bundle: .module)
+                )
+                .padding(.top, Space.xs)
+                .onChange(of: ruled) { _, value in minutes = try? WorkoutMinutes(value) }
+                .accessibilityIdentifier("compose.minutes.ruler")
             }
-        }
-        // A field closed by picking a pill never says it stopped being typed in.
-        .onChange(of: isTyping) { _, typing in
-            if !typing { onWriting(false) }
         }
     }
 
+    /// Any minute from 1 to 6 hours; the API takes up to 600, but a ruler that long is hard to slide.
+    private static let scale = RulerScale(range: 1...360, step: 1, midEvery: 5, labelEvery: 15)
+    /// Where the ruler starts when no usual length was picked first.
+    private static let rulerStart = 60
     private static let quickPicks = [15, 30, 45, 60, 90]
 }
 #endif

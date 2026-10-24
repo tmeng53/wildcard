@@ -90,8 +90,7 @@ struct SportPicksTests {
     }
 
     @Test func theListsHaveNoRepeats() {
-        let all = SportPicks.common + SportPicks.more
-        #expect(Set(all).count == all.count)
+        #expect(Set(SportPicks.common).count == SportPicks.common.count)
         #expect(SportPicks.common == [.swim, .run, .strength, .tennis, .climb, .yoga])
     }
 }
