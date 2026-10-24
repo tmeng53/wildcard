@@ -177,31 +177,37 @@ final class AppModel {
                 screen = .signUp(resumed)
                 return
             }
-            let today = TodayModel(
-                store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
-            let profile = MeModel(
-                service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-                confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
-            let squad = SquadSettingsModel(
-                service: APISquadSettingsService(api: api),
-                changed: { [weak self] in Task { await self?.squadChanged() } },
-                signOut: { [weak self] in await self?.signOut() })
-            let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
-            let recap = RecapShelf(
-                service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
-                scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
-                scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
-            // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
-            // from now rather than from when the scene covered the screen.
-            if let scene { await today.dropIn(on: scene, coveredAt: .now) }
-            screen = .tabs(
-                today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
-                recap: recap)
-            await readScene(of: home.squad.id, into: today)
-            if let pending = pendingRecap {
-                pendingRecap = nil
-                await openRecap(squad: pending.squad, week: pending.week)
-            }
+            await openTabs(on: home, store: store, landingOn: scene)
+        }
+    }
+
+    /// 今天 under the tab bar, on the member's squad's home; on a picked scene the member drops
+    /// onto it.
+    private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
+        let today = TodayModel(
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
+        let profile = MeModel(
+            service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
+            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
+        let squad = SquadSettingsModel(
+            service: APISquadSettingsService(api: api),
+            changed: { [weak self] in Task { await self?.squadChanged() } },
+            signOut: { [weak self] in await self?.signOut() })
+        let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
+        let recap = RecapShelf(
+            service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
+            scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
+            scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
+        // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
+        // from now rather than from when the scene covered the screen.
+        if let scene { await today.dropIn(on: scene, coveredAt: .now) }
+        screen = .tabs(
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+            recap: recap)
+        await readScene(of: home.squad.id, into: today)
+        if let pending = pendingRecap {
+            pendingRecap = nil
+            await openRecap(squad: pending.squad, week: pending.week)
         }
     }
 
