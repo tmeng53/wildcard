@@ -1540,6 +1540,36 @@
           }
         }
       }
+    },
+    "开灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights on"
+          }
+        }
+      }
+    },
+    "关灯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lights off"
+          }
+        }
+      }
+    },
+    "开灯的拉绳：关着是白的，开着是暖黄": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The light cord: white when off, warm when on"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

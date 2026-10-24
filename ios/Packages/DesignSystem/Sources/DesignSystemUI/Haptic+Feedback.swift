@@ -18,6 +18,7 @@ extension Haptic {
         case .crown: .impact(weight: .medium)
         case .poke: .impact(flexibility: .rigid, intensity: 0.5)
         case .unbox: .impact(weight: .heavy)
+        case .lights: .impact(flexibility: .rigid, intensity: 1)
         }
     }
 }
