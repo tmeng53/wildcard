@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "species": [
     { "id": "person", "bodies": ["peach"], "hair": true },
     { "id": "cat", "bodies": ["cat", "tuxedo", "calico", "tortie", "orangewhite", "lihua", "siamese", "ragdoll"] },
@@ -7,28 +7,36 @@
     { "id": "rabbit", "bodies": ["rabbit", "lop", "dutch"] },
     { "id": "bear", "bodies": ["bear"] }
   ],
+  "stores": [
+    { "id": "warmup", "open": true },
+    { "id": "lap" },
+    { "id": "nolook" },
+    { "id": "moss" },
+    { "id": "halfmoon" },
+    { "id": "deuce" }
+  ],
   "wear": {
     "top": [
-      { "id": "warmup-tee", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-tank", "swatches": ["#2D5BA0", "#1F2128", "#F4F6FA", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-hoodie", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-tee", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-tank", "store": "warmup", "swatches": ["#2D5BA0", "#1F2128", "#F4F6FA", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-hoodie", "store": "warmup", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
     ],
     "bottom": [
-      { "id": "warmup-shorts", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-joggers", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-leggings", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-shorts", "store": "warmup", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-joggers", "store": "warmup", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-leggings", "store": "warmup", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
     ],
     "shoes": [
-      { "id": "warmup-canvas", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-runner", "swatches": ["#3A3F4B", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-canvas", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-runner", "store": "warmup", "swatches": ["#3A3F4B", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
     ],
     "hat": [
-      { "id": "warmup-cap", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-headband", "swatches": ["#E65345", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE"] }
+      { "id": "warmup-cap", "store": "warmup", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-headband", "store": "warmup", "swatches": ["#E65345", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE"] }
     ],
     "acc": [
-      { "id": "warmup-towel", "swatches": ["#9062DE", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#E65345"] },
-      { "id": "warmup-waistbag", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-towel", "store": "warmup", "swatches": ["#9062DE", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#E65345"] },
+      { "id": "warmup-waistbag", "store": "warmup", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
     ]
   },
   "props": ["bottle", "dumbbell"]

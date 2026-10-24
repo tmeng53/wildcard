@@ -336,12 +336,33 @@ func outline(_ path: [PathElement]) -> [Point] {
     }
 }
 
+/// A piece hung in a store the street doesn't have fails, instead of showing on no rack.
+@Test func editorChoicesWithAPieceInNoStoreAreRejected() {
+    #expect(throws: AvatarError.malformedJSON("editor.json: warmup-tee hangs in no store")) {
+        try EditorChoices.decode(
+            Data(
+                #"{"version": 3, "species": [], "stores": [{"id": "lap"}], "wear": {"top": [{"id": "warmup-tee", "store": "warmup"}]}, "props": []}"#
+                    .utf8))
+    }
+}
+
+/// The street: WARM-UP open at the start, then the five stores that open with check-ins, each
+/// with a badge the app can draw.
+@Test func everyStoreHasABadge() throws {
+    let stores = try PlaceholderCharacter.editorChoices().stores
+    #expect(stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"])
+    #expect(stores.filter(\.isOpen).map(\.id) == ["warmup"])
+    for store in stores {
+        #expect(try !PlaceholderCharacter.storeBadge(store.id).shapes.isEmpty)
+    }
+}
+
 /// A misspelt key fails instead of loading as if it were absent.
 @Test func editorChoicesWithAnUnknownKeyAreRejected() {
     #expect(throws: AvatarError.malformedJSON(#".species[0]: unknown key "hiar""#)) {
         try EditorChoices.decode(
             Data(
-                #"{"version": 2, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "wear": {}, "props": []}"#
+                #"{"version": 3, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
                     .utf8))
     }
 }

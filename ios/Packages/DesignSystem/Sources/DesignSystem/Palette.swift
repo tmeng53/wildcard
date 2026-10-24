@@ -15,6 +15,8 @@ public enum Palette {
     public static let inkTertiary = SRGBColor(red: 0xAE, green: 0xB2, blue: 0xBC)
     /// Dividers on an ink surface.
     public static let inkLine = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x49)
+    /// Text that says something is open, such as a store's 营业中 (5:1 on white).
+    public static let positive = SRGBColor(red: 0x1F, green: 0x7A, blue: 0x50)
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
