@@ -25,7 +25,7 @@ public struct LightsFlip: Hashable, Sendable {
     /// When the first sleeper says their line; it stays up `Motion.speechHold`.
     public static let lineAt = 1.7
     /// How long switching off takes to go dark: the dark lifts or falls this fast.
-    static let fade = 0.3
+    public static let fade = 0.3
 
     /// How dark the scene is, 0 (day) to 1 (the night layer in full).
     public func darkness(at seconds: Double) -> Double {

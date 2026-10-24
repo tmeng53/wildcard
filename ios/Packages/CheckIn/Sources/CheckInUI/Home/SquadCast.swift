@@ -51,6 +51,9 @@ final class SquadCast {
     /// How long each teammate's doze lasts after the lights went off, at their persona's tempo:
     /// their "z z" come back after it.
     private(set) var dozes: [MemberID: Double] = [:]
+    /// Each sleeper's wake-up or doze still waiting for its turn; the next pull cancels them, so
+    /// a quick second pull never lets the first one's move play after it.
+    private var lightsMoves: [MemberID: Task<Void, Never>] = [:]
 
     /// Places the squad from the store's home: everyone but `me`.
     func update(home: Home, scene: SceneTheme, phase: DayPhase) {
@@ -120,8 +123,10 @@ final class SquadCast {
             }
             if !flip.isOn { dozes[mate.id] = move?.duration ?? 0 }
             let delay = flip.start(ofSleeper: index)
-            Task { @MainActor in
+            lightsMoves[mate.id]?.cancel()
+            lightsMoves[mate.id] = Task { @MainActor in
                 if delay > 0 { try? await Task.sleep(for: .seconds(delay)) }
+                guard !Task.isCancelled else { return }
                 try? mate.player.wear(mate.player.figure, idle: loop)
                 if let move { try? mate.player.play(move) }
             }

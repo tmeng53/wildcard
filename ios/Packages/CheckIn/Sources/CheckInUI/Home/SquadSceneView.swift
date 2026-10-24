@@ -43,8 +43,18 @@ struct SquadSceneView: View {
         return lightsPull
     }
 
-    /// How long a pull plays: the last sleeper's wake-up and their 请假条 coming back, or the doze.
+    /// How long a pull plays at least: the last sleeper's wake-up and their 请假条 coming back.
     private static let pullPlays = 4.0
+    /// How long `pull` plays: switched off, until the slowest doze is over and its "z z" are back.
+    private func plays(_ pull: TodayModel.LightsPull) -> Double {
+        guard !pull.isOn else { return Self.pullPlays }
+        let flip = LightsFlip(isOn: false, reduceMotion: reduceMotion)
+        let longest =
+            cast.sleepers.enumerated().map { index, mate in
+                flip.start(ofSleeper: index) + (cast.dozes[mate.id] ?? 0)
+            }.max() ?? 0
+        return max(Self.pullPlays, longest + LightsFlip.fade)
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -84,7 +94,7 @@ struct SquadSceneView: View {
         .clipped()
         .task(id: lightsPull) {
             guard let lightsPull else { return }
-            try? await Task.sleep(for: .seconds(Self.pullPlays - Date.now.timeIntervalSince(lightsPull.start)))
+            try? await Task.sleep(for: .seconds(plays(lightsPull) - Date.now.timeIntervalSince(lightsPull.start)))
             guard !Task.isCancelled else { return }
             settledPull = lightsPull
         }
