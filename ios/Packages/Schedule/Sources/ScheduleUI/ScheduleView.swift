@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -156,8 +157,12 @@ public struct ScheduleView: View {
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
         case .loading, .ready:
+            // The poster's place, where the character jogs while the weeks are read.
             Color(role: .bgSubtle, in: theme)
                 .aspectRatio(WeekPoster.size.width / WeekPoster.size.height, contentMode: .fit)
+                .loadingCover(store.phase == .loading) {
+                    LoadingCharacter().frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         }
     }

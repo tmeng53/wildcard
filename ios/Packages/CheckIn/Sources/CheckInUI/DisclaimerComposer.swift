@@ -173,6 +173,8 @@ struct DisclaimerComposer: View {
             if !isEditing {
                 ForEach(Array(drafts.enumerated()), id: \.element) { index, draft in
                     DraftRow(line: draft, isPicked: draft == entry.text) { take(draft) }
+                        .opacity(isWriting ? Loading.waitingOpacity : 1)
+                        .transition(arrival(index))
                         .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
                 }
                 WriteButton(isAgain: draftsAnswer, isWriting: isWriting) {
@@ -227,6 +229,15 @@ struct DisclaimerComposer: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: 1)
         }
+    }
+
+    /// A line on offer arriving: rising as it fades in, `index` lines after the first. While the
+    /// writer works, the lines it will replace fade back (`Loading.waitingOpacity`).
+    private func arrival(_ index: Int) -> AnyTransition {
+        let rise: AnyTransition = reduceMotion ? .opacity : .opacity.combined(with: .offset(y: Loading.arrivalRise))
+        return .asymmetric(
+            insertion: rise.animation(.wildcard(Loading.arrival).delay(Double(index) * Loading.arrivalStagger)),
+            removal: .opacity)
     }
 
     /// Puts a line in the hero.
@@ -328,16 +339,22 @@ private struct WriteButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                if isAgain {
-                    Text("换一组", bundle: .module)
-                } else {
-                    Text("编几句", bundle: .module)
+                Group {
+                    if isAgain {
+                        Text("换一组", bundle: .module)
+                    } else {
+                        Text("编几句", bundle: .module)
+                    }
                 }
+                .foregroundStyle(Color(role: isWriting ? .fgSubtle : .fgDefault, in: theme))
             } icon: {
-                Image(systemName: isAgain ? "arrow.clockwise" : "pencil.line")
+                // While the writer works, 三拍 in the icon's place (loader design A).
+                LoadingSwap(isWriting) {
+                    Image(systemName: isAgain ? "arrow.clockwise" : "pencil.line")
+                }
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
             .typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
             .frame(minHeight: Sizing.minimumTapTarget)
         }
         .disabled(isWriting)
@@ -347,7 +364,6 @@ private struct WriteButton: View {
 
 /// The page's one primary button.
 private struct PostButton: View {
-    @Environment(\.sceneTheme) private var theme
     let model: TodayModel
     /// The excuse to post, or nil while it can't be.
     let disclaimer: Disclaimer?
@@ -357,15 +373,12 @@ private struct PostButton: View {
             guard let disclaimer, !model.isSending else { return }
             Task { await model.post(.disclaimer(disclaimer)) }
         } label: {
-            ZStack {
-                Text("发布请假条", bundle: .module)
-                    .opacity(model.isSending ? 0 : 1)
-                if model.isSending { ProgressView().tint(Color(role: .fgOnBrand, in: theme)) }
-            }
-            .frame(maxWidth: .infinity)
+            Text("发布请假条", bundle: .module)
+                .loadingLabel(model.isSending)
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
-        // Still enabled while sending, so it stays the brand color under its spinner; the action
+        // Still enabled while sending, so it stays the brand color under its dots; the action
         // ignores taps until the post is done.
         .disabled(disclaimer == nil)
         .accessibilityIdentifier("disclaimer.post")

@@ -152,6 +152,8 @@ struct InviteCard: View {
 struct MemberRow: View {
     let member: SquadMemberRow
     let showsDivider: Bool
+    /// A change to this member is saving: the ··· menu waits as 三拍.
+    let isSaving: Bool
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
 
@@ -187,7 +189,11 @@ struct MemberRow: View {
                     .lineLimit(1)
                     .fixedSize()
             }
-            if member.isManageable {
+            if isSaving {
+                LoadingDots()
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
+            } else if member.isManageable {
                 Menu {
                     Button {
                         act(.handCaptaincy(member.id, name: name))

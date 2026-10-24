@@ -41,7 +41,7 @@ struct PhotoStep: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isPreparing {
-                        ProgressView()
+                        LoadingDots()
                     } else if items.isEmpty {
                         Button {
                             model.photosPicked([])

@@ -76,14 +76,11 @@ struct DeleteAccountView: View {
                 Task { await model.deleteAccount() }
             } label: {
                 Label {
-                    if model.deletion == .deleting {
-                        Text("正在注销…", bundle: .module)
-                    } else {
-                        Text("用 Apple 确认注销", bundle: .module)
-                    }
+                    Text("用 Apple 确认注销", bundle: .module)
                 } icon: {
                     Image(systemName: "apple.logo")
                 }
+                .loadingLabel(model.deletion == .deleting)
             }
             .buttonStyle(AppleButtonStyle(.outlined))
             .disabled(!model.deletion.canConfirm)

@@ -95,13 +95,10 @@ struct ComposeView: View {
             Button {
                 Task { await model.post(draft) }
             } label: {
-                if model.isSending {
-                    ProgressView()
-                } else {
-                    Text("发布", bundle: .module)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                }
+                Text("发布", bundle: .module)
+                    .typeStyle(TypeRamp.headline)
+                    .loadingLabel(model.isSending)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
             .frame(minHeight: Sizing.minimumTapTarget)
             .disabled(model.isSending)

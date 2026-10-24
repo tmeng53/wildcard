@@ -1,9 +1,11 @@
 import AccountDomain
 import AccountUI
+import AvatarUI
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
 import Contracts
+import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
@@ -191,7 +193,7 @@ private struct AppRoot: View {
         ZStack {
             switch app.screen {
             case .starting:
-                ProgressView()
+                Starting()
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
@@ -254,5 +256,22 @@ private struct SignInButton: View {
         AppleSignInButton { result in
             Task { await app.signIn(result, from: signUp) }
         }
+    }
+}
+
+/// While the app reads the member's home at launch: the brand's grey page, and the character
+/// jogging in place once the wait has lasted (loader design A, 2026-10-24).
+private struct Starting: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Color(role: .bgSubtle, in: theme)
+            .ignoresSafeArea()
+            .loadingCover(true) {
+                LoadingCharacter()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+            }
+            .accessibilityIdentifier("app.starting")
     }
 }
