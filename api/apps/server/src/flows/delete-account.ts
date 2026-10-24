@@ -14,7 +14,8 @@ export interface DeleteAccountDependencies {
  * Deletes a member's account and everything that is theirs, as the App Store requires: their
  * Sign in with Apple grant, their photo files, then their user, which takes their profile,
  * check-ins (with their photos' records and audiences), squad memberships and weekly awards
- * with it in the database. Squads they made stay with the other members. Each step is safe to repeat, so a
+ * with it in the database. A squad stays with its other members; one the member was the last in
+ * goes with them (the database's cascade). Each step is safe to repeat, so a
  * failed deletion is retried from the start; Apple goes first because it needs a fresh code
  * the app can only get while the member is still signed in.
  */
