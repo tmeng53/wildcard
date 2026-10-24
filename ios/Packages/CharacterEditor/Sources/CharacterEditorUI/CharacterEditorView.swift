@@ -68,6 +68,9 @@ public struct CharacterEditorView: View {
         // keyboard, which covers the tabs and 就这样 until 完成 puts it away.
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear { model.start() }
+        // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
+        // 我's tone. Its button, tabs, picks and swatches never wear the squad's scene.
+        .accentTone(.brand)
     }
 }
 
