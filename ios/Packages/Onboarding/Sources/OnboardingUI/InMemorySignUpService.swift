@@ -1,6 +1,7 @@
 import AvatarArt
 import AvatarDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 import OnboardingDomain
 
@@ -28,7 +29,7 @@ public actor InMemorySignUpService: SignUpService {
         return InMemorySignUpService(
             sample: JoinedSquad(
                 id: SquadID(UUID()),
-                name: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
                 teammates: teammates.map { name, body, persona in
                     Squadmate(
                         id: MemberID(UUID()), nickname: name,

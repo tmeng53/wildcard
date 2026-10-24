@@ -21,22 +21,6 @@
         }
       }
     },
-    "sportCard.strength": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "力量训练"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Strength"
-          }
-        }
-      }
-    },
     "sportCard.baseballSoftball": {
       "localizations": {
         "zh-Hans": {
@@ -832,7 +816,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Strength training"
+            "value": "Strength"
           }
         }
       }

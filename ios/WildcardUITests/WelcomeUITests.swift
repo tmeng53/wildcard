@@ -2,8 +2,7 @@ import CoreGraphics
 import UIKit
 import XCTest
 
-/// The open screen with the real Sign in with Apple button, as the hosted app shows it: still
-/// once WILDCARD breaks the tape.
+/// The open screen, as the hosted app shows it: still once WILDCARD breaks the tape.
 @MainActor
 final class WelcomeUITests: XCTestCase {
     private static let wait: TimeInterval = 30
@@ -130,12 +129,12 @@ final class WelcomeUITests: XCTestCase {
         }
     }
 
-    /// The open screen in Chinese, with the real Apple button.
+    /// The open screen in Chinese.
     private func launchFresh() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
-            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-onboarding", "-apple-sign-in",
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-onboarding",
             "-uitest-monday",
         ]
         app.launch()
