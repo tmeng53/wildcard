@@ -19,6 +19,9 @@ public protocol SignUpService: Sendable {
     func save(_ character: NewCharacter) async throws(SignUpError)
     /// Saves this week's plan, from 一周练几天？.
     func savePlan(_ days: [PlanDay]) async throws(SignUpError)
+    /// Picks where the squad the member made trains, from 这周在哪练？: its first scene, from now
+    /// on. Safe to repeat with the same scene.
+    func pickScene(_ scene: SceneID, for squad: SquadID) async throws(SignUpError)
 }
 
 /// The character as 角色和昵称 hands it over.

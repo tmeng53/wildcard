@@ -107,7 +107,7 @@ struct MainTabs: View {
     /// squad drops onto it.
     private func land(on scene: SceneTheme, coveredAt: Date) {
         selection = .today
-        today.dropIn(on: scene, coveredAt: coveredAt)
+        Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
     /// Opens the editor on the member's own character.

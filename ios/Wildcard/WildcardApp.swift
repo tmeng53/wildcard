@@ -158,6 +158,8 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
+                // Whoever made their squad in `-onboarding` drops onto the scene they picked.
+                if let scene = signUp?.landing { Task { await today.dropIn(on: scene, coveredAt: .now) } }
                 delegate.opened = { [today, $tab] _ in
                     $tab.wrappedValue = .today
                     Task { await today.load() }
@@ -186,7 +188,7 @@ private struct AppRoot: View {
                     MainTabs.entranceTabBar
                 }
                 .onChange(of: signUp.finished) { _, finished in
-                    if finished != nil { Task { await app.finishSignUp() } }
+                    if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
                 }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(

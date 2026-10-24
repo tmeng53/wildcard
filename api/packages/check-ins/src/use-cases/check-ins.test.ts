@@ -26,6 +26,7 @@ import {
   photosOf,
   type CheckInRecord,
 } from '../domain/check-in.js';
+import { DEFAULT_PLAN_DAYS, WeekStart } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -335,6 +336,32 @@ describe('saving a check-in', () => {
       draft: draft({ audience: [squad], day: '2026-10-19', ...disclaimer('累') }),
     });
     expect(tomorrow.created).toBe(true);
+  });
+
+  it('makes a planned rest day a training day of the 练了’s sport, and leaves other days', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const plans = createPostgresWeeklyPlanStore(db);
+    // The 18th is a Sunday, a rest day in the default plan.
+    const swim = draft({ audience: [squad], training: { sport: 'swim' } });
+    await checkIns.save({ id: CheckInId.parse(randomUUID()), member, draft: swim });
+    const week = WeekStart.parse('2026-10-12');
+    const trained = await plans.latestFrom(member, week);
+    expect(trained?.days[6]).toStrictEqual({ kind: 'train', sport: 'swim' });
+    expect(trained?.days.slice(0, 6)).toStrictEqual(DEFAULT_PLAN_DAYS.slice(0, 6));
+    // Now a training day, a second 练了 leaves it as it is.
+    await checkIns.save({
+      id: CheckInId.parse(randomUUID()),
+      member,
+      draft: draft({ audience: [squad] }),
+    });
+    expect(await plans.latestFrom(member, week)).toStrictEqual(trained);
+    // Other kinds never change the plan.
+    const other = await newMember();
+    const theirs = await newSquad(other);
+    const meal = draft({ audience: [theirs], kind: 'healthyMeal', meal: {} });
+    await checkIns.save({ id: CheckInId.parse(randomUUID()), member: other, draft: meal });
+    expect(await plans.latestFrom(other, week)).toBeUndefined();
   });
 
   it('refuses a squad the member isn’t in, or one that doesn’t exist', async () => {

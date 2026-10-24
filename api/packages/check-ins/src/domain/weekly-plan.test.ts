@@ -16,6 +16,7 @@ import {
   checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
+  trainedOnRestDay,
   weekStartOf,
   type PlanDays as Days,
   type WeeklyPlan,
@@ -148,10 +149,20 @@ describe('checkPlanChange', () => {
     );
   });
 
-  it('keeps today a rest day once it has begun', () => {
-    expect(change(plan('saved'), [run, train, train, rest, train, train, rest])).toStrictEqual(
-      new PlanDayStartedError('2026-10-21'),
+  it('lets a rest today become a training day, one rest day fewer or swapped with a later one', () => {
+    const swim = { kind: 'train', sport: 'swim' } as const;
+    expect(change(plan('saved'), [run, train, swim, train, train, train, rest])).toBe('allowed');
+    expect(change(plan('saved'), [run, train, swim, rest, train, train, rest])).toBe('allowed');
+    expect(change(plan('saved'), [run, train, swim, train, train, train, train])).toStrictEqual(
+      new RestDaysFixedError(2),
     );
+  });
+
+  it('keeps a training today a training day', () => {
+    // Today is Thursday, a training day.
+    expect(
+      changeOn('2026-10-22')(plan('saved'), [run, train, rest, rest, train, train, train]),
+    ).toStrictEqual(new PlanDayStartedError('2026-10-22'));
   });
 
   it('holds a default plan to the same rules once the member has been here a day', () => {
@@ -164,10 +175,8 @@ describe('checkPlanChange', () => {
     const joinedToday = changeOn('2026-10-21', '2026-10-21');
     const allTraining: Days = [train, train, train, train, train, train, train];
     expect(joinedToday(plan('default'), allTraining)).toBe('allowed');
-    // Once they have saved, today's kind is fixed like anyone's.
-    expect(joinedToday(plan('saved'), allTraining)).toStrictEqual(
-      new PlanDayStartedError('2026-10-21'),
-    );
+    // Once they have saved, the week keeps its rest days like anyone's.
+    expect(joinedToday(plan('saved'), allTraining)).toStrictEqual(new RestDaysFixedError(2));
   });
 
   it('lets days before the member joined change, and counts rest days from then', () => {
@@ -199,6 +208,35 @@ describe('checkPlanChange', () => {
     );
     // On its Sunday the week is still the current one.
     expect(changeOn('2026-10-18')(plan('saved', '2026-10-12'), days)).toBe('allowed');
+  });
+});
+
+describe('trainedOnRestDay', () => {
+  const rest = { kind: 'rest' } as const;
+  const train = { kind: 'train' } as const;
+  const plan: WeeklyPlan = {
+    weekStart: '2026-10-19',
+    days: [train, train, rest, train, train, train, rest],
+    source: 'saved',
+  };
+
+  it('makes a planned rest day a training day of the 练了’s sport', () => {
+    expect(
+      trainedOnRestDay({ plan, day: '2026-10-21', training: { sport: 'swim' } }),
+    ).toStrictEqual([train, train, { kind: 'train', sport: 'swim' }, train, train, train, rest]);
+    expect(
+      trainedOnRestDay({
+        plan,
+        day: '2026-10-25',
+        training: { sport: 'custom', customSport: '飞盘' },
+      })?.[6],
+    ).toStrictEqual({ kind: 'train', sport: 'custom', customSport: '飞盘' });
+  });
+
+  it('leaves a training day as planned', () => {
+    expect(
+      trainedOnRestDay({ plan, day: '2026-10-22', training: { sport: 'swim' } }),
+    ).toBeUndefined();
   });
 });
 

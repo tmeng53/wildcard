@@ -55,6 +55,7 @@ struct EditorStage: View {
 /// The nickname, typed in white straight onto the ticket's stub.
 struct NicknameField: View {
     @Binding var nickname: String
+    var isFocused: FocusState<Bool>.Binding
     @Environment(\.sceneTheme) private var theme
     private let width: Double = 180
     /// Room for the pen on the trailing side, mirrored on the leading side to keep the name centered.
@@ -74,6 +75,8 @@ struct NicknameField: View {
         .tint(Color(role: .fgOnBrand, in: theme))
         .multilineTextAlignment(.center)
         .submitLabel(.done)
+        .focused(isFocused)
+        .onSubmit { isFocused.wrappedValue = false }
         .autocorrectionDisabled()
         .padding(.horizontal, inset)
         .frame(width: width, height: Sizing.minimumTapTarget)

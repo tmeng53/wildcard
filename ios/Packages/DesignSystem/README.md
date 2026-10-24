@@ -26,6 +26,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |
+| `TickRuler`, `RulerScale` | A number slid under a needle (刻度), snapping to the scale's marks with one `pick` tick per mark (发动态's minutes under 其他) |
 | `InputField`, `SearchField` | Text entry |
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
@@ -41,7 +42,7 @@ One meaningful tap per moment, never a buzz (Apple HIG, Playing haptics). Screen
 
 | `Haptic` | Moment |
 | --- | --- |
-| `pick` | Picking an option, swatch, tab or style |
+| `pick` | Picking an option, swatch, tab or style; each mark passing a `TickRuler`'s needle |
 | `appear` | The check-in capsules opening, drafts landing |
 | `refuse` | Tapping a kind that can't be used today |
 | `tick`, `checkIn` | My own status ring drawing (ticks), then closing (one heavy hit, the check-in's only one) |

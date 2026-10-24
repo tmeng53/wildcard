@@ -55,7 +55,12 @@ struct DisclaimerComposer: View {
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
         .padding(.bottom, Space.xs)
-        .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+        .background {
+            // A tap on the empty page puts the keyboard away; buttons keep their taps.
+            Color(role: .bgSubtle, in: theme)
+                .ignoresSafeArea()
+                .onTapGesture { isEditing = false }
+        }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: drafts)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isEditing)
@@ -107,6 +112,7 @@ struct DisclaimerComposer: View {
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1...4)
             .focused($isEditing)
+            .submitLabel(.done)
             .opacity(isWriting ? 0.4 : 1)
             .accessibilityIdentifier("disclaimer.field")
             .onChange(of: text) { _, typed in

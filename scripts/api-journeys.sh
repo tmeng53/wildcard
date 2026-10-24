@@ -493,7 +493,8 @@ if want squad-today; then
 fi
 
 if want week-summary; then
-  # A squad of its own for this week's 战报. Ace plans a week of rest, so one 练了 completes it;
+  # A squad of its own for this week's 战报. Ace plans a week of rest, and one 练了 makes that
+  # day a training day and completes it;
   # the writer posts a 请假条 and the fan laughs at it.
   shared_squad="$squad"
   read -r ace ace_token <<<"$(sign_up)"
@@ -524,9 +525,9 @@ if want week-summary; then
     fail "ace should complete the plan and wear the crown, and the writer's 请假条 be the best; not final yet: $body"
   echo "week-summary: still being played; podium and crown ace (1 day), best 请假条 writer's (1 reaction)"
   [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.emoji == "😂") | .count], [.me.reactions[] | select(.emoji == "😂") | .given]]' <<<"$body")" = \
-    '[[1,10,2],[1],[1]]' ] ||
-    fail "the squad should have 1 of 10 days trained in 2 check-ins and one 😂, given by the fan: $body"
-  echo "week-summary: squad 1/10 days in 2 check-ins, one 😂, which the fan sees as given"
+    '[[1,11,2],[1],[1]]' ] ||
+    fail "the squad should have 1 of 11 days trained in 2 check-ins and one 😂, given by the fan: $body"
+  echo "week-summary: squad 1/11 days in 2 check-ins, one 😂, which the fan sees as given"
 
   call GET "/squads/$squad/weeks/$(days_after "$monday" 7)/summary" "$fan_token"
   expect 400 WEEK_NOT_STARTED

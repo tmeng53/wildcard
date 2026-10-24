@@ -141,15 +141,18 @@ private func saved(_ kindAndFields: String) -> String {
 }
 
 @Test func whatTheContractDoesNotAllowFailsToDecode() {
-    // A version this build doesn't know, a sport that isn't listed, a field from no version.
+    // A version this build doesn't know, a sport that isn't listed.
     #expect(throws: DecodingError.self) {
         try decode(
             saved(#""kind":"healthyMeal","meal":{}"#).replacingOccurrences(of: #""version":1"#, with: #""version":2"#))
     }
     #expect(throws: DecodingError.self) { try decode(saved(#""kind":"trained","training":{"sport":"padel"}"#)) }
-    #expect(throws: DecodingError.self) {
-        try decode(saved(#""kind":"trained","training":{"sport":"run","calories":300}"#))
-    }
+}
+
+@Test func aFieldThisBuildDoesNotKnowIsSkipped() throws {
+    // The API adds fields without a new version; a build already on phones must keep reading.
+    let checkIn = try decode(saved(#""kind":"trained","training":{"sport":"run","addedLater":300}"#))
+    #expect(checkIn.entry == .trained(Training(activity: .sport(.run))))
 }
 
 @Test(arguments: [0, 1, 7, 123, 499, 500, 501, 998, 999])

@@ -15,6 +15,7 @@ public struct CharacterEditorView: View {
     private let issued: Date?
     private let onBack: () -> Void
     private let onDone: (EditedCharacter) -> Void
+    @FocusState private var isNaming: Bool
     @Environment(\.sceneTheme) private var theme
 
     public init(
@@ -43,7 +44,7 @@ public struct CharacterEditorView: View {
             CharacterStage(issued: issued) {
                 EditorStage(model: model)
             } stub: {
-                NicknameField(nickname: $model.nickname)
+                NicknameField(nickname: $model.nickname, isFocused: $isNaming)
             }
             .frame(height: EditorStage.height)
             .accessibilityElement(children: .contain)
@@ -59,13 +60,20 @@ public struct CharacterEditorView: View {
             .padding(.top, Space.s)
             ChoicesPanel(model: model)
         }
-        .background(Color(role: .bgCanvas, in: theme))
+        .background {
+            // A tap on the empty page puts the keyboard away; buttons and tiles keep their taps.
+            Color(role: .bgCanvas, in: theme)
+                .contentShape(Rectangle())
+                .onTapGesture { isNaming = false }
+        }
+        .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             DoneBar(context: context, result: model.result, onDone: onDone)
         }
         // The page is taller than the room above the keyboard, so making way for it pushed the
         // header under the status bar. The nickname sits high enough to stay clear of the
-        // keyboard, which covers the tabs and 就这样 until 完成 puts it away.
+        // keyboard, which covers the tabs and 就这样 until Return, a tap outside or a scroll puts
+        // it away.
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear { model.start() }
         // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
