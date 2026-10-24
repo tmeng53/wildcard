@@ -49,6 +49,13 @@ public struct WeekStory: Hashable, Sendable {
         self.ending = ending
     }
 
+    /// Whether the squad's 战报 for this week came out: the awards were written, or are due and
+    /// on their way. A week nobody in the squad checked in (one before the squad began, say)
+    /// gets no 战报, though the API still answers for it.
+    public var isPublished: Bool {
+        status == .pending || !titles.isEmpty
+    }
+
     /// The pages to play, in order. A page whose data is missing is left out, and the ending,
     /// when there is one, closes the story. While the titles are pending, the pending page takes their place
     /// and every other page plays as usual.

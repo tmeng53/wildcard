@@ -31,6 +31,11 @@ public struct ScheduleProfile: Hashable, Sendable {
     public init(nickname: String, timeZone: TimeZone, firstWeek: LocalDay, look: CharacterLook? = nil) {
         (self.nickname, self.timeZone, self.firstWeek, self.look) = (nickname, timeZone, firstWeek.weekStart, look)
     }
+
+    /// The week's number on the poster and its chip, the week they joined being W1.
+    public func weekNumber(of weekStart: LocalDay) -> Int {
+        weekStart.weekNumber(since: firstWeek)
+    }
 }
 
 /// Why loading or saving the 出赛表 didn't work. Each case is something the screen can act on,

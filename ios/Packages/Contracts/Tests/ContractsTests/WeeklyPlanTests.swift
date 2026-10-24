@@ -19,3 +19,20 @@ private let memberID = MemberID(UUID(uuidString: "22222222-2222-2222-2222-222222
         try WeeklyPlan(member: memberID, weekStart: try LocalDay("2025-10-20"), days: Array(repeating: .rest, count: 6))
     }
 }
+
+@Test func aWeeksCharacterActsOutTheTrainingPlannedMost() {
+    let days: [PlanDay] = [
+        .train(.sport(.run)), .rest, .train(.sport(.swim)), .train(.sport(.swim)), .rest, .train(.sport(.run)),
+        .train(.sport(.swim)),
+    ]
+    #expect(PlanDay.mostPlanned(in: days) == .train(.sport(.swim)))
+}
+
+@Test func onATieTheTrainingPlannedFirstWins() {
+    let days: [PlanDay] = [.rest, .train(nil), .train(.sport(.yoga)), .rest, .train(.sport(.yoga)), .train(nil), .rest]
+    #expect(PlanDay.mostPlanned(in: days) == .train(nil))
+}
+
+@Test func aWeekOfRestActsOutRest() {
+    #expect(PlanDay.mostPlanned(in: Array(repeating: .rest, count: 7)) == .rest)
+}

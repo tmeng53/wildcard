@@ -62,8 +62,8 @@ public final class SignUpModel {
 
     /// This week's days, Monday first, for the poster's dates.
     let weekDays: [LocalDay]
-    /// The week's number in the year, the poster's W43.
-    let weekNumber: Int
+    /// The poster's W1: weeks count from the one the member signs up in.
+    let weekNumber = 1
 
     @ObservationIgnored private let service: any SignUpService
     /// How many of this week's days are over: 0 on its first day.
@@ -85,7 +85,6 @@ public final class SignUpModel {
         let today = LocalDay(at: now, in: timeZone)
         weekDays = (0..<WeeklyPlan.dayCount).map { today.weekStart.adding(days: $0) }
         daysGone = today.weekday - 1
-        weekNumber = today.weekOfYear
     }
 
     /// The nickname so far, for the squad's suggested name and the poster.
@@ -120,6 +119,13 @@ public final class SignUpModel {
         }
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, daysGone: daysGone).choices {
             week = WeekDraft(sports: sports.picked, daysGone: daysGone)
+        }
+        if next == .week {
+            actOutWeek()
+        } else if step == .week, next == .sports {
+            // Back to the sports: the character wears the one picked last again.
+            actedOut = nil
+            myCharacter?.dress(for: sports.wearing)
         }
         if next == .scene, scenePicker == nil, let joined {
             scenePicker = .newSquad(service: SignUpScenePick(service: service, squad: joined.id))
@@ -271,6 +277,20 @@ public final class SignUpModel {
     /// Sets the selected day; the character hops when a rest day becomes a training day.
     func setDay(_ day: PlanDay) {
         if week?.set(day) == true { hops += 1 }
+        actOutWeek()
+    }
+
+    /// What the poster's character acts out now, so it changes only when the week's most
+    /// planned training does.
+    @ObservationIgnored private var actedOut: PlanDay?
+
+    /// The character on the poster loops the training planned most, or sits for a week of rest.
+    private func actOutWeek() {
+        guard let days = week?.days else { return }
+        let top = PlanDay.mostPlanned(in: days)
+        guard top != actedOut else { return }
+        actedOut = top
+        myCharacter?.actOut(days)
     }
 
     /// Bumped each time a rest day becomes a training day.

@@ -50,7 +50,12 @@ public struct SportKits: Hashable, Sendable {
         case .custom: id = otherwise
         }
         // `decode` checked that every id names a kit.
-        return kits.first { $0.id == id } ?? SportKit(id: otherwise, wear: [:])
+        return kits.first { $0.id == id } ?? warmUp
+    }
+
+    /// The kit for training with no sport named: the one for sports no entry covers.
+    public var warmUp: SportKit {
+        kits.first { $0.id == otherwise } ?? SportKit(id: otherwise, wear: [:])
     }
 
     /// `{"version": 1, "kits": [{"id": "swim", "wear": {"hat": "swimcap", "prop": null}}],

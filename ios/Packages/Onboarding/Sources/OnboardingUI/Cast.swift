@@ -44,6 +44,13 @@ final class CastMember {
         change(into: kit.dress(look), move: try? PlaceholderCharacter.move(for: kit, persona: persona))
     }
 
+    /// Puts on what the week's plan acts out, looping: the kit and move of the training planned
+    /// most, or sitting down for a week of rest.
+    func actOut(_ days: [PlanDay]) {
+        guard let week = try? PlaceholderCharacter.weekLoop(for: days, look: look, persona: persona) else { return }
+        change(into: week.outfit, move: week.clip)
+    }
+
     /// Changes into another outfit with a hop, then plays `move` in it, as a sport
     /// is picked. A newer change wins over a slower build.
     func change(into outfit: Outfit, move: Clip?) {

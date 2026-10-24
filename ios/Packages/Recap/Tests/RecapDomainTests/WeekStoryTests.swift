@@ -126,3 +126,12 @@ private func ids(_ pages: [StoryPage]) -> [String] {
         ], healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(week.trainedDays == 2)
 }
+
+@Test func aWeekNobodyCheckedInHasNoRecap() throws {
+    #expect(try story(titles: false).isPublished == false)
+}
+
+@Test func aStoryWithItsAwardsOrWaitingForThemIsOut() throws {
+    #expect(try story().isPublished)
+    #expect(try story(.pending, titles: false).isPublished)
+}

@@ -133,7 +133,7 @@ public struct ScheduleView: View {
                 } else if let thisWeek, week > thisWeek {
                     Text("下周", bundle: .module)
                 } else {
-                    Text(verbatim: ScheduleLabels.week(week))
+                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
                 }
             return CategoryBarItem(id: week, title: title, accessibilityIdentifier: "schedule.week.\(week)")
         }
@@ -167,7 +167,8 @@ public struct ScheduleView: View {
 
     private func content(_ sheet: WeekSheet) -> PosterContent {
         PosterContent(
-            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "", fuelOpen: model.panel == .fuel,
+            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "",
+            weekNumber: store.profile?.weekNumber(of: sheet.weekStart) ?? 1, fuelOpen: model.panel == .fuel,
             typingFuel: model.writingFuel ? ownFuel : "")
     }
 

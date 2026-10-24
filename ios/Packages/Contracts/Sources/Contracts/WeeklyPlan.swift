@@ -26,3 +26,14 @@ public enum PlanDay: Hashable, Sendable {
     case train(Activity?)
     case rest
 }
+
+extension PlanDay {
+    /// The day a week's character acts out: the training planned most, the one planned first on
+    /// a tie (a training day with no sport named counts as one kind), or 休息 when every day rests.
+    public static func mostPlanned(in days: [PlanDay]) -> PlanDay {
+        let trainings = days.filter { $0 != .rest }
+        let counts = Dictionary(trainings.map { ($0, 1) }, uniquingKeysWith: +)
+        // `max(by:)` keeps the first of equals: the one planned earliest.
+        return trainings.max { counts[$0, default: 0] < counts[$1, default: 0] } ?? .rest
+    }
+}
