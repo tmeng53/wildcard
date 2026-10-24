@@ -7,7 +7,7 @@ import OnboardingDomain
 import SportsUI
 import SwiftUI
 
-/// 定个本周目标, step 4: this week as a poster, each day a sport picked in the step before or
+/// 本周目标, step 4: this week as a poster, each day a sport picked in the step before or
 /// 休息. Tap a day, then what it is under the poster, and the next day is selected; days already
 /// over are blank, neither training nor 休息, since the member wasn't here yet. The character on the poster hops when a rest day becomes a training day.
 struct WeekStep: View {
@@ -15,7 +15,7 @@ struct WeekStep: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        StepPage(step: .week, title: Text("定个本周目标", bundle: .module), character: nil, onBack: model.back) {
+        StepPage(step: .week, title: Text("本周目标", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
                     WeekPoster(model: model, week: week)

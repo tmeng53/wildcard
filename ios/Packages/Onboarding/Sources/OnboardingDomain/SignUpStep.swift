@@ -9,7 +9,7 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     case squad
     /// 平时练什么？
     case sports
-    /// 定个本周目标, on the week's poster.
+    /// 本周目标, on the week's poster.
     case week
     /// 上场: the entrance into the squad, then home.
     case entrance

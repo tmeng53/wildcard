@@ -1,6 +1,6 @@
 import Contracts
 
-/// 定个本周目标, drawn on the week's poster: what each day of this week is, a sport picked in
+/// 本周目标, drawn on the week's poster: what each day of this week is, a sport picked in
 /// the step before, a training day with no sport named, or 休息. Tapping a day selects it, and
 /// picking what it is moves on to the next day, so a whole week takes a few taps. Days of this
 /// week that are already over can't change, as on any weekly plan; the poster leaves them blank rather

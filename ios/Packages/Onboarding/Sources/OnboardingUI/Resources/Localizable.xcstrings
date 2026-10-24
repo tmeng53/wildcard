@@ -993,7 +993,7 @@
         }
       }
     },
-    "定个本周目标": {
+    "本周目标": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1004,7 +1004,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "定个本周目标"
+            "value": "本周目标"
           }
         }
       }
