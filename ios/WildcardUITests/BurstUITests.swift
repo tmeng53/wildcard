@@ -12,12 +12,13 @@ final class BurstUITests: XCTestCase {
             for size in ["UICTContentSizeCategoryL", "UICTContentSizeCategoryAccessibilityXL"] {
                 let app = launch(language: language, size: size)
                 app.buttons["today.checkin"].tap()
+                _ = app.buttons["today.capsule.disclaimer"].waitForExistence(timeout: Self.wait)
+                settle()
                 let frames = ["trained", "healthyMeal", "cheatMeal", "disclaimer"].map { kind -> CGRect in
                     let capsule = app.buttons["today.capsule.\(kind)"]
                     XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(kind) capsule")
                     return capsule.frame
                 }
-                settle()
                 let frame = app.windows.firstMatch.frame
                 let button = app.buttons["today.checkin"].frame
                 for (first, one) in frames.enumerated() {
