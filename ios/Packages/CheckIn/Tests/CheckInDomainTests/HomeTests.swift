@@ -61,7 +61,6 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(rolled.today.today == TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false))
     #expect(rolled.today.myWeek.firstDay == monday)
     #expect(rolled.today.myWeek.week == WeekCount(trainedDays: 0, plannedDays: 5))
-    #expect(rolled.today.myWeek.lifetimeTrainedDays == 30)
     #expect(rolled.today.squadWeek == WeekCount(trainedDays: 0, plannedDays: 22))
     // Already on that day, nothing moves.
     #expect(rolled.rolled(to: monday) == rolled)
@@ -78,8 +77,10 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
 @Test func myWeekShowsEachDaysOneStatusWhatITrainedAndMyMeals() throws {
     let monday = tuesday.adding(days: -1)
     let home = sampleHome(checkIns: [
-        try checkIn(1, by: myID, on: monday, .trained(Training(activity: .sport(.swim)))),
-        try checkIn(2, by: myID, on: monday, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(
+            1, by: myID, on: monday, .trained(Training(activity: .sport(.swim), minutes: try WorkoutMinutes(30)))),
+        try checkIn(
+            2, by: myID, on: monday, .trained(Training(activity: .sport(.swim), minutes: try WorkoutMinutes(20)))),
         try checkIn(3, by: myID, on: monday, .healthyMeal(Meal())),
         try checkIn(4, by: myID, .disclaimer(try Disclaimer("腿还没回来"))),
         try checkIn(5, by: myID, .trained(Training(activity: .sport(.run)))),
@@ -98,8 +99,15 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     // Two swims on Monday are one day of swimming.
     #expect(week.trained.map(\.activity) == [.sport(.swim), .sport(.run)])
     #expect(week.trained.map(\.days) == [2, 1])
-    #expect(week.healthyMeals == 1)
-    #expect(week.cheatMeals == 1)
+    // Each day's log: Monday's two swims are one swim of 50 minutes.
+    #expect(week.logs[0].sessions.map(\.activity) == [.sport(.swim)])
+    #expect(week.logs[0].sessions.map(\.minutes) == [50])
+    #expect(week.logs[0].healthyMeals == 1)
+    #expect(week.logs[1].sessions.map(\.activity) == [.sport(.run), .sport(.swim)])
+    #expect(week.logs[1].sessions.map(\.minutes) == [nil, nil])
+    #expect(week.logs[1].cheatMeals == 1)
+    #expect(week.logs[2].sessions.isEmpty)
+    #expect(week.logs[2].healthyMeals + week.logs[2].cheatMeals == 0)
 
     let onLeave = sampleHome(checkIns: [try checkIn(1, by: myID, .disclaimer(try Disclaimer("加班")))])
     #expect(onLeave.week(on: tuesday).days[1] == .disclaimer)
