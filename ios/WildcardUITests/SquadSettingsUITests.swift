@@ -29,11 +29,16 @@ final class SquadSettingsUITests: XCTestCase {
             app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3), "exists == false",
             "大卫 is still in the squad")
 
-        app.buttons["squad.rename"].tap()
-        let field = app.textFields["squad.rename.field"]
+        // The page stays disabled while the removal saves, and a tap then does nothing.
+        let rename = app.buttons["squad.rename"]
+        waitFor(rename, "isEnabled == true", "the page stayed disabled after removing")
+        rename.tap()
+        // The system alert may not carry the field's and button's identifiers, so find them in it.
+        let alert = app.alerts.firstMatch
+        let field = alert.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 30), "改队名 didn't open")
         field.typeText("夜跑")
-        app.buttons["squad.rename.save"].tap()
+        alert.buttons["保存"].tap()
         waitFor(app.staticTexts["squad.name"], "label == '晨跑五人组夜跑'", "the new name didn't show")
 
         app.swipeUp()
