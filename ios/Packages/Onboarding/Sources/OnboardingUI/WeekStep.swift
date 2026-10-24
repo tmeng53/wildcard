@@ -9,7 +9,8 @@ import SwiftUI
 
 /// 本周目标, step 4: this week as a poster, each day a sport picked in the step before or
 /// 休息. Tap a day, then what it is under the poster, and the next day is selected; days already
-/// over are blank, neither training nor 休息, since the member wasn't here yet. The character on the poster hops when a rest day becomes a training day.
+/// over are blank, neither training nor 休息, since the member wasn't here yet. Giving a day a
+/// sport puts the character on the poster into that sport's kit and move, as in the step before.
 struct WeekStep: View {
     let model: SignUpModel
     @Environment(\.sceneTheme) private var theme

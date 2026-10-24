@@ -272,12 +272,18 @@ public final class SignUpModel {
         week?.select(index)
     }
 
-    /// Sets the selected day; the character hops when a rest day becomes a training day.
+    /// Sets the selected day. A sport puts the character into its kit and plays its move, as
+    /// picking it in 平时练什么 does; plain 训练 on a rest day makes it hop.
     func setDay(_ day: PlanDay) {
-        if week?.set(day) == true { hops += 1 }
+        let becameTraining = week?.set(day) == true
+        if case .train(let activity?) = day {
+            myCharacter?.dress(for: activity)
+        } else if becameTraining {
+            hops += 1
+        }
     }
 
-    /// Bumped each time a rest day becomes a training day.
+    /// Bumped each time a rest day becomes plain 训练.
     private(set) var hops = 0
 
     func finishWeek() {

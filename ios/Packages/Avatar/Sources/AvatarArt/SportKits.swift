@@ -4,8 +4,8 @@ import Foundation
 
 /// What a character puts on and does for a sport: goggles and a breaststroke, running shoes and a
 /// jog. Picking a sport turns the character into its kit for a moment; the saved look never
-/// changes. Read from `kits.json`. A kit holding a prop trains at that prop's own move; the
-/// others have `moves/sports/<id>.json`.
+/// changes. Read from `kits.json`. A kit with its own `moves/sports/<id>.json` plays it; the
+/// others train at the signature move of the prop they hold.
 public struct SportKit: Hashable, Sendable, Identifiable {
     /// `swim`, `run`, ... `warmup` changes no clothes, for sports without a kit of their own.
     public let id: String
@@ -100,15 +100,19 @@ extension PlaceholderCharacter {
     }
 
     /// A kit's move, looping, at `persona`'s tempo (`accentTempo`, the pace it plays its
-    /// species' moves at): a deadpan character swims slowly, an energetic one quickly. A kit
-    /// holding a prop loops that prop's own move (the goggles' breaststroke, the racket's
-    /// swing), which ends at rest, so it loops without a jump.
+    /// species' moves at): a deadpan character swims slowly, an energetic one quickly. A kit with
+    /// a move of its own (the run kit's jog) plays it; any other loops the signature move of the
+    /// prop it holds (the goggles' breaststroke, the racket's serve), which ends at rest, so it
+    /// loops without a jump.
     public static func move(for kit: SportKit, persona: Persona) throws(AvatarError) -> Clip {
-        if case let prop?? = kit.wear["prop"], var move = try propMove(for: Outfit(["prop": prop])) {
-            move.loops = true
-            return try move.atTempo(persona.accentTempo)
+        if let own = try? file("moves/sports/\(kit.id).json") {
+            return try Clip.decode(own).atTempo(persona.accentTempo)
         }
-        return try Clip.decode(file("moves/sports/\(kit.id).json")).atTempo(persona.accentTempo)
+        guard case let prop?? = kit.wear["prop"], var move = try propMove(for: Outfit(["prop": prop])) else {
+            throw .missingFile("moves/sports/\(kit.id).json")
+        }
+        move.loops = true
+        return try move.atTempo(persona.accentTempo)
     }
 
     /// The hop a character changes into a kit in: `out` squashes it down, where the kit goes on,

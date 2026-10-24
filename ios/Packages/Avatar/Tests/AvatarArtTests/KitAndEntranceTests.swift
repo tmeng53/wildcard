@@ -128,6 +128,18 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     }
 }
 
+/// The run kit jogs with the tumbler and the warm-up keeps its own move; every other kit trains
+/// at the signature move of the prop it holds.
+@Test func kitsTrainAtTheirPropsMoves() throws {
+    let kits = try PlaceholderCharacter.sportKits()
+    let moves = try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: .energetic).name }
+    #expect(
+        moves == [
+            "goggles", "run", "dumbbell", "racket", "chalkbag", "yogamat", "kettlebell", "badminton", "pickleball",
+            "pingpong", "warmup",
+        ])
+}
+
 /// A deadpan character swims slower than an energetic one.
 @Test func personasPlayKitMovesAtTheirOwnTempo() throws {
     let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
