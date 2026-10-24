@@ -13,6 +13,9 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("周三不练腿俱乐部"), "the card has no squad: \(card.label)")
         XCTAssertTrue(card.label.contains("128"), "the card has no lifetime count: \(card.label)")
         XCTAssertTrue(card.label.contains("3/5"), "the card has no 本周: \(card.label)")
+        XCTAssertTrue(card.label.contains("22号"), "the card has no number: \(card.label)")
+        XCTAssertTrue(card.label.contains("SINCE 2026"), "the card has no join year: \(card.label)")
+        XCTAssertTrue(card.label.contains("早八战神"), "the card has no latest title: \(card.label)")
         XCTAssertTrue(app.buttons["tab.me"].isSelected, "the 我 tab isn't the selected one")
         assertClearOfTabBar(app.buttons["me.editCharacter"], in: app)
         settle()
@@ -22,6 +25,9 @@ final class MeUITests: XCTestCase {
         card.tap()
         waitFor(card, "label CONTAINS '坦白放纵餐'", "the card didn't turn over to the other kinds")
         XCTAssertTrue(card.label.contains("46"), "the back has no 健康餐 count: \(card.label)")
+        XCTAssertTrue(card.label.contains("最常练"), "the back has no 最常练: \(card.label)")
+        XCTAssertTrue(card.label.contains("跑步"), "the back has no top sport: \(card.label)")
+        XCTAssertTrue(card.label.contains("×2"), "the back has no title count: \(card.label)")
         settle()
         keepScreenshot(named: "41-me-card-back")
         card.tap()
@@ -79,6 +85,31 @@ final class MeUITests: XCTestCase {
         confirm.tap()
         // The in-memory member has nothing to sign out of, so the page stays, done.
         waitFor(confirm, "isEnabled == false", "the confirm button still takes taps after deleting")
+    }
+
+    /// The member picks their card's number in 设置, and the card wears it.
+    func testJerseyNumber() {
+        let app = launch(language: "zh-Hans")
+        let settingsButton = app.buttons["me.settings"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
+        settingsButton.tap()
+        let row = app.buttons["me.jerseyNumber"]
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 球衣号码 row")
+        XCTAssertTrue(row.label.contains("22"), "the row doesn't show the number: \(row.label)")
+        row.tap()
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertTrue(wheel.waitForExistence(timeout: 30), "the number page never opened")
+        wheel.adjust(toPickerWheelValue: "07")
+        assertClearOfTabBar(app.buttons["number.save"], in: app)
+        settle()
+        keepScreenshot(named: "49-jersey-number")
+        app.buttons["number.save"].tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "saving didn't go back to 设置")
+        waitFor(row, "label CONTAINS '07'", "the row doesn't show the new number")
+        app.buttons["settings.back"].tap()
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30))
+        XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
     }
 
     /// A change that can't be saved flips back and says so; a delete that fails can be tried again.

@@ -31,7 +31,7 @@ import Testing
             == MeOverview(
                 character: MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama),
                 joinedAt: joinedAt.date,
-                counts: .zero, week: week, squadName: "早八健身", dailyPushOn: true))
+                counts: .zero, week: week, squadName: "早八健身", dailyPushOn: true, squadPlace: 1))
 
     try await service.setDailyPush(false)
     #expect(try await service.overview().dailyPushOn == false)
@@ -59,6 +59,27 @@ import Testing
     await #expect(throws: MeError.rejected) {
         try await service.save(MeCharacter(nickname: "", outfit: Outfit(["body": "bear"]), persona: .shy))
     }
+}
+
+@Test func aPickedNumberStaysThroughACharacterEditAndTheSecondToJoinWearsTwoTillThen() async throws {
+    let stack = try LocalStack()
+    let captain = try await stack.signedInMember()
+    let member = try await stack.signedInMember()
+    _ = try await member.api.save(Profile(timeZone: .current, catchphrase: try Catchphrase("冲就完了")))
+    _ = try await stack.squad(of: captain, member)
+    let service = APIMeService(api: member.api)
+
+    let before = try await service.overview()
+    #expect(before.squadPlace == 2)
+    #expect(before.jerseyNumber == nil)
+    #expect(before.cardNumber?.text == "02")
+
+    try await service.save(jerseyNumber: try JerseyNumber(23))
+    try await service.save(MeCharacter(nickname: "豆豆", outfit: Outfit(["body": "bear"]), persona: .shy))
+
+    let after = try await service.overview()
+    #expect(after.cardNumber?.text == "23")
+    #expect(try await member.api.me().profile?.catchphrase == (try Catchphrase("冲就完了")))
 }
 
 @Test func deletingTheAccountUnregistersFirstAndLeavesNothing() async throws {

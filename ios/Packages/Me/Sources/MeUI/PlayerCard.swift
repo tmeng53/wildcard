@@ -1,7 +1,8 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import DesignSystem
 import DesignSystemUI
 import MeDomain
+import SportsUI
 import SwiftUI
 
 /// 我's player card, like a baseball card: the front has the character, the name and squad and the
@@ -71,7 +72,8 @@ struct PlayerCard: View {
     }
 }
 
-/// The front: the character in its window, the name and squad, then 练了 and 本周.
+/// The front: the character in its window under the card's number and latest title, the name,
+/// squad and the year they joined, then 练了, 本周 and 周奖.
 private struct CardFront: View {
     let overview: MeOverview
     @Environment(\.sceneTheme) private var theme
@@ -81,45 +83,94 @@ private struct CardFront: View {
             MeStage(character: overview.character, floor: .borderDefault)
                 .padding(.bottom, -Space.xxs)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .overlay(alignment: .top) {
+                    // One row, so a long title gives way (truncating) before it can reach the number.
+                    HStack(alignment: .top, spacing: Space.xs) {
+                        if let number = overview.cardNumber {
+                            Text(verbatim: number.text)
+                                .typeStyle(TypeRamp.scoreHero)
+                                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                                .monospacedDigit()
+                                .fixedSize()
+                                .padding(.leading, Space.s)
+                                .padding(.top, Space.xs)
+                                .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
+                                .accessibilityIdentifier("me.cardNumber")
+                        }
+                        Spacer(minLength: 0)
+                        if let latest = overview.titles.latest {
+                            Text(verbatim: latest.title)
+                                .typeStyle(TypeRamp.footnoteEmphasis)
+                                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                                .lineLimit(1)
+                                .padding(.horizontal, Space.xs)
+                                .padding(.vertical, Space.xxs)
+                                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                                .padding(.trailing, Space.xs)
+                                .padding(.top, Space.s)
+                                .accessibilityIdentifier("me.latestTitle")
+                        }
+                    }
+                }
                 .background(
                     Color(role: .bgSubtle, in: theme),
                     in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
-            VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                Text(overview.character.nickname)
-                    .typeStyle(TypeRamp.title)
-                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                    .lineLimit(1)
-                    .accessibilityIdentifier("me.nickname")
-                if let squad = overview.squadName {
-                    Text(squad)
-                        .typeStyle(TypeRamp.footnote)
+            HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
+                nameAndSquad
+                if let year = overview.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
+                    Text("card.since \(year)", bundle: .module)
+                        .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                        .lineLimit(1)
-                        .accessibilityIdentifier("me.squadName")
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, Space.xxs)
-            .padding(.top, Space.s)
-            HStack(alignment: .top, spacing: Space.xs) {
-                FrontStat(label: Text("练了", bundle: .module)) {
-                    Score(count: overview.counts.trainedDays, size: .card, onInk: true)
-                        .accessibilityIdentifier("me.trainedDays")
-                }
-                if let week = overview.week {
-                    FrontStat(label: Text("本周", bundle: .module)) {
-                        Score(count: week.trainedDays, goal: week.plannedDays, size: .card, onInk: true)
-                    }
+                        .accessibilityIdentifier("me.since")
                 }
             }
             .padding(.horizontal, Space.xxs)
             .padding(.top, Space.s)
-            .padding(.bottom, Space.xxs)
-            .overlay(alignment: .top) { Hairline().padding(.horizontal, Space.xxs) }
-            .padding(.top, Space.s)
+            stats
         }
+    }
+
+    private var nameAndSquad: some View {
+        VStack(alignment: .leading, spacing: Space.xxs / 2) {
+            Text(overview.character.nickname)
+                .typeStyle(TypeRamp.title)
+                .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                .lineLimit(1)
+                .accessibilityIdentifier("me.nickname")
+            if let squad = overview.squadName {
+                Text(squad)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                    .lineLimit(1)
+                    .accessibilityIdentifier("me.squadName")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var stats: some View {
+        HStack(alignment: .top, spacing: Space.xs) {
+            FrontStat(label: Text("练了", bundle: .module)) {
+                Score(count: overview.counts.trainedDays, size: .card, onInk: true)
+                    .accessibilityIdentifier("me.trainedDays")
+            }
+            if let week = overview.week {
+                FrontStat(label: Text("本周", bundle: .module)) {
+                    Score(count: week.trainedDays, goal: week.plannedDays, size: .card, onInk: true)
+                }
+            }
+            FrontStat(label: Text("周奖", bundle: .module)) {
+                Score(count: overview.titles.count, size: .card, onInk: true)
+                    .accessibilityIdentifier("me.titles")
+            }
+        }
+        .padding(.horizontal, Space.xxs)
+        .padding(.top, Space.s)
+        .padding(.bottom, Space.xxs)
+        .overlay(alignment: .top) { Hairline().padding(.horizontal, Space.xxs) }
+        .padding(.top, Space.s)
     }
 }
 
@@ -142,17 +193,27 @@ private struct FrontStat<Value: View>: View {
     }
 }
 
-/// The back: the name, the career count of 练了 large, then every other kind and this week.
+/// The back: the name and number, the career count of 练了 large, then every other kind, this
+/// week, the sport trained most and the latest title.
 private struct CardBack: View {
     let overview: MeOverview
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(overview.character.nickname)
-                .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline) {
+                Text(overview.character.nickname)
+                    .typeStyle(TypeRamp.headline)
+                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                    .lineLimit(1)
+                Spacer(minLength: Space.s)
+                if let number = overview.cardNumber {
+                    Text(verbatim: "#\(number.text)")
+                        .typeStyle(TypeRamp.scoreInline)
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                        .monospacedDigit()
+                }
+            }
             Text("card.career", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
@@ -171,14 +232,43 @@ private struct CardBack: View {
                 BackStat(label: Text("坦白放纵餐", bundle: .module), isLast: false) {
                     Score(count: overview.counts.cheatMeals, size: .inline, onInk: true)
                 }
-                BackStat(label: Text("请假条", bundle: .module), isLast: overview.week == nil) {
+                BackStat(label: Text("请假条", bundle: .module), isLast: false) {
                     Score(count: overview.counts.disclaimers, size: .inline, onInk: true)
                 }
                 if let week = overview.week {
-                    BackStat(label: Text("本周", bundle: .module), isLast: true) {
+                    BackStat(label: Text("本周", bundle: .module), isLast: false) {
                         Score(count: week.trainedDays, goal: week.plannedDays, size: .inline, onInk: true)
                     }
                 }
+                if let most = overview.mostTrained {
+                    BackStat(label: Text("最常练", bundle: .module), isLast: false) {
+                        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
+                            most.activity.name
+                                .typeStyle(TypeRamp.callout)
+                                .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                                .lineLimit(1)
+                            Score(count: most.checkIns, size: .inline, onInk: true)
+                        }
+                    }
+                    .accessibilityIdentifier("me.mostTrained")
+                }
+                BackStat(label: Text("周奖", bundle: .module), isLast: true) {
+                    if let latest = overview.titles.latest {
+                        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
+                            Text(verbatim: latest.title)
+                                .typeStyle(TypeRamp.callout)
+                                .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                                .lineLimit(1)
+                            Text(verbatim: "×\(latest.times)")
+                                .typeStyle(TypeRamp.scoreInline)
+                                .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                                .monospacedDigit()
+                        }
+                    } else {
+                        Score(count: 0, size: .inline, onInk: true)
+                    }
+                }
+                .accessibilityIdentifier("me.backTitles")
             }
             .padding(.top, Space.s)
             Spacer(minLength: 0)

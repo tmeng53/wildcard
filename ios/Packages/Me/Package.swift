@@ -14,6 +14,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Avatar"), .package(path: "../Contracts"), .package(path: "../DesignSystem"),
+        .package(path: "../Sports"),
     ],
     targets: [
         .target(
@@ -30,6 +31,7 @@ let package = Package(
                 .product(name: "AvatarUI", package: "Avatar"), .product(name: "Contracts", package: "Contracts"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
+                .product(name: "SportsUI", package: "Sports"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]),
         .testTarget(
