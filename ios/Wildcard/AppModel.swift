@@ -39,8 +39,9 @@ final class AppModel {
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
-    /// Where the home's copy and the posts still to go out are kept.
-    @ObservationIgnored private let directory: URL
+    /// Where the home's copy and the posts still to go out are kept, a folder per member, so a
+    /// new account on this phone never opens on what was kept for one signed out or deleted.
+    @ObservationIgnored private let folders: MemberFolders
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
     /// with the session alone.
     @ObservationIgnored private let confirmDeletion: @MainActor () async throws(MeError) -> DeletionConfirmation
@@ -54,7 +55,8 @@ final class AppModel {
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(), now: { Date() })
         api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
-        directory = URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory)
+        folders = MemberFolders(
+            root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -139,9 +141,12 @@ final class AppModel {
     private func openHome(
         continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
     ) async {
-        let store = TodayStore(
-            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
-            now: { Date() }, newID: { UUID() })
+        // Only called once the account says who is signed in, so it is read from memory.
+        guard case .signedIn(let member)? = try? await account.restore() else {
+            await signedOut()
+            return
+        }
+        let store = todayStore(of: member)
         await store.load()
         switch store.phase {
         case .noSquad:
@@ -195,6 +200,14 @@ final class AppModel {
         }
     }
 
+    /// The member's home, from what the phone kept for them alone.
+    private func todayStore(of member: MemberID) -> TodayStore {
+        let directory = folders.folder(for: member)
+        return TodayStore(
+            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
+            now: { Date() }, newID: { UUID() })
+    }
+
     /// The squad's name or scene changed on 小队设置: 今天 and 我 read them again.
     private func squadChanged() async {
         guard case .tabs(let today, let profile, _, _, let squad, _) = screen else { return }
@@ -234,8 +247,7 @@ final class AppModel {
     }
 
     private func signedOut() async {
-        APICheckInBackend(api: api, directory: directory).forget()
-        await DeviceOutbox(directory: directory).forget()
+        folders.forgetAll()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
     }
