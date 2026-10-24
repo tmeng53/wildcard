@@ -10,7 +10,7 @@ import SwiftUI
 struct JerseyNumberView: View {
     @Bindable var model: MeModel
     let close: () -> Void
-    @State private var picked: Int
+    @State private var picked: JerseyNumber
     /// Set once this page has saved: a failure shows only for a save made here, never for an
     /// earlier one on another page, and 保存 waits while one is on its way.
     @State private var saving = false
@@ -20,7 +20,7 @@ struct JerseyNumberView: View {
     init(model: MeModel, close: @escaping () -> Void) {
         self.model = model
         self.close = close
-        _picked = State(initialValue: model.overview?.cardNumber?.value ?? 0)
+        _picked = State(initialValue: model.overview?.cardNumber ?? Self.numbers[0])
     }
 
     var body: some View {
@@ -32,17 +32,17 @@ struct JerseyNumberView: View {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .accessibilityAddTraits(.isHeader)
                 .padding(.top, Space.s)
-            Text(verbatim: Self.text(picked))
+            Text(verbatim: picked.text)
                 .typeStyle(TypeRamp.scoreHero)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .monospacedDigit()
-                .contentTransition(.numericText(value: Double(picked)))
+                .contentTransition(.numericText(value: Double(picked.value)))
                 .frame(maxWidth: .infinity)
                 .padding(.top, Space.l)
                 .accessibilityHidden(true)
             Picker(selection: $picked) {
-                ForEach(JerseyNumber.range, id: \.self) { number in
-                    Text(verbatim: Self.text(number)).tag(number)
+                ForEach(Self.numbers, id: \.self) { number in
+                    Text(verbatim: number.text).tag(number)
                 }
             } label: {
                 Text("球衣号码", bundle: .module)
@@ -54,11 +54,9 @@ struct JerseyNumberView: View {
                 SaveFailed().frame(maxWidth: .infinity).padding(.bottom, Space.s)
             }
             Button {
-                // The wheel offers only 00 to 99.
-                guard let number = try? JerseyNumber(picked) else { return }
                 saving = true
                 Task {
-                    await model.save(jerseyNumber: number)
+                    await model.save(jerseyNumber: picked)
                     (saving, saved) = (false, true)
                     if !model.saveFailed { close() }
                 }
@@ -77,8 +75,7 @@ struct JerseyNumberView: View {
         .accessibilityIdentifier("number.page")
     }
 
-    private static func text(_ number: Int) -> String {
-        number < 10 ? "0\(number)" : "\(number)"
-    }
+    /// Every number the API takes, 00 to 99.
+    private static let numbers = JerseyNumber.range.compactMap { try? JerseyNumber($0) }
 }
 #endif
