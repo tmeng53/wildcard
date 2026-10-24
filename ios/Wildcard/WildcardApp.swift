@@ -39,6 +39,10 @@ struct WildcardApp: App {
     @State private var recap: RecapShelf
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
+    /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
+    /// made their squad only once the squad is dropping onto the scene they picked, so the
+    /// tabs never show the squad's old scene first.
+    @State private var signedUp = false
     @State private var app: AppModel?
 
     // An init, not property initializers: those run outside the main actor, and the post
@@ -142,11 +146,18 @@ struct WildcardApp: App {
         if let editor {
             CharacterEditorView(
                 model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
-        } else if let signUp, signUp.finished == nil {
+        } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 StandInSignIn { signUp.signedIn(name: nil) }
             } tabBar: {
                 MainTabs.entranceTabBar
+            }
+            .onChange(of: signUp.finished) { _, finished in
+                guard finished != nil else { return }
+                Task {
+                    if let scene = signUp.landing { await today.dropIn(on: scene, coveredAt: .now) }
+                    signedUp = true
+                }
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
@@ -160,8 +171,6 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
-                // Whoever made their squad in `-onboarding` drops onto the scene they picked.
-                if let scene = signUp?.landing { Task { await today.dropIn(on: scene, coveredAt: .now) } }
                 delegate.opened = { [today, $tab] _ in
                     $tab.wrappedValue = .today
                     Task { await today.load() }
