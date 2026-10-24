@@ -46,9 +46,9 @@ struct WeekBoardTests {
         #expect(board.isEditable(3))
         #expect(board.tap(3) == .selected)
         board.rest()
-        #expect(board.days[3] == .train(.sport(.strength)))
-        board.pick(.sport(.swim))
-        #expect(board.days[3] == .train(.sport(.swim)))
+        #expect(board.days[3] == .train(.sport("strength")))
+        board.pick(.sport("swim"))
+        #expect(board.days[3] == .train(.sport("swim")))
         #expect(board.plannedDays == 5)
     }
 
@@ -56,8 +56,8 @@ struct WeekBoardTests {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-21"))
         #expect(board.isEditable(2))
         #expect(board.tap(2) == .selected, "today is picked, not lifted")
-        board.pick(.sport(.swim))
-        #expect(board.days[2] == .train(.sport(.swim)))
+        board.pick(.sport("swim"))
+        #expect(board.days[2] == .train(.sport("swim")))
         #expect(board.plannedDays == 6, "one rest day fewer")
     }
 

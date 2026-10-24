@@ -243,7 +243,7 @@ private struct DayChoices: View {
     }
 
     private var selectedActivity: Activity {
-        if case .train(let activity?) = week.days[week.selected] { activity } else { .sport(.run) }
+        if case .train(let activity?) = week.days[week.selected] { activity } else { .sport("run") }
     }
 
     static func key(for day: PlanDay) -> String {
