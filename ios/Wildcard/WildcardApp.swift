@@ -1,9 +1,11 @@
 import AccountDomain
 import AccountUI
+import AvatarUI
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
 import Contracts
+import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
@@ -23,7 +25,7 @@ import SwiftUI
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
+/// `-character-editor` the character editor, `-loading` the launch page's loader and `-recap` the 战报's tile and sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
 /// about.
@@ -161,6 +163,8 @@ struct WildcardApp: App {
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
+        } else if LaunchOptions.showsLoading {
+            Starting().loadingCover(true) { OpeningLoader() }
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {
@@ -191,7 +195,7 @@ private struct AppRoot: View {
         ZStack {
             switch app.screen {
             case .starting:
-                ProgressView()
+                Starting()
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
@@ -211,6 +215,9 @@ private struct AppRoot: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Over every screen, so the character stays its minimum and fades out over the screen
+        // that opened (loader design A, 2026-10-24).
+        .loadingCover(app.isOpening) { OpeningLoader() }
         .task { await app.run() }
         .onAppear {
             delegate.opened = { [app, $tab] opened in
@@ -254,5 +261,28 @@ private struct SignInButton: View {
         AppleSignInButton { result in
             Task { await app.signIn(result, from: signUp) }
         }
+    }
+}
+
+/// While the app reads the member's home at launch: the brand's grey page, which the root's
+/// loader covers once the wait has lasted.
+private struct Starting: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Color(role: .bgSubtle, in: theme)
+            .ignoresSafeArea()
+            .accessibilityIdentifier("app.starting")
+    }
+}
+
+/// The character jogging in place on the brand's grey page, while the app opens.
+private struct OpeningLoader: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        LoadingCharacter()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
     }
 }

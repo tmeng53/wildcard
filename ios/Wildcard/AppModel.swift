@@ -33,6 +33,13 @@ final class AppModel {
     }
 
     private(set) var screen = Screen.starting
+    /// Signing in on the open screen, until the screen after it opens.
+    private(set) var isSigningIn = false
+    /// The app is reading who is signed in or their home, for the page's loader.
+    var isOpening: Bool {
+        if case .starting = screen { return true }
+        return isSigningIn
+    }
     /// An awards push tapped before the home was up, opened once it is.
     @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
 
@@ -97,6 +104,8 @@ final class AppModel {
     /// Signs in and carries on: into sign-up's next step, or straight to 今天 for a member who
     /// already has a squad, such as on a new phone.
     func signIn(with credential: Credential, name: String?, from signUp: SignUpModel) async {
+        isSigningIn = true
+        defer { isSigningIn = false }
         do {
             _ = try await account.signIn(with: credential)
         } catch {

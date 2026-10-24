@@ -29,7 +29,7 @@ final class PatUITests: XCTestCase {
         XCTAssertTrue(labeled("阿杰 也拍了拍你", in: app).exists, "the bubble doesn't name 阿杰 too")
         let bubble = app.descendants(matching: .any).matching(identifier: "today.patBubble").firstMatch
         let pat = app.buttons["today.pat"]
-        expectOnScreen(bubble, pat, in: app)
+        expectOnScreen(bubble, pat, of: "小米", in: app)
         XCTAssertEqual(pat.label, "拍一拍")
         keepScreenshot(named: "52-patted-bubble")
 
@@ -47,7 +47,7 @@ final class PatUITests: XCTestCase {
         mate("豆豆", in: app).tap()
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping 豆豆 showed no bubble")
         XCTAssertTrue(labeled("今天练了", in: app).exists, "豆豆's bubble doesn't say she trained today")
-        expectOnScreen(bubble, pat, in: app)
+        expectOnScreen(bubble, pat, of: "豆豆", in: app)
         XCTAssertEqual(pat.label, "拍一拍")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "54-mate-status")
@@ -61,8 +61,15 @@ final class PatUITests: XCTestCase {
     }
 
     /// The bubble whole inside the window, below the status bar and above the tab bar, and its
-    /// button tappable.
-    private func expectOnScreen(_ bubble: XCUIElement, _ button: XCUIElement, in app: XCUIApplication) {
+    /// button tappable. Like `tapPat`, it opens `nickname`'s bubble again first if its 5 seconds
+    /// ran out while a slow CI simulator checked it.
+    private func expectOnScreen(
+        _ bubble: XCUIElement, _ button: XCUIElement, of nickname: String, in app: XCUIApplication
+    ) {
+        if !button.isHittable {
+            mate(nickname, in: app).tap()
+            XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
+        }
         let window = app.windows.firstMatch.frame
         let frame = bubble.frame
         XCTAssertGreaterThanOrEqual(frame.minX, window.minX, "the bubble runs off the left: \(frame)")

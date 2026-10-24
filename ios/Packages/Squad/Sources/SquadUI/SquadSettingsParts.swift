@@ -72,7 +72,7 @@ struct ScenePickerGrid: View {
                     }
                 }
             } label: {
-                Text("就它了", bundle: .module).frame(maxWidth: .infinity)
+                Text("就它了", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
@@ -152,6 +152,8 @@ struct InviteCard: View {
 struct MemberRow: View {
     let member: SquadMemberRow
     let showsDivider: Bool
+    /// A change to this member is saving: the ··· menu waits as 三拍.
+    let isSaving: Bool
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
 
@@ -188,36 +190,40 @@ struct MemberRow: View {
                     .fixedSize()
             }
             if member.isManageable {
-                Menu {
-                    Button {
-                        act(.handCaptaincy(member.id, name: name))
-                    } label: {
-                        Label {
-                            Text("转让队长", bundle: .module)
-                        } icon: {
-                            Image(systemName: "crown")
+                LoadingSwap(isSaving) {
+                    Menu {
+                        Button {
+                            act(.handCaptaincy(member.id, name: name))
+                        } label: {
+                            Label {
+                                Text("转让队长", bundle: .module)
+                            } icon: {
+                                Image(systemName: "crown")
+                            }
                         }
-                    }
-                    .accessibilityIdentifier("squad.member.handCaptaincy")
-                    Button(role: .destructive) {
-                        act(.remove(member.id, name: name))
-                    } label: {
-                        Label {
-                            Text("移出小队", bundle: .module)
-                        } icon: {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .accessibilityIdentifier("squad.member.handCaptaincy")
+                        Button(role: .destructive) {
+                            act(.remove(member.id, name: name))
+                        } label: {
+                            Label {
+                                Text("移出小队", bundle: .module)
+                            } icon: {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                            }
                         }
+                        .accessibilityIdentifier("squad.member.remove")
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: Sizing.icon - 3, weight: .semibold))
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
+                            .contentShape(Rectangle())
                     }
-                    .accessibilityIdentifier("squad.member.remove")
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: Sizing.icon - 3, weight: .semibold))
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                        .contentShape(Rectangle())
+                    .accessibilityLabel(Text("管理 \(name)", bundle: .module))
+                    .accessibilityIdentifier("squad.member.more")
                 }
-                .accessibilityLabel(Text("管理 \(name)", bundle: .module))
-                .accessibilityIdentifier("squad.member.more")
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
         }
         .frame(minHeight: SquadSettingsMetrics.row)

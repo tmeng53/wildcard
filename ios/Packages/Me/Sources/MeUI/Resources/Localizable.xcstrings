@@ -107,16 +107,6 @@
         }
       }
     },
-    "正在注销…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deleting…"
-          }
-        }
-      }
-    },
     "注销账号": {
       "localizations": {
         "en": {

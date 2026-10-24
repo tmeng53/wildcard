@@ -351,6 +351,16 @@
         }
       }
     },
+    "加载中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        }
+      }
+    },
     "动态": {
       "localizations": {
         "en": {
@@ -1197,6 +1207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Step %1$lld of %2$lld"
+          }
+        }
+      }
+    },
+    "等待：三拍，整页是小人原地跑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting: three hopping dots; a whole page jogs"
           }
         }
       }

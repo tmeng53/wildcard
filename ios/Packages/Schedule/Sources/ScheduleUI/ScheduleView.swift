@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -44,6 +45,9 @@ public struct ScheduleView: View {
                         loading
                     }
                 }
+                // Over the poster and the placeholder alike, so the character stays its minimum
+                // and fades out over the poster that arrived.
+                .loadingCover(store.phase == .loading) { PosterLoader() }
                 .padding(.horizontal, Space.pageMargin)
                 .padding(.top, Space.s)
                 .padding(.bottom, Space.l)
@@ -112,9 +116,11 @@ public struct ScheduleView: View {
                 Label {
                     Text("存图", bundle: .module)
                 } icon: {
-                    Image(systemName: model.saving == .saved ? "checkmark" : "square.and.arrow.down")
-                        .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-                        .contentTransition(.symbolEffect(.replace))
+                    LoadingSwap(model.saving == .working) {
+                        Image(systemName: model.saving == .saved ? "checkmark" : "square.and.arrow.down")
+                            .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
+                            .contentTransition(.symbolEffect(.replace))
+                    }
                 }
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -156,6 +162,7 @@ public struct ScheduleView: View {
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
         case .loading, .ready:
+            // The poster's place until the weeks are read; the character jogs over it.
             Color(role: .bgSubtle, in: theme)
                 .aspectRatio(WeekPoster.size.width / WeekPoster.size.height, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
@@ -289,6 +296,17 @@ public struct ScheduleView: View {
             ownFuel = ""
             typingFuel = false
         }
+    }
+}
+/// The character jogging in place on the poster's grey card while the weeks are read.
+private struct PosterLoader: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        LoadingCharacter()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(role: .bgSubtle, in: theme))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
     }
 }
 #endif
