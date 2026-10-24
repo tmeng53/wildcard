@@ -29,7 +29,7 @@ public struct CharacterEditorView: View {
     public var body: some View {
         VStack(spacing: 0) {
             EditorHeader(model: model, context: context, onBack: onBack)
-            if case .signUp = context {
+            if case .signUp = context, !isNaming {
                 Text("创建你的外卡运动员", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -43,8 +43,8 @@ public struct CharacterEditorView: View {
             }
             .frame(height: EditorStage.height)
             .padding(.horizontal, Space.pageMargin)
-            // The tabs and choices make room while the nickname is typed, so the page fits above
-            // the keyboard and 就这样 stays in reach.
+            // The title, tabs and choices make room while the nickname is typed, so the page fits
+            // above the keyboard and 就这样 stays in reach.
             if !isNaming {
                 CategoryBar(
                     model.tabs.map {
