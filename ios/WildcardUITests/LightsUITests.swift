@@ -35,11 +35,12 @@ final class LightsUITests: XCTestCase {
         XCTAssertFalse(bubble.frame.intersects(cord.frame), "the bubble covers the cord: \(bubble.frame)")
 
         cord.tap()
-        // Mid-wake: the first sleepers glaring up at the lamps, the first one's line.
-        Thread.sleep(forTimeInterval: 1.6)
+        // Mid-wake: the first sleepers glaring up at the lamps, the first one's line (up from 1.7s
+        // after the click, which comes 0.12s after the tap).
+        Thread.sleep(forTimeInterval: 2.2)
         keepScreenshot(named: "72-today-lights-waking")
         XCTAssertEqual(cord.label, "关灯")
-        Thread.sleep(forTimeInterval: 3)
+        Thread.sleep(forTimeInterval: 2.4)
         keepScreenshot(named: "73-today-lights-on")
         expectClear(cord, of: card, in: app)
 
