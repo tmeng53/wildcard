@@ -35,6 +35,19 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(home.suggestedActivity(on: tuesday) == .sport(.yoga))
 }
 
+@Test func recentSportsAreTheLoggedOnesNewestFirstThenThePlannedOnesWithoutRepeats() throws {
+    let home = sampleHome(checkIns: [
+        try checkIn(1, by: myID, .trained(Training(activity: .sport(.tennis)))),
+        try checkIn(2, by: myID, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(3, by: mate, .trained(Training(activity: .sport(.climb)))),
+    ])
+    let recent = home.recentActivities()
+    #expect(Array(recent.prefix(2)) == [.sport(.swim), .sport(.tennis)])
+    #expect(Set(recent).count == recent.count)
+    #expect(!recent.contains(.sport(.climb)))
+    #expect(home.recentActivities(limit: 1) == [.sport(.swim)])
+}
+
 @Test func aHomeRolledIntoANewWeekStartsTheWeeksFromNothing() {
     var trained = sampleToday()
     trained.members[1] = entry(myID, .trained, since: 1_792_512_000_000)

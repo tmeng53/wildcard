@@ -1153,22 +1153,6 @@
         }
       }
     },
-    "加上「%@」": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add “%@”"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加上「%@」"
-          }
-        }
-      }
-    },
     "加入小队": {
       "localizations": {
         "en": {
@@ -1411,22 +1395,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "每周训练 %lld/%lld 天"
-          }
-        }
-      }
-    },
-    "比如：飞盘": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "e.g. Ultimate frisbee"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "比如：飞盘"
           }
         }
       }
