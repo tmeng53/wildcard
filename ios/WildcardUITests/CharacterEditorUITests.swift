@@ -40,12 +40,12 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "21-editor-hair")
 
         app.buttons["editor.tab.outfit"].tap()
-        let hoodie = app.buttons["editor.tile.top.hoodie"]
-        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 卫衣 tile")
+        let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]
+        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 连帽卫衣 tile")
         hoodie.tap()
-        waitUntilSelected(hoodie, "picking 卫衣 didn't select it")
+        waitUntilSelected(hoodie, "picking 连帽卫衣 didn't select it")
         app.buttons["editor.swatch.top.2"].tap()
-        app.buttons["editor.tile.hat.cap"].tap()
+        app.buttons["editor.tile.hat.warmup-cap"].tap()
         settle()
         keepScreenshot(named: "22-editor-outfit")
     }

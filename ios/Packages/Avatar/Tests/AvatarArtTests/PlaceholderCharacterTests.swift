@@ -20,7 +20,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "heartR", "sparkle",
             "tearL", "tearR",
             "food0", "food1", "food2",
-            "armL", "flexL", "muscleL", "armR", "chin", "propR", "gripR", "flexR", "muscleR", "heart", "propFront",
+            "armL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart", "propFront",
             "propOver",
             "desk",
         ])
@@ -157,13 +157,14 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     }
 }
 
-/// Sleeves tuck under a person-sized chin; a bichon's fluff reaches lower, so it draws that fluff
-/// again over the arms, and only the bichon does.
+/// Hanging sleeves tuck under a person-sized chin; a bichon's fluff reaches lower, so it draws that
+/// fluff again over the hanging arms, and only the bichon does. Raised arms stay in front of it.
 @Test func aBichonsChinSitsOverTheSleeves() throws {
     for body in try PlaceholderCharacter.variants(for: "body") {
         let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
         #expect(try figure.part("chin").art.isEmpty == (body != "bichon"), "\(body)")
         #expect(try figure.index("chin") > figure.index("armL") && figure.index("chin") > figure.index("armR"))
+        #expect(try figure.index("chin") < figure.index("flexL") && figure.index("chin") < figure.index("flexR"))
     }
 }
 

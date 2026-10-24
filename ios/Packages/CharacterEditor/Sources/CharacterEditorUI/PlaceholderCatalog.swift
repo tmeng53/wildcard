@@ -13,11 +13,12 @@ extension Catalog {
         }
         var swatches: [Slot: [String: [RGBAColor]]] = [:]
         var originals: [Slot: [String: RGBAColor]] = [:]
-        let recolorable: [(Slot, [String])] =
-            [
-                ("body", choices.species.flatMap(\.bodies)), ("hair", variants["hair"] ?? []),
-                ("eyes", variants["eyes"] ?? []), ("brows", variants["brows"] ?? []),
-            ] + Catalog.clothingSlots.map { ($0, variants[$0] ?? []) }
+        // Typed piece by piece: as one literal, Xcode's type checker gives up on it.
+        let bodies: [String] = choices.species.flatMap(\.bodies)
+        var recolorable: [(Slot, [String])] = [("body", bodies)]
+        for slot: Slot in ["hair", "eyes", "brows"] + Catalog.clothingSlots {
+            recolorable.append((slot, variants[slot] ?? []))
+        }
         for (slot, names) in recolorable {
             for name in names {
                 let colors = PlaceholderCharacter.swatches(for: slot, wearing: name)
