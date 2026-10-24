@@ -12,7 +12,7 @@ import PackageDescription
 // - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
 // - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
 //   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the
-//   posts still to go out kept on the device.
+//   posts still to go out kept on the device, in the member's own `MemberFolders` folder.
 // - `APISignUpService`, the adapter behind `OnboardingDomain`'s `SignUpService`: the squad, the
 //   character and the first week's plan saved through the API.
 // - `APIMeService`, the adapter behind `MeDomain`'s `MeService`: 我's overview, the daily push

@@ -168,13 +168,14 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
     _ = try await stack.squad(of: member)
-    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let folders = MemberFolders(
+        root: FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)"))
+    let directory = folders.folder(for: member.id)
     await home(member, in: directory).load()
     #expect(await APICheckInBackend(api: member.api, directory: directory).savedHome() != nil)
 
     try await member.account.signOut()
-    APICheckInBackend(api: member.api, directory: directory).forget()
-    await DeviceOutbox(directory: directory).forget()
+    folders.forgetAll()
 
     #expect(await APICheckInBackend(api: member.api, directory: directory).savedHome() == nil)
     #expect(await DeviceOutbox(directory: directory).load().isEmpty)
