@@ -8,6 +8,8 @@ import XCTest
 final class LightsUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
+    /// The squad card's page dots, under the white card, answer taps this tall.
+    private static let pageDots: CGFloat = 44
 
     func testLightsAtNight() {
         continueAfterFailure = false
@@ -53,11 +55,14 @@ final class LightsUITests: XCTestCase {
         keepScreenshot(named: "74-today-lights-off")
     }
 
-    /// The cord whole on screen, hanging under the card and above 打卡.
+    /// The cord whole on screen, hanging under the white card (the page dots' row, 44 tall, is the
+    /// card element's last part) and above 打卡.
     private func expectClear(_ cord: XCUIElement, of card: XCUIElement, in app: XCUIApplication) {
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(cord.frame), "the cord runs off the screen: \(cord.frame)")
-        XCTAssertGreaterThanOrEqual(cord.frame.minY, card.frame.maxY - 1, "the cord covers the card: \(cord.frame)")
+        let cardBottom = card.frame.maxY - Self.pageDots
+        XCTAssertGreaterThanOrEqual(cord.frame.minY, cardBottom - 1, "the cord covers the card: \(cord.frame)")
+        XCTAssertLessThan(cord.frame.minY, cardBottom + 40, "the cord hangs away from the card: \(cord.frame)")
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.exists, "no 打卡 button")
         XCTAssertLessThan(cord.frame.maxY, checkIn.frame.minY, "the cord reaches 打卡: \(cord.frame)")
