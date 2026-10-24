@@ -102,8 +102,7 @@ public final class SignUpModel {
         show(.character)
     }
 
-    /// Carries on a sign-up the app was closed during after 你的小队, from 平时练什么？, with the
-    /// squad and character it saved. False when they can't be read, and the app opens home.
+    /// Carries on, from 平时练什么？, a sign-up closed after 你的小队; false (home) if unreadable.
     public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
         guard let resumed = try? await service.resume(in: squad) else { return false }
         (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
