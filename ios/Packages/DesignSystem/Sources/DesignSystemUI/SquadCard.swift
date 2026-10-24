@@ -45,8 +45,7 @@ public enum WeekDayStatus: Sendable, Hashable {
     case restDay
     /// A training day not done (yet, or missed): a thin grey ring, never red.
     case open
-    /// A training day not done yet with a sport planned: the same ring with the sport's icon in
-    /// the scene's color.
+    /// A training day not done yet with its sport's icon, in the scene's color, in the ring.
     case planned(symbol: String)
 }
 
@@ -314,14 +313,12 @@ private struct DayCircle: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())
         case .planned(let symbol):
-            ring
-                .overlay {
-                    Image(systemName: symbol)
-                        .font(.system(size: SquadCardMetrics.dayGlyph, weight: .semibold))
-                        .foregroundStyle(Color(role: .fgAccent, in: theme))
-                }
-        case .open:
-            ring
+            ring.overlay {
+                Image(systemName: symbol)
+                    .font(.system(size: SquadCardMetrics.dayGlyph, weight: .semibold))
+                    .foregroundStyle(Color(role: .fgAccent, in: theme))
+            }
+        case .open: ring
         }
     }
 
