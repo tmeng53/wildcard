@@ -306,6 +306,31 @@ describe('DELETE /me', () => {
     expect([again.status, reasonOf(again.body)]).toStrictEqual([401, 'AUTH_TOKEN_INVALID']);
   });
 
+  it('deletes the squad with its last member, and lets the next sign-up start afresh', async () => {
+    const { call } = appWith(undefined);
+    const { me, friend, squad } = await memberWithEverything(call);
+    expect(
+      (await call('DELETE', `/squads/${squad}/members/${friend.userId}`, friend.token)).status,
+    ).toBe(204);
+    const squadRows = async () =>
+      Number(
+        (
+          await sql<{
+            n: number;
+          }>`select count(*) as n from public.squads where id = ${squad}`.execute(db)
+        ).rows[0]?.n,
+      );
+    expect(await squadRows()).toBe(1);
+
+    expect((await call('DELETE', '/me', me.token, { version: 1 })).status).toBe(204);
+
+    expect([await whatIsLeftOf(me.userId), await squadRows()]).toStrictEqual([nothing, 0]);
+    // The friend who left keeps their check-in, now sent to no squad.
+    const kept = await sql<{ n: number }>`select count(*) as n from public.check_ins
+      where member_id = ${friend.userId}`.execute(db);
+    expect(Number(kept.rows[0]?.n)).toBe(1);
+  });
+
   it('refuses a session that has signed out, though its token hasn’t expired', async () => {
     const { call } = appWith(undefined);
     const me = await signUp();
