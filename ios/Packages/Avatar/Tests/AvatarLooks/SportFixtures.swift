@@ -5,8 +5,9 @@ extension Looks {
     /// names categories, and the list says which category a sport is in.
     public static let sports: SportCatalog = {
         let categories: [(String, [Sport])] = [
-            ("runWalk", ["run", "walk", "hike"]), ("strength", ["strength"]), ("cardio", ["spin"]),
-            ("mindBody", ["yoga", "matPilates"]), ("water", ["swim", "surf"]), ("racket", ["tennis", "badminton"]),
+            ("runWalk", ["run", "walk", "hike"]), ("strength", ["strength", "kettlebell"]), ("cardio", ["spin"]),
+            ("mindBody", ["yoga", "matPilates"]), ("water", ["swim", "surf"]),
+            ("racket", ["tennis", "squash", "badminton", "pickleball", "tableTennis"]),
             ("ball", ["basketball"]), ("outdoorWinter", ["climb", "ski"]), ("combat", ["boxing"]),
             ("dance", ["dance"]), ("everyday", ["dogWalk"]),
         ]

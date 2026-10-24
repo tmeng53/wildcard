@@ -3,8 +3,7 @@ import AvatarDomain
 import AvatarLooks
 import Testing
 
-/// The props a hand can hold that have a move of their own: the first batch, all but the
-/// run kit's stopwatch.
+/// The props a hand can hold, each with a move of its own: the first batch.
 let heldProps = [
     "badminton", "bottle", "chalkbag", "dumbbell", "goggles", "kettlebell", "pickleball", "pingpong", "racket",
     "yogamat",
@@ -14,7 +13,7 @@ let heldProps = [
 /// on every look holding it; a look holding nothing has none.
 @Test(arguments: heldProps)
 func everyPropHasItsMove(prop: String) throws {
-    #expect(PlaceholderCharacter.variants(for: "prop").filter { $0 != "stopwatch" } == heldProps)
+    #expect(PlaceholderCharacter.variants(for: "prop") == heldProps)
     for var look in Looks.squad {
         look.variants["prop"] = prop
         let figure = try PlaceholderCharacter.figure(wearing: look)
@@ -32,7 +31,7 @@ func everyPropHasItsMove(prop: String) throws {
 
 /// The pose with hidden parts, such as a mat put away, left at rest: where they end up unseen
 /// doesn't show.
-private func shown(_ pose: Pose) -> Pose {
+func shown(_ pose: Pose) -> Pose {
     Pose(parts: pose.parts.map { $0.opacity == 0 ? PartPose(opacity: 0) : $0 })
 }
 
