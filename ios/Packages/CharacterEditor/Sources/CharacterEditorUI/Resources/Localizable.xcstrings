@@ -351,6 +351,16 @@
         }
       }
     },
+    "好了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
     "寸头": {
       "localizations": {
         "en": {
