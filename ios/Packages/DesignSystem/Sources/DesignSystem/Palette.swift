@@ -13,6 +13,8 @@ public enum Palette {
     public static let inkSecondary = SRGBColor(red: 0x6B, green: 0x70, blue: 0x80)
     /// Denominators, placeholders and chevrons: large type and decoration only (2.1:1 on white).
     public static let inkTertiary = SRGBColor(red: 0xAE, green: 0xB2, blue: 0xBC)
+    /// Dividers on an ink surface.
+    public static let inkLine = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x49)
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
@@ -29,6 +31,12 @@ public enum Palette {
     public static let brandSky = SRGBColor(red: 0xF2, green: 0xF3, blue: 0xF5)
     public static let brandFloor = SRGBColor(red: 0xE3, green: 0xE6, blue: 0xEA)
     public static let brandTile = SRGBColor(red: 0xD6, green: 0xDA, blue: 0xE0)
+    /// The character's ticket, where it is dressed (sign-up and 我): the stub below the tear,
+    /// a step lighter than `brand`; the lamp's housing; the sign-up date; and the pen by the name.
+    public static let brandStub = SRGBColor(red: 0x27, green: 0x2A, blue: 0x32)
+    public static let brandLamp = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x48)
+    public static let brandStamp = SRGBColor(red: 0x7D, green: 0x82, blue: 0x8D)
+    public static let brandPen = SRGBColor(red: 0x9A, green: 0xA0, blue: 0xAA)
 
     // MARK: Pool scene
 

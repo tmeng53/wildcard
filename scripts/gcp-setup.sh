@@ -18,7 +18,13 @@
 # - `wildcard-scheduler`, the account Cloud Scheduler signs its calls as, and the two jobs it
 #   runs: the daily progress push every 15 minutes and the weekly awards every hour. Each call
 #   carries an ID token Google signs for that account, which the API checks, so no shared secret
-#   sits in a job. Two jobs fit in Cloud Scheduler's free tier (three a billing account).
+#   sits in a job. Two jobs fit in Cloud Scheduler's free tier (three a billing account);
+# - an uptime check on the API's /health and four alert policies, which email the account running
+#   this (or ALERT_EMAIL): the API is down, it answers 5xx, a scheduled job's call failed, or the
+#   daily push or weekly awards logged an ERROR. Alerting costs nothing until September 2027 at
+#   the earliest; then Google charges $0.35 a month for the 5xx condition (uptime and log-match
+#   conditions return no points), and the uptime check's ~26k calls a month stay in its free tier.
+#   https://cloud.google.com/stackdriver/pricing#monitoring-pricing-summary
 # Secret values never pass through here: they are pasted into Secret Manager by hand.
 set -euo pipefail
 
@@ -53,7 +59,7 @@ scheduler="wildcard-scheduler@$project.iam.gserviceaccount.com"
 
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com \
   secretmanager.googleapis.com iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
-  cloudscheduler.googleapis.com
+  cloudscheduler.googleapis.com monitoring.googleapis.com logging.googleapis.com
 
 exists gcloud artifacts repositories describe wildcard --location "$region" ||
   gcloud artifacts repositories create wildcard --repository-format docker --location "$region"
@@ -115,6 +121,123 @@ schedule daily-progress-push '*/15 * * * *'
 # A squad's awards that couldn't be written are tried again on the next run.
 schedule weekly-awards '5 * * * *'
 
+# Alerts, by email to whoever runs this in Cloud Shell, unless ALERT_EMAIL names someone else.
+alert_email="${ALERT_EMAIL:-$(gcloud config get account 2>/dev/null)}"
+[[ "$alert_email" == *@* ]] || { echo "gcp-setup: set ALERT_EMAIL to where alerts should go" >&2; exit 1; }
+channel="$(gcloud beta monitoring channels list \
+  --filter "type=\"email\" AND labels.email_address=\"$alert_email\"" --format 'value(name)' | head -n 1)"
+[ -n "$channel" ] || channel="$(gcloud beta monitoring channels create --type email \
+  --display-name "Wildcard alerts" --channel-labels "email_address=$alert_email" --format 'value(name)')"
+
+# Is the API up? Three US regions call /health every five minutes; it checks the database too.
+api_host="${api_url#https://}"
+uptime_check() {
+  gcloud monitoring uptime list-configs --filter 'displayName="wildcard-api health"' \
+    --format 'value(name)' | head -n 1
+}
+[ -n "$(uptime_check)" ] ||
+  gcloud monitoring uptime create "wildcard-api health" --resource-type uptime-url \
+    --resource-labels "host=$api_host,project_id=$project" --protocol https --path /health \
+    --period 5 --timeout 10 --regions usa-virginia,usa-oregon,usa-iowa \
+    --matcher-content '"ok"' --matcher-type contains-string >/dev/null
+check_id="$(uptime_check)"
+check_id="${check_id##*/}"
+
+# Each policy is created by its display name, or replaced when it exists, so a rerun applies
+# changes made here. Log-match policies email at most once an hour each.
+policy_file="$(mktemp)"
+trap 'rm -f "$policy_file"' EXIT
+alert() {
+  cat >"$policy_file"
+  local existing
+  existing="$(gcloud monitoring policies list --filter "displayName=\"$1\"" --format 'value(name)' | head -n 1)"
+  if [ -n "$existing" ]; then
+    gcloud monitoring policies update "$existing" --policy-from-file "$policy_file" >/dev/null
+  else
+    gcloud monitoring policies create --policy-from-file "$policy_file" >/dev/null
+  fi
+}
+logs="https://console.cloud.google.com/logs/query?project=$project"
+# Cloud Logging's filter syntax, for the log-match policies (metric filters say resource.label).
+api_logs='resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"wildcard-api\"'
+
+alert "Wildcard API is down" <<JSON
+{
+  "displayName": "Wildcard API is down",
+  "documentation": { "mimeType": "text/markdown",
+    "content": "$api_url/health failed from more than one region. It fails when the server can't start or can't reach the database. Logs: $logs" },
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "/health failing",
+    "conditionThreshold": {
+      "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"$check_id\"",
+      "aggregations": [{ "alignmentPeriod": "1200s", "perSeriesAligner": "ALIGN_NEXT_OLDER",
+        "crossSeriesReducer": "REDUCE_COUNT_FALSE", "groupByFields": ["resource.label.host"] }],
+      "comparison": "COMPARISON_GT", "thresholdValue": 1, "duration": "60s",
+      "trigger": { "count": 1 }
+    }
+  }],
+  "notificationChannels": ["$channel"]
+}
+JSON
+
+alert "Wildcard API answers 5xx" <<JSON
+{
+  "displayName": "Wildcard API answers 5xx",
+  "documentation": { "mimeType": "text/markdown",
+    "content": "More than 5 requests in 5 minutes answered 5xx. Unexpected failures are ERROR entries naming their route, with X-Request-Id's value as requestId; a 503 from AI drafts while no model key is set is expected and logs nothing. Logs: $logs" },
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "More than 5 server errors in 5 minutes",
+    "conditionThreshold": {
+      "filter": "resource.type=\"cloud_run_revision\" AND resource.label.service_name=\"wildcard-api\" AND metric.type=\"run.googleapis.com/request_count\" AND metric.label.response_code_class=\"5xx\"",
+      "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM",
+        "crossSeriesReducer": "REDUCE_SUM" }],
+      "comparison": "COMPARISON_GT", "thresholdValue": 5, "duration": "0s",
+      "trigger": { "count": 1 }
+    }
+  }],
+  "notificationChannels": ["$channel"]
+}
+JSON
+
+alert "Wildcard scheduled job failed" <<JSON
+{
+  "displayName": "Wildcard scheduled job failed",
+  "documentation": { "mimeType": "text/markdown",
+    "content": "Cloud Scheduler's call to a job (daily-progress-push or weekly-awards) failed or timed out. Logs: $logs" },
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "A Cloud Scheduler attempt failed",
+    "conditionMatchedLog": {
+      "filter": "resource.type=\"cloud_scheduler_job\" AND severity>=ERROR",
+      "labelExtractors": { "job": "EXTRACT(resource.labels.job_id)" }
+    }
+  }],
+  "alertStrategy": { "notificationRateLimit": { "period": "3600s" }, "autoClose": "1800s" },
+  "notificationChannels": ["$channel"]
+}
+JSON
+
+alert "Wildcard job logged an error" <<JSON
+{
+  "displayName": "Wildcard job logged an error",
+  "documentation": { "mimeType": "text/markdown",
+    "content": "The daily push or the weekly awards logged an ERROR (the job label says which). Logs: $logs" },
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "An ERROR from the daily push or weekly awards",
+    "conditionMatchedLog": {
+      "filter": "$api_logs AND severity>=ERROR AND jsonPayload.job=(\"daily-progress-push\" OR \"weekly-awards\")",
+      "labelExtractors": { "job": "EXTRACT(jsonPayload.job)" }
+    }
+  }],
+  "alertStrategy": { "notificationRateLimit": { "period": "3600s" }, "autoClose": "1800s" },
+  "notificationChannels": ["$channel"]
+}
+JSON
+
 echo
+echo "gcp-setup: alerts go to $alert_email."
 echo "gcp-setup: done. Send Claude this line (none of it is secret):"
 echo "GCP_PROJECT_ID=$project GCP_PROJECT_NUMBER=$number GCP_REGION=$region"

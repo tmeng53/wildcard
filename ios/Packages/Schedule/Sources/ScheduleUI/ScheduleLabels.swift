@@ -37,7 +37,7 @@ enum ScheduleLabels {
     static func plan(_ day: PlanDay) -> Text {
         switch day {
         case .rest: Text("休息", bundle: .module)
-        case .train(let activity?): activity.name
+        case .train(let activity?): activity.cardName
         case .train(nil): Text("训练", bundle: .module)
         }
     }

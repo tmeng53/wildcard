@@ -7,15 +7,15 @@ import OnboardingDomain
 import SportsUI
 import SwiftUI
 
-/// 一周练几天？, step 4: this week as a poster, each day a sport picked in the step before or
+/// 本周目标, step 4: this week as a poster, each day a sport picked in the step before or
 /// 休息. Tap a day, then what it is under the poster, and the next day is selected; days already
-/// over stay 休息. The character on the poster hops when a rest day becomes a training day.
+/// over are blank, neither training nor 休息, since the member wasn't here yet. The character on the poster hops when a rest day becomes a training day.
 struct WeekStep: View {
     let model: SignUpModel
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        StepPage(step: .week, title: Text("一周练几天？", bundle: .module), character: nil, onBack: model.back) {
+        StepPage(step: .week, title: Text("本周目标", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
                     WeekPoster(model: model, week: week)
@@ -58,14 +58,14 @@ private struct WeekPoster: View {
     private let weekNumberTop: Double = 15
     /// Where the rows start, under the week's number, and how wide they run.
     private let rowsTop: Double = 138
-    private let rowsWidth: Double = 180
+    private let rowsWidth: Double = 196
     private let rowHeight: Double = 38
     /// The day's name in front of its sport.
     private let dayLabelWidth: Double = 32
     /// The character in the poster's corner, clear of the strip.
     private let characterSize = CGSize(width: 92, height: 120)
     private let characterInset = CGSize(width: 30, height: 56)
-    /// Days that are 休息 fade back, so the training days read first.
+    /// Days that are 休息 or already over fade back, so the training days read first.
     private let restOpacity = 0.55
     /// The selected day's row: the ink over the card, faintly.
     private let selectedFill = 0.22
@@ -128,9 +128,16 @@ private struct WeekPoster: View {
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .frame(width: dayLabelWidth, alignment: .leading)
                 // The board sets the sport at 19 points, semibold: the action's size.
-                DayName(day: day)
-                    .typeStyle(TypeRamp.action)
-                    .lineLimit(1)
+                if week.isOpen(index) {
+                    DayName(day: day)
+                        .typeStyle(TypeRamp.action)
+                        .lineLimit(1)
+                } else {
+                    // A day gone before sign-up isn't a rest day, so it says nothing.
+                    Text(verbatim: "–")
+                        .typeStyle(TypeRamp.action)
+                        .accessibilityHidden(true)
+                }
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, Space.xs)
@@ -141,7 +148,7 @@ private struct WeekPoster: View {
                         .fill(Color(role: tone.onFill, in: theme).opacity(selectedFill))
                 }
             }
-            .opacity(day == .rest ? restOpacity : 1)
+            .opacity(day == .rest || !week.isOpen(index) ? restOpacity : 1)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
@@ -213,6 +220,7 @@ private struct WeekTotal: View {
 private struct DayChoices: View {
     let model: SignUpModel
     let week: WeekDraft
+    @State private var isChoosing = false
 
     var body: some View {
         FlowRow {
@@ -222,7 +230,29 @@ private struct DayChoices: View {
                 }
                 .accessibilityIdentifier("week.choice.\(Self.key(for: choice))")
             }
+            // A sport that wasn't picked as 常练: the shared picker has every one.
+            Button {
+                isChoosing = true
+            } label: {
+                Label {
+                    Text("更多", bundle: .module)
+                } icon: {
+                    Image(systemName: "plus")
+                }
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .accessibilityIdentifier("week.choice.more")
         }
+        .sheet(isPresented: $isChoosing) {
+            SportPicker(selected: selectedActivity, recent: model.sports.picked) { activity in
+                isChoosing = false
+                model.setDay(.train(activity))
+            }
+        }
+    }
+
+    private var selectedActivity: Activity {
+        if case .train(let activity?) = week.days[week.selected] { activity } else { .sport(.run) }
     }
 
     static func key(for day: PlanDay) -> String {
@@ -285,7 +315,7 @@ private struct DayName: View {
 
     var text: Text {
         switch day {
-        case .train(let activity?): activity.name
+        case .train(let activity?): activity.cardName
         case .train(nil): Text("训练", bundle: .module)
         case .rest: Text("休息", bundle: .module)
         }

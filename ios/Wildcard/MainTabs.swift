@@ -69,7 +69,8 @@ struct MainTabs: View {
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
                 CharacterEditorView(
-                    model: editor, context: .profile, onBack: { self.editor = nil },
+                    model: editor, context: .profile, issued: profile.overview?.joinedAt,
+                    onBack: { self.editor = nil },
                     onDone: { edited in
                         self.editor = nil
                         Task {
