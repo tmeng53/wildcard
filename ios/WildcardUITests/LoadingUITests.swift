@@ -33,8 +33,10 @@ final class LoadingUITests: XCTestCase {
         XCTAssertTrue(gym.waitForExistence(timeout: Self.wait), "the style guide never appeared")
         gym.tap()
         let group = app.descendants(matching: .any).matching(identifier: "styleguide.loading").firstMatch
-        for _ in 0..<20 where !(group.exists && group.isHittable) {
-            app.swipeUp()
+        // Swipe until the whole group is on screen, clear of the bottom edge.
+        let window = app.windows.firstMatch
+        for _ in 0..<20 where !(group.exists && group.frame.maxY <= window.frame.maxY - 60) {
+            app.swipeUp(velocity: .slow)
         }
         XCTAssertTrue(group.isHittable, "the style guide has no 三拍 group")
         Thread.sleep(forTimeInterval: 0.6)

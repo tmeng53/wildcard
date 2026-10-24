@@ -104,10 +104,10 @@ struct LoadingCover<Loader: View>: ViewModifier {
         content
             .overlay {
                 if gate.isShown {
+                    // One element saying it is loading, whatever the loader hides from VoiceOver.
                     loader
                         .transition(.opacity)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(Text("加载中", bundle: .module))
+                        .accessibilityRepresentation { Text("加载中", bundle: .module) }
                 }
             }
             .animation(.wildcard(Motion.fadeIn), value: gate.isShown)
