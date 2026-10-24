@@ -23,21 +23,8 @@ struct StringCatalogCoverageTests {
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
-    @Test func diceLinesHaveEnglish() throws {
-        let source = try String(
-            contentsOf: Self.sources.appendingPathComponent("DiceDisclaimerWriter.swift"), encoding: .utf8)
-        #expect(source.contains("今天是战略性休息"))
-        #expect(try Self.english(for: "今天是战略性休息") == "Today is a strategic rest day")
+    @Test func sampleSquadNameHasEnglish() throws {
         #expect(try Self.english(for: "周三不练腿俱乐部") != nil)
-    }
-
-    /// A dice line goes into the field as is, so in every language it must fit a 请假条.
-    @Test func everyDiceLineFitsADisclaimer() throws {
-        for line in DiceDisclaimerWriter.lines {
-            #expect(line.count <= Disclaimer.maxLength, "\(line)")
-            let english = try #require(try Self.english(for: line), "\(line) has no English")
-            #expect(english.count <= Disclaimer.maxLength, "\(english) is \(english.count) characters")
-        }
     }
 
     /// The care line's copy is the approved wording, and points at 988 and 911.

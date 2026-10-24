@@ -1,17 +1,12 @@
 import CheckInDomain
 import Contracts
-import DesignSystemUI
 import Foundation
+import SportsUI
+import Synchronization
 
-/// The dice: ready-made 请假条 lines, from the spec's copy table. They stand in whenever the
-/// AI writer is blocked, offline or missing, so the member never sees an error.
+/// The dice: ready-made 请假条 lines. They stand in whenever the AI writer is blocked, offline or
+/// missing, so the member never sees an error. The lines are the catalog's (`DiceLines`).
 public struct DiceDisclaimerWriter: DisclaimerWriter {
-    /// String Catalog keys; the Chinese line is the key.
-    static let lines = [
-        "昨天的腿还没回来", "加班到十点，算脑力训练", "下雨，场地条件不允许", "在 Costco 走了两小时，算有氧",
-        "deadline 当前，先活下来", "happy hour 有约，社交也是训练", "身体说不，我尊重它", "今天是战略性休息",
-    ]
-
     public init() {}
 
     /// The dice have no styles: every style rolls the same lines.
@@ -19,16 +14,35 @@ public struct DiceDisclaimerWriter: DisclaimerWriter {
         .drafts(Self.rollDefault(3))
     }
 
-    /// `count` different lines, localized, from the system's random source.
+    /// `count` different lines, in the app's language, from the system's random source.
     static func rollDefault(_ count: Int) -> [String] {
         var generator = SystemRandomNumberGenerator()
-        return roll(count, using: &generator)
+        return roll(count, of: DiceLines.shared.lines, using: &generator)
     }
 
-    /// `count` different lines, localized.
-    static func roll(_ count: Int, using generator: inout some RandomNumberGenerator) -> [String] {
-        lines.shuffled(using: &generator).prefix(count).map {
-            Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil)
-        }
+    /// Every line, in the app's language, in a random order.
+    static func rollAll() -> [String] { rollDefault(DiceLines.shared.lines.count) }
+
+    /// `count` different lines of `lines`, in the app's language.
+    static func roll(
+        _ count: Int, of lines: [CatalogNames], using generator: inout some RandomNumberGenerator
+    ) -> [String] {
+        lines.shuffled(using: &generator).prefix(count).map(\.localized)
     }
+}
+
+/// The 请假条 dice lines this app rolls now: the catalog's, which the app sets at launch (the
+/// copy it keeps, else the one it ships with) and again whenever a newer catalog arrives. Any
+/// thread may read them.
+public final class DiceLines: Sendable {
+    /// The app's lines.
+    public static let shared = DiceLines()
+
+    private let current = Mutex<[CatalogNames]>([])
+
+    init() {}
+
+    public var lines: [CatalogNames] { current.withLock { $0 } }
+
+    public func show(_ lines: [CatalogNames]) { current.withLock { $0 = lines } }
 }

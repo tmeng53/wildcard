@@ -63,7 +63,7 @@ final class AppModel {
         catalog = CatalogClient(
             api: api, directory: URL.applicationSupportDirectory.appending(path: "Catalog", directoryHint: .isDirectory)
         )
-        SportList.shared.show(catalog.keptSports())
+        Self.show(catalog.kept())
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -141,10 +141,17 @@ final class AppModel {
         await openHome()
     }
 
-    /// Reads the catalog again, as the app comes back to the front: a sport added on the server
-    /// shows without an app update.
+    /// Reads the catalog again, as the app comes back to the front: a sport or dice line added on
+    /// the server shows without an app update.
     func refreshCatalog() async {
-        if let sports = await catalog.refreshSports() { SportList.shared.show(sports) }
+        if let fresh = await catalog.refresh() { Self.show(fresh) }
+    }
+
+    /// Hands each part of the catalog to the screens that read it. Static, since `init` calls it
+    /// before every property is set.
+    private static func show(_ catalog: AppCatalog) {
+        SportList.shared.show(catalog.sports)
+        DiceLines.shared.show(catalog.diceLines)
     }
 
     func signOut() async {
