@@ -29,6 +29,7 @@ import type {
   VerifyToken,
 } from './ports.js';
 import { problemResponse } from './problem.js';
+import { requestTrace } from './request-trace.js';
 import { aiConsent } from './routes/ai-consent.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
@@ -111,6 +112,8 @@ export function createApp(deps: AppDependencies) {
     bearerFormat: 'JWT',
     description: 'A Supabase Auth access token.',
   });
+  // First, so everything a request logs carries its trace, and every response its id.
+  app.use(requestTrace());
 
   app.route('/', health(deps));
   app.route('/', me(deps));
@@ -162,11 +165,11 @@ export function createApp(deps: AppDependencies) {
     // Drafts being off is how the server runs until it has a key, which main.ts logs once.
     const expected = error instanceof DisclaimerWriterOffError;
     const response = problemResponse(error);
+    // The route, not the path, so no invite code or id lands in the log.
     if (!expected && (!isAppError(error) || HTTP_STATUS[error.status] >= 500)) {
-      deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
+      deps.log.error('request failed', { method: c.req.method, route: routePath(c), error });
     } else if (isAppError(error) && response.status < 500) {
-      // A refusal is the client's to fix, but it shows which app builds fail and why. The route,
-      // not the path, so no invite code or id lands in the log.
+      // A refusal is the client's to fix, but it shows which app builds fail and why.
       deps.log.warn('request refused', {
         method: c.req.method,
         route: routePath(c),

@@ -69,7 +69,8 @@ struct MainTabs: View {
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
                 CharacterEditorView(
-                    model: editor, context: .profile, onBack: { self.editor = nil },
+                    model: editor, context: .profile, issued: profile.overview?.joinedAt,
+                    onBack: { self.editor = nil },
                     onDone: { edited in
                         self.editor = nil
                         Task {
@@ -106,7 +107,7 @@ struct MainTabs: View {
     /// squad drops onto it.
     private func land(on scene: SceneTheme, coveredAt: Date) {
         selection = .today
-        today.dropIn(on: scene, coveredAt: coveredAt)
+        Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
     /// Opens the editor on the member's own character.

@@ -137,8 +137,9 @@ const restDays = (days: readonly PlanDay[]) => days.filter((day) => day.kind ===
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
  * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
  * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
- * days before today stay as they were, today stays a training or a rest day (its sport may
- * change), and the number of rest days stays the same. Days before the member joined weren't
+ * days before today stay as they were, a training today stays a training day (its sport may
+ * change), and the number of rest days stays the same, except that a rest today may become a
+ * training day, one rest day fewer. Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
  * is still on the default plan: that is where they first make their plan.
  */
@@ -170,10 +171,38 @@ export function checkPlanChange({
     const after = next[index];
     const unchanged =
       date < today ? isDeepStrictEqual(before, after) : before?.kind === after?.kind;
-    if (!unchanged) throw new PlanDayStartedError(date);
+    if (!unchanged && !(date === today && before?.kind === 'rest')) {
+      throw new PlanDayStartedError(date);
+    }
   }
+  const todayIndex = Math.round((Date.parse(today) - Date.parse(thisWeek)) / DAY);
+  const tookUpToday =
+    current.days[todayIndex]?.kind === 'rest' && next[todayIndex]?.kind === 'train';
   const kept = restDays(current.days.slice(first));
-  if (restDays(next.slice(first)) !== kept) throw new RestDaysFixedError(kept);
+  const rests = restDays(next.slice(first));
+  if (rests !== kept && !(tookUpToday && rests === kept - 1)) throw new RestDaysFixedError(kept);
+}
+
+/**
+ * The plan with `day` a training day of `training`'s sport when it was a rest day: a 练了 on a
+ * planned rest day makes it a training day. Undefined when the day was already a training day.
+ */
+export function trainedOnRestDay({
+  plan,
+  day,
+  training,
+}: {
+  readonly plan: WeeklyPlan;
+  readonly day: LocalDay;
+  readonly training: { readonly sport: SportKey; readonly customSport?: string | undefined };
+}): PlanDays | undefined {
+  const index = Math.round((Date.parse(day) - Date.parse(plan.weekStart)) / DAY);
+  if (plan.days[index]?.kind !== 'rest') return undefined;
+  const trained: PlanDay =
+    training.customSport === undefined
+      ? { kind: 'train', sport: training.sport }
+      : { kind: 'train', sport: training.sport, customSport: training.customSport };
+  return plan.days.map((planned, at) => (at === index ? trained : planned));
 }
 
 /**

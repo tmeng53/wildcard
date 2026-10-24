@@ -13,7 +13,7 @@ struct StageSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 9, title: Text("小人舞台和气泡", bundle: .module))
-            CharacterStage {
+            CharacterStage(issued: .now) {
                 VStack(spacing: Space.xxs) {
                     if isTalking {
                         SpeechBubble(Text("冲冲冲！", bundle: .module))
@@ -21,16 +21,21 @@ struct StageSection: View {
                     }
                     Image(systemName: "figure.arms.open")
                         .font(.system(size: Sizing.characterBust * 1.4))
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                 }
                 .frame(maxHeight: .infinity, alignment: .bottom)
-                .padding(.bottom, Space.xl)
+                .padding(.bottom, CharacterStage<EmptyView, EmptyView>.stubHeight)
                 .overlay(alignment: .topTrailing) {
                     HeaderButton(Text("随机换一个", bundle: .module), systemImage: "dice", on: .scene) {
                         withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { isTalking.toggle() }
                     }
-                    .padding(Space.xs)
+                    .padding(.top, Space.xl)
+                    .padding(.trailing, Space.xs)
                 }
+            } stub: {
+                Text("小林", bundle: .module)
+                    .typeStyle(TypeRamp.headline)
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
             }
             .frame(height: 300)
             GuideGroup(Text("点人看状态：整段显示", bundle: .module)) {

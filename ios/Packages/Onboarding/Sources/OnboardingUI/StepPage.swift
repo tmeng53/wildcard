@@ -23,7 +23,7 @@ struct StepPage<Content: View, Actions: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            StepHeader(step: step.number ?? 1, of: SignUpStep.counted.count, onBack: onBack)
+            StepHeader(step: step.number, of: SignUpStep.counted.count, onBack: onBack)
                 .padding(.horizontal, Space.pageMargin)
                 .padding(.top, Space.xs)
             ScrollView {

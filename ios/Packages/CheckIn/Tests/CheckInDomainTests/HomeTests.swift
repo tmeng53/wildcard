@@ -35,6 +35,19 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(home.suggestedActivity(on: tuesday) == .sport(.yoga))
 }
 
+@Test func recentSportsAreTheLoggedOnesNewestFirstThenThePlannedOnesWithoutRepeats() throws {
+    let home = sampleHome(checkIns: [
+        try checkIn(1, by: myID, .trained(Training(activity: .sport(.tennis)))),
+        try checkIn(2, by: myID, .trained(Training(activity: .sport(.swim)))),
+        try checkIn(3, by: mate, .trained(Training(activity: .sport(.climb)))),
+    ])
+    let recent = home.recentActivities()
+    #expect(Array(recent.prefix(2)) == [.sport(.swim), .sport(.tennis)])
+    #expect(Set(recent).count == recent.count)
+    #expect(!recent.contains(.sport(.climb)))
+    #expect(home.recentActivities(limit: 1) == [.sport(.swim)])
+}
+
 @Test func aHomeRolledIntoANewWeekStartsTheWeeksFromNothing() {
     var trained = sampleToday()
     trained.members[1] = entry(myID, .trained, since: 1_792_512_000_000)
@@ -80,6 +93,8 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     // Wednesday and Sunday are rest days in the plan; a 练了 beats the 请假条 on Tuesday.
     #expect(week.days == [.trained, .trained, .restDay, .open, .open, .open, .restDay])
     #expect(week.today == 1)
+    // A day shows what I trained on it (Monday's swim, Tuesday's run over the plan's yoga), else the plan's.
+    #expect(week.activities == [.sport(.swim), .sport(.run), nil, nil, nil, nil, nil])
     // Two swims on Monday are one day of swimming.
     #expect(week.trained.map(\.activity) == [.sport(.swim), .sport(.run)])
     #expect(week.trained.map(\.days) == [2, 1])

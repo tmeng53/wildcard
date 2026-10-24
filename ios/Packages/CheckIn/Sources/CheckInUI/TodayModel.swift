@@ -139,6 +139,7 @@ public final class TodayModel {
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
+    var recentActivities: [Activity] { store.recentActivities }
 
     /// Day or night on the scene, on the member's own clock.
     var phase: DayPhase {
