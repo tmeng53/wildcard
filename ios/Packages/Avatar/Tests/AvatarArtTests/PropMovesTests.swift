@@ -22,6 +22,8 @@ func everyPropHasItsMove(prop: String) throws {
         let bound = try figure.bind(move)
         #expect(!move.loops)
         #expect(move.name == prop)
+        // Its own move turns the prop itself, so a prop that keeps level is left to it.
+        #expect(move.holds == prop)
         #expect(
             nearlyEqual(shown(figure.pose(bound, at: move.duration)), shown(figure.restPose)), "\(prop) ends at rest")
         expectOnCanvas(figure, bound, for: move.duration, "\(prop) \(move.name)")
@@ -76,4 +78,11 @@ func theGripIsTheWearersHand(look: Outfit, fill: String, stroke: String?) throws
     if let stroke { #expect(hand.stroke?.color.hex == stroke) }
     #expect(grip.shapes.first?.fill == hand.fill)
     #expect(grip.shapes.allSatisfy { $0.stroke?.color == hand.stroke?.color })
+}
+
+/// Every held prop is drawn in a fist: a missing grip would leave the prop floating by the hand.
+@Test(arguments: heldProps)
+func everyPropIsHeldInAFist(prop: String) throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "prop": prop]))
+    #expect(try #require(figure.part("gripR").art.first).shapes.isEmpty == false)
 }

@@ -274,7 +274,6 @@ public struct Figure: Hashable, Sendable {
     }
 }
 
-/// `{"version": 1, "level": "armR"}`: the arm a variant keeps level in.
 /// A clip linked to a figure's parts.
 public struct BoundClip: Sendable {
     typealias Track = (part: Int, track: Clip.Track)

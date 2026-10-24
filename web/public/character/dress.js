@@ -4,7 +4,8 @@
 //
 // `wardrobe` is the art as scripts/generate.mjs bundles it: the rig's `parts` and `defaults`, the
 // `variants` of each slot, every layer's `art` by "slot/variant/layer" (and "base/layer"), and each
-// recolorable variant's `tones` by "slot/variant". A slot whose variant this art doesn't have wears
+// recolorable variant's `tones` by "slot/variant", and the arm each variant that keeps level hangs
+// from (`holds`, from its hold.json). A slot whose variant this art doesn't have wears
 // the slot's default, as in the app.
 
 // A shade keeps its relation to the base color: each channel scales by shade/base.
@@ -62,16 +63,35 @@ export function dress(wardrobe, variants, colors = {}, shoes = []) {
 }
 
 // A layer held in a hand, drawn in the rig's skin, takes the colors of that hand: the last
-// shape of the hand's body art, as in the app.
+// shape of the hand's body art with both a fill and an outline, as in the app.
+const attribute = (tag, name) => tag.match(new RegExp(`\\s${name}="(#[0-9A-Fa-f]{6})"`))?.[1];
 function held(svg, skin, body) {
-  const shapes = [
-    ...(body ?? '').matchAll(/fill="(#[0-9A-Fa-f]{6})"[^>]*stroke="(#[0-9A-Fa-f]{6})"/g),
-  ];
+  const shapes = [...(body ?? '').matchAll(/<[a-z]+\b[^>]*>/g)]
+    .map(([tag]) => [attribute(tag, 'fill'), attribute(tag, 'stroke')])
+    .filter(([fill, stroke]) => fill && stroke);
   if (!skin || shapes.length === 0) return svg;
-  const [, fill, stroke] = shapes[shapes.length - 1];
+  const [fill, stroke] = shapes[shapes.length - 1];
   return replaceAllCaseless(
     replaceAllCaseless(replaceAllCaseless(svg, skin.stroke, '\u0000'), skin.fill, fill),
     '\u0000',
     stroke,
   );
+}
+
+/**
+ * The parts of `variants`' look that keep level in a hand, as indices into `wardrobe.parts`: the
+ * parts hanging from the arm a worn variant's hold.json names that draw that variant's slot, as
+ * the app's `Figure.level` finds them. The site never plays a prop's own move, so they always
+ * hang level.
+ */
+export function leveled(wardrobe, variants) {
+  const look = { ...wardrobe.defaults, ...variants };
+  for (const slot of Object.keys(look).sort()) {
+    const arm = wardrobe.holds?.[`${slot}/${look[slot]}`];
+    if (arm === undefined) continue;
+    return wardrobe.parts.flatMap((part, i) =>
+      part.parent === arm && (part.layers ?? []).some((layer) => layer.slot === slot) ? [i] : [],
+    );
+  }
+  return [];
 }

@@ -34,6 +34,7 @@ const wardrobe = {
   variants: {},
   art: {},
   tones: {},
+  holds: {},
 };
 for (const file of list(join(art, 'art', 'base')).filter((f) => f.endsWith('.svg')))
   wardrobe.art[`base/${basename(file, '.svg')}`] = svgInner(join(art, 'art', 'base', file));
@@ -47,6 +48,8 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
       const { base, shades } = json(join(dir, 'tones.json'));
       wardrobe.tones[`${slot}/${variant}`] = { base, shades: shades ?? [] };
     }
+    if (existsSync(join(dir, 'hold.json')))
+      wardrobe.holds[`${slot}/${variant}`] = json(join(dir, 'hold.json')).level;
   }
 }
 

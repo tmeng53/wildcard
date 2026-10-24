@@ -66,6 +66,7 @@ extension Figure {
     }
 }
 
+/// `{"version": 1, "level": "armR"}`: the arm a variant keeps level in.
 private struct HoldFile: Decodable {
     static let shape = JSONShape.object(["version": .value, "level": .value])
 

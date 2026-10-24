@@ -120,9 +120,21 @@
 
   const format = (m) => m.map((x) => x.toFixed(3)).join(' ');
 
+  // A prop that keeps level turns back by everything that carries it, as the app's Figure does.
+  function leveled(poses, level) {
+    if (!level?.length) return poses;
+    const out = poses.map((q) => ({ ...q }));
+    for (const i of level) {
+      let turned = 0;
+      for (let p = PARTS[i].parent; p; p = PARTS[INDEX[p]].parent) turned += out[INDEX[p]].rotation;
+      out[i].rotation = -turned;
+    }
+    return out;
+  }
+
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
-    const { matrices, opacities } = layout(poses);
+    const { matrices, opacities } = layout(leveled(poses, member.level));
     let svg = '';
     PARTS.forEach((part, i) => {
       const art = member.art[i];
