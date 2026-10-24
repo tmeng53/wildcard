@@ -35,7 +35,7 @@ public struct Score: View {
     private let onInk: Bool
 
     /// Leave out `goal` for a count on its own (一共练了 46). `onInk` sets it white on a `bgInk`
-    /// surface, its goal in muted ink.
+    /// surface, its goal in `fgOnInkMuted`.
     public init(count: Int, goal: Int? = nil, size: Size, onInk: Bool = false) {
         self.count = count
         self.goal = goal
@@ -52,7 +52,7 @@ public struct Score: View {
             if let goal {
                 Text(verbatim: "/\(goal)")
                     .typeStyle(TypeRamp.denominator(of: size.style))
-                    .foregroundStyle(Color(role: onInk ? .fgMuted : .fgSubtle, in: theme))
+                    .foregroundStyle(Color(role: onInk ? .fgOnInkMuted : .fgSubtle, in: theme))
             }
         }
         .monospacedDigit()
