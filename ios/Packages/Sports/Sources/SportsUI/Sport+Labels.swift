@@ -15,7 +15,8 @@ extension Sport {
 
     /// The name as a string, in the app's language.
     public var localizedName: String {
-        entry?.names.localized ?? Bundle.module.inAppLanguage.localizedString(forKey: "sport.unknown", value: nil, table: nil)
+        entry?.names.localized
+            ?? Bundle.module.inAppLanguage.localizedString(forKey: "sport.unknown", value: nil, table: nil)
     }
 
     /// The name on a card or poster row, where a long one would clip: the list's short name, else
