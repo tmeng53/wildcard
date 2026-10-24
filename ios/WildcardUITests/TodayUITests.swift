@@ -323,23 +323,22 @@ final class TodayUITests: XCTestCase {
 }
 
 extension TodayUITests {
-    /// The 练了 page's sport starts on the last one used; minutes go in 其他's field as any
-    /// other number, then one tap on a usual length.
+    /// The 练了 page's sport starts on the last one used; 其他 opens a ruler for any other number
+    /// of minutes, which a swipe moves, then one tap on a usual length closes it.
     fileprivate func checkSportAndPickMinutes(in app: XCUIApplication) {
         XCTAssertTrue(app.buttons["compose.sport.run"].isSelected, "the last sport used (跑步) isn't picked")
         app.buttons["compose.minutes.other"].tap()
-        let minutes = app.descendants(matching: .any).matching(identifier: "compose.minutes.field").firstMatch
-        XCTAssertTrue(minutes.waitForExistence(timeout: Self.wait), "其他 didn't open the minutes field")
-        minutes.tap()
-        minutes.typeText("75")
+        let ruler = app.descendants(matching: .any).matching(identifier: "compose.minutes.ruler").firstMatch
+        XCTAssertTrue(ruler.waitForExistence(timeout: Self.wait), "其他 didn't open the minutes ruler")
+        XCTAssertEqual(ruler.value as? String, "60", "the ruler doesn't start on 60 minutes")
+        ruler.swipeLeft()
         settle()
+        XCTAssertNotEqual(ruler.value as? String, "60", "swiping the ruler didn't change the minutes")
         keepScreenshot(named: "15-compose-minutes-other")
-        let keyboard = app.keyboards.firstMatch
-        XCTAssertTrue(keyboard.exists, "no keyboard for the minutes")
-        XCTAssertLessThanOrEqual(
-            minutes.frame.maxY, keyboard.frame.minY, "the minutes field is under the keyboard: \(minutes.frame)")
+        let window = app.windows.firstMatch.frame
+        XCTAssertTrue(window.contains(ruler.frame), "the minutes ruler is cut off: \(ruler.frame)")
         app.buttons["compose.minutes.45"].tap()
         XCTAssertTrue(app.buttons["compose.minutes.45"].isSelected, "45 minutes isn't picked")
-        XCTAssertTrue(minutes.waitForNonExistence(timeout: Self.wait), "the minutes field stayed open after picking 45")
+        XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "the ruler stayed open after picking 45")
     }
 }

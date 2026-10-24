@@ -95,6 +95,21 @@ public struct Home: Hashable, Sendable {
         return day.weekStart == plan.weekStart && plan.days.indices.contains(offset) && plan.days[offset] == .rest
     }
 
+    /// 常用运动: the sports the member logged most recently, newest first, then this week's
+    /// planned ones (which start as the sports they chose at sign-up), at most `limit`.
+    public func recentActivities(limit: Int = 6) -> [Activity] {
+        let logged: [Activity] = checkIns.reversed().compactMap { checkIn in
+            guard checkIn.member == member, case .trained(let training) = checkIn.entry else { return nil }
+            return training.activity
+        }
+        let planned: [Activity] = plan.days.compactMap { day in
+            if case .train(let activity?) = day { activity } else { nil }
+        }
+        var seen: [Activity] = []
+        for activity in logged + planned where !seen.contains(activity) { seen.append(activity) }
+        return Array(seen.prefix(limit))
+    }
+
     /// The sport a new 练了 starts with: today's in the plan, else the member's latest 练了.
     public func suggestedActivity(on day: LocalDay) -> Activity? {
         let offset = day.weekday - 1

@@ -100,6 +100,9 @@ public final class TodayStore {
         return home.suggestedActivity(on: day)
     }
 
+    /// 常用运动, for the sport picker.
+    public var recentActivities: [Activity] { home?.recentActivities() ?? [] }
+
     // MARK: - Loading
 
     /// Shows the copy kept on the device at once, then loads the server's and sends any post
