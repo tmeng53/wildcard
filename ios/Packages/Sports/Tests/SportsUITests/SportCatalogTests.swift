@@ -35,7 +35,7 @@ struct SportCatalogTests {
         #expect(names.localized(in: ["fr"]) == "羽毛球")
     }
 
-    @MainActor @Test func theAppsListChangesWhenANewerOneArrives() {
+    @Test func theAppsListChangesWhenANewerOneArrives() {
         let list = SportList.shared
         let catalog = SportCatalog(
             categories: [
@@ -49,7 +49,7 @@ struct SportCatalogTests {
                                 simplifiedChinese: "板式网球", english: "Padel", traditionalChinese: "板式網球"),
                             icon: "figure.tennis", offered: true, category: "racket")
                     ])
-            ], signUpCommon: [], signUpMore: [], checkInQuick: ["padel"])
+            ], signUpCommon: [], checkInQuick: ["padel"])
         list.show(catalog)
         #expect(list.catalog.checkInQuick == ["padel"])
         list.show(.empty)

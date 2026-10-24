@@ -83,11 +83,13 @@ private var thisWeek: LocalDay {
     #expect(week.squad == nil)
 }
 
-@Test func thisWeeksFoodGoalsCantChange() async throws {
+@Test func thisWeeksFoodGoalsChangeAndLastWeeksDont() async throws {
     let (_, backend) = try await scheduleMember(try LocalStack())
 
+    try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek)
+    #expect(try await backend.week(starting: try thisWeek).fuel == [.suggested(.breakfast)])
     await #expect(throws: ScheduleError.weekOver) {
-        try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek)
+        try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek.adding(days: -7))
     }
 }
 
@@ -118,7 +120,6 @@ private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn 
 @Test func eachRefusalMeansSomethingOnTheSchedule() {
     #expect(ScheduleError(.refused(.weekClosed)) == .weekOver)
     #expect(ScheduleError(.refused(.planDayStarted)) == .dayStarted)
-    #expect(ScheduleError(.refused(.restDaysFixed)) == .restDaysFixed)
     #expect(ScheduleError(.refused(.squadFull)) == .refused)
     #expect(ScheduleError(.unreadableResponse) == .refused)
     #expect(ScheduleError(.unavailable) == .notSent)

@@ -14,6 +14,8 @@ export interface LocalizedNames {
 export interface ListedSport {
   readonly id: SportId;
   readonly names: LocalizedNames;
+  /** The name on a card or poster row, for a sport whose name is too long there. */
+  readonly shortNames?: LocalizedNames;
   /** An SF Symbol name. */
   readonly icon: string;
   /** False for a sport the pickers no longer offer; check-ins that name it still show it. */
@@ -28,7 +30,7 @@ export interface SportCategory {
 }
 
 /** The short lists some screens show before the whole list. */
-export const PICK_LISTS = ['signUpCommon', 'signUpMore', 'checkInQuick'] as const;
+export const PICK_LISTS = ['signUpCommon', 'checkInQuick'] as const;
 export type PickList = (typeof PICK_LISTS)[number];
 
 export interface SportCatalog {

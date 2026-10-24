@@ -11,13 +11,12 @@ extension SportCatalog {
                     entries: category.sports.compactMap { sport in
                         Sport(rawValue: sport.id).map {
                             Entry(
-                                sport: $0, names: Names(sport.names), icon: sport.icon, offered: sport.offered,
-                                category: category.id)
+                                sport: $0, names: Names(sport.names), shortNames: sport.shortNames.map(Names.init),
+                                icon: sport.icon, offered: sport.offered, category: category.id)
                         }
                     })
             },
             signUpCommon: wire.picks.signUpCommon.compactMap(Sport.init(rawValue:)),
-            signUpMore: wire.picks.signUpMore.compactMap(Sport.init(rawValue:)),
             checkInQuick: wire.picks.checkInQuick.compactMap(Sport.init(rawValue:)))
     }
 }

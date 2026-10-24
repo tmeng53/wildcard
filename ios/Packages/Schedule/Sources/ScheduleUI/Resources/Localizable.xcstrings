@@ -503,16 +503,6 @@
         }
       }
     },
-    "这周的休息天数定好了，只能挪": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This week's rest days are set. You can move them"
-          }
-        }
-      }
-    },
     "饮食": {
       "localizations": {
         "en": {

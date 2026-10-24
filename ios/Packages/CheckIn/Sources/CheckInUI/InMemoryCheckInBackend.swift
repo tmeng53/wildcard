@@ -68,7 +68,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                         today: counts(of: members),
                         myWeek: MyWeek(
                             firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
-                            week: WeekCount(trainedDays: earlier.count, plannedDays: 5), lifetimeTrainedDays: 40),
+                            week: WeekCount(trainedDays: earlier.count, plannedDays: 5)),
                         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
             },

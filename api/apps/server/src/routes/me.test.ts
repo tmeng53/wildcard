@@ -111,6 +111,9 @@ const problem = (reason: string, detail: string) => ({
   reason,
   errorStatus: 'UNAUTHENTICATED',
 });
+/** A moment as the API sends one: an ISO 8601 time in UTC. */
+const anInstant: unknown = expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+
 const invalid = problem(
   'AUTH_TOKEN_INVALID',
   'The sign-in has expired or is not valid. Sign in again.',
@@ -194,14 +197,24 @@ describe('GET /me', () => {
 describe('PUT /me/profile', () => {
   it('creates the profile on the first save, and GET /me returns it', async () => {
     const { token, userId } = await signUp();
-    const profile = { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null };
+    const profile = {
+      version: 1,
+      timeZone: 'America/Los_Angeles',
+      catchphrase: null,
+      jerseyNumber: null,
+    };
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
       {
         version: 1,
         userId,
-        profile: { timeZone: 'America/Los_Angeles', catchphrase: null },
+        profile: {
+          timeZone: 'America/Los_Angeles',
+          catchphrase: null,
+          jerseyNumber: null,
+          joinedAt: anInstant,
+        },
       },
     ]);
   });
@@ -209,7 +222,12 @@ describe('PUT /me/profile', () => {
   it('replaces the profile on a later save, and a repeat changes nothing', async () => {
     const { token, userId } = await signUp();
     await putProfile(token, { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null });
-    const moved = { version: 1, timeZone: 'America/Toronto', catchphrase: null };
+    const moved = {
+      version: 1,
+      timeZone: 'America/Toronto',
+      catchphrase: null,
+      jerseyNumber: null,
+    };
     expect(await putProfile(token, moved)).toStrictEqual([200, moved]);
     expect(await putProfile(token, moved)).toStrictEqual([200, moved]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
@@ -217,9 +235,25 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
-        profile: { timeZone: 'America/Toronto', catchphrase: null },
+        profile: {
+          timeZone: 'America/Toronto',
+          catchphrase: null,
+          jerseyNumber: null,
+          joinedAt: anInstant,
+        },
       },
     ]);
+  });
+
+  it('keeps the day the member joined when they save again', async () => {
+    const { token } = await signUp();
+    await putProfile(token, { version: 1, timeZone: 'America/Los_Angeles', catchphrase: null });
+    const [, first] = await getMe({ authorization: `Bearer ${token}` });
+    await putProfile(token, { version: 1, timeZone: 'America/Toronto', catchphrase: null });
+    const [, later] = await getMe({ authorization: `Bearer ${token}` });
+    const joinedAt = (body: unknown) =>
+      z.object({ profile: z.object({ joinedAt: z.string() }) }).parse(body).profile.joinedAt;
+    expect(joinedAt(later)).toBe(joinedAt(first));
   });
 
   it('saves a catchphrase trimmed, counting an emoji as one character, and clears it with null', async () => {
@@ -229,24 +263,32 @@ describe('PUT /me/profile', () => {
     const shout = '今天也冲冲冲的一天👍🏽';
     expect(
       await putProfile(token, { version: 1, timeZone: zone, catchphrase: `  ${shout}\n` }),
-    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: shout }]);
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: shout, jerseyNumber: null }]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: zone, catchphrase: shout } },
+      {
+        version: 1,
+        userId,
+        profile: { timeZone: zone, catchphrase: shout, jerseyNumber: null, joinedAt: anInstant },
+      },
     ]);
     // The body is the whole profile, so leaving the catchphrase out clears it too.
     await putProfile(token, { version: 1, timeZone: zone, catchphrase: shout });
     expect(await putProfile(token, { version: 1, timeZone: zone })).toStrictEqual([
       200,
-      { version: 1, timeZone: zone, catchphrase: null },
+      { version: 1, timeZone: zone, catchphrase: null, jerseyNumber: null },
     ]);
     await putProfile(token, { version: 1, timeZone: zone, catchphrase: shout });
     expect(
       await putProfile(token, { version: 1, timeZone: zone, catchphrase: null }),
-    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: null }]);
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: null, jerseyNumber: null }]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: zone, catchphrase: null } },
+      {
+        version: 1,
+        userId,
+        profile: { timeZone: zone, catchphrase: null, jerseyNumber: null, joinedAt: anInstant },
+      },
     ]);
   });
 
@@ -274,7 +316,7 @@ describe('PUT /me/profile', () => {
   /** A look as the character editor makes one: a cat with a hoodie, a swatch and a persona. */
   const look = {
     persona: 'deadpan',
-    variants: { body: 'tuxedo', top: 'hoodie', prop: 'racket' },
+    variants: { body: 'tuxedo', top: 'warmup-hoodie', prop: 'racket' },
     colors: { top: '#2D5BA0' },
   };
 
@@ -314,7 +356,13 @@ describe('PUT /me/profile', () => {
     const zone = 'America/Los_Angeles';
     // 12 characters, an emoji with a skin tone among them.
     const nickname = '早八跑团的小周同学👍🏽冲';
-    const saved = { version: 1, timeZone: zone, catchphrase: null, character: { nickname, look } };
+    const saved = {
+      version: 1,
+      timeZone: zone,
+      catchphrase: null,
+      character: { nickname, look },
+      jerseyNumber: null,
+    };
     expect(
       await putProfile(token, { ...saved, character: { nickname: ` ${nickname}\n`, look } }),
     ).toStrictEqual([200, saved]);
@@ -323,7 +371,13 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
-        profile: { timeZone: zone, catchphrase: null, character: { nickname, look } },
+        profile: {
+          timeZone: zone,
+          catchphrase: null,
+          character: { nickname, look },
+          jerseyNumber: null,
+          joinedAt: anInstant,
+        },
       },
     ]);
     // A new look in place of the old one: slots and colors it leaves out are gone.
@@ -334,11 +388,15 @@ describe('PUT /me/profile', () => {
     // The body is the whole profile, so leaving the character out clears it.
     expect(await putProfile(token, { version: 1, timeZone: zone })).toStrictEqual([
       200,
-      { version: 1, timeZone: zone, catchphrase: null },
+      { version: 1, timeZone: zone, catchphrase: null, jerseyNumber: null },
     ]);
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: { timeZone: zone, catchphrase: null } },
+      {
+        version: 1,
+        userId,
+        profile: { timeZone: zone, catchphrase: null, jerseyNumber: null, joinedAt: anInstant },
+      },
     ]);
   });
 
@@ -354,7 +412,10 @@ describe('PUT /me/profile', () => {
     };
     expect(
       await putProfile(token, { version: 1, timeZone: 'UTC', catchphrase: null, character }),
-    ).toStrictEqual([200, { version: 1, timeZone: 'UTC', catchphrase: null, character }]);
+    ).toStrictEqual([
+      200,
+      { version: 1, timeZone: 'UTC', catchphrase: null, character, jerseyNumber: null },
+    ]);
   });
 
   it.each([
@@ -365,7 +426,10 @@ describe('PUT /me/profile', () => {
     ['a nickname with a link', { nickname: '看abc.com', look }],
     ['no nickname', { look }],
     ['no look', { nickname: '小周' }],
-    ['a look with no body', { nickname: '小周', look: { ...look, variants: { top: 'hoodie' } } }],
+    [
+      'a look with no body',
+      { nickname: '小周', look: { ...look, variants: { top: 'warmup-hoodie' } } },
+    ],
     ['a look with no persona', { nickname: '小周', look: { variants: look.variants, colors: {} } }],
     [
       'a color for a slot it doesn’t wear',
@@ -437,8 +501,58 @@ describe('PUT /me/profile', () => {
     ['with digits in its first part', 'EST5EDT'],
   ])('accepts a zone iOS may report %s', async (_case, timeZone) => {
     const { token } = await signUp();
-    const profile = { version: 1, timeZone, catchphrase: null };
+    const profile = { version: 1, timeZone, catchphrase: null, jerseyNumber: null };
     expect(await putProfile(token, profile)).toStrictEqual([200, profile]);
+  });
+
+  it('saves the player card’s number, 0 to 99, keeps it when a save leaves it out, and logs it', async () => {
+    const { token, userId } = await signUp();
+    const zone = 'America/Los_Angeles';
+    const seven = { version: 1, timeZone: zone, catchphrase: null, jerseyNumber: 7 };
+    expect(await putProfile(token, seven)).toStrictEqual([200, seven]);
+    // An app from before the number leaves it out, and its save keeps the member's pick.
+    expect(
+      await putProfile(token, { version: 1, timeZone: zone, catchphrase: '冲' }),
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: '冲', jerseyNumber: 7 }]);
+    const [, me] = await getMe({ authorization: `Bearer ${token}` });
+    expect(
+      z.object({ profile: z.object({ jerseyNumber: z.int() }) }).parse(me).profile.jerseyNumber,
+    ).toBe(7);
+    for (const jerseyNumber of [0, 99, null]) {
+      expect(
+        (
+          await putProfile(token, { version: 1, timeZone: zone, catchphrase: null, jerseyNumber })
+        )[0],
+      ).toBe(200);
+    }
+    // Leaving the number out of a save that changes nothing else writes no log entry.
+    expect(
+      await putProfile(token, { version: 1, timeZone: zone, catchphrase: null }),
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: null, jerseyNumber: null }]);
+
+    for (const jerseyNumber of [-1, 100, 7.5, '07']) {
+      const [status] = await putProfile(token, {
+        version: 1,
+        timeZone: zone,
+        catchphrase: null,
+        jerseyNumber,
+      });
+      expect([jerseyNumber, status]).toStrictEqual([jerseyNumber, 400]);
+    }
+    const db = createDatabase(config.databaseUrl);
+    try {
+      const { rows } = await sql`select jersey_number from public.profile_events
+        where member_id = ${userId} order by id`.execute(db);
+      expect(rows).toStrictEqual([
+        { jersey_number: 7 },
+        { jersey_number: 7 },
+        { jersey_number: 0 },
+        { jersey_number: 99 },
+        { jersey_number: null },
+      ]);
+    } finally {
+      await db.destroy();
+    }
   });
 
   it.each([

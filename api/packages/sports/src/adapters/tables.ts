@@ -32,6 +32,9 @@ export interface Sports {
   name_zh_hant: string;
   offered: Generated<boolean>;
   position: number;
+  short_name_en: string | null;
+  short_name_zh_hans: string | null;
+  short_name_zh_hant: string | null;
 }
 
 export interface DB {

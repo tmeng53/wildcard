@@ -1,6 +1,6 @@
 -- What the database keeps true about the sports list however it is edited.
 begin;
-select plan(13);
+select plan(15);
 
 select is((select count(*)::int from public.sports), 52, 'the first list has 52 sports');
 select is(
@@ -39,6 +39,15 @@ select throws_ok(
   $$insert into public.sports (id, category_id, position, icon, name_zh_hans, name_en, name_zh_hant)
     values ('quidditch', 'nowhere', 1, 'figure.run', '魁地奇', 'Quidditch', '魁地奇')$$,
   '23503', null, 'a sport is in a listed category'
+);
+select throws_ok(
+  $$update public.sports set short_name_en = 'Jog' where id = 'run'$$,
+  '23514', null, 'a short name comes in all three languages or none'
+);
+select is(
+  (select short_name_en from public.sports where id = 'tableTennis'),
+  'Ping pong',
+  'a long name has a shorter one for cards'
 );
 
 -- A change is logged with its new value; a save that changed nothing is not.

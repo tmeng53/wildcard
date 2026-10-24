@@ -273,14 +273,14 @@ public protocol APIProtocol: Sendable {
     func getMyWeeklyPlan(_ input: Operations.GetMyWeeklyPlan.Input) async throws -> Operations.GetMyWeeklyPlan.Output
     /// Save the signed-in member’s plan for a week
     ///
-    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
     func saveMyWeeklyPlan(_ input: Operations.SaveMyWeeklyPlan.Input) async throws -> Operations.SaveMyWeeklyPlan.Output
     /// Set the signed-in member’s 饮食小目标 for a week
     ///
-    /// Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.
+    /// Replaces the week’s goals; repeating a save gives the same result. For this week on the member’s clock or a later one, up to 4 weeks ahead. Answers with the whole week.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
@@ -299,6 +299,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
     func getSquadWeekStory(_ input: Operations.GetSquadWeekStory.Input) async throws -> Operations.GetSquadWeekStory.Output
+    /// The weekly titles the signed-in member has won
+    ///
+    /// Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.
+    ///
+    /// - Remark: HTTP `GET /me/award-totals`.
+    /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
+    func getMyAwardTotals(_ input: Operations.GetMyAwardTotals.Input) async throws -> Operations.GetMyAwardTotals.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -854,7 +861,7 @@ extension APIProtocol {
     }
     /// Save the signed-in member’s plan for a week
     ///
-    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
@@ -871,7 +878,7 @@ extension APIProtocol {
     }
     /// Set the signed-in member’s 饮食小目标 for a week
     ///
-    /// Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.
+    /// Replaces the week’s goals; repeating a save gives the same result. For this week on the member’s clock or a later one, up to 4 weeks ahead. Answers with the whole week.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
@@ -915,6 +922,15 @@ extension APIProtocol {
             path: path,
             headers: headers
         ))
+    }
+    /// The weekly titles the signed-in member has won
+    ///
+    /// Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.
+    ///
+    /// - Remark: HTTP `GET /me/award-totals`.
+    /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
+    public func getMyAwardTotals(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) async throws -> Operations.GetMyAwardTotals.Output {
+        try await getMyAwardTotals(Operations.GetMyAwardTotals.Input(headers: headers))
     }
 }
 

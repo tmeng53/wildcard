@@ -224,7 +224,7 @@ async function member(timeZone = 'America/Los_Angeles', agreedToAi = true) {
   }
   await members.saveProfile({
     member: MembersMember.parse(signedUp.userId),
-    profile: { timeZone, catchphrase: null, character: null },
+    profile: { timeZone, catchphrase: null, character: null, jerseyNumber: null },
   });
   const token = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await pushOn(db).registerDevice({
@@ -399,6 +399,34 @@ describe('weekly awards', () => {
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(2);
+  });
+
+  it('counts every title a member won, in all their squads, for their player card', async () => {
+    const { run, app } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const totals = async (token: string) => {
+      const response = await app.request('/me/award-totals', {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      return [response.status, await response.json()];
+    };
+    expect(await totals(ana.token)).toStrictEqual([200, { version: 1, titles: 0 }]);
+    // Ana is first in both squads, so the model names her 狠人0号 in each.
+    const [first, second] = [await squadOf(ana, bo), await squadOf(ana)];
+    await trained(ana, { squad: first });
+    await trained(ana, { squad: second });
+    await trained(bo, { squad: first });
+
+    await run();
+    expect(await totals(ana.token)).toStrictEqual([
+      200,
+      { version: 1, titles: 2, latest: { title: '狠人0号', times: 2 } },
+    ]);
+    expect(await totals(bo.token)).toStrictEqual([
+      200,
+      { version: 1, titles: 1, latest: { title: '狠人1号', times: 1 } },
+    ]);
+    expect((await app.request('/me/award-totals')).status).toBe(401);
   });
 
   it('leaves out of the prompt and the awards a member who hasn’t agreed to AI use', async () => {

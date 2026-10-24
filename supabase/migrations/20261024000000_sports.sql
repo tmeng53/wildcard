@@ -1,6 +1,6 @@
 -- The sports list every picker in the app shows: categories, each sport's names in the app's
--- languages and its icon, and the short lists some screens show first (sign-up's 最常见 and
--- 更多, 练了's quick picks). It is data, served by the API's catalog, so a new sport, name,
+-- languages (and a shorter one where the name is too long for a poster row) and its icon,
+-- and the short lists some screens show first (sign-up's 最常见, 练了's quick picks). It is data, served by the API's catalog, so a new sport, name,
 -- icon or order needs no app release. Stored check-ins and weekly plans keep a sport by its
 -- id, so an id never changes and a sport is never deleted: one the pickers should stop
 -- offering is marked `offered = false` and keeps its names for the check-ins that use it.
@@ -32,13 +32,22 @@ create table public.sports (
   name_zh_hans text not null check (name_zh_hans <> ''),
   name_en text not null check (name_en <> ''),
   name_zh_hant text not null check (name_zh_hant <> ''),
+  -- The name on a card or poster row, for a sport whose name is too long there; null uses the
+  -- name. All three or none.
+  short_name_zh_hans text check (short_name_zh_hans <> ''),
+  short_name_en text check (short_name_en <> ''),
+  short_name_zh_hant text check (short_name_zh_hant <> ''),
+  check (
+  (short_name_zh_hans is null) = (short_name_en is null)
+    and (short_name_en is null) = (short_name_zh_hant is null)
+  ),
   offered boolean not null default true,
   unique (category_id, position) deferrable initially immediate
 );
 
 -- A short list a screen shows before the whole list, in order.
 create table public.sport_picks (
-  list text not null check (list in ('signUpCommon', 'signUpMore', 'checkInQuick')),
+  list text not null check (list in ('signUpCommon', 'checkInQuick')),
   position int not null check (position > 0),
   sport_id text not null references public.sports (id),
   primary key (list, position) deferrable initially immediate,
@@ -170,12 +179,22 @@ insert into public.sport_categories (id, position, name_zh_hans, name_en, name_z
   ('dance', 11, '舞蹈', 'Dance', '舞蹈'),
   ('everyday', 12, '生活也算练', 'Everyday counts', '生活也算練');
 
-insert into public.sports (id, category_id, position, icon, name_zh_hans, name_en, name_zh_hant) values
+insert into public.sports (
+  id, category_id, position, icon, name_zh_hans, name_en, name_zh_hant,
+  short_name_zh_hans, short_name_en, short_name_zh_hant
+)
+select
+  sport.id, sport.category_id, sport.position, sport.icon, sport.name_zh_hans, sport.name_en,
+  sport.name_zh_hant,
+  -- A shorter English name for a card or poster row, where the full one would clip.
+  case when short.en is not null then sport.name_zh_hans end, short.en,
+  case when short.en is not null then sport.name_zh_hant end
+from (values
   ('run', 'runWalk', 1, 'figure.run', '跑步', 'Run', '跑步'),
   ('walk', 'runWalk', 2, 'figure.walk', '快走', 'Walk', '快走'),
   ('hike', 'runWalk', 3, 'figure.hiking', '徒步', 'Hike', '健行'),
   ('trailRun', 'runWalk', 4, 'figure.run', '越野跑', 'Trail run', '越野跑'),
-  ('strength', 'strength', 1, 'figure.strengthtraining.traditional', '力量训练', 'Strength training', '重訓'),
+  ('strength', 'strength', 1, 'figure.strengthtraining.traditional', '力量训练', 'Strength', '重訓'),
   ('crossfit', 'strength', 2, 'figure.cross.training', 'CrossFit', 'CrossFit', 'CrossFit'),
   ('hyrox', 'strength', 3, 'figure.highintensity.intervaltraining', 'Hyrox', 'Hyrox', 'Hyrox'),
   ('kettlebell', 'strength', 4, 'figure.strengthtraining.traditional', '壶铃', 'Kettlebell', '壺鈴'),
@@ -222,7 +241,21 @@ insert into public.sports (id, category_id, position, icon, name_zh_hans, name_e
   ('deepClean', 'everyday', 4, 'bubbles.and.sparkles.fill', '大扫除', 'Deep clean', '大掃除'),
   ('moving', 'everyday', 5, 'shippingbox.fill', '搬家', 'Moving', '搬家'),
   ('strollerWalk', 'everyday', 6, 'stroller.fill', '带娃散步', 'Stroller walk', '推車散步'),
-  ('gardening', 'everyday', 7, 'leaf.fill', '园艺', 'Gardening', '園藝');
+  ('gardening', 'everyday', 7, 'leaf.fill', '园艺', 'Gardening', '園藝')
+) as sport (id, category_id, position, icon, name_zh_hans, name_en, name_zh_hant)
+left join (values
+  ('baseballSoftball', 'Baseball'),
+  ('reformerPilates', 'Reformer'),
+  ('mountainBiking', 'Mtn bike'),
+  ('roadCycling', 'Cycling'),
+  ('bikeCommute', 'Bike ride'),
+  ('walkCommute', 'Commute'),
+  ('strollerWalk', 'Stroller'),
+  ('tableTennis', 'Ping pong'),
+  ('kickboxing', 'Kickbox'),
+  ('martialArts', 'Martial')
+) as short (id, en) on short.id = sport.id
+order by sport.category_id, sport.position;
 
 insert into public.sport_picks (list, position, sport_id) values
   ('signUpCommon', 1, 'swim'),
@@ -231,16 +264,6 @@ insert into public.sport_picks (list, position, sport_id) values
   ('signUpCommon', 4, 'tennis'),
   ('signUpCommon', 5, 'climb'),
   ('signUpCommon', 6, 'yoga'),
-  ('signUpMore', 1, 'roadCycling'),
-  ('signUpMore', 2, 'matPilates'),
-  ('signUpMore', 3, 'badminton'),
-  ('signUpMore', 4, 'hike'),
-  ('signUpMore', 5, 'basketball'),
-  ('signUpMore', 6, 'ski'),
-  ('signUpMore', 7, 'pickleball'),
-  ('signUpMore', 8, 'dance'),
-  ('signUpMore', 9, 'boxing'),
-  ('signUpMore', 10, 'soccer'),
   ('checkInQuick', 1, 'run'),
   ('checkInQuick', 2, 'strength'),
   ('checkInQuick', 3, 'yoga'),
@@ -248,3 +271,4 @@ insert into public.sport_picks (list, position, sport_id) values
   ('checkInQuick', 5, 'spin'),
   ('checkInQuick', 6, 'hike'),
   ('checkInQuick', 7, 'tennis');
+

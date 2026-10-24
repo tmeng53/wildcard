@@ -33,6 +33,22 @@ struct ButtonSection: View {
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(true)
+                    // Ink, on the pages that keep out of the scene's colours (我, 设置, 注销账号).
+                    Button {
+                    } label: {
+                        Text("下一步", bundle: .module).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .accentTone(.ink)
+                    Button {
+                    } label: {
+                        Label {
+                            Text("用 Apple 确认", bundle: .module)
+                        } icon: {
+                            Image(systemName: "apple.logo")
+                        }
+                    }
+                    .buttonStyle(AppleButtonStyle(.outlined))
                 }
             }
             GuideGroup(Text("次要按钮、文字按钮", bundle: .module)) {
@@ -262,6 +278,7 @@ struct StatusSection: View {
 
     @State private var plusOnes = 0
     @State private var page = SquadCardPage.squad
+    @State private var pickedDay: Int?
 
     private let squad: [RingStatus] = [.done, .done, .restDay, .open, .open]
 
@@ -279,7 +296,28 @@ struct StatusSection: View {
                 mine == .done ? .trained(symbol: "figure.run") : .planned(symbol: "figure.run"),
                 .planned(symbol: "figure.yoga"), .restDay,
             ],
-            today: 4, healthyMeals: 3, cheatMeals: 1, lifetimeTrained: mine == .done ? 48 : 47)
+            today: 4,
+            details: [
+                WeekDayDetail(
+                    line: String(localized: "跑步 32 分钟", bundle: .module), isPlan: false,
+                    meals: .init(healthy: 1, cheat: 0)),
+                WeekDayDetail(
+                    line: String(localized: "休息日", bundle: .module), isPlan: false, meals: .init(healthy: 2, cheat: 1)),
+                WeekDayDetail(
+                    line: String(localized: "游泳 45 分钟", bundle: .module), isPlan: false,
+                    meals: .init(healthy: 0, cheat: 0)),
+                WeekDayDetail(
+                    line: String(localized: "请假了", bundle: .module), isPlan: false, meals: .init(healthy: 0, cheat: 1)),
+                mine == .done
+                    ? WeekDayDetail(
+                        line: String(localized: "跑步", bundle: .module), isPlan: false,
+                        meals: .init(healthy: 1, cheat: 0))
+                    : WeekDayDetail(
+                        line: String(localized: "跑步", bundle: .module), isPlan: true, meals: .init(healthy: 1, cheat: 0)
+                    ),
+                WeekDayDetail(line: String(localized: "瑜伽", bundle: .module), isPlan: true, meals: nil),
+                WeekDayDetail(line: String(localized: "休息日", bundle: .module), isPlan: false, meals: nil),
+            ])
     }
 
     private var members: [SquadMember] {
@@ -291,7 +329,7 @@ struct StatusSection: View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 7, title: Text("卡片、状态圈、进度", bundle: .module))
             GuideGroup(Text("场景上：实心白卡片", bundle: .module)) {
-                SquadCard(squad: squadWeek, mine: myWeek, page: $page) { member in
+                SquadCard(squad: squadWeek, mine: myWeek, page: $page, pickedDay: $pickedDay) { member in
                     GuideFace(index: members.firstIndex(of: member) ?? 0)
                 }
                 .overlay(alignment: .topLeading) {
@@ -340,29 +378,6 @@ struct GuideFace: View {
         )
         .font(.system(size: Sizing.characterHead * 0.55))
         .foregroundStyle(Color(role: .fgMuted, in: theme))
-    }
-}
-
-// MARK: - 8 List
-
-struct ListSection: View {
-    @State private var dailyReminder = true
-    @State private var pokes = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 8, title: Text("列表", bundle: .module))
-            VStack(spacing: 0) {
-                ListRow(Text("性格", bundle: .module), systemImage: "sparkles", value: Text("淡人", bundle: .module)) {}
-                ListRow(Text("穿搭", bundle: .module), systemImage: "tshirt") {}
-                ListRow(
-                    Text("每周计划", bundle: .module), systemImage: "calendar", value: Text("练 5 休 2", bundle: .module)
-                ) {}
-                SwitchRow(Text("每日提醒", bundle: .module), systemImage: "bell", isOn: $dailyReminder)
-                    .accessibilityIdentifier("styleguide.switch")
-                SwitchRow(Text("被戳提醒", bundle: .module), systemImage: "hand.tap", isOn: $pokes, showsDivider: false)
-            }
-        }
     }
 }
 #endif

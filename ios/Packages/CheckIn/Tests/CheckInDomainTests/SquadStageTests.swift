@@ -27,11 +27,12 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(StageStatus(training: .notCheckedIn, activity: nil, plannedRest: false) == .notYet)
 }
 
-@Test func nightIsFromSevenInTheEveningToSixInTheMorning() {
+@Test func nightIsFromElevenAtNightToSixInTheMorning() {
     #expect(DayPhase(hour: 5) == .night)
     #expect(DayPhase(hour: 6) == .day)
-    #expect(DayPhase(hour: 18) == .day)
-    #expect(DayPhase(hour: 19) == .night)
+    #expect(DayPhase(hour: 19) == .day)
+    #expect(DayPhase(hour: 22) == .day)
+    #expect(DayPhase(hour: 23) == .night)
     #expect(DayPhase(hour: 0) == .night)
 }
 

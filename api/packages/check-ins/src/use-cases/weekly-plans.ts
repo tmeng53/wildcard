@@ -46,7 +46,7 @@ export interface WeeklyPlans {
     readonly days: PlanDays;
   }): Promise<PlannedWeek>;
   /**
-   * Saves the member's 饮食小目标 for a week that hasn't started and returns the week. Throws
+   * Saves the member's 饮食小目标 for this week or a later one and returns the week. Throws
    * `TimeZoneNotSetError` before the member has a profile, and the errors of
    * `checkFuelGoalsChange` otherwise. Safe to repeat.
    */

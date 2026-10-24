@@ -85,14 +85,13 @@ public struct ScheduleView: View {
             }
         }
         .task { await model.load() }
+        .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
             SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
                 picksAll = false
                 model.pick(activity)
             }
         }
-        .haptic(.pick, trigger: model.lifts)
-        .haptic(.land, trigger: model.swaps)
         .haptic(.appear, trigger: model.saving == .saved)
         .task(id: model.saving) {
             guard model.saving == .saved || model.saving == .failed else { return }
@@ -133,7 +132,7 @@ public struct ScheduleView: View {
                 } else if let thisWeek, week > thisWeek {
                     Text("下周", bundle: .module)
                 } else {
-                    Text(verbatim: ScheduleLabels.week(week))
+                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
                 }
             return CategoryBarItem(id: week, title: title, accessibilityIdentifier: "schedule.week.\(week)")
         }
@@ -167,7 +166,8 @@ public struct ScheduleView: View {
 
     private func content(_ sheet: WeekSheet) -> PosterContent {
         PosterContent(
-            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "", fuelOpen: model.panel == .fuel,
+            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "",
+            weekNumber: store.profile?.weekNumber(of: sheet.weekStart) ?? 1, fuelOpen: model.panel == .fuel,
             typingFuel: model.writingFuel ? ownFuel : "")
     }
 
@@ -186,7 +186,7 @@ public struct ScheduleView: View {
 
     @MainActor private func save() async {
         guard let sheet = store.sheet else { return }
-        let still = WeekPoster(content: content(sheet).forSaving, player: model.player, isStill: true)
+        let still = WeekPoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
         await model.savePoster { WeekPoster.picture(of: still, theme: theme, locale: locale) }
     }
 

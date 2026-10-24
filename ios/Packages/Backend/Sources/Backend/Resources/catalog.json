@@ -64,7 +64,7 @@
             "id": "strength",
             "names": {
               "zhHans": "力量训练",
-              "en": "Strength training",
+              "en": "Strength",
               "zhHant": "重訓"
             },
             "icon": "figure.strengthtraining.traditional",
@@ -207,6 +207,11 @@
               "en": "Reformer Pilates",
               "zhHant": "器械皮拉提斯"
             },
+            "shortNames": {
+              "zhHans": "普拉提器械",
+              "en": "Reformer",
+              "zhHant": "器械皮拉提斯"
+            },
             "icon": "figure.pilates",
             "offered": true
           },
@@ -327,6 +332,11 @@
               "en": "Table tennis",
               "zhHant": "桌球"
             },
+            "shortNames": {
+              "zhHans": "乒乓球",
+              "en": "Ping pong",
+              "zhHant": "桌球"
+            },
             "icon": "figure.table.tennis",
             "offered": true
           },
@@ -397,6 +407,11 @@
               "en": "Baseball and softball",
               "zhHant": "棒壘球"
             },
+            "shortNames": {
+              "zhHans": "棒垒球",
+              "en": "Baseball",
+              "zhHant": "棒壘球"
+            },
             "icon": "figure.baseball",
             "offered": true
           },
@@ -427,6 +442,11 @@
               "en": "Road cycling",
               "zhHant": "公路車"
             },
+            "shortNames": {
+              "zhHans": "公路骑行",
+              "en": "Cycling",
+              "zhHant": "公路車"
+            },
             "icon": "figure.outdoor.cycle",
             "offered": true
           },
@@ -435,6 +455,11 @@
             "names": {
               "zhHans": "山地车",
               "en": "Mountain biking",
+              "zhHant": "登山車"
+            },
+            "shortNames": {
+              "zhHans": "山地车",
+              "en": "Mtn bike",
               "zhHant": "登山車"
             },
             "icon": "bicycle",
@@ -517,6 +542,11 @@
               "en": "Kickboxing",
               "zhHant": "泰拳踢拳"
             },
+            "shortNames": {
+              "zhHans": "泰拳踢拳",
+              "en": "Kickbox",
+              "zhHant": "泰拳踢拳"
+            },
             "icon": "figure.kickboxing",
             "offered": true
           },
@@ -535,6 +565,11 @@
             "names": {
               "zhHans": "武术",
               "en": "Martial arts",
+              "zhHant": "武術"
+            },
+            "shortNames": {
+              "zhHans": "武术",
+              "en": "Martial",
               "zhHant": "武術"
             },
             "icon": "figure.martial.arts",
@@ -587,6 +622,11 @@
               "en": "Walk commute",
               "zhHant": "走路通勤"
             },
+            "shortNames": {
+              "zhHans": "走路通勤",
+              "en": "Commute",
+              "zhHant": "走路通勤"
+            },
             "icon": "figure.walk",
             "offered": true
           },
@@ -595,6 +635,11 @@
             "names": {
               "zhHans": "骑车通勤",
               "en": "Bike commute",
+              "zhHant": "騎車通勤"
+            },
+            "shortNames": {
+              "zhHans": "骑车通勤",
+              "en": "Bike ride",
               "zhHant": "騎車通勤"
             },
             "icon": "figure.outdoor.cycle",
@@ -627,6 +672,11 @@
               "en": "Stroller walk",
               "zhHant": "推車散步"
             },
+            "shortNames": {
+              "zhHans": "带娃散步",
+              "en": "Stroller",
+              "zhHant": "推車散步"
+            },
             "icon": "stroller.fill",
             "offered": true
           },
@@ -651,18 +701,6 @@
         "tennis",
         "climb",
         "yoga"
-      ],
-      "signUpMore": [
-        "roadCycling",
-        "matPilates",
-        "badminton",
-        "hike",
-        "basketball",
-        "ski",
-        "pickleball",
-        "dance",
-        "boxing",
-        "soccer"
       ],
       "checkInQuick": [
         "run",

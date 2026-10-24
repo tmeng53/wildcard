@@ -130,6 +130,27 @@ export type AwardsState =
   | { readonly status: 'given'; readonly awards: Awards }
   | { readonly status: 'failing'; readonly failures: Failures };
 
+/**
+ * Every title a member has won, in all their squads and weeks (周奖 on the player card): how
+ * many, and the latest with how often they have won that one.
+ */
+export interface TitlesWon {
+  readonly count: number;
+  readonly latest?: { readonly title: string; readonly times: number };
+}
+
+/** Counts a member's titles from their awards, the latest week first: its first title is the latest. */
+export function titlesWonOf(awards: readonly StoredAward[]): TitlesWon {
+  const titles = awards.flatMap((award) => award.titles.map(({ title }) => title));
+  const latest = titles[0];
+  return latest === undefined
+    ? { count: 0 }
+    : {
+        count: titles.length,
+        latest: { title: latest, times: titles.filter((title) => title === latest).length },
+      };
+}
+
 /** The tries at a squad's awards that failed, and why the last one did. */
 export interface Failures {
   readonly count: number;

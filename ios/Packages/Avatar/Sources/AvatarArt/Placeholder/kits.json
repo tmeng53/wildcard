@@ -1,12 +1,12 @@
 {
   "version": 1,
   "kits": [
-    { "id": "swim", "wear": { "hat": "swimcap", "top": "tank", "shoes": "sneaker", "prop": null } },
-    { "id": "run", "wear": { "hat": "headband", "top": "tank", "bottom": "shorts", "shoes": "runner", "prop": "stopwatch" } },
-    { "id": "strength", "wear": { "hat": null, "top": "tank", "shoes": "sneaker", "prop": "dumbbell" } },
-    { "id": "tennis", "wear": { "hat": "cap", "top": "tee", "shoes": "sneaker", "prop": "racket" } },
-    { "id": "climb", "wear": { "hat": null, "top": "tank", "bottom": "leggings", "shoes": "climbing", "prop": "chalkbag" } },
-    { "id": "yoga", "wear": { "hat": null, "top": "tee", "bottom": "leggings", "shoes": "sneaker", "prop": "yogamat" } },
+    { "id": "swim", "wear": { "hat": "swimcap", "top": "warmup-tank", "shoes": "warmup-canvas", "prop": null } },
+    { "id": "run", "wear": { "hat": "warmup-headband", "top": "warmup-tank", "bottom": "warmup-shorts", "shoes": "warmup-runner", "prop": "stopwatch" } },
+    { "id": "strength", "wear": { "hat": null, "top": "warmup-tank", "shoes": "warmup-canvas", "prop": "dumbbell" } },
+    { "id": "tennis", "wear": { "hat": "warmup-cap", "top": "warmup-tee", "shoes": "warmup-canvas", "prop": "racket" } },
+    { "id": "climb", "wear": { "hat": null, "top": "warmup-tank", "bottom": "warmup-leggings", "shoes": "moss-trail", "prop": "chalkbag" } },
+    { "id": "yoga", "wear": { "hat": null, "top": "warmup-tee", "bottom": "warmup-leggings", "shoes": "warmup-canvas", "prop": "yogamat" } },
     { "id": "warmup", "wear": {} }
   ],
   "categories": {

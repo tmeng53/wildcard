@@ -11,8 +11,9 @@ private let newer = #"""
      "sports": {
        "categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
          "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
+           "shortNames": {"zhHans": "板网", "en": "Padel", "zhHant": "板網"},
            "icon": "figure.tennis", "offered": true, "season": "summer"}]}],
-       "picks": {"signUpCommon": ["padel"], "signUpMore": [], "checkInQuick": ["padel"], "winter": []}}}
+       "picks": {"signUpCommon": ["padel"], "checkInQuick": ["padel"], "winter": []}}}
     """#
 
 @Test func aCatalogWithMoreThanThisBuildKnowsStillReads() throws {
@@ -20,6 +21,7 @@ private let newer = #"""
     let sports = SportCatalog(wire.sports)
     #expect(sports.entry(for: "padel")?.names.english == "Padel")
     #expect(sports.entry(for: "padel")?.category == "racket")
+    #expect(sports.entry(for: "padel")?.shortNames?.simplifiedChinese == "板网")
     #expect(sports.signUpCommon == ["padel"])
     #expect(sports.checkInQuick == ["padel"])
 }

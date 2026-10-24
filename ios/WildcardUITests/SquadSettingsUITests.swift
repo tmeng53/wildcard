@@ -28,19 +28,28 @@ final class SquadSettingsUITests: XCTestCase {
         waitFor(
             app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3), "exists == false",
             "大卫 is still in the squad")
+        // SwiftUI drops an alert asked for while the removal's dialog is still going away.
+        waitFor(confirm, "exists == false", "removing's dialog didn't close")
+        settle()
 
-        app.buttons["squad.rename"].tap()
-        let field = app.textFields["squad.rename.field"]
+        // The page stays disabled while the removal saves, and a tap then does nothing.
+        let rename = app.buttons["squad.rename"]
+        waitFor(rename, "isEnabled == true", "the page stayed disabled after removing")
+        rename.tap()
+        // The system alert may not carry the field's and button's identifiers, so find them in it.
+        let alert = app.alerts.firstMatch
+        let field = alert.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 30), "改队名 didn't open")
         field.typeText("夜跑")
-        app.buttons["squad.rename.save"].tap()
+        // More than one element in the alert can match 保存, so take the first.
+        alert.buttons.matching(NSPredicate(format: "label == '保存'")).firstMatch.tap()
         waitFor(app.staticTexts["squad.name"], "label == '晨跑五人组夜跑'", "the new name didn't show")
 
         app.swipeUp()
         settle()
         keepScreenshot(named: "62-squad-bottom")
         app.buttons["squad.back"].tap()
-        XCTAssertTrue(app.buttons["me.squad"].waitForExistence(timeout: 30), "返回 didn't go back to 我")
+        XCTAssertTrue(app.buttons["me.squad"].waitForExistence(timeout: 30), "返回 didn't go back to 设置")
     }
 
     func testTheWinnerPicksTheSceneOnce() {
@@ -72,8 +81,7 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "64-squad-picked-home")
         // Back on 小队设置, the pick is locked for the week.
         app.buttons["tab.me"].tap()
-        XCTAssertTrue(app.buttons["me.squad"].waitForExistence(timeout: 30), "我 has no squad row")
-        app.buttons["me.squad"].tap()
+        openSquad(app)
         waitFor(app.staticTexts["squad.scene"], "label == '游泳池'", "the picked scene didn't show", timeout: 60)
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
     }
@@ -97,7 +105,7 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "66-squad-en")
     }
 
-    /// Opens 我, then 我的小队.
+    /// Opens 我, then 设置, then 我的小队.
     private func launch(language: String = "zh-Hans", extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -105,12 +113,21 @@ final class SquadSettingsUITests: XCTestCase {
             ["-tab", "me", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
-        let row = app.buttons["me.squad"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "我 has no squad row")
-        row.tap()
+        openSquad(app)
         let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 30), "小队设置 never showed")
         return app
+    }
+
+    /// Taps 我的小队 in 设置, opening 设置 from 我 first unless it is still open.
+    private func openSquad(_ app: XCUIApplication) {
+        let settings = app.buttons["me.settings"]
+        let row = app.buttons["me.squad"]
+        let either = app.buttons.matching(NSPredicate(format: "identifier IN %@", ["me.settings", "me.squad"]))
+        XCTAssertTrue(either.firstMatch.waitForExistence(timeout: 30), "我 never showed")
+        if !row.exists { settings.tap() }
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "设置 has no squad row")
+        row.tap()
     }
 
     /// The page's header and scene card sit inside the screen, clear of each other.

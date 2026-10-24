@@ -58,7 +58,7 @@ func photoBytes() -> Data {
     let character = MemberCharacter(
         nickname: try Nickname(" 小周 "),
         look: CharacterLook(
-            persona: "deadpan", variants: ["body": "tuxedo", "top": "hoodie"], colors: ["top": "#2D5BA0"]))
+            persona: "deadpan", variants: ["body": "tuxedo", "top": "warmup-hoodie"], colors: ["top": "#2D5BA0"]))
     let moved = Profile(
         timeZone: try #require(TimeZone(identifier: "America/Toronto")), catchphrase: try Catchphrase("冲就完了🔥"),
         character: character)
@@ -260,4 +260,18 @@ private struct RefusedTokens: AuthProvider {
             member: session.member, accessToken: "refused.token.here", refreshToken: session.refreshToken,
             expiresAt: session.expiresAt)
     }
+}
+
+@Test func thePlayerCardsRecordsStartEmptyAndCountTheSportTrainedMost() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let squad = try await stack.squad(of: member)
+
+    #expect(try await member.api.checkInTotals().topSport == nil)
+    #expect(try await member.api.awardTotals() == AwardTotals(titles: 0, latest: nil))
+
+    for activity in [Activity.sport("run"), .custom(try CustomSport("飞盘")), .sport("run")] {
+        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))
+    }
+    #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
 }

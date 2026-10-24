@@ -397,11 +397,15 @@ if want weekly-plan; then
   call GET "/me/weekly-plans/$later" "$planner_token"
   expect 200
   [ "$(jq -c .fuelGoals <<<"$body")" = '[]' ] || fail "goals shouldn't carry over to the week after: $body"
-  call PUT "/me/weekly-plans/$monday/fuel-goals" "$planner_token" "$goals"
-  expect 400 WEEK_STARTED
   logged="$(psql "$DB_URL" -tAc "select count(*) from public.fuel_goal_events where member_id = '$planner'")"
   [ "$logged" = 1 ] || fail "saving the same goals twice should log once: $logged rows"
-  echo "weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's refused (400 WEEK_STARTED); first week $monday"
+  call PUT "/me/weekly-plans/$monday/fuel-goals" "$planner_token" "$goals"
+  expect 200
+  logged="$(psql "$DB_URL" -tAc "select count(*) from public.fuel_goal_events where member_id = '$planner' and week_start = '$monday'")"
+  [ "$logged" = 1 ] || fail "this week's goals should be logged once: $logged rows"
+  call PUT "/me/weekly-plans/$(days_after "$monday" -7)/fuel-goals" "$planner_token" "$goals"
+  expect 400 WEEK_OVER
+  echo "weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's saved and logged; last week's refused (400 WEEK_OVER); first week $monday"
 fi
 
 if want squad-today; then
@@ -418,7 +422,7 @@ if want squad-today; then
   done
   # The runner picks a catchphrase (口头禅) and makes a character; the napper's catchphrases are
   # refused, so theirs stays unset.
-  runner_look='{"persona":"energetic","variants":{"body":"shiba","top":"jersey"},"colors":{"top":"#2D5BA0"}}'
+  runner_look='{"persona":"energetic","variants":{"body":"shiba","top":"nolook-jersey"},"colors":{"top":"#2D5BA0"}}'
   call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \",\"character\":{\"nickname\":\" 跑跑 \",\"look\":$runner_look}}"
   expect 200
   [ "$(jq -r .catchphrase <<<"$body")" = '冲就完了🔥' ] || fail "the catchphrase should be saved trimmed: $body"
@@ -576,53 +580,63 @@ if want reactions; then
 fi
 
 if want replies; then
+  # A squad of its own: a 请假条 is taken back once its author trains that day, as me and mate
+  # may have in the journeys before.
+  shared_squad="$squad"
+  read -r writer writer_token <<<"$(sign_up)"
+  read -r fan fan_token <<<"$(sign_up)"
+  squad_of "$writer_token" "$fan_token"
   excuse="$(new_id)"
-  call PUT "/check-ins/$excuse" "$me_token" "$(check_in_of "$squad" "$day" disclaimer '"disclaimer":{"text":"今天加班到很晚"}')"
+  call PUT "/check-ins/$excuse" "$writer_token" "$(check_in_of "$squad" "$day" disclaimer '"disclaimer":{"text":"今天加班到很晚"}')"
   expect 201
   reply() { echo "{\"version\":1,\"kind\":\"$1\"}"; }
-  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply approved)"
+  call PUT "/check-ins/$excuse/replies/mine" "$fan_token" "$(reply approved)"
   expect 201
-  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply approved)"
+  call PUT "/check-ins/$excuse/replies/mine" "$fan_token" "$(reply approved)"
   expect 200
-  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply hug)"
+  call PUT "/check-ins/$excuse/replies/mine" "$fan_token" "$(reply hug)"
   expect 200
-  call PUT "/check-ins/$excuse/reactions/mine" "$mate_token" '{"version":1,"emoji":"😂"}'
+  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"emoji":"😂"}'
   expect 201
-  echo "replies: mate replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too"
+  echo "replies: the fan replied 准了 (201), again (200), changed it to 抱抱 (200), and laughed at it too"
 
-  call GET "/check-ins/$excuse/replies" "$me_token"
+  call GET "/check-ins/$excuse/replies" "$writer_token"
   expect 200
-  [ "$(jq -c '[.replies[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"hug"]]')" ] ||
-    fail "the author should see one reply, mate's hug: $body"
-  echo "replies: the author sees one reply, mate's 抱抱, apart from the reaction"
+  [ "$(jq -c '[.replies[] | [.member, .kind]]' <<<"$body")" = "$(jq -cn --arg m "$fan" '[[$m,"hug"]]')" ] ||
+    fail "the author should see one reply, the fan's hug: $body"
+  echo "replies: the author sees one reply, the fan's 抱抱, apart from the reaction"
 
-  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$me_token"
+  call GET "/squads/$squad/check-ins?from=$day&to=$day" "$writer_token"
   expect 200
   [ "$(jq -c --arg e "$excuse" '.posts[] | select(.checkIn.id == $e) | [[.reactions[] | [.member, .emoji]], [.replies[] | [.member, .kind]]]' <<<"$body")" = \
-    "$(jq -cn --arg m "$mate" '[[[$m,"😂"]],[[$m,"hug"]]]')" ] ||
-    fail "the feed should list the 请假条 with mate's 😂 and 抱抱: $body"
-  echo "replies: the squad's feed lists the 请假条 with mate's 😂 and 抱抱 in one call"
+    "$(jq -cn --arg m "$fan" '[[[$m,"😂"]],[[$m,"hug"]]]')" ] ||
+    fail "the feed should list the 请假条 with the fan's 😂 and 抱抱: $body"
+  echo "replies: the squad's feed lists the 请假条 with the fan's 😂 and 抱抱 in one call"
 
+  call PUT "/check-ins/$excuse/replies/mine" "$writer_token" "$(reply approved)"
+  expect 400 OWN_DISCLAIMER_REPLY
+  call PUT "/check-ins/$excuse/replies/mine" "$outsider_token" "$(reply approved)"
+  expect 404 CHECK_IN_NOT_FOUND
+  call PUT "/check-ins/$excuse/replies/mine" "$fan_token" "$(reply cheer)"
+  expect 400 REQUEST_INVALID
+  echo "replies: own 请假条 refused (400 OWN_DISCLAIMER_REPLY), outsider sees nothing (404), unknown kind refused (400)"
+
+  call DELETE "/check-ins/$excuse/replies/mine" "$fan_token"
+  expect 204
+  call DELETE "/check-ins/$excuse/replies/mine" "$fan_token"
+  expect 204
+  rows="$(psql "$DB_URL" -tAc "select (select count(*) from public.disclaimer_replies where check_in_id = '$excuse') || ' ' || (select count(*) from public.check_in_reactions where check_in_id = '$excuse')")"
+  [ "$rows" = "0 1" ] || fail "the reply should be gone and the reaction kept: $rows"
+  echo "replies: the fan took it off (204, again 204), no reply row left, the reaction kept"
+
+  # A 练了 takes no replies.
+  squad="$shared_squad"
   run="$(new_id)"
   call PUT "/check-ins/$run" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
   expect 201
   call PUT "/check-ins/$run/replies/mine" "$mate_token" "$(reply approved)"
   expect 400 NOT_A_DISCLAIMER
-  call PUT "/check-ins/$excuse/replies/mine" "$me_token" "$(reply approved)"
-  expect 400 OWN_DISCLAIMER_REPLY
-  call PUT "/check-ins/$excuse/replies/mine" "$outsider_token" "$(reply approved)"
-  expect 404 CHECK_IN_NOT_FOUND
-  call PUT "/check-ins/$excuse/replies/mine" "$mate_token" "$(reply cheer)"
-  expect 400 REQUEST_INVALID
-  echo "replies: a 练了 refused (400 NOT_A_DISCLAIMER), own 请假条 refused (400 OWN_DISCLAIMER_REPLY), outsider sees nothing (404), unknown kind refused (400)"
-
-  call DELETE "/check-ins/$excuse/replies/mine" "$mate_token"
-  expect 204
-  call DELETE "/check-ins/$excuse/replies/mine" "$mate_token"
-  expect 204
-  rows="$(psql "$DB_URL" -tAc "select (select count(*) from public.disclaimer_replies where check_in_id = '$excuse') || ' ' || (select count(*) from public.check_in_reactions where check_in_id = '$excuse')")"
-  [ "$rows" = "0 1" ] || fail "the reply should be gone and the reaction kept: $rows"
-  echo "replies: mate took it off (204, again 204), no reply row left, the reaction kept"
+  echo "replies: a 练了 refused (400 NOT_A_DISCLAIMER)"
 fi
 
 if want devices; then
@@ -741,8 +755,9 @@ if want account; then
   expect 200
   call GET /me "$leaver_token"
   expect 200
-  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto","catchphrase":null}' ] || fail "the profile should be saved: $body"
-  echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved"
+  [ "$(jq -c '.profile | del(.joinedAt)' <<<"$body")" = '{"timeZone":"America/Toronto","catchphrase":null,"jerseyNumber":null}' ] || fail "the profile should be saved: $body"
+  jq -e '.profile.joinedAt | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$")' <<<"$body" >/dev/null || fail "the profile should say when they joined: $body"
+  echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved, joined $(jq -r .profile.joinedAt <<<"$body")"
 
   squad_of "$leaver_token" "$mate_token"
   call POST /photo-uploads "$leaver_token"

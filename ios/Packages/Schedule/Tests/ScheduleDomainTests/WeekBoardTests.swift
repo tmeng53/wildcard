@@ -55,71 +55,35 @@ struct WeekBoardTests {
     @Test func aRestTodayBecomesATrainingDay() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-21"))
         #expect(board.isEditable(2))
-        #expect(board.tap(2) == .selected, "today is picked, not lifted")
+        #expect(board.tap(2) == .selected)
+        #expect(!board.offersRest, "today never rests")
         board.pick(.sport("swim"))
         #expect(board.days[2] == .train(.sport("swim")))
         #expect(board.plannedDays == 6, "one rest day fewer")
     }
 
-    @Test func aLiftedRestDayNeverSwapsWithToday() {
+    @Test func thisWeekTurnsADayStillToComeIntoASportOrRest() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
-        board.tap(5)
-        #expect(!board.isSwapTarget(3))
-        #expect(board.tap(3) == .selected, "today is picked, not swapped")
-        #expect(board.days == plan)
-    }
-
-    @Test func thisWeekPicksAnotherSportButNeverRest() {
-        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
-        board.tap(4)
-        #expect(!board.offersRest)
+        #expect(board.tap(4) == .selected)
+        #expect(board.offersRest)
         board.rest()
-        #expect(board.days[4] == .train(.sport("run")))
+        #expect(board.days[4] == .rest)
+        #expect(board.plannedDays == 4, "a rest day more")
+        #expect(board.tap(5) == .selected, "a rest day is selected too")
         board.pick(.sport("yoga"))
-        #expect(board.days[4] == .train(.sport("yoga")))
+        #expect(board.days[5] == .train(.sport("yoga")))
         #expect(board.plannedDays == 5)
-    }
-
-    @Test func thisWeekSwapsALiftedRestDayWithATrainingDay() {
-        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
-        #expect(board.tap(5) == .lifted)
-        #expect(board.focus == .lifted(5))
-        #expect(board.isSwapTarget(4))
-        #expect(board.isSwapTarget(6))
-        #expect(!board.isSwapTarget(3), "today is no target")
-        #expect(!board.isSwapTarget(5), "a rest day is no target")
-        #expect(board.tap(6) == .swapped)
-        #expect(board.days[5] == .train(.sport("tennis")))
-        #expect(board.days[6] == .rest)
-        #expect(board.focus == .none)
-        #expect(board.plannedDays == 5, "the number of rest days stays")
-    }
-
-    @Test func thisWeekLetsGoOfALiftedDayTappedAgainAndIgnoresLockedDays() {
-        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
-        board.tap(5)
-        #expect(board.tap(1) == .locked)
-        #expect(board.focus == .lifted(5))
         #expect(board.tap(5) == .released)
         #expect(board.focus == .none)
-        #expect(board.days == plan)
-    }
-
-    @Test func thisWeekLiftsARestDayEvenWithAnotherDaySelected() {
-        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-21"))
-        board.tap(3)
-        #expect(board.tap(5) == .lifted)
-        #expect(board.focus == .lifted(5))
     }
 
     @Test func nextWeekChangesAnyDayToASportOrRest() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-18"))
         #expect(board.tense == .upcoming)
-        #expect(board.offersRest)
         #expect(board.tap(0) == .selected)
         board.rest()
         #expect(board.days[0] == .rest)
-        #expect(board.tap(2) == .selected, "a rest day is selected, not lifted")
+        #expect(board.tap(2) == .selected)
         board.pick(.sport("swim"))
         #expect(board.days[2] == .train(.sport("swim")))
         #expect(board.tap(2) == .released)

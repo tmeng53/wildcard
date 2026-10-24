@@ -3,8 +3,8 @@ import Contracts
 /// 平时练什么？: the sports a new member usually does, in the order picked. They become the
 /// choices for each training day of the week that follows. The character puts on the kit of the
 /// last one picked; taking that one off puts on the one picked before it, or everyday clothes.
-/// Which sports 最常见 and 更多 show is the sports list's (`SportCatalog.signUpCommon` and
-/// `signUpMore`), data the API serves.
+/// Which sports 最常见 shows is the sports list's (`SportCatalog.signUpCommon`), data the API
+/// serves; 更多 opens the whole list.
 public struct SportPicks: Hashable, Sendable {
     public private(set) var picked: [Activity] = []
 

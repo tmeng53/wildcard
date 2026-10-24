@@ -245,11 +245,11 @@ describe('/me/weekly-plans/{weekStart}', () => {
     expect(later).toMatchObject({ fuelGoals: [] });
     expect(
       await call('PUT', {
-        path: `/me/weekly-plans/${memberWeek(0)}/fuel-goals`,
+        path: `/me/weekly-plans/${memberWeek(-1)}/fuel-goals`,
         token,
         body: { version: 1, goals },
       }),
-    ).toStrictEqual([400, problem('WEEK_STARTED', 'FAILED_PRECONDITION')]);
+    ).toStrictEqual([400, problem('WEEK_OVER', 'FAILED_PRECONDITION')]);
     expect(
       await call('PUT', {
         path: `/me/weekly-plans/${memberWeek(5)}/fuel-goals`,

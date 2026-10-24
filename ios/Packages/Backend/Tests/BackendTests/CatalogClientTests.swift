@@ -14,7 +14,7 @@ import Testing
     #expect(sports.categories.flatMap(\.entries).count == 52)
     #expect(
         sports.entry(for: "strength")?.names
-            == .init(simplifiedChinese: "力量训练", english: "Strength training", traditionalChinese: "重訓"))
+            == .init(simplifiedChinese: "力量训练", english: "Strength", traditionalChinese: "重訓"))
     #expect(sports.entry(for: "roadCycling")?.icon == "figure.outdoor.cycle")
     #expect(sports.entry(for: "roadCycling")?.category == "cycling")
     #expect(sports.signUpCommon == ["swim", "run", "strength", "tennis", "climb", "yoga"])
@@ -59,7 +59,7 @@ import Testing
           "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
             "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
               "icon": "figure.tennis", "offered": true}]}],
-            "picks": {"signUpCommon": [], "signUpMore": [], "checkInQuick": ["padel"]}}}}
+            "picks": {"signUpCommon": [], "checkInQuick": ["padel"]}}}}
         """#
     try Data(kept.utf8).write(to: directory.appending(path: "catalog.json"))
     let stack = try LocalStack()

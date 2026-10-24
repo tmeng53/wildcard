@@ -47,6 +47,9 @@ export const SportsCatalog = z
                 example: 'run',
               }),
               names: Names,
+              // The name on a card or poster row, for a sport whose name is too long there;
+              // without it, `names`. A plain reference, so the app's type is `CatalogNames`.
+              shortNames: Names.optional(),
               icon: z.string().meta({
                 description:
                   'An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.',
@@ -65,7 +68,6 @@ export const SportsCatalog = z
     picks: z
       .looseObject({
         signUpCommon: sportIds('Sign-up’s 最常见 grid.'),
-        signUpMore: sportIds('Sign-up’s 更多 pills.'),
         checkInQuick: sportIds('A 练了’s quick picks, before the whole list.'),
       })
       .meta({ description: 'The short lists some screens show before the whole list.' }),
@@ -85,11 +87,14 @@ const wireSports = (catalog: SportCatalog): z.input<typeof SportsCatalog> => ({
   categories: catalog.categories.map(({ id, names, sports }) => ({
     id,
     names: { ...names },
-    sports: sports.map((sport) => ({ ...sport, names: { ...sport.names } })),
+    sports: sports.map(({ shortNames, ...sport }) => ({
+      ...sport,
+      names: { ...sport.names },
+      ...(shortNames === undefined ? {} : { shortNames: { ...shortNames } }),
+    })),
   })),
   picks: {
     signUpCommon: [...catalog.picks.signUpCommon],
-    signUpMore: [...catalog.picks.signUpMore],
     checkInQuick: [...catalog.picks.checkInQuick],
   },
 });

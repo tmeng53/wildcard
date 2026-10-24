@@ -18,12 +18,12 @@ struct ScheduleStoreSavingTests {
 
     @Test func aFailedSavePutsTheWeekBackAndSaysWhy() async {
         let backend = FakeBackend()
-        await backend.failSaves(with: .restDaysFixed)
+        await backend.failSaves(with: .dayStarted)
         let store = store(backend)
         await store.load()
         await store.tap(4)
         await store.pick(.sport("yoga"))
-        #expect(store.failure == .restDaysFixed)
+        #expect(store.failure == .dayStarted)
         #expect(store.sheet?.plan == Fixtures.plan)
         #expect(store.board?.focus == WeekBoard.Focus.none)
     }

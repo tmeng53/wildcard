@@ -40,12 +40,15 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "21-editor-hair")
 
         app.buttons["editor.tab.outfit"].tap()
-        let hoodie = app.buttons["editor.tile.top.hoodie"]
-        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 卫衣 tile")
+        let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]
+        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 连帽卫衣 tile")
         hoodie.tap()
-        waitUntilSelected(hoodie, "picking 卫衣 didn't select it")
+        waitUntilSelected(hoodie, "picking 连帽卫衣 didn't select it")
         app.buttons["editor.swatch.top.2"].tap()
-        app.buttons["editor.tile.hat.cap"].tap()
+        // Hats come after the tops, bottoms and shoes, below the fold.
+        let cap = app.buttons["editor.tile.hat.warmup-cap"]
+        scrollUntilHittable(cap, in: app)
+        cap.tap()
         settle()
         keepScreenshot(named: "22-editor-outfit")
     }
@@ -84,16 +87,17 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "30-editor-face-glasses")
     }
 
-    /// The racket plays its move; undo brings the dumbbell back.
+    /// The tumbler, the other prop every member starts with, plays its move; undo brings the
+    /// dumbbell back.
     func testPickingAPropAndUndoing() {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.prop"].tap()
-        let racket = app.buttons["editor.tile.prop.racket"]
-        XCTAssertTrue(racket.waitForExistence(timeout: Self.wait), "no 网球拍 tile")
+        let bottle = app.buttons["editor.tile.prop.bottle"]
+        XCTAssertTrue(bottle.waitForExistence(timeout: Self.wait), "no 外卡水杯 tile")
         XCTAssertTrue(app.buttons["editor.tile.prop.dumbbell"].isSelected)
-        racket.tap()
-        waitUntilSelected(racket, "picking 网球拍 didn't select it")
+        bottle.tap()
+        waitUntilSelected(bottle, "picking 外卡水杯 didn't select it")
         settle()
         keepScreenshot(named: "23-editor-prop")
         app.buttons["editor.undo"].tap()
@@ -133,6 +137,16 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "26-editor-cat")
 
         let nickname = app.textFields["editor.nickname"]
+        // The name sits on the ticket's stub, under the tear line (44 above the ticket's bottom),
+        // centred on the ticket.
+        let stage = app.otherElements["editor.stage"].frame
+        let field = nickname.frame
+        XCTAssertGreaterThanOrEqual(field.minY, stage.maxY - 44, "the nickname rose above the tear line")
+        XCTAssertLessThanOrEqual(field.maxY, stage.maxY, "the nickname fell off the ticket")
+        XCTAssertEqual(field.midY, stage.maxY - 22, accuracy: 1, "the nickname isn't centred on the stub")
+        // XCUITest reports the field about 8 points right of the ticket's middle while the name
+        // draws centred (CI's 26-editor-cat), so this checks the name stays near the middle.
+        XCTAssertEqual(field.midX, stage.midX, accuracy: 12, "the nickname isn't centred on the ticket")
         let undo = app.buttons["editor.undo"]
         let headerTop = undo.frame.minY
         // The first tap on a field puts the cursor after its text; delete more than it holds.
@@ -142,6 +156,9 @@ final class CharacterEditorUITests: XCTestCase {
         nickname.typeText("小汤")
         waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
         XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
+        XCTAssertTrue(done.isHittable, "the keyboard covers 就这样")
+        nickname.typeText("\n")
+        waitFor(app.keyboards.element, "exists == false", "Return left the keyboard up")
         keepScreenshot(named: "27-editor-nickname")
     }
 
@@ -153,7 +170,9 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
         XCTAssertEqual(app.buttons["editor.tab.look"].label, "Look")
         app.buttons["editor.tab.outfit"].tap()
-        XCTAssertEqual(app.buttons["editor.tile.hat.none"].label, "No hat")
+        let noHat = app.buttons["editor.tile.hat.none"]
+        scrollUntilHittable(noHat, in: app)
+        XCTAssertEqual(noHat.label, "No hat")
         settle()
         keepScreenshot(named: "28-editor-profile-en")
     }
@@ -189,7 +208,7 @@ final class CharacterEditorUITests: XCTestCase {
         // Clear of 就这样 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
         let done = app.buttons["editor.done"]
         func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
-        for _ in 0..<8 where !inView() {
+        for _ in 0..<12 where !inView() {
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(inView(), "\(element.identifier) never scrolled into view")

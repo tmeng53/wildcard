@@ -48,20 +48,27 @@ extension InMemoryFeedSource {
     private static func sampleCharacters(_ members: [String: MemberID]) -> [MemberID: MemberCharacter] {
         let looks: [String: CharacterLook] = [
             "阿杰": CharacterLook(
-                persona: "energetic", variants: ["body": "peach", "hair": "curls", "top": "tee", "bottom": "shorts"],
+                persona: "energetic",
+                variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
                 colors: ["body": "#C68A5E"]),
-            "Coco": CharacterLook(persona: "drama", variants: ["body": "lop", "top": "hoodie", "bottom": "leggings"]),
+            "Coco": CharacterLook(
+                persona: "drama", variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
             "Mia": CharacterLook(
-                persona: "deadpan", variants: ["body": "calico", "top": "tee", "bottom": "greenshorts"]),
+                persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
             "豆豆": CharacterLook(
-                persona: "energetic", variants: ["body": "shiba", "top": "jersey", "bottom": "shorts"]),
+                persona: "energetic", variants: ["body": "shiba", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
             "小鱼": CharacterLook(
-                persona: "shy", variants: ["body": "peach", "hair": "ponytail", "top": "tee", "bottom": "leggings"]),
+                persona: "shy",
+                variants: ["body": "peach", "hair": "ponytail", "top": "warmup-tee", "bottom": "warmup-leggings"]),
             "Kiki": CharacterLook(
                 persona: "showoff",
-                variants: ["body": "peach", "hair": "bob", "glasses": "round", "top": "hoodie", "bottom": "shorts"]),
+                variants: [
+                    "body": "peach", "hair": "bob", "glasses": "round", "top": "warmup-hoodie",
+                    "bottom": "warmup-shorts",
+                ]),
             "Momo": CharacterLook(
-                persona: "energetic", variants: ["body": "peach", "hair": "long", "top": "tank", "bottom": "shorts"]),
+                persona: "energetic",
+                variants: ["body": "peach", "hair": "long", "top": "warmup-tank", "bottom": "warmup-shorts"]),
         ]
         var characters: [MemberID: MemberCharacter] = [:]
         for (nickname, member) in members {

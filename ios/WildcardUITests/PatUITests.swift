@@ -34,7 +34,7 @@ final class PatUITests: XCTestCase {
         keepScreenshot(named: "52-patted-bubble")
 
         // I pat her back.
-        pat.tap()
+        tapPat(pat, on: "小米", bubble: bubble, in: app)
         let patted = Date()
         for frame in 0..<8 {
             let after = Int(Date().timeIntervalSince(patted) * 1000)
@@ -51,7 +51,7 @@ final class PatUITests: XCTestCase {
         XCTAssertEqual(pat.label, "拍一拍")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "54-mate-status")
-        pat.tap()
+        tapPat(pat, on: "豆豆", bubble: bubble, in: app)
         Thread.sleep(forTimeInterval: 3.5)
         mate("豆豆", in: app).tap()
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping 豆豆 again showed no bubble")
@@ -72,6 +72,18 @@ final class PatUITests: XCTestCase {
         XCTAssertTrue(tab.exists, "no tab bar under 今天")
         XCTAssertLessThanOrEqual(frame.maxY, tab.frame.minY, "the tab bar covers the bubble: \(frame)")
         XCTAssertTrue(button.isHittable, "the bubble's button can't be tapped")
+    }
+
+    /// Taps the bubble's 「拍一拍」. A bubble closes on its own after 5 seconds, and a slow CI
+    /// simulator can spend that long on the checks and screenshots before the tap, so if it has
+    /// closed, tapping the teammate opens their bubble again, still offering 「拍一拍」.
+    private func tapPat(_ pat: XCUIElement, on nickname: String, bubble: XCUIElement, in app: XCUIApplication) {
+        if !pat.isHittable {
+            mate(nickname, in: app).tap()
+            XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
+            XCTAssertEqual(pat.label, "拍一拍")
+        }
+        pat.tap()
     }
 
     private func mate(_ nickname: String, in app: XCUIApplication) -> XCUIElement {

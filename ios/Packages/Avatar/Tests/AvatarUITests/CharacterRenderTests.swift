@@ -13,7 +13,9 @@ import Testing
 @MainActor
 struct CharacterRenderTests {
     static let skin = (0xF5, 0xCD, 0xAE)
-    static let plate = (0x1F, 0x21, 0x28)
+    /// The dumbbell's outer plate in the right hand, at rest: its iron, clear of the grip's collar.
+    static let plateSpot = Point(x: 187, y: 243)
+    static let iron = (0x2B, 0x2E, 0x37)
     static let white = (0xFF, 0xFF, 0xFF)
 
     @Test func drawsTheRestPoseWhereTheArtSays() throws {
@@ -21,7 +23,7 @@ struct CharacterRenderTests {
         let image = try lifter.render(lifter.figure.restPose)
         // The middle of the face, the outer dumbbell plate in the right hand, and empty canvas.
         #expect(matches(image.color(atColumn: 120, row: 150), Self.skin))
-        #expect(matches(image.color(atColumn: 193, row: 255), Self.plate))
+        #expect(matches(image.color(atColumn: 187, row: 243), Self.iron))
         #expect(matches(image.color(atColumn: 10, row: 10), Self.white))
 
         // The bear has no prop: the same spot, past the hand, is empty.
@@ -36,7 +38,7 @@ struct CharacterRenderTests {
         let pupil = (0x0E, 0x0F, 0x14)
         let ink = (0x22, 0x25, 0x2E)
         for body in PlaceholderCharacter.variants(for: "body") {
-            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "tee"]))
+            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tee"]))
             // 160 points square draws the head's crop one to one: canvas (x, y) is (x - 40, y - 74).
             let view = CharacterHead(player: try CharacterPlayer(figure: figure, idle: idle))
                 .frame(width: 160, height: 160)
@@ -57,8 +59,8 @@ struct CharacterRenderTests {
         // The plate's rest spot is empty, and the plate is where the arm and prop transforms take it.
         #expect(matches(image.color(atColumn: 193, row: 255), Self.white))
         let prop = try #require(lifter.figure.parts.firstIndex { $0.id == "propR" })
-        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Point(x: 193, y: 255))
-        #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
+        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Self.plateSpot)
+        #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.iron))
     }
 
     /// Picking a sport: the player draws the old clothes until the hop's squash, the kit after.
@@ -79,8 +81,9 @@ struct CharacterRenderTests {
         #expect(before.drawing.width == after.drawing.width)
         #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)
         #expect(player.figure == swimmer)
-        // Reduce Motion shows the kit straight away, standing still.
-        #expect(player.restFrame.placements == swimmer.layout(swimmer.restPose))
+        // Reduce Motion shows the kit straight away, holding its move's first frame.
+        let move = try swimmer.bind(PlaceholderCharacter.move(for: swim, persona: .shy))
+        #expect(player.restFrame.placements == swimmer.layout(swimmer.pose(move, at: 0)))
     }
 
     /// Taking a sport off mid-hop: the outfit worn instead stays on, the kit never shows.

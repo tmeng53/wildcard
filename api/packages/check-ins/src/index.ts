@@ -28,7 +28,7 @@ export {
 export { PhotoPath, PhotoRef, Photos, isOwnPhoto } from './domain/photos.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
 export { DayRange } from './domain/day-range.js';
-export type { CheckInTotals } from './domain/totals.js';
+export type { CheckInTotals, TopSport } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { ReplyKind, type Reply } from './domain/reply.js';
 export {
@@ -55,13 +55,11 @@ export {
   PhotoNotUploadedError,
   PhotoNotYoursError,
   PlanDayStartedError,
-  RestDaysFixedError,
   SportNotListedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
   WeekOverError,
-  WeekStartedError,
   WeekTooFarAheadError,
 } from './errors.js';
 export type {

@@ -62,6 +62,12 @@ func workoutMinutesRangeIsTheAPIs(schema: String) throws {
     #expect(try property("catchphrase", of: "Profile")?.maxCharacters == Catchphrase.maxLength)
 }
 
+@Test func jerseyNumberRangeIsTheAPIs() throws {
+    let number = try property("jerseyNumber", of: "Profile")
+    #expect(number?.minimum == JerseyNumber.range.lowerBound)
+    #expect(number?.maximum == JerseyNumber.range.upperBound)
+}
+
 @Test func nicknameLimitIsTheAPIs() throws {
     #expect(try property("nickname", of: "Character")?.maxCharacters == Nickname.maxLength)
 }

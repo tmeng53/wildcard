@@ -184,6 +184,8 @@ extension Components {
                     public var id: Swift.String
                     /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/names`.
                     public var names: Components.Schemas.CatalogNames
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/shortNames`.
+                    public var shortNames: Components.Schemas.CatalogNames?
                     /// An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
                     ///
                     /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/icon`.
@@ -199,18 +201,21 @@ extension Components {
                     /// - Parameters:
                     ///   - id: What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
                     ///   - names:
+                    ///   - shortNames:
                     ///   - icon: An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
                     ///   - offered: False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
                     ///   - additionalProperties: A container of undocumented properties.
                     public init(
                         id: Swift.String,
                         names: Components.Schemas.CatalogNames,
+                        shortNames: Components.Schemas.CatalogNames? = nil,
                         icon: Swift.String,
                         offered: Swift.Bool,
                         additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                     ) {
                         self.id = id
                         self.names = names
+                        self.shortNames = shortNames
                         self.icon = icon
                         self.offered = offered
                         self.additionalProperties = additionalProperties
@@ -218,6 +223,7 @@ extension Components {
                     public enum CodingKeys: String, CodingKey {
                         case id
                         case names
+                        case shortNames
                         case icon
                         case offered
                     }
@@ -231,6 +237,10 @@ extension Components {
                             Components.Schemas.CatalogNames.self,
                             forKey: .names
                         )
+                        self.shortNames = try container.decodeIfPresent(
+                            Components.Schemas.CatalogNames.self,
+                            forKey: .shortNames
+                        )
                         self.icon = try container.decode(
                             Swift.String.self,
                             forKey: .icon
@@ -242,6 +252,7 @@ extension Components {
                         additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                             "id",
                             "names",
+                            "shortNames",
                             "icon",
                             "offered"
                         ])
@@ -255,6 +266,10 @@ extension Components {
                         try container.encode(
                             self.names,
                             forKey: .names
+                        )
+                        try container.encodeIfPresent(
+                            self.shortNames,
+                            forKey: .shortNames
                         )
                         try container.encode(
                             self.icon,
@@ -349,10 +364,6 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/signUpCommon`.
                 public var signUpCommon: [Swift.String]
-                /// Sign-up’s 更多 pills. Sport ids, in order.
-                ///
-                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/signUpMore`.
-                public var signUpMore: [Swift.String]
                 /// A 练了’s quick picks, before the whole list. Sport ids, in order.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/checkInQuick`.
@@ -363,23 +374,19 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - signUpCommon: Sign-up’s 最常见 grid. Sport ids, in order.
-                ///   - signUpMore: Sign-up’s 更多 pills. Sport ids, in order.
                 ///   - checkInQuick: A 练了’s quick picks, before the whole list. Sport ids, in order.
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     signUpCommon: [Swift.String],
-                    signUpMore: [Swift.String],
                     checkInQuick: [Swift.String],
                     additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.signUpCommon = signUpCommon
-                    self.signUpMore = signUpMore
                     self.checkInQuick = checkInQuick
                     self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
                     case signUpCommon
-                    case signUpMore
                     case checkInQuick
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -388,17 +395,12 @@ extension Components {
                         [Swift.String].self,
                         forKey: .signUpCommon
                     )
-                    self.signUpMore = try container.decode(
-                        [Swift.String].self,
-                        forKey: .signUpMore
-                    )
                     self.checkInQuick = try container.decode(
                         [Swift.String].self,
                         forKey: .checkInQuick
                     )
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "signUpCommon",
-                        "signUpMore",
                         "checkInQuick"
                     ])
                 }
@@ -407,10 +409,6 @@ extension Components {
                     try container.encode(
                         self.signUpCommon,
                         forKey: .signUpCommon
-                    )
-                    try container.encode(
-                        self.signUpMore,
-                        forKey: .signUpMore
                     )
                     try container.encode(
                         self.checkInQuick,
@@ -574,25 +572,41 @@ extension Components {
                 public var catchphrase: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/Me/profile/character`.
                 public var character: Components.Schemas.Character?
+                /// The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/jerseyNumber`.
+                public var jerseyNumber: Swift.Int?
+                /// When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/joinedAt`.
+                public var joinedAt: Foundation.Date
                 /// Creates a new `ProfilePayload`.
                 ///
                 /// - Parameters:
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
                 ///   - character:
+                ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///   - joinedAt: When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 public init(
                     timeZone: Swift.String,
                     catchphrase: Swift.String? = nil,
-                    character: Components.Schemas.Character? = nil
+                    character: Components.Schemas.Character? = nil,
+                    jerseyNumber: Swift.Int? = nil,
+                    joinedAt: Foundation.Date
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
                     self.character = character
+                    self.jerseyNumber = jerseyNumber
+                    self.joinedAt = joinedAt
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
                     case catchphrase
                     case character
+                    case jerseyNumber
+                    case joinedAt
                 }
             }
             /// Null until the member first saves one, right after signing up.
@@ -742,6 +756,10 @@ extension Components {
             public var catchphrase: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Profile/character`.
             public var character: Components.Schemas.Character?
+            /// The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/jerseyNumber`.
+            public var jerseyNumber: Swift.Int?
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
@@ -749,22 +767,26 @@ extension Components {
             ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
             ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
             ///   - character:
+            ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
             public init(
                 version: Components.Schemas.Profile.VersionPayload,
                 timeZone: Swift.String,
                 catchphrase: Swift.String? = nil,
-                character: Components.Schemas.Character? = nil
+                character: Components.Schemas.Character? = nil,
+                jerseyNumber: Swift.Int? = nil
             ) {
                 self.version = version
                 self.timeZone = timeZone
                 self.catchphrase = catchphrase
                 self.character = character
+                self.jerseyNumber = jerseyNumber
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case timeZone
                 case catchphrase
                 case character
+                case jerseyNumber
             }
         }
         /// - Remark: Generated from `#/components/schemas/AccountDeletion`.
@@ -1958,6 +1980,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/topSport`.
+            public var topSport: Components.Schemas.TopSport?
             /// Creates a new `CheckInTotals`.
             ///
             /// - Parameters:
@@ -1966,18 +1990,21 @@ extension Components {
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
             ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
-                disclaimers: Swift.Int
+                disclaimers: Swift.Int,
+                topSport: Components.Schemas.TopSport? = nil
             ) {
                 self.version = version
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
                 self.disclaimers = disclaimers
+                self.topSport = topSport
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -1985,6 +2012,42 @@ extension Components {
                 case healthyMeals
                 case cheatMeals
                 case disclaimers
+                case topSport
+            }
+        }
+        /// The sport with the most 练了 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 练了.
+        ///
+        /// - Remark: Generated from `#/components/schemas/TopSport`.
+        public struct TopSport: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TopSport/sport`.
+            public var sport: Components.Schemas.Sport
+            /// The name of a `custom` sport; a listed sport has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TopSport/customSport`.
+            public var customSport: Swift.String?
+            /// 练了 check-ins of this sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TopSport/checkIns`.
+            public var checkIns: Swift.Int
+            /// Creates a new `TopSport`.
+            ///
+            /// - Parameters:
+            ///   - sport:
+            ///   - customSport: The name of a `custom` sport; a listed sport has none.
+            ///   - checkIns: 练了 check-ins of this sport.
+            public init(
+                sport: Components.Schemas.Sport,
+                customSport: Swift.String? = nil,
+                checkIns: Swift.Int
+            ) {
+                self.sport = sport
+                self.customSport = customSport
+                self.checkIns = checkIns
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sport
+                case customSport
+                case checkIns
             }
         }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
@@ -4771,6 +4834,70 @@ extension Components {
                 case title
                 case speech
                 case move
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AwardTotals`.
+        public struct AwardTotals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/version`.
+            public var version: Components.Schemas.AwardTotals.VersionPayload
+            /// Every title (周奖) the member has won, in all their squads and weeks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/titles`.
+            public var titles: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/latest`.
+            public var latest: Components.Schemas.LatestTitle?
+            /// Creates a new `AwardTotals`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - titles: Every title (周奖) the member has won, in all their squads and weeks.
+            ///   - latest:
+            public init(
+                version: Components.Schemas.AwardTotals.VersionPayload,
+                titles: Swift.Int,
+                latest: Components.Schemas.LatestTitle? = nil
+            ) {
+                self.version = version
+                self.titles = titles
+                self.latest = latest
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case titles
+                case latest
+            }
+        }
+        /// The latest title they won. Left out before the first.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LatestTitle`.
+        public struct LatestTitle: Codable, Hashable, Sendable {
+            /// The title, at most 6 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LatestTitle/title`.
+            public var title: Swift.String
+            /// How many times the member has won this title.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LatestTitle/times`.
+            public var times: Swift.Int
+            /// Creates a new `LatestTitle`.
+            ///
+            /// - Parameters:
+            ///   - title: The title, at most 6 characters.
+            ///   - times: How many times the member has won this title.
+            public init(
+                title: Swift.String,
+                times: Swift.Int
+            ) {
+                self.title = title
+                self.times = times
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case times
             }
         }
     }

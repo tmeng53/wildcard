@@ -85,15 +85,11 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         if weekStart == thisWeek {
             let before = sheet.plan
             // Days before today stay as they were; a training today stays a training day, and a
-            // rest today may become one, one rest day fewer.
+            // rest today may become one. Later days change freely.
             let todayIndex = today.weekday - 1
             guard days.count == before.count, days.prefix(todayIndex) == before.prefix(todayIndex),
                 before[todayIndex] == .rest || days[todayIndex] != .rest
             else { throw .dayStarted }
-            let tookUpToday = before[todayIndex] == .rest && days[todayIndex] != .rest
-            let rests = days.count(where: { $0 == .rest })
-            let kept = before.count(where: { $0 == .rest })
-            guard rests == kept || (tookUpToday && rests == kept - 1) else { throw .restDaysFixed }
         }
         sheet.plan = days
         sheets[weekStart] = sheet
@@ -101,7 +97,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     }
 
     public func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        guard weekStart > thisWeek else { throw .weekOver }
+        guard weekStart >= thisWeek else { throw .weekOver }
         var sheet = try await week(starting: weekStart)
         sheet.fuel = goals
         sheets[weekStart] = sheet

@@ -459,12 +459,49 @@ describe('GET /me/check-in-totals', () => {
     ).toStrictEqual({
       status: 200,
       type: 'application/json',
-      body: { version: 1, trainedDays: 2, healthyMeals: 2, cheatMeals: 1, disclaimers: 1 },
+      body: {
+        version: 1,
+        trainedDays: 2,
+        healthyMeals: 2,
+        cheatMeals: 1,
+        disclaimers: 1,
+        topSport: { sport: 'run', checkIns: 2 },
+      },
     });
     expect(
       (await call({ method: 'GET', path: '/me/check-in-totals', token: friend.token })).body,
     ).toStrictEqual({ version: 1, trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0 });
     expect((await call({ method: 'GET', path: '/me/check-in-totals' })).status).toBe(401);
+  });
+
+  it('counts a custom sport by its name for 最常练, and the latest sport wins a tie', async () => {
+    const me = await signUp();
+    const squad = await squadOf(me);
+    const train = async (minutesAgo: number, training: Record<string, unknown>) => {
+      const when = new Date(Date.now() - minutesAgo * 60_000);
+      const body = {
+        version: 1,
+        day: when.toISOString().slice(0, 10),
+        createdAt: when.toISOString(),
+        audience: [squad],
+        kind: 'trained',
+        training,
+      };
+      return (
+        await call({ method: 'PUT', path: `/check-ins/${randomUUID()}`, token: me.token, body })
+      ).status;
+    };
+    const topSport = async () =>
+      z
+        .object({ topSport: z.unknown() })
+        .parse((await call({ method: 'GET', path: '/me/check-in-totals', token: me.token })).body)
+        .topSport;
+
+    expect(await train(5, { sport: 'custom', customSport: '飞盘' })).toBe(201);
+    expect(await train(4, { sport: 'custom', customSport: '匹克球' })).toBe(201);
+    expect(await topSport()).toStrictEqual({ sport: 'custom', customSport: '匹克球', checkIns: 1 });
+    expect(await train(3, { sport: 'custom', customSport: '飞盘' })).toBe(201);
+    expect(await topSport()).toStrictEqual({ sport: 'custom', customSport: '飞盘', checkIns: 2 });
   });
 });
 

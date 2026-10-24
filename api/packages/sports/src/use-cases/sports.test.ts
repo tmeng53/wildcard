@@ -67,21 +67,22 @@ describe('the sports list', () => {
     });
   });
 
+  it('gives a long name a shorter one for cards, and leaves the rest without', async () => {
+    const all = (await sports.catalog()).categories.flatMap((category) => category.sports);
+    expect(all.find((sport) => sport.id === 'tableTennis')?.shortNames).toEqual({
+      zhHans: '乒乓球',
+      en: 'Ping pong',
+      zhHant: '桌球',
+    });
+    expect(all.find((sport) => sport.id === 'strength')).toMatchObject({
+      names: { zhHans: '力量训练', en: 'Strength', zhHant: '重訓' },
+    });
+    expect(all.find((sport) => sport.id === 'strength')).not.toHaveProperty('shortNames');
+  });
+
   it('gives each short list in its order', async () => {
     expect((await sports.catalog()).picks).toEqual({
       signUpCommon: ['swim', 'run', 'strength', 'tennis', 'climb', 'yoga'],
-      signUpMore: [
-        'roadCycling',
-        'matPilates',
-        'badminton',
-        'hike',
-        'basketball',
-        'ski',
-        'pickleball',
-        'dance',
-        'boxing',
-        'soccer',
-      ],
       checkInQuick: ['run', 'strength', 'yoga', 'swim', 'spin', 'hike', 'tennis'],
     });
   });

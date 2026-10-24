@@ -29,7 +29,6 @@ private func mine(_ entry: CheckIn.Entry, at millis: Int64 = 1_792_515_600_000, 
 @Test func everyoneTrainedOnceTheLastWhoWasntRestingTrains() throws {
     let counted = sampleToday().countingMine(try mine(.trained(Training(activity: .sport("run")))))
     #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
-    #expect(counted.myWeek.lifetimeTrainedDays == 31)
 }
 
 @Test func aCheckInForAnotherDayIsntCountedToday() throws {

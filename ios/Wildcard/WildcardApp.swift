@@ -41,15 +41,21 @@ struct WildcardApp: App {
     @State private var recap: RecapShelf
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
+    /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
+    /// made their squad only once the squad is dropping onto the scene they picked, so the
+    /// tabs never show the squad's old scene first.
+    @State private var signedUp = false
     @State private var app: AppModel?
 
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
+        CrashReports.start()
         // The sports this build ships with; with a backend, `AppModel` shows the kept or newer list.
         SportList.shared.show(CatalogClient.bundledSports)
         _ = DefaultLanguage.applies
         LaunchOptions.forgetSeenRecapIfAsked()
+        LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(
@@ -66,11 +72,7 @@ struct WildcardApp: App {
             defaults: LaunchOptions.todayDefaults,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
-        _profile = State(
-            initialValue: MeModel(
-                service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
-                // The in-memory member has no Apple account to confirm with and nothing to sign out of.
-                confirm: { .signedInSession }, signOut: {}))
+        _profile = State(initialValue: Self.sampleProfile())
         _squad = State(
             initialValue: SquadSettingsModel(
                 service: InMemorySquadSettingsService.sample(
@@ -98,6 +100,14 @@ struct WildcardApp: App {
                     now: LaunchOptions.signUpTime))
         }
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad))
+    }
+
+    /// The sample member for 我. The in-memory member has no Apple account to confirm with and
+    /// nothing to sign out of.
+    private static func sampleProfile() -> MeModel {
+        MeModel(
+            service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
+            confirm: { .signedInSession }, signOut: {})
     }
 
     /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on
@@ -142,12 +152,20 @@ struct WildcardApp: App {
 
     @ViewBuilder private var root: some View {
         if let editor {
-            CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
-        } else if let signUp, signUp.finished == nil {
+            CharacterEditorView(
+                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
+        } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 StandInSignIn { signUp.signedIn(name: nil) }
             } tabBar: {
                 MainTabs.entranceTabBar
+            }
+            .onChange(of: signUp.finished) { _, finished in
+                guard finished != nil else { return }
+                Task {
+                    if let scene = signUp.landing { await today.dropIn(on: scene, coveredAt: .now) }
+                    signedUp = true
+                }
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
@@ -161,8 +179,6 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
-                // Whoever made their squad in `-onboarding` drops onto the scene they picked.
-                if let scene = signUp?.landing { Task { await today.dropIn(on: scene, coveredAt: .now) } }
                 delegate.opened = { [today, $tab] _ in
                     $tab.wrappedValue = .today
                     Task { await today.load() }

@@ -135,6 +135,9 @@
                       "names": {
                         "$ref": "#/components/schemas/CatalogNames"
                       },
+                      "shortNames": {
+                        "$ref": "#/components/schemas/CatalogNames"
+                      },
                       "icon": {
                         "type": "string",
                         "description": "An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.",
@@ -174,13 +177,6 @@
                 },
                 "description": "Sign-up’s 最常见 grid. Sport ids, in order."
               },
-              "signUpMore": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Sign-up’s 更多 pills. Sport ids, in order."
-              },
               "checkInQuick": {
                 "type": "array",
                 "items": {
@@ -191,7 +187,6 @@
             },
             "required": [
               "signUpCommon",
-              "signUpMore",
               "checkInQuick"
             ],
             "additionalProperties": {},
@@ -270,10 +265,26 @@
               },
               "character": {
                 "$ref": "#/components/schemas/Character"
+              },
+              "jerseyNumber": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 99,
+                "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
+                "example": 22
+              },
+              "joinedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket."
               }
             },
             "required": [
-              "timeZone"
+              "timeZone",
+              "joinedAt"
             ],
             "additionalProperties": false,
             "description": "Null until the member first saves one, right after signing up."
@@ -370,6 +381,16 @@
           },
           "character": {
             "$ref": "#/components/schemas/Character"
+          },
+          "jerseyNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 99,
+            "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
+            "example": 22
           }
         },
         "required": [
@@ -1297,6 +1318,9 @@
             "type": "integer",
             "minimum": 0,
             "description": "今日请假条 check-ins, at most one a day."
+          },
+          "topSport": {
+            "$ref": "#/components/schemas/TopSport"
           }
         },
         "required": [
@@ -1307,6 +1331,29 @@
           "disclaimers"
         ],
         "additionalProperties": false
+      },
+      "TopSport": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/Sport"
+          },
+          "customSport": {
+            "type": "string",
+            "description": "The name of a `custom` sport; a listed sport has none."
+          },
+          "checkIns": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "练了 check-ins of this sport."
+          }
+        },
+        "required": [
+          "sport",
+          "checkIns"
+        ],
+        "additionalProperties": false,
+        "description": "The sport with the most 练了 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 练了."
       },
       "PhotoUpload": {
         "type": "object",
@@ -3153,6 +3200,54 @@
           "move"
         ],
         "additionalProperties": false
+      },
+      "AwardTotals": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "titles": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every title (周奖) the member has won, in all their squads and weeks.",
+            "example": 3
+          },
+          "latest": {
+            "$ref": "#/components/schemas/LatestTitle"
+          }
+        },
+        "required": [
+          "version",
+          "titles"
+        ],
+        "additionalProperties": false
+      },
+      "LatestTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The title, at most 6 characters.",
+            "example": "早八战神"
+          },
+          "times": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "How many times the member has won this title.",
+            "example": 2
+          }
+        },
+        "required": [
+          "title",
+          "times"
+        ],
+        "additionalProperties": false,
+        "description": "The latest title they won. Left out before the first."
       }
     },
     "parameters": {}
@@ -6101,7 +6196,7 @@
       "put": {
         "operationId": "saveMyWeeklyPlan",
         "summary": "Save the signed-in member’s plan for a week",
-        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
+        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
         "security": [
           {
             "bearer": []
@@ -6143,7 +6238,7 @@
             }
           },
           "400": {
-            "description": "Not a valid plan or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`) or to this week’s number of rest days (`REST_DAYS_FIXED`); or no profile yet (`TIME_ZONE_NOT_SET`)",
+            "description": "Not a valid plan or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`); or no profile yet (`TIME_ZONE_NOT_SET`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6189,7 +6284,7 @@
       "put": {
         "operationId": "saveMyFuelGoals",
         "summary": "Set the signed-in member’s 饮食小目标 for a week",
-        "description": "Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.",
+        "description": "Replaces the week’s goals; repeating a save gives the same result. For this week on the member’s clock or a later one, up to 4 weeks ahead. Answers with the whole week.",
         "security": [
           {
             "bearer": []
@@ -6231,7 +6326,7 @@
             }
           },
           "400": {
-            "description": "Not valid goals or not a Monday; a week that has started (`WEEK_STARTED`) or is too far ahead (`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)",
+            "description": "Not valid goals or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6439,6 +6534,50 @@
           },
           "404": {
             "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/award-totals": {
+      "get": {
+        "operationId": "getMyAwardTotals",
+        "summary": "The weekly titles the signed-in member has won",
+        "description": "Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The titles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardTotals"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

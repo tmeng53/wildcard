@@ -22,6 +22,11 @@ public enum AvatarError: Error, Equatable, Sendable {
     case notRecolorable(slot: Slot, variant: String)
     /// A variant's `tones.json` lists a color its art never paints.
     case unusedTone(slot: Slot, variant: String, color: RGBAColor)
+    /// A layer is held in a part with no hand to take colors from (no `body` art ending in a
+    /// filled and outlined shape), or the rig has no `skin` to repaint.
+    case noHand(PartID)
+    /// A variant's `hold.json` names an arm the rig doesn't have.
+    case unknownArm(art: String, arm: PartID)
     /// An art file uses SVG this player doesn't draw.
     case invalidSVG(art: String, problem: SVGProblem)
     /// An art file drawn on a different canvas than the rig's.

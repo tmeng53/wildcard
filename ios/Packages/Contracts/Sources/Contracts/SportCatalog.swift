@@ -23,6 +23,8 @@ public struct SportCatalog: Hashable, Sendable {
     public struct Entry: Hashable, Sendable {
         public let sport: Sport
         public let names: Names
+        /// The name on a card or poster row, for a sport whose name is too long there.
+        public let shortNames: Names?
         /// An SF Symbol name.
         public let icon: String
         /// False for a sport the pickers no longer offer; check-ins that name it still show it.
@@ -30,8 +32,12 @@ public struct SportCatalog: Hashable, Sendable {
         /// The id of the category it is in.
         public let category: String
 
-        public init(sport: Sport, names: Names, icon: String, offered: Bool, category: String) {
-            (self.sport, self.names, self.icon, self.offered, self.category) = (sport, names, icon, offered, category)
+        public init(
+            sport: Sport, names: Names, shortNames: Names? = nil, icon: String, offered: Bool, category: String
+        ) {
+            (self.sport, self.names, self.shortNames, self.icon, self.offered, self.category) = (
+                sport, names, shortNames, icon, offered, category
+            )
         }
     }
 
@@ -54,25 +60,22 @@ public struct SportCatalog: Hashable, Sendable {
     public let categories: [Category]
     /// Sign-up's 最常见 grid.
     public let signUpCommon: [Sport]
-    /// Sign-up's 更多 pills.
-    public let signUpMore: [Sport]
     /// A 练了's quick picks, before the whole list.
     public let checkInQuick: [Sport]
     private let entries: [Sport: Entry]
 
-    public init(categories: [Category], signUpCommon: [Sport], signUpMore: [Sport], checkInQuick: [Sport]) {
+    public init(categories: [Category], signUpCommon: [Sport], checkInQuick: [Sport]) {
         self.categories = categories
         var entries: [Sport: Entry] = [:]
         for entry in categories.flatMap(\.entries) where entries[entry.sport] == nil { entries[entry.sport] = entry }
         self.entries = entries
         // A short list names only listed sports the pickers offer.
         let offered = { (list: [Sport]) in list.filter { entries[$0]?.offered == true } }
-        (self.signUpCommon, self.signUpMore, self.checkInQuick) =
-            (offered(signUpCommon), offered(signUpMore), offered(checkInQuick))
+        (self.signUpCommon, self.checkInQuick) = (offered(signUpCommon), offered(checkInQuick))
     }
 
     /// No sports at all.
-    public static let empty = SportCatalog(categories: [], signUpCommon: [], signUpMore: [], checkInQuick: [])
+    public static let empty = SportCatalog(categories: [], signUpCommon: [], checkInQuick: [])
 
     /// The sport's names, icon and category; nil for an id this list doesn't have (one the
     /// server added after this list was read).

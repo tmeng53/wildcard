@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build",
     "typecheck": "tsc --build && tsc --noEmit -p apps/server/tsconfig.test.json && tsc --noEmit -p packages/errors/tsconfig.test.json && tsc --noEmit -p packages/check-ins/tsconfig.test.json && tsc --noEmit -p packages/members/tsconfig.test.json && tsc --noEmit -p packages/disclaimer-drafts/tsconfig.test.json && tsc --noEmit -p packages/memes/tsconfig.test.json && tsc --noEmit -p packages/push/tsconfig.test.json && tsc --noEmit -p packages/squads/tsconfig.test.json && tsc --noEmit -p packages/typed-text/tsconfig.test.json && tsc --noEmit -p packages/admins/tsconfig.test.json && tsc --noEmit -p packages/ai-consent/tsconfig.test.json && tsc --noEmit -p packages/nudges/tsconfig.test.json && tsc --noEmit -p packages/disclaimer-styles/tsconfig.test.json && tsc --noEmit -p packages/weekly-awards/tsconfig.test.json && tsc --noEmit -p packages/sports/tsconfig.test.json && tsc --noEmit -p packages/sport-ids/tsconfig.test.json",
-    "lint": "tsc --build && NODE_OPTIONS=--max-old-space-size=4096 eslint . && prettier --check .",
+    "lint": "tsc --build && NODE_OPTIONS=--max-old-space-size=6144 eslint . && prettier --check .",
     "format": "prettier --write .",
     "boundaries": "depcruise apps packages",
     "test": "vitest run",

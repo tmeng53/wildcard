@@ -1,6 +1,7 @@
 // Writes the site's generated files. The site and the app share one character art and one
 // wordmark font, so those come from the app's own sources:
-//   public/home/characters.js       the rig, the five looks drawn from the app's SVG parts, the clips
+//   public/home/characters.js       the rig, the five looks drawn from the app's SVG parts (with the
+//                                   parts each keeps level in a hand), the clips
 //   public/join/characters.js       the rig, all of the app's art and the idles, for the invite page
 //                                   to dress each member's look as the API sends it
 //   public/fonts/                   Barlow Condensed ExtraBold and its license, from DesignSystemUI
@@ -9,7 +10,7 @@
 import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dress } from '../public/character/dress.js';
+import { dress, leveled } from '../public/character/dress.js';
 
 const web = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ios = join(web, '..', 'ios', 'Packages');
@@ -27,7 +28,15 @@ const list = (dir) => readdirSync(dir).sort();
 const rig = json(join(art, 'rig.json'));
 
 // All of the app's art, as public/character/dress.js takes it.
-const wardrobe = { parts: rig.parts, defaults: rig.defaults, variants: {}, art: {}, tones: {} };
+const wardrobe = {
+  parts: rig.parts,
+  defaults: rig.defaults,
+  skin: rig.skin,
+  variants: {},
+  art: {},
+  tones: {},
+  holds: {},
+};
 for (const file of list(join(art, 'art', 'base')).filter((f) => f.endsWith('.svg')))
   wardrobe.art[`base/${basename(file, '.svg')}`] = svgInner(join(art, 'art', 'base', file));
 for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
@@ -40,6 +49,8 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
       const { base, shades } = json(join(dir, 'tones.json'));
       wardrobe.tones[`${slot}/${variant}`] = { base, shades: shades ?? [] };
     }
+    if (existsSync(join(dir, 'hold.json')))
+      wardrobe.holds[`${slot}/${variant}`] = json(join(dir, 'hold.json')).level;
   }
 }
 
@@ -60,20 +71,20 @@ const moves = ['warmup', 'stretch', 'pump', 'wave'];
 const bundle = {
   version: 1,
   parts: rigParts,
-  cast: cast.map(({ id, zh, zhHant, en, persona, look, colors, shoes }) => ({
+  cast: cast.map(({ id, zh, zhHant, en, persona, look, colors }) => ({
     id,
     zh,
     zhHant,
     en,
     persona,
-    art: dress(wardrobe, look, colors, shoes),
+    art: dress(wardrobe, look, colors),
+    level: leveled(wardrobe, look),
   })),
   idle: idles(personas),
   cheer: Object.fromEntries(personas.map((p) => [p, clip(join(art, 'clips', p, 'cheer.json'))])),
   moves: Object.fromEntries(
     moves.map((m) => [m, clip(join(web, 'character', 'moves', `${m}.json`))]),
   ),
-  dumbbell: svgInner(join(art, 'art', 'prop', 'dumbbell', 'propR.svg')),
 };
 
 // The invite page dresses any look the API sends, so it gets the whole wardrobe and every idle.

@@ -72,22 +72,27 @@ public enum RecapSample {
                 [
                     "body": "peach", "hair": "curls", "eyes": "happy", "brows": "arched", "mouth": "grin",
                     "cheeks": "flushed",
-                    "top": "jersey", "bottom": "shorts",
+                    "top": "nolook-jersey", "bottom": "warmup-shorts",
                 ]),
             member(
                 lin, "小林", .showoff, "person",
                 [
-                    "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk", "top": "tank",
-                    "bottom": "shorts",
+                    "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk",
+                    "top": "warmup-tank",
+                    "bottom": "warmup-shorts",
                 ]),
-            member(mia, "Mia", .drama, "cat", ["body": "tuxedo", "top": "tee", "bottom": "shorts", "hat": "headband"]),
-            member(jay, "阿杰", .shy, "dog", ["body": "shiba", "top": "tee", "bottom": "greenshorts", "hat": "cap"]),
+            member(
+                mia, "Mia", .drama, "cat",
+                ["body": "tuxedo", "top": "warmup-tee", "bottom": "warmup-shorts", "hat": "warmup-headband"]),
+            member(
+                jay, "阿杰", .shy, "dog",
+                ["body": "shiba", "top": "warmup-tee", "bottom": "moss-cargo", "hat": "warmup-cap"]),
             member(
                 reader, "我", .deadpan, "person",
                 [
                     "body": "peach", "hair": "long", "eyes": "sleepy", "brows": "soft", "mouth": "smile",
                     "cheeks": "rosy",
-                    "glasses": "square", "top": "hoodie", "bottom": "leggings",
+                    "glasses": "square", "top": "warmup-hoodie", "bottom": "warmup-leggings",
                 ]),
         ], viewer: reader, scene: .pool)
 

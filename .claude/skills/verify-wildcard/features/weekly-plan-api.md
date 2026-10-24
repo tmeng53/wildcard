@@ -27,7 +27,7 @@ weekly-plan: next week (2026-10-26) saved, custom sport trimmed; saving again ch
 weekly-plan: the week after (2026-11-02) carries it over
 weekly-plan: last week refused (400 WEEK_OVER), 5 weeks ahead refused (400 WEEK_TOO_FAR_AHEAD), a Tuesday refused (400)
 weekly-plan: one row stored, for 2026-10-26
-weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's refused (400 WEEK_STARTED); first week 2026-10-19
+weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's saved and logged; last week's refused (400 WEEK_OVER); first week 2026-10-19
 api-journeys: ok (weekly-plan)
 ```
 
@@ -40,5 +40,5 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 ## Worth probing
 
-- In the current week after the join day: changing a day before today (`PLAN_DAY_STARTED`) or the number of rest days (`REST_DAYS_FIXED`).
+- In the current week after the join day: changing a day before today, or today between training and rest (`PLAN_DAY_STARTED`); a later day turning into a rest day is allowed and logged.
 - Today's day in a zone where it is just before 3am: it still counts as the day before.

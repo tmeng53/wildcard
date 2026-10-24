@@ -122,7 +122,7 @@ struct CharacterPreviewTests {
     /// Every body (in a tee and shorts), then every hair (on the lifter), eight to a row.
     private func writeWardrobe(to url: URL) throws {
         let bodies = PlaceholderCharacter.variants(for: "body").map {
-            Outfit(["body": $0, "top": "tee", "bottom": "shorts"])
+            Outfit(["body": $0, "top": "warmup-tee", "bottom": "warmup-shorts"])
         }
         let hairs = PlaceholderCharacter.variants(for: "hair").map { hair in
             var look = PlaceholderCharacter.lifter
@@ -167,12 +167,12 @@ struct CharacterPreviewTests {
     private func writeSpecies(to url: URL) throws {
         let cast: [(Persona, Outfit)] = [
             (.drama, PlaceholderCharacter.lifter),
-            (.deadpan, Outfit(["body": "cat", "top": "tee", "bottom": "shorts"])),
-            (.energetic, Outfit(["body": "shiba", "top": "tee", "bottom": "shorts"])),
-            (.deadpan, Outfit(["body": "golden", "top": "tee", "bottom": "shorts"])),
-            (.showoff, Outfit(["body": "rabbit", "top": "tee", "bottom": "shorts"])),
+            (.deadpan, Outfit(["body": "cat", "top": "warmup-tee", "bottom": "warmup-shorts"])),
+            (.energetic, Outfit(["body": "shiba", "top": "warmup-tee", "bottom": "warmup-shorts"])),
+            (.deadpan, Outfit(["body": "golden", "top": "warmup-tee", "bottom": "warmup-shorts"])),
+            (.showoff, Outfit(["body": "rabbit", "top": "warmup-tee", "bottom": "warmup-shorts"])),
             (.shy, Looks.bear),
-            (.drama, Outfit(["body": "lop", "hat": "cap", "top": "tee", "bottom": "shorts"])),
+            (.drama, Outfit(["body": "lop", "hat": "warmup-cap", "top": "warmup-tee", "bottom": "warmup-shorts"])),
         ]
         var looks: [Frame] = []
         var performances: [(idling: Performance, cheering: Performance)] = []

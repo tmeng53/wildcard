@@ -37,7 +37,7 @@ private let catalog = SportCatalog(
                     offered: true, category: "racket")
             ]),
     ],
-    signUpCommon: ["run", "racewalk", "quidditch"], signUpMore: ["tableTennis"], checkInQuick: [])
+    signUpCommon: ["run", "racewalk", "quidditch"], checkInQuick: [])
 
 @Test func findsEachSportsEntryAndOffersOnlyThoseStillOffered() {
     #expect(catalog.entry(for: "racewalk")?.names.english == "Racewalk")

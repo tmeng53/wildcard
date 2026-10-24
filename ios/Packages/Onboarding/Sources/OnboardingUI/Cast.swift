@@ -3,6 +3,7 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import Contracts
+import DesignSystem
 import Foundation
 import Observation
 import SportsUI
@@ -43,6 +44,15 @@ final class CastMember {
         }
         let kit = kits.kit(for: activity, in: SportList.shared.catalog)
         change(into: kit.dress(look), move: try? PlaceholderCharacter.move(for: kit, persona: persona))
+    }
+
+    /// Puts on the kit of `scene`'s sport and loops its move, as on the scene itself.
+    func train(on scene: SceneTheme) {
+        guard
+            let loop = try? PlaceholderCharacter.sceneLoop(
+                for: scene, look: look, persona: persona, in: SportList.shared.catalog)
+        else { return }
+        change(into: loop.outfit, move: loop.clip)
     }
 
     /// Changes into another outfit with a hop, then plays `move` in it, as a sport

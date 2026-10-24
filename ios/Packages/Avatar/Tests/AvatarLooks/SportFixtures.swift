@@ -18,6 +18,6 @@ extension Looks {
                     entries: sports.map {
                         SportCatalog.Entry(sport: $0, names: names, icon: "figure.run", offered: true, category: id)
                     })
-            }, signUpCommon: [], signUpMore: [], checkInQuick: [])
+            }, signUpCommon: [], checkInQuick: [])
     }()
 }

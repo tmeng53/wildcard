@@ -11,6 +11,18 @@ export type SportTables = DB;
 
 const PickListName = z.enum(PICK_LISTS);
 
+/** A sport's card name, when it has one: the table keeps all three languages or none. */
+function shortNamesOf(sport: {
+  short_name_zh_hans: string | null;
+  short_name_en: string | null;
+  short_name_zh_hant: string | null;
+}): { shortNames?: { zhHans: string; en: string; zhHant: string } } {
+  const { short_name_zh_hans: zhHans, short_name_en: en, short_name_zh_hant: zhHant } = sport;
+  return zhHans !== null && en !== null && zhHant !== null
+    ? { shortNames: { zhHans, en, zhHant } }
+    : {};
+}
+
 /** The sports list on Postgres (`supabase/migrations`). */
 export function createPostgresSportStore(db: Kysely<SportTables>): SportStore {
   return {
@@ -22,7 +34,6 @@ export function createPostgresSportStore(db: Kysely<SportTables>): SportStore {
       ]);
       const lists: Record<PickList, SportId[]> = {
         signUpCommon: [],
-        signUpMore: [],
         checkInQuick: [],
       };
       for (const pick of picks) {
@@ -41,6 +52,7 @@ export function createPostgresSportStore(db: Kysely<SportTables>): SportStore {
             .map((sport) => ({
               id: SportId.parse(sport.id),
               names: { zhHans: sport.name_zh_hans, en: sport.name_en, zhHant: sport.name_zh_hant },
+              ...shortNamesOf(sport),
               icon: sport.icon,
               offered: sport.offered,
             })),
