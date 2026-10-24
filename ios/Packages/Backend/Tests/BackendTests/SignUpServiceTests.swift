@@ -183,3 +183,23 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     await after.load()
     #expect(after.phase == .signedOut)
 }
+
+@Test func aSignUpClosedAfterJoiningCarriesOnWithTheSquadAndTheCharacter() async throws {
+    let stack = try LocalStack()
+    let creator = try await stack.signedInMember()
+    try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
+    try await APISignUpService(api: creator.api).agreeToAI()
+    _ = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
+    let code = try InviteCode(try await creator.api.mySquads()[0].inviteCode)
+    let friend = try await stack.signedInMember()
+    let saved = try character("小林", body: "calico", persona: .shy)
+    try await APISignUpService(api: friend.api).save(saved)
+    try await APISignUpService(api: friend.api).agreeToAI()
+    let joined = try await APISignUpService(api: friend.api).join(code)
+
+    // The app was closed here; the next launch reads the same squad and character back.
+    let resumed = try await APISignUpService(api: friend.api).resume(in: joined.id)
+
+    #expect(resumed.squad == joined)
+    #expect(resumed.character == saved)
+}

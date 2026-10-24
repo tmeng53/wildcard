@@ -56,6 +56,10 @@ final class WelcomeUITests: XCTestCase {
             }
         }
         XCTAssertEqual(Set(rows).count, 1, "the floor moved:\n" + log.joined(separator: "\n"))
+        // Once it is on screen it stays there: a floor gone for a few frames moved too.
+        let shown = measured.firstIndex { $0.floor != nil } ?? 0
+        XCTAssertTrue(
+            measured[shown...].allSatisfy { $0.floor != nil }, "the floor left:\n" + log.joined(separator: "\n"))
     }
 
     private struct Shot {

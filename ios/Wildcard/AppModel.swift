@@ -177,6 +177,8 @@ final class AppModel {
                 screen = .signUp(resumed)
                 return
             }
+            // Signed up some other way since, or for another squad: nothing left to carry on.
+            SignUpProgress.clear()
             await openTabs(on: home, store: store, landingOn: scene)
         }
     }

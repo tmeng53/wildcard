@@ -32,17 +32,6 @@ public struct FeedSection: Hashable, Sendable, Identifiable {
 
     public var id: LocalDay { day }
 
-    /// When `post`, a 请假条, was taken back: its author's first 练了 that day, which the card's
-    /// 销假 stamp shows. Nil for any other post, or a 请假条 whose author didn't train that day.
-    public func excused(_ post: FeedPost) -> Timestamp? {
-        guard case .disclaimer = post.checkIn.entry else { return nil }
-        return
-            posts
-            .filter { $0.author == post.author && $0.checkIn.isTraining }
-            .map(\.checkIn.createdAt)
-            .min()
-    }
-
     /// Posts grouped by the day they count for, newest day first.
     public static func sections(_ posts: [FeedPost], today: LocalDay) -> [FeedSection] {
         Dictionary(grouping: posts, by: \.checkIn.day)
@@ -74,11 +63,5 @@ public struct FeedRange: Hashable, Sendable {
     /// The week before this one.
     public var earlier: FeedRange {
         FeedRange(first: first.adding(days: -Self.days), last: first.adding(days: -1))
-    }
-}
-
-extension CheckIn {
-    fileprivate var isTraining: Bool {
-        if case .trained = entry { true } else { false }
     }
 }
