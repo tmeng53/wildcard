@@ -12,7 +12,7 @@ extension Sport {
     /// Sports whose name is too long for a poster row and have a short one in the catalog
     /// (`sportCard.<id>`); the rest use their name.
     static let shortOnCards: Set<Sport> = [
-        .strength, .baseballSoftball, .reformerPilates, .mountainBiking, .roadCycling, .bikeCommute,
+        .baseballSoftball, .reformerPilates, .mountainBiking, .roadCycling, .bikeCommute,
         .walkCommute, .strollerWalk, .tableTennis, .kickboxing, .martialArts,
     ]
 
