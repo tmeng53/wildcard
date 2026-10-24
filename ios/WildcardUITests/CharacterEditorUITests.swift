@@ -144,7 +144,7 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
         XCTAssertTrue(done.isHittable, "the keyboard covers 就这样")
         nickname.typeText("\n")
-        XCTAssertFalse(app.keyboards.element.exists, "Return left the keyboard up")
+        waitFor(app.keyboards.element, "exists == false", "Return left the keyboard up")
         keepScreenshot(named: "27-editor-nickname")
     }
 
