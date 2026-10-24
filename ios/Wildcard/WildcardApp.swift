@@ -138,7 +138,7 @@ struct WildcardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            root.environment(\.locale, DefaultLanguage.locale)
+            root.environment(\.locale, DefaultLanguage.locale).dismissesKeyboardOnTapOutside()
         }
     }
 
@@ -148,7 +148,11 @@ struct WildcardApp: App {
                 model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
-                StandInSignIn { signUp.signedIn(name: nil) }
+                if LaunchOptions.showsAppleSignIn {
+                    AppleSignInButton { _ in }
+                } else {
+                    StandInSignIn { signUp.signedIn(name: nil) }
+                }
             } tabBar: {
                 MainTabs.entranceTabBar
             }
@@ -200,6 +204,9 @@ private struct AppRoot: View {
                 }
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
+                }
+                .onChange(of: signUp.joinedSquad) { _, squad in
+                    if let squad { SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad) }
                 }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
