@@ -21,7 +21,12 @@ final class WelcomeUITests: XCTestCase {
         XCUIDevice.shared.press(.home)
         Thread.sleep(forTimeInterval: 2)
         app.activate()
-        shots += sample(for: 7, after: shots.last?.time ?? 0)
+        // Sample only once the app is back on screen: frames of the system's switch back show
+        // the home screen, not the floor.
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: Self.wait))
+        XCTAssertTrue(app.buttons["signup.crowd"].firstMatch.waitForExistence(timeout: Self.wait))
+        Thread.sleep(forTimeInterval: 0.6)
+        shots += sample(for: 7, after: (shots.last?.time ?? 0) + 3)
         let biggest = crowd.max { $0.width < $1.width }
         let measured = shots.map { shot in
             let bitmap = Bitmap(shot.shot)

@@ -46,11 +46,12 @@ private final class TapOutside: NSObject, UIGestureRecognizerDelegate {
     }
 
     /// Not for a touch in a text input (SwiftUI's fields are UIKit's underneath), which keeps
-    /// the keyboard for it.
+    /// the keyboard for it, nor in an alert, whose own buttons put its field's keyboard away:
+    /// closing it first moves the alert under the finger and can lose the button's action.
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         var view = touch.view
         while let each = view {
-            if each is UITextField || each is UITextView { return false }
+            if each is UITextField || each is UITextView || each.next is UIAlertController { return false }
             view = each.superview
         }
         return true
