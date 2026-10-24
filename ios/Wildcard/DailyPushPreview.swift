@@ -43,6 +43,8 @@ struct DailyPushPreview: View {
                         .padding(.horizontal, Space.xs)
                         .padding(.vertical, Space.xs)
                 }
+                // Scrolled, the card stays below the status bar, as iOS keeps a notification's view.
+                .clipped()
             }
             if let opened {
                 Text(verbatim: opened.rawValue)

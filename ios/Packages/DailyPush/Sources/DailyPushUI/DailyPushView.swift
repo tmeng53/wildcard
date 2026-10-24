@@ -58,7 +58,7 @@ private struct PushHeader: View {
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
                     Spacer(minLength: 0)
-                    Text(model.arrived.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute()))
+                    Text(model.arrived.formatted(.dateTime.hour().minute()))
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgSubtle, in: .gym))
                 }

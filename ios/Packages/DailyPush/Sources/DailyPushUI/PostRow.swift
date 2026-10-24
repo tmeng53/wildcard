@@ -19,6 +19,7 @@ struct PostRow: View {
     private static let figureColumn: Double = 60
     private static let figure = CGSize(width: 64, height: 89)
     private static let rowHeads = 4
+    private static let mineStroke: Double = 1.5
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -92,7 +93,7 @@ struct PostRow: View {
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: .gym))
                     .lineLimit(1)
-                Text(post.posted.date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute()))
+                Text(post.posted.date.formatted(.dateTime.hour().minute()))
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: .gym))
                     .lineLimit(1)
@@ -177,7 +178,13 @@ struct PostRow: View {
                 }
             }
             .frame(width: Sizing.minimumTapTarget, height: Sizing.compactControl - 2)
-            .background(Color(role: mine == nil ? .bgSubtle : .bgAccentSubtle, in: .gym), in: Capsule())
+            .background(Color(role: mine == nil ? .bgSubtle : .bgCanvas, in: .gym), in: Capsule())
+            // Once I reacted, white with a dark outline, as on 动态 (a brand screen: no scene colour).
+            .overlay {
+                if mine != nil {
+                    Capsule().strokeBorder(Color(role: .fgDefault, in: .gym), lineWidth: Self.mineStroke)
+                }
+            }
             .contentShape(Capsule())
         }
         .buttonStyle(PressableButtonStyle())
