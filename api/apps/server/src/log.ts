@@ -56,10 +56,11 @@ export function createLog(write: (line: string) => void, options: LogOptions = {
       write(
         `${JSON.stringify(
           {
-            severity,
-            message,
             ...scope?.fields,
             ...fields,
+            // After the fields, so none can take their place.
+            severity,
+            message,
             // Error Reporting groups an ERROR by the stack it finds in this field.
             ...(severity === 'ERROR' && error instanceof Error ? { stack_trace: error.stack } : {}),
             ...(scope === undefined ? {} : traceFields(scope, options.traceProject)),
@@ -114,6 +115,8 @@ const REDACTED_PATTERNS: readonly (readonly [RegExp, string])[] = [
   [/\bBearer\s+\S+/gi, 'Bearer [token]'],
   [/\bsb_(?:secret|publishable)_\w+/g, '[key]'],
   [/\bsk-[\w-]{16,}/g, '[key]'],
+  // A URL's user and password (a database URL in a connection error).
+  [/\/\/[^\s/@]+@/g, '//[credentials]@'],
   // A domain ends in letters, so a package in a stack (`hono@4.13.13`) stays.
   [/[\w.+-]+@[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}\b/gi, '[email]'],
   // A photo's path in Storage: the member's folder, then the photo.

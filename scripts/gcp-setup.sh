@@ -158,6 +158,7 @@ alert() {
   fi
 }
 logs="https://console.cloud.google.com/logs/query?project=$project"
+# Cloud Logging's filter syntax, for the log-match policies (metric filters say resource.label).
 api_logs='resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"wildcard-api\"'
 
 alert "Wildcard API is down" <<JSON
@@ -184,12 +185,12 @@ alert "Wildcard API answers 5xx" <<JSON
 {
   "displayName": "Wildcard API answers 5xx",
   "documentation": { "mimeType": "text/markdown",
-    "content": "More than 5 requests in 5 minutes failed on the server's side. Each failure is an ERROR entry naming its route, with X-Request-Id's value as requestId. Logs: $logs" },
+    "content": "More than 5 requests in 5 minutes answered 5xx. Unexpected failures are ERROR entries naming their route, with X-Request-Id's value as requestId; a 503 from AI drafts while no model key is set is expected and logs nothing. Logs: $logs" },
   "combiner": "OR",
   "conditions": [{
     "displayName": "More than 5 server errors in 5 minutes",
     "conditionThreshold": {
-      "filter": "$api_logs AND metric.type=\"run.googleapis.com/request_count\" AND metric.label.response_code_class=\"5xx\"",
+      "filter": "resource.type=\"cloud_run_revision\" AND resource.label.service_name=\"wildcard-api\" AND metric.type=\"run.googleapis.com/request_count\" AND metric.label.response_code_class=\"5xx\"",
       "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM",
         "crossSeriesReducer": "REDUCE_SUM" }],
       "comparison": "COMPARISON_GT", "thresholdValue": 5, "duration": "0s",

@@ -78,6 +78,7 @@ describe('createLog', () => {
       headers: { Authorization: `Bearer ${jwt}` },
       note: `sent to tracy@example.com with ${jwt}, key sb_secret_abc123 and sk-proj-abcdefghijklmnopqrst`,
       error: new Error(`could not read ${photo} for ${device}`),
+      cause: 'connect to postgres://postgres:p4ss!w0rd@db.example.com:6543/postgres failed',
     });
     const [entry] = logged;
     expect(entry).toMatchObject({
@@ -87,6 +88,7 @@ describe('createLog', () => {
       headers: { Authorization: '[redacted]' },
       note: 'sent to [email] with [token], key [key] and [key]',
       error: { message: 'could not read [photo] for [device]' },
+      cause: 'connect to postgres://[credentials]@db.example.com:6543/postgres failed',
     });
     const line = JSON.stringify(entry);
     for (const secret of [
@@ -94,6 +96,7 @@ describe('createLog', () => {
       jwt,
       'tracy@example.com',
       'sb_secret_abc123',
+      'p4ss!w0rd',
       photo,
       device,
     ]) {
