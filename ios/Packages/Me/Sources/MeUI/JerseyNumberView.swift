@@ -50,14 +50,16 @@ struct JerseyNumberView: View {
                 SaveFailed().frame(maxWidth: .infinity).padding(.bottom, Space.s)
             }
             Button {
+                // The wheel offers only 00 to 99.
+                guard let number = try? JerseyNumber(picked) else { return }
                 Task {
-                    await model.save(jerseyNumber: try? JerseyNumber(picked))
+                    await model.save(jerseyNumber: number)
                     if !model.saveFailed { close() }
                 }
             } label: {
                 Text("保存", bundle: .module).frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle(tint: .ink))
+            .buttonStyle(PrimaryButtonStyle())
             .accessibilityIdentifier("number.save")
         }
         .padding(.horizontal, Space.pageMargin)

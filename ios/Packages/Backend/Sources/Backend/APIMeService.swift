@@ -49,7 +49,7 @@ public struct APIMeService: MeService {
     }
 
     /// Saves the card's number on the profile, keeping the rest of it.
-    public func save(jerseyNumber: JerseyNumber?) async throws(MeError) {
+    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
         try await me { () throws(APIError) in
             let profile = try await api.me().profile
             _ = try await api.save(

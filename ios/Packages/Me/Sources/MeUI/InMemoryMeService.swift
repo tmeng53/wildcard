@@ -45,7 +45,7 @@ public actor InMemoryMeService: MeService {
         current.character = character
     }
 
-    public func save(jerseyNumber: JerseyNumber?) async throws(MeError) {
+    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
         if failsSaving { throw .unavailable }
         current.jerseyNumber = jerseyNumber
     }

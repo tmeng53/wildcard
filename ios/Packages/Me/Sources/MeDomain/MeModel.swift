@@ -91,7 +91,7 @@ public final class MeModel {
     }
 
     /// Saves the number the member picked for their card, and shows it.
-    public func save(jerseyNumber: JerseyNumber?) async {
+    public func save(jerseyNumber: JerseyNumber) async {
         saveFailed = false
         do {
             try await service.save(jerseyNumber: jerseyNumber)

@@ -38,7 +38,7 @@ private actor FakeService: MeService {
         current.character = character
     }
 
-    func save(jerseyNumber: JerseyNumber?) async throws(MeError) {
+    func save(jerseyNumber: JerseyNumber) async throws(MeError) {
         if let failing { throw failing }
         current.jerseyNumber = jerseyNumber
     }
@@ -150,10 +150,6 @@ struct MeModelTests {
         await page.save(jerseyNumber: try JerseyNumber(99))
         #expect(page.overview?.cardNumber?.text == "00")
         #expect(page.saveFailed)
-
-        await service.fail(with: nil)
-        await page.save(jerseyNumber: nil)
-        #expect(page.overview?.cardNumber?.text == "02")
     }
 
     @Test func signsOutThroughTheApp() async {
