@@ -1,4 +1,6 @@
 import AvatarArt
+import Contracts
+import Foundation
 import Testing
 
 @testable import MeDomain
@@ -56,8 +58,9 @@ private actor FakeService: MeService {
 
 private let sample = MeOverview(
     character: MeCharacter(nickname: "小林", outfit: PlaceholderCharacter.lifter, persona: .energetic),
+    joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
     counts: LifetimeCounts(trainedDays: 128, healthyMeals: 46, cheatMeals: 12, disclaimers: 9),
-    squadName: "周三不练腿俱乐部", dailyPushOn: true)
+    week: WeekCount(trainedDays: 3, plannedDays: 5), squadName: "周三不练腿俱乐部", dailyPushOn: true)
 
 @MainActor
 struct MeModelTests {

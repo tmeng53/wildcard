@@ -139,7 +139,8 @@ struct WildcardApp: App {
 
     @ViewBuilder private var root: some View {
         if let editor {
-            CharacterEditorView(model: editor, context: CharacterEditorDemo.context, onBack: {}, onDone: { _ in })
+            CharacterEditorView(
+                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
         } else if let signUp, signUp.finished == nil {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 StandInSignIn { signUp.signedIn(name: nil) }

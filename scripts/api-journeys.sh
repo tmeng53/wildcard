@@ -741,8 +741,9 @@ if want account; then
   expect 200
   call GET /me "$leaver_token"
   expect 200
-  [ "$(jq -c .profile <<<"$body")" = '{"timeZone":"America/Toronto","catchphrase":null}' ] || fail "the profile should be saved: $body"
-  echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved"
+  [ "$(jq -c '.profile | del(.joinedAt)' <<<"$body")" = '{"timeZone":"America/Toronto","catchphrase":null}' ] || fail "the profile should be saved: $body"
+  jq -e '.profile.joinedAt | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$")' <<<"$body" >/dev/null || fail "the profile should say when they joined: $body"
+  echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved, joined $(jq -r .profile.joinedAt <<<"$body")"
 
   squad_of "$leaver_token" "$mate_token"
   call POST /photo-uploads "$leaver_token"

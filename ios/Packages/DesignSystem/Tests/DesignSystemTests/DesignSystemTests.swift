@@ -307,10 +307,13 @@ struct TypographyTests {
         }
         let names = [
             "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption",
-            "posterWeek",
+            "ticketDate", "posterWeek",
         ]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
+        // The day on the character's ticket, as the approved design sets it but a weight lighter:
+        // Barlow's bold isn't bundled.
+        #expect(TypeRamp.ticketDate.size == 15 && TypeRamp.ticketDate.tracking == 1.2)
         // The 出赛表 poster's W42, as the approved design sets it.
         #expect(TypeRamp.posterWeek.face == .scoreboard(.extraBoldItalic))
         #expect(TypeRamp.posterWeek.size == 128 && TypeRamp.posterWeek.tracking == -5)
@@ -370,8 +373,16 @@ struct BrandTests {
         #expect(ColorRole.fgOnBrand.color(in: .pool).hex == "#FFFFFF")
     }
 
+    /// The character's ticket in the editor (approved 2026-10-23): a lighter stub, the lamp, the
+    /// date and the pen, all greys of the graphite.
+    @Test func theTicketIsGraphiteGreys() {
+        #expect(
+            [ColorRole.bgBrandStub, .bgBrandLamp, .fgBrandStamp, .fgBrandPen].map { $0.color(in: .pool).hex }
+                == ["#272A32", "#3A3E48", "#7D828D", "#9AA0AA"])
+    }
+
     /// Brand screens look the same whatever scene the squad picked.
-    @Test(arguments: [ColorRole.bgBrand, .fgOnBrand])
+    @Test(arguments: [ColorRole.bgBrand, .fgOnBrand, .bgBrandStub, .bgBrandLamp, .fgBrandStamp, .fgBrandPen])
     func brandNeverFollowsTheScene(role: ColorRole) {
         #expect(Set(SceneTheme.allCases.map { role.color(in: $0) }).count == 1)
     }

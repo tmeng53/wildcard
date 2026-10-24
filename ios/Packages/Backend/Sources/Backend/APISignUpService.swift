@@ -5,7 +5,7 @@ import Foundation
 import OnboardingDomain
 
 /// Sign-up over our API: the squad step makes or joins a squad, 角色和昵称 saves the character
-/// on the profile, 一周练几天？ saves this week's plan and 这周在哪练？ the squad's first scene.
+/// on the profile, 本周目标 saves this week's plan and 这周在哪练？ the squad's first scene.
 public struct APISignUpService: SignUpService {
     private let api: WildcardAPI
     private let now: @Sendable () -> Date
