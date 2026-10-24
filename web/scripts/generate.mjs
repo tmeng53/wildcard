@@ -60,13 +60,13 @@ const moves = ['warmup', 'stretch', 'pump', 'wave'];
 const bundle = {
   version: 1,
   parts: rigParts,
-  cast: cast.map(({ id, zh, zhHant, en, persona, look, colors, shoes }) => ({
+  cast: cast.map(({ id, zh, zhHant, en, persona, look, colors }) => ({
     id,
     zh,
     zhHant,
     en,
     persona,
-    art: dress(wardrobe, look, colors, shoes),
+    art: dress(wardrobe, look, colors),
   })),
   idle: idles(personas),
   cheer: Object.fromEntries(personas.map((p) => [p, clip(join(art, 'clips', p, 'cheer.json'))])),

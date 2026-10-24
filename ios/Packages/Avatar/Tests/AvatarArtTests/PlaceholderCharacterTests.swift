@@ -10,7 +10,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "tail", "legL", "legR", "torso", "medal", "earL", "earR", "head",
+            "shadow", "dustL", "dustR", "root", "tail", "legL", "legR", "torso", "medal", "acc", "earL", "earR", "head",
             "flapL",
             "flapR", "crown", "award",
             "nose",
@@ -21,7 +21,10 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "propR", "food0", "food1", "food2",
             "armL", "flexL", "muscleL", "armR", "flexR", "muscleR", "heart", "desk",
         ])
-    // Only the bear's hands are free, and only the cat has a tail.
+    // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
+    #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
+    // NO LOOK's jersey and MOSSWAY's anorak draw their hems over the waistband; the tee doesn't.
+    #expect(try figure.part("torso").art.count == (outfit == Looks.athlete || outfit == Looks.bear ? 3 : 2))
     #expect(try figure.part("propR").art.count == (outfit == Looks.bear ? 0 : 1))
     #expect(try figure.part("tail").art.count == (outfit == Looks.cat ? 1 : 0))
     // Everyone has eyes and both mouths; only people pick brows.
@@ -70,7 +73,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 53)
+    #expect(figure.parts.count == 54)
 }
 
 @Test(arguments: Persona.allCases)
@@ -153,7 +156,7 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
 
 /// A hat sits over floppy ears, as it did before the ears were parts of their own.
 @Test func hatsSitOverFloppyEars() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "lop", "hat": "cap"]))
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "lop", "hat": "warmup-cap"]))
     #expect(try figure.index("crown") > figure.index("flapL") && figure.index("crown") > figure.index("flapR"))
     #expect(try figure.part("crown").art.count == 2)
 }
@@ -270,8 +273,9 @@ func outline(_ path: [PathElement]) -> [Point] {
     return points
 }
 
-/// Every body the editor groups is bundled, and every bundled body is in a group; every hat,
-/// pair of shoes and prop it offers is bundled. The swim cap is only for the swim kit.
+/// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
+/// clothing and prop it offers is bundled, and its first color is its art's own. The swim cap is
+/// only for the swim kit. The racks start with WARM-UP's twelve pieces.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -281,23 +285,40 @@ func outline(_ path: [PathElement]) -> [Point] {
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
     #expect(choices.props == ["dumbbell", "racket"])
     #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
-    #expect(choices.hats == ["cap", "headband"])
-    #expect(PlaceholderCharacter.variants(for: "hat") == ["cap", "headband", "swimcap"])
-    #expect(choices.shoes == ["sneaker", "runner", "climbing"])
-    #expect(Set(choices.shoes) == Set(PlaceholderCharacter.variants(for: "shoes")))
-    // A look that leaves its shoes out wears the editor's first pair.
-    #expect(try PlaceholderCharacter.rig().defaults["shoes"] == choices.shoes.first)
+    #expect(
+        choices.wear.mapValues { $0.map(\.id) } == [
+            "top": ["warmup-tee", "warmup-tank", "warmup-hoodie"],
+            "bottom": ["warmup-shorts", "warmup-joggers", "warmup-leggings"],
+            "shoes": ["warmup-canvas", "warmup-runner"],
+            "hat": ["warmup-cap", "warmup-headband"],
+            "acc": ["warmup-towel", "warmup-waistbag"],
+        ])
+    for (slot, pieces) in choices.wear {
+        #expect(Set(pieces.map(\.id)).isSubset(of: PlaceholderCharacter.variants(for: slot)))
+        for piece in pieces {
+            #expect(piece.swatches.count == 6, "\(piece.id)")
+            #expect(
+                piece.swatches.first == PlaceholderCharacter.tones(for: slot, wearing: piece.id)?.base, "\(piece.id)")
+        }
+    }
+    #expect(PlaceholderCharacter.variants(for: "hat").contains("swimcap"))
+    #expect(!choices.wear.values.joined().contains { $0.id == "swimcap" })
+    // A look that leaves its top, bottom or shoes out wears WARM-UP's first.
+    let defaults = try PlaceholderCharacter.rig().defaults
+    for slot: Slot in ["top", "bottom", "shoes"] {
+        #expect(defaults[slot] == choices.wear[slot]?.first?.id)
+    }
 }
 
 @Test func tonesNameTheColorAnUncoloredVariantShows() {
-    #expect(PlaceholderCharacter.tones(for: "top", wearing: "tee")?.base == RGBAColor(hex: "#2D5BA0"))
+    #expect(PlaceholderCharacter.tones(for: "top", wearing: "warmup-tee")?.base == RGBAColor(hex: "#F4F6FA"))
     #expect(PlaceholderCharacter.tones(for: "body", wearing: "calico") == nil)
     #expect(PlaceholderCharacter.tones(for: "prop", wearing: "dumbbell") == nil)
 }
 
 @Test func editorChoicesOfAnotherVersionAreRejected() {
-    #expect(throws: AvatarError.unsupportedVersion(2)) {
-        try EditorChoices.decode(Data(#"{"version": 2, "species": [], "hats": [], "shoes": [], "props": []}"#.utf8))
+    #expect(throws: AvatarError.unsupportedVersion(1)) {
+        try EditorChoices.decode(Data(#"{"version": 1, "species": [], "hats": [], "shoes": [], "props": []}"#.utf8))
     }
 }
 
@@ -306,7 +327,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     #expect(throws: AvatarError.malformedJSON(#".species[0]: unknown key "hiar""#)) {
         try EditorChoices.decode(
             Data(
-                #"{"version": 1, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "hats": [], "shoes": [], "props": []}"#
+                #"{"version": 2, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "wear": {}, "props": []}"#
                     .utf8))
     }
 }

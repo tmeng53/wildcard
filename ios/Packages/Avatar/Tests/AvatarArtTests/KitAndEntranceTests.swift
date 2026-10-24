@@ -5,29 +5,35 @@ import Contracts
 import Foundation
 import Testing
 
-/// Shoes are their own slot: bodies draw bare legs, and every look wears 小白鞋 unless it picks
-/// another pair, drawn over the bottoms.
+/// Shoes are their own slot: bodies draw bare legs, and every look wears WARM-UP's canvas shoes
+/// unless it picks another pair, drawn over the bottoms.
 @Test func everyLookWearsShoes() throws {
     for body in PlaceholderCharacter.variants(for: "body") {
-        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "bottom": "leggings"]))
+        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "bottom": "warmup-leggings"]))
         for leg in ["legL", "legR"] as [PartID] {
             #expect(try figure.part(leg).art.count == 3, "\(body) \(leg)")
         }
     }
     let plain = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
-    let sneakers = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "sneaker"]))
-    let runners = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "runner"]))
-    #expect(try plain.part("legL").art == sneakers.part("legL").art)
-    #expect(try runners.part("legL").art != sneakers.part("legL").art)
-    #expect(try runners.part("legL").art.last?.shapes.first?.fill == RGBAColor(hex: "#2D5BA0"))
+    let canvas = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "warmup-canvas"]))
+    let runners = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "lap-runner"]))
+    #expect(try plain.part("legL").art == canvas.part("legL").art)
+    #expect(try runners.part("legL").art != canvas.part("legL").art)
 }
 
-/// Shoes keep their art's colors, like hats and props.
-@Test func shoesKeepTheirColors() {
-    for shoes in PlaceholderCharacter.variants(for: "shoes") {
-        #expect(PlaceholderCharacter.tones(for: "shoes", wearing: shoes) == nil)
-        #expect(PlaceholderCharacter.swatches(for: "shoes", wearing: shoes).isEmpty)
-    }
+/// A look saved with a piece this build has no art for (retired, or released after it) wears
+/// the slot's default there, and drops a color the default can't take.
+@Test func aRetiredPieceGivesWayToTheDefault() throws {
+    let blue = try #require(RGBAColor(hex: "#2D5BA0"))
+    let saved = Outfit(
+        ["body": "peach", "top": "jersey", "shoes": "sneaker", "hat": "cap"], colors: ["top": blue, "hat": blue])
+    let drawn = try PlaceholderCharacter.drawable(saved)
+    #expect(drawn.variants == ["body": "peach"])
+    #expect(drawn.colors == ["top": blue])
+    let figure = try PlaceholderCharacter.figure(wearing: saved)
+    #expect(
+        try figure.part("torso").art
+            == PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"], colors: ["top": blue])).part("torso").art)
 }
 
 /// Each sport puts on its own kit, its category's, or the warm-up.
@@ -51,16 +57,19 @@ import Testing
     let kits = try PlaceholderCharacter.sportKits()
     let blue = try #require(RGBAColor(hex: "#2D5BA0"))
     let look = Outfit(
-        ["body": "peach", "hair": "bob", "eyes": "sharp", "hat": "cap", "top": "tee", "bottom": "leggings"],
+        [
+            "body": "peach", "hair": "bob", "eyes": "sharp", "hat": "warmup-cap", "top": "warmup-tee",
+            "bottom": "warmup-leggings",
+        ],
         colors: ["top": blue, "hair": try #require(RGBAColor(hex: "#2A2333"))])
     let running = kits.kit(for: .sport(.run)).dress(look)
-    #expect(running.variants["top"] == "tank" && running.colors["top"] == blue)
-    #expect(running.variants["hat"] == "headband" && running.variants["shoes"] == "runner")
+    #expect(running.variants["top"] == "warmup-tank" && running.colors["top"] == blue)
+    #expect(running.variants["hat"] == "warmup-headband" && running.variants["shoes"] == "warmup-runner")
     #expect(running.variants["prop"] == "stopwatch")
     #expect(running.variants["hair"] == "bob" && running.variants["eyes"] == "sharp")
     #expect(running.colors["hair"] == look.colors["hair"])
     let climbing = kits.kit(for: .sport(.climb)).dress(look)
-    #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "climbing")
+    #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "moss-trail")
     #expect(kits.kit(for: .sport(.ski)).dress(look) == look)
 }
 

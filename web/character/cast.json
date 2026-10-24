@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "about": "The home page's squad, left to right. A look picks a variant per slot of the app's art (ios/Packages/Avatar/Sources/AvatarArt/Placeholder); colors recolor a slot through its tones.json; shoes swap colors by literal find and replace, since shoes have no tones.json.",
+  "about": "The home page's squad, left to right, each in one store's kit. A look picks a variant per slot of the app's art (ios/Packages/Avatar/Sources/AvatarArt/Placeholder); colors recolor a slot through its tones.json.",
   "cast": [
     {
       "id": "kai",
@@ -14,20 +14,17 @@
         "eyes": "sharp",
         "brows": "bold",
         "mouth": "grin",
-        "top": "tank",
-        "bottom": "greenshorts",
-        "hat": "headband",
-        "shoes": "runner",
+        "top": "nolook-jersey",
+        "bottom": "nolook-shorts",
+        "hat": "nolook-backcap",
+        "shoes": "nolook-hightop",
         "prop": "dumbbell"
       },
       "colors": {
         "body": "#E8B48F",
-        "top": "#1F2128",
-        "bottom": "#E65345",
         "hair": "#2A2333",
         "brows": "#2A2333"
-      },
-      "shoes": []
+      }
     },
     {
       "id": "snow",
@@ -37,17 +34,13 @@
       "persona": "shy",
       "look": {
         "body": "bichon",
-        "top": "hoodie",
-        "bottom": "shorts",
-        "hat": "cap",
-        "prop": "stopwatch",
-        "shoes": "runner"
+        "top": "lap-jacket",
+        "bottom": "lap-pants",
+        "shoes": "lap-runner",
+        "acc": "race-bib",
+        "prop": "stopwatch"
       },
-      "colors": { "top": "#278C5E", "bottom": "#1F2128" },
-      "shoes": [
-        ["#2D5BA0", "#E65345"],
-        ["#254A82", "#B8392E"]
-      ]
+      "colors": {}
     },
     {
       "id": "garfield",
@@ -59,17 +52,13 @@
         "body": "cat",
         "eyes": "sleepy",
         "mouth": "smirk",
-        "top": "jersey",
-        "bottom": "shorts",
-        "prop": "racket",
-        "shoes": "runner"
+        "top": "deuce-polo",
+        "bottom": "deuce-shorts",
+        "hat": "deuce-visor",
+        "shoes": "deuce-court",
+        "prop": "racket"
       },
-      "colors": { "top": "#E65345", "bottom": "#1F2128" },
-      "shoes": [
-        ["stroke=\"#FFFFFF\"", "stroke=\"#E65345\""],
-        ["#2D5BA0", "#F4F6FA"],
-        ["#254A82", "#AFAEB9"]
-      ]
+      "colors": {}
     },
     {
       "id": "buns",
@@ -84,13 +73,16 @@
         "brows": "arched",
         "mouth": "grin",
         "cheeks": "rosy",
-        "top": "tank",
-        "bottom": "leggings",
-        "prop": "chalkbag",
-        "shoes": "climbing"
+        "top": "moss-anorak",
+        "bottom": "moss-cargo",
+        "shoes": "moss-trail",
+        "acc": "moss-sling",
+        "prop": "chalkbag"
       },
-      "colors": { "bottom": "#9062DE", "hair": "#2A2333", "brows": "#2A2333" },
-      "shoes": []
+      "colors": {
+        "hair": "#2A2333",
+        "brows": "#2A2333"
+      }
     },
     {
       "id": "oreo",
@@ -100,16 +92,13 @@
       "persona": "drama",
       "look": {
         "body": "tuxedo",
-        "top": "tee",
-        "bottom": "leggings",
         "glasses": "square",
-        "shoes": "runner"
+        "top": "halfmoon-tank",
+        "bottom": "halfmoon-flare",
+        "shoes": "halfmoon-studio",
+        "acc": "halfmoon-tied"
       },
-      "colors": { "top": "#2D5BA0", "bottom": "#1F2128" },
-      "shoes": [
-        ["#2D5BA0", "#1F2128"],
-        ["#254A82", "#1F2128"]
-      ]
+      "colors": {}
     }
   ]
 }

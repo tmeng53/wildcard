@@ -23,11 +23,8 @@ function shadeTo(base, shade, color) {
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const replaceAllCaseless = (text, from, to) => text.replace(new RegExp(escape(from), 'gi'), to);
 
-/**
- * `variants` picks a variant per slot, `colors` a swatch per slot (through its tones), and
- * `shoes` swaps colors in the shoes by literal find and replace (shoes have no tones).
- */
-export function dress(wardrobe, variants, colors = {}, shoes = []) {
+/** `variants` picks a variant per slot, and `colors` a swatch per slot, through its tones. */
+export function dress(wardrobe, variants, colors = {}) {
   const look = { ...wardrobe.defaults };
   for (const [slot, variant] of Object.entries(variants))
     // Own keys only: a slot named like an Object method ("constructor") is no slot.
@@ -40,9 +37,7 @@ export function dress(wardrobe, variants, colors = {}, shoes = []) {
         if (!look[slot]) return '';
         let svg = wardrobe.art[`${slot}/${look[slot]}/${name}`];
         if (svg === undefined) return '';
-        if (slot === 'shoes') {
-          for (const [from, to] of shoes) svg = svg.replaceAll(from, to);
-        } else if (slot in colors) {
+        if (slot in colors) {
           const tones = wardrobe.tones[`${slot}/${look[slot]}`];
           if (tones === undefined) return svg;
           const color = colors[slot];

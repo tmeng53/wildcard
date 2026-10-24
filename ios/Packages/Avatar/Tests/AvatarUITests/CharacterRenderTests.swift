@@ -36,7 +36,7 @@ struct CharacterRenderTests {
         let pupil = (0x0E, 0x0F, 0x14)
         let ink = (0x22, 0x25, 0x2E)
         for body in PlaceholderCharacter.variants(for: "body") {
-            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "tee"]))
+            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tee"]))
             // 160 points square draws the head's crop one to one: canvas (x, y) is (x - 40, y - 74).
             let view = CharacterHead(player: try CharacterPlayer(figure: figure, idle: idle))
                 .frame(width: 160, height: 160)

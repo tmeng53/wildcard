@@ -1,16 +1,6 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "T恤": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tee"
-          }
-        }
-      }
-    },
     "三花": {
       "localizations": {
         "en": {
@@ -151,16 +141,6 @@
         }
       }
     },
-    "卫衣": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hoodie"
-          }
-        }
-      }
-    },
     "卷发": {
       "localizations": {
         "en": {
@@ -207,16 +187,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hair"
-          }
-        }
-      }
-    },
-    "发带": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Headband"
           }
         }
       }
@@ -311,6 +281,16 @@
         }
       }
     },
+    "圆领短袖 T": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crew tee"
+          }
+        }
+      }
+    },
     "坏笑": {
       "localizations": {
         "en": {
@@ -327,6 +307,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lop"
+          }
+        }
+      }
+    },
+    "基础紧身裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leggings"
+          }
+        }
+      }
+    },
+    "基础跑鞋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runners"
           }
         }
       }
@@ -371,6 +371,16 @@
         }
       }
     },
+    "帆布鞋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canvas shoes"
+          }
+        }
+      }
+    },
     "帽子": {
       "localizations": {
         "en": {
@@ -407,6 +417,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Drama"
+          }
+        }
+      }
+    },
+    "抽绳运动短裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drawstring shorts"
+          }
+        }
+      }
+    },
+    "挂脖毛巾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neck towel"
           }
         }
       }
@@ -477,6 +507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siamese"
+          }
+        }
+      }
+    },
+    "束脚卫裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joggers"
           }
         }
       }
@@ -661,16 +701,6 @@
         }
       }
     },
-    "球衣": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jersey"
-          }
-        }
-      }
-    },
     "眉毛": {
       "localizations": {
         "en": {
@@ -697,16 +727,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Glasses"
-          }
-        }
-      }
-    },
-    "短裤": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shorts"
           }
         }
       }
@@ -741,16 +761,6 @@
         }
       }
     },
-    "紧身裤": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Leggings"
-          }
-        }
-      }
-    },
     "红脸蛋": {
       "localizations": {
         "en": {
@@ -767,16 +777,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tennis racket"
-          }
-        }
-      }
-    },
-    "背心": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tank top"
           }
         }
       }
@@ -851,12 +851,22 @@
         }
       }
     },
-    "运动短裤": {
+    "运动背心": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gym shorts"
+            "value": "Tank"
+          }
+        }
+      }
+    },
+    "运动腰包": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waist bag"
           }
         }
       }
@@ -871,12 +881,32 @@
         }
       }
     },
+    "连帽卫衣": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoodie"
+          }
+        }
+      }
+    },
     "道具": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Props"
+          }
+        }
+      }
+    },
+    "配件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessories"
           }
         }
       }
@@ -921,12 +951,32 @@
         }
       }
     },
+    "鞋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoes"
+          }
+        }
+      }
+    },
     "颜色 %lld": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Color %lld"
+          }
+        }
+      }
+    },
+    "飘带发带": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ribbon headband"
           }
         }
       }

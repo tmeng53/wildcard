@@ -58,7 +58,7 @@ func photoBytes() -> Data {
     let character = MemberCharacter(
         nickname: try Nickname(" 小周 "),
         look: CharacterLook(
-            persona: "deadpan", variants: ["body": "tuxedo", "top": "hoodie"], colors: ["top": "#2D5BA0"]))
+            persona: "deadpan", variants: ["body": "tuxedo", "top": "warmup-hoodie"], colors: ["top": "#2D5BA0"]))
     let moved = Profile(
         timeZone: try #require(TimeZone(identifier: "America/Toronto")), catchphrase: try Catchphrase("冲就完了🔥"),
         character: character)

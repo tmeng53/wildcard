@@ -29,7 +29,7 @@ public struct FigureDrawing {
                             Color(stroke.color),
                             StrokeStyle(
                                 lineWidth: stroke.width, lineCap: CGLineCap(stroke.cap),
-                                lineJoin: CGLineJoin(stroke.join))
+                                lineJoin: CGLineJoin(stroke.join), dash: stroke.dash.map { CGFloat($0) })
                         )
                     },
                     opacity: shape.opacity)

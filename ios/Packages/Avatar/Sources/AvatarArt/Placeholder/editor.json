@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "species": [
     { "id": "person", "bodies": ["peach"], "hair": true },
     { "id": "cat", "bodies": ["cat", "tuxedo", "calico", "tortie", "orangewhite", "lihua", "siamese", "ragdoll"] },
@@ -7,7 +7,29 @@
     { "id": "rabbit", "bodies": ["rabbit", "lop", "dutch"] },
     { "id": "bear", "bodies": ["bear"] }
   ],
-  "hats": ["cap", "headband"],
-  "shoes": ["sneaker", "runner", "climbing"],
+  "wear": {
+    "top": [
+      { "id": "warmup-tee", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-tank", "swatches": ["#2D5BA0", "#1F2128", "#F4F6FA", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-hoodie", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+    ],
+    "bottom": [
+      { "id": "warmup-shorts", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-joggers", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-leggings", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+    ],
+    "shoes": [
+      { "id": "warmup-canvas", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-runner", "swatches": ["#3A3F4B", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+    ],
+    "hat": [
+      { "id": "warmup-cap", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "warmup-headband", "swatches": ["#E65345", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE"] }
+    ],
+    "acc": [
+      { "id": "warmup-towel", "swatches": ["#9062DE", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#E65345"] },
+      { "id": "warmup-waistbag", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+    ]
+  },
   "props": ["dumbbell", "racket"]
 }
