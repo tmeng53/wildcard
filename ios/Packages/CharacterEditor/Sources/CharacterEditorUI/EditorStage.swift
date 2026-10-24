@@ -10,6 +10,7 @@ import SwiftUI
 /// move now and then. The editor puts it in a `CharacterStage`.
 struct EditorStage: View {
     @Bindable var model: CharacterEditorModel
+    var isNaming: FocusState<Bool>.Binding
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     static let height: Double = 300
@@ -33,7 +34,7 @@ struct EditorStage: View {
             .onTapGesture { model.cheer() }
             .gesture(personaSwipe, isEnabled: model.tab == .persona)
             .padding(.bottom, feet)
-            NicknameField(nickname: $model.nickname)
+            NicknameField(nickname: $model.nickname, isFocused: isNaming)
                 .padding(.bottom, Space.xs)
         }
         .frame(maxWidth: .infinity)
@@ -60,6 +61,7 @@ struct EditorStage: View {
 /// The nickname, typed straight onto a white tag under the character's feet.
 private struct NicknameField: View {
     @Binding var nickname: String
+    var isFocused: FocusState<Bool>.Binding
     @Environment(\.sceneTheme) private var theme
     private let width: Double = 180
     /// Room for the pen on the trailing side, mirrored on the leading side to keep the name centered.
@@ -74,6 +76,8 @@ private struct NicknameField: View {
         .foregroundStyle(Color(role: .fgDefault, in: theme))
         .multilineTextAlignment(.center)
         .submitLabel(.done)
+        .focused(isFocused)
+        .onSubmit { isFocused.wrappedValue = false }
         .autocorrectionDisabled()
         .padding(.horizontal, inset)
         .frame(width: width, height: Sizing.minimumTapTarget)

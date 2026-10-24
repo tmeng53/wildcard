@@ -125,6 +125,8 @@ struct ComposeView: View {
             .typeStyle(TypeRamp.field)
             .lineLimit(1...4)
             .focused($isWriting)
+            .submitLabel(.done)
+            .onSubmit { isWriting = false }
             .onChange(of: caption) { _, typed in
                 let fitted = PostBody.fitCaption(typed)
                 if fitted != typed { caption = fitted }
