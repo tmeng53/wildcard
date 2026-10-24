@@ -43,6 +43,11 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
                     persona: "shy", variants: ["body": "calico", "top": "tee"], colors: ["top": "#3A7BD5"])))
     let thisWeek = LocalDay(at: Date(), in: profile.timeZone).weekStart
     #expect(try await member.api.weeklyPlan(weekStart: thisWeek).days == week)
+
+    // 这周在哪练？: the squad trains on its pick at once, and a retry of it is fine.
+    try await signUp.pickScene(.pool, for: squad.id)
+    try await signUp.pickScene(.pool, for: squad.id)
+    #expect(try await member.api.scene(of: squad.id).scene == .pool)
 }
 
 @Test func aFriendSeesTheInviteJoinsAndMeetsTheSquad() async throws {

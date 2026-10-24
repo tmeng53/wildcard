@@ -4,6 +4,10 @@
 # ios/Packages/Contracts/Sources/APIContract/Generated and the client that sends them in
 # ios/Packages/Backend/Sources/Backend/Generated. Run it after `pnpm --dir api openapi`. With --verify it changes
 # nothing and fails when the committed Swift is stale; scripts/verify.sh runs that.
+#
+# The app reads the document without `additionalProperties: false`: the server still refuses a
+# request with keys it doesn't know, but a build already on phones must keep reading replies
+# after the API adds a field, so the generated decoders skip keys they don't know.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -14,10 +18,12 @@ generator="$(swift build --package-path "$tools" -c release --show-bin-path)/swi
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+jq 'walk(if type == "object" and .additionalProperties == false then del(.additionalProperties) else . end)' \
+  api/apps/server/openapi.json >"$tmp/openapi.json"
 stale=0
 # generate PACKAGE OUT: the Swift that PACKAGE's openapi-generator-config.yaml asks for, into OUT.
 generate() {
-  if ! "$generator" generate api/apps/server/openapi.json \
+  if ! "$generator" generate "$tmp/openapi.json" \
     --config "$1/openapi-generator-config.yaml" \
     --output-directory "$tmp/$1" >"$tmp/log" 2>&1; then
     cat "$tmp/log" >&2

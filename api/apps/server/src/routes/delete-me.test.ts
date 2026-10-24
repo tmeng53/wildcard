@@ -392,8 +392,8 @@ describe('DELETE /me', () => {
     });
   });
 
-  it('refuses a body not sent as JSON, and deletes nothing', async () => {
-    const { call } = appWith(undefined);
+  it('refuses a body not sent as JSON, logs why, and deletes nothing', async () => {
+    const { call, logged } = appWith(undefined);
     const me = await signUp();
     const response = await call('DELETE', '/me', me.token, { version: 1 }, 'text/plain');
     expect([response.status, reasonOf(response.body)]).toStrictEqual([
@@ -401,6 +401,16 @@ describe('DELETE /me', () => {
       'MEDIA_TYPE_UNSUPPORTED',
     ]);
     expect((await whatIsLeftOf(me.userId)).user).toBe(1);
+    expect(logged).toStrictEqual([
+      {
+        severity: 'WARNING',
+        message: 'request refused',
+        method: 'DELETE',
+        route: '/me',
+        status: 415,
+        reason: 'MEDIA_TYPE_UNSUPPORTED',
+      },
+    ]);
   });
 
   it.each([

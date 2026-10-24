@@ -137,3 +137,14 @@ private let squad = "33333333-3333-3333-3333-333333333333"
             SceneHistory(scene: .gym, weeksAgo: nil),
         ])
 }
+
+/// A build already on phones keeps reading replies after the API adds a field to them.
+@Test func aSquadReadsWithAFieldThisBuildDoesNotKnow() throws {
+    let wire = try decode(
+        Components.Schemas.Squad.self,
+        #"{"version":1,"id":"\#(squad)","name":"早八跑团","inviteCode":"K7M2QX9P","#
+            + #""createdAt":"2026-10-19T15:00:00.000Z","captain":"\#(myID)","#
+            + #""members":[{"userId":"\#(myID)","joinedAt":"2026-10-19T15:00:00.000Z","addedLater":true}],"#
+            + #""addedLater":{"any":"shape"}}"#)
+    #expect(try Squad(wire).name.description == "早八跑团")
+}

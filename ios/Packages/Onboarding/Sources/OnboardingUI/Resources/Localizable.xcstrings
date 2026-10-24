@@ -1590,6 +1590,38 @@
           }
         }
       }
+    },
+    "就它了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This one"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就它了"
+          }
+        }
+      }
+    },
+    "这周在哪练？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where this week?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这周在哪练？"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

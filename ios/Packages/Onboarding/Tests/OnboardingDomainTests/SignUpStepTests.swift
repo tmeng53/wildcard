@@ -4,7 +4,7 @@ import Testing
 
 struct SignUpStepTests {
     @Test func theHeaderCountsFourTaskSteps() {
-        #expect(SignUpStep.allCases.map(\.number) == [nil, 1, 2, 3, 4, nil])
+        #expect(SignUpStep.allCases.map(\.number) == [nil, 1, 2, 3, 4, nil, nil])
         #expect(SignUpStep.counted.count == 4)
     }
 
@@ -13,8 +13,15 @@ struct SignUpStepTests {
         #expect(SignUpStep.character.next == .squad)
         #expect(SignUpStep.squad.next == .sports)
         #expect(SignUpStep.sports.next == .week)
-        #expect(SignUpStep.week.next == .entrance)
+        #expect(SignUpStep.week.next == .scene)
+        #expect(SignUpStep.scene.next == .entrance)
         #expect(SignUpStep.entrance.next == nil)
+    }
+
+    @Test func onlyWhoeverMadeTheSquadPicksItsScene() {
+        #expect(SignUpStep.afterWeek(madeTheSquad: true) == .scene)
+        #expect(SignUpStep.afterWeek(madeTheSquad: false) == .entrance)
+        #expect(SignUpStep.scene.previous == .week)
     }
 
     @Test func thereIsNoGoingBackFromTheOpenScreenOrTheEntrance() {

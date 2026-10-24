@@ -59,8 +59,13 @@ final class SquadSettingsUITests: XCTestCase {
         // the squad drops onto the scene one after another, me last.
         let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
         waitFor(page, "exists == false", "the page didn't go after the reveal", timeout: 60)
-        Thread.sleep(forTimeInterval: 0.6)
-        keepScreenshot(named: "64-squad-picked-dropping")
+        // Frames a few times a second, to review the drop against the prototype.
+        let start = Date()
+        for frame in 0..<12 {
+            keepScreenshot(
+                named: String(
+                    format: "64-squad-picked-dropping-%02d-%04dms", frame, Int(Date().timeIntervalSince(start) * 1000)))
+        }
         let card = app.descendants(matching: .any)["today.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30), "home didn't take over")
         Thread.sleep(forTimeInterval: 2.5)

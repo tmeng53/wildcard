@@ -38,6 +38,14 @@ struct ScenePickerTests {
             ])
     }
 
+    @Test func aNewSquadSeesEverySceneInACarton() async {
+        let picker = ScenePicker.newSquad(service: FakeService())
+        #expect(picker.options.map(\.scene) == [.track, .pool, .gym, .tennis, .climbing])
+        #expect(picker.options.allSatisfy { !$0.isOpened })
+        picker.select(.climbing)
+        #expect(await picker.confirm() == Unboxing(boxed: true))
+    }
+
     @Test func aCartonPicksOnceAndPlaysTheBoxedReveal() async {
         let service = FakeService()
         let picker = ScenePicker(options: options, service: service)

@@ -80,6 +80,8 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     // Wednesday and Sunday are rest days in the plan; a 练了 beats the 请假条 on Tuesday.
     #expect(week.days == [.trained, .trained, .restDay, .open, .open, .open, .restDay])
     #expect(week.today == 1)
+    // A day shows what I trained on it (Monday's swim, Tuesday's run over the plan's yoga), else the plan's.
+    #expect(week.activities == [.sport("swim"), .sport("run"), nil, nil, nil, nil, nil])
     // Two swims on Monday are one day of swimming.
     #expect(week.trained.map(\.activity) == [.sport("swim"), .sport("run")])
     #expect(week.trained.map(\.days) == [2, 1])
