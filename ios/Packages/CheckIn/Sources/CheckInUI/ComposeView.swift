@@ -63,7 +63,7 @@ struct ComposeView: View {
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
-            SportPicker(selected: currentActivity) { picked in
+            SportPicker(selected: currentActivity, recent: model.recentActivities) { picked in
                 activity = picked
                 isPickingSport = false
             }
