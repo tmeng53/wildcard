@@ -191,13 +191,13 @@ struct HottestPage: View {
             let floor = proxy.size.height - StoryLayout.groundLow
             ZStack(alignment: .topLeading) {
                 Ground(height: StoryLayout.groundLow)
-                if let line = hottest.line {
-                    Text(verbatim: line)
-                        .typeStyle(TypeRamp.body)
-                        .foregroundStyle(Color(role: .fgOnScene, in: theme))
-                        .frame(width: width * 0.58, alignment: .leading)
-                        .position(x: Space.l + width * 0.29, y: floor - Space.xxl)
-                        .opacity(page.ramp(1.4, 1.7))
+                VStack(alignment: .leading, spacing: Space.l) {
+                    PageTitle(label: Text("本周", bundle: .module), title: Text("你最火的一条", bundle: .module))
+                    post(photoHeight: min(Self.photoHeight, max(Self.photoHeightMin, floor - Self.besidePhoto)))
+                        .padding(.horizontal, Space.l)
+                        .offset(y: 30 * (1 - page.pop(0, 0.5)))
+                        .rotationEffect(.degrees(-2 * page.pop(0, 0.5)))
+                        .opacity(page.ramp(0, 0.15))
                 }
                 HStack(spacing: Space.xs) {
                     ForEach(Array(hottest.reactions.enumerated()), id: \.element.emoji) { index, reaction in
@@ -208,8 +208,8 @@ struct HottestPage: View {
                     }
                 }
                 .padding(.horizontal, Space.l)
-                .position(x: width / 2, y: floor + Space.xl + Space.xs)
                 .frame(width: width, alignment: .leading)
+                .position(x: width / 2, y: floor + Space.xl + Space.xs)
                 page.character(
                     page.cast.viewer,
                     act: Act(
@@ -219,22 +219,18 @@ struct HottestPage: View {
                 .standing(feetAt: CGPoint(x: width - 72, y: floor), scale: 0.5)
             }
         }
-        .overlay(alignment: .top) {
-            VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(label: Text("本周", bundle: .module), title: Text("你最火的一条", bundle: .module))
-                post
-                    .padding(.horizontal, Space.l)
-                    .offset(y: 30 * (1 - page.pop(0, 0.5)))
-                    .rotationEffect(.degrees(-2 * page.pop(0, 0.5)))
-                    .opacity(page.ramp(0, 0.15))
-            }
-        }
     }
 
-    private var post: some View {
+    /// The photo at the design's 220 × 293, smaller on a short phone so the post stays above the
+    /// ground: the title over it and the words under it take `besidePhoto`.
+    private static let photoHeight: Double = 293
+    private static let photoHeightMin: Double = 120
+    private static let besidePhoto: Double = 300
+
+    private func post(photoHeight: Double) -> some View {
         VStack(alignment: .leading, spacing: Space.s) {
             photo
-                .frame(width: 220, height: 293)
+                .frame(width: photoHeight * 220 / 293, height: photoHeight)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             HStack(spacing: Space.xs) {
                 Tag(kindTag)
@@ -248,6 +244,14 @@ struct HottestPage: View {
                     .foregroundStyle(Color(role: .fgOnScene, in: theme))
                     .lineLimit(2)
                     .frame(width: 220, alignment: .leading)
+            }
+            if let line = hottest.line {
+                Text(verbatim: line)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .lineLimit(2)
+                    .frame(width: 220, alignment: .leading)
+                    .opacity(page.ramp(1.4, 1.7))
             }
         }
         .accessibilityElement(children: .combine)

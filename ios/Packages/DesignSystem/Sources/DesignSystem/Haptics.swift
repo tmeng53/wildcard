@@ -28,6 +28,9 @@ public enum Haptic: String, CaseIterable, Sendable {
     /// A carton bursting open on a scene pick, as its flaps fly: one heavy hit, the reveal's only
     /// one.
     case unbox
+    /// The pull cord clicking the lights on at night (开灯): short and hard, like a real switch.
+    /// Switching them off has none.
+    case lights
 
     /// How many ticks a status ring plays while it draws itself closed.
     public static let ringTicks = 3

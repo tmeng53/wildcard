@@ -63,7 +63,7 @@ enum EditorNames {
         "pigtails": "双马尾", "ponytail": "马尾", "spacebuns": "双丸子", "wolf": "狼尾",
         // Hats, clothes and props
         "cap": "棒球帽", "headband": "发带", "hoodie": "卫衣", "jersey": "球衣", "tank": "背心", "tee": "T恤",
-        "greenshorts": "运动短裤", "leggings": "紧身裤", "shorts": "短裤", "dumbbell": "哑铃", "racket": "网球拍",
+        "greenshorts": "运动短裤", "leggings": "紧身裤", "shorts": "短裤", "dumbbell": "哑铃", "bottle": "外卡水杯",
     ]
 
     private static let faces = [
