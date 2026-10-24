@@ -10,6 +10,7 @@ import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
 import { HTTPException } from 'hono/http-exception';
+import { routePath } from 'hono/route';
 import { z } from 'zod';
 
 import { adminMcp } from './admin-mcp/admin-mcp.js';
@@ -160,10 +161,20 @@ export function createApp(deps: AppDependencies) {
     const error = fromHono(thrown);
     // Drafts being off is how the server runs until it has a key, which main.ts logs once.
     const expected = error instanceof DisclaimerWriterOffError;
+    const response = problemResponse(error);
     if (!expected && (!isAppError(error) || HTTP_STATUS[error.status] >= 500)) {
       deps.log.error('request failed', { method: c.req.method, path: c.req.path, error });
+    } else if (isAppError(error) && response.status < 500) {
+      // A refusal is the client's to fix, but it shows which app builds fail and why. The route,
+      // not the path, so no invite code or id lands in the log.
+      deps.log.warn('request refused', {
+        method: c.req.method,
+        route: routePath(c),
+        status: response.status,
+        reason: error.reason,
+      });
     }
-    return problemResponse(error);
+    return response;
   });
   return app;
 }
