@@ -107,6 +107,7 @@ final class AppModel {
     /// 上场 has played, or the scene the member's new squad picked has filled the screen: the
     /// squad's home takes over, and on a picked scene the member drops onto it.
     func finishSignUp(landingOn scene: SceneTheme?) async {
+        SignUpProgress.clear()
         await openHome(landingOn: scene)
     }
 
@@ -166,6 +167,11 @@ final class AppModel {
         case .loading, .current, .offline:
             // The case above has every load without a home.
             guard let home = store.home else { return }
+            // The app was closed during sign-up, after 你的小队: carry on from the next step.
+            if signUp == nil, let resumed = await resumedSignUp(in: home.squad.id) {
+                screen = .signUp(resumed)
+                return
+            }
             let today = TodayModel(
                 store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
             let profile = MeModel(
@@ -233,10 +239,18 @@ final class AppModel {
     }
 
     private func signedOut() async {
+        SignUpProgress.clear()
         APICheckInBackend(api: api, directory: directory).forget()
         await DeviceOutbox(directory: directory).forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
+    }
+
+    /// The sign-up the app was closed during, carried on, when it had joined or made `squad`.
+    private func resumedSignUp(in squad: SquadID) async -> SignUpModel? {
+        guard let progress = SignUpProgress.saved, progress.squad == squad else { return nil }
+        let model = newSignUp(hasAgreedToAI: true)
+        return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
     }
 
     private func newSignUp(hasAgreedToAI: Bool) -> SignUpModel {
