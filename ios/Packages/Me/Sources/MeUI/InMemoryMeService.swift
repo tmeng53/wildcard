@@ -22,6 +22,7 @@ public actor InMemoryMeService: MeService {
                 character: MeCharacter(
                     nickname: Bundle.module.localizedString(forKey: "小林", value: nil, table: nil),
                     outfit: PlaceholderCharacter.lifter, persona: .energetic),
+                joinedAt: Date(timeIntervalSince1970: 1_792_756_800),  // 2026-10-23, noon UTC
                 counts: LifetimeCounts(trainedDays: 128, healthyMeals: 46, cheatMeals: 12, disclaimers: 9),
                 week: WeekCount(trainedDays: 3, plannedDays: 5),
                 squadName: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),

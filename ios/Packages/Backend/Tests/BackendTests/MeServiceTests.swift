@@ -24,11 +24,13 @@ import Testing
     // the weekday the test runs, since a week counts only from the day the member joined.
     let week = try await member.api.today(of: squad.id).myWeek.week
     #expect(week.trainedDays == 0)
+    let joinedAt = try #require(try await member.api.me().joinedAt)
 
     #expect(
         try await service.overview()
             == MeOverview(
                 character: MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama),
+                joinedAt: joinedAt.date,
                 counts: .zero, week: week, squadName: "早八健身", dailyPushOn: true))
 
     try await service.setDailyPush(false)

@@ -1,6 +1,7 @@
 import AvatarArt
 import AvatarDomain
 import Contracts
+import Foundation
 
 /// Everything the member ever checked in, by kind. Counts only go up.
 public struct LifetimeCounts: Hashable, Sendable {
@@ -33,6 +34,9 @@ public struct MeCharacter: Hashable, Sendable {
 /// switch.
 public struct MeOverview: Hashable, Sendable {
     public var character: MeCharacter
+    /// When the member signed up: the day on their character's ticket. Nil before they first
+    /// saved a profile.
+    public var joinedAt: Date?
     public var counts: LifetimeCounts
     /// 本周 x/y; nil while the member has no plan for the week.
     public var week: WeekCount?
@@ -42,9 +46,11 @@ public struct MeOverview: Hashable, Sendable {
     public var dailyPushOn: Bool
 
     public init(
-        character: MeCharacter, counts: LifetimeCounts, week: WeekCount?, squadName: String?, dailyPushOn: Bool
+        character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
+        dailyPushOn: Bool
     ) {
         self.character = character
+        self.joinedAt = joinedAt
         self.counts = counts
         self.week = week
         self.squadName = squadName
