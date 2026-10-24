@@ -3332,6 +3332,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
             public var joined: Swift.Bool
+            /// The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/looks`.
+            public var looks: [Components.Schemas.Look]
             /// Creates a new `SquadInvite`.
             ///
             /// - Parameters:
@@ -3340,18 +3344,21 @@ extension Components {
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
             ///   - joined: True when the caller is in it already.
+            ///   - looks: The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
                 version: Components.Schemas.SquadInvite.VersionPayload,
                 name: Swift.String,
                 memberCount: Swift.Int,
                 full: Swift.Bool,
-                joined: Swift.Bool
+                joined: Swift.Bool,
+                looks: [Components.Schemas.Look]
             ) {
                 self.version = version
                 self.name = name
                 self.memberCount = memberCount
                 self.full = full
                 self.joined = joined
+                self.looks = looks
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -3359,6 +3366,7 @@ extension Components {
                 case memberCount
                 case full
                 case joined
+                case looks
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -3382,12 +3390,17 @@ extension Components {
                     Swift.Bool.self,
                     forKey: .joined
                 )
+                self.looks = try container.decode(
+                    [Components.Schemas.Look].self,
+                    forKey: .looks
+                )
                 try decoder.ensureNoAdditionalProperties(knownKeys: [
                     "version",
                     "name",
                     "memberCount",
                     "full",
-                    "joined"
+                    "joined",
+                    "looks"
                 ])
             }
         }

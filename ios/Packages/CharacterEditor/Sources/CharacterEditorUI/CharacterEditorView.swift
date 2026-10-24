@@ -63,6 +63,10 @@ public struct CharacterEditorView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             DoneBar(context: context, result: model.result, onDone: onDone)
         }
+        // The page is taller than the room above the keyboard, so making way for it pushed the
+        // header under the status bar. The nickname sits high enough to stay clear of the
+        // keyboard, which covers the tabs and 就这样 until 完成 puts it away.
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear { model.start() }
     }
 }

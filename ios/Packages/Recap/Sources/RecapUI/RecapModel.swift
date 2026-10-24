@@ -25,7 +25,7 @@ public final class RecapModel {
     /// week's crown winner, else the captain) while nobody has; nil for everyone else. It can
     /// arrive after the story opens, once the squad's scene is read.
     public var scenePicker: ScenePicker?
-    private let scenePicked: @MainActor (SceneTheme) -> Void
+    private let scenePicked: @MainActor (SceneTheme, Date) -> Void
     /// A reveal held on one moment over the last page, for UI tests' screenshots.
     let heldReveal: (scene: SceneTheme, at: Double)?
 
@@ -41,7 +41,7 @@ public final class RecapModel {
         story: WeekStory, cast: StoryCast, service: (any WeekStoryService)?, now: Date = .now,
         scenePicker: ScenePicker? = nil, heldReveal: (scene: SceneTheme, at: Double)? = nil,
         close: @escaping @MainActor () -> Void, planNextWeek: @escaping @MainActor () -> Void,
-        scenePicked: @escaping @MainActor (SceneTheme) -> Void = { _ in }
+        scenePicked: @escaping @MainActor (SceneTheme, Date) -> Void = { _, _ in }
     ) {
         self.service = service
         self.scenePicker = scenePicker
@@ -107,7 +107,7 @@ public final class RecapModel {
     public func dismiss() { close() }
 
     /// The picked scene's reveal is over: the story closes onto home on that scene.
-    func revealed(_ scene: SceneTheme) { scenePicked(scene) }
+    func revealed(_ scene: SceneTheme, coveredAt: Date) { scenePicked(scene, coveredAt) }
 
     /// 催一下主办方. It always lands as far as the reader can tell: a nudge that doesn't reach the
     /// API changes nothing they could act on, and the hourly retry runs anyway.

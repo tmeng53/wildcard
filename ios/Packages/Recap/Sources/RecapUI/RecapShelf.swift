@@ -7,6 +7,7 @@ import Foundation
 import Observation
 import RecapDomain
 import ScenePickDomain
+import SwiftUI
 
 /// Where the app keeps the squad's latest 战报: the story 动态's tile opens, and the one a tapped
 /// awards push opens. It reads the story from its service and the squad (who is in it, how they
@@ -35,8 +36,11 @@ public final class RecapShelf {
     /// Who is in the squad, for the tile's peeking reader.
     public private(set) var cast: StoryCast?
     /// How many scenes the reader picked on a story's last page, counted as each reveal fills
-    /// the screen: the app goes home onto the scene, the same one as last time or not.
+    /// the screen: the app goes home onto the scene, the same one as last time or not, and the
+    /// squad drops in.
     public private(set) var picks = 0
+    /// The scene picked last, and when it filled the screen.
+    public private(set) var picked: (scene: SceneTheme, coveredAt: Date)?
 
     @ObservationIgnored private let service: any WeekStoryService
     @ObservationIgnored private let readSquad: @MainActor () -> Squad?
@@ -104,8 +108,12 @@ public final class RecapShelf {
                 self?.open = nil
                 self?.planNextWeek()
             },
-            scenePicked: { [weak self] scene in
-                self?.open = nil
+            scenePicked: { [weak self] scene, coveredAt in
+                // The story goes at once: the reveal's last frame is the scene home draws.
+                var instant = Transaction()
+                instant.disablesAnimations = true
+                withTransaction(instant) { self?.open = nil }
+                self?.picked = (scene, coveredAt)
                 self?.picks += 1
                 self?.scenePicked(scene)
             })

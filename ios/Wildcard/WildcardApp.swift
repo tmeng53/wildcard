@@ -44,6 +44,7 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
+        _ = DefaultLanguage.applies
         LaunchOptions.forgetSeenRecapIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
@@ -131,29 +132,35 @@ struct WildcardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let editor {
-                CharacterEditorView(
-                    model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
-            } else if let signUp, signUp.finished == nil {
-                SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
-                    StandInSignIn { signUp.signedIn(name: nil) }
-                }
-            } else if LaunchOptions.showsStyleGuide {
-                StyleGuideView()
-            } else if LaunchOptions.showsRecap {
-                RecapDemo()
-            } else if let app {
-                AppRoot(app: app, tab: $tab, delegate: delegate)
-            } else {
-                MainTabs(
-                    today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    selection: $tab
-                )
-                .onAppear {
-                    delegate.opened = { [today, $tab] _ in
-                        $tab.wrappedValue = .today
-                        Task { await today.load() }
-                    }
+            root.environment(\.locale, DefaultLanguage.locale)
+        }
+    }
+
+    @ViewBuilder private var root: some View {
+        if let editor {
+            CharacterEditorView(
+                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
+        } else if let signUp, signUp.finished == nil {
+            SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
+                StandInSignIn { signUp.signedIn(name: nil) }
+            } tabBar: {
+                MainTabs.entranceTabBar
+            }
+        } else if LaunchOptions.showsStyleGuide {
+            StyleGuideView()
+        } else if LaunchOptions.showsRecap {
+            RecapDemo()
+        } else if let app {
+            AppRoot(app: app, tab: $tab, delegate: delegate)
+        } else {
+            MainTabs(
+                today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
+                selection: $tab
+            )
+            .onAppear {
+                delegate.opened = { [today, $tab] _ in
+                    $tab.wrappedValue = .today
+                    Task { await today.load() }
                 }
             }
         }
@@ -175,6 +182,8 @@ private struct AppRoot: View {
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
+                } tabBar: {
+                    MainTabs.entranceTabBar
                 }
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp() } }

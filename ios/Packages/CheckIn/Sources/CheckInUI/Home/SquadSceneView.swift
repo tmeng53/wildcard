@@ -26,6 +26,8 @@ struct SquadSceneView: View {
     let canPat: (MemberID) -> Bool
     let tapMate: (MemberID) -> Void
     let patMate: (MemberID) -> Void
+    /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
+    var arrival: TodayModel.Arrival?
 
     var body: some View {
         GeometryReader { proxy in
@@ -76,7 +78,7 @@ struct SquadSceneView: View {
                 ForEach(figures) { figure in
                     StageFigure(figure: figure, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
                         .onTapGesture {
-                            if case .mate(let id) = figure.id { tapMate(id) }
+                            if arrival == nil, case .mate(let id) = figure.id { tapMate(id) }
                         }
                         // Each teammate is a button by their nickname, for VoiceOver and UI tests.
                         .accessibilityElement(children: .ignore)
@@ -106,14 +108,19 @@ struct SquadSceneView: View {
             return Placed(
                 id: .mate(mate.id), player: mate.player, position: position, ring: mate.member.status.ring,
                 pose: cast.stage.pose(of: mate.member, at: phase), sign: mate.disclaimer,
-                hop: Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale))
+                hop: Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale),
+                fall: fall(of: mate.id, at: date))
         }
         if let myPlayer {
             figures.append(
                 Placed(
                     id: .mine, player: myPlayer,
                     position: .mine,
-                    ring: myRing, pose: .standing, sign: nil, hop: 0))
+                    ring: myRing, pose: .standing, sign: nil, hop: 0, fall: fall(of: nil, at: date)))
+        }
+        // Under Reduce Motion everyone is simply there.
+        if arrival != nil, !reduceMotion {
+            figures.removeAll { $0.fall.map { $0 < 0 } ?? false }
         }
         guard let pat, date.timeIntervalSince(pat.start) < pat.duration,
             let patter = figures.first(where: { $0.id == pat.patter.placed }),
@@ -126,6 +133,13 @@ struct SquadSceneView: View {
             // wakes for it, and drops back off after.
             return figure.turned(direction, awake: figure.id == patted.id)
         }
+    }
+
+    /// How far into their drop onto a newly picked scene `member` (nil for me) is at `date`, in
+    /// seconds: below zero while waiting for their turn; nil once the squad has settled.
+    private func fall(of member: MemberID?, at date: Date) -> Double? {
+        guard let arrival else { return nil }
+        return arrival.elapsed(at: date) - arrival.drop.start(of: arrival.index(of: member))
     }
 
     /// A teammate's nickname; nil for me and for anyone without one yet.
@@ -168,13 +182,15 @@ private struct Placed: Identifiable {
     let sign: String?
     /// How high off the ground a tap's hop has them, in stage points.
     let hop: Double
+    /// How far into their drop onto a newly picked scene they are, in seconds.
+    let fall: Double?
 
     var depth: Double { position.point.y + (id == .mine ? 50 : 0) }
 
     func turned(_ direction: Double, awake: Bool) -> Placed {
         Placed(
             id: id, player: player, position: position.facing(direction), ring: ring,
-            pose: awake && pose == .asleep ? .standing : pose, sign: sign, hop: hop)
+            pose: awake && pose == .asleep ? .standing : pose, sign: sign, hop: hop, fall: fall)
     }
 }
 
@@ -203,23 +219,41 @@ private struct StageFigure: View {
         x: -PlaceholderCharacter.patReachSideways, y: -PlaceholderCharacter.patReachAbove,
         width: canvas.width + 2 * PlaceholderCharacter.patReachSideways,
         height: canvas.height + PlaceholderCharacter.patReachAbove + PlaceholderCharacter.patReachBelow)
+    /// The canvas with the room the drop starts in, 420 rig points above it, while it falls.
+    private static let fallReach = CGRect(
+        x: reach.minX, y: -fallRoom, width: reach.width, height: reach.maxY + fallRoom)
+    /// The room above the canvas while falling: the drop's height and a little air for the head.
+    private static let fallRoom = PlaceholderCharacter.dropHeight + 20
+
+    /// Still in the air, before the drop touches down.
+    private var isFalling: Bool { figure.fall.map { $0 < DropIn.land } ?? false }
 
     var body: some View {
         let scale = figure.position.scale * unit
         let point = figure.position.point
         let frame = reduceMotion ? figure.player.restFrame : figure.player.frame(at: date)
+        let falling = isFalling && !reduceMotion
+        let crop = falling ? Self.fallReach : Self.reach
+        let lift =
+            falling
+            ? DropIn.lift(
+                at: figure.fall ?? 0, spotY: point.y, clipLift: PlaceholderCharacter.dropHeight * figure.position.scale)
+            : 0
         ZStack {
-            GroundRing(ring: figure.ring, scale: scale, unit: unit)
-                .position(x: Self.feet.x * scale, y: Self.feet.y * scale - 2 * unit)
+            if !falling {
+                GroundRing(ring: figure.ring, scale: scale, unit: unit)
+                    .position(x: Self.feet.x * scale, y: Self.feet.y * scale - 2 * unit)
+            }
             // Drawn with room around the canvas for moves that reach past it (a pat's reaction
-            // staggering back), laid out at the canvas's size so everything else stays put.
+            // staggering back, the drop from above), laid out at the canvas's size so everything
+            // else stays put.
             Color.clear.overlay {
-                CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.reach)
-                    .frame(width: Self.reach.width * scale, height: Self.reach.height * scale)
-                    .offset(y: (Self.reach.midY - Self.canvas.height / 2) * scale)
+                CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: crop)
+                    .frame(width: crop.width * scale, height: crop.height * scale)
+                    .offset(y: (crop.midY - Self.canvas.height / 2) * scale)
             }
             .scaleEffect(x: figure.position.facing, y: 1)
-            .offset(y: -figure.hop * unit)
+            .offset(y: -(figure.hop + lift) * unit)
             .allowsHitTesting(false)
             if figure.pose == .holdingSign {
                 SignCard(scale: scale)
@@ -293,59 +327,6 @@ private struct SignCard: View {
     /// The card as the design draws it in the rig's points: 108 by 58, corners of 9.
     private var card: RoundedRectangle {
         RoundedRectangle(cornerSize: CGSize(width: 9 * scale, height: 9 * scale))
-    }
-}
-
-/// The venue's art, exported from the approved home design (`SceneArt/render.mjs`). The home
-/// draws it full screen; 动态's empty state shows a window onto it.
-public struct SceneArt: View {
-    public enum Layer: Sendable {
-        case day
-        /// The dark tint and the lamps, over everything on the scene.
-        case night
-        /// A part of the venue people stand behind.
-        case front(Int)
-
-        var name: String {
-            switch self {
-            case .day: "day"
-            case .night: "night"
-            case .front(let index): "front-\(index)"
-            }
-        }
-    }
-
-    let scene: SceneTheme
-    let layer: Layer
-
-    public init(scene: SceneTheme, layer: Layer) {
-        self.scene = scene
-        self.layer = layer
-    }
-
-    public var body: some View {
-        Image(uiImage: UIImage(named: "\(scene.rawValue)-\(layer.name)", in: .module, with: nil) ?? UIImage())
-            .resizable()
-            .accessibilityHidden(true)
-    }
-}
-
-/// A scene's venue as home draws it, filling the screen with nobody on it: what the scene pick's
-/// reveal shows as its card rises, before home takes over.
-public struct SceneBackdrop: View {
-    private let scene: SceneTheme
-
-    public init(scene: SceneTheme) {
-        self.scene = scene
-    }
-
-    public var body: some View {
-        GeometryReader { proxy in
-            SceneArt(scene: scene, layer: .day)
-                .frame(width: proxy.size.width, height: Stage.height * proxy.size.width / StageLayout.width)
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-        }
-        .background(Color(role: .bgCanvas, in: scene))
     }
 }
 #endif

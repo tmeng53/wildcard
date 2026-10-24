@@ -141,12 +141,15 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertLessThanOrEqual(field.maxY, stage.maxY, "the nickname fell off the ticket")
         XCTAssertEqual(field.midY, stage.maxY - 22, accuracy: 1, "the nickname isn't centred on the stub")
         XCTAssertEqual(field.midX, stage.midX, accuracy: 1, "the nickname isn't centred on the ticket")
+        let undo = app.buttons["editor.undo"]
+        let headerTop = undo.frame.minY
         // The first tap on a field puts the cursor after its text; delete more than it holds.
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
         waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
         nickname.typeText("小汤")
         waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
+        XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
         keepScreenshot(named: "27-editor-nickname")
     }
 

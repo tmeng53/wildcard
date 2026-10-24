@@ -17,10 +17,13 @@ import UIKit
 /// 小队设置 (approved canvas, 2026-10-22): the squad's name and captain, this week's scene and
 /// who picks it, the invite code, the members, and leaving. The captain renames the squad and
 /// manages members from each row's ··· menu; last week's crown winner, or the captain when
-/// nobody won, picks the scene once. `close` goes back; the app follows `model.hasLeft`.
+/// nobody won, picks the scene once. `close` goes back; the app follows `model.hasLeft`. A pick
+/// ends where every pick does, on home with the squad dropping in: once the reveal is over,
+/// `picked` hands the scene to the app, which takes over.
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
     private let close: () -> Void
+    private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
     @State private var renaming: String?
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
@@ -28,9 +31,13 @@ public struct SquadSettingsView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(model: SquadSettingsModel, close: @escaping () -> Void) {
+    public init(
+        model: SquadSettingsModel, close: @escaping () -> Void,
+        picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void = { _, _ in }
+    ) {
         self.model = model
         self.close = close
+        self.picked = picked
     }
 
     public var body: some View {
@@ -47,7 +54,8 @@ public struct SquadSettingsView: View {
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
-                    onFinished: {
+                    onFinished: { coveredAt in
+                        picked(reveal.scene, coveredAt)
                         self.reveal = nil
                         Task { await model.picked() }
                     },

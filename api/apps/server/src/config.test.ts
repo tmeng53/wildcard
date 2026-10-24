@@ -40,7 +40,7 @@ describe('readConfig', () => {
       proxyHops: 1,
       languageModelKeys: { openai: undefined, anthropic: undefined },
       appleSignInKey: undefined,
-      jobsToken: undefined,
+      scheduler: undefined,
       apns: undefined,
     });
   });
@@ -59,6 +59,21 @@ describe('readConfig', () => {
     expect(
       readConfig({ ...base, LLM_PROVIDER: 'gemini' }).languageModelKeys.openai,
     ).toBeUndefined();
+  });
+
+  it('takes Cloud Scheduler’s account over a jobs token, and either alone', () => {
+    const token = 'a'.repeat(32);
+    const account = 'wildcard-scheduler@project.iam.gserviceaccount.com';
+    expect(readConfig({ ...base, JOBS_TOKEN: token }).scheduler).toStrictEqual({
+      kind: 'token',
+      token,
+    });
+    expect(
+      readConfig({ ...base, JOBS_TOKEN: token, JOBS_SCHEDULER_ACCOUNT: account }).scheduler,
+    ).toStrictEqual({ kind: 'google', serviceAccount: account });
+    expect(() => readConfig({ ...base, JOBS_SCHEDULER_ACCOUNT: 'not an email' })).toThrow(
+      /JOBS_SCHEDULER_ACCOUNT/,
+    );
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {
