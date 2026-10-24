@@ -6,6 +6,7 @@ import DesignSystemUI
 import FeedDomain
 import SportsUI
 import SwiftUI
+import UIKit
 
 /// One post: its photos on top (swipe; the cover first), the author's character standing at the
 /// card's left in that day's kit, their name and time, the kind's tag (a 请假条's grey with a
@@ -46,10 +47,7 @@ struct PostCard: View {
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         )
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        // Alongside the feed's scroll, not in place of it: a plain gesture with a drag in it keeps
-        // the list from scrolling when a swipe starts on a card. The feed stops scrolling once the
-        // card lifts, so the slide then only picks.
-        .simultaneousGesture(holdAndSlide, including: canRespond ? .all : .subviews)
+        .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
         .blur(radius: model.lifted && !isLifted ? Scrim.blurRadius : 0)
         .zIndex(isLifted ? 1 : 0)
@@ -76,27 +74,21 @@ struct PostCard: View {
         .accessibilityIdentifier("feed.post")
     }
 
-    /// Press and hold the card to open the emoji bar over it, then slide along the bar and let go
-    /// on an emoji to pick it; letting go anywhere else leaves the bar open for a tap.
-    private var holdAndSlide: some Gesture {
-        LongPressGesture(minimumDuration: Self.holdToPick, maximumDistance: Self.holdSlop)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named(FeedView.space)))
-            .onChanged { value in
-                guard case .second(true, let drag) = value else { return }
-                if !isLifted {
-                    withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
-                        model.openBar(on: post.id, lifted: true)
-                    }
-                }
-                if let drag { model.hovering = model.slot(at: drag.location) }
+    /// Held on the card: the bar opens over it, and the finger's place picks the slot under it.
+    private func hold(at location: CGPoint) {
+        if !isLifted {
+            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
+                model.openBar(on: post.id, lifted: true)
             }
-            .onEnded { value in
-                model.hovering = nil
-                guard case .second(true, let drag) = value, let drag, let index = model.slot(at: drag.location),
-                    let from = model.slotCenter(index)
-                else { return }
-                model.react(.pick(EmojiBar.common[index]), on: post, from: from)
-            }
+        }
+        model.hovering = model.slot(at: location)
+    }
+
+    /// Let go on an emoji to pick it; anywhere else (or cancelled) leaves the bar open for a tap.
+    private func letGo(at location: CGPoint?) {
+        model.hovering = nil
+        guard let location, let index = model.slot(at: location), let from = model.slotCenter(index) else { return }
+        model.react(.pick(EmojiBar.common[index]), on: post, from: from)
     }
 
     /// The character's column, then who, when, what and the words.
@@ -197,4 +189,37 @@ extension CheckIn {
     }
 }
 
+/// Press and hold a card to open the emoji bar over it, then slide along the bar and let go on an
+/// emoji to pick it. A UIKit long press, not a SwiftUI one: a SwiftUI gesture with a drag in it
+/// keeps the feed from scrolling when a swipe starts on a card, even alongside the scroll. This
+/// one fails once the finger moves first, so the scroll wins, and once it holds the scroll can't
+/// start, so the slide only picks.
+private struct HoldAndSlide: UIGestureRecognizerRepresentable {
+    let isEnabled: Bool
+    /// The press held, and each move after, in the feed's space.
+    let held: (CGPoint) -> Void
+    /// The finger lifted there, or the press was cancelled (nil).
+    let letGo: (CGPoint?) -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
+        let recognizer = UILongPressGestureRecognizer()
+        recognizer.minimumPressDuration = PostCard.holdToPick
+        recognizer.allowableMovement = PostCard.holdSlop
+        return recognizer
+    }
+
+    func updateUIGestureRecognizer(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        recognizer.isEnabled = isEnabled
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        let location = context.converter.location(in: .named(FeedView.space))
+        switch recognizer.state {
+        case .began, .changed: held(location)
+        case .ended: letGo(location)
+        case .cancelled, .failed: letGo(nil)
+        default: break
+        }
+    }
+}
 #endif
