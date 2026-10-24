@@ -60,6 +60,10 @@ public struct CharacterEditorView: View {
             .padding(.top, Space.s)
             ChoicesPanel(model: model)
         }
+        // Pinned to the top: whenever the page is taller than its room, the header stays put and
+        // the overflow goes under the bottom instead of the page centring and sliding the header
+        // under the status bar.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background {
             // A tap on the empty page puts the keyboard away; buttons and tiles keep their taps.
             Color(role: .bgCanvas, in: theme)
