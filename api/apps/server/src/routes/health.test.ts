@@ -75,7 +75,10 @@ async function getHealth(db: Database) {
     admin: adminOn(),
   });
   try {
-    const response = await app.request('/health');
+    // As Cloud Run's load balancer sends it, so a failure's log line carries the trace id.
+    const response = await app.request('/health', {
+      headers: { 'X-Cloud-Trace-Context': '105445aa7843bc8bf206b12000100000/1;o=1' },
+    });
     return {
       status: response.status,
       type: response.headers.get('content-type'),
@@ -117,7 +120,8 @@ describe('GET /health', () => {
           severity: 'ERROR',
           message: 'request failed',
           method: 'GET',
-          path: '/health',
+          route: '/health',
+          traceId: '105445aa7843bc8bf206b12000100000',
           error: {
             name: 'DatabaseUnavailableError',
             cause: { message: 'connect ECONNREFUSED 127.0.0.1:1' },
