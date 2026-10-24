@@ -15,10 +15,14 @@ final class LoadingUITests: XCTestCase {
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-loading",
         ]
         app.launch()
-        let loader = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "加载中")).firstMatch
-        XCTAssertTrue(loader.waitForExistence(timeout: Self.wait), "the launch page never showed its loader")
-        Thread.sleep(forTimeInterval: 0.8)
+        // Kept first, so a failure below still shows what the page drew.
+        Thread.sleep(forTimeInterval: 2)
         keepScreenshot(named: "90-loading-page")
+        let loader = app.descendants(matching: .any).matching(identifier: "loading.cover").firstMatch
+        let shown = loader.waitForExistence(timeout: Self.wait)
+        if !shown { print(app.debugDescription) }
+        XCTAssertTrue(shown, "the launch page never showed its loader")
+        XCTAssertEqual(loader.label, "加载中")
     }
 
     func testDotsInTheStyleGuide() {

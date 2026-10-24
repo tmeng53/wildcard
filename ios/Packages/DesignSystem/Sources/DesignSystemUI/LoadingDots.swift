@@ -108,6 +108,7 @@ struct LoadingCover<Loader: View>: ViewModifier {
                     loader
                         .transition(.opacity)
                         .accessibilityRepresentation { Text("加载中", bundle: .module) }
+                        .accessibilityIdentifier("loading.cover")
                 }
             }
             .animation(.wildcard(Motion.fadeIn), value: gate.isShown)
