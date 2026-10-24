@@ -44,8 +44,6 @@ public enum ScheduleError: Error, Equatable, Sendable {
     case weekOver
     /// A day that has started can't change any more.
     case dayStarted
-    /// This week keeps its number of rest days; they only move.
-    case restDaysFixed
     /// A 饮食小目标 of the member's own must be one line of 1 to 8 characters.
     case invalidFuelGoal
     /// The server said no for a reason this build doesn't know. Trying again won't help.

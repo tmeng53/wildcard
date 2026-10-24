@@ -4,7 +4,7 @@ import Contracts
 public enum WeekTense: Hashable, Sendable {
     /// Over: read-only.
     case past
-    /// This week: only days still to come change, and its rest days only move.
+    /// This week: the days still to come change freely; today and the days before stay.
     case current
     /// Next week or later: every day changes freely.
     case upcoming
@@ -13,19 +13,16 @@ public enum WeekTense: Hashable, Sendable {
 /// One week's plan as the poster edits it, with the rules for what a tap does. A value: the
 /// store keeps it and saves its days after each change.
 ///
-/// - Next week: tap a day to select it, then pick its sport or 休息 under the poster.
-/// - This week, a day still to come: tap a training day to pick another sport (never 休息, so
-///   the rest days keep their number); tap a rest day to lift it, then a training day to swap
-///   the two. Today and the days before it stay as they are.
+/// - Next week, or a day still to come this week: tap a day to select it, then pick its sport
+///   or 休息 under the poster. Every change is saved, and the server logs each one.
+/// - This week, today and the days before it stay as they are.
 /// - A past week: nothing changes.
 public struct WeekBoard: Hashable, Sendable {
     /// What the board has hold of.
     public enum Focus: Hashable, Sendable {
         case none
-        /// A day whose sport is being picked.
+        /// A day whose sport or rest is being picked.
         case selected(Int)
-        /// A rest day of this week, about to swap with a training day.
-        case lifted(Int)
     }
 
     /// What a tap did, so the screen can answer with the right haptic.
@@ -33,10 +30,7 @@ public struct WeekBoard: Hashable, Sendable {
         /// The day can't change: past, or today or before in this week.
         case locked
         case selected
-        case lifted
-        /// The lifted rest day and a training day swapped.
-        case swapped
-        /// Let go of the selected or lifted day.
+        /// Let go of the selected day.
         case released
     }
 
@@ -73,42 +67,20 @@ public struct WeekBoard: Hashable, Sendable {
         }
     }
 
-    /// While a rest day is lifted: the training days it can swap with.
-    public func isSwapTarget(_ index: Int) -> Bool {
-        guard case .lifted = focus, isEditable(index) else { return false }
-        return days[index] != .rest
-    }
-
-    /// Whether 休息 is among the picks for the selected day: only in a week that hasn't started.
-    public var offersRest: Bool { tense == .upcoming }
-
     public var plannedDays: Int { days.count { $0 != .rest } }
 
     @discardableResult
     public mutating func tap(_ index: Int) -> TapOutcome {
         guard isEditable(index) else { return .locked }
-        switch (tense, focus) {
-        case (.current, .lifted(let lifted)) where lifted == index:
+        if focus == .selected(index) {
             focus = .none
             return .released
-        case (.current, .lifted(let lifted)) where days[index] != .rest:
-            days[lifted] = days[index]
-            days[index] = .rest
-            focus = .none
-            return .swapped
-        case (.current, _) where days[index] == .rest:
-            focus = .lifted(index)
-            return .lifted
-        case (_, .selected(let selected)) where selected == index:
-            focus = .none
-            return .released
-        default:
-            focus = .selected(index)
-            return .selected
         }
+        focus = .selected(index)
+        return .selected
     }
 
-    /// Lets go of whatever the board has hold of.
+    /// Lets go of the selected day.
     public mutating func release() {
         focus = .none
     }
@@ -119,9 +91,9 @@ public struct WeekBoard: Hashable, Sendable {
         days[index] = .train(activity)
     }
 
-    /// Makes the selected day a rest day, in a week that hasn't started.
+    /// Makes the selected day a rest day; nothing without a selected day.
     public mutating func rest() {
-        guard offersRest, case .selected(let index) = focus else { return }
+        guard case .selected(let index) = focus else { return }
         days[index] = .rest
     }
 

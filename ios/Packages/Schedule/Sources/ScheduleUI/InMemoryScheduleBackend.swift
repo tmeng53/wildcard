@@ -84,9 +84,6 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
             let before = sheet.plan
             let started = today.weekday
             guard days.prefix(started) == before.prefix(started) else { throw .dayStarted }
-            guard days.count(where: { $0 == .rest }) == before.count(where: { $0 == .rest }) else {
-                throw .restDaysFixed
-            }
         }
         sheet.plan = days
         sheets[weekStart] = sheet
@@ -94,7 +91,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     }
 
     public func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        guard weekStart > thisWeek else { throw .weekOver }
+        guard weekStart >= thisWeek else { throw .weekOver }
         var sheet = try await week(starting: weekStart)
         sheet.fuel = goals
         sheets[weekStart] = sheet

@@ -55,12 +55,10 @@ export {
   PhotoNotUploadedError,
   PhotoNotYoursError,
   PlanDayStartedError,
-  RestDaysFixedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
   WeekOverError,
-  WeekStartedError,
   WeekTooFarAheadError,
 } from './errors.js';
 export type {

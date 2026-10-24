@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  PlanDayStartedError,
-  RestDaysFixedError,
-  WeekOverError,
-  WeekStartedError,
-  WeekTooFarAheadError,
-} from '../errors.js';
+import { PlanDayStartedError, WeekOverError, WeekTooFarAheadError } from '../errors.js';
 import { FuelGoals } from './fuel-goal.js';
 import {
   DEFAULT_PLAN_DAYS,
@@ -120,23 +114,20 @@ describe('checkPlanChange', () => {
     expect(change(plan('saved'), [run, train, rest, rest, train, train, train])).toBe('allowed');
   });
 
-  it('lets today’s sport change, and keeps the rest days of a carried-over plan', () => {
+  it('lets today’s sport change, and the days after it change freely', () => {
     const today = '2026-10-19';
     expect(
       changeOn(today)(plan('carriedOver'), [{ kind: 'train', sport: 'swim' }, ...days.slice(1)]),
     ).toBe('allowed');
-    expect(
-      changeOn(today)(plan('carriedOver'), [run, rest, rest, train, train, train, rest]),
-    ).toStrictEqual(new RestDaysFixedError(2));
+    expect(changeOn(today)(plan('carriedOver'), [run, rest, rest, train, train, train, rest])).toBe(
+      'allowed',
+    );
   });
 
-  it('keeps the number of rest days this week', () => {
-    expect(change(plan('saved'), [run, train, rest, rest, train, train, rest])).toStrictEqual(
-      new RestDaysFixedError(2),
-    );
-    expect(change(plan('saved'), [run, train, rest, train, train, train, train])).toStrictEqual(
-      new RestDaysFixedError(2),
-    );
+  it('lets later days this week become rest or training days', () => {
+    expect(change(plan('saved'), [run, train, rest, rest, train, train, rest])).toBe('allowed');
+    expect(change(plan('saved'), [run, train, rest, train, train, train, train])).toBe('allowed');
+    expect(change(plan('saved'), [run, train, rest, rest, rest, rest, rest])).toBe('allowed');
   });
 
   it('keeps days before today as they were, sport included', () => {
@@ -170,7 +161,7 @@ describe('checkPlanChange', () => {
     );
   });
 
-  it('lets days before the member joined change, and counts rest days from then', () => {
+  it('lets days before the member joined change', () => {
     // Joined on Tuesday; today is Wednesday.
     const joinedTuesday = changeOn('2026-10-21', '2026-10-20');
     expect(joinedTuesday(plan('default'), [rest, train, rest, train, train, train, rest])).toBe(
@@ -179,9 +170,6 @@ describe('checkPlanChange', () => {
     expect(
       joinedTuesday(plan('default'), [run, rest, rest, train, train, train, train]),
     ).toStrictEqual(new PlanDayStartedError('2026-10-20'));
-    expect(
-      joinedTuesday(plan('default'), [run, train, rest, train, train, train, train]),
-    ).toStrictEqual(new RestDaysFixedError(2));
   });
 
   it('lets a later week change freely, up to 4 weeks ahead', () => {
@@ -212,12 +200,13 @@ describe('checkFuelGoalsChange', () => {
     }
   };
 
-  it('lets a week change only before it starts, up to 4 weeks ahead', () => {
+  it('lets this week or a later one change, up to 4 weeks ahead, never a past one', () => {
+    expect(on('2026-10-21', '2026-10-19')).toBe('allowed');
     expect(on('2026-10-25', '2026-10-26')).toBe('allowed');
     expect(on('2026-10-21', '2026-11-16')).toBe('allowed');
     expect(on('2026-10-21', '2026-11-23')).toStrictEqual(new WeekTooFarAheadError('2026-11-23'));
-    expect(on('2026-10-26', '2026-10-26')).toStrictEqual(new WeekStartedError('2026-10-26'));
-    expect(on('2026-10-21', '2026-10-12')).toStrictEqual(new WeekStartedError('2026-10-12'));
+    expect(on('2026-10-26', '2026-10-26')).toBe('allowed');
+    expect(on('2026-10-21', '2026-10-12')).toStrictEqual(new WeekOverError('2026-10-12'));
   });
 });
 

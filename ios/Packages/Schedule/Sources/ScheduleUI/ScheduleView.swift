@@ -91,8 +91,6 @@ public struct ScheduleView: View {
                 model.pick(activity)
             }
         }
-        .haptic(.pick, trigger: model.lifts)
-        .haptic(.land, trigger: model.swaps)
         .haptic(.appear, trigger: model.saving == .saved)
         .task(id: model.saving) {
             guard model.saving == .saved || model.saving == .failed else { return }

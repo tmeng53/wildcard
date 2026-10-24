@@ -397,11 +397,15 @@ if want weekly-plan; then
   call GET "/me/weekly-plans/$later" "$planner_token"
   expect 200
   [ "$(jq -c .fuelGoals <<<"$body")" = '[]' ] || fail "goals shouldn't carry over to the week after: $body"
-  call PUT "/me/weekly-plans/$monday/fuel-goals" "$planner_token" "$goals"
-  expect 400 WEEK_STARTED
   logged="$(psql "$DB_URL" -tAc "select count(*) from public.fuel_goal_events where member_id = '$planner'")"
   [ "$logged" = 1 ] || fail "saving the same goals twice should log once: $logged rows"
-  echo "weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's refused (400 WEEK_STARTED); first week $monday"
+  call PUT "/me/weekly-plans/$monday/fuel-goals" "$planner_token" "$goals"
+  expect 200
+  logged="$(psql "$DB_URL" -tAc "select count(*) from public.fuel_goal_events where member_id = '$planner' and week_start = '$monday'")"
+  [ "$logged" = 1 ] || fail "this week's goals should be logged once: $logged rows"
+  call PUT "/me/weekly-plans/$(days_after "$monday" -7)/fuel-goals" "$planner_token" "$goals"
+  expect 400 WEEK_OVER
+  echo "weekly-plan: next week's 饮食小目标 saved (own words trimmed), logged once though saved twice, not carried over; this week's saved and logged; last week's refused (400 WEEK_OVER); first week $monday"
 fi
 
 if want squad-today; then

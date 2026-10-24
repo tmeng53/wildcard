@@ -2,13 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { z } from 'zod';
 
-import {
-  PlanDayStartedError,
-  RestDaysFixedError,
-  WeekOverError,
-  WeekStartedError,
-  WeekTooFarAheadError,
-} from '../errors.js';
+import { PlanDayStartedError, WeekOverError, WeekTooFarAheadError } from '../errors.js';
 import { LocalDay } from './check-in.js';
 import { SportKey } from './sports.js';
 import { CustomSportName } from './text.js';
@@ -130,15 +124,13 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
   return Number(part('hour')) < GRACE_HOURS ? addDays(calendarDay, -1) : calendarDay;
 }
 
-const restDays = (days: readonly PlanDay[]) => days.filter((day) => day.kind === 'rest').length;
-
 /**
  * Checks that a member may replace `current` (the week's plan as it stands) with `next` on
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
  * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
  * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
- * days before today stay as they were, today stays a training or a rest day (its sport may
- * change), and the number of rest days stays the same. Days before the member joined weren't
+ * days before today stay as they were and today stays a training or a rest day (its sport may
+ * change); the days after today change freely, rest days included. Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
  * is still on the default plan: that is where they first make their plan.
  */
@@ -172,13 +164,11 @@ export function checkPlanChange({
       date < today ? isDeepStrictEqual(before, after) : before?.kind === after?.kind;
     if (!unchanged) throw new PlanDayStartedError(date);
   }
-  const kept = restDays(current.days.slice(first));
-  if (restDays(next.slice(first)) !== kept) throw new RestDaysFixedError(kept);
 }
 
 /**
- * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: only
- * before the week starts, and at most `WEEKS_AHEAD` weeks ahead, as for the plan.
+ * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: this
+ * week or a later one, at most `WEEKS_AHEAD` weeks ahead, as for the plan; past weeks are over.
  */
 export function checkFuelGoalsChange({
   weekStart,
@@ -188,6 +178,6 @@ export function checkFuelGoalsChange({
   readonly today: LocalDay;
 }): void {
   const thisWeek = weekStartOf(today);
-  if (weekStart <= thisWeek) throw new WeekStartedError(weekStart);
+  if (weekStart < thisWeek) throw new WeekOverError(weekStart);
   if (weekStart > addDays(thisWeek, 7 * WEEKS_AHEAD)) throw new WeekTooFarAheadError(weekStart);
 }

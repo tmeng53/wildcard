@@ -118,7 +118,6 @@ private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn 
 @Test func eachRefusalMeansSomethingOnTheSchedule() {
     #expect(ScheduleError(.refused(.weekClosed)) == .weekOver)
     #expect(ScheduleError(.refused(.planDayStarted)) == .dayStarted)
-    #expect(ScheduleError(.refused(.restDaysFixed)) == .restDaysFixed)
     #expect(ScheduleError(.refused(.squadFull)) == .refused)
     #expect(ScheduleError(.unreadableResponse) == .refused)
     #expect(ScheduleError(.unavailable) == .notSent)
