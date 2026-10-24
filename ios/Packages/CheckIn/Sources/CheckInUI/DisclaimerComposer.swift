@@ -113,7 +113,8 @@ struct DisclaimerComposer: View {
             .lineLimit(1...4)
             .focused($isEditing)
             .submitLabel(.done)
-            .opacity(isWriting ? 0.4 : 1)
+            .opacity(isWriting ? Loading.waitingOpacity : 1)
+            .animation(.wildcard(Motion.fadeIn), value: isWriting)
             .accessibilityIdentifier("disclaimer.field")
             .onChange(of: text) { _, typed in
                 // Return finishes editing; the excuse is one line of at most `Disclaimer.maxLength` characters.
@@ -174,7 +175,8 @@ struct DisclaimerComposer: View {
                 ForEach(Array(drafts.enumerated()), id: \.element) { index, draft in
                     DraftRow(line: draft, isPicked: draft == entry.text) { take(draft) }
                         .opacity(isWriting ? Loading.waitingOpacity : 1)
-                        .transition(arrival(index))
+                        .animation(.wildcard(Motion.fadeIn), value: isWriting)
+                        .transition(.arrival(index, reduceMotion: reduceMotion))
                         .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
                 }
                 WriteButton(isAgain: draftsAnswer, isWriting: isWriting) {
@@ -229,15 +231,6 @@ struct DisclaimerComposer: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: 1)
         }
-    }
-
-    /// A line on offer arriving: rising as it fades in, `index` lines after the first. While the
-    /// writer works, the lines it will replace fade back (`Loading.waitingOpacity`).
-    private func arrival(_ index: Int) -> AnyTransition {
-        let rise: AnyTransition = reduceMotion ? .opacity : .opacity.combined(with: .offset(y: Loading.arrivalRise))
-        return .asymmetric(
-            insertion: rise.animation(.wildcard(Loading.arrival).delay(Double(index) * Loading.arrivalStagger)),
-            removal: .opacity)
     }
 
     /// Puts a line in the hero.

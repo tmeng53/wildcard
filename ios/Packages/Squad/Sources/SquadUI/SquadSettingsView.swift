@@ -150,16 +150,14 @@ public struct SquadSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if model.isCaptain {
-                if isSaving(.rename) {
-                    LoadingDots()
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                } else {
+                LoadingSwap(isSaving(.rename)) {
                     HeaderButton(Text("改队名", bundle: .module), systemImage: "pencil") {
                         renaming = settings.squad.name
                     }
                     .accessibilityIdentifier("squad.rename")
                 }
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
         }
     }

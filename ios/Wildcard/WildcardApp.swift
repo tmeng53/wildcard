@@ -213,6 +213,9 @@ private struct AppRoot: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Over every screen, so the character stays its minimum and fades out over the screen
+        // that opened (loader design A, 2026-10-24).
+        .loadingCover(app.isOpening) { OpeningLoader() }
         .task { await app.run() }
         .onAppear {
             delegate.opened = { [app, $tab] opened in
@@ -259,19 +262,25 @@ private struct SignInButton: View {
     }
 }
 
-/// While the app reads the member's home at launch: the brand's grey page, and the character
-/// jogging in place once the wait has lasted (loader design A, 2026-10-24).
+/// While the app reads the member's home at launch: the brand's grey page, which the root's
+/// loader covers once the wait has lasted.
 private struct Starting: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         Color(role: .bgSubtle, in: theme)
             .ignoresSafeArea()
-            .loadingCover(true) {
-                LoadingCharacter()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
-            }
             .accessibilityIdentifier("app.starting")
+    }
+}
+
+/// The character jogging in place on the brand's grey page, while the app opens.
+private struct OpeningLoader: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        LoadingCharacter()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
     }
 }
