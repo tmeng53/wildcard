@@ -22,7 +22,8 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | --- | --- |
 | `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, the accent tone: scene, brand, or ink on the 我 pages), a second action (44, grey), a quiet text action |
 | `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask: filled, or `.outlined` when a gentler action leads |
-| `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button; a sign-up step's back button and ink segments |
+| `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button (grey on a page, glass over the scene, glass with a white glyph over photos on ink); a sign-up step's back button and ink segments |
+| `.photoViewer(isPresented:count:page:load:)` | A post's photos full screen on ink, zooming out of the photos tapped: pinch or double tap to zoom, swipe between them, swipe down or 关闭 to put them back (发动态 and 动态) |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |

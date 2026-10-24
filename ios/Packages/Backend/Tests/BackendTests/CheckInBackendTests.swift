@@ -21,7 +21,9 @@ private func scratch() -> URL {
 }
 
 private func jpeg(_ byte: UInt8) -> PreparedPhoto {
-    PreparedPhoto(id: UUID(), jpeg: Data([0xFF, 0xD8, 0xFF, byte] + (0..<2048).map { _ in UInt8.random(in: 0...255) }))
+    PreparedPhoto(
+        id: UUID(), jpeg: Data([0xFF, 0xD8, 0xFF, byte] + (0..<2048).map { _ in UInt8.random(in: 0...255) }),
+        size: nil)
 }
 
 @MainActor @Test func theHomeLoadsTheSquadsTodayAndKeepsACopy() async throws {

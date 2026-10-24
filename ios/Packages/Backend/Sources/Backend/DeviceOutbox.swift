@@ -72,7 +72,10 @@ public actor DeviceOutbox: Outbox {
             day = post.day
             createdAt = post.createdAt
             audience = post.audience.squads
-            photos = post.draft.photos.map { StoredPhoto(id: $0.id, path: post.uploaded[$0.id]?.path) }
+            photos = post.draft.photos.map {
+                StoredPhoto(
+                    id: $0.id, path: post.uploaded[$0.id]?.path, width: $0.size?.width, height: $0.size?.height)
+            }
             var sport: String?
             var customSport: String?
             var minutes: Int?
@@ -106,12 +109,13 @@ public actor DeviceOutbox: Outbox {
             var prepared: [PreparedPhoto] = []
             var uploaded: [UUID: PhotoRef] = [:]
             for photo in photos {
+                let size = try photo.size()
                 if let path = photo.path {
                     uploaded[photo.id] = try PhotoRef(path: path)
-                    prepared.append(PreparedPhoto(id: photo.id, jpeg: Data()))
+                    prepared.append(PreparedPhoto(id: photo.id, jpeg: Data(), size: size))
                 } else {
                     let jpeg = try Data(contentsOf: directory.appending(path: "\(photo.id.uuidString).jpg"))
-                    prepared.append(PreparedPhoto(id: photo.id, jpeg: jpeg))
+                    prepared.append(PreparedPhoto(id: photo.id, jpeg: jpeg, size: size))
                 }
             }
             let body = PostBody(photos: prepared, caption: caption ?? "")
@@ -140,8 +144,16 @@ public actor DeviceOutbox: Outbox {
     }
 }
 
-/// A kept post's photo: its id, and its path once uploaded.
+/// A kept post's photo: its id, its size in pixels (missing on posts kept before sizes were
+/// sent), and its path once uploaded.
 private struct StoredPhoto: Codable {
     let id: UUID
     let path: String?
+    let width: Int?
+    let height: Int?
+
+    func size() throws(ContractsError) -> PhotoSize? {
+        guard let width, let height else { return nil }
+        return try PhotoSize(width: width, height: height)
+    }
 }

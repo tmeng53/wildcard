@@ -12,6 +12,7 @@ import {
   storedTrainingFields,
   type CheckInRecord,
   type CheckIns,
+  PhotoSize,
   type PhotoRef,
 } from '@wildcard/check-ins';
 
@@ -53,6 +54,7 @@ const photoViews = {
             .string()
             .meta({ description: 'The photo’s name, as the check-in was saved with.' }),
           url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
+          size: PhotoSize.optional(),
         })
         .openapi('PhotoView'),
     )
@@ -152,10 +154,10 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     ...fields
   }: T) => {
     if (photos === undefined) return fields;
-    const views = photos.map(({ path }) => {
+    const views = photos.map(({ path, size }) => {
       const url = urls.get(path);
       if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
-      return { path, url: url.href };
+      return size === undefined ? { path, url: url.href } : { path, url: url.href, size };
     });
     return { ...fields, photos: views };
   };

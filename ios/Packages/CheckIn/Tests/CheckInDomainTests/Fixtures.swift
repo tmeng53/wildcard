@@ -166,5 +166,5 @@ func store(_ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), no
 }
 
 func photo(_ number: Int) -> PreparedPhoto {
-    PreparedPhoto(id: id(number), jpeg: Data([UInt8(number)]))
+    PreparedPhoto(id: id(number), jpeg: Data([UInt8(number)]), size: try? PhotoSize(width: 1080, height: 1350))
 }
