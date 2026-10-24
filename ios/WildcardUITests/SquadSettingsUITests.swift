@@ -41,7 +41,7 @@ final class SquadSettingsUITests: XCTestCase {
         let field = alert.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 30), "改队名 didn't open")
         field.typeText("夜跑")
-        alert.buttons["保存"].firstMatch.tap()
+        alert.buttons["保存"].tap()
         waitFor(app.staticTexts["squad.name"], "label == '晨跑五人组夜跑'", "the new name didn't show")
 
         app.swipeUp()
