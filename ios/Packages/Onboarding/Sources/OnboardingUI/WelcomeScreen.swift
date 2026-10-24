@@ -11,6 +11,7 @@ import SwiftUI
 /// and breaks the finish tape while the squad watches; they cheer, then each does a check-in
 /// once. Every so often one of them changes into another look, and a tap changes it too. The
 /// middle one's look is where 角色和昵称 starts. Then 通过 Apple 继续, and the terms under it.
+/// The globe in the top corner picks the app's language before signing up.
 struct WelcomeScreen<SignIn: View>: View {
     let model: SignUpModel
     let policies: PolicyLinks
@@ -20,6 +21,7 @@ struct WelcomeScreen<SignIn: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
     @State private var crowd = WelcomeCrowd()
     @State private var word: CGRect?
     @State private var sprint: SprintRunner?
@@ -58,6 +60,7 @@ struct WelcomeScreen<SignIn: View>: View {
                 title(top: WelcomeCrowd.titleTop)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
+            .overlay(alignment: .topTrailing) { language }
             .coordinateSpace(.named(WelcomeTitle.space))
             // Once the word is measured, from where it stands then, and again on each reopen;
             // going to the background cancels it. Keyed on the layout, the sprint restarted
@@ -100,6 +103,16 @@ struct WelcomeScreen<SignIn: View>: View {
         .onDisappear { crowd.stop() }
         .onChange(of: scenePhase) { _, phase in reopen(phase) }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
+    }
+
+    /// The app's language: iOS keeps it in Settings and opens the app again in the one picked,
+    /// so every word, Sign in with Apple included, changes at once.
+    private var language: some View {
+        HeaderButton(Text("语言", bundle: .module), systemImage: "globe", on: .scene) {
+            if let settings = URL(string: UIApplication.openSettingsURLString) { openURL(settings) }
+        }
+        .padding(.trailing, Space.pageMargin)
+        .accessibilityIdentifier("signup.language")
     }
 
     /// WILDCARD, then the slogan under it. While the sprint plays the word is drawn where the

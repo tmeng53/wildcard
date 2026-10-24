@@ -20,6 +20,10 @@ final class LanguageUITests: XCTestCase {
         XCTAssertEqual(signIn.label, "通过 Apple 继续")
         XCTAssertTrue(app.links["用户协议"].exists, "the terms line isn't in Chinese")
         XCTAssertTrue(app.links["隐私政策"].exists, "the privacy policy link isn't in Chinese")
+        // The globe that picks the language sits in the top corner, whole and on screen.
+        let globe = app.buttons["signup.language"]
+        XCTAssertEqual(globe.label, "语言")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(globe.frame), "the language button is off screen")
         settle()
         keepScreenshot(named: "51-first-launch-open")
         signIn.tap()
