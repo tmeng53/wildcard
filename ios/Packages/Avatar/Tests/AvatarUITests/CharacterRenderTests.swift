@@ -13,20 +13,21 @@ import Testing
 @MainActor
 struct CharacterRenderTests {
     static let skin = (0xF5, 0xCD, 0xAE)
-    static let plate = (0x1F, 0x21, 0x28)
+    static let plate = (0x3A, 0x3E, 0x4A)
     static let white = (0xFF, 0xFF, 0xFF)
 
     @Test func drawsTheRestPoseWhereTheArtSays() throws {
         let lifter = try Frame(outfit: PlaceholderCharacter.lifter)
         let image = try lifter.render(lifter.figure.restPose)
-        // The middle of the face, the outer dumbbell plate in the right hand, and empty canvas.
+        // The middle of the face, the shaded face of the hex dumbbell's outer head in the right hand,
+        // and empty canvas.
         #expect(matches(image.color(atColumn: 120, row: 150), Self.skin))
-        #expect(matches(image.color(atColumn: 193, row: 255), Self.plate))
+        #expect(matches(image.color(atColumn: 203, row: 250), Self.plate))
         #expect(matches(image.color(atColumn: 10, row: 10), Self.white))
 
         // The bear has no prop: the same spot, past the hand, is empty.
         let bear = try Frame(outfit: Looks.bear)
-        #expect(matches(try bear.render(bear.figure.restPose).color(atColumn: 193, row: 255), Self.white))
+        #expect(matches(try bear.render(bear.figure.restPose).color(atColumn: 203, row: 250), Self.white))
     }
 
     /// A ring shows the face, not just ears or hair: every body's head has both pupils and
@@ -55,9 +56,9 @@ struct CharacterRenderTests {
         let peak = lifter.figure.pose(cheer, at: 0.84)
         let image = try lifter.render(peak)
         // The plate's rest spot is empty, and the plate is where the arm and prop transforms take it.
-        #expect(matches(image.color(atColumn: 193, row: 255), Self.white))
+        #expect(matches(image.color(atColumn: 203, row: 250), Self.white))
         let prop = try #require(lifter.figure.parts.firstIndex { $0.id == "propR" })
-        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Point(x: 193, y: 255))
+        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Point(x: 203, y: 250))
         #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
     }
 
