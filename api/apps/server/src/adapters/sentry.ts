@@ -47,7 +47,9 @@ export function createSentryErrorReports(options: {
       Sentry.linkedErrorsIntegration(),
       Sentry.dedupeIntegration(),
       Sentry.onUncaughtExceptionIntegration(),
-      Sentry.onUnhandledRejectionIntegration(),
+      // `strict`: report, then exit as Node does without Sentry, rather than its default `warn`,
+      // which would keep a broken process serving.
+      Sentry.onUnhandledRejectionIntegration({ mode: 'strict' }),
     ],
     // Drop it again on the way out, in case a later SDK adds it by default, and mask what an
     // error's message may carry.
