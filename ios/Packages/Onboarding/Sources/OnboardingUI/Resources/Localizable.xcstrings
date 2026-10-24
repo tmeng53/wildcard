@@ -1137,22 +1137,6 @@
         }
       }
     },
-    "其他": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Other"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "其他"
-          }
-        }
-      }
-    },
     "加入小队": {
       "localizations": {
         "en": {
@@ -1299,22 +1283,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "换一个小人"
-          }
-        }
-      }
-    },
-    "搜索": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索"
           }
         }
       }
