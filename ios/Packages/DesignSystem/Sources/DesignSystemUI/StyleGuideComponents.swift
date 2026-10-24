@@ -268,7 +268,11 @@ struct StatusSection: View {
     private var myWeek: MyWeek {
         MyWeek(
             summary: String(localized: "游泳 1 · 跑步 1", bundle: .module), done: mine == .done ? 3 : 2, planned: 5,
-            days: [.trained, .restDay, .trained, .excused, mine == .done ? .trained : .open, .open, .restDay],
+            days: [
+                .trained(symbol: "figure.run"), .restDay, .trained(symbol: "figure.pool.swim"), .excused,
+                mine == .done ? .trained(symbol: "figure.run") : .planned(symbol: "figure.run"),
+                .planned(symbol: "figure.yoga"), .restDay,
+            ],
             today: 4, healthyMeals: 3, cheatMeals: 1, lifetimeTrained: mine == .done ? 48 : 47)
     }
 
