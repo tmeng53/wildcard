@@ -9,7 +9,11 @@ import Testing
 @Test func thePlaceholderCatalogComesFromTheArt() throws {
     let catalog = try Catalog.placeholder()
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
-    #expect(catalog.props == ["bottle", "dumbbell"])
+    #expect(
+        catalog.props == [
+            "bottle", "dumbbell", "kettlebell", "yogamat", "racket", "pickleball", "badminton", "pingpong", "chalkbag",
+            "goggles",
+        ])
     #expect(catalog.variants["top"] == ["warmup-tee", "warmup-tank", "warmup-hoodie"])
     #expect(catalog.variants["bottom"] == ["warmup-shorts", "warmup-joggers", "warmup-leggings"])
     #expect(catalog.variants["shoes"] == ["warmup-canvas", "warmup-runner"])

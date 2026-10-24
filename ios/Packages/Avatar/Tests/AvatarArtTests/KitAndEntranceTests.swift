@@ -41,14 +41,19 @@ import Testing
     let kits = try PlaceholderCharacter.sportKits()
     let picks: [Sport: String] = [
         .swim: "swim", .surf: "swim", .run: "run", .hike: "run", .spin: "run", .strength: "strength",
-        .boxing: "strength", .tennis: "tennis", .badminton: "tennis", .climb: "climb", .ski: "warmup",
+        .boxing: "strength", .kettlebell: "kettlebell", .tennis: "tennis", .squash: "tennis",
+        .badminton: "badminton", .pickleball: "pickleball", .tableTennis: "pingpong", .climb: "climb", .ski: "warmup",
         .yoga: "yoga", .matPilates: "yoga", .basketball: "warmup", .dance: "warmup", .dogWalk: "warmup",
     ]
     for (sport, kit) in picks {
         #expect(kits.kit(for: .sport(sport)).id == kit, "\(sport)")
     }
     #expect(kits.kit(for: .custom(try CustomSport("飞盘"))).id == "warmup")
-    #expect(kits.kits.map(\.id) == ["swim", "run", "strength", "tennis", "climb", "yoga", "warmup"])
+    #expect(
+        kits.kits.map(\.id) == [
+            "swim", "run", "strength", "tennis", "climb", "yoga", "kettlebell", "badminton", "pickleball", "pingpong",
+            "warmup",
+        ])
 }
 
 /// A kit changes the clothes it names and keeps the rest of the look: body, hair, face, and the
@@ -65,7 +70,8 @@ import Testing
     let running = kits.kit(for: .sport(.run)).dress(look)
     #expect(running.variants["top"] == "warmup-tank" && running.colors["top"] == blue)
     #expect(running.variants["hat"] == "warmup-headband" && running.variants["shoes"] == "warmup-runner")
-    #expect(running.variants["prop"] == "stopwatch")
+    #expect(running.variants["prop"] == "bottle")
+    #expect(kits.kit(for: .sport(.swim)).dress(look).variants["prop"] == "goggles")
     #expect(running.variants["hair"] == "bob" && running.variants["eyes"] == "sharp")
     #expect(running.colors["hair"] == look.colors["hair"])
     let climbing = kits.kit(for: .sport(.climb)).dress(look)
@@ -96,7 +102,7 @@ import Testing
 
 /// Every kit on every kind of character: the hop squashes down, where the kit goes on, and pops
 /// back up from that same squash to land where the kit's move starts; the move loops without a
-/// jump. Nothing leaves the canvas.
+/// jump (a hidden part, such as a prop put away, may end anywhere). Nothing leaves the canvas.
 @Test(arguments: Persona.allCases)
 func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let kits = try PlaceholderCharacter.sportKits()
@@ -113,7 +119,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
             #expect(figure.pose(out, at: out.clip.duration).parts[root].scaleY < 0.9)
             #expect(nearlyEqual(figure.pose(out, at: out.clip.duration), figure.pose(back, at: 0)))
             #expect(nearlyEqual(figure.pose(back, at: back.clip.duration), figure.restPose))
-            #expect(nearlyEqual(figure.pose(move, at: move.clip.duration - 1e-9), figure.pose(move, at: 0)))
+            #expect(
+                nearlyEqual(shown(figure.pose(move, at: move.clip.duration - 1e-9)), shown(figure.pose(move, at: 0))))
             for clip in [out, back, move] {
                 expectOnCanvas(figure, clip, for: clip.clip.duration, "\(kit.id) \(persona.rawValue) \(clip.clip.name)")
             }
@@ -126,8 +133,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
     let deadpan = try PlaceholderCharacter.move(for: swim, persona: .deadpan)
     let energetic = try PlaceholderCharacter.move(for: swim, persona: .energetic)
-    #expect(abs(deadpan.duration - 1.3 / 0.7) < 1e-9)
-    #expect(abs(energetic.duration - 1.3 / 1.4) < 1e-9)
+    #expect(abs(deadpan.duration - 5.0 / 0.7) < 1e-9)
+    #expect(abs(energetic.duration - 5.0 / 1.4) < 1e-9)
 }
 
 /// 上场: the root carries the figure in from the right and up into the jump while the shadow
