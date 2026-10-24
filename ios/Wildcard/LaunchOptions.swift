@@ -114,6 +114,13 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-onboarding")
     }
 
+    /// With `-onboarding`, the open screen shows the real Sign in with Apple button, as the
+    /// hosted app does, instead of the stand-in that signs in at once; for checking the screen's
+    /// motion around the system button.
+    static var showsAppleSignIn: Bool {
+        ProcessInfo.processInfo.arguments.contains("-apple-sign-in")
+    }
+
     /// The moment sign-up starts at: noon on this week's Monday with `-uitest-monday`, so the
     /// week step's default plan and screenshots don't change with the day the tests run;
     /// otherwise now.
