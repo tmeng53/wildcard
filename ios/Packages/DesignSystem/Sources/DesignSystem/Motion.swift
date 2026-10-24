@@ -84,7 +84,8 @@ public enum Motion {
     ]
 }
 
-/// Where the check-in capsules land: on an arc above the 打卡 button.
+/// Where the check-in capsules land: on an arc above the 打卡 button, spread or stacked when the
+/// words are too wide for the arc.
 public enum BurstLayout {
     /// Distance from the button's center to each capsule's center, in points.
     public static let radius: Double = 128
@@ -103,5 +104,94 @@ public enum BurstLayout {
     public static func offset(for kind: CheckInKind) -> (x: Double, y: Double) {
         let radians = angle(for: kind) * Double.pi / 180
         return (radius * cos(radians), -radius * sin(radians))
+    }
+
+    /// A rectangle by its center, relative to the button's center.
+    public struct Box: Equatable, Sendable {
+        public var x: Double
+        public var y: Double
+        public var width: Double
+        public var height: Double
+
+        public init(x: Double, y: Double, width: Double, height: Double) {
+            (self.x, self.y, self.width, self.height) = (x, y, width, height)
+        }
+
+        /// Whether the two share any area once `gap` is kept between them.
+        public func collides(with other: Box, gap: Double = 0) -> Bool {
+            abs(x - other.x) < (width + other.width) / 2 + gap && abs(y - other.y) < (height + other.height) / 2 + gap
+        }
+    }
+
+    /// Each capsule's center, in `CheckInKind.allCases` order, for capsules of the measured
+    /// `widths` and one `height`, around a button of `button` size, on a screen `available` wide
+    /// whose center is the button's. The arc is kept as far as the words allow: the two on top
+    /// move apart, the two at the sides stay off the edges. When the arc can't hold them without
+    /// touching each other, the button or the screen's edge, they stand in rows above the
+    /// button instead, as many to a row as fit.
+    public static func positions(
+        widths: [Double], height: Double, button: (width: Double, height: Double), available: Double,
+        gap: Double = Space.xs, margin: Double = Space.m
+    ) -> [(x: Double, y: Double)] {
+        let kinds = CheckInKind.allCases
+        guard widths.count == kinds.count else { return kinds.map { offset(for: $0) } }
+        let reach = available / 2 - margin
+        let arc = arcPositions(widths: widths, height: height, gap: gap, reach: reach)
+        let buttonBox = Box(x: 0, y: 0, width: button.width, height: button.height)
+        let boxes = zip(arc, widths).map { Box(x: $0.0.x, y: $0.0.y, width: $0.1, height: height) }
+        let arcFits =
+            boxes.indices.allSatisfy { i in
+                abs(boxes[i].x) + boxes[i].width / 2 <= reach + 0.001
+                    && !boxes[i].collides(with: buttonBox, gap: gap)
+                    && boxes.indices.dropFirst(i + 1).allSatisfy { !boxes[i].collides(with: boxes[$0], gap: gap) }
+            }
+        return arcFits ? arc : rows(widths: widths, height: height, button: button, gap: gap, reach: reach)
+    }
+
+    private static func arcPositions(widths: [Double], height: Double, gap: Double, reach: Double)
+        -> [(x: Double, y: Double)]
+    {
+        var spots = CheckInKind.allCases.map { offset(for: $0) }
+        // The two on top: apart by their own widths if the arc leaves them closer than that.
+        let (left, right) = (1, 2)
+        if spots[right].x - spots[left].x < (widths[left] + widths[right]) / 2 + gap {
+            let total = widths[left] + gap + widths[right]
+            spots[left].x = -total / 2 + widths[left] / 2
+            spots[right].x = total / 2 - widths[right] / 2
+        }
+        for i in spots.indices {
+            let edge = reach - widths[i] / 2
+            spots[i].x = min(max(spots[i].x, -edge), edge)
+        }
+        return spots
+    }
+
+    /// Rows above the button: the sides first, as many to a row as fit, in the arc's order.
+    private static func rows(
+        widths: [Double], height: Double, button: (width: Double, height: Double), gap: Double, reach: Double
+    ) -> [(x: Double, y: Double)] {
+        let order = [0, 3, 1, 2]
+        var rowsOfIndices: [[Int]] = []
+        for i in order {
+            if let last = rowsOfIndices.last,
+                (last + [i]).map({ widths[$0] }).reduce(0, +) + gap * Double(last.count) <= 2 * reach
+            {
+                rowsOfIndices[rowsOfIndices.count - 1].append(i)
+            } else {
+                rowsOfIndices.append([i])
+            }
+        }
+        var spots = [(x: Double, y: Double)](repeating: (0, 0), count: widths.count)
+        for (row, members) in rowsOfIndices.enumerated() {
+            let y = -(button.height / 2 + gap + height / 2 + Double(row) * (height + gap))
+            let left = members.sorted()
+            let total = left.map { widths[$0] }.reduce(0, +) + gap * Double(left.count - 1)
+            var cursor = -total / 2
+            for i in left {
+                spots[i] = (cursor + widths[i] / 2, y)
+                cursor += widths[i] + gap
+            }
+        }
+        return spots
     }
 }

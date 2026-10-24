@@ -268,6 +268,34 @@ final class TodayUITests: XCTestCase {
 
     /// `cardPage` pins the squad card to its first page, since the card reopens where it was
     /// left; pass nil to let the test swipe it.
+    /// The four capsules never touch each other or the button, in every language, at the
+    /// default and a large text size.
+    func testBurstCapsulesDoNotOverlap() {
+        for language in ["zh-Hans", "zh-Hant", "en"] {
+            for size in ["UICTContentSizeCategoryL", "UICTContentSizeCategoryAccessibilityXL"] {
+                let app = launch(
+                    language: language, photos: 0, extra: ["-UIPreferredContentSizeCategoryName", size])
+                app.buttons["today.checkin"].tap()
+                let frames = ["trained", "healthyMeal", "cheatMeal", "disclaimer"].map { kind -> CGRect in
+                    let capsule = app.buttons["today.capsule.\(kind)"]
+                    XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(kind) capsule")
+                    return capsule.frame
+                }
+                settle()
+                let frame = app.windows.firstMatch.frame
+                let button = app.buttons["today.checkin"].frame
+                for (i, one) in frames.enumerated() {
+                    XCTAssertTrue(frame.contains(one), "\(language) \(size): capsule \(i) leaves the screen")
+                    XCTAssertFalse(one.intersects(button), "\(language) \(size): capsule \(i) covers the button")
+                    for (j, other) in frames.enumerated() where j > i {
+                        XCTAssertFalse(one.intersects(other), "\(language) \(size): capsules \(i) and \(j) overlap")
+                    }
+                }
+                app.terminate()
+            }
+        }
+    }
+
     private func launch(language: String, photos: Int, extra: [String] = [], cardPage: Int? = 0) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
