@@ -37,7 +37,6 @@
         "top": "lap-jacket",
         "bottom": "lap-pants",
         "shoes": "lap-runner",
-        "acc": "race-bib",
         "prop": "stopwatch"
       },
       "colors": {}
