@@ -77,6 +77,8 @@ private struct JoinPanel: View {
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)
+                .submitLabel(.done)
+                .onSubmit { isTyping = false }
                 .focused($isTyping)
                 // The boxes show what is typed; the field only takes the keys.
                 .opacity(0.02)
