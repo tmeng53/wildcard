@@ -18,6 +18,15 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
+/// The app's entry point: the language first, then the app.
+@main
+enum Launch {
+    @MainActor static func main() {
+        DefaultLanguage.apply()
+        WildcardApp.main()
+    }
+}
+
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
 /// build launched with `-local-backend`) it follows the account: sign-up until the member is in a
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
@@ -26,8 +35,7 @@ import SwiftUI
 /// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
-/// about.
-@main
+/// about. `Launch` starts it.
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
@@ -49,7 +57,6 @@ struct WildcardApp: App {
     // callback and the models are the main actor's.
     init() {
         CrashReports.start()
-        _ = DefaultLanguage.applies
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
@@ -138,7 +145,7 @@ struct WildcardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            root.environment(\.locale, DefaultLanguage.locale)
+            root
         }
     }
 

@@ -11,7 +11,8 @@ public struct AppleSignIn: Sendable, Equatable {
     public let name: PersonNameComponents?
 }
 
-/// Apple's own Sign in with Apple button, which App Review expects to look as Apple draws it.
+/// Apple's own Sign in with Apple button, which App Review expects to look as Apple draws it,
+/// reading 通过 Apple 继续 like the open screen's design.
 /// It asks for the member's name and email. The email lands on the Supabase Auth user, never in
 /// our tables (a member is keyed by the provider's user id); it may be Apple's private relay
 /// address, and Apple sends it on the first authorization only, so an account made before we asked
@@ -26,7 +27,7 @@ public struct AppleSignInButton: View {
     }
 
     public var body: some View {
-        SignInWithAppleButton(.signIn) { request in
+        SignInWithAppleButton(.continue) { request in
             // A fresh nonce for every attempt: a token is good for one sign-in.
             nonce = AppleNonce.random()
             request.requestedScopes = [.fullName, .email]
