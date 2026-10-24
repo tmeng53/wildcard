@@ -60,20 +60,19 @@ public struct CharacterDraft: Hashable, Sendable {
     }
 
     /// Wears `variant` in `slot`, or nothing there when nil. A color stays when the new
-    /// variant can wear it too: hair keeps its color across styles, skin across people, and a
-    /// piece of clothing the color it showed, even its own (a white tee swapped for a hoodie
-    /// gives a white hoodie). An animal's coat starts from its own colors. Brows put on without
-    /// a color take the hair's.
+    /// variant can wear it too: hair keeps its color across styles and clothes across pieces,
+    /// even when that color was the old piece's own, and skin across people. A body's own
+    /// colors are what picking it means, and an animal's coat starts from its own colors.
+    /// Brows put on without a color take the hair's.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
         let worn = picks.variants[slot]
         guard worn != variant else { return false }
         var next = picks
         next.variants[slot] = variant
-        // What the slot showed: its color, or for clothes the art's own.
+        // What the slot showed: its color, or the art's own, except a body's, which comes with it.
         let shown =
-            picks.colors[slot]
-            ?? (Catalog.clothingSlots.contains(slot) ? worn.flatMap { catalog.originals[slot]?[$0] } : nil)
+            picks.colors[slot] ?? (slot == "body" ? nil : worn.flatMap { catalog.originals[slot]?[$0] })
         if let variant, let color = shown,
             slot != "body" || worn.flatMap(catalog.species(of:)) == catalog.species(of: variant)
         {

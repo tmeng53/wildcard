@@ -41,7 +41,7 @@ import Testing
 }
 
 /// The shopping street: six stores, WARM-UP open at the start, and every piece of clothing on
-/// a rack, WARM-UP's twelve tops first, then bottoms, shoes, hats and accessories.
+/// a rack, WARM-UP's twelve pieces, tops first, then bottoms, shoes, hats and accessories.
 @Test func everyPieceHangsInAStore() throws {
     let catalog = try Catalog.placeholder()
     #expect(catalog.stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"])

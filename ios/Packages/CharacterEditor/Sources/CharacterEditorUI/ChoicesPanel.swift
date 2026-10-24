@@ -155,7 +155,7 @@ struct SwatchRow: View {
         if let variant = model.draft.picks.variants[slot],
             let original = catalog.originals[slot]?[variant]
         {
-            // Clothes list their art's own color first; the rest get a 原色 swatch before theirs.
+            // A list that starts with the art's own color has it once, as 原色.
             let listed = catalog.swatches(for: slot, wearing: variant)
             let colors = listed.first == original ? Array(listed.dropFirst()) : listed
             ScrollView(.horizontal) {

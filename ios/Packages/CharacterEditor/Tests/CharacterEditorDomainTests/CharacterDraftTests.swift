@@ -17,6 +17,18 @@ import Testing
     #expect(editing.outfit.colors["hair"] == hairColors[1])
 }
 
+/// A color picked for one style that is another style's own stays through that style.
+@Test func hairKeepsAColorThatIsAStylesOwn() {
+    var store = catalog
+    store.originals["hair"] = ["bob": hairColors[0], "buzz": hairColors[1]]
+    var editing = CharacterDraft(catalog: store, look: lifter, persona: .energetic, nickname: "Tracy")
+    editing.pickColor(hairColors[1], for: "hair")
+    editing.pick("buzz", for: "hair")
+    #expect(editing.outfit.colors["hair"] == nil)
+    editing.pick("bob", for: "hair")
+    #expect(editing.outfit.colors["hair"] == hairColors[1])
+}
+
 @Test func onlyAVariantsOwnSwatchesColorIt() {
     var editing = draft()
     #expect(!changed(&editing) { $0.pickColor(blue, for: "hair") })
