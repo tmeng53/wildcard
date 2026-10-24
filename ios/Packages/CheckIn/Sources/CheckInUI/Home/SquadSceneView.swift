@@ -308,12 +308,12 @@ private struct StageFigure: View {
             .scaleEffect(x: figure.position.facing, y: 1)
             .offset(y: -(figure.hop + lift) * unit)
             .allowsHitTesting(false)
-            if figure.sign > 0 {
+            if figure.sign > 0, !falling {  // A sign and sleep wait for the figure to land.
                 SignCard(scale: scale)
                     .position(x: Self.feet.x * scale, y: 249 * scale)
                     .opacity(figure.sign)
             }
-            if figure.sleep > 0 {
+            if figure.sleep > 0, !falling {
                 Text(verbatim: "z z")
                     .font(.system(size: 60 * scale, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color(role: .fgOnScene, in: theme).opacity(0.85 * figure.sleep))
