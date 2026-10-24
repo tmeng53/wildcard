@@ -18,6 +18,8 @@ final class LanguageUITests: XCTestCase {
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
         XCTAssertEqual(signIn.label, "通过 Apple 继续")
+        XCTAssertTrue(app.links["用户协议"].exists, "the terms line isn't in Chinese")
+        XCTAssertTrue(app.links["隐私政策"].exists, "the privacy policy link isn't in Chinese")
         settle()
         keepScreenshot(named: "51-first-launch-open")
         signIn.tap()
