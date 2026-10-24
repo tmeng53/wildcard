@@ -108,18 +108,19 @@ public enum BurstLayout {
 
     /// A rectangle by its center, relative to the button's center.
     public struct Box: Equatable, Sendable {
-        public var x: Double
-        public var y: Double
+        public var midX: Double
+        public var midY: Double
         public var width: Double
         public var height: Double
 
-        public init(x: Double, y: Double, width: Double, height: Double) {
-            (self.x, self.y, self.width, self.height) = (x, y, width, height)
+        public init(midX: Double, midY: Double, width: Double, height: Double) {
+            (self.midX, self.midY, self.width, self.height) = (midX, midY, width, height)
         }
 
         /// Whether the two share any area once `gap` is kept between them.
         public func collides(with other: Box, gap: Double = 0) -> Bool {
-            abs(x - other.x) < (width + other.width) / 2 + gap && abs(y - other.y) < (height + other.height) / 2 + gap
+            abs(midX - other.midX) < (width + other.width) / 2 + gap
+                && abs(midY - other.midY) < (height + other.height) / 2 + gap
         }
     }
 
@@ -137,13 +138,15 @@ public enum BurstLayout {
         guard widths.count == kinds.count else { return kinds.map { offset(for: $0) } }
         let reach = available / 2 - margin
         let arc = arcPositions(widths: widths, height: height, gap: gap, reach: reach)
-        let buttonBox = Box(x: 0, y: 0, width: button.width, height: button.height)
-        let boxes = zip(arc, widths).map { Box(x: $0.0.x, y: $0.0.y, width: $0.1, height: height) }
+        let buttonBox = Box(midX: 0, midY: 0, width: button.width, height: button.height)
+        let boxes = zip(arc, widths).map { Box(midX: $0.0.x, midY: $0.0.y, width: $0.1, height: height) }
         let arcFits =
-            boxes.indices.allSatisfy { i in
-                abs(boxes[i].x) + boxes[i].width / 2 <= reach + 0.001
-                    && !boxes[i].collides(with: buttonBox, gap: gap)
-                    && boxes.indices.dropFirst(i + 1).allSatisfy { !boxes[i].collides(with: boxes[$0], gap: gap) }
+            boxes.indices.allSatisfy { index in
+                abs(boxes[index].midX) + boxes[index].width / 2 <= reach + 0.001
+                    && !boxes[index].collides(with: buttonBox, gap: gap)
+                    && boxes.indices.dropFirst(index + 1).allSatisfy {
+                        !boxes[index].collides(with: boxes[$0], gap: gap)
+                    }
             }
         return arcFits ? arc : rows(widths: widths, height: height, button: button, gap: gap, reach: reach)
     }
@@ -159,9 +162,9 @@ public enum BurstLayout {
             spots[left].x = -total / 2 + widths[left] / 2
             spots[right].x = total / 2 - widths[right] / 2
         }
-        for i in spots.indices {
-            let edge = reach - widths[i] / 2
-            spots[i].x = min(max(spots[i].x, -edge), edge)
+        for index in spots.indices {
+            let edge = reach - widths[index] / 2
+            spots[index].x = min(max(spots[index].x, -edge), edge)
         }
         return spots
     }
@@ -172,13 +175,13 @@ public enum BurstLayout {
     ) -> [(x: Double, y: Double)] {
         let order = [0, 3, 1, 2]
         var rowsOfIndices: [[Int]] = []
-        for i in order {
+        for member in order {
             if let last = rowsOfIndices.last,
-                (last + [i]).map({ widths[$0] }).reduce(0, +) + gap * Double(last.count) <= 2 * reach
+                (last + [member]).map({ widths[$0] }).reduce(0, +) + gap * Double(last.count) <= 2 * reach
             {
-                rowsOfIndices[rowsOfIndices.count - 1].append(i)
+                rowsOfIndices[rowsOfIndices.count - 1].append(member)
             } else {
-                rowsOfIndices.append([i])
+                rowsOfIndices.append([member])
             }
         }
         var spots = [(x: Double, y: Double)](repeating: (0, 0), count: widths.count)
@@ -187,9 +190,9 @@ public enum BurstLayout {
             let left = members.sorted()
             let total = left.map { widths[$0] }.reduce(0, +) + gap * Double(left.count - 1)
             var cursor = -total / 2
-            for i in left {
-                spots[i] = (cursor + widths[i] / 2, y)
-                cursor += widths[i] + gap
+            for member in left {
+                spots[member] = (cursor + widths[member] / 2, y)
+                cursor += widths[member] + gap
             }
         }
         return spots

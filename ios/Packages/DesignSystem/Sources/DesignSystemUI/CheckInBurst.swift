@@ -76,7 +76,7 @@ public struct CheckInBurst: View {
         ZStack {
             ForEach(CheckInKind.allCases, id: \.self) { kind in
                 BurstCapsuleLabel(kind: kind, isAvailable: true)
-                    .onGeometryChange(for: Double.self, of: { $0.size.width }) { widths[kind] = $0 }
+                    .onGeometryChange(for: Double.self, of: { $0.size.width }, action: { widths[kind] = $0 })
             }
         }
         .hidden()
@@ -84,7 +84,7 @@ public struct CheckInBurst: View {
         .allowsHitTesting(false)
         .background {
             Color.clear.containerRelativeFrame(.horizontal)
-                .onGeometryChange(for: Double.self, of: { $0.size.width }) { screenWidth = $0 }
+                .onGeometryChange(for: Double.self, of: { $0.size.width }, action: { screenWidth = $0 })
         }
     }
 
