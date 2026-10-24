@@ -45,3 +45,34 @@ func homePosesPlayOnEveryLook(persona: Persona) throws {
         #expect(pose.parts[armL].rotation > 10 && pose.parts[armR].rotation < -10)
     }
 }
+
+/// Woken by the lights: it starts from the sleeping pose, glares with the mad brows, the vein and
+/// the sad mouth in the middle, and ends standing at rest, on every look, on the canvas (the legs
+/// dip a point under it as it stands up).
+@Test func wokenStartsAsleepAndEndsStanding() throws {
+    let woken = try PlaceholderCharacter.woken()
+    #expect(woken.duration == 2.5 && !woken.loops)
+    for look in Looks.squad {
+        let figure = try PlaceholderCharacter.figure(wearing: look)
+        let bound = try figure.bind(woken)
+        let asleep = try figure.bind(PlaceholderCharacter.sleeping(persona: .deadpan))
+        let (root, eyes) = (try figure.index("root"), try figure.index("eyes"))
+        let start = figure.pose(bound, at: 0)
+        #expect(start.parts[root].y == figure.pose(asleep, at: 0).parts[root].y)
+        #expect(start.parts[eyes].scaleY < 0.2)
+        let glare = figure.layout(figure.pose(bound, at: 1.6))
+        let (sad, smile, vein) = (
+            try figure.index("mouthSad"), try figure.index("mouthSmile"), try figure.index("vein")
+        )
+        #expect(glare[sad].opacity == 1 && glare[smile].opacity == 0 && glare[vein].opacity == 1)
+        // Rubbing the eye, the fist reaches past the canvas as a move's does.
+        expectOnCanvas(
+            figure, bound, for: woken.duration, "woken", sideways: PlaceholderCharacter.moveReachSideways,
+            above: PlaceholderCharacter.moveReachAbove, below: 2)
+        let end = figure.pose(bound, at: woken.duration)
+        // At rest, the hand prop still put away: the day pose that follows brings it back if it has one.
+        var rest = figure.restPose
+        rest.parts[try figure.index("propR")].opacity = 0
+        #expect(nearlyEqual(end, rest))
+    }
+}

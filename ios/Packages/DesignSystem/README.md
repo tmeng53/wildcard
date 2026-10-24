@@ -31,6 +31,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows, a setting's on/off row |
 | `SceneTile`, `CartonBox`, `Tween`, `Wiggle` | A scene to pick for next week (a colour pattern card once the squad has trained there, a kraft carton until then, shaking every 2.4 s while picked); the carton the reveal opens; the reveal's easing curves |
+| `PullCord`, `PullCordMotion` | The light switch hanging under the home's card at night: a ball chain and a bulb, white when off, warm when on; pulled down it clicks at 24 points, springs back and swings |
 | `SpeechBubble`, `CharacterStage` | What the character says (with an action, a button that opens it); the character's stage in the editor |
 
 Conventions, as SwiftUI's own controls do it: the label comes first (`Text`, so it goes through the String Catalog), state comes in as a value (`isSelected`, `status`) and changes go out through an `action` closure or a `Binding`; button variants are `ButtonStyle`s; the scene and the accent tone come from the environment (`\.sceneTheme`, `\.accentTone`); UI-test identifiers are set by the caller. Each component's doc comment says when to use it and what its states look like, and the style guide shows every state.
@@ -50,6 +51,7 @@ One meaningful tap per moment, never a buzz (Apple HIG, Playing haptics). Screen
 | `crown` | The crown landing on the 战报 champion |
 | `reaction` | A teammate's reaction arriving |
 | `unbox` | The flaps flying off a new scene's carton (the scene pick's only one) |
+| `lights` | The pull cord clicking the lights on at night (none when they go off) |
 
 ## Adding to it
 

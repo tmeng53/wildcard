@@ -89,8 +89,9 @@ public final class TodayModel {
     private let posted: @MainActor () -> Void
 
     let now: () -> Date
-    /// Keeps when the latest pat I was shown arrived, so each pat on me plays once.
-    private let defaults: UserDefaults
+    /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
+    /// the lights are on for.
+    let defaults: UserDefaults
 
     /// - Parameters:
     ///   - scene: the squad's scene this week; the gym, the scene the designs are drawn on, until
@@ -109,6 +110,7 @@ public final class TodayModel {
         self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
+        litNight = defaults.string(forKey: Self.lightsKey)
         player = Self.player(wearing: myLook, persona: myPersona)
     }
 
@@ -141,9 +143,11 @@ public final class TodayModel {
     /// Day or night on the scene, on the member's own clock.
     var phase: DayPhase {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = store.home?.timeZone ?? .current
+        calendar.timeZone = timeZone
         return DayPhase(hour: calendar.component(.hour, from: now()))
     }
+
+    var timeZone: TimeZone { store.home?.timeZone ?? .current }
 
     /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
     var recap: DayRecap? {
@@ -182,6 +186,11 @@ public final class TodayModel {
 
     private var heldWeek: (squad: WeekCount, mine: WeekCount)?
 
+    /// The night the lights are on for, as `lightsKey` keeps it (`TodayModel+Lights.swift`).
+    var litNight: String?
+    /// The latest pull of the cord, which the scene plays.
+    var lightsPull: LightsPull?
+
     /// The character whose head the card shows for a member (`MemberID`'s description).
     func head(of member: String) -> CharacterPlayer? {
         guard member != home?.member.description else { return player }
@@ -199,7 +208,7 @@ public final class TodayModel {
                 player = Self.player(wearing: look, persona: persona)
             }
         }
-        cast.update(home: home, scene: scene, phase: phase)
+        cast.update(home: home, scene: scene, phase: stagePhase)
     }
 
     var unavailable: Set<CheckInKind> {
@@ -223,7 +232,7 @@ public final class TodayModel {
     /// A teammate on the scene was tapped: their status and 「拍一拍」.
     func tapMate(_ id: MemberID) {
         guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
-        pats.tap(mate, cast: cast, phase: phase)
+        pats.tap(mate, cast: cast, phase: stagePhase)
     }
 
     /// Whether I can still pat `id` today.
@@ -346,7 +355,7 @@ public final class TodayModel {
         // does the week's count flip up.
         celebrations += 1
         heldWeek = weekBefore
-        let phase = phase
+        let phase = stagePhase
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(Motion.ringFill))
             cast.cheerMe(at: phase)

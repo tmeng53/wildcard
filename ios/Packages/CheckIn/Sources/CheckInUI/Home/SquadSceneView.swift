@@ -8,8 +8,9 @@ import DesignSystemUI
 import SwiftUI
 
 /// The squad's scene, full screen: the venue's art, every teammate where `SquadStage` puts them,
-/// me front and centre, the status rings on the ground, and the lights at night. Positions are
-/// the design's 390-point-wide stage, scaled to the screen's width.
+/// me front and centre, the status rings on the ground, and the dark at night, until the lights
+/// are switched on (开灯). Positions are the design's 390-point-wide stage, scaled to the
+/// screen's width.
 struct SquadSceneView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -18,6 +19,9 @@ struct SquadSceneView: View {
     let myPlayer: CharacterPlayer?
     let myRing: RingStatus
     let phase: DayPhase
+    /// Whether the member switched the lights on tonight, and their latest pull of the cord.
+    let lightsOn: Bool
+    let lightsPull: TodayModel.LightsPull?
     /// Bumps on each of my 练了: the ground ring draws, the camera leans in, the streamers fall.
     let celebration: Int
     /// 拍一拍: taps, pats under way and the bubble over a teammate.
@@ -28,6 +32,19 @@ struct SquadSceneView: View {
     let patMate: (MemberID) -> Void
     /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
     var arrival: TodayModel.Arrival?
+
+    /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
+    /// for it under Reduce Motion.
+    @State private var settledPull: TodayModel.LightsPull?
+
+    /// The lights' pull while it is still playing.
+    private var playingPull: TodayModel.LightsPull? {
+        guard let lightsPull, lightsPull != settledPull, lightsPull.isOn == lightsOn else { return nil }
+        return lightsPull
+    }
+
+    /// How long a pull plays: the last sleeper's wake-up and their 请假条 coming back, or the doze.
+    private static let pullPlays = 4.0
 
     var body: some View {
         GeometryReader { proxy in
@@ -40,11 +57,12 @@ struct SquadSceneView: View {
                     .onTapGesture { pats.dismissBubble() }
                 cast(unit: unit)
                 if phase == .night {
-                    SceneArt(scene: theme, layer: .night)
+                    NightLayer(lightsOn: lightsOn, pull: playingPull)
                         .frame(width: proxy.size.width, height: Stage.height * unit)
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)
+                if phase == .night { WokenLine(cast: cast, pull: playingPull, unit: unit) }
                 PatOverlay(layer: .marks, cast: cast, pats: pats, unit: unit, canPat: canPat, pat: patMate)
                 Streamers(trigger: celebration)
                     .allowsHitTesting(false)
@@ -64,6 +82,12 @@ struct SquadSceneView: View {
         }
         .background(Color(role: .bgSubtle, in: theme))
         .clipped()
+        .task(id: lightsPull) {
+            guard let lightsPull else { return }
+            try? await Task.sleep(for: .seconds(Self.pullPlays - Date.now.timeIntervalSince(lightsPull.start)))
+            guard !Task.isCancelled else { return }
+            settledPull = lightsPull
+        }
     }
 
     /// How far the camera leans in when my ring closes.
@@ -71,7 +95,8 @@ struct SquadSceneView: View {
 
     /// Everyone, back to front, redrawn each display frame so runners and swimmers move.
     private func cast(unit: Double) -> some View {
-        TimelineView(.animation(minimumInterval: nil, paused: reduceMotion)) { timeline in
+        // Under Reduce Motion it redraws only while a pull of the lights crossfades.
+        TimelineView(.animation(minimumInterval: nil, paused: reduceMotion && playingPull == nil)) { timeline in
             let seconds = timeline.date.timeIntervalSinceReferenceDate
             let figures = placed(at: reduceMotion ? 0 : seconds, date: timeline.date)
             ZStack(alignment: .topLeading) {
@@ -103,12 +128,13 @@ struct SquadSceneView: View {
     /// back moves away; a tapped teammate hops.
     private func placed(at seconds: Double, date: Date) -> [Placed] {
         let pat = pats.pat
+        let sleepers = cast.sleepers.map(\.id)
         var figures = cast.mates.compactMap { mate -> Placed? in
             guard let position = cast.stage.position(of: mate.id, at: seconds) else { return nil }
+            let (sleep, sign) = drowse(of: mate, sleeper: sleepers.firstIndex(of: mate.id), at: date)
             return Placed(
                 id: .mate(mate.id), player: mate.player, position: position, ring: mate.member.status.ring,
-                pose: cast.stage.pose(of: mate.member, at: phase), sign: mate.disclaimer,
-                hop: Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale),
+                sleep: sleep, sign: sign, hop: Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale),
                 fall: fall(of: mate.id, at: date))
         }
         if let myPlayer {
@@ -116,7 +142,7 @@ struct SquadSceneView: View {
                 Placed(
                     id: .mine, player: myPlayer,
                     position: .mine,
-                    ring: myRing, pose: .standing, sign: nil, hop: 0, fall: fall(of: nil, at: date)))
+                    ring: myRing, sleep: 0, sign: 0, hop: 0, fall: fall(of: nil, at: date)))
         }
         // Under Reduce Motion everyone is simply there.
         if arrival != nil, !reduceMotion {
@@ -133,6 +159,21 @@ struct SquadSceneView: View {
             // wakes for it, and drops back off after.
             return figure.turned(direction, awake: figure.id == patted.id)
         }
+    }
+
+    /// How asleep a teammate looks at `date`, for their "z z", and how much of their 请假条 shows:
+    /// at night the sleepers (`sleeper`, their place among them) are asleep with the sign put
+    /// away, until the lights wake them; a pull plays out by `LightsFlip`.
+    private func drowse(of mate: SquadCast.Mate, sleeper: Int?, at date: Date) -> (sleep: Double, sign: Double) {
+        let holdsSign = cast.stage.pose(of: mate.member, at: .day) == .holdingSign
+        guard phase == .night, let sleeper else { return (0, holdsSign ? 1 : 0) }
+        guard let pull = playingPull else { return (lightsOn ? 0 : 1, lightsOn && holdsSign ? 1 : 0) }
+        let flip = LightsFlip(isOn: pull.isOn, reduceMotion: reduceMotion)
+        let seconds = date.timeIntervalSince(pull.start)
+        return (
+            flip.sleep(ofSleeper: sleeper, at: seconds, dozeDuration: cast.dozes[mate.id] ?? 0),
+            holdsSign ? flip.sign(ofSleeper: sleeper, at: seconds) : 0
+        )
     }
 
     /// How far into their drop onto a newly picked scene `member` (nil for me) is at `date`, in
@@ -178,8 +219,10 @@ private struct Placed: Identifiable {
     let player: CharacterPlayer
     let position: StagePosition
     let ring: RingStatus
-    let pose: StagePose
-    let sign: String?
+    /// How asleep they look, 0 to 1: their "z z".
+    let sleep: Double
+    /// How much of their 请假条 shows, 0 to 1.
+    let sign: Double
     /// How high off the ground a tap's hop has them, in stage points.
     let hop: Double
     /// How far into their drop onto a newly picked scene they are, in seconds.
@@ -189,8 +232,8 @@ private struct Placed: Identifiable {
 
     func turned(_ direction: Double, awake: Bool) -> Placed {
         Placed(
-            id: id, player: player, position: position.facing(direction), ring: ring,
-            pose: awake && pose == .asleep ? .standing : pose, sign: sign, hop: hop, fall: fall)
+            id: id, player: player, position: position.facing(direction), ring: ring, sleep: awake ? 0 : sleep,
+            sign: sign, hop: hop, fall: fall)
     }
 }
 
@@ -255,14 +298,15 @@ private struct StageFigure: View {
             .scaleEffect(x: figure.position.facing, y: 1)
             .offset(y: -(figure.hop + lift) * unit)
             .allowsHitTesting(false)
-            if figure.pose == .holdingSign {
+            if figure.sign > 0 {
                 SignCard(scale: scale)
                     .position(x: Self.feet.x * scale, y: 249 * scale)
+                    .opacity(figure.sign)
             }
-            if figure.pose == .asleep {
+            if figure.sleep > 0 {
                 Text(verbatim: "z z")
                     .font(.system(size: 60 * scale, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color(role: .fgOnScene, in: theme).opacity(0.85))
+                    .foregroundStyle(Color(role: .fgOnScene, in: theme).opacity(0.85 * figure.sleep))
                     .position(x: 170 * scale, y: 60 * scale)
             }
         }

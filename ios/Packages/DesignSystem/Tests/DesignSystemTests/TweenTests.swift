@@ -41,3 +41,37 @@ struct SpeechTimingTests {
         #expect([Motion.speechHold, Motion.speechFade, Motion.speechStagger] == [1.6, 0.2, 0.06])
     }
 }
+
+struct PullCordTests {
+    /// The cord's colours, from the approved 开灯 prototype (2026-10-24).
+    @Test func theCordIsThePrototypes() {
+        #expect(
+            [
+                Palette.cordChain, Palette.cordCap, Palette.cordScrew, Palette.bulbLit, Palette.bulbLitLine,
+                Palette.bulbFilament,
+            ].map(\.hex) == ["#C9CED6", "#9AA2AE", "#B9C0CA", "#FFE9A8", "#F2C14E", "#E0A526"])
+        #expect(PullCordMotion.length == 70 && PullCordMotion.maxPull == 36 && PullCordMotion.clickPull == 24)
+    }
+
+    /// A drag gives less the further it goes, clicks before 24 points of finger travel run out,
+    /// and stops at 36.
+    @Test func aDragFollowsWithResistance() {
+        #expect(PullCordMotion.pull(dragged: -10) == 0)
+        #expect(abs(PullCordMotion.pull(dragged: 10) - 10.91) < 0.01)
+        #expect(abs(PullCordMotion.pull(dragged: 30) - 25.44) < 0.01)
+        #expect(PullCordMotion.pull(dragged: 26) < PullCordMotion.clickPull)
+        #expect(PullCordMotion.pull(dragged: 80) == 36)
+    }
+
+    /// A tap pulls 28 points over 0.12 s; a release springs back past rest, swings under 5° and is
+    /// still after 2 s; Reduce Motion keeps it from swinging.
+    @Test func aReleaseSpringsAndSwings() {
+        #expect(PullCordMotion.tap(at: 0) == 0 && PullCordMotion.tap(at: 0.06) == 14 && PullCordMotion.tap(at: 1) == 28)
+        #expect(PullCordMotion.release(from: 28, at: 0) == (28, 0))
+        let samples = stride(from: 0.0, to: 2, by: 0.01).map { PullCordMotion.release(from: 36, at: $0) }
+        #expect(samples.map(\.offset).min() ?? 0 >= -6 && samples.map(\.offset).min() ?? 0 < 0)
+        #expect(samples.map { abs($0.degrees) }.max() ?? 9 < 5 && samples.map { abs($0.degrees) }.max() ?? 0 > 3)
+        #expect(PullCordMotion.release(from: 28, at: 2) == (0, 0))
+        #expect(PullCordMotion.release(from: 28, at: 0.3, swings: false).degrees == 0)
+    }
+}

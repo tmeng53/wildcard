@@ -86,6 +86,18 @@ public enum Palette {
     /// The ink over a page while a carton is opened on it.
     public static let dusk = SRGBColor(red: 0x1A, green: 0x1C, blue: 0x22)
 
+    // MARK: Pull cord: the light switch hanging under the home's card at night (开灯)
+
+    /// The ball chain, and the bulb's outline and filament while the lights are off.
+    public static let cordChain = SRGBColor(red: 0xC9, green: 0xCE, blue: 0xD6)
+    /// The cap over the bulb, and the screw base's rings.
+    public static let cordCap = SRGBColor(red: 0x9A, green: 0xA2, blue: 0xAE)
+    public static let cordScrew = SRGBColor(red: 0xB9, green: 0xC0, blue: 0xCA)
+    /// The bulb lit: its glass, outline and filament.
+    public static let bulbLit = SRGBColor(red: 0xFF, green: 0xE9, blue: 0xA8)
+    public static let bulbLitLine = SRGBColor(red: 0xF2, green: 0xC1, blue: 0x4E)
+    public static let bulbFilament = SRGBColor(red: 0xE0, green: 0xA5, blue: 0x26)
+
     // MARK: Clothes: outfit swatches for the character only, never UI color
 
     public static let cobalt = SRGBColor(red: 0x2D, green: 0x5B, blue: 0xA0)

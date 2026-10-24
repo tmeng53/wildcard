@@ -46,6 +46,7 @@ struct WildcardApp: App {
     init() {
         _ = DefaultLanguage.applies
         LaunchOptions.forgetSeenRecapIfAsked()
+        LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(
