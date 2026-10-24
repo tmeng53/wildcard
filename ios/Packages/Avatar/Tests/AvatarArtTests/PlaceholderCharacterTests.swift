@@ -297,11 +297,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(
-        choices.props == [
-            "bottle", "dumbbell", "kettlebell", "yogamat", "racket", "pickleball", "badminton", "pingpong", "chalkbag",
-            "goggles",
-        ])
+    #expect(choices.props == ["bottle", "dumbbell"])
     #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.map(\.id) } == [

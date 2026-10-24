@@ -31,5 +31,5 @@
       { "id": "warmup-waistbag", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
     ]
   },
-  "props": ["bottle", "dumbbell", "kettlebell", "yogamat", "racket", "pickleball", "badminton", "pingpong", "chalkbag", "goggles"]
+  "props": ["bottle", "dumbbell"]
 }
