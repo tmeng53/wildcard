@@ -107,6 +107,10 @@ public enum TypeRamp {
     /// A number inside a line of small text (小队 5 周前…): 14, semibold.
     public static let scoreCaption = TypeStyle(face: .scoreboard(.semibold), size: 14, anchor: .caption)
 
+    /// The day stamped on the character's ticket (2026.10.23): 15, spaced out. The ticket is
+    /// drawn at a fixed size, so it doesn't scale with Dynamic Type.
+    public static let ticketDate = TypeStyle(face: .scoreboard(.semibold), size: 15, tracking: 1.2, anchor: .footnote)
+
     /// The week's number across the 出赛表 poster (W42), italic and set tight. The poster is a
     /// picture saved at a fixed size, so it doesn't scale with Dynamic Type.
     public static let posterWeek = TypeStyle(
@@ -126,6 +130,6 @@ public enum TypeRamp {
         ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
-        ("posterWeek", posterWeek),
+        ("ticketDate", ticketDate), ("posterWeek", posterWeek),
     ]
 }

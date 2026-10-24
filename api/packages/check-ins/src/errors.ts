@@ -190,7 +190,7 @@ export class WeekTooFarAheadError extends AppError {
 
 /**
  * Thrown for a change to a day of the current week that has already started: earlier days stay
- * as planned, and today stays a training or a rest day.
+ * as planned, and a training today stays a training day.
  */
 export class PlanDayStartedError extends AppError {
   override readonly name = 'PlanDayStartedError';

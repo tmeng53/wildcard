@@ -19,7 +19,7 @@ final class ScheduleUITests: XCTestCase {
         return app
     }
 
-    func testThisWeekMovesOnlyDaysStillToCome() {
+    func testThisWeekChangesTodayAndDaysStillToCome() {
         let app = launch()
         let tabBar = app.buttons["tab.schedule"]
         XCTAssertTrue(tabBar.isSelected)
@@ -35,9 +35,16 @@ final class ScheduleUITests: XCTestCase {
         settle()
         keepScreenshot(named: "60-schedule-this-week")
 
-        // Today and the days before it stay as they are.
+        // The days before today stay as they are.
         XCTAssertFalse(lane(app, 1).isEnabled, "Tuesday can still change")
-        XCTAssertFalse(lane(app, 3).isEnabled, "today can still change")
+
+        // Today's training day takes another sport, never 休息.
+        lane(app, 3).tap()
+        XCTAssertTrue(app.buttons["schedule.pick.more"].waitForExistence(timeout: 10), "today's picks didn't open")
+        XCTAssertFalse(app.buttons["schedule.pick.rest"].exists, "today offers 休息")
+        app.buttons["schedule.pick.swim"].tap()
+        waitFor(lane(app, 3), "label CONTAINS '游泳'", "today didn't turn to swimming")
+        lane(app, 3).tap()
 
         // A training day still to come takes another sport, or 休息.
         lane(app, 4).tap()

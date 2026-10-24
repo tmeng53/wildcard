@@ -1,5 +1,6 @@
 import AvatarArt
 import AvatarDomain
+import Foundation
 
 /// Everything the member ever checked in, by kind. Counts only go up.
 public struct LifetimeCounts: Hashable, Sendable {
@@ -31,14 +32,20 @@ public struct MeCharacter: Hashable, Sendable {
 /// What 我 shows: the character, the lifetime counts, the squad and the notification switch.
 public struct MeOverview: Hashable, Sendable {
     public var character: MeCharacter
+    /// When the member signed up: the day on their character's ticket. Nil before they first
+    /// saved a profile.
+    public var joinedAt: Date?
     public var counts: LifetimeCounts
     /// Nil before the member is in a squad. The app shows one squad, though the API allows three.
     public var squadName: String?
     /// The one daily push at 6pm with the squad's progress.
     public var dailyPushOn: Bool
 
-    public init(character: MeCharacter, counts: LifetimeCounts, squadName: String?, dailyPushOn: Bool) {
+    public init(
+        character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, squadName: String?, dailyPushOn: Bool
+    ) {
         self.character = character
+        self.joinedAt = joinedAt
         self.counts = counts
         self.squadName = squadName
         self.dailyPushOn = dailyPushOn

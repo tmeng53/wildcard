@@ -4,7 +4,8 @@ import Contracts
 public enum WeekTense: Hashable, Sendable {
     /// Over: read-only.
     case past
-    /// This week: the days still to come change freely; today and the days before stay.
+    /// This week: the days still to come change freely; today's sport changes, and a rest today
+    /// may become a training day; the days before today stay.
     case current
     /// Next week or later: every day changes freely.
     case upcoming
@@ -15,7 +16,8 @@ public enum WeekTense: Hashable, Sendable {
 ///
 /// - Next week, or a day still to come this week: tap a day to select it, then pick its sport
 ///   or 休息 under the poster. Every change is saved, and the server logs each one.
-/// - This week, today and the days before it stay as they are.
+/// - This week, today picks a sport, never 休息: a rest today becomes a training day. The days
+///   before today stay as they are.
 /// - A past week: nothing changes.
 public struct WeekBoard: Hashable, Sendable {
     /// What the board has hold of.
@@ -27,7 +29,7 @@ public struct WeekBoard: Hashable, Sendable {
 
     /// What a tap did, so the screen can answer with the right haptic.
     public enum TapOutcome: Hashable, Sendable {
-        /// The day can't change: past, or today or before in this week.
+        /// The day can't change: past, or before today in this week.
         case locked
         case selected
         /// Let go of the selected day.
@@ -63,8 +65,16 @@ public struct WeekBoard: Hashable, Sendable {
         switch tense {
         case .past: return false
         case .upcoming: return true
-        case .current: return index > (today ?? WeeklyPlan.dayCount)
+        case .current:
+            guard let today else { return false }
+            return index >= today
         }
+    }
+
+    /// Whether 休息 is among the picks for the selected day: any day but today.
+    public var offersRest: Bool {
+        guard case .selected(let index) = focus else { return false }
+        return index != today
     }
 
     public var plannedDays: Int { days.count { $0 != .rest } }
@@ -91,9 +101,9 @@ public struct WeekBoard: Hashable, Sendable {
         days[index] = .train(activity)
     }
 
-    /// Makes the selected day a rest day; nothing without a selected day.
+    /// Makes the selected day a rest day; nothing without a selected day, or for today.
     public mutating func rest() {
-        guard case .selected(let index) = focus else { return }
+        guard offersRest, case .selected(let index) = focus else { return }
         days[index] = .rest
     }
 

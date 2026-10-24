@@ -174,6 +174,23 @@ describe('saving a week’s plan', () => {
     ]);
   });
 
+  it('lets a rest today become a training day, with one rest day fewer', async () => {
+    const member = await newMember({ joinedAt: new Date('2026-10-14T17:00:00.000Z') });
+    // Rest today, Wednesday, and Sunday.
+    const resting: PlanDays = [swim, train, rest, train, train, train, rest];
+    now = new Date('2026-10-14T20:00:00.000Z');
+    await plans.save({ member, weekStart: lastWeek, days: resting });
+    now = new Date('2026-10-21T20:00:00.000Z');
+    const trained: PlanDays = [swim, train, swim, train, train, train, rest];
+    expect((await plans.save({ member, weekStart: thisWeek, days: trained })).days).toStrictEqual(
+      trained,
+    );
+    // Once today trains, it stays a training day.
+    await expect(plans.save({ member, weekStart: thisWeek, days: resting })).rejects.toThrow(
+      new PlanDayStartedError('2026-10-21'),
+    );
+  });
+
   it('plans next week without touching this one, and keeps past weeks as they were', async () => {
     const member = await newMember();
     await plans.save({ member, weekStart: thisWeek, days: mine });

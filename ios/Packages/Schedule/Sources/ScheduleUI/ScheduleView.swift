@@ -86,7 +86,7 @@ public struct ScheduleView: View {
         }
         .task { await model.load() }
         .sheet(isPresented: $picksAll) {
-            SportPicker(selected: selectedActivity) { activity in
+            SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
                 picksAll = false
                 model.pick(activity)
             }
@@ -210,6 +210,15 @@ public struct ScheduleView: View {
             PanelNote(store: store)
         }
         .transition(.opacity)
+    }
+
+    /// 常用运动: the sports in the week on the poster, in the order planned.
+    private var recentActivities: [Activity] {
+        var seen: [Activity] = []
+        for case .train(let activity?) in store.sheet?.plan ?? [] where !seen.contains(activity) {
+            seen.append(activity)
+        }
+        return seen
     }
 
     private var selectedActivity: Activity {

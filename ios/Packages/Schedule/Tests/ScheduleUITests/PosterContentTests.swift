@@ -31,7 +31,7 @@ struct PosterContentTests {
         let content = PosterContent(
             sheet: try sheet(monday), board: board, nickname: "Tracy", fuelOpen: true)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
-        #expect(content.lanes.map(\.isEditable) == [false, false, false, false, true, true, true])
+        #expect(content.lanes.map(\.isEditable) == [false, false, false, true, true, true, true])
         #expect(content.tally == .trained(2, planned: 5, isPast: false))
         #expect(content.titles.isEmpty, "titles wait for the week's awards")
         #expect(content.fuelOpen, "this week's goals open too")
