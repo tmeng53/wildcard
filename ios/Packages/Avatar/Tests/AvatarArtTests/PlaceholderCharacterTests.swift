@@ -19,7 +19,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "heartR", "sparkle",
             "tearL", "tearR",
             "propR", "food0", "food1", "food2",
-            "armL", "flexL", "muscleL", "armR", "flexR", "muscleR", "heart", "desk",
+            "armL", "flexL", "muscleL", "armR", "chin", "flexR", "muscleR", "heart", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
@@ -73,7 +73,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 54)
+    #expect(figure.parts.count == 55)
 }
 
 @Test(arguments: Persona.allCases)
@@ -151,6 +151,16 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
         for part in ["earL", "earR", "flapL", "flapR", "nose"] as [PartID] {
             #expect(try figure.part(part).art.isEmpty == !moving.contains(part), "\(body) \(part)")
         }
+    }
+}
+
+/// Sleeves tuck under a person-sized chin; a bichon's fluff reaches lower, so it draws that fluff
+/// again over the arms, and only the bichon does.
+@Test func aBichonsChinSitsOverTheSleeves() throws {
+    for body in try PlaceholderCharacter.variants(for: "body") {
+        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
+        #expect(try figure.part("chin").art.isEmpty == (body != "bichon"), "\(body)")
+        #expect(try figure.index("chin") > figure.index("armL") && figure.index("chin") > figure.index("armR"))
     }
 }
 

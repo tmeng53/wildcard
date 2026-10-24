@@ -77,6 +77,7 @@
       "layers": [{ "slot": "body", "art": "muscleL" }, { "slot": "top", "art": "muscleL" }] },
     { "id": "armR", "parent": "torso", "pivot": [147.6, 222],
       "layers": [{ "slot": "body", "art": "armR" }, { "slot": "top", "art": "armR" }] },
+    { "id": "chin", "parent": "head", "pivot": [120, 210], "layers": [{ "slot": "body", "art": "chin" }] },
     { "id": "flexR", "parent": "torso", "pivot": [147.6, 222], "opacity": 0,
       "layers": [{ "slot": "body", "art": "flexR" }, { "slot": "top", "art": "flexR" }] },
     { "id": "muscleR", "parent": "flexR", "pivot": [172.8, 216], "opacity": 0,
