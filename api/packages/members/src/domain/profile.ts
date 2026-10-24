@@ -118,6 +118,11 @@ export const Profile = z.strictObject({
 });
 export type Profile = z.infer<typeof Profile>;
 
+/** A save of the profile. A number left out keeps the one saved, so builds that don't send one keep it. */
+export type ProfileSave = Omit<Profile, 'jerseyNumber'> & {
+  readonly jerseyNumber?: JerseyNumber | null | undefined;
+};
+
 /** What squadmates see of a member besides their check-ins. */
 export interface Squadmate {
   readonly catchphrase: Catchphrase | null;

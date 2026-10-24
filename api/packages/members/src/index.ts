@@ -17,6 +17,7 @@ export {
   NICKNAME_MAX_CHARACTERS,
   Nickname,
   Profile,
+  type ProfileSave,
   Swatch,
   TimeZone,
   type Squadmate,

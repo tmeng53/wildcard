@@ -518,6 +518,10 @@ describe('PUT /me/profile', () => {
         )[0],
       ).toBe(200);
     }
+    // Leaving the number out of a save that changes nothing else writes no log entry.
+    expect(
+      await putProfile(token, { version: 1, timeZone: zone, catchphrase: null }),
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: null, jerseyNumber: null }]);
 
     for (const jerseyNumber of [-1, 100, 7.5, '07']) {
       const [status] = await putProfile(token, {

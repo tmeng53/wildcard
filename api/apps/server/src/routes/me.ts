@@ -205,13 +205,9 @@ export function me(
       const { timeZone, catchphrase, character, jerseyNumber } = c.req.valid('json');
       const member = MemberId.parse(c.var.caller.userId);
       // Builds from before the player card don't send the number; their saves keep it.
-      const number =
-        jerseyNumber === undefined
-          ? ((await deps.members.findProfile(member))?.jerseyNumber ?? null)
-          : jerseyNumber;
       const saved = await deps.members.saveProfile({
         member,
-        profile: { timeZone, catchphrase, character: character ?? null, jerseyNumber: number },
+        profile: { timeZone, catchphrase, character: character ?? null, jerseyNumber },
       });
       return c.json({ version: 1, ...wireProfile(saved) } as const, 200);
     })
