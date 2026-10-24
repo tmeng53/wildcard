@@ -13,6 +13,7 @@
     "@hono/node-server": "2.1.5",
     "@hono/zod-openapi": "1.6.3",
     "@modelcontextprotocol/server": "2.3.1",
+    "@sentry/node": "11.8.0",
     "@wildcard/admins": "workspace:*",
     "@wildcard/ai-consent": "workspace:*",
     "@wildcard/check-ins": "workspace:*",

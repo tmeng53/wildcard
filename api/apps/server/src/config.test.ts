@@ -42,8 +42,25 @@ describe('readConfig', () => {
       appleSignInKey: undefined,
       scheduler: undefined,
       apns: undefined,
+      errorReports: undefined,
       traceProject: undefined,
     });
+  });
+
+  it('reports errors only once there is a DSN, naming the revision Cloud Run serves', () => {
+    const dsn = 'https://public@o1.ingest.us.sentry.io/2';
+    expect(
+      readConfig({ ...base, SENTRY_DSN_API: dsn, K_REVISION: 'wildcard-api-00042-abc' })
+        .errorReports,
+    ).toStrictEqual({
+      dsn,
+      release: 'wildcard-api-00042-abc',
+    });
+    expect(readConfig({ ...base, SENTRY_DSN_API: dsn }).errorReports).toStrictEqual({
+      dsn,
+      release: undefined,
+    });
+    expect(() => readConfig({ ...base, SENTRY_DSN_API: 'not a url' })).toThrow(/SENTRY_DSN_API/);
   });
 
   it('names log traces in the Google Cloud project the deploy says', () => {
