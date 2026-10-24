@@ -18,7 +18,7 @@ struct DeleteAccountView: View {
                 .disabled(model.deletion == .deleting)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    MeStage(character: model.overview?.character, size: CGSize(width: 96, height: 120), mood: .teary)
+                    MeStage(character: model.overview?.character, mood: .teary, size: CGSize(width: 96, height: 120))
                         .frame(maxWidth: .infinity)
                     Text("注销账号", bundle: .module)
                         .typeStyle(TypeRamp.title)

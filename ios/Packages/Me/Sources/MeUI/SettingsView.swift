@@ -37,7 +37,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
                     .accessibilityIdentifier("settings.back")
-                MeStage(character: model.overview?.character, size: CGSize(width: 96, height: 120), mood: .typing)
+                MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 96, height: 120))
                     .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
                 Text("设置", bundle: .module)
