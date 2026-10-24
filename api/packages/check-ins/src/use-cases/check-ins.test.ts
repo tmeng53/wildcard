@@ -9,6 +9,7 @@ import {
   randomInviteCodes,
   type SquadTables,
 } from '@wildcard/squads';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import {
@@ -30,7 +31,7 @@ import { DEFAULT_PLAN_DAYS, WeekStart } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables & SquadTables>({
+const db = new Kysely<CheckInTables & SquadTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -50,6 +51,7 @@ const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) }
 // Nobody here has a time zone: these tests don't read members' days.
 const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
@@ -208,6 +210,7 @@ describe('saving a check-in', () => {
     const body = draft({ audience: [squad] });
     await checkIns.save({ id, member, draft: body });
     const late = createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
@@ -270,6 +273,7 @@ describe('saving a check-in', () => {
     const overlapping = () => {
       let missed = false;
       return createCheckIns({
+        sports: createSports({ store: createPostgresSportStore(db) }),
         store: {
           ...real,
           find: (id) => {
@@ -403,6 +407,7 @@ describe('saving a check-in', () => {
     const member = await newMember();
     const squad = await newSquad(member);
     const inPagoPago = createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),

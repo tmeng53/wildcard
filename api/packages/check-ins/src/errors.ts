@@ -62,6 +62,20 @@ export class CheckInDayMismatchError extends AppError {
 }
 
 /**
+ * Thrown for a 练了 or planned day naming a sport id that isn't in the sports list. The app's
+ * copy of the list is older or newer than the server's: read `GET /public/catalog` again.
+ */
+export class SportNotListedError extends AppError {
+  override readonly name = 'SportNotListedError';
+  readonly reason = 'SPORT_NOT_LISTED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly sport: string) {
+    super(`${sport} is not a listed sport.`);
+  }
+}
+
+/**
  * Thrown when the caller isn't in a squad they name. The same answer whether or not the squad
  * exists, so it reveals nothing about other squads.
  */

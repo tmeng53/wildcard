@@ -17,6 +17,7 @@ import RecapUI
 import ScenePickDomain
 import ScheduleDomain
 import ScheduleUI
+import SportsUI
 import SquadDomain
 
 /// The app on the real backend: who is signed in decides between sign-up and the tabs. A member
@@ -42,6 +43,8 @@ final class AppModel {
     /// Where the home's copy and the posts still to go out are kept, a folder per member, so a
     /// new account on this phone never opens on what was kept for one signed out or deleted.
     @ObservationIgnored private let folders: MemberFolders
+    /// The lists the app shows that live in the database, such as every sport.
+    @ObservationIgnored private let catalog: CatalogClient
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
     /// with the session alone.
     @ObservationIgnored private let confirmDeletion: @MainActor () async throws(MeError) -> DeletionConfirmation
@@ -57,6 +60,10 @@ final class AppModel {
         api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
         folders = MemberFolders(
             root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
+        catalog = CatalogClient(
+            api: api, directory: URL.applicationSupportDirectory.appending(path: "Catalog", directoryHint: .isDirectory)
+        )
+        SportList.shared.show(catalog.keptSports())
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -76,6 +83,7 @@ final class AppModel {
     /// Follows the account for as long as the app runs: the first state picks the first screen,
     /// and signing out, from here or because the session ended, returns to the open screen.
     func run() async {
+        Task { await refreshCatalog() }
         for await state in await account.states() {
             switch state {
             case .signedOut: await signedOut()
@@ -130,6 +138,12 @@ final class AppModel {
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
     func leftSquad() async {
         await openHome()
+    }
+
+    /// Reads the catalog again, as the app comes back to the front: a sport added on the server
+    /// shows without an app update.
+    func refreshCatalog() async {
+        if let sports = await catalog.refreshSports() { SportList.shared.show(sports) }
     }
 
     func signOut() async {

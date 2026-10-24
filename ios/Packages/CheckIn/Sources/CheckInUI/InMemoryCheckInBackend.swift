@@ -55,7 +55,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
-            days: [.train(.sport(.run)), .train(nil), .rest, .train(.sport(.run)), .train(nil), .train(nil), .rest])
+            days: [.train(.sport("run")), .train(nil), .rest, .train(.sport("run")), .train(nil), .train(nil), .rest])
         return InMemoryCheckInBackend(
             home: plan.map { plan in
                 Home(
@@ -123,9 +123,9 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         let leave = try? Disclaimer(
             Bundle.module.inAppLanguage.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
         return [
-            checkIn(mates[0], 5, .trained(Training(activity: .sport(.run)))),
-            checkIn(mates[1], 4, .trained(Training(activity: .sport(.yoga)))),
-            checkIn(mates[2], 3, .trained(Training(activity: .sport(.swim)))),
+            checkIn(mates[0], 5, .trained(Training(activity: .sport("run")))),
+            checkIn(mates[1], 4, .trained(Training(activity: .sport("yoga")))),
+            checkIn(mates[2], 3, .trained(Training(activity: .sport("swim")))),
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
     }
 
@@ -136,8 +136,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     ) -> [CheckIn] {
         guard let audience = try? Audience([squad]) else { return [] }
         let entries: [[CheckIn.Entry]] = [
-            [.trained(Training(activity: .sport(.run))), .healthyMeal(Meal())],
-            [.trained(Training(activity: .sport(.swim)))],
+            [.trained(Training(activity: .sport("run"))), .healthyMeal(Meal())],
+            [.trained(Training(activity: .sport("swim")))],
         ]
         return zip(days, entries).enumerated().flatMap { offset, pair in
             pair.1.map { entry in

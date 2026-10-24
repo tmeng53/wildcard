@@ -25,6 +25,7 @@ import { createDraftSettings, createPostgresDraftSettings } from '@wildcard/disc
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -50,8 +51,8 @@ import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
 import { memeTools } from './tools/memes.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
@@ -90,8 +91,10 @@ beforeAll(async () => {
             secretKey: config.supabaseSecretKey,
           }),
           revokeAppleSignIn: undefined,
+          catalog: catalogOn(db),
           publicRoutes: unlimitedPublicRoutes,
           checkIns: createCheckIns({
+            sports: createSports({ store: createPostgresSportStore(db) }),
             store: createPostgresCheckInStore(db),
             membership: createSquads({
               store: createPostgresSquadStore(db),
@@ -106,6 +109,7 @@ beforeAll(async () => {
             clock: () => new Date(),
           }),
           weeklyPlans: createWeeklyPlans({
+            sports: createSports({ store: createPostgresSportStore(db) }),
             store: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),
             clock: () => new Date(),

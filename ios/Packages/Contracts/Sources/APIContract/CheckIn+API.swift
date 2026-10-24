@@ -98,20 +98,19 @@ extension Activity {
 
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {
         switch (sport, customSport) {
-        case (.custom, let name?): self = .custom(try CustomSport(name))
-        case (.custom, nil): throw .strayCustomSport
+        case ("custom", let name?): self = .custom(try CustomSport(name))
+        case ("custom", nil): throw .strayCustomSport
         case (_, .some): throw .strayCustomSport
         case (_, nil):
-            guard let listed = Sport(rawValue: sport.rawValue) else { throw .unknownSport(sport.rawValue) }
+            guard let listed = Sport(rawValue: sport) else { throw .unknownSport(sport) }
             self = .sport(listed)
         }
     }
 
     var wireSport: Components.Schemas.Sport {
         switch self {
-        // Every `Sport` is in the API's list: `APIContract`'s tests check it.
-        case .sport(let sport): Components.Schemas.Sport(rawValue: sport.rawValue) ?? .custom
-        case .custom: .custom
+        case .sport(let sport): sport.rawValue
+        case .custom: "custom"
         }
     }
 

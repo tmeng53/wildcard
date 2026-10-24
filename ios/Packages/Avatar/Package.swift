@@ -26,7 +26,10 @@ let package = Package(
             resources: [.copy("Placeholder")]),
         .target(name: "AvatarUI", dependencies: ["AvatarDomain", "AvatarArt"]),
         // The looks the tests and previews share; no product, so only this package's tests see it.
-        .target(name: "AvatarLooks", dependencies: ["AvatarArt", "AvatarDomain"], path: "Tests/AvatarLooks"),
+        .target(
+            name: "AvatarLooks",
+            dependencies: ["AvatarArt", "AvatarDomain", .product(name: "Contracts", package: "Contracts")],
+            path: "Tests/AvatarLooks"),
         .testTarget(name: "AvatarDomainTests", dependencies: ["AvatarDomain"]),
         .testTarget(
             name: "AvatarArtTests",

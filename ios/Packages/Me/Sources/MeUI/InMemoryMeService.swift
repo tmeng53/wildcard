@@ -29,7 +29,7 @@ public actor InMemoryMeService: MeService {
                 squadName: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
-                mostTrained: MostTrained(activity: .sport(.run), checkIns: 34),
+                mostTrained: MostTrained(activity: .sport("run"), checkIns: 34),
                 titles: TitlesWon(
                     count: 3,
                     latest: TitlesWon.Latest(

@@ -25,7 +25,7 @@ func checkIn(_ number: Int, by author: MemberID, on onDay: String, at moment: In
 {
     do {
         let entry: CheckIn.Entry =
-            disclaimer ? .disclaimer(try Disclaimer("腿说今天它请假")) : .trained(Training(activity: .sport(.run)))
+            disclaimer ? .disclaimer(try Disclaimer("腿说今天它请假")) : .trained(Training(activity: .sport("run")))
         return CheckIn(
             id: checkInID(number), member: author, day: day(onDay), createdAt: at(moment),
             audience: try Audience([squad]),

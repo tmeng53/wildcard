@@ -81,11 +81,11 @@ struct ScheduleStoreTests {
         await store.load()
         await store.show(thisWeek.adding(days: 7))
         await store.tap(0)
-        await store.pick(.sport(.swim))
+        await store.pick(.sport("swim"))
         await store.rest()
         let saved = await backend.savedPlans
         #expect(saved.count == 2)
-        #expect(saved.first?.first == .train(.sport(.swim)))
+        #expect(saved.first?.first == .train(.sport("swim")))
         #expect(saved.last?.first == .rest)
     }
 
@@ -95,7 +95,7 @@ struct ScheduleStoreTests {
         await store.load()
         await store.show(thisWeek.adding(days: -7))
         #expect(await store.tap(0) == .locked)
-        await store.pick(.sport(.swim))
+        await store.pick(.sport("swim"))
         #expect(await backend.savedPlans.isEmpty)
         #expect(!store.canEditFuel)
     }
@@ -104,8 +104,8 @@ struct ScheduleStoreTests {
         let store = store(FakeBackend())
         await store.load()
         #expect(
-            store.suggestedActivities == [
-                .sport(.run), .sport(.tennis), .sport(.strength), .sport(.yoga), .sport(.swim),
+            store.suggestedActivities(common: ["run", "strength", "yoga", "swim", "tennis", "hike"]) == [
+                .sport("run"), .sport("tennis"), .sport("strength"), .sport("yoga"), .sport("swim"),
             ]
         )
     }

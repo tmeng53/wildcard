@@ -1,5 +1,6 @@
 import AccountDomain
 import AccountUI
+import Backend
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
@@ -15,6 +16,7 @@ import OnboardingUI
 import RecapUI
 import ScheduleDomain
 import ScheduleUI
+import SportsUI
 import SquadDomain
 import SquadUI
 import SwiftUI
@@ -60,6 +62,8 @@ struct WildcardApp: App {
     // callback and the models are the main actor's.
     init() {
         CrashReports.start()
+        // The sports this build ships with; with a backend, `AppModel` shows the kept or newer list.
+        SportList.shared.show(CatalogClient.bundledSports)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
@@ -78,11 +82,7 @@ struct WildcardApp: App {
             defaults: LaunchOptions.todayDefaults,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
-        _profile = State(
-            initialValue: MeModel(
-                service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
-                // The in-memory member has no Apple account to confirm with and nothing to sign out of.
-                confirm: { .signedInSession }, signOut: {}))
+        _profile = State(initialValue: Self.sampleProfile())
         _squad = State(
             initialValue: SquadSettingsModel(
                 service: InMemorySquadSettingsService.sample(
@@ -110,6 +110,14 @@ struct WildcardApp: App {
                     now: LaunchOptions.signUpTime))
         }
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad))
+    }
+
+    /// The sample member for 我. The in-memory member has no Apple account to confirm with and
+    /// nothing to sign out of.
+    private static func sampleProfile() -> MeModel {
+        MeModel(
+            service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
+            confirm: { .signedInSession }, signOut: {})
     }
 
     /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on
@@ -200,6 +208,7 @@ private struct AppRoot: View {
     let app: AppModel
     @Binding var tab: MainTabs.Tab
     let delegate: AppDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         // A ZStack, not a Group, so the task below starts once and outlives screen changes.
@@ -227,6 +236,9 @@ private struct AppRoot: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await app.refreshCatalog() } }
+        }
         .onAppear {
             delegate.opened = { [app, $tab] opened in
                 switch opened {

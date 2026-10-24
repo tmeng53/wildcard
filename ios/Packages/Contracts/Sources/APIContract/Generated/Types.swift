@@ -11,6 +11,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /health`.
     /// - Remark: Generated from `#/paths//health/get(getHealth)`.
     func getHealth(_ input: Operations.GetHealth.Input) async throws -> Operations.GetHealth.Output
+    /// The lists the app shows, such as every sport
+    ///
+    /// No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.
+    ///
+    /// - Remark: HTTP `GET /public/catalog`.
+    /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)`.
+    func getCatalog(_ input: Operations.GetCatalog.Input) async throws -> Operations.GetCatalog.Output
     /// The signed-in member
     ///
     /// Who the bearer token belongs to, and their profile once they have saved one.
@@ -309,6 +316,15 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//health/get(getHealth)`.
     public func getHealth(headers: Operations.GetHealth.Input.Headers = .init()) async throws -> Operations.GetHealth.Output {
         try await getHealth(Operations.GetHealth.Input(headers: headers))
+    }
+    /// The lists the app shows, such as every sport
+    ///
+    /// No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.
+    ///
+    /// - Remark: HTTP `GET /public/catalog`.
+    /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)`.
+    public func getCatalog(headers: Operations.GetCatalog.Input.Headers = .init()) async throws -> Operations.GetCatalog.Output {
+        try await getCatalog(Operations.GetCatalog.Input(headers: headers))
     }
     /// The signed-in member
     ///

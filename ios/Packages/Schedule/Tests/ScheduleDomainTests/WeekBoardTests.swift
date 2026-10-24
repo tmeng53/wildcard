@@ -25,7 +25,7 @@ struct WeekBoardTests {
         for day in 0..<7 {
             #expect(board.tap(day) == .locked)
         }
-        board.pick(.sport(.swim))
+        board.pick(.sport("swim"))
         #expect(board.days == plan)
         #expect(board.focus == .none)
     }
@@ -46,9 +46,9 @@ struct WeekBoardTests {
         #expect(board.isEditable(3))
         #expect(board.tap(3) == .selected)
         board.rest()
-        #expect(board.days[3] == .train(.sport(.strength)))
-        board.pick(.sport(.swim))
-        #expect(board.days[3] == .train(.sport(.swim)))
+        #expect(board.days[3] == .train(.sport("strength")))
+        board.pick(.sport("swim"))
+        #expect(board.days[3] == .train(.sport("swim")))
         #expect(board.plannedDays == 5)
     }
 
@@ -57,8 +57,8 @@ struct WeekBoardTests {
         #expect(board.isEditable(2))
         #expect(board.tap(2) == .selected)
         #expect(!board.offersRest, "today never rests")
-        board.pick(.sport(.swim))
-        #expect(board.days[2] == .train(.sport(.swim)))
+        board.pick(.sport("swim"))
+        #expect(board.days[2] == .train(.sport("swim")))
         #expect(board.plannedDays == 6, "one rest day fewer")
     }
 
@@ -70,8 +70,8 @@ struct WeekBoardTests {
         #expect(board.days[4] == .rest)
         #expect(board.plannedDays == 4, "a rest day more")
         #expect(board.tap(5) == .selected, "a rest day is selected too")
-        board.pick(.sport(.yoga))
-        #expect(board.days[5] == .train(.sport(.yoga)))
+        board.pick(.sport("yoga"))
+        #expect(board.days[5] == .train(.sport("yoga")))
         #expect(board.plannedDays == 5)
         #expect(board.tap(5) == .released)
         #expect(board.focus == .none)
@@ -84,8 +84,8 @@ struct WeekBoardTests {
         board.rest()
         #expect(board.days[0] == .rest)
         #expect(board.tap(2) == .selected)
-        board.pick(.sport(.swim))
-        #expect(board.days[2] == .train(.sport(.swim)))
+        board.pick(.sport("swim"))
+        #expect(board.days[2] == .train(.sport("swim")))
         #expect(board.tap(2) == .released)
         #expect(board.plannedDays == 5)
     }
