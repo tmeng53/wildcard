@@ -29,7 +29,6 @@ SAFE_FIELDS = [
     "deviceFamily",
     "deviceModel",
     "osVersion",
-    "locale",
     "architecture",
     "connectionType",
     "appUptimeInMilliseconds",
