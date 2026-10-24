@@ -21,6 +21,10 @@ export function createSentryErrorReports(options: {
   /** For tests: where envelopes go instead of Sentry's servers. */
   readonly transport?: Sentry.NodeOptions['transport'];
 }): ErrorReports {
+  // The log keeps ids (a member's, a squad's) to find what failed; a report, which leaves our
+  // project, names none.
+  const mask = (text: string) =>
+    options.redact(text).replace(/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi, '[id]');
   Sentry.initWithoutDefaultIntegrations({
     dsn: options.dsn,
     release: options.release,
@@ -51,9 +55,9 @@ export function createSentryErrorReports(options: {
       delete event.user;
       delete event.request;
       for (const exception of event.exception?.values ?? []) {
-        if (exception.value !== undefined) exception.value = options.redact(exception.value);
+        if (exception.value !== undefined) exception.value = mask(exception.value);
       }
-      if (event.message !== undefined) event.message = options.redact(event.message);
+      if (event.message !== undefined) event.message = mask(event.message);
       return event;
     },
     ...(options.transport === undefined ? {} : { transport: options.transport }),

@@ -29,7 +29,7 @@ describe('createSentryErrorReports', () => {
     });
 
     reports.report(
-      new Error('the database dropped the connection', {
+      new Error('squad 9b1f0c3e-1111-4222-8333-444455556666 vanished', {
         cause: new Error('auth failed for postgres://admin:hunter2@db.example.com:5432/postgres'),
       }),
       {
@@ -61,7 +61,7 @@ describe('createSentryErrorReports', () => {
             type: 'Error',
             value: 'auth failed for postgres://[credentials]@db.example.com:5432/postgres',
           },
-          { type: 'Error', value: 'the database dropped the connection' },
+          { type: 'Error', value: 'squad [id] vanished' },
         ],
       },
     });

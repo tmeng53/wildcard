@@ -92,7 +92,8 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- The push token. -->
+		<!-- The push token. Crash reports carry Sentry's random id for this installation, not
+		     linked to the account; this entry, declared linked, already covers it. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeDeviceID</string>
