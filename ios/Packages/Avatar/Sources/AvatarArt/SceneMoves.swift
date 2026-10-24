@@ -24,4 +24,19 @@ extension PlaceholderCharacter {
         let kit = try sportKits().kit(for: .sport(scene.sport))
         return (kit.dress(look), try move(for: kit, persona: persona))
     }
+
+    /// How far into `scene`'s sport move its signature pose falls, as a share of the move: the
+    /// frame a still picture of the loop shows, never whichever frame was on screen. The bar
+    /// overhead, the racket through the swing, one arm up mid-stroke, legs apart mid-stride, one
+    /// arm and one knee up the wall. The move's widest swing is at its end there, never between.
+    public static func keyPose(for scene: SceneTheme) -> Double {
+        switch scene.sport {
+        case .strength: 0.47
+        case .tennis: 0.61
+        case .swim: 0.08
+        case .run: 0.07
+        case .climb: 0
+        default: 0
+        }
+    }
 }
