@@ -120,12 +120,12 @@
 
   const format = (m) => m.map((x) => x.toFixed(3)).join(' ');
 
-  // SVG markup of one cast member in a pose; `swap` replaces a part's art by part id.
-  function figure(member, poses, swap) {
+  // SVG markup of one cast member in a pose.
+  function figure(member, poses) {
     const { matrices, opacities } = layout(poses);
     let svg = '';
     PARTS.forEach((part, i) => {
-      const art = swap && part.id in swap ? swap[part.id] : member.art[i];
+      const art = member.art[i];
       if (art && opacities[i] > 0)
         svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
     });

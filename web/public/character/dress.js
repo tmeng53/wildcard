@@ -33,25 +33,45 @@ export function dress(wardrobe, variants, colors = {}, shoes = []) {
     // Own keys only: a slot named like an Object method ("constructor") is no slot.
     if (Object.hasOwn(wardrobe.variants, slot) && wardrobe.variants[slot].includes(variant))
       look[slot] = variant;
-  return wardrobe.parts.map((part) =>
-    (part.layers ?? [])
-      .map(({ slot, art: name }) => {
-        if (slot === undefined) return wardrobe.art[`base/${name}`] ?? '';
-        if (!look[slot]) return '';
-        let svg = wardrobe.art[`${slot}/${look[slot]}/${name}`];
-        if (svg === undefined) return '';
-        if (slot === 'shoes') {
-          for (const [from, to] of shoes) svg = svg.replaceAll(from, to);
-        } else if (slot in colors) {
-          const tones = wardrobe.tones[`${slot}/${look[slot]}`];
-          if (tones === undefined) return svg;
+  // Each part's body art, for the hands that layers are held in (a racket's grip).
+  const bodies = {};
+  const parts = wardrobe.parts.map((part) =>
+    (part.layers ?? []).map(({ slot, art: name, hand }) => {
+      if (slot === undefined) return { svg: wardrobe.art[`base/${name}`] ?? '' };
+      if (!look[slot]) return { svg: '' };
+      let svg = wardrobe.art[`${slot}/${look[slot]}/${name}`];
+      if (svg === undefined) return { svg: '' };
+      if (slot === 'shoes') {
+        for (const [from, to] of shoes) svg = svg.replaceAll(from, to);
+      } else if (slot in colors) {
+        const tones = wardrobe.tones[`${slot}/${look[slot]}`];
+        if (tones !== undefined) {
           const color = colors[slot];
           for (const shade of tones.shades ?? [])
             svg = replaceAllCaseless(svg, shade, shadeTo(tones.base, shade, color));
           svg = replaceAllCaseless(svg, tones.base, color);
         }
-        return svg;
-      })
-      .join(''),
+      }
+      if (slot === 'body') bodies[part.id] = svg;
+      return { svg, hand };
+    }),
+  );
+  return parts.map((layers) =>
+    layers.map(({ svg, hand }) => (hand ? held(svg, wardrobe.skin, bodies[hand]) : svg)).join(''),
+  );
+}
+
+// A layer held in a hand, drawn in the rig's skin, takes the colors of that hand: the last
+// shape of the hand's body art, as in the app.
+function held(svg, skin, body) {
+  const shapes = [
+    ...(body ?? '').matchAll(/fill="(#[0-9A-Fa-f]{6})"[^>]*stroke="(#[0-9A-Fa-f]{6})"/g),
+  ];
+  if (!skin || shapes.length === 0) return svg;
+  const [, fill, stroke] = shapes[shapes.length - 1];
+  return replaceAllCaseless(
+    replaceAllCaseless(replaceAllCaseless(svg, skin.stroke, '\u0000'), skin.fill, fill),
+    '\u0000',
+    stroke,
   );
 }

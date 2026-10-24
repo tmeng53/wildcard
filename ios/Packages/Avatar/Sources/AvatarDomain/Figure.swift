@@ -33,6 +33,16 @@ public struct Figure: Hashable, Sendable {
     let parents: [Int?]
     /// Part indices with every parent before its children.
     let evaluationOrder: [Int]
+    /// A worn variant that keeps level in its wearer's hand, like goggles dangling from a
+    /// fist: the parts it draws on that hang from the arm stay level however the arm and the
+    /// body carrying it turn, in every clip but its own (`Clip.holds`). Read from
+    /// `<slot>/<variant>/hold.json`.
+    let level: Level?
+
+    struct Level: Hashable, Sendable {
+        let variant: String
+        let parts: [Int]
+    }
 
     public struct Part: Hashable, Sendable {
         public let id: PartID
@@ -54,6 +64,10 @@ public struct Figure: Hashable, Sendable {
         /// Each recolored slot's art colors before recoloring, to check its tones against.
         var painted: [Slot: [RGBAColor]] = [:]
         var built: [Part] = []
+        /// Each part's `body` art, for the hands that layers are held in.
+        var bodies: [PartID: Artwork] = [:]
+        /// Layers held in a hand, painted once every part's body art is read.
+        var held: [(part: Int, layer: Int, hand: PartID)] = []
         for part in rig.parts {
             var artworks: [Artwork] = []
             for layer in part.layers {
@@ -68,6 +82,8 @@ public struct Figure: Hashable, Sendable {
                         painted[slot, default: []] += artwork.colors
                         artwork = recolor.applied(to: artwork)
                     }
+                    if slot == "body" { bodies[part.id] = artwork }
+                    if let hand = layer.hand { held.append((built.count, artworks.count, hand)) }
                     artworks.append(artwork)
                     used.insert(slot)
                 } else {
@@ -78,11 +94,13 @@ public struct Figure: Hashable, Sendable {
             }
             built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks))
         }
+        try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
         }
         try Self.checkTones(recolors, against: painted, variants)
         (width, height, parts, self.parents) = (rig.width, rig.height, built, parents)
+        level = try Self.level(variants, rig, parents, source)
     }
 
     /// Each colored slot's tones, read from its variant's `tones.json`.
@@ -175,7 +193,10 @@ public struct Figure: Hashable, Sendable {
         for accent in clip.accents {
             accents.append((accent, try bind(accent.clip.tracks, of: accent.clip.name)))
         }
-        return BoundClip(clip: clip, tracks: try bind(clip.tracks, of: clip.name), accents: accents)
+        // A level-held prop is the clip's to turn only when the clip is choreographed for it.
+        let leveled = level.map { clip.holds == $0.variant ? [] : $0.parts } ?? []
+        return BoundClip(
+            clip: clip, tracks: try bind(clip.tracks, of: clip.name), accents: accents, leveled: leveled)
     }
 
     private func bind(_ tracks: [Clip.Track], of clip: String) throws(AvatarError) -> [BoundClip.Track] {
@@ -217,6 +238,16 @@ public struct Figure: Hashable, Sendable {
                 pose.parts[part].add(track.value(at: moment), to: track.channel, strength: accent.strength)
             }
         }
+        // Turned back by as much as everything carrying it has turned, so it hangs level.
+        for part in bound.leveled {
+            var turned = 0.0
+            var carrier = parents[part]
+            while let index = carrier {
+                turned += pose.parts[index].rotation
+                carrier = parents[index]
+            }
+            pose.parts[part].rotation = -turned
+        }
         return pose
     }
 
@@ -243,6 +274,7 @@ public struct Figure: Hashable, Sendable {
     }
 }
 
+/// `{"version": 1, "level": "armR"}`: the arm a variant keeps level in.
 /// A clip linked to a figure's parts.
 public struct BoundClip: Sendable {
     typealias Track = (part: Int, track: Clip.Track)
@@ -250,6 +282,8 @@ public struct BoundClip: Sendable {
     public let clip: Clip
     let tracks: [Track]
     let accents: [(accent: Clip.Accent, tracks: [Track])]
+    /// Parts that hang level whatever carries them, as `Figure.level` says.
+    let leveled: [Int]
 }
 
 /// One part's channel values. Unlike a clip, a pose has every channel of every part.

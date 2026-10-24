@@ -101,6 +101,9 @@ public struct Clip: Hashable, Sendable {
     /// Loops forever (idle) or plays once and hands back to the idle clip (cheer).
     public var loops: Bool
     public var tracks: [Track]
+    /// The prop this clip is choreographed for, such as `goggles` for the goggles' own move:
+    /// it turns that prop itself, so a prop that keeps level (`hold.json`) is left to it.
+    public var holds: String?
     /// Moves played on top, such as a species' own: a cat's yawn over any persona's idle.
     public private(set) var accents: [Accent] = []
 
@@ -161,7 +164,9 @@ public struct Clip: Hashable, Sendable {
         (self.name, self.duration, self.loops, self.tracks) = (name, duration, loops, tracks)
     }
 
-    public init(name: String, duration: Double, loops: Bool, tracks: [Track]) throws(AvatarError) {
+    public init(
+        name: String, duration: Double, loops: Bool, tracks: [Track], holds: String? = nil
+    ) throws(AvatarError) {
         guard duration > 0, duration.isFinite else { throw .invalidDuration(clip: name) }
         var moved: Set<String> = []
         for track in tracks {
@@ -177,7 +182,7 @@ public struct Clip: Hashable, Sendable {
                 throw .invalidEasing(clip: name, part: track.part, channel: track.channel)
             }
         }
-        (self.name, self.duration, self.loops, self.tracks) = (name, duration, loops, tracks)
+        (self.name, self.duration, self.loops, self.tracks, self.holds) = (name, duration, loops, tracks, holds)
     }
 
     /// This clip with `accent` played on top. The accent loops if this clip does, and every
@@ -208,7 +213,7 @@ public struct Clip: Hashable, Sendable {
                 part: track.part, channel: track.channel,
                 keys: track.keys.map { Keyframe(time: $0.time / tempo, value: $0.value, easing: $0.easing) })
         }
-        var clip = try Clip(name: name, duration: duration / tempo, loops: loops, tracks: paced)
+        var clip = try Clip(name: name, duration: duration / tempo, loops: loops, tracks: paced, holds: holds)
         clip.accents = accents.map { Accent(clip: $0.clip, tempo: $0.tempo * tempo, strength: $0.strength) }
         return clip
     }
@@ -223,7 +228,8 @@ public struct Clip: Hashable, Sendable {
             }
             tracks.append(Track(part: track.part, channel: track.channel, keys: keys))
         }
-        return try Clip(name: file.name, duration: file.duration, loops: file.loops, tracks: tracks)
+        return try Clip(
+            name: file.name, duration: file.duration, loops: file.loops, tracks: tracks, holds: file.holds)
     }
 
     private static func easing(_ given: EaseFile?, _ clip: String) throws(AvatarError) -> Easing {
@@ -241,10 +247,11 @@ private struct ClipFile: Decodable {
     let name: String
     let duration: Double
     let loops: Bool
+    let holds: String?
     let tracks: [TrackFile]
 
     static let shape = JSONShape.object([
-        "version": .value, "name": .value, "duration": .value, "loops": .value,
+        "version": .value, "name": .value, "duration": .value, "loops": .value, "holds": .value,
         "tracks": .array(
             .object([
                 "part": .value, "channel": .value,
