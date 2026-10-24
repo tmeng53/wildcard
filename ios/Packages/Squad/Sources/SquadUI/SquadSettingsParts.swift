@@ -173,7 +173,9 @@ struct MemberRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if member.hasCrown {
+                // Tags keep their words; a long nickname gives way instead.
                 Tag(Text("上周冠军", bundle: .module), systemImage: "crown")
+                    .fixedSize()
             }
             if member.isCaptain {
                 Text("队长", bundle: .module)
@@ -183,6 +185,7 @@ struct MemberRow: View {
                     .frame(minHeight: Sizing.tag)
                     .background(Color(role: .bgSubtle, in: theme), in: Capsule())
                     .lineLimit(1)
+                    .fixedSize()
             }
             if member.isManageable {
                 Menu {
@@ -225,6 +228,8 @@ struct MemberRow: View {
                     .frame(height: Sizing.hairline)
             }
         }
+        // Contain, so the row's identifier doesn't replace its ··· button's.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squad.member")
     }
 }

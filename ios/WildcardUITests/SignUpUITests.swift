@@ -40,7 +40,8 @@ final class SignUpUITests: XCTestCase {
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
-        nickname.typeText("Tracy")
+        // Return puts the keyboard away: the editor doesn't make room for it, so it covers 就这样.
+        nickname.typeText("Tracy\n")
         waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
         settle()
         keepScreenshot(named: "41-signup-character")
@@ -137,7 +138,7 @@ final class SignUpUITests: XCTestCase {
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
-        nickname.typeText("Sam")
+        nickname.typeText("Sam\n")
         waitFor(editorDone, "isEnabled == true", "Done stays off with a nickname")
         editorDone.tap()
 
@@ -176,7 +177,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
-        nickname.typeText("Tracy")
+        nickname.typeText("Tracy\n")
         waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
         editorDone.tap()
         let squadDone = app.buttons["squad.done"]
