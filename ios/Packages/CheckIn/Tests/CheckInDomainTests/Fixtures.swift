@@ -35,7 +35,7 @@ func sampleToday() -> SquadToday {
         today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false),
         myWeek: MyWeek(
             firstDay: tuesday.weekStart, lastDay: tuesday.weekStart.adding(days: 6),
-            week: WeekCount(trainedDays: 1, plannedDays: 5), lifetimeTrainedDays: 30),
+            week: WeekCount(trainedDays: 1, plannedDays: 5)),
         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22))
 }
 

@@ -1,5 +1,5 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
-import { weekOf } from '../../domain/days.js';
+import { weekOf, withoutTakenBackDisclaimers } from '../../domain/days.js';
 import type { Reaction } from '../../domain/reaction.js';
 import type { WeekStart } from '../../domain/weekly-plan.js';
 import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
@@ -43,9 +43,12 @@ export async function squadWeekCheckIns(
 ): Promise<SquadWeekCheckIns> {
   const { from, to } = weekOf(weekStart);
   const memberIds = await deps.membership.membersOf(squad);
-  const checkIns = (await deps.store.listForSquad({ squad, members: memberIds, from, to }))
-    .filter(({ createdAt }) => createdAt < before)
-    .toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  // A 请假条 counts as taken back only by a 练了 made before the awards, as they saw the week.
+  const checkIns = withoutTakenBackDisclaimers(
+    (await deps.store.listForSquad({ squad, members: memberIds, from, to })).filter(
+      ({ createdAt }) => createdAt < before,
+    ),
+  ).toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const inSquad = new Set(memberIds);
   const all = await deps.reactions.listForAll(checkIns.map(({ id }) => id));
   const reactions = new Map<CheckInId, Reaction[]>();

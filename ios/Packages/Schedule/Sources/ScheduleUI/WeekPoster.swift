@@ -76,13 +76,13 @@ struct WeekPoster: View {
                 .padding(.leading, Space.m + 2)
                 .padding(.top, Space.s + 2)
                 .accessibilityIdentifier("schedule.poster.title")
-            Text(verbatim: ScheduleLabels.week(content.weekStart))
+            Text(verbatim: ScheduleLabels.week(content.weekNumber))
                 .typeStyle(TypeRamp.posterWeek)
                 .fixedSize()
                 .padding(.leading, Space.s + 2)
                 .padding(.top, weekNumberTop)
                 .allowsHitTesting(false)
-                .accessibilityLabel(Text("第 \(content.weekStart.weekOfYear) 周", bundle: .module))
+                .accessibilityLabel(Text("第 \(content.weekNumber) 周", bundle: .module))
         }
     }
 

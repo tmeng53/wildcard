@@ -28,9 +28,9 @@ enum ScheduleLabels {
         "\(day.month)/\(day.day)"
     }
 
-    /// W42.
-    static func week(_ weekStart: LocalDay) -> String {
-        "W\(weekStart.weekOfYear)"
+    /// W3, the week the member joined being W1.
+    static func week(_ number: Int) -> String {
+        "W\(number)"
     }
 
     /// A lane's sport, or 休息; a training day with no sport set says 训练.

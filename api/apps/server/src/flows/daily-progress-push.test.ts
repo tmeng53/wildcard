@@ -444,12 +444,14 @@ describe('the daily progress push', () => {
   });
 
   it('carries teammates’ posts today, newest first, with their reactions and names', async () => {
-    const [eve, mate, third] = [
+    // The 请假条 is someone else's: a 练了 the same day would take it back.
+    const [eve, mate, third, resting] = [
       await member(evening),
       await member(evening),
       await member(morning),
+      await member(evening),
     ];
-    const squad = await squadOf(eve, mate, third);
+    const squad = await squadOf(eve, mate, third, resting);
     await call('PUT', {
       path: '/me/profile',
       token: mate.token,
@@ -470,10 +472,10 @@ describe('the daily progress push', () => {
       (
         await call('PUT', {
           path: `/check-ins/${id}`,
-          token: mate.token,
+          token: resting.token,
           body: {
             version: 1,
-            day: dayAt(mate.offset),
+            day: dayAt(resting.offset),
             createdAt: new Date(Date.now() - 30_000).toISOString(),
             audience: [squad],
             kind: 'disclaimer',
@@ -490,7 +492,12 @@ describe('the daily progress push', () => {
     await run();
     const [sent] = sentTo.get(eve.phone) ?? [];
     expect(sent?.event.today).toStrictEqual({
-      members: [{ id: eve.userId }, { id: mate.userId, name: '小米' }, { id: third.userId }],
+      members: [
+        { id: eve.userId },
+        { id: resting.userId },
+        { id: third.userId },
+        { id: mate.userId, name: '小米' },
+      ],
       posts: [
         {
           id,
@@ -512,7 +519,7 @@ describe('the daily progress push', () => {
         },
         {
           id: older,
-          by: 1,
+          by: 3,
           kind: 'trained',
           sport: 'run',
           at: anyTime,

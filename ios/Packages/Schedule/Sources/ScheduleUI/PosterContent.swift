@@ -34,6 +34,8 @@ struct PosterContent: Equatable {
 
     let nickname: String
     let weekStart: LocalDay
+    /// W1 for the week the member joined.
+    let weekNumber: Int
     let lanes: [Lane]
     let titles: [AwardTitle]
     let fuel: [FuelGoal]
@@ -45,9 +47,12 @@ struct PosterContent: Equatable {
     var weekEnd: LocalDay { weekStart.adding(days: WeeklyPlan.dayCount - 1) }
 
     /// The week as the member sees it now, with what they have hold of.
-    init(sheet: WeekSheet, board: WeekBoard?, nickname: String, fuelOpen: Bool, typingFuel: String = "") {
+    init(
+        sheet: WeekSheet, board: WeekBoard?, nickname: String, weekNumber: Int, fuelOpen: Bool, typingFuel: String = ""
+    ) {
         self.nickname = nickname
         weekStart = sheet.weekStart
+        self.weekNumber = weekNumber
         let days = board?.days ?? sheet.plan
         let tense = board?.tense ?? .past
         lanes = days.indices.map { index in
@@ -75,7 +80,7 @@ struct PosterContent: Equatable {
     /// The same week to save as a picture: nothing held, the goals shut.
     var forSaving: PosterContent {
         PosterContent(
-            nickname: nickname, weekStart: weekStart,
+            nickname: nickname, weekStart: weekStart, weekNumber: weekNumber,
             lanes: lanes.map {
                 Lane(
                     index: $0.index, day: $0.day, isToday: $0.isToday, plan: $0.plan, mark: $0.mark,
@@ -85,11 +90,13 @@ struct PosterContent: Equatable {
     }
 
     private init(
-        nickname: String, weekStart: LocalDay, lanes: [Lane], titles: [AwardTitle], fuel: [FuelGoal], fuelOpen: Bool,
+        nickname: String, weekStart: LocalDay, weekNumber: Int, lanes: [Lane], titles: [AwardTitle], fuel: [FuelGoal],
+        fuelOpen: Bool,
         fuelEditable: Bool, tally: Tally
     ) {
         self.nickname = nickname
         self.weekStart = weekStart
+        self.weekNumber = weekNumber
         self.lanes = lanes
         self.titles = titles
         self.fuel = fuel
