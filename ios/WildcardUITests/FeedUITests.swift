@@ -17,10 +17,6 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(react.waitForExistence(timeout: Self.wait), "no post to react to")
         settle()
         assertClearOfTheTabBar(app.staticTexts["feed.title"], in: app)
-        // A 练了 with its minutes shows them as the card's big number.
-        let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
-        XCTAssertTrue(minutes.exists, "no minutes on a 练了")
-        assertOnScreen(minutes, in: app)
         keepScreenshot(named: "40-feed")
 
         react.tap()
@@ -61,6 +57,26 @@ final class FeedUITests: XCTestCase {
         settle()
         assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
         keepScreenshot(named: "45-feed-end")
+    }
+
+    /// A 练了 with its minutes shows them as the card's big number. The newest posts on top are a
+    /// salad and a 请假条, so the run's card is scrolled to, a little at a time.
+    func testMinutes() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
+        let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
+        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        var drags = 0
+        while drags < Self.maxSwipes, !(minutes.exists && minutes.frame.maxY <= tabBarTop) {
+            let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(minutes.exists, "no minutes on a 练了")
+        settle()
+        assertClearOfTheTabBar(minutes, in: app)
+        keepScreenshot(named: "44-feed-minutes")
     }
 
     /// ＋ opens our own emoji grid, and holding a card then sliding along the bar picks.
