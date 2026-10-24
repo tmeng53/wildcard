@@ -6,7 +6,8 @@ import OnboardingDomain
 import SwiftUI
 
 /// The open screen: the app's name, one line, and five characters on a light floor, two at
-/// the back and three in front, the middle one biggest. On the first open WILDCARD sprints in
+/// the back and three in front, the middle one biggest. Each time the screen opens (the app
+/// starts, comes back from the background, or sign-up steps back to it) WILDCARD sprints in
 /// and breaks the finish tape while the squad watches; they cheer, then each does a check-in
 /// once. Every so often one of them changes into another look, and a tap changes it too. The
 /// middle one's look is where 角色和昵称 starts. Then 通过 Apple 继续, and the terms under it.
@@ -18,7 +19,7 @@ struct WelcomeScreen<SignIn: View>: View {
     /// roles it draws with are fixed, so the scene only fills in the signature.
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AppStorage("welcome.sprintPlayed") private var sprintPlayed = false
+    @Environment(\.scenePhase) private var scenePhase
     @State private var crowd = WelcomeCrowd()
     @State private var word: CGRect?
     @State private var sprint: SprintRunner?
@@ -28,6 +29,10 @@ struct WelcomeScreen<SignIn: View>: View {
     @State private var revealed = false
     @State private var landed = 0
     @State private var homeIndicator = 0.0
+    /// How many times the screen has opened again from the background; each plays the sprint.
+    @State private var reopens = 0
+    /// In the background, where nothing plays.
+    @State private var away = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -51,10 +56,11 @@ struct WelcomeScreen<SignIn: View>: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .coordinateSpace(.named(WelcomeTitle.space))
-            // Once the word is measured, from where it stands then. Keyed on the layout, the
-            // sprint restarted forever: the word is measured again as the sprint takes it over.
-            .task(id: word != nil) {
-                guard let word else { return }
+            // Once the word is measured, from where it stands then, and again on each reopen;
+            // going to the background cancels it. Keyed on the layout, the sprint restarted
+            // forever: the word is measured again as the sprint takes it over.
+            .task(id: word == nil || away ? -1 : reopens) {
+                guard let word, !away else { return }
                 await open(layout: Self.layout(word: word, top: top, height: proxy.size.height, unit: unit))
             }
         }
@@ -89,6 +95,7 @@ struct WelcomeScreen<SignIn: View>: View {
         }
         .haptic(.land, trigger: landed)
         .onDisappear { crowd.stop() }
+        .onChange(of: scenePhase) { _, phase in reopen(phase) }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
     }
 
@@ -129,11 +136,30 @@ struct WelcomeScreen<SignIn: View>: View {
             floorTop: top + height - WelcomeCrowd.floorAbove * unit)
     }
 
-    /// The first open plays the sprint, timed so the haptic, the cheer and the reveal land on
-    /// the break; later opens, and Reduce Motion, start at the still screen.
+    /// Going to the background puts the screen back before the sprint, out of sight; coming
+    /// back plays it again. A sheet over the screen (Sign in with Apple) only makes it
+    /// inactive, so it doesn't replay.
+    private func reopen(_ phase: ScenePhase) {
+        switch phase {
+        case .background:
+            crowd.stop()
+            away = true
+            sprint = nil
+            settled = false
+            revealed = false
+        case .active where away:
+            away = false
+            reopens += 1
+        default:
+            break
+        }
+    }
+
+    /// Each open plays the sprint, timed so the haptic, the cheer and the reveal land on the
+    /// break; Reduce Motion starts at the still screen.
     private func open(layout: FinishLineSprint.Layout) async {
-        guard !settled, !reduceMotion, !sprintPlayed else {
-            // Still, or back on the screen after the sprint: the squad plays on where it stands.
+        guard !settled, !reduceMotion else {
+            // Still, or the layout changed after the sprint: the squad plays on where it stands.
             settled = true
             revealed = true
             await crowd.load(reduceMotion: reduceMotion)
@@ -151,7 +177,6 @@ struct WelcomeScreen<SignIn: View>: View {
         let runner = SprintRunner(layout: layout)
         sprint = runner
         guard await wait(until: start + .seconds(timing.breaks), runner) else { return }
-        sprintPlayed = true
         landed += 1
         crowd.play(sprinting: true)
         guard await wait(until: start + .seconds(timing.breaks + WelcomeCrowd.revealDelay), runner) else { return }
