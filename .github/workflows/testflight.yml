@@ -78,6 +78,21 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             2>&1 | tee build-archive.log
+      # Crash reports in Sentry name our functions only with the build's debug symbols. Skipped
+      # until the repository secret SENTRY_AUTH_TOKEN exists: a Sentry organization token, which
+      # can upload files but read nothing, and names the organization itself.
+      - name: Upload debug symbols to Sentry
+        # Symbols are a help, never a reason to hold back a build.
+        continue-on-error: true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "No SENTRY_AUTH_TOKEN: crash reports show our code as addresses."
+            exit 0
+          fi
+          npx --yes @sentry/cli@3.8.0 debug-files upload --project wildcard-ios \
+            build/testflight/Wildcard.xcarchive/dSYMs
       - name: Export and upload
         run: |
           set -o pipefail
