@@ -2,7 +2,7 @@ import AvatarArt
 import AvatarDomain
 import AvatarLooks
 
-/// The squad, then one look for every other body, hair, hat, pair of shoes and face part in the
+/// The squad, then one look for every other body, hair, piece of clothing and face part in the
 /// bundle (a body in a tee and shorts, the rest on the lifter), and a person and each kind of animal
 /// holding every prop, so tests that run over looks cover every piece of art.
 let wardrobe: [Outfit] = {
@@ -10,8 +10,8 @@ let wardrobe: [Outfit] = {
     func unworn(_ slot: Slot) -> [String] {
         PlaceholderCharacter.variants(for: slot).filter { variant in !squad.contains { $0.variants[slot] == variant } }
     }
-    let bodies = unworn("body").map { Outfit(["body": $0, "top": "tee", "bottom": "shorts"]) }
-    let onLifter = (["hair", "hat", "shoes"] + PlaceholderCharacter.faceSlots).flatMap { slot in
+    let bodies = unworn("body").map { Outfit(["body": $0, "top": "warmup-tee", "bottom": "warmup-shorts"]) }
+    let onLifter = (["hair", "hat", "top", "bottom", "shoes", "acc"] + PlaceholderCharacter.faceSlots).flatMap { slot in
         unworn(slot).map { variant in
             var look = PlaceholderCharacter.lifter
             look.variants[slot] = variant
@@ -22,7 +22,7 @@ let wardrobe: [Outfit] = {
     let firsts = ["peach", "cat", "shiba", "collie", "rabbit", "lop", "bear"]
     let armed = firsts.flatMap { body in
         PlaceholderCharacter.variants(for: "prop").map {
-            Outfit(["body": body, "top": "tee", "bottom": "shorts", "prop": $0])
+            Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts", "prop": $0])
         }
     }
     return squad + bodies + onLifter + armed

@@ -13,7 +13,8 @@ import Testing
 
 private func character(_ nickname: String, body: String, persona: Persona) throws -> NewCharacter {
     NewCharacter(
-        outfit: Outfit(["body": body, "top": "tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
+        outfit: Outfit(
+            ["body": body, "top": "warmup-tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
         persona: persona, nickname: try Nickname(nickname))
 }
 
@@ -40,7 +41,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
             == MemberCharacter(
                 nickname: try Nickname("小林"),
                 look: CharacterLook(
-                    persona: "shy", variants: ["body": "calico", "top": "tee"], colors: ["top": "#3A7BD5"])))
+                    persona: "shy", variants: ["body": "calico", "top": "warmup-tee"], colors: ["top": "#3A7BD5"])))
     let thisWeek = LocalDay(at: Date(), in: profile.timeZone).weekStart
     #expect(try await member.api.weeklyPlan(weekStart: thisWeek).days == week)
 
@@ -66,7 +67,8 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
                 code: code, name: "早八健身", memberCount: 1, isFull: false,
                 looks: [
                     CharacterLook(
-                        persona: "energetic", variants: ["body": "shiba", "top": "tee"], colors: ["top": "#3A7BD5"])
+                        persona: "energetic", variants: ["body": "shiba", "top": "warmup-tee"],
+                        colors: ["top": "#3A7BD5"])
                 ]))
     try await signUp.agreeToAI()
     let joined = try await signUp.join(code)
@@ -76,7 +78,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
             Squadmate(
                 id: creator.id, nickname: "阿杰",
                 outfit: Outfit(
-                    ["body": "shiba", "top": "tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
+                    ["body": "shiba", "top": "warmup-tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
                 persona: .energetic)
         ])
     // Joining again, after a lost answer, is the same squad.
