@@ -292,7 +292,7 @@ extension LocalDay {
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
         let date = calendar.date(from: DateComponents(year: year, month: month, day: day)) ?? .distantPast
         let style = Date.FormatStyle(timeZone: calendar.timeZone).weekday(.abbreviated)
-        return date.formatted(style.locale(Locale.current))
+        return date.formatted(style.locale(AppLanguage.current.locale))
     }
 }
 #endif
