@@ -163,9 +163,9 @@ export function createApp(deps: AppDependencies) {
     // Drafts being off is how the server runs until it has a key, which main.ts logs once.
     const expected = error instanceof DisclaimerWriterOffError;
     const response = problemResponse(error);
+    // The route, not the path, so no invite code or id lands in the log or an error report.
     if (!expected && (!isAppError(error) || HTTP_STATUS[error.status] >= 500)) {
-      // The route, not the path, so no invite code or id lands in the log or the error report;
-      // the trace id finds the request's other log lines.
+      // The trace id finds the request's other log lines.
       deps.log.error('request failed', {
         method: c.req.method,
         route: routePath(c),
@@ -173,8 +173,7 @@ export function createApp(deps: AppDependencies) {
         error,
       });
     } else if (isAppError(error) && response.status < 500) {
-      // A refusal is the client's to fix, but it shows which app builds fail and why. The route,
-      // not the path, so no invite code or id lands in the log.
+      // A refusal is the client's to fix, but it shows which app builds fail and why.
       deps.log.warn('request refused', {
         method: c.req.method,
         route: routePath(c),

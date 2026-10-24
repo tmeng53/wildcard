@@ -12,6 +12,7 @@ public actor InMemorySignUpService: SignUpService {
     private(set) var plan: [PlanDay]?
     private(set) var squad: JoinedSquad?
     private(set) var agreedToAI = false
+    private(set) var scene: SceneID?
 
     public init(sample: JoinedSquad) {
         self.sample = sample
@@ -66,5 +67,10 @@ public actor InMemorySignUpService: SignUpService {
     public func savePlan(_ days: [PlanDay]) async throws(SignUpError) {
         guard days.count == WeeklyPlan.dayCount else { throw .rejected }
         plan = days
+    }
+
+    public func pickScene(_ scene: SceneID, for squad: SquadID) async throws(SignUpError) {
+        guard squad == self.squad?.id, self.scene == nil || self.scene == scene else { throw .rejected }
+        self.scene = scene
     }
 }
