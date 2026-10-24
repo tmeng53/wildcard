@@ -281,6 +281,16 @@
         }
       }
     },
+    "分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
+          }
+        }
+      }
+    },
     "分隔线、未完成": {
       "localizations": {
         "en": {
@@ -317,6 +327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        }
+      }
+    },
+    "刻度尺：滑动选数字，每过一格轻震一下": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruler: slide to a number, one light tick per mark"
           }
         }
       }
@@ -917,6 +937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "S"
+          }
+        }
+      }
+    },
+    "时长 · 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
           }
         }
       }
