@@ -37,14 +37,18 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
                     .accessibilityIdentifier("settings.back")
-                MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 96, height: 120))
-                    .frame(maxWidth: .infinity)
-                    .accessibilityHidden(true)
-                Text("设置", bundle: .module)
-                    .typeStyle(TypeRamp.largeTitle)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Space.s)
+                // The character types beside the heading, standing on its line, so the menu starts
+                // right under it.
+                HStack(alignment: .bottom, spacing: Space.s) {
+                    Text("设置", bundle: .module)
+                        .typeStyle(TypeRamp.largeTitle)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer(minLength: 0)
+                    MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
+                        .accessibilityHidden(true)
+                }
+                .padding(.top, Space.s)
                 squadGroup
                 preferencesGroup
                 aboutGroup
