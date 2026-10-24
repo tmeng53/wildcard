@@ -113,6 +113,8 @@ private struct WeekPoster: View {
         .dynamicTypeSize(.large)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: week)
         .onChange(of: model.hops) { _, _ in model.myCharacter?.play("cheer") }
+        // On the poster the character trains at the scene's sport, as on the scene.
+        .task(id: theme) { model.myCharacter?.train(on: theme) }
     }
 
     private func dayRow(_ index: Int) -> some View {

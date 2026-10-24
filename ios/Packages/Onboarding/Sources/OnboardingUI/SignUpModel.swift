@@ -120,11 +120,9 @@ public final class SignUpModel {
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, daysGone: daysGone).choices {
             week = WeekDraft(sports: sports.picked, daysGone: daysGone)
         }
-        if next == .week {
-            actOutWeek()
-        } else if step == .week, next == .sports {
-            // Back to the sports: the character wears the one picked last again.
-            actedOut = nil
+        if step == .week, next == .sports {
+            // Back to the sports: the character wears the one picked last again, not the
+            // scene's kit the week's poster put on it.
             myCharacter?.dress(for: sports.wearing)
         }
         if next == .scene, scenePicker == nil, let joined {
@@ -277,20 +275,6 @@ public final class SignUpModel {
     /// Sets the selected day; the character hops when a rest day becomes a training day.
     func setDay(_ day: PlanDay) {
         if week?.set(day) == true { hops += 1 }
-        actOutWeek()
-    }
-
-    /// What the poster's character acts out now, so it changes only when the week's most
-    /// planned training does.
-    @ObservationIgnored private var actedOut: PlanDay?
-
-    /// The character on the poster loops the training planned most, or sits for a week of rest.
-    private func actOutWeek() {
-        guard let days = week?.days else { return }
-        let top = PlanDay.mostPlanned(in: days)
-        guard top != actedOut else { return }
-        actedOut = top
-        myCharacter?.actOut(days)
     }
 
     /// Bumped each time a rest day becomes a training day.
