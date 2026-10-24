@@ -1,5 +1,3 @@
-import { CUSTOM_SPORT } from '@wildcard/sport-ids';
-
 import { checkCheckInTime } from '../../domain/check-in-time.js';
 import {
   isSameCheckIn,
@@ -17,7 +15,6 @@ import {
   PhotoInUseError,
   PhotoNotUploadedError,
   PhotoNotYoursError,
-  SportNotListedError,
   SquadNotJoinedError,
 } from '../../errors.js';
 import type {
@@ -29,6 +26,7 @@ import type {
   SquadMembership,
   WeeklyPlanStore,
 } from '../../ports.js';
+import { checkSport } from '../check-sport.js';
 import { planTrainedDay } from '../weekly-plans.js';
 
 export interface SaveCheckInInput {
@@ -121,13 +119,6 @@ async function insertCheckIn(
   if (outcome.taken === 'dailyDisclaimer') throw new DisclaimerAlreadyPostedError(checkIn.day);
   if (outcome.taken === 'photo') throw new PhotoInUseError();
   throw new CheckInIdConflictError(id);
-}
-
-/** A listed sport, or 其他. */
-export async function checkSport(sports: SportList, sport: string): Promise<void> {
-  if (sport !== CUSTOM_SPORT && !(await sports.isListed(sport))) {
-    throw new SportNotListedError(sport);
-  }
 }
 
 /** Each photo is the member's own and already uploaded. */

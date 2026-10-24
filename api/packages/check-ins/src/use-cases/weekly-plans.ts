@@ -13,7 +13,7 @@ import {
 } from '../domain/weekly-plan.js';
 import { TimeZoneNotSetError } from '../errors.js';
 import type { Clock, MemberCalendar, SportList, WeeklyPlanStore } from '../ports.js';
-import { checkSport } from './check-ins/save-check-in.js';
+import { checkSport } from './check-sport.js';
 
 interface Deps {
   readonly store: WeeklyPlanStore;
