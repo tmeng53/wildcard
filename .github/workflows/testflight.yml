@@ -3,8 +3,8 @@
 # TEMPORARY, until full launch: while the repo is public GitHub's Macs are free, and internal
 # testers get every build. At launch (repo goes private, releases get gated) revisit this: switch
 # back to manual runs, or to a schedule, so macOS minutes and tester notices stay under control.
-# A burst of merges collapses into one build of the latest main: a newer push cancels the running
-# and the pending upload. It shares the one free Mac with verify's scheduled `ios` job, but runs
+# A burst of merges collapses into one build of the latest main: a newer push replaces the pending
+# upload, and the running one finishes. It shares the one free Mac with verify's scheduled `ios` job, but runs
 # at most one at a time (about 6 minutes), so that job waits at most one build.
 # Signing is automatic and Apple-managed: xcodebuild signs in to App Store Connect with an API key
 # and Apple's cloud-managed distribution certificate signs the export, so no certificate or
@@ -30,7 +30,9 @@ permissions:
 
 concurrency:
   group: testflight
-  cancel-in-progress: true
+  # A running upload always finishes; only the waiting one is replaced by a newer push. With true,
+  # a stream of merges kept cancelling the build in progress and no build ever uploaded.
+  cancel-in-progress: false
 
 # None of these is secret.
 env:

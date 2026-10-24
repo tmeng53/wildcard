@@ -29,7 +29,7 @@ import type {
   VerifyToken,
 } from './ports.js';
 import { problemResponse } from './problem.js';
-import { traceIdOf } from './trace.js';
+import { requestTrace } from './request-trace.js';
 import { aiConsent } from './routes/ai-consent.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
@@ -112,6 +112,8 @@ export function createApp(deps: AppDependencies) {
     bearerFormat: 'JWT',
     description: 'A Supabase Auth access token.',
   });
+  // First, so everything a request logs carries its trace, and every response its id.
+  app.use(requestTrace());
 
   app.route('/', health(deps));
   app.route('/', me(deps));
@@ -165,13 +167,7 @@ export function createApp(deps: AppDependencies) {
     const response = problemResponse(error);
     // The route, not the path, so no invite code or id lands in the log or an error report.
     if (!expected && (!isAppError(error) || HTTP_STATUS[error.status] >= 500)) {
-      // The trace id finds the request's other log lines.
-      deps.log.error('request failed', {
-        method: c.req.method,
-        route: routePath(c),
-        traceId: traceIdOf((name) => c.req.header(name)),
-        error,
-      });
+      deps.log.error('request failed', { method: c.req.method, route: routePath(c), error });
     } else if (isAppError(error) && response.status < 500) {
       // A refusal is the client's to fix, but it shows which app builds fail and why.
       deps.log.warn('request refused', {

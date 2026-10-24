@@ -43,6 +43,7 @@ describe('readConfig', () => {
       scheduler: undefined,
       apns: undefined,
       errorReports: undefined,
+      traceProject: undefined,
     });
   });
 
@@ -60,6 +61,14 @@ describe('readConfig', () => {
       release: undefined,
     });
     expect(() => readConfig({ ...base, SENTRY_DSN_API: 'not a url' })).toThrow(/SENTRY_DSN_API/);
+  });
+
+  it('names log traces in the Google Cloud project the deploy says', () => {
+    const project = 'soy-transducer-512501-h1';
+    expect(readConfig({ ...base, GOOGLE_CLOUD_PROJECT: project }).traceProject).toBe(project);
+    expect(() => readConfig({ ...base, GOOGLE_CLOUD_PROJECT: 'Not/A project' })).toThrow(
+      /GOOGLE_CLOUD_PROJECT/,
+    );
   });
 
   it('keeps each provider’s key, and no longer reads which model writes what', () => {

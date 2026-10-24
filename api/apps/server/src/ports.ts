@@ -75,7 +75,8 @@ export type RevokeAppleSignIn = (authorizationCode: string) => Promise<void>;
 /**
  * Where errors the server couldn't handle go to be grouped and seen (Sentry today), beside the
  * log. A report never names a member, a path or a body: only what failed, the request's method
- * and route, and its trace id, which finds the request's log lines.
+ * and route, and its trace id, which finds the request's log lines (the app sees it as
+ * `X-Request-Id`).
  */
 export interface ErrorReports {
   /** Queues a report and returns at once; it never throws, and a report that can't go is lost. */
@@ -91,7 +92,7 @@ export interface ErrorContext {
   readonly method?: string | undefined;
   /** The route's pattern (`/squads/:squadId`), never the path, which holds ids and codes. */
   readonly route?: string | undefined;
-  /** The request's trace id, as Cloud Run's load balancer gave it. */
+  /** The request's trace id: the `requestId` on its log lines and its `X-Request-Id`. */
   readonly traceId?: string | undefined;
 }
 

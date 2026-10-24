@@ -77,6 +77,12 @@ const Environment = z.object({
   SENTRY_DSN_API: z.url({ protocol: /^https$/ }).optional(),
   // The revision Cloud Run is serving, which it sets itself; reports name it as the release.
   K_REVISION: z.string().min(1).optional(),
+  // The Google Cloud project the server runs in (set by the deploy), so each log entry names its
+  // request's trace and Cloud Logging groups a request's entries. Unset off Google Cloud.
+  GOOGLE_CLOUD_PROJECT: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/)
+    .optional(),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
@@ -129,6 +135,8 @@ export interface Config {
         >;
       }
     | undefined;
+  /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
+  readonly traceProject: string | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -197,6 +205,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
       result.data.SENTRY_DSN_API === undefined
         ? undefined
         : { dsn: result.data.SENTRY_DSN_API, release: result.data.K_REVISION },
+    traceProject: result.data.GOOGLE_CLOUD_PROJECT,
   };
 }
 

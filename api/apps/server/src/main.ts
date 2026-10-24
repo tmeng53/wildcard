@@ -75,7 +75,7 @@ import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
-import { createLog, reportingErrors } from './log.js';
+import { createLog, redactText, reportingErrors } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
 
@@ -83,8 +83,12 @@ import type { Database } from './ports.js';
 const config = readConfig(process.env);
 // Every error the server logs also goes to Sentry, once the API project's DSN is set.
 const errorReports =
-  config.errorReports === undefined ? undefined : createSentryErrorReports(config.errorReports);
-const stdoutLog = createLog((line) => process.stdout.write(line));
+  config.errorReports === undefined
+    ? undefined
+    : createSentryErrorReports({ ...config.errorReports, redact: redactText });
+const stdoutLog = createLog((line) => process.stdout.write(line), {
+  traceProject: config.traceProject,
+});
 const log = errorReports === undefined ? stdoutLog : reportingErrors(stdoutLog, errorReports);
 if (errorReports === undefined) log.info('no Sentry DSN (SENTRY_DSN_API): errors are only logged');
 const db = createDatabase(config.databaseUrl, {

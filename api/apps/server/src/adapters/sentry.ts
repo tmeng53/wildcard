@@ -13,6 +13,11 @@ export function createSentryErrorReports(options: {
   readonly dsn: string;
   /** The deployed revision, which Sentry shows as the release. */
   readonly release: string | undefined;
+  /**
+   * Masks what may hide in an error's message (an email, a token, a photo's path), as the log
+   * does, before a report leaves.
+   */
+  readonly redact: (text: string) => string;
   /** For tests: where envelopes go instead of Sentry's servers. */
   readonly transport?: Sentry.NodeOptions['transport'];
 }): ErrorReports {
@@ -40,10 +45,15 @@ export function createSentryErrorReports(options: {
       Sentry.onUncaughtExceptionIntegration(),
       Sentry.onUnhandledRejectionIntegration(),
     ],
-    // And drop it again on the way out, in case a later SDK adds it by default.
+    // Drop it again on the way out, in case a later SDK adds it by default, and mask what an
+    // error's message may carry.
     beforeSend: (event) => {
       delete event.user;
       delete event.request;
+      for (const exception of event.exception?.values ?? []) {
+        if (exception.value !== undefined) exception.value = options.redact(exception.value);
+      }
+      if (event.message !== undefined) event.message = options.redact(event.message);
       return event;
     },
     ...(options.transport === undefined ? {} : { transport: options.transport }),
@@ -54,7 +64,7 @@ export function createSentryErrorReports(options: {
         scope.setTag('log_message', context.message);
         if (context.method !== undefined) scope.setTag('method', context.method);
         if (context.route !== undefined) scope.setTag('route', context.route);
-        if (context.traceId !== undefined) scope.setTag('trace_id', context.traceId);
+        if (context.traceId !== undefined) scope.setTag('request_id', context.traceId);
         Sentry.captureException(error);
       });
     },

@@ -30,15 +30,43 @@ struct WeekBoardTests {
         #expect(board.focus == .none)
     }
 
-    @Test func thisWeekKeepsTodayAndTheDaysBefore() {
+    @Test func thisWeekKeepsTheDaysBeforeToday() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
-        for day in 0...3 {
+        for day in 0...2 {
             #expect(board.tap(day) == .locked)
             #expect(!board.isEditable(day))
         }
         #expect(board.isEditable(4))
         #expect(board.tap(4) == .selected)
         #expect(board.focus == .selected(4))
+    }
+
+    @Test func todaysTrainingDayPicksAnotherSportButStaysATrainingDay() {
+        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
+        #expect(board.isEditable(3))
+        #expect(board.tap(3) == .selected)
+        board.rest()
+        #expect(board.days[3] == .train(.sport(.strength)))
+        board.pick(.sport(.swim))
+        #expect(board.days[3] == .train(.sport(.swim)))
+        #expect(board.plannedDays == 5)
+    }
+
+    @Test func aRestTodayBecomesATrainingDay() {
+        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-21"))
+        #expect(board.isEditable(2))
+        #expect(board.tap(2) == .selected, "today is picked, not lifted")
+        board.pick(.sport(.swim))
+        #expect(board.days[2] == .train(.sport(.swim)))
+        #expect(board.plannedDays == 6, "one rest day fewer")
+    }
+
+    @Test func aLiftedRestDayNeverSwapsWithToday() {
+        var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
+        board.tap(5)
+        #expect(!board.isSwapTarget(3))
+        #expect(board.tap(3) == .selected, "today is picked, not swapped")
+        #expect(board.days == plan)
     }
 
     @Test func thisWeekPicksAnotherSportButNeverRest() {

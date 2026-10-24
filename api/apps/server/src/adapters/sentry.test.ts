@@ -2,6 +2,7 @@ import type { NodeOptions } from '@sentry/node';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { redactText } from '../log.js';
 import { createSentryErrorReports } from './sentry.js';
 
 const EnvelopeItem = z.tuple([
@@ -11,11 +12,12 @@ const EnvelopeItem = z.tuple([
 type Envelope = Parameters<ReturnType<NonNullable<NodeOptions['transport']>>['send']>[0];
 
 describe('createSentryErrorReports', () => {
-  it('sends the error, its cause and where it happened, and nothing about the member', async () => {
+  it('sends the error and its cause, masked as the log masks them, where it happened, and nothing about the member', async () => {
     const sent: Envelope[] = [];
     const reports = createSentryErrorReports({
       dsn: 'https://public@o1.ingest.us.sentry.io/2',
       release: 'wildcard-api-00042-abc',
+      redact: redactText,
       // Sentry's servers are never called: the envelope is kept here instead.
       transport: () => ({
         send: (envelope) => {
@@ -27,7 +29,9 @@ describe('createSentryErrorReports', () => {
     });
 
     reports.report(
-      new Error('the database dropped the connection', { cause: new Error('ECONNRESET') }),
+      new Error('the database dropped the connection', {
+        cause: new Error('auth failed for postgres://admin:hunter2@db.example.com:5432/postgres'),
+      }),
       {
         message: 'request failed',
         method: 'GET',
@@ -49,11 +53,14 @@ describe('createSentryErrorReports', () => {
         log_message: 'request failed',
         method: 'GET',
         route: '/squads/:squadId',
-        trace_id: '105445aa7843bc8bf206b12000100000',
+        request_id: '105445aa7843bc8bf206b12000100000',
       },
       exception: {
         values: [
-          { type: 'Error', value: 'ECONNRESET' },
+          {
+            type: 'Error',
+            value: 'auth failed for postgres://[credentials]@db.example.com:5432/postgres',
+          },
           { type: 'Error', value: 'the database dropped the connection' },
         ],
       },
