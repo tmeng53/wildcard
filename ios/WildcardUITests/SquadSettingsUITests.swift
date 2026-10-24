@@ -28,6 +28,9 @@ final class SquadSettingsUITests: XCTestCase {
         waitFor(
             app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3), "exists == false",
             "大卫 is still in the squad")
+        // SwiftUI drops an alert asked for while the removal's dialog is still going away.
+        waitFor(confirm, "exists == false", "removing's dialog didn't close")
+        settle()
 
         app.buttons["squad.rename"].tap()
         let field = app.textFields["squad.rename.field"]
