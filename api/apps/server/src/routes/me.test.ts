@@ -312,7 +312,7 @@ describe('PUT /me/profile', () => {
   /** A look as the character editor makes one: a cat with a hoodie, a swatch and a persona. */
   const look = {
     persona: 'deadpan',
-    variants: { body: 'tuxedo', top: 'hoodie', prop: 'racket' },
+    variants: { body: 'tuxedo', top: 'warmup-hoodie', prop: 'racket' },
     colors: { top: '#2D5BA0' },
   };
 
@@ -422,7 +422,10 @@ describe('PUT /me/profile', () => {
     ['a nickname with a link', { nickname: '看abc.com', look }],
     ['no nickname', { look }],
     ['no look', { nickname: '小周' }],
-    ['a look with no body', { nickname: '小周', look: { ...look, variants: { top: 'hoodie' } } }],
+    [
+      'a look with no body',
+      { nickname: '小周', look: { ...look, variants: { top: 'warmup-hoodie' } } },
+    ],
     ['a look with no persona', { nickname: '小周', look: { variants: look.variants, colors: {} } }],
     [
       'a color for a slot it doesn’t wear',

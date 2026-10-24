@@ -418,7 +418,7 @@ if want squad-today; then
   done
   # The runner picks a catchphrase (口头禅) and makes a character; the napper's catchphrases are
   # refused, so theirs stays unset.
-  runner_look='{"persona":"energetic","variants":{"body":"shiba","top":"jersey"},"colors":{"top":"#2D5BA0"}}'
+  runner_look='{"persona":"energetic","variants":{"body":"shiba","top":"nolook-jersey"},"colors":{"top":"#2D5BA0"}}'
   call PUT /me/profile "$runner_token" "{\"version\":1,\"timeZone\":\"$zone\",\"catchphrase\":\" 冲就完了🔥 \",\"character\":{\"nickname\":\" 跑跑 \",\"look\":$runner_look}}"
   expect 200
   [ "$(jq -r .catchphrase <<<"$body")" = '冲就完了🔥' ] || fail "the catchphrase should be saved trimmed: $body"

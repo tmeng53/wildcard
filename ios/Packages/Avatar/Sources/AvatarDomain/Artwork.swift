@@ -28,9 +28,11 @@ public struct Stroke: Hashable, Sendable {
     public var width: Double
     public var cap: Cap
     public var join: Join
+    /// Dash and gap lengths, repeating, for a stitched line; empty for a solid one.
+    public var dash: [Double]
 
-    public init(color: RGBAColor, width: Double, cap: Cap = .butt, join: Join = .miter) {
-        (self.color, self.width, self.cap, self.join) = (color, width, cap, join)
+    public init(color: RGBAColor, width: Double, cap: Cap = .butt, join: Join = .miter, dash: [Double] = []) {
+        (self.color, self.width, self.cap, self.join, self.dash) = (color, width, cap, join, dash)
     }
 }
 

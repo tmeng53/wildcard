@@ -58,9 +58,6 @@ struct ChoicesPanel: View {
             }
         case .outfit:
             scroll {
-                ChoiceSection(label: Text("帽子", bundle: .module)) {
-                    TileGrid(model: model, slot: "hat", variants: variants("hat"), offersNothing: true)
-                }
                 ChoiceSection(label: Text("上衣", bundle: .module)) {
                     SwatchRow(model: model, slot: "top")
                     TileGrid(model: model, slot: "top", variants: variants("top"), offersNothing: false)
@@ -68,6 +65,18 @@ struct ChoicesPanel: View {
                 ChoiceSection(label: Text("下装", bundle: .module)) {
                     SwatchRow(model: model, slot: "bottom")
                     TileGrid(model: model, slot: "bottom", variants: variants("bottom"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("鞋", bundle: .module)) {
+                    SwatchRow(model: model, slot: "shoes")
+                    TileGrid(model: model, slot: "shoes", variants: variants("shoes"), offersNothing: false)
+                }
+                ChoiceSection(label: Text("帽子", bundle: .module)) {
+                    SwatchRow(model: model, slot: "hat")
+                    TileGrid(model: model, slot: "hat", variants: variants("hat"), offersNothing: true)
+                }
+                ChoiceSection(label: Text("配件", bundle: .module)) {
+                    SwatchRow(model: model, slot: "acc")
+                    TileGrid(model: model, slot: "acc", variants: variants("acc"), offersNothing: true)
                 }
             }
         case .prop:

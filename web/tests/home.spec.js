@@ -86,6 +86,18 @@ test('a tap makes a character say its lines in turn, one bubble at a time, on sc
   expect(bubble.x + bubble.width).toBeLessThanOrEqual(320);
 });
 
+test('a prop that hangs from the hand keeps level as the arm swings; a gripped one swings', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const level = await page.evaluate(() =>
+    Object.fromEntries(window.WILDCARD_CHARACTERS.cast.map(({ id, level }) => [id, level])),
+  );
+  // Snow's tumbler, Buns's chalk bag and Oreo's yoga mat hang; Kai's dumbbell and Garfield's racket are gripped.
+  for (const id of ['snow', 'buns', 'oreo']) expect(level[id].length, id).toBeGreaterThan(0);
+  for (const id of ['kai', 'garfield']) expect(level[id], id).toEqual([]);
+});
+
 test('the zh-Hant page speaks Traditional Chinese when tapped', async ({ page }) => {
   await page.goto('/zh-hant/');
   const kai = page.getByRole('button', { name: '阿凱' });

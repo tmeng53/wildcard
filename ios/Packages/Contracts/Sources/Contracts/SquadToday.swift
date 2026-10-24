@@ -95,19 +95,16 @@ public struct WeekCount: Hashable, Sendable {
     }
 }
 
-/// The signed-in member's week and lifetime.
+/// The signed-in member's week.
 public struct MyWeek: Hashable, Sendable {
     /// The week's Monday and Sunday.
     public let firstDay: LocalDay
     public let lastDay: LocalDay
     public var week: WeekCount
-    /// Days ever with a 练了.
-    public var lifetimeTrainedDays: Int
 
-    public init(firstDay: LocalDay, lastDay: LocalDay, week: WeekCount, lifetimeTrainedDays: Int) {
+    public init(firstDay: LocalDay, lastDay: LocalDay, week: WeekCount) {
         self.firstDay = firstDay
         self.lastDay = lastDay
         self.week = week
-        self.lifetimeTrainedDays = lifetimeTrainedDays
     }
 }
