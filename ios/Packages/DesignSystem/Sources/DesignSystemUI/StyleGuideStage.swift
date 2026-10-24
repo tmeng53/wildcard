@@ -8,6 +8,7 @@ struct StageSection: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.sceneTheme) private var theme
     @State private var isTalking = true
+    @State private var isLit = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
@@ -58,6 +59,16 @@ struct StageSection: View {
                         kind: .status(detail: nil, button: .init(Text("拍过了", bundle: .module), isDone: true) {}),
                         on: .page)
                 }
+            }
+            GuideGroup(Text("开灯的拉绳：关着是白的，开着是暖黄", bundle: .module)) {
+                HStack(alignment: .top, spacing: Space.xl) {
+                    PullCord(isLit ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isLit) {
+                        isLit.toggle()
+                    }
+                    .accessibilityIdentifier("styleguide.pullcord")
+                    PullCord(Text("关灯", bundle: .module), isOn: true) {}
+                }
+                .frame(maxWidth: .infinity)
             }
         }
     }

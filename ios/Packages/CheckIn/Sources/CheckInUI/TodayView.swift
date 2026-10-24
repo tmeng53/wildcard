@@ -70,6 +70,8 @@ public struct TodayView: View {
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
         .haptic(.poke, trigger: model.pats.landed)
         .haptic(.reaction, trigger: model.pats.landedOnMe)
+        // The cord clicking the lights on; switching them off is quiet.
+        .haptic(.lights, trigger: model.lightsPull) { _, pull in pull?.isOn == true }
         .task { await model.load() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
@@ -82,7 +84,8 @@ public struct TodayView: View {
         ZStack {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
-                celebration: model.celebrations, pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
+                lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
+                pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
                 patMate: model.patMate, arrival: model.arrival
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
@@ -95,6 +98,7 @@ public struct TodayView: View {
                     // Read again each minute, so 今日赛况 arrives at 21:00 with the app open.
                     TimelineView(.everyMinute) { _ in
                         topCard(home: home, week: week, day: day, recap: model.recap)
+                            .overlay(alignment: .bottom) { lightCord }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
@@ -192,6 +196,32 @@ public struct TodayView: View {
             .transition(.opacity)
         }
     }
+
+    /// The pull cord hanging under the card at night (the approved 开灯), its centre 40 points
+    /// from the screen's right edge; it follows the card as 今日赛况 makes it taller and fades out
+    /// while the 打卡 burst is open.
+    @ViewBuilder
+    private var lightCord: some View {
+        if model.phase == .night {
+            let isOn = model.lightsOn
+            PullCord(isOn ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isOn) {
+                model.pullCord(reduceMotion: reduceMotion)
+            }
+            .accessibilityIdentifier("today.lights")
+            .padding(.trailing, Self.cordInset)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            // Hangs from the card's bottom edge.
+            .alignmentGuide(.bottom) { $0[.top] }
+            .opacity(model.isBurstOpen ? 0 : 1)
+            .allowsHitTesting(!model.isBurstOpen)
+            .accessibilityHidden(model.isBurstOpen)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.isBurstOpen)
+            .transition(.opacity)
+        }
+    }
+
+    /// From the screen's right edge to the cord's frame: its centre sits 40 points in.
+    private static let cordInset = 40 - PullCord.size.width / 2
 
     /// A teammate's head in the squad card's ring.
     @ViewBuilder
