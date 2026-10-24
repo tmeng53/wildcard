@@ -9,6 +9,18 @@ extension Sport {
 
     public var name: Text { Text(LocalizedStringKey(nameKey), bundle: .module) }
 
+    /// Sports whose name is too long for a poster row and have a short one in the catalog
+    /// (`sportCard.<id>`); the rest use their name.
+    static let shortOnCards: Set<Sport> = [
+        .strength, .baseballSoftball, .reformerPilates, .mountainBiking, .roadCycling, .bikeCommute,
+        .walkCommute, .strollerWalk, .tableTennis, .kickboxing, .martialArts,
+    ]
+
+    /// The name on a card or poster, where a long one would clip.
+    public var cardName: Text {
+        Self.shortOnCards.contains(self) ? Text(LocalizedStringKey("sportCard.\(rawValue)"), bundle: .module) : name
+    }
+
     /// The localized name as a string, for search.
     public var localizedName: String { Bundle.module.localizedString(forKey: nameKey, value: nil, table: nil) }
 
@@ -87,6 +99,14 @@ extension Activity {
     public var name: Text {
         switch self {
         case .sport(let sport): sport.name
+        case .custom(let custom): Text(verbatim: custom.name)
+        }
+    }
+
+    /// The name for a card or poster row: short where the full name is long.
+    public var cardName: Text {
+        switch self {
+        case .sport(let sport): sport.cardName
         case .custom(let custom): Text(verbatim: custom.name)
         }
     }

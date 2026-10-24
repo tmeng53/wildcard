@@ -10,7 +10,7 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     case squad
     /// 平时练什么？
     case sports
-    /// 一周练几天？, on the week's poster.
+    /// 本周目标, on the week's poster.
     case week
     /// 这周在哪练？: only for whoever made the squad. Five cartons; the one picked opens, and the
     /// member drops onto it at home (Tracy, 2026-10-23: 「selecting a new scene always do the
@@ -29,7 +29,7 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
 
     public var next: SignUpStep? { SignUpStep(rawValue: rawValue + 1) }
 
-    /// Where 一周练几天？ goes: whoever made the squad picks its scene; whoever joined one goes
+    /// Where 本周目标 goes: whoever made the squad picks its scene; whoever joined one goes
     /// straight to 上场 and the squad's welcome (Tracy, 2026-10-23: 「joining a new team should
     /// always do the join and teammates welcome effect」).
     public static func afterWeek(madeTheSquad: Bool) -> SignUpStep {
