@@ -160,13 +160,14 @@ struct EntranceScreen<Bar: View>: View {
         .accessibilityHidden(true)
     }
 
-    /// My week as the card's second page shows it: the plan just made, nothing done yet.
+    /// My week as the card's second page shows it: the plan just made, nothing done yet, and no
+    /// day to pick.
     private var myWeek: DesignSystemUI.MyWeek {
         let days = model.week?.days ?? Array(repeating: .rest, count: WeeklyPlan.dayCount)
         return DesignSystemUI.MyWeek(
             summary: "", done: 0, planned: model.week?.trainingDays ?? 0,
             days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone,
-            details: Array(repeating: WeekDayDetail(line: "", isPlan: true, meals: nil), count: days.count))
+            details: [])
     }
 
     /// A character with its feet at `position`, in stage points scaled by `unit`, drawn as home

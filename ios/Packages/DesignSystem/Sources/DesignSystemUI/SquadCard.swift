@@ -90,7 +90,8 @@ public struct MyWeek: Sendable, Hashable {
     public let days: [WeekDayStatus]
     /// Today's index in `days`, if this is the current week.
     public let today: Int?
-    /// Monday first, seven days: what each day shows once picked.
+    /// Monday first, seven days: what each day shows once picked; empty for a week whose days
+    /// can't be picked.
     public let details: [WeekDayDetail]
 
     public init(
@@ -303,6 +304,8 @@ private struct MyWeekPage: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    // A week without details (the 上场 card's) has no day to pick.
+                    .disabled(mine.details.isEmpty)
                     .accessibilityAddTraits(index == picked ? .isSelected : [])
                     .accessibilityIdentifier("squadcard.day.\(index)")
                     if index < mine.days.count - 1 { Spacer(minLength: 0) }
