@@ -993,18 +993,18 @@
         }
       }
     },
-    "一周练几天？": {
+    "定个本周目标": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How many days a week?"
+            "value": "Set your goal for this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一周练几天？"
+            "value": "定个本周目标"
           }
         }
       }

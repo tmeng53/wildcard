@@ -1,9 +1,10 @@
 import Contracts
 
-/// 一周练几天？, drawn on the week's poster: what each day of this week is, a sport picked in
+/// 定个本周目标, drawn on the week's poster: what each day of this week is, a sport picked in
 /// the step before, a training day with no sport named, or 休息. Tapping a day selects it, and
 /// picking what it is moves on to the next day, so a whole week takes a few taps. Days of this
-/// week that are already over can't change, as on any weekly plan, and count as 休息.
+/// week that are already over can't change, as on any weekly plan; the poster leaves them blank rather
+/// than calling them 休息, though the plan saves them as rest.
 public struct WeekDraft: Hashable, Sendable {
     public private(set) var days: [PlanDay]
     /// The day the choices below the poster are for, from 0 (the week's first day).

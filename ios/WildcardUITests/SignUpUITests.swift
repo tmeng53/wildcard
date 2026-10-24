@@ -88,7 +88,7 @@ final class SignUpUITests: XCTestCase {
 
     private func planTheWeek(in app: XCUIApplication) {
         let count = app.descendants(matching: .any)["week.count"]
-        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "一周练几天？ never appeared")
+        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "定个本周目标 never appeared")
         settle()
         keepScreenshot(named: "45-signup-week")
         // The whole poster and the day's choices show above the buttons, with no scrolling.

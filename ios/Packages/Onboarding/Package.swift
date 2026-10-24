@@ -1,7 +1,7 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// Sign-up: the open screen, then 角色和昵称, 小队, 平时练什么？, 一周练几天？ and 上场, the
+// Sign-up: the open screen, then 角色和昵称, 小队, 平时练什么？, 定个本周目标 and 上场, the
 // entrance into the squad. `OnboardingDomain` holds the flow and each step's draft (the squad
 // choice, the sports picked, the week, the welcome lines and who cheers when, and the open
 // screen's finish-line sprint); it is pure Swift

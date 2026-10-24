@@ -246,7 +246,7 @@ public final class SignUpModel {
         show(.week)
     }
 
-    // MARK: 一周练几天？
+    // MARK: 定个本周目标
 
     func selectDay(_ index: Int) {
         week?.select(index)
