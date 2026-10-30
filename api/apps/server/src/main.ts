@@ -75,6 +75,7 @@ import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
+import { sportTools } from './admin-mcp/tools/sports.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -297,6 +298,7 @@ const app = createApp({
       ...weekSummaryWordTools({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
+      ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),

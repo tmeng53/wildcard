@@ -1,6 +1,6 @@
 -- What the database keeps true about the sports list however it is edited.
 begin;
-select plan(15);
+select plan(16);
 
 select is((select count(*)::int from public.sports), 52, 'the first list has 52 sports');
 select is(
@@ -72,6 +72,13 @@ select is(
 select throws_ok(
   $$delete from public.sport_catalog_events$$,
   '42501', null, 'the log only grows'
+);
+
+-- Moving a tab swaps places in one statement; the places are checked at its end.
+select lives_ok(
+  $$ update public.sport_categories set position = case id when 'runWalk' then 2 else 1 end
+     where id in ('runWalk', 'strength') $$,
+  'two tabs swap places in one statement'
 );
 
 select * from finish();

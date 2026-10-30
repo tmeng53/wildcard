@@ -1,5 +1,5 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
-import { weekOf, withoutTakenBackDisclaimers } from '../../domain/days.js';
+import { weekOf } from '../../domain/days.js';
 import { summarizeWeek, type WeekSummary } from '../../domain/week-summary.js';
 import { localDayAt, plannedTrainingDays, type WeekStart } from '../../domain/weekly-plan.js';
 import { SquadNotJoinedError, WeekNotStartedError } from '../../errors.js';
@@ -59,9 +59,7 @@ export async function squadWeekSummary(
   // A squad has at most 8 members, so one plan read each is fine.
   const [plansOf, checkIns] = await Promise.all([
     Promise.all(memberIds.map((member) => findWeeklyPlan({ store: plans }, { member, weekStart }))),
-    store
-      .listForSquad({ squad, members: memberIds, from: week.from, to: week.to })
-      .then(withoutTakenBackDisclaimers),
+    store.listForSquad({ squad, members: memberIds, from: week.from, to: week.to }),
   ]);
   const members = memberIds.map((member, index) => ({
     member,

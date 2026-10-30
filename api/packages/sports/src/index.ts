@@ -10,5 +10,18 @@ export {
   type SportCatalog,
   type SportCategory,
 } from './domain/catalog.js';
-export type { SportStore } from './ports.js';
-export { createSports, type Sports } from './use-cases/sports.js';
+export {
+  CategoryEdit,
+  CategoryId,
+  LocalizedNamesInput,
+  PicksEdit,
+  SportEdit,
+  SportIcon,
+} from './domain/edits.js';
+export {
+  SportCategoryNotFoundError,
+  SportInPickListError,
+  SportNotOfferedError,
+} from './errors.js';
+export type { SportRecord, SportStore } from './ports.js';
+export { createSports, type Sports, type SportsAdmin } from './use-cases/sports.js';

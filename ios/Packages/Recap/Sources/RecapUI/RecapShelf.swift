@@ -92,16 +92,19 @@ public final class RecapShelf {
         show(latest, cast: cast)
     }
 
-    /// Opens the week a tapped awards push is about, once it can be read.
+    /// Opens the week a tapped awards push is about, once it can be read and has come out.
     public func open(squad id: SquadID, week monday: LocalDay) async {
         guard let squad = readSquad(), squad.id == id else { return }
         cast = squad.cast
-        guard let story = try? await service.story(squad: id, week: monday) else { return }
+        guard let story = try? await service.story(squad: id, week: monday), story.isPublished else { return }
         if monday >= (latest?.week.monday ?? monday) { latest = story }
         show(story, cast: squad.cast)
     }
 
+    /// Plays a story that came out: one that didn't may have no page at all, which the player
+    /// can't start on.
     private func show(_ story: WeekStory, cast: StoryCast) {
+        guard story.isPublished else { return }
         let model = RecapModel(
             story: story, cast: cast, service: service,
             close: { [weak self] in self?.open = nil },

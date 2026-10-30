@@ -353,6 +353,9 @@ importers:
 
   packages/sports:
     dependencies:
+      '@wildcard/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@wildcard/sport-ids':
         specifier: workspace:*
         version: link:../sport-ids

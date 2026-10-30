@@ -66,12 +66,7 @@ public struct CharacterEditorView: View {
             Spacer(minLength: 0)
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .background {
-            // A tap on the empty page puts the keyboard away; buttons and tiles keep their taps.
-            Color(role: .bgCanvas, in: theme)
-                .contentShape(Rectangle())
-                .onTapGesture { isNaming = false }
-        }
+        .background(Color(role: .bgCanvas, in: theme))
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             DoneBar(context: context, result: model.result, onDone: onDone)
