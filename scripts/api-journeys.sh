@@ -442,6 +442,9 @@ if want squad-today; then
   done
   call PUT "/me/weekly-plans/$monday" "$rester_token" "$(plan_of rest)"
   expect 200
+  # Planned days count from the day a member joined, so these members joined weeks ago and the
+  # whole week counts.
+  psql "$DB_URL" -qc "update public.profiles set created_at = now() - interval '30 days' where member_id in ('$runner', '$napper', '$rester')"
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" healthyMeal '"meal":{"caption":"沙拉"}')"
@@ -512,6 +515,8 @@ if want week-summary; then
   squad_of "$ace_token" "$writer_token" "$fan_token"
   call PUT "/me/weekly-plans/$monday" "$ace_token" "$(jq -cn '{version: 1, days: [range(7) | {kind: "rest"}]}')"
   expect 200
+  # Planned days count from the day a member joined, so these members joined weeks ago.
+  psql "$DB_URL" -qc "update public.profiles set created_at = now() - interval '30 days' where member_id in ('$ace', '$writer', '$fan')"
   call PUT "/check-ins/$(new_id)" "$ace_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
   excuse="$(new_id)"
