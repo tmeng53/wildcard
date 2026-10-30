@@ -89,7 +89,7 @@ public struct TodayView: View {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
-                pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
+                pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
                 patMate: model.patMate, arrival: model.arrival
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }

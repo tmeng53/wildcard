@@ -61,6 +61,7 @@ final class TodayUITests: XCTestCase {
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "16-today-trained-payoff")
+        tapMeInMyKit(in: app)
 
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
@@ -347,4 +348,18 @@ private func pickADayNotToday(in app: XCUIApplication) {
     XCTAssertTrue(app.buttons["squadcard.day.\(day)"].isSelected, "the tapped day isn't picked")
     let line = app.descendants(matching: .any).matching(identifier: "squadcard.dayLine").firstMatch.label
     XCTAssertTrue(line.hasPrefix(day == 0 ? "周一" : "周二"), "the line isn't the tapped day's: \(line)")
+}
+
+extension TodayUITests {
+    /// The cheer over, I hop into the sport's kit and train at it; a tap on me plays my prop's
+    /// own move.
+    fileprivate func tapMeInMyKit(in app: XCUIApplication) {
+        Thread.sleep(forTimeInterval: 2)
+        keepScreenshot(named: "16b-today-in-kit")
+        let myCharacter = app.buttons["today.me"]
+        XCTAssertTrue(myCharacter.waitForExistence(timeout: Self.wait), "my character isn't on the scene")
+        myCharacter.tap()
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "16c-today-tapped-me")
+    }
 }
