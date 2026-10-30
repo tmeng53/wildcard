@@ -36,14 +36,19 @@ public struct WeekSheet: Hashable, Sendable {
     public var plannedDays: Int { plan.count { $0 != .rest } }
 
     /// The days with a 练了, planned or not: what 本周 x/y counts, as the home's my week does.
-    public var trainedDays: Int { marks.count { $0 == .trained } }
+    public var trainedDays: Int { marks.count(where: \.isTrained) }
 }
 
 /// How a day went: one status a day, a 练了 over a 请假条.
 public enum DayMark: Hashable, Sendable {
-    case trained
+    /// A 练了, with the sport the day's latest one logged.
+    case trained(Activity)
     case disclaimer
     case none
+
+    public var isTrained: Bool {
+        if case .trained = self { true } else { false }
+    }
 }
 
 /// A title (头衔) the weekly awards gave the member, and its award line (颁奖词).
