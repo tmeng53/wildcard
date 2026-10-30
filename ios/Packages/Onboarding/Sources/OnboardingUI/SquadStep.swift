@@ -250,4 +250,11 @@ private struct CreatePanel: View {
         .padding(.top, Space.xs)
     }
 }
+
+extension SignUpModel {
+    /// 「Tracy 的小队」.
+    static func suggestedName(for nickname: String) -> String {
+        String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
+    }
+}
 #endif

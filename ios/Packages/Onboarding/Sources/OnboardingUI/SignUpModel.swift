@@ -172,11 +172,6 @@ public final class SignUpModel {
         }
     }
 
-    /// 「Tracy 的小队」.
-    static func suggestedName(for nickname: String) -> String {
-        String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
-    }
-
     // MARK: 你的小队
 
     func choose(_ choice: SquadDraft.Choice) {
@@ -293,11 +288,7 @@ public final class SignUpModel {
     /// picking it in 平时练什么 does; plain 训练 on a rest day makes it hop.
     func setDay(_ day: PlanDay) {
         let becameTraining = week?.set(day) == true
-        if case .train(let activity?) = day {
-            myCharacter?.dress(for: activity)
-        } else if becameTraining {
-            hops += 1
-        }
+        if case .train(let activity?) = day { myCharacter?.dress(for: activity) } else if becameTraining { hops += 1 }
     }
 
     /// Bumped each time a rest day becomes plain 训练.
@@ -379,27 +370,6 @@ public final class SignUpModel {
             } catch {
                 failure = error
             }
-        }
-    }
-}
-/// The carton opening on 这周在哪练？.
-struct SceneReveal {
-    let unboxing: Unboxing
-    let scene: SceneTheme
-    let startedAt: Date
-}
-
-/// 这周在哪练？'s pick, saved through sign-up's backend for the squad just made.
-private struct SignUpScenePick: ScenePickService {
-    let service: any SignUpService
-    let squad: SquadID
-
-    func pick(_ scene: SceneTheme) async throws(ScenePickError) {
-        guard let id = SceneID(rawValue: scene.rawValue) else { throw .notAllowed }
-        do throws(SignUpError) {
-            try await service.pickScene(id, for: squad)
-        } catch {
-            throw error == .unavailable ? .unavailable : .notAllowed
         }
     }
 }

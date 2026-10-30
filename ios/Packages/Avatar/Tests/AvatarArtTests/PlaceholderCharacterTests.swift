@@ -343,3 +343,17 @@ func outline(_ path: [PathElement]) -> [Point] {
                     .utf8))
     }
 }
+
+/// 秀肌肉's flexed arms and their biceps are the same fur as the arms at rest: a tuxedo's dark
+/// arm stays dark, with only the paw white.
+@Test(arguments: PlaceholderCharacter.variants(for: "body"))
+func theFlexedArmsKeepTheArmsColor(body: String) throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tank"]))
+    for (arm, flex, muscle) in [("armL", "flexL", "muscleL"), ("armR", "flexR", "muscleR")]
+        as [(PartID, PartID, PartID)]
+    {
+        let fur = try #require(figure.part(arm).art.first?.shapes[1].stroke?.color)
+        #expect(try figure.part(flex).art.first?.shapes[1].stroke?.color == fur, "\(body) \(flex)")
+        #expect(try figure.part(muscle).art.first?.shapes[0].fill == fur, "\(body) \(muscle)")
+    }
+}
