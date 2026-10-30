@@ -162,6 +162,7 @@ struct WildcardApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: AppLanguage.didChange)) { _ in
                     language = AppLanguage.current
                 }
+                .dismissesKeyboardOnTapOutside()
         }
     }
 
@@ -224,6 +225,9 @@ private struct AppRoot: View {
                 }
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
+                }
+                .onChange(of: signUp.joinedSquad) { _, squad in
+                    if let squad { SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad) }
                 }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(

@@ -16,8 +16,8 @@ final class WelcomeCrowd {
         /// How far above the bottom of the screen's free area, over the sign-in button.
         let feetAbove: Double
         let width: Double
-        /// What this one does once the cheering is over.
-        let checkIn: CheckInMove
+        /// What this one does once the cheering is over; nil stays in the idle.
+        let checkIn: CheckInMove?
     }
 
     /// One look the crowd can show: its figure, persona and player, built once.
@@ -32,14 +32,15 @@ final class WelcomeCrowd {
     /// The design's points, on a 390-point-wide screen: two back, three in front, standing up
     /// from the sign-in button so it never covers their feet, however tall the phone is. At the
     /// back the left one naps (请假条) and the right one lifts (练了); in front a salad (健康餐), a
-    /// lift in the middle and a boba (坦白放纵餐).
+    /// lift in the middle and a boba (坦白放纵餐). The meals wait for their moves with the new
+    /// props: the old ones swapped a bowl in and out of the hand, which flashed.
     static let designWidth = 390.0
     let spots = [
         Spot(centerX: 122, feetAbove: 129, width: 96, checkIn: .excuse),
         Spot(centerX: 268, feetAbove: 129, width: 96, checkIn: .workout),
-        Spot(centerX: 62, feetAbove: 53, width: 112, checkIn: .healthyMeal),
+        Spot(centerX: 62, feetAbove: 53, width: 112, checkIn: nil),
         Spot(centerX: 195, feetAbove: 39, width: 132, checkIn: .workout),
-        Spot(centerX: 328, feetAbove: 53, width: 112, checkIn: .treatMeal),
+        Spot(centerX: 328, feetAbove: 53, width: 112, checkIn: nil),
     ]
     /// The middle one, whose look 角色和昵称 starts from.
     static let middle = 3
@@ -166,7 +167,7 @@ final class WelcomeCrowd {
 
     /// Holds what the move needs, plays it once, then puts it down and goes back to idle.
     private func checkIn(_ index: Int) async {
-        let move = spots[index].checkIn
+        guard let move = spots[index].checkIn else { return }
         let member = pool[shown[index]]
         guard
             let figure = try? await CastMember.figure(wearing: PlaceholderCharacter.dressed(member.outfit, for: move)),

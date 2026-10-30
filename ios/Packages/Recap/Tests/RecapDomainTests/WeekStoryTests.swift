@@ -134,6 +134,16 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(empty.isPublished == false)
 }
 
+@Test func aStoryWithNoPageAtAllIsNotOut() throws {
+    // The shape behind a crash in build 5.1: the player can't start on no pages, so the shelf
+    // opens only stories that came out.
+    let blank = WeekStory(
+        status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
+        week: Week(monday: try day(13), sunday: try day(19)))
+    #expect(blank.pages.isEmpty)
+    #expect(blank.isPublished == false)
+}
+
 @Test func aStoryWithItsAwardsOrWaitingForThemIsOut() throws {
     #expect(try story().isPublished)
     #expect(try story(.pending, titles: false).isPublished)

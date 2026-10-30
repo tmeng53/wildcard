@@ -1,6 +1,5 @@
 import type { CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
 import type { DayRange } from '../../domain/day-range.js';
-import { withoutTakenBackDisclaimers } from '../../domain/days.js';
 import { sharedSquads, type Reaction } from '../../domain/reaction.js';
 import type { Reply } from '../../domain/reply.js';
 import { SquadNotJoinedError } from '../../errors.js';
@@ -25,7 +24,6 @@ export interface SquadPost {
  * replies. Only check-ins from members still in the squad: leaving a squad takes your check-ins
  * out of it. Someone else's check-in shows only the squads the viewer is in among its audience,
  * and, as everywhere, only the responses of members of the squads the viewer sees it through.
- * A 请假条 taken back by a 练了 the same day is left out.
  */
 export async function listSquadCheckIns(
   {
@@ -44,9 +42,7 @@ export async function listSquadCheckIns(
   const viewerSquads = await membership.squadIdsOf(viewer);
   if (!viewerSquads.has(squad)) throw new SquadNotJoinedError(squad);
   const members = await membership.membersOf(squad);
-  const checkIns = withoutTakenBackDisclaimers(
-    await store.listForSquad({ ...days, squad, members }),
-  );
+  const checkIns = await store.listForSquad({ ...days, squad, members });
   const ids = checkIns.map(({ id }) => id);
   const [reactionsOf, repliesOf, squadsOfAuthor] = await Promise.all([
     reactions.listForAll(ids),
