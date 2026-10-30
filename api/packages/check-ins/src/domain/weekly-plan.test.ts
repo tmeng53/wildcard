@@ -74,7 +74,7 @@ describe('PlanDay', () => {
     ['a custom sport with no name', { kind: 'train', sport: 'custom' }],
     ['a name next to a listed sport', { kind: 'train', sport: 'run', customSport: '飞盘' }],
     ['a name with no sport', { kind: 'train', customSport: '飞盘' }],
-    ['a sport not on the list', { kind: 'train', sport: 'quidditch' }],
+    ['a sport id of another shape', { kind: 'train', sport: 'Quidditch' }],
     ['minutes', { kind: 'train', minutes: 30 }],
     ['another kind', { kind: 'nap' }],
   ])('refuses %s', (_case, day) => {

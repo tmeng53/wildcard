@@ -93,7 +93,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
 
     let photos = [jpeg(1), jpeg(2)]
     let outcome = try await today.post(
-        .trained(.sport(.climb), try WorkoutMinutes(50), PostBody(photos: photos, caption: "抱石 V3")))
+        .trained(.sport("climb"), try WorkoutMinutes(50), PostBody(photos: photos, caption: "抱石 V3")))
     guard case .posted(let saved) = outcome else {
         Issue.record("expected posted, got \(outcome)")
         return
@@ -182,7 +182,8 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     let authors = store(author, directory: scratch())
     await authors.load()
     guard
-        case .posted(let saved) = try await authors.post(.trained(.sport(.run), nil, PostBody(photos: [], caption: "")))
+        case .posted(let saved) = try await authors.post(
+            .trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
     else {
         Issue.record("expected posted")
         return

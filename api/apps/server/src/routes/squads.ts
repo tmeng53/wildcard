@@ -150,6 +150,8 @@ export interface PublicRoutes {
   readonly proxyHops: number;
   /** Invite lookups by the web invite page, per client address. */
   readonly inviteLookups: RateLimit;
+  /** Catalog reads by the app, per client address. */
+  readonly catalogReads: RateLimit;
 }
 
 /**

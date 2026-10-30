@@ -19,16 +19,16 @@ extension InMemoryFeedSource {
         let write = SamplePosts(today: LocalDay(at: now, in: zone), zone: zone, audience: audience)
         var posts = [
             write.post(
-                jay, 0, 7, 42, .trained(write.training(.run, minutes: 45, ["track", "tennis"], "下雨也跑了，鞋已阵亡")),
+                jay, 0, 7, 42, .trained(write.training("run", minutes: 45, ["track", "tennis"], "下雨也跑了，鞋已阵亡")),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")]),
             write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
             write.post(
-                doudou, 1, 21, 5, .trained(write.training(.swim, minutes: 40, "pool", "夜泳人，泳池是我的")),
+                doudou, 1, 21, 5, .trained(write.training("swim", minutes: 40, "pool", "夜泳人，泳池是我的")),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
-                viewer, 1, 19, 20, .trained(write.training(.strength, minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
+                viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")]),
-            write.post(fish, 2, 18, 10, .trained(write.training(.tennis, "tennis", "发球终于过网了"))),
+            write.post(fish, 2, 18, 10, .trained(write.training("tennis", "tennis", "发球终于过网了"))),
             write.post(
                 kiki, 2, 20, 45, .cheatMeal(write.meal("burger", "坦白：两个汉堡，不后悔")),
                 reactions: [(jay, "🤤"), (fish, "🤤")]),

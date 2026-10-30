@@ -16,7 +16,7 @@ private func post(_ number: Int, by member: Int, on date: Int, _ entry: CheckIn.
         entry: entry)
 }
 
-private func ran() -> CheckIn.Entry { .trained(Training(activity: .sport(.run))) }
+private func ran() -> CheckIn.Entry { .trained(Training(activity: .sport("run"))) }
 
 private func story(titles: [MemberTitles] = []) throws -> WeekStory {
     WeekStory(
@@ -64,7 +64,7 @@ private func facts(
 
     let week = try #require(try story().filled(with: facts(myPlanned: 4, checkIns: checkIns, plan: plan)).myWeek)
 
-    #expect(week.days.map(\.kind) == [.trained(.run), .rest, .disclaimer, .trained(nil), .rest, .none, .rest])
+    #expect(week.days.map(\.kind) == [.trained("run"), .rest, .disclaimer, .trained(nil), .rest, .none, .rest])
     #expect(week.plan == 4)
     #expect(week.healthyMeals == 1)
     #expect(week.cheatMeals == 0)

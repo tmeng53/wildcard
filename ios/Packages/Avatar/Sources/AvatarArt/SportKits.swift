@@ -29,11 +29,12 @@ public struct SportKit: Hashable, Sendable, Identifiable {
     }
 }
 
-/// Which kit each sport wears: `kits.json`. A sport takes its own entry, else its category's,
-/// else the warm-up.
+/// Which kit each sport wears: `kits.json`. A sport takes its own entry, else its category's in
+/// the sports list, else the warm-up. Sports and categories are data the API serves, so the
+/// file may name ones the list doesn't have, and a new sport takes its category's kit.
 public struct SportKits: Hashable, Sendable {
     public let kits: [SportKit]
-    /// Kit ids by `SportCategory` raw value, and by `Sport` raw value for single sports.
+    /// Kit ids by category id, and by sport id for single sports.
     let categories: [String: String]
     let sports: [String: String]
     /// The kit for a sport no entry covers, and for sports people name themselves.
@@ -42,11 +43,12 @@ public struct SportKits: Hashable, Sendable {
     /// The only `version` of `kits.json` this build reads.
     public static let currentVersion = 1
 
-    /// The kit an activity puts on.
-    public func kit(for activity: Activity) -> SportKit {
+    /// The kit an activity puts on, its category read from `catalog`.
+    public func kit(for activity: Activity, in catalog: SportCatalog) -> SportKit {
         let id: String
         switch activity {
-        case .sport(let sport): id = sports[sport.rawValue] ?? categories[sport.category.rawValue] ?? otherwise
+        case .sport(let sport):
+            id = sports[sport.rawValue] ?? catalog.entry(for: sport).flatMap { categories[$0.category] } ?? otherwise
         case .custom: id = otherwise
         }
         // `decode` checked that every id names a kit.
@@ -66,10 +68,9 @@ public struct SportKits: Hashable, Sendable {
         }) {
             throw .unknownKit(unknown)
         }
-        if let stray = file.categories.keys.first(where: { SportCategory(rawValue: $0) == nil }) {
+        if let stray = (Array(file.categories.keys) + file.sports.keys).first(where: { Sport(rawValue: $0) == nil }) {
             throw .unknownKit(stray)
         }
-        if let stray = file.sports.keys.first(where: { Sport(rawValue: $0) == nil }) { throw .unknownKit(stray) }
         return SportKits(kits: kits, categories: file.categories, sports: file.sports, otherwise: file.otherwise)
     }
 

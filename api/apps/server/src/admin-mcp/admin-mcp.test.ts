@@ -25,6 +25,7 @@ import { createDraftSettings, createPostgresDraftSettings } from '@wildcard/disc
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -49,9 +50,10 @@ import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
 import { memeTools } from './tools/memes.js';
+import { sportTools } from './tools/sports.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
@@ -90,8 +92,10 @@ beforeAll(async () => {
             secretKey: config.supabaseSecretKey,
           }),
           revokeAppleSignIn: undefined,
+          catalog: catalogOn(db),
           publicRoutes: unlimitedPublicRoutes,
           checkIns: createCheckIns({
+            sports: createSports({ store: createPostgresSportStore(db) }),
             store: createPostgresCheckInStore(db),
             membership: createSquads({
               store: createPostgresSquadStore(db),
@@ -106,6 +110,7 @@ beforeAll(async () => {
             clock: () => new Date(),
           }),
           weeklyPlans: createWeeklyPlans({
+            sports: createSports({ store: createPostgresSportStore(db) }),
             store: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),
             clock: () => new Date(),
@@ -161,6 +166,7 @@ beforeAll(async () => {
               ...weekSummaryWordTools({
                 words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
               }),
+              ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
               // A tool that changes something, standing in for the meme tools.
               adminTool({
                 name: 'rename_thing',
@@ -322,6 +328,10 @@ describe('the admin MCP server', () => {
       ['change_daily_push_settings', false],
       ['get_week_summary_words', true],
       ['change_week_summary_words', false],
+      ['get_sports', true],
+      ['put_sport', false],
+      ['put_sport_category', false],
+      ['set_sport_picks', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -570,6 +580,45 @@ describe('the admin MCP server', () => {
     expect(Words.parse(JSON.parse((await call('get_week_summary_words')).text))).toStrictEqual(
       before,
     );
+    await client.close();
+  });
+
+  it('reads the sports list and logs a change to it, refusing one that breaks its rules', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const before = await call('get_sports');
+    const Catalog = z.object({
+      version: z.literal(1),
+      categories: z.array(
+        z.object({ id: z.string(), sports: z.array(z.object({ id: z.string() }).loose()) }),
+      ),
+      picks: z.record(z.string(), z.array(z.string())),
+    });
+    const catalog = Catalog.parse(JSON.parse(before.text));
+    const strength = catalog.categories
+      .flatMap(({ id, sports }) => sports.map((sport) => ({ ...sport, category: id })))
+      .find(({ id }) => id === 'strength');
+    // Putting a sport back as it is changes nothing in the list, but the call is still logged.
+    // Changes that stick are tested in the sports module, inside transactions rolled back, so
+    // other tests keep reading the seeded list.
+    const same = await call('put_sport', { ...strength });
+    expect(same.isError).toBe(false);
+    expect(JSON.parse(same.text)).toStrictEqual(JSON.parse(before.text));
+    const refused = await call('set_sport_picks', { list: 'checkInQuick', sports: ['quidditch'] });
+    expect(refused).toStrictEqual({
+      isError: true,
+      text: 'SPORT_NOT_OFFERED: quidditch is not a sport the pickers offer.',
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_sport', arguments: { ...strength } },
+    ]);
     await client.close();
   });
 

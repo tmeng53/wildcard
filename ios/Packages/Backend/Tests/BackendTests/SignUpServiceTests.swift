@@ -27,7 +27,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     try await signUp.save(try character("小林", body: "calico", persona: .shy))
     try await signUp.agreeToAI()
     let squad = try await signUp.create(named: try SquadName("周三不练腿"))
-    let week: [PlanDay] = [.train(.sport(.run)), .rest, .train(nil), .rest, .train(.sport(.yoga)), .rest, .rest]
+    let week: [PlanDay] = [.train(.sport("run")), .rest, .train(nil), .rest, .train(.sport("yoga")), .rest, .rest]
     try await signUp.savePlan(week)
 
     #expect(try await member.api.hasAgreedToAI())
@@ -159,7 +159,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(today.phase == .current)
     #expect(today.home?.squad.id == squad.id)
     #expect(today.home?.today.members.map(\.character?.nickname.text) == ["小林"])
-    guard case .posted = try await today.post(.trained(.sport(.run), nil, PostBody(photos: [], caption: "")))
+    guard case .posted = try await today.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
     else { Issue.record("the post was queued, not saved"); return }
     #expect(today.myStatus == .trained)
 }
@@ -182,4 +182,24 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let after = home(member, in: directory)
     await after.load()
     #expect(after.phase == .signedOut)
+}
+
+@Test func aSignUpClosedAfterJoiningCarriesOnWithTheSquadAndTheCharacter() async throws {
+    let stack = try LocalStack()
+    let creator = try await stack.signedInMember()
+    try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
+    try await APISignUpService(api: creator.api).agreeToAI()
+    _ = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
+    let code = try InviteCode(try await creator.api.mySquads()[0].inviteCode)
+    let friend = try await stack.signedInMember()
+    let saved = try character("小林", body: "calico", persona: .shy)
+    try await APISignUpService(api: friend.api).save(saved)
+    try await APISignUpService(api: friend.api).agreeToAI()
+    let joined = try await APISignUpService(api: friend.api).join(code)
+
+    // The app was closed here; the next launch reads the same squad and character back.
+    let resumed = try await APISignUpService(api: friend.api).resume(in: joined.id)
+
+    #expect(resumed.squad == joined)
+    #expect(resumed.character == saved)
 }

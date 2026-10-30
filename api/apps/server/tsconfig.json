@@ -42,6 +42,12 @@
     },
     {
       "path": "../../packages/weekly-awards"
+    },
+    {
+      "path": "../../packages/sport-ids"
+    },
+    {
+      "path": "../../packages/sports"
     }
   ]
 }

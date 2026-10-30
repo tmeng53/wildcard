@@ -7,6 +7,7 @@ import DesignSystem
 import DesignSystemUI
 import Foundation
 import RecapDomain
+import SportsUI
 import SwiftUI
 
 /// What one character does on a page: idle, then `clip` from `start`. A one-shot clip hands
@@ -53,7 +54,7 @@ final class StoryWardrobe {
     /// member named themselves.
     func kit(for clip: StoryClip?) -> SportKit? {
         guard case .sport(let sport?) = clip else { return nil }
-        return kits?.kit(for: .sport(sport))
+        return kits?.kit(for: .sport(sport), in: SportList.shared.catalog)
     }
 
     /// Where every part of `member` lands at `time` on the page, wearing `regalia`, and the

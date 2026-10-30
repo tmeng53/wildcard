@@ -13,6 +13,9 @@
     },
     {
       "path": "../typed-text"
+    },
+    {
+      "path": "../sport-ids"
     }
   ]
 }

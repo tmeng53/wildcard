@@ -10,8 +10,9 @@ struct PosterContentTests {
     private let monday = Self.day("2026-10-19")
     private let thursday = Self.day("2026-10-22")
     private let plan: [PlanDay] = [
-        .train(.sport(.run)), .train(.sport(.tennis)), .rest, .train(.sport(.strength)), .train(.sport(.run)), .rest,
-        .train(.sport(.tennis)),
+        .train(.sport("run")), .train(.sport("tennis")), .rest, .train(.sport("strength")), .train(.sport("run")),
+        .rest,
+        .train(.sport("tennis")),
     ]
     private let titles = [AwardTitle(title: "网球担当", speech: "三次站上网球场")]
 

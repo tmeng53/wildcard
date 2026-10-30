@@ -16,6 +16,7 @@ import {
   type PushSender,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -34,7 +35,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -58,6 +59,7 @@ const squads = createSquads({
   aiConsent: () => Promise.resolve(true),
 });
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership: squads,
   reactions: createPostgresReactionStore(db),
@@ -93,6 +95,7 @@ const deps = {
   photos,
   checkIns,
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -106,6 +109,7 @@ const deps = {
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,

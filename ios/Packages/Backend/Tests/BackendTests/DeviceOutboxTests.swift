@@ -15,7 +15,7 @@ import Testing
         member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
         day: try LocalDay("2026-10-23"), createdAt: Timestamp(millisecondsSince1970: 1_792_727_000_000),
         audience: try Audience([squad]),
-        draft: .trained(.sport(.run), try WorkoutMinutes(45), PostBody(photos: [], caption: "雨中五公里")))
+        draft: .trained(.sport("run"), try WorkoutMinutes(45), PostBody(photos: [], caption: "雨中五公里")))
     let untimed = PendingCheckIn(
         id: CheckInID(try #require(UUID(uuidString: "44444444-4444-4444-4444-444444444444"))),
         member: post.member, day: post.day, createdAt: post.createdAt, audience: post.audience,
