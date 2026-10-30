@@ -66,7 +66,8 @@ final class PatUITests: XCTestCase {
     private func expectOnScreen(
         _ bubble: XCUIElement, _ button: XCUIElement, of nickname: String, in app: XCUIApplication
     ) {
-        if !button.isHittable {
+        // Only once it has closed: tapping a teammate whose bubble is open closes it.
+        if !button.exists {
             mate(nickname, in: app).tap()
             XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
         }
@@ -83,9 +84,10 @@ final class PatUITests: XCTestCase {
 
     /// Taps the bubble's 「拍一拍」. A bubble closes on its own after 5 seconds, and a slow CI
     /// simulator can spend that long on the checks and screenshots before the tap, so if it has
-    /// closed, tapping the teammate opens their bubble again, still offering 「拍一拍」.
+    /// closed, tapping the teammate opens their bubble again, still offering 「拍一拍」. Only then:
+    /// tapping a teammate whose bubble is open closes it.
     private func tapPat(_ pat: XCUIElement, on nickname: String, bubble: XCUIElement, in app: XCUIApplication) {
-        if !pat.isHittable {
+        if !pat.exists {
             mate(nickname, in: app).tap()
             XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
             XCTAssertEqual(pat.label, "拍一拍")
