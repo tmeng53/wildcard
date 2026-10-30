@@ -63,10 +63,8 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "16-today-trained-payoff")
 
         checkIn.tap()
-        let disclaimer = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(disclaimer.waitForExistence(timeout: Self.wait))
-        disclaimer.tap()
-        XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "请假 opened after training")
+        XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
+        XCTAssertFalse(app.buttons["today.capsule.disclaimer"].exists, "请假 offered after training")
         settle()
         keepScreenshot(named: "17-today-disclaimer-unavailable")
     }
@@ -236,7 +234,8 @@ final class TodayUITests: XCTestCase {
         capsule.tap()
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        XCTAssertEqual(caption.placeholderValue, "这顿很自律…")
+        // The caption is a text view whose placeholder is drawn over it and read as its label.
+        XCTAssertEqual(caption.label, "这顿很自律…")
         XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
         XCTAssertFalse(app.buttons["compose.photo.1"].exists, "one photo shows a cover choice")
         settle()

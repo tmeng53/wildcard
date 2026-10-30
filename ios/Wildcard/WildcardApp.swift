@@ -81,6 +81,7 @@ struct WildcardApp: App {
             scene: LaunchOptions.scene,
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
+            bubbleHold: LaunchOptions.bubbleHold,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _profile = State(initialValue: Self.sampleProfile())
@@ -241,8 +242,15 @@ private struct AppRoot: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
+        // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
+        .onChange(of: app.showsTabs) { _, shows in
+            if !shows { tab = .today }
+        }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await app.refreshCatalog() } }
+            if phase == .active {
+                Task { await app.refreshCatalog() }
+                Task { await app.refreshScene() }
+            }
         }
         .onAppear {
             delegate.opened = { [app, $tab] opened in

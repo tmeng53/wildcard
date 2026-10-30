@@ -144,6 +144,15 @@ async function member(timeZone = 'UTC') {
   return signedUp;
 }
 
+/** Moves the members' join day weeks back, once their plans are saved, so this week counts from Monday. */
+async function joinedWeeksAgo(...members: readonly { readonly userId: string }[]) {
+  for (const { userId } of members) {
+    await sql`update profiles set created_at = now() - interval '30 days' where member_id = ${userId}`.execute(
+      db,
+    );
+  }
+}
+
 /** The Monday of the week `day` is in. */
 function mondayOf(day: string) {
   const date = new Date(`${day}T00:00:00.000Z`);
@@ -182,6 +191,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
     const squad = await squadOf(me, friend);
     // Me plans a week of rest; the 练了 makes today a training day, and completes the week.
     await planAll(me.token, { day: today(), kind: 'rest' });
+    await joinedWeeksAgo(me, friend);
     await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
     const excuse = await checkIn(friend.token, {
       squad,

@@ -6,20 +6,27 @@ import SwiftUI
 
 /// The dark over the scene at night, as `LightsFlip` lifts or brings it back while a pull of the
 /// cord plays: the tint and lamps, the lamp tubes flickering on and a faint flash at each bank.
+/// It fills the screen: below the art, on a phone taller than it, the same tint goes on.
 struct NightLayer: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let lightsOn: Bool
     let pull: TodayModel.LightsPull?
+    /// The art's height on this screen.
+    let artHeight: Double
 
     var body: some View {
         TimelineView(.animation(minimumInterval: nil, paused: pull == nil)) { timeline in
             let (dark, lamps, flash) = levels(at: timeline.date)
-            ZStack {
-                SceneArt(scene: theme, layer: .night).opacity(dark)
-                SceneArt(scene: theme, layer: .lamps).opacity(lamps)
-                Color(role: .bgCanvas, in: theme).opacity(flash)
+            VStack(spacing: 0) {
+                ZStack {
+                    SceneArt(scene: theme, layer: .night).opacity(dark)
+                    SceneArt(scene: theme, layer: .lamps).opacity(lamps)
+                }
+                .frame(height: artHeight)
+                Color(NightTint.color).opacity(NightTint.opacity * dark)
             }
+            .overlay { Color(role: .bgCanvas, in: theme).opacity(flash) }
         }
     }
 
