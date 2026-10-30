@@ -168,6 +168,27 @@ private func account(
     #expect(await provider.signedOut == [session("renewed")])
 }
 
+// MARK: - One member's tokens
+
+@Test func aMembersTokenComesOnlyWhileTheyAreSignedIn() async throws {
+    let someoneElse = MemberID(UUID(uuid: (9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9)))
+    let account = account(FakeProvider(), MemoryStore(session("stored")))
+
+    #expect(try await account.accessToken(for: tracy) == "access-stored")
+    await #expect(throws: AccountError.signedOut) { try await account.accessToken(for: someoneElse) }
+    try await account.signOut()
+    await #expect(throws: AccountError.signedOut) { try await account.accessToken(for: tracy) }
+}
+
+@Test func aMembersTokenIsRenewedLikeAnyOther() async throws {
+    let clock = TestClock()
+    let provider = FakeProvider(renewals: [.success(session("renewed"))])
+    let account = account(provider, MemoryStore(session("stored", expiresIn: 30)), clock: clock)
+
+    #expect(try await account.accessToken(for: tracy) == "access-renewed")
+    #expect(await provider.refreshed == ["refresh-stored"])
+}
+
 // MARK: - Signing in and out
 
 @Test func signingInSavesTheSession() async throws {

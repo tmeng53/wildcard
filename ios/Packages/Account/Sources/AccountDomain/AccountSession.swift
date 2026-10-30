@@ -98,16 +98,21 @@ public actor AccountSession {
 
     /// A current access token for our API. Pass `rejected` with the token the API just refused
     /// (it can refuse one before its expiry), and it is renewed unless it was already replaced.
+    /// Pass `member` for work kept for one member, such as their outbox: it then throws
+    /// `signedOut` once someone else is signed in, so that work never goes out under them.
     ///
     /// Throws `signedOut` when nobody is signed in or the session can't be renewed, `unavailable`
     /// when renewing needs the provider and it can't be reached, and `storeLocked` or
     /// `storeFailed` while the stored session can't be read yet.
-    public func accessToken(rejected: String? = nil) async throws(AccountError) -> String {
+    public func accessToken(for member: MemberID? = nil, rejected: String? = nil) async throws(AccountError) -> String {
         try await ensureRestored()
-        guard let current = session else { throw .signedOut }
+        guard let current = session, member == nil || member == current.member else { throw .signedOut }
         let expiring = current.expiresAt.timeIntervalSince(now()) <= renewalMargin
         guard expiring || rejected == current.accessToken else { return current.accessToken }
-        return try await renew(current).accessToken
+        let renewed = try await renew(current)
+        // Someone else may have signed in while it renewed.
+        guard member == nil || member == renewed.member else { throw .signedOut }
+        return renewed.accessToken
     }
 
     /// Signs out on this device and at the provider. The device is signed out even when the

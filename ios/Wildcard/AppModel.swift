@@ -48,6 +48,9 @@ final class AppModel {
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
+    /// The API for one member's own home and outbox: it stops calling once someone else signs in,
+    /// so posts queued for one account never go out under the next.
+    @ObservationIgnored private let memberAPI: (MemberID) -> WildcardAPI
     /// Where the home's copy and the posts still to go out are kept, a folder per member, so a
     /// new account on this phone never opens on what was kept for one signed out or deleted.
     @ObservationIgnored private let folders: MemberFolders
@@ -66,6 +69,15 @@ final class AppModel {
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(), now: { Date() })
         api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
+        memberAPI = { [account] member in
+            WildcardAPI(
+                url: config.apiURL,
+                accessToken: { rejected async throws(AccountError) in
+                    try await account.accessToken(for: member, rejected: rejected)
+                },
+                refused: { token in try? await account.signOut(ifCurrent: token) },
+                language: { AppLanguage.current.rawValue })
+        }
         folders = MemberFolders(
             root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
         catalog = CatalogClient(
@@ -255,7 +267,8 @@ final class AppModel {
     private func todayStore(of member: MemberID) -> TodayStore {
         let directory = folders.folder(for: member)
         return TodayStore(
-            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
+            backend: APICheckInBackend(api: memberAPI(member), directory: directory),
+            outbox: DeviceOutbox(directory: directory),
             now: { Date() }, newID: { UUID() })
     }
 
