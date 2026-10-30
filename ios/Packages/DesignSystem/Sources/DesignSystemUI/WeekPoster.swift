@@ -8,18 +8,18 @@ public struct WeekPosterLayout: Sendable, Equatable {
     public static let stripHeight: Double = 44
 
     /// Nil: the width the poster is given.
-    public let width: Double?
+    public let width: CGFloat?
     public let height: Double
     public let titleStyle: TypeStyle
     /// The name and dates stop here (short of the 出赛表's title stickers); nil runs on.
-    public let titleWidth: Double?
+    public let titleWidth: CGFloat?
     public let weekNumberStyle: TypeStyle
     /// Puts the number's baseline where the board has it.
     public let weekNumberTop: Double
     /// Where the rows start, under the number, and how wide they run; nil is the poster's width.
     public let rowsTop: Double
     public let rowsLeading: Double
-    public let rowsWidth: Double?
+    public let rowsWidth: CGFloat?
     public let characterSize: CGSize
     /// From the poster's bottom right corner to the character's.
     public let characterInset: CGSize
