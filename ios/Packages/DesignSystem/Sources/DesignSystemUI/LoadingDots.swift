@@ -107,7 +107,8 @@ struct LoadingCover<Loader: View>: ViewModifier {
                     // One element saying it is loading, whatever the loader hides from VoiceOver.
                     loader
                         .transition(.opacity)
-                        .accessibilityRepresentation { Text("加载中", bundle: .module) }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(Text("加载中", bundle: .module))
                         .accessibilityIdentifier("loading.cover")
                 }
             }
