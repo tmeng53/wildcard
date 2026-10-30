@@ -77,9 +77,9 @@ struct CharacterRenderTests {
             now: start.addingTimeInterval(1))
         let before = player.frame(at: start.addingTimeInterval(1 + hop.out.duration / 2))
         let after = player.frame(at: start.addingTimeInterval(1 + hop.out.duration + 0.01))
-        let goggles = try #require(swimmer.parts.firstIndex { $0.id == "propFront" })
+        let water = try #require(swimmer.parts.firstIndex { $0.id == "propOver" })
         #expect(before.drawing.width == after.drawing.width)
-        #expect(lifter.parts[goggles].art.isEmpty && !swimmer.parts[goggles].art.isEmpty)
+        #expect(lifter.parts[water].art.isEmpty && !swimmer.parts[water].art.isEmpty)
         #expect(player.figure == swimmer)
         // Reduce Motion shows the kit straight away, holding its move's first frame.
         let move = try swimmer.bind(PlaceholderCharacter.move(for: swim, persona: .shy))
@@ -99,11 +99,11 @@ struct CharacterRenderTests {
             hop: PlaceholderCharacter.kitHop(), now: start.addingTimeInterval(1))
         try player.wear(lifter, idle: idle, now: start.addingTimeInterval(1.05))
         let later = player.frame(at: start.addingTimeInterval(2))
-        let goggles = try #require(swimmer.parts.firstIndex { $0.id == "propFront" })
-        // The goggles over the face are drawn only in the kit.
-        #expect(lifter.parts[goggles].art.isEmpty && !swimmer.parts[goggles].art.isEmpty)
-        #expect(later.drawing.parts[goggles].isEmpty)
-        #expect(player.restFrame.drawing.parts[goggles].isEmpty)
+        let water = try #require(swimmer.parts.firstIndex { $0.id == "propOver" })
+        // The water the goggles swim in comes only with the swim kit.
+        #expect(lifter.parts[water].art.isEmpty && !swimmer.parts[water].art.isEmpty)
+        #expect(later.drawing.parts[water].isEmpty)
+        #expect(player.restFrame.drawing.parts[water].isEmpty)
         #expect(player.figure == lifter)
     }
 }
