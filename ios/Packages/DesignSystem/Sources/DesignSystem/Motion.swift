@@ -124,20 +124,21 @@ public enum BurstLayout {
         }
     }
 
-    /// Each capsule's center, in `CheckInKind.allCases` order, for capsules of the measured
-    /// `widths` and one `height`, around a button of `button` size, on a screen `available` wide
-    /// whose center is the button's. The arc is kept as far as the words allow: the two on top
-    /// move apart, the two at the sides stay off the edges. When the arc can't hold them without
-    /// touching each other, the button or the screen's edge, they stand in rows above the
-    /// button instead, as many to a row as fit.
+    /// Each capsule's center, in `kinds` order (all four unless some are left out), for capsules
+    /// of the measured `widths` and one `height`, around a button of `button` size, on a screen
+    /// `available` wide whose center is the button's. The arc is kept as far as the words allow:
+    /// the two on top move apart, the two at the sides stay off the edges. When the arc can't
+    /// hold them without touching each other, the button or the screen's edge, they stand in
+    /// rows above the button instead, as many to a row as fit. Fewer kinds share the same arc,
+    /// evenly.
     public static func positions(
-        widths: [Double], height: Double, button: (width: Double, height: Double), available: Double,
-        gap: Double = Space.xs, margin: Double = Space.m
+        kinds: [CheckInKind] = CheckInKind.allCases, widths: [Double], height: Double,
+        button: (width: Double, height: Double), available: Double, gap: Double = Space.xs,
+        margin: Double = Space.m
     ) -> [(x: Double, y: Double)] {
-        let kinds = CheckInKind.allCases
-        guard widths.count == kinds.count else { return kinds.map { offset(for: $0) } }
+        guard widths.count == kinds.count else { return arc(for: kinds) }
         let reach = available / 2 - margin
-        let arc = arcPositions(widths: widths, height: height, gap: gap, reach: reach)
+        let arc = arcPositions(kinds: kinds, widths: widths, gap: gap, reach: reach)
         let buttonBox = Box(midX: 0, midY: 0, width: button.width, height: button.height)
         let boxes = zip(arc, widths).map { Box(midX: $0.0.x, midY: $0.0.y, width: $0.1, height: height) }
         let arcFits =
@@ -151,16 +152,30 @@ public enum BurstLayout {
         return arcFits ? arc : rows(widths: widths, height: height, button: button, gap: gap, reach: reach)
     }
 
-    private static func arcPositions(widths: [Double], height: Double, gap: Double, reach: Double)
+    /// The arc's spots before any measuring: each kind's own angle when all four show, else
+    /// evenly between the outermost two.
+    public static func arc(for kinds: [CheckInKind]) -> [(x: Double, y: Double)] {
+        guard kinds != CheckInKind.allCases else { return kinds.map { offset(for: $0) } }
+        let (first, last) = (angle(for: .trained), angle(for: .disclaimer))
+        return kinds.indices.map { index in
+            let share = kinds.count > 1 ? Double(index) / Double(kinds.count - 1) : 0.5
+            let radians = (first + (last - first) * share) * Double.pi / 180
+            return (radius * cos(radians), -radius * sin(radians))
+        }
+    }
+
+    private static func arcPositions(kinds: [CheckInKind], widths: [Double], gap: Double, reach: Double)
         -> [(x: Double, y: Double)]
     {
-        var spots = CheckInKind.allCases.map { offset(for: $0) }
+        var spots = arc(for: kinds)
         // The two on top: apart by their own widths if the arc leaves them closer than that.
-        let (left, right) = (1, 2)
-        if spots[right].x - spots[left].x < (widths[left] + widths[right]) / 2 + gap {
-            let total = widths[left] + gap + widths[right]
-            spots[left].x = -total / 2 + widths[left] / 2
-            spots[right].x = total / 2 - widths[right] / 2
+        if spots.count == 4 {
+            let (left, right) = (1, 2)
+            if spots[right].x - spots[left].x < (widths[left] + widths[right]) / 2 + gap {
+                let total = widths[left] + gap + widths[right]
+                spots[left].x = -total / 2 + widths[left] / 2
+                spots[right].x = total / 2 - widths[right] / 2
+            }
         }
         for index in spots.indices {
             let edge = reach - widths[index] / 2
@@ -173,7 +188,8 @@ public enum BurstLayout {
     private static func rows(
         widths: [Double], height: Double, button: (width: Double, height: Double), gap: Double, reach: Double
     ) -> [(x: Double, y: Double)] {
-        let order = [0, 3, 1, 2]
+        let last = widths.count - 1
+        let order = last > 0 ? [0, last] + Array(1..<last) : [0]
         var rowsOfIndices: [[Int]] = []
         for member in order {
             if let last = rowsOfIndices.last,

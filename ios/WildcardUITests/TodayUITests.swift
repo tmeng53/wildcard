@@ -63,10 +63,8 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "16-today-trained-payoff")
 
         checkIn.tap()
-        let disclaimer = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(disclaimer.waitForExistence(timeout: Self.wait))
-        disclaimer.tap()
-        XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "请假 opened after training")
+        XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
+        XCTAssertFalse(app.buttons["today.capsule.disclaimer"].exists, "请假 offered after training")
         settle()
         keepScreenshot(named: "17-today-disclaimer-unavailable")
     }

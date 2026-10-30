@@ -189,6 +189,10 @@ async function member(at: { readonly zone: string; readonly offset: number }, ni
     body: { version: 1, timeZone: at.zone, ...character },
   });
   expect(saved.status).toBe(200);
+  // Joined weeks ago, so this week's plan counts from Monday.
+  await sql`update profiles set created_at = now() - interval '30 days' where member_id = ${signedUp.userId}`.execute(
+    db,
+  );
   const phone = randomBytes(32).toString('hex');
   const registered = await call('PUT', {
     path: '/me/devices',

@@ -35,8 +35,16 @@ final class AppModel {
     }
 
     private(set) var screen = Screen.starting
+    /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
+    /// squad) puts the next tabs back on 今天.
+    var showsTabs: Bool {
+        if case .tabs = screen { return true }
+        return false
+    }
     /// An awards push tapped before the home was up, opened once it is.
     @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
+    /// The squad 今天 is on, whose scene it reads again each time the app comes back.
+    @ObservationIgnored private var homeSquad: SquadID?
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
@@ -147,6 +155,13 @@ final class AppModel {
         if let sports = await catalog.refreshSports() { SportList.shared.show(sports) }
     }
 
+    /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
+    /// from their phone meanwhile.
+    func refreshScene() async {
+        guard case .tabs(let today, _, _, _, _, _) = screen else { return }
+        await readScene(of: homeSquad, into: today)
+    }
+
     func signOut() async {
         try? await Push.registration.signingOut()
         try? await account.signOut()
@@ -221,6 +236,7 @@ final class AppModel {
         screen = .tabs(
             today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
             recap: recap)
+        homeSquad = home.squad.id
         await readScene(of: home.squad.id, into: today)
         if let pending = pendingRecap {
             pendingRecap = nil

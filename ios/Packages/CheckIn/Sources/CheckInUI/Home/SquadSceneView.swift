@@ -67,8 +67,8 @@ struct SquadSceneView: View {
                     .onTapGesture { pats.dismissBubble() }
                 cast(unit: unit)
                 if phase == .night {
-                    NightLayer(lightsOn: lightsOn, pull: playingPull)
-                        .frame(width: proxy.size.width, height: Stage.height * unit)
+                    NightLayer(lightsOn: lightsOn, pull: playingPull, artHeight: Stage.height * unit)
+                        .frame(width: proxy.size.width, height: max(proxy.size.height, Stage.height * unit))
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)

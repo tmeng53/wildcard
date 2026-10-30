@@ -20,6 +20,8 @@ struct ComposeView: View {
     @State private var isPickingSport = false
     @State private var minutes: WorkoutMinutes?
     @State private var isRulingMinutes = false
+    /// Where the caption starts on the page, so it can fill the page below.
+    @State private var captionTop = 0.0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -43,6 +45,7 @@ struct ComposeView: View {
                     }
                     .padding(.horizontal, Space.pageMargin)
                     .padding(.vertical, Space.m)
+                    .coordinateSpace(.named(Self.pageSpace))
                 }
                 .scrollDismissesKeyboard(.interactively)
                 // Keep the line being written above the keyboard.
@@ -74,6 +77,7 @@ struct ComposeView: View {
 
     private static let captionID = "caption"
     private static let minutesID = "minutes"
+    private static let pageSpace = "compose.page"
 
     /// The board's last sport until the member picks one; detection from the cover comes later.
     private var currentActivity: Activity {
@@ -117,21 +121,41 @@ struct ComposeView: View {
         .padding(.vertical, Space.xxs)
     }
 
+    /// The caption fills the page below what's above it, so a tap anywhere on the white starts
+    /// typing. A line has no breaks: return closes the keyboard, as 完成 did.
     private var captionField: some View {
         VStack(alignment: .trailing, spacing: Space.xxs) {
-            TextField(text: $caption, axis: .vertical) {
-                placeholder
-            }
-            .typeStyle(TypeRamp.field)
-            .lineLimit(1...4)
-            .focused($isWriting)
-            .submitLabel(.done)
-            .onSubmit { isWriting = false }
-            .onChange(of: caption) { _, typed in
-                let fitted = PostBody.fitCaption(typed)
-                if fitted != typed { caption = fitted }
-            }
-            .accessibilityIdentifier("compose.caption")
+            TextEditor(text: $caption)
+                .typeStyle(TypeRamp.field)
+                .scrollContentBackground(.hidden)
+                .focused($isWriting)
+                .overlay(alignment: .topLeading) {
+                    if caption.isEmpty {
+                        placeholder
+                            .typeStyle(TypeRamp.field)
+                            .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                            .padding(.top, Self.editorInset.top)
+                            .padding(.leading, Self.editorInset.leading)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .containerRelativeFrame(.vertical) { page, _ in
+                    max(page - captionTop - Space.m - Self.countRoom, Sizing.minimumTapTarget)
+                }
+                .onGeometryChange(for: Double.self) {
+                    $0.frame(in: .named(Self.pageSpace)).minY
+                } action: {
+                    captionTop = $0
+                }
+                .padding(.horizontal, -Self.editorInset.leading)
+                .onChange(of: caption) { _, typed in
+                    if typed.contains(where: \.isNewline) { isWriting = false }
+                    let fitted = PostBody.fitCaption(typed)
+                    if fitted != typed { caption = fitted }
+                }
+                .accessibilityLabel(placeholder)
+                .accessibilityIdentifier("compose.caption")
             // The count shows only near the limit, so the field stays quiet.
             if caption.count >= Caption.maxLength - 10 {
                 Text(verbatim: "\(caption.count)/\(Caption.maxLength)")
@@ -141,6 +165,13 @@ struct ComposeView: View {
             }
         }
     }
+
+    /// Where `TextEditor` (a text view) starts its first line inside its frame, which the
+    /// placeholder matches; its leading inset hangs into the page margin so the text lines up
+    /// with the rows above.
+    private static let editorInset = (top: 8.0, leading: 5.0)
+    /// Room kept under the caption for its count near the limit.
+    private static let countRoom = 20.0
 
     private var placeholder: Text {
         switch kind {

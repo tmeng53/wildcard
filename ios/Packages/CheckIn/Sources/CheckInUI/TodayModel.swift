@@ -213,7 +213,7 @@ public final class TodayModel {
     }
 
     var unavailable: Set<CheckInKind> {
-        store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
+        store.myStatus.allowsDisclaimer && !store.restsToday ? [] : [.disclaimer]
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member

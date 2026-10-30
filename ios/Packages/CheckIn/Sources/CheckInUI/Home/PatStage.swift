@@ -73,9 +73,14 @@ final class PatStage {
     // MARK: Tapping a teammate
 
     /// A teammate was tapped: they hop, cheer if awake and not mid-sport, and their bubble says
-    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today).
+    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today). Tapped again while their
+    /// bubble is up, the bubble closes.
     func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) {
         guard pat == nil else { return }
+        if bubble?.mate == mate.id {
+            bubble = nil
+            return
+        }
         hops[mate.id] = now
         let pose = cast.stage.pose(of: mate.member, at: phase)
         switch pose {

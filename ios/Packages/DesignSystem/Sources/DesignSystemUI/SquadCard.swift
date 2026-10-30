@@ -115,8 +115,8 @@ public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
 /// The card on the home scene, swiped between two pages of the same height: the squad's week
 /// (score, bar, everyone's rings in one row) and my week (my count, Monday to Sunday, and the
 /// picked day's line: what I trained and my meals; tapping a day picks it, today until then).
-/// White cards straight on the scene, no shadow, 12 apart while swiping; two dots under them say
-/// which page shows, and tapping one goes there. The caller keeps `page`, so the card reopens on
+/// One white card straight on the scene, no shadow: a swipe moves only what is inside it, and two
+/// dots at its foot say which page shows; tapping one goes there. The caller keeps `page`, so the card reopens on
 /// the page it was left on, and `pickedDay` (an index in `MyWeek.days`; nil for today). A
 /// `footer` (the evening's 今日赛况 tag) is the squad page's last row;
 /// the page keeps its height by drawing its rows closer.
@@ -145,7 +145,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
-                HStack(spacing: Space.s) {
+                HStack(spacing: 0) {
                     SquadPage(squad: squad, avatar: avatar, footer: footer)
                         .pageFrame()
                         .id(SquadCardPage.squad)
@@ -157,12 +157,15 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .scrollTargetLayout()
             }
-            .contentMargins(.horizontal, Space.pageMargin, for: .scrollContent)
-            .scrollTargetBehavior(.viewAligned)
+            .scrollTargetBehavior(.paging)
             .scrollPosition(id: pagePosition)
             .scrollIndicators(.hidden)
             PageDots(page: $page)
+                .padding(.bottom, Space.xs)
         }
+        .background(Color(role: .bgCanvas, in: theme))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .padding(.horizontal, Space.pageMargin)
         .accessibilityElement(children: .contain)
     }
 
@@ -191,12 +194,14 @@ extension SquadCard where Footer == EmptyView {
 }
 
 extension View {
-    /// A page of the squad card: a full-width white card, the same height on both pages.
+    /// A page of the squad card: the card's whole width, the same height on both pages, with
+    /// the card's padding except at its foot, where the dots sit.
     fileprivate func pageFrame() -> some View {
         frame(
             maxWidth: .infinity, minHeight: SquadCardMetrics.pageContent, maxHeight: .infinity, alignment: .topLeading
         )
-        .card(on: .scene)
+        .padding([.top, .horizontal], Space.cardPadding)
+        .padding(.bottom, Space.xs)
         .containerRelativeFrame(.horizontal)
     }
 }
@@ -325,7 +330,7 @@ private struct MyWeekPage: View {
     private var shownDay: Int { pickedDay ?? mine.today ?? 0 }
 }
 
-/// Two dots under the card, the current page's solid. Tapping one goes to it.
+/// Two dots at the card's foot, the current page's solid. Tapping one goes to it.
 private struct PageDots: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -340,8 +345,8 @@ private struct PageDots: View {
                     Circle()
                         .fill(Color(role: .fgOnScene, in: theme).opacity(item == page ? 1 : 0.25))
                         .frame(width: SquadCardMetrics.dot, height: SquadCardMetrics.dot)
-                        // 6 apart to the eye; each answers taps 44 tall.
-                        .frame(width: SquadCardMetrics.dot * 2, height: Sizing.minimumTapTarget)
+                        // 6 apart to the eye, in a row as tall as the card's padding.
+                        .frame(width: SquadCardMetrics.dot * 2, height: Space.cardPadding)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

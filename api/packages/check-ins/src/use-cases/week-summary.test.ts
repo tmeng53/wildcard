@@ -42,6 +42,9 @@ const now = new Date('2026-10-26T20:00:00.000Z');
 // Members' time zones, as the members module would give them.
 const zones = new Map<MemberId, string>();
 const plans = createPostgresWeeklyPlanStore(db);
+/** When every member joined: weeks before the weeks tested. */
+const JOINED = new Date('2026-09-01T00:00:00.000Z');
+
 /** The check-ins module with its clock at `moment`. */
 const checkInsAt = (moment: Date) =>
   createCheckIns({
@@ -54,7 +57,7 @@ const checkInsAt = (moment: Date) =>
     photos: { exists: () => Promise.reject(new Error('unused')) },
     calendarOf: (member) => {
       const timeZone = zones.get(member);
-      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: moment });
+      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: JOINED });
     },
     clock: () => moment,
   });
