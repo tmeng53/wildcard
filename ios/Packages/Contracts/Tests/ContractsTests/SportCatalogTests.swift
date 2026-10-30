@@ -13,8 +13,8 @@ import Testing
     #expect(Sport(rawValue: String(repeating: "a", count: 41)) == nil)
 }
 
-private func names(_ simplifiedChinese: String, _ english: String, _ traditionalChinese: String) -> SportCatalog.Names {
-    SportCatalog.Names(simplifiedChinese: simplifiedChinese, english: english, traditionalChinese: traditionalChinese)
+private func names(_ simplifiedChinese: String, _ english: String, _ traditionalChinese: String) -> CatalogNames {
+    CatalogNames(simplifiedChinese: simplifiedChinese, english: english, traditionalChinese: traditionalChinese)
 }
 
 private let catalog = SportCatalog(

@@ -259,7 +259,7 @@ struct DisclaimerComposer: View {
     /// at random when they typed none, topped up with dice lines when the writer has too few new ones.
     private func fetch(style: DisclaimerStyle) async -> [String] {
         let shown = Set(drafts + [entry.text])
-        let spare = DiceDisclaimerWriter.rollDefault(DiceDisclaimerWriter.lines.count)
+        let spare = DiceDisclaimerWriter.rollAll()
         let reason = entry.mine.trimmingCharacters(in: .whitespaces)
         guard !reason.isEmpty else { return DisclaimerEntry.newLines(from: [], spare: spare, shown: shown) }
         isWriting = true

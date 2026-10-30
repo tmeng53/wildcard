@@ -11,7 +11,7 @@ extension Looks {
             ("ball", ["basketball"]), ("outdoorWinter", ["climb", "ski"]), ("combat", ["boxing"]),
             ("dance", ["dance"]), ("everyday", ["dogWalk"]),
         ]
-        let names = SportCatalog.Names(simplifiedChinese: "", english: "", traditionalChinese: "")
+        let names = CatalogNames(simplifiedChinese: "", english: "", traditionalChinese: "")
         return SportCatalog(
             categories: categories.map { id, sports in
                 SportCatalog.Category(

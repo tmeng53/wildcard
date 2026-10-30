@@ -23,6 +23,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, the accent tone: scene, brand, or ink on the 我 pages), a second action (44, grey), a quiet text action |
 | `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask: filled, or `.outlined` when a gentler action leads |
 | `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button; a sign-up step's back button and ink segments |
+| `swipesBack(isEnabled:perform:)` | A page with 返回 also goes back on a swipe right from anywhere on it, following the finger |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |

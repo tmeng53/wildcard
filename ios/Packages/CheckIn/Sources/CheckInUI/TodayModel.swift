@@ -55,7 +55,7 @@ public final class TodayModel {
     /// Everyone else on the scene.
     let cast = SquadCast()
     /// 拍一拍 on the scene.
-    let pats = PatStage()
+    let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
     private(set) var step = Step.scene
@@ -101,8 +101,9 @@ public final class TodayModel {
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
-        posted: @escaping @MainActor () -> Void
+        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void
     ) {
+        pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -213,7 +214,7 @@ public final class TodayModel {
     }
 
     var unavailable: Set<CheckInKind> {
-        store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
+        store.myStatus.allowsDisclaimer && !store.restsToday ? [] : [.disclaimer]
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
