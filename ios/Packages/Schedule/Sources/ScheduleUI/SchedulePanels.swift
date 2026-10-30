@@ -100,28 +100,14 @@ struct DayPicks: View {
     }
 }
 
-/// What became of 存图, for a moment, under the top bar where the member just tapped.
+/// 存图's picture couldn't be drawn, for a moment, under the top bar where the member just
+/// tapped.
 struct SaveNote: View {
     let saving: ScheduleModel.Saving
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         switch saving {
-        case .saved:
-            Text("存好了，去相册看看", bundle: .module)
-                .noteStyle(theme)
-                .accessibilityIdentifier("schedule.saved")
-        case .notAllowed:
-            HStack(spacing: Space.xs) {
-                Text("要先允许存到相册", bundle: .module)
-                    .noteStyle(theme)
-                if let settings = URL(string: UIApplication.openSettingsURLString) {
-                    Link(destination: settings) {
-                        Text("去设置", bundle: .module)
-                    }
-                    .buttonStyle(TextButtonStyle(.plain))
-                }
-            }
         case .failed:
             Text("没存上，再试一次", bundle: .module)
                 .noteStyle(theme)

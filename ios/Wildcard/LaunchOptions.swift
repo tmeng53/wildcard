@@ -172,12 +172,6 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
     }
 
-    /// `-uitest-save-poster`: 存图 says it saved without asking for Photos, whose permission prompt
-    /// UI tests can't answer.
-    static var posterSaver: any PosterSaver {
-        ProcessInfo.processInfo.arguments.contains("-uitest-save-poster") ? PretendPosterSaver() : PhotoLibrarySaver()
-    }
-
     /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in
     /// daylight and the squad cheers whatever time CI runs the UI tests. `-uitest-evening` starts
     /// it at 21:30 instead, when 今日赛况 is on the card, and `-uitest-night` at 23:30, when the
