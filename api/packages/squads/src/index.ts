@@ -41,5 +41,5 @@ export {
   type SquadScene,
   type SquadScenes,
 } from './use-cases/squad-scenes.js';
-export { createSquads, type Squads } from './use-cases/squads.js';
+export { createSquads, type SquadAt, type Squads } from './use-cases/squads.js';
 export type { InvitePreview, PublicInvitePreview } from './use-cases/squads/preview-invite.js';

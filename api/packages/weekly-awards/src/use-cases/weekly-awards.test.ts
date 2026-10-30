@@ -7,6 +7,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createPostgresAwardSettings } from '../adapters/postgres-award-settings.js';
+import { createPostgresWeekStoryStore } from '../adapters/postgres-week-story-store.js';
 import {
   createPostgresAwardsStore,
   type WeeklyAwardTables,
@@ -59,6 +60,7 @@ function setup(
     model,
     settings: createPostgresAwardSettings(db),
     store: createPostgresAwardsStore(db),
+    stories: createPostgresWeekStoryStore(db),
     aiConsented: (members) => {
       consentAsked.push(members);
       return Promise.resolve(members.filter(agreed));
@@ -126,14 +128,6 @@ describe('createWeeklyAwards', () => {
         {
           member: ana,
           titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' }],
-          topCheckIn: {
-            checkIn: members[0]?.checkIns[0]?.id,
-            day: '2026-10-21',
-            kind: 'trained',
-            sport: 'run',
-            photos: [],
-            reactions: { '❤️': 2 },
-          },
         },
         {
           member: bo,
@@ -334,5 +328,57 @@ describe('createWeeklyAwards', () => {
       status: 'failing',
       failures: { count: 1, lastError: 'FailedChecks' },
     });
+  });
+});
+
+describe('the frozen 战报', () => {
+  const days = Array.from({ length: 7 }, (_, index) => ({
+    day: `2026-10-${String(19 + index)}`,
+    kind: 'none' as const,
+  }));
+  const part = (member: MemberId) => ({
+    member,
+    version: 1 as const,
+    character: null,
+    checkedIn: true,
+    plannedDays: 5,
+    trainedDays: 1,
+    days,
+    healthyMeals: 0,
+    cheatMeals: 1,
+    reactionsReceived: 2,
+  });
+
+  it('is kept once: a second freeze leaves the first, and a deleted account takes its part', async () => {
+    const { awards } = setup();
+    const [squad, ana, bo] = [await newSquad(), await member(), await member()];
+    expect(await awards.story({ squad, weekStart: week })).toBeUndefined();
+    const story = {
+      squad,
+      weekStart: week,
+      story: { version: 1 as const, name: 'squad', scene: 'gym', ending: { done: 1, plan: 10 } },
+      members: [
+        {
+          ...part(ana),
+          bestDisclaimer: { checkIn: randomUUID(), text: '今天腿说不', reactions: 2 },
+        },
+        part(bo),
+      ],
+    };
+    expect(await awards.freezeStory(story)).toStrictEqual(story);
+    const later = {
+      ...story,
+      story: { version: 1 as const, name: 'renamed', scene: 'pool' },
+      members: [part(bo)],
+    };
+    expect(await awards.freezeStory(later)).toStrictEqual(story);
+    await sql`delete from auth.users where id = ${ana}`.execute(db);
+    expect(await awards.story({ squad, weekStart: week })).toStrictEqual({
+      ...story,
+      members: [part(bo)],
+    });
+    await expect(
+      sql`delete from public.week_story_members where member_id = ${bo}`.execute(db),
+    ).rejects.toThrow(/frozen/u);
   });
 });

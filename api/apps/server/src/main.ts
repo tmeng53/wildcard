@@ -51,6 +51,7 @@ import {
   createAwardSettings,
   createPostgresAwardSettings,
   createPostgresAwardsStore,
+  createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -159,6 +160,7 @@ const awards = createWeeklyAwards({
   model: awardsModel,
   settings: createPostgresAwardSettings(db),
   store: createPostgresAwardsStore(db),
+  stories: createPostgresWeekStoryStore(db),
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
 });

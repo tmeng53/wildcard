@@ -2961,7 +2961,8 @@
                     "format": "uuid"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The squad’s name that week."
                   }
                 },
                 "required": [
@@ -2988,8 +2989,182 @@
                 ],
                 "additionalProperties": false
               },
+              "scene": {
+                "type": "string",
+                "enum": [
+                  "track",
+                  "pool",
+                  "gym",
+                  "tennis",
+                  "climbing"
+                ],
+                "description": "The scene the squad trained on that week: the story takes its colours."
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryMember"
+                },
+                "description": "Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out."
+              },
+              "podium": {
+                "type": "object",
+                "properties": {
+                  "champion": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sides": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "champion",
+                  "sides"
+                ],
+                "additionalProperties": false,
+                "description": "领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either."
+              },
+              "myWeek": {
+                "type": "object",
+                "properties": {
+                  "plannedDays": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "trainedDays": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "days": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/StoryDay"
+                    },
+                    "description": "Monday first."
+                  },
+                  "healthyMeals": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cheatMeals": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reactionsReceived": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "plannedDays",
+                  "trainedDays",
+                  "days",
+                  "healthyMeals",
+                  "cheatMeals",
+                  "reactionsReceived"
+                ],
+                "additionalProperties": false,
+                "description": "你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards."
+              },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
+              },
+              "meals": {
+                "type": "object",
+                "properties": {
+                  "healthy": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cheat": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "eaters": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "member": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "more": {
+                          "type": "string",
+                          "enum": [
+                            "healthy",
+                            "cheat"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "member",
+                        "more"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "healthy",
+                  "cheat",
+                  "eaters"
+                ],
+                "additionalProperties": false,
+                "description": "吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal."
+              },
+              "bestDisclaimer": {
+                "type": "object",
+                "properties": {
+                  "checkIn": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "author": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "reactions": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "checkIn",
+                  "author",
+                  "text",
+                  "reactions"
+                ],
+                "additionalProperties": false,
+                "description": "最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted."
+              },
+              "ending": {
+                "type": "object",
+                "properties": {
+                  "done": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "plan": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "done",
+                  "plan"
+                ],
+                "additionalProperties": false,
+                "description": "这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell."
               },
               "status": {
                 "type": "string",
@@ -3022,13 +3197,15 @@
                   ],
                   "additionalProperties": false
                 },
-                "description": "Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too."
+                "description": "Every member in the squad at the awards who checked in before them and agreed to AI use, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too."
               }
             },
             "required": [
               "version",
               "squad",
               "week",
+              "scene",
+              "members",
               "status",
               "titles"
             ],
@@ -3052,7 +3229,8 @@
                     "format": "uuid"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The squad’s name that week."
                   }
                 },
                 "required": [
@@ -3079,8 +3257,182 @@
                 ],
                 "additionalProperties": false
               },
+              "scene": {
+                "type": "string",
+                "enum": [
+                  "track",
+                  "pool",
+                  "gym",
+                  "tennis",
+                  "climbing"
+                ],
+                "description": "The scene the squad trained on that week: the story takes its colours."
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryMember"
+                },
+                "description": "Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out."
+              },
+              "podium": {
+                "type": "object",
+                "properties": {
+                  "champion": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sides": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "champion",
+                  "sides"
+                ],
+                "additionalProperties": false,
+                "description": "领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either."
+              },
+              "myWeek": {
+                "type": "object",
+                "properties": {
+                  "plannedDays": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "trainedDays": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "days": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/StoryDay"
+                    },
+                    "description": "Monday first."
+                  },
+                  "healthyMeals": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cheatMeals": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reactionsReceived": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "plannedDays",
+                  "trainedDays",
+                  "days",
+                  "healthyMeals",
+                  "cheatMeals",
+                  "reactionsReceived"
+                ],
+                "additionalProperties": false,
+                "description": "你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards."
+              },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
+              },
+              "meals": {
+                "type": "object",
+                "properties": {
+                  "healthy": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cheat": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "eaters": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "member": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "more": {
+                          "type": "string",
+                          "enum": [
+                            "healthy",
+                            "cheat"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "member",
+                        "more"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "healthy",
+                  "cheat",
+                  "eaters"
+                ],
+                "additionalProperties": false,
+                "description": "吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal."
+              },
+              "bestDisclaimer": {
+                "type": "object",
+                "properties": {
+                  "checkIn": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "author": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "reactions": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "checkIn",
+                  "author",
+                  "text",
+                  "reactions"
+                ],
+                "additionalProperties": false,
+                "description": "最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted."
+              },
+              "ending": {
+                "type": "object",
+                "properties": {
+                  "done": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "plan": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "done",
+                  "plan"
+                ],
+                "additionalProperties": false,
+                "description": "这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell."
               },
               "status": {
                 "type": "string",
@@ -3093,12 +3445,75 @@
               "version",
               "squad",
               "week",
+              "scene",
+              "members",
               "status"
             ],
             "additionalProperties": false,
-            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later."
+            "description": "The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later."
           }
         ]
+      },
+      "StoryMember": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "character": {
+            "type": "object",
+            "properties": {
+              "nickname": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.",
+                "x-max-characters": 12
+              },
+              "look": {
+                "$ref": "#/components/schemas/Look"
+              }
+            },
+            "required": [
+              "nickname",
+              "look"
+            ],
+            "additionalProperties": false,
+            "description": "Their character as it was that week; missing when they had none."
+          }
+        },
+        "required": [
+          "member"
+        ],
+        "additionalProperties": false
+      },
+      "StoryDay": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained",
+              "rest",
+              "disclaimer",
+              "none"
+            ],
+            "description": "A 练了 wins over a 请假条, which wins over a planned rest day."
+          },
+          "sport": {
+            "type": "string",
+            "description": "For a trained day: its first 练了’s sport key, or the name of the member’s own."
+          }
+        },
+        "required": [
+          "day",
+          "kind"
+        ],
+        "additionalProperties": false
       },
       "StoryHottest": {
         "type": "object",
@@ -3170,7 +3585,7 @@
           "reactions"
         ],
         "additionalProperties": false,
-        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any."
+        "description": "The signed-in member’s check-in with the most reactions at the awards, the latest on a tie. No AI writes it. Missing when none of theirs had any, or it was deleted since."
       },
       "StoryPhoto": {
         "type": "object",
@@ -6479,8 +6894,8 @@
     "/squads/{squadId}/weeks/{weekStart}/story": {
       "get": {
         "operationId": "getSquadWeekStory",
-        "summary": "A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)",
-        "description": "Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.",
+        "summary": "A squad’s weekly 战报 (每周战报), frozen at the week’s awards",
+        "description": "Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.",
         "security": [
           {
             "bearer": []

@@ -82,7 +82,8 @@ const Title = z.strictObject({
 });
 export type Title = z.infer<typeof Title>;
 
-const TopCheckIn = z.strictObject({
+/** A member's check-in with the most reactions, as it stood at the awards. */
+export const TopCheckIn = z.strictObject({
   checkIn: z.uuid(),
   day: z.iso.date(),
   kind: CheckInKind,
@@ -95,14 +96,14 @@ const TopCheckIn = z.strictObject({
 export type TopCheckIn = z.infer<typeof TopCheckIn>;
 
 /**
- * Stored JSON (`weekly_award_winners.award`): one member's titles and their most-reacted
- * check-in, as it stood at the awards.
+ * Stored JSON (`weekly_award_winners.award`): one member's titles. Not strict: rows written
+ * before the frozen 战报 also carry the member's `topCheckIn`, which the 战报 now keeps itself
+ * (`week_story_members`), and reading them drops it.
  */
 export const StoredAward = z.discriminatedUnion('version', [
-  z.strictObject({
+  z.object({
     version: z.literal(1),
     titles: z.array(Title).min(1).max(TITLES_MAX),
-    topCheckIn: TopCheckIn.optional(),
   }),
 ]);
 export type StoredAward = z.infer<typeof StoredAward>;
@@ -111,7 +112,6 @@ export type StoredAward = z.infer<typeof StoredAward>;
 export interface MemberAwards {
   readonly member: MemberId;
   readonly titles: readonly Title[];
-  readonly topCheckIn?: TopCheckIn;
 }
 
 /**

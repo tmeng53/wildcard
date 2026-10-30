@@ -38,6 +38,7 @@ import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summar
 import {
   squadWeekCheckIns,
   squadsCheckedInto,
+  stillPosted,
   type SquadWeekCheckIns,
 } from './check-ins/week-for-awards.js';
 import {
@@ -83,12 +84,18 @@ export interface CheckIns {
     readonly weekStart: WeekStart;
     readonly before: Date;
   }): Promise<SquadId[]>;
-  /** A squad's check-ins for the week made before `before`, for the week's awards. */
+  /**
+   * A squad's week as it stood at `before` for these members (who was in it then), for the
+   * week's awards and its frozen 战报.
+   */
   squadWeekCheckIns(input: {
     readonly squad: SquadId;
     readonly weekStart: WeekStart;
     readonly before: Date;
+    readonly members: readonly MemberId[];
   }): Promise<SquadWeekCheckIns>;
+  /** Which of these check-ins are still posted. */
+  stillPosted(ids: readonly CheckInId[]): Promise<ReadonlySet<CheckInId>>;
 }
 
 export function createCheckIns(deps: {
@@ -123,5 +130,6 @@ export function createCheckIns(deps: {
     weekSummary: (input) => squadWeekSummary(deps, input),
     squadsCheckedInto: (input) => squadsCheckedInto(deps, input),
     squadWeekCheckIns: (input) => squadWeekCheckIns(deps, input),
+    stillPosted: (ids) => stillPosted(deps, ids),
   };
 }
