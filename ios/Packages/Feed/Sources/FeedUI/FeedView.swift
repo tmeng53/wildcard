@@ -132,7 +132,7 @@ extension DayHeading {
         case .weekday(5): Text("周五", bundle: .module)
         case .weekday(6): Text("周六", bundle: .module)
         case .weekday: Text("周日", bundle: .module)
-        case .date(let day): Text(Self.noon(of: day).formatted(Self.dayStyle))
+        case .date(let day): Text(Self.noon(of: day), format: Self.dayStyle)
         }
     }
 

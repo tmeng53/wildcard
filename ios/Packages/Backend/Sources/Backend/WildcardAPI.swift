@@ -24,27 +24,29 @@ public struct WildcardAPI: Sendable {
     /// - Parameters:
     ///   - url: where the API is served, such as `https://api.example.com`.
     ///   - refused: called with a freshly renewed token the API refuses too: its session is over.
+    ///   - language: the tag (`zh-Hans`, `en`) of the language the 战报's words come in.
     public init(
         url: URL, accessToken: @escaping AccessToken,
         refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
-        http: URLSession = .wildcard
+        language: LanguageTag? = nil, http: URLSession = .wildcard
     ) {
         client = Client(
             serverURL: url, configuration: .api, transport: URLSessionTransport(configuration: .init(session: http)),
             // The first wraps the rest: `Problems` reads the answer after any retry.
-            middlewares: [Problems(), BearerToken(accessToken: accessToken, refused: refused)])
+            middlewares: [Problems(), BearerToken(accessToken: accessToken, refused: refused)]
+                + (language.map { [AcceptLanguage(language: $0)] } ?? []))
         self.http = http
     }
 
     /// Calls with the account's tokens, and signs the account out when the API refuses a renewed
-    /// one, so screens following `AccountSession.states()` see the member signed out. A session
-    /// signed in while that call was on its way stays.
-    public init(url: URL, account: AccountSession, http: URLSession = .wildcard) {
+    /// one, so screens following `AccountSession.states()` see the member signed out (a session
+    /// signed in while that call was on its way stays).
+    public init(url: URL, account: AccountSession, language: LanguageTag? = nil, http: URLSession = .wildcard) {
         self.init(
             url: url,
             accessToken: { rejected async throws(AccountError) in try await account.accessToken(rejected: rejected) },
             refused: { token in try? await account.signOut(ifCurrent: token) },
-            http: http)
+            language: language, http: http)
     }
 
     // MARK: - The member

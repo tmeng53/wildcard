@@ -1,26 +1,25 @@
 import Foundation
 
-/// For now the app opens in Simplified Chinese even on a phone set to English, until the member
-/// picks a language in iOS Settings (which writes the app's own `AppleLanguages`). To undo it,
-/// delete this file and the two lines in `WildcardApp` that use it.
+/// The app opens in Simplified Chinese even on a phone set to English, until the member picks a
+/// language (`AppLanguage.pick`, or iOS Settings; both write the app's own `AppleLanguages`). To
+/// undo it, delete this file and its call in `Launch`.
 enum DefaultLanguage {
     static let identifier = "zh-Hans"
+    private static let key = "AppleLanguages"
 
-    /// True for this launch when no language was chosen for the app, by Settings or a launch
-    /// argument; the choice is then recorded so later launches start in Chinese too.
-    @MainActor static let applies: Bool = {
-        let key = "AppleLanguages"
-        guard !ProcessInfo.processInfo.arguments.contains("-\(key)"),
-            let bundle = Bundle.main.bundleIdentifier,
-            UserDefaults.standard.persistentDomain(forName: bundle)?[key] == nil
-        else { return false }
+    /// Records Chinese as the app's language when none was chosen, by Settings or a launch
+    /// argument. It runs before the app starts, since the system reads the app's languages once,
+    /// the first time anything asks for one: set later, SwiftUI's text would follow but strings
+    /// the code looks up, formatted dates and system controls (Sign in with Apple) would stay in
+    /// the phone's language until the next launch, which is sign-up's.
+    static func apply() {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard !arguments.contains("-\(key)"), let bundle = Bundle.main.bundleIdentifier else { return }
+        #if DEBUG
+        // `-uitest-first-launch`: forget the recorded language, as on a new install.
+        if arguments.contains("-uitest-first-launch") { UserDefaults.standard.removeObject(forKey: key) }
+        #endif
+        guard UserDefaults.standard.persistentDomain(forName: bundle)?[key] == nil else { return }
         UserDefaults.standard.set([identifier], forKey: key)
-        return true
-    }()
-
-    /// The locale the views use: Chinese on the launch that sets the default (the system reads the
-    /// stored choice from the next launch on), the phone's own otherwise.
-    @MainActor static var locale: Locale {
-        applies ? Locale(identifier: identifier) : .current
     }
 }

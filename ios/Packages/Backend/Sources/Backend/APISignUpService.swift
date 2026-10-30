@@ -75,6 +75,17 @@ public struct APISignUpService: SignUpService {
         }
     }
 
+    /// The squad the member is already in, as joining it returned it, and the character on
+    /// their profile.
+    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
+        let (found, member) = try await signUp { () throws(APIError) in (try await api.squad(squad), try await api.me())
+        }
+        let character = member.profile?.character.map { saved in
+            NewCharacter(outfit: Outfit(saved.look), persona: Persona(saved.look), nickname: saved.nickname)
+        }
+        return ResumedSignUp(squad: try await joined(found), character: character)
+    }
+
     /// The squad as 上场 shows it: the teammates who have made their character, and the squad's
     /// week without the member's own days, which the entrance adds.
     private func joined(_ squad: Squad) async throws(SignUpError) -> JoinedSquad {

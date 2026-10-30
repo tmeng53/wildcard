@@ -227,7 +227,7 @@ private struct AIConsentLine: View {
 
     private var line: AttributedString {
         var line = AttributedString(
-            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module)
+            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module.inAppLanguage)
         for (link, range) in line.runs[\.link] where link != nil {
             line[range].link = privacyPolicy
             line[range].underlineStyle = .single

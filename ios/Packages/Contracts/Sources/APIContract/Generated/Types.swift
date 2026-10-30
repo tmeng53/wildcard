@@ -11,6 +11,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /health`.
     /// - Remark: Generated from `#/paths//health/get(getHealth)`.
     func getHealth(_ input: Operations.GetHealth.Input) async throws -> Operations.GetHealth.Output
+    /// The lists the app shows, such as every sport
+    ///
+    /// No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.
+    ///
+    /// - Remark: HTTP `GET /public/catalog`.
+    /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)`.
+    func getCatalog(_ input: Operations.GetCatalog.Input) async throws -> Operations.GetCatalog.Output
     /// The signed-in member
     ///
     /// Who the bearer token belongs to, and their profile once they have saved one.
@@ -20,7 +27,7 @@ public protocol APIProtocol: Sendable {
     func getMe(_ input: Operations.GetMe.Input) async throws -> Operations.GetMe.Output
     /// Delete the signed-in member’s account
     ///
-    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
+    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (a squad stays with its other members, and goes with its last), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
     ///
     /// - Remark: HTTP `DELETE /me`.
     /// - Remark: Generated from `#/paths//me/delete(deleteMe)`.
@@ -310,6 +317,15 @@ extension APIProtocol {
     public func getHealth(headers: Operations.GetHealth.Input.Headers = .init()) async throws -> Operations.GetHealth.Output {
         try await getHealth(Operations.GetHealth.Input(headers: headers))
     }
+    /// The lists the app shows, such as every sport
+    ///
+    /// No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.
+    ///
+    /// - Remark: HTTP `GET /public/catalog`.
+    /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)`.
+    public func getCatalog(headers: Operations.GetCatalog.Input.Headers = .init()) async throws -> Operations.GetCatalog.Output {
+        try await getCatalog(Operations.GetCatalog.Input(headers: headers))
+    }
     /// The signed-in member
     ///
     /// Who the bearer token belongs to, and their profile once they have saved one.
@@ -321,7 +337,7 @@ extension APIProtocol {
     }
     /// Delete the signed-in member’s account
     ///
-    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
+    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (a squad stays with its other members, and goes with its last), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
     ///
     /// - Remark: HTTP `DELETE /me`.
     /// - Remark: Generated from `#/paths//me/delete(deleteMe)`.

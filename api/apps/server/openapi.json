@@ -88,6 +88,143 @@
         ],
         "additionalProperties": false
       },
+      "Catalog": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "sports": {
+            "$ref": "#/components/schemas/SportsCatalog"
+          }
+        },
+        "required": [
+          "version",
+          "sports"
+        ],
+        "additionalProperties": {}
+      },
+      "SportsCatalog": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "runWalk"
+                },
+                "names": {
+                  "$ref": "#/components/schemas/CatalogNames"
+                },
+                "sports": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.",
+                        "example": "run"
+                      },
+                      "names": {
+                        "$ref": "#/components/schemas/CatalogNames"
+                      },
+                      "shortNames": {
+                        "$ref": "#/components/schemas/CatalogNames"
+                      },
+                      "icon": {
+                        "type": "string",
+                        "description": "An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.",
+                        "example": "figure.run"
+                      },
+                      "offered": {
+                        "type": "boolean",
+                        "description": "False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "names",
+                      "icon",
+                      "offered"
+                    ],
+                    "additionalProperties": {}
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "names",
+                "sports"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "The picker’s tabs, in order, each with its sports in order."
+          },
+          "picks": {
+            "type": "object",
+            "properties": {
+              "signUpCommon": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Sign-up’s 最常见 grid. Sport ids, in order."
+              },
+              "checkInQuick": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "A 练了’s quick picks, before the whole list. Sport ids, in order."
+              }
+            },
+            "required": [
+              "signUpCommon",
+              "checkInQuick"
+            ],
+            "additionalProperties": {},
+            "description": "The short lists some screens show before the whole list."
+          }
+        },
+        "required": [
+          "categories",
+          "picks"
+        ],
+        "additionalProperties": {}
+      },
+      "CatalogNames": {
+        "type": "object",
+        "properties": {
+          "zhHans": {
+            "type": "string",
+            "description": "Simplified Chinese.",
+            "example": "跑步"
+          },
+          "en": {
+            "type": "string",
+            "description": "English.",
+            "example": "Run"
+          },
+          "zhHant": {
+            "type": "string",
+            "description": "Traditional Chinese (Taiwan).",
+            "example": "跑步"
+          }
+        },
+        "required": [
+          "zhHans",
+          "en",
+          "zhHant"
+        ],
+        "additionalProperties": {}
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -477,62 +614,8 @@
       },
       "Sport": {
         "type": "string",
-        "enum": [
-          "run",
-          "walk",
-          "hike",
-          "trailRun",
-          "strength",
-          "crossfit",
-          "hyrox",
-          "kettlebell",
-          "spin",
-          "elliptical",
-          "rowing",
-          "hiit",
-          "jumpRope",
-          "aerobics",
-          "yoga",
-          "matPilates",
-          "reformerPilates",
-          "barre",
-          "stretching",
-          "swim",
-          "surf",
-          "paddleboard",
-          "kayak",
-          "tennis",
-          "badminton",
-          "pickleball",
-          "tableTennis",
-          "squash",
-          "basketball",
-          "soccer",
-          "volleyball",
-          "golf",
-          "baseballSoftball",
-          "ultimate",
-          "roadCycling",
-          "mountainBiking",
-          "climb",
-          "ski",
-          "snowboard",
-          "skate",
-          "boxing",
-          "kickboxing",
-          "jiuJitsu",
-          "martialArts",
-          "dance",
-          "dogWalk",
-          "walkCommute",
-          "bikeCommute",
-          "deepClean",
-          "moving",
-          "strollerWalk",
-          "gardening",
-          "custom"
-        ],
-        "description": "A listed sport, or `custom` with the member’s own name in `customSport`."
+        "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+        "description": "A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`."
       },
       "PhotoView": {
         "type": "object",
@@ -3198,6 +3281,72 @@
         }
       }
     },
+    "/public/catalog": {
+      "get": {
+        "operationId": "getCatalog",
+        "summary": "The lists the app shows, such as every sport",
+        "description": "No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "The `ETag` of the catalog the app has."
+            },
+            "required": false,
+            "description": "The `ETag` of the catalog the app has.",
+            "name": "if-none-match",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The catalog",
+            "headers": {
+              "ETag": {
+                "description": "Names this version of the catalog.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "`no-cache`: keep it, but ask again before using it as current.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalog"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Unchanged since the `If-None-Match` version"
+          },
+          "429": {
+            "description": "Too many reads from this address (`REQUESTS_TOO_FREQUENT`)",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until reads from this address are taken again.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me": {
       "get": {
         "operationId": "getMe",
@@ -3244,7 +3393,7 @@
       "delete": {
         "operationId": "deleteMe",
         "summary": "Delete the signed-in member’s account",
-        "description": "Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.",
+        "description": "Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (a squad stays with its other members, and goes with its last), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.",
         "security": [
           {
             "bearer": []

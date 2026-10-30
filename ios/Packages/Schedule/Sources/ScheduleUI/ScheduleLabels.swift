@@ -1,3 +1,4 @@
+import DesignSystemUI
 import ScheduleDomain
 
 #if os(iOS)
@@ -44,9 +45,9 @@ enum ScheduleLabels {
 
     static func planName(_ day: PlanDay) -> String {
         switch day {
-        case .rest: String(localized: "休息", bundle: .module)
+        case .rest: String(localized: "休息", bundle: .module.inAppLanguage)
         case .train(let activity?): activity.localizedName
-        case .train(nil): String(localized: "训练", bundle: .module)
+        case .train(nil): String(localized: "训练", bundle: .module.inAppLanguage)
         }
     }
 
@@ -59,7 +60,8 @@ enum ScheduleLabels {
 
     static func fuelName(_ goal: FuelGoal) -> String {
         switch goal {
-        case .suggested(let suggestion): Bundle.module.localizedString(forKey: suggestion.key, value: nil, table: nil)
+        case .suggested(let suggestion):
+            Bundle.module.inAppLanguage.localizedString(forKey: suggestion.key, value: nil, table: nil)
         case .own(let text): text
         }
     }

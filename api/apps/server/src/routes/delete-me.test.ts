@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -32,8 +33,8 @@ import {
   signOut,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
 // its servers can't be called without a real key and a real sign-in.
@@ -55,9 +56,11 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
         store: createPostgresSquadStore(db),
@@ -72,6 +75,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       clock: () => new Date(),
     }),
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: memberCalendar(members),
       clock: () => new Date(),
@@ -300,6 +304,31 @@ describe('DELETE /me', () => {
     // The deleted session no longer works here.
     const again = await call('DELETE', '/me', me.token, { version: 1 });
     expect([again.status, reasonOf(again.body)]).toStrictEqual([401, 'AUTH_TOKEN_INVALID']);
+  });
+
+  it('deletes the squad with its last member, and lets the next sign-up start afresh', async () => {
+    const { call } = appWith(undefined);
+    const { me, friend, squad } = await memberWithEverything(call);
+    expect(
+      (await call('DELETE', `/squads/${squad}/members/${friend.userId}`, friend.token)).status,
+    ).toBe(204);
+    const squadRows = async () =>
+      Number(
+        (
+          await sql<{
+            n: number;
+          }>`select count(*) as n from public.squads where id = ${squad}`.execute(db)
+        ).rows[0]?.n,
+      );
+    expect(await squadRows()).toBe(1);
+
+    expect((await call('DELETE', '/me', me.token, { version: 1 })).status).toBe(204);
+
+    expect([await whatIsLeftOf(me.userId), await squadRows()]).toStrictEqual([nothing, 0]);
+    // The friend who left keeps their check-in, now sent to no squad.
+    const kept = await sql<{ n: number }>`select count(*) as n from public.check_ins
+      where member_id = ${friend.userId}`.execute(db);
+    expect(Number(kept.rows[0]?.n)).toBe(1);
   });
 
   it('refuses a session that has signed out, though its token hasn’t expired', async () => {

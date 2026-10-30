@@ -75,7 +75,8 @@ async function asRetry(store: SquadStore, { id, creator, name }: CreateSquadInpu
 
 async function found(store: SquadStore, id: SquadId): Promise<Squad> {
   const squad = await store.find(id);
-  // Squads are never deleted, so one the store just created or reported is there.
+  // A squad goes only with its last member's account, so one the store just created or reported
+  // for a signed-in member is there.
   if (squad === undefined) throw new Error(`Squad ${id} vanished.`);
   return squad;
 }

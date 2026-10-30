@@ -55,12 +55,7 @@ struct DisclaimerComposer: View {
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
         .padding(.bottom, Space.xs)
-        .background {
-            // A tap on the empty page puts the keyboard away; buttons keep their taps.
-            Color(role: .bgSubtle, in: theme)
-                .ignoresSafeArea()
-                .onTapGesture { isEditing = false }
-        }
+        .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: drafts)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isEditing)

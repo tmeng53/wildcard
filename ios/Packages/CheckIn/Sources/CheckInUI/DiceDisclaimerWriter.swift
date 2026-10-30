@@ -1,5 +1,6 @@
 import CheckInDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 
 /// The dice: ready-made 请假条 lines, from the spec's copy table. They stand in whenever the
@@ -27,7 +28,7 @@ public struct DiceDisclaimerWriter: DisclaimerWriter {
     /// `count` different lines, localized.
     static func roll(_ count: Int, using generator: inout some RandomNumberGenerator) -> [String] {
         lines.shuffled(using: &generator).prefix(count).map {
-            Bundle.module.localizedString(forKey: $0, value: nil, table: nil)
+            Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil)
         }
     }
 }

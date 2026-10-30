@@ -103,7 +103,7 @@ struct PostCard: View {
                         .typeStyle(TypeRamp.headline)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .lineLimit(1)
-                    Text(post.checkIn.createdAt.date.formatted(.dateTime.hour().minute()))
+                    Text(post.checkIn.createdAt.date, format: .dateTime.hour().minute())
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)

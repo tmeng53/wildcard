@@ -1,5 +1,6 @@
 import AvatarArt
 import Contracts
+import DesignSystemUI
 import Foundation
 import MeDomain
 
@@ -20,19 +21,20 @@ public actor InMemoryMeService: MeService {
         InMemoryMeService(
             overview: MeOverview(
                 character: MeCharacter(
-                    nickname: Bundle.module.localizedString(forKey: "小林", value: nil, table: nil),
+                    nickname: Bundle.module.inAppLanguage.localizedString(forKey: "小林", value: nil, table: nil),
                     outfit: PlaceholderCharacter.lifter, persona: .energetic),
                 joinedAt: Date(timeIntervalSince1970: 1_792_756_800),  // 2026-10-23, noon UTC
                 counts: LifetimeCounts(trainedDays: 128, healthyMeals: 46, cheatMeals: 12, disclaimers: 9),
                 week: WeekCount(trainedDays: 3, plannedDays: 5),
-                squadName: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                squadName: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
-                mostTrained: MostTrained(activity: .sport(.run), checkIns: 34),
+                mostTrained: MostTrained(activity: .sport("run"), checkIns: 34),
                 titles: TitlesWon(
                     count: 3,
                     latest: TitlesWon.Latest(
-                        title: Bundle.module.localizedString(forKey: "早八战神", value: nil, table: nil), times: 2))),
+                        title: Bundle.module.inAppLanguage.localizedString(forKey: "早八战神", value: nil, table: nil),
+                        times: 2))),
             failsSaving: failsSaving)
     }
 
