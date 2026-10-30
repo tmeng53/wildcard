@@ -208,7 +208,8 @@ extension View {
 
 /// Sizes that belong to the squad card alone.
 enum SquadCardMetrics {
-    /// Inside each page's padding: 186 tall in all, on both pages.
+    /// Inside each page's padding: 186 tall with the card's padding, on both pages; the dots'
+    /// row adds its own height under them.
     static let pageContent: Double = 186 - 2 * Space.cardPadding
     /// Between rings: eight 38-point rings fit a 358-point card.
     static let ringSpacing: Double = 3
@@ -345,9 +346,10 @@ private struct PageDots: View {
                     Circle()
                         .fill(Color(role: .fgOnScene, in: theme).opacity(item == page ? 1 : 0.25))
                         .frame(width: SquadCardMetrics.dot, height: SquadCardMetrics.dot)
-                        // 6 apart to the eye, in a row as tall as the card's padding.
+                        // 6 apart to the eye, in a row as tall as the card's padding, each
+                        // still a full tap target tall.
                         .frame(width: SquadCardMetrics.dot * 2, height: Space.cardPadding)
-                        .contentShape(Rectangle())
+                        .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Space.cardPadding) / 2))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(item == .squad ? Text("小队", bundle: .module) : Text("我这周", bundle: .module))

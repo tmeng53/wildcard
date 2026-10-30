@@ -46,7 +46,7 @@ const plans = createPostgresWeeklyPlanStore(db);
 const JOINED = new Date('2026-09-01T00:00:00.000Z');
 
 /** The check-ins module with its clock at `moment`. */
-const checkInsAt = (moment: Date) =>
+const checkInsAt = (moment: Date, joinedAt = JOINED) =>
   createCheckIns({
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
@@ -57,7 +57,7 @@ const checkInsAt = (moment: Date) =>
     photos: { exists: () => Promise.reject(new Error('unused')) },
     calendarOf: (member) => {
       const timeZone = zones.get(member);
-      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: JOINED });
+      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt });
     },
     clock: () => moment,
   });
@@ -299,6 +299,17 @@ describe('a squad’s week summary', () => {
     );
     const monday = checkInsAt(new Date('2026-10-26T10:00:00.000Z'));
     expect((await monday.weekSummary({ viewer: la, squad, weekStart: week })).final).toBe(true);
+  });
+
+  it('counts the planned days from the day a member joined', async () => {
+    // Joined on Thursday morning in Los Angeles: the default plan's Thursday to Saturday count.
+    const joinedThursday = checkInsAt(now, new Date('2026-10-22T16:00:00.000Z'));
+    const la = await newMember('America/Los_Angeles');
+    const squad = await newSquad(la);
+    const summary = await joinedThursday.weekSummary({ viewer: la, squad, weekStart: week });
+    const planned = (rows: readonly { kind: string; value: number }[]) =>
+      rows.find(({ kind }) => kind === 'plannedDays')?.value;
+    expect([planned(summary.me.stats), planned(summary.squad.stats)]).toStrictEqual([3, 3]);
   });
 
   it('refuses a week that hasn’t started on the viewer’s clock', async () => {
