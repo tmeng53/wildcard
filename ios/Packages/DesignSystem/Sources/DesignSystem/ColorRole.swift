@@ -130,7 +130,8 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case fgKind
 
     /// The brand's light gym, the same in every scene: the open screen's page, its floor and
-    /// the floor's tile lines, as on the website.
+    /// the floor's tile lines, as on the website. The tile lines also draw the court in 我's
+    /// card window.
     case bgBrandPage
     case bgBrandFloor
     case borderBrandFloor

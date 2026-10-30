@@ -6,7 +6,8 @@ import SportsUI
 import SwiftUI
 
 /// 我's player card, like a baseball card: the front has the character, the name and squad and the
-/// headline numbers; a tap turns it over to the career numbers, as the line under it says. Ink card stock with white type, the character in a light grey window.
+/// headline numbers; a tap turns it over to the career numbers, as the line under it says. Ink card stock with white type, the character in a light grey window,
+/// standing on faint court lines.
 struct PlayerCard: View {
     let overview: MeOverview
     @State private var showsBack = false
@@ -111,10 +112,14 @@ private struct CardFront: View {
                         }
                     }
                 }
-                .background(
-                    Color(role: .bgSubtle, in: theme),
-                    in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-                )
+                .background {
+                    Color(role: .bgSubtle, in: theme)
+                        .overlay {
+                            CourtLines()
+                                .stroke(Color(role: .borderBrandFloor, in: theme), lineWidth: Sizing.selectionStroke)
+                                .accessibilityHidden(true)
+                        }
+                }
                 .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 nameAndSquad
@@ -309,6 +314,24 @@ private struct Hairline: View {
         Rectangle()
             .fill(Color(role: .borderOnInk, in: theme))
             .frame(height: Sizing.hairline)
+    }
+}
+/// The card window's faint court: a boundary inset from the window's edge, a half line behind
+/// the character's middle and a centre circle on it. The card's only backdrop for now; more can
+/// come later as backdrops a member unlocks.
+private struct CourtLines: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let court = rect.insetBy(dx: Space.s, dy: Space.s)
+        path.addRoundedRect(in: court, cornerSize: CGSize(width: Space.xxs, height: Space.xxs))
+        let halfLine = rect.minY + rect.height * 0.7
+        path.move(to: CGPoint(x: court.minX, y: halfLine))
+        path.addLine(to: CGPoint(x: court.maxX, y: halfLine))
+        let radius = rect.width * 0.22
+        path.addEllipse(
+            in: CGRect(x: rect.midX - radius, y: halfLine - radius, width: radius * 2, height: radius * 2)
+        )
+        return path
     }
 }
 #endif
