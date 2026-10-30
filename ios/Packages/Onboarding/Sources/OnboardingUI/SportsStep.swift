@@ -36,7 +36,7 @@ struct SportsStep: View {
             .accessibilityIdentifier("sports.skip")
         }
         .sheet(isPresented: $isChoosing) {
-            SportPicker(selected: model.sports.picked.last ?? .sport(.run), recent: model.sports.picked) { activity in
+            SportPicker(selected: model.sports.picked.last ?? .sport("run"), recent: model.sports.picked) { activity in
                 if !model.sports.contains(activity) { model.toggle(activity) }
                 isChoosing = false
             }
@@ -47,7 +47,7 @@ struct SportsStep: View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
             SectionLabel(Text("最常见", bundle: .module))
             LazyVGrid(columns: columns, spacing: Space.xs) {
-                ForEach(SportPicks.common, id: \.self) { sport in
+                ForEach(catalog.signUpCommon, id: \.self) { sport in
                     row(.sport(sport))
                 }
             }
@@ -79,8 +79,10 @@ struct SportsStep: View {
 
     /// Picks that are not in 最常见.
     private var extraPicks: [Activity] {
-        let shown = Set(SportPicks.common.map(Activity.sport))
+        let shown = Set(catalog.signUpCommon.map(Activity.sport))
         return model.sports.picked.filter { !shown.contains($0) }
     }
+
+    private var catalog: SportCatalog { SportList.shared.catalog }
 }
 #endif

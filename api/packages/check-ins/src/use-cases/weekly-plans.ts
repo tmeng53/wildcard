@@ -12,10 +12,13 @@ import {
   type WeeklyPlan,
 } from '../domain/weekly-plan.js';
 import { TimeZoneNotSetError } from '../errors.js';
-import type { Clock, MemberCalendar, WeeklyPlanStore } from '../ports.js';
+import type { Clock, MemberCalendar, SportList, WeeklyPlanStore } from '../ports.js';
+import { checkSport } from './check-sport.js';
 
 interface Deps {
   readonly store: WeeklyPlanStore;
+  /** Which sports a planned day may name. */
+  readonly sports: SportList;
   readonly calendarOf: MemberCalendar;
   readonly clock: Clock;
 }
@@ -124,6 +127,10 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
       const { today, joinedOn } = await daysOf(member);
       const current = await findWeeklyPlan(deps, { member, weekStart });
       checkPlanChange({ current, next: days, today, joinedOn });
+      for (const day of days) {
+        if (day.kind === 'train' && day.sport !== undefined)
+          await checkSport(deps.sports, day.sport);
+      }
       await deps.store.save({ member, weekStart, days });
       return plannedWeek({ member, joinedOn }, { weekStart, days, source: 'saved' });
     },

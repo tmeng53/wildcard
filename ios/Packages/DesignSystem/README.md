@@ -28,6 +28,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |
 | `TickRuler`, `RulerScale` | A number slid under a needle (刻度), snapping to the scale's marks with one `pick` tick per mark (发动态's minutes under 其他) |
 | `InputField`, `SearchField` | Text entry |
+| `dismissesKeyboardOnTapOutside()` | Applied once at the app's root: a tap outside a text input puts the keyboard away on every screen, and still reaches what was tapped |
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows (a plain menu leaves out icon and chevron), a setting's on/off row |

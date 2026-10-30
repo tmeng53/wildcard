@@ -150,12 +150,14 @@ export interface PublicRoutes {
   readonly proxyHops: number;
   /** Invite lookups by the web invite page, per client address. */
   readonly inviteLookups: RateLimit;
+  /** Catalog reads by the app, per client address. */
+  readonly catalogReads: RateLimit;
 }
 
 /**
  * Squads: create one with a name, preview and join one by invite code, list mine, read one,
- * leave, and the captain's settings (rename, remove a member, hand on the captaincy). A squad is
- * never deleted; its members leave.
+ * leave, and the captain's settings (rename, remove a member, hand on the captaincy). No route
+ * deletes a squad: its members leave, and it goes only with its last member's account.
  */
 export function squads(deps: {
   readonly verifyToken: VerifyToken;

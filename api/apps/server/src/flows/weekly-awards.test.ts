@@ -27,6 +27,7 @@ import {
   createWeeklyAwards,
   type LanguageModel,
 } from '@wildcard/weekly-awards';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -48,7 +49,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -69,6 +70,7 @@ const aiConsent = aiConsentOn(db);
 const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: checkInStore,
   membership: squads,
   reactions,
@@ -144,10 +146,12 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns,
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: memberCalendar(members),
       clock: () => new Date(),

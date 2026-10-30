@@ -4,6 +4,7 @@ import AvatarDomain
 import CharacterEditorDomain
 import CharacterEditorUI
 import Contracts
+import DesignSystemUI
 import Foundation
 import DesignSystem
 import Observation
@@ -31,6 +32,8 @@ public final class SignUpModel {
     /// The heads of the squad found, under its name: its members' characters, standing still.
     private(set) var previewHeads: [CastMember] = []
     private(set) var joined: JoinedSquad?
+    /// The squad joined or made, which the app keeps until 上场 to carry on a closed sign-up.
+    public var joinedSquad: SquadID? { joined?.id }
     /// The teammates who welcome the member at 上场, the earliest to join first.
     private(set) var teammates: [CastMember] = []
 
@@ -38,7 +41,7 @@ public final class SignUpModel {
     private(set) var week: WeekDraft?
 
     /// Whether the member made the squad they are in, rather than joined one: they pick its scene.
-    private(set) var madeTheSquad = false
+    public private(set) var madeTheSquad = false
     /// 这周在哪练？'s five cartons, once the squad is made.
     private(set) var scenePicker: ScenePicker?
     /// The picked carton opening over 这周在哪练？.
@@ -99,6 +102,20 @@ public final class SignUpModel {
         show(.character)
     }
 
+    /// Carries on a sign-up closed after 你的小队, at 平时练什么？ with its saved character; false if not.
+    public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
+        guard let resumed = try? await service.resume(in: squad) else { return false }
+        (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
+        teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
+        if let made = resumed.character {
+            (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
+            editor = try? CharacterEditorModel.placeholder(look: made.outfit, persona: made.persona, nickname: nickname)
+            await myCharacter?.load(idle: false)
+        }
+        show(.sports)
+        return true
+    }
+
     /// Sign-in didn't work: the open screen says so above its button until the next try.
     public func signInFailed() {
         failure = .unavailable
@@ -157,7 +174,7 @@ public final class SignUpModel {
 
     /// 「Tracy 的小队」.
     static func suggestedName(for nickname: String) -> String {
-        String(localized: "\(nickname) 的小队", bundle: .module)
+        String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
     }
 
     // MARK: 你的小队

@@ -5,6 +5,7 @@ import CheckInDomain
 import CheckInUI
 import Contracts
 import DesignSystem
+import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
@@ -16,6 +17,7 @@ import RecapUI
 import ScenePickDomain
 import ScheduleDomain
 import ScheduleUI
+import SportsUI
 import SquadDomain
 
 /// The app on the real backend: who is signed in decides between sign-up and the tabs. A member
@@ -38,8 +40,11 @@ final class AppModel {
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
-    /// Where the home's copy and the posts still to go out are kept.
-    @ObservationIgnored private let directory: URL
+    /// Where the home's copy and the posts still to go out are kept, a folder per member, so a
+    /// new account on this phone never opens on what was kept for one signed out or deleted.
+    @ObservationIgnored private let folders: MemberFolders
+    /// The lists the app shows that live in the database, such as every sport.
+    @ObservationIgnored private let catalog: CatalogClient
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
     /// with the session alone.
     @ObservationIgnored private let confirmDeletion: @MainActor () async throws(MeError) -> DeletionConfirmation
@@ -52,8 +57,13 @@ final class AppModel {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(), now: { Date() })
-        api = WildcardAPI(url: config.apiURL, account: account)
-        directory = URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory)
+        api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
+        folders = MemberFolders(
+            root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
+        catalog = CatalogClient(
+            api: api, directory: URL.applicationSupportDirectory.appending(path: "Catalog", directoryHint: .isDirectory)
+        )
+        SportList.shared.show(catalog.keptSports())
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -73,6 +83,7 @@ final class AppModel {
     /// Follows the account for as long as the app runs: the first state picks the first screen,
     /// and signing out, from here or because the session ended, returns to the open screen.
     func run() async {
+        Task { await refreshCatalog() }
         for await state in await account.states() {
             switch state {
             case .signedOut: await signedOut()
@@ -107,6 +118,7 @@ final class AppModel {
     /// 上场 has played, or the scene the member's new squad picked has filled the screen: the
     /// squad's home takes over, and on a picked scene the member drops onto it.
     func finishSignUp(landingOn scene: SceneTheme?) async {
+        SignUpProgress.clear()
         await openHome(landingOn: scene)
     }
 
@@ -129,6 +141,12 @@ final class AppModel {
         await openHome()
     }
 
+    /// Reads the catalog again, as the app comes back to the front: a sport added on the server
+    /// shows without an app update.
+    func refreshCatalog() async {
+        if let sports = await catalog.refreshSports() { SportList.shared.show(sports) }
+    }
+
     func signOut() async {
         try? await Push.registration.signingOut()
         try? await account.signOut()
@@ -138,9 +156,12 @@ final class AppModel {
     private func openHome(
         continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
     ) async {
-        let store = TodayStore(
-            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
-            now: { Date() }, newID: { UUID() })
+        // Only called once the account says who is signed in, so it is read from memory.
+        guard case .signedIn(let member)? = try? await account.restore() else {
+            await signedOut()
+            return
+        }
+        let store = todayStore(of: member)
         await store.load()
         switch store.phase {
         case .noSquad:
@@ -166,32 +187,53 @@ final class AppModel {
         case .loading, .current, .offline:
             // The case above has every load without a home.
             guard let home = store.home else { return }
-            let today = TodayModel(
-                store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
-            let profile = MeModel(
-                service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-                confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
-            let squad = SquadSettingsModel(
-                service: APISquadSettingsService(api: api),
-                changed: { [weak self] in Task { await self?.squadChanged() } },
-                signOut: { [weak self] in await self?.signOut() })
-            let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
-            let recap = RecapShelf(
-                service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
-                scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
-                scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
-            // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
-            // from now rather than from when the scene covered the screen.
-            if let scene { await today.dropIn(on: scene, coveredAt: .now) }
-            screen = .tabs(
-                today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
-                recap: recap)
-            await readScene(of: home.squad.id, into: today)
-            if let pending = pendingRecap {
-                pendingRecap = nil
-                await openRecap(squad: pending.squad, week: pending.week)
+            // The app was closed during sign-up, after 你的小队: carry on from the next step.
+            if signUp == nil, let resumed = await resumedSignUp(in: home.squad.id) {
+                screen = .signUp(resumed)
+                return
             }
+            // Signed up some other way since, or for another squad: nothing left to carry on.
+            SignUpProgress.clear()
+            await openTabs(on: home, store: store, landingOn: scene)
         }
+    }
+
+    /// 今天 under the tab bar, on the member's squad's home; on a picked scene the member drops
+    /// onto it.
+    private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
+        let today = TodayModel(
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
+        let profile = MeModel(
+            service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
+            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
+        let squad = SquadSettingsModel(
+            service: APISquadSettingsService(api: api),
+            changed: { [weak self] in Task { await self?.squadChanged() } },
+            signOut: { [weak self] in await self?.signOut() })
+        let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
+        let recap = RecapShelf(
+            service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
+            scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
+            scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
+        // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
+        // from now rather than from when the scene covered the screen.
+        if let scene { await today.dropIn(on: scene, coveredAt: .now) }
+        screen = .tabs(
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+            recap: recap)
+        await readScene(of: home.squad.id, into: today)
+        if let pending = pendingRecap {
+            pendingRecap = nil
+            await openRecap(squad: pending.squad, week: pending.week)
+        }
+    }
+
+    /// The member's home, from what the phone kept for them alone.
+    private func todayStore(of member: MemberID) -> TodayStore {
+        let directory = folders.folder(for: member)
+        return TodayStore(
+            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
+            now: { Date() }, newID: { UUID() })
     }
 
     /// The squad's name or scene changed on 小队设置: 今天 and 我 read them again.
@@ -233,10 +275,17 @@ final class AppModel {
     }
 
     private func signedOut() async {
-        APICheckInBackend(api: api, directory: directory).forget()
-        await DeviceOutbox(directory: directory).forget()
+        SignUpProgress.clear()
+        folders.forgetAll()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
+    }
+
+    /// The sign-up the app was closed during, carried on, when it had joined or made `squad`.
+    private func resumedSignUp(in squad: SquadID) async -> SignUpModel? {
+        guard let progress = SignUpProgress.saved, progress.squad == squad else { return nil }
+        let model = newSignUp(hasAgreedToAI: true)
+        return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
     }
 
     private func newSignUp(hasAgreedToAI: Bool) -> SignUpModel {

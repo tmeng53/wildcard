@@ -3,7 +3,7 @@ import Contracts
 import Foundation
 
 /// Check-ins waiting to go out, kept in files on the device so they survive the app closing:
-/// `outbox.json` and each photo beside it. The member's: `forget()` it on sign-out.
+/// `outbox.json` and each photo beside it. The member's: keep it in their `MemberFolders` folder.
 public actor DeviceOutbox: Outbox {
     private let list: URL
     private let photos: URL
@@ -43,12 +43,6 @@ public actor DeviceOutbox: Outbox {
         } catch {
             // Kept in memory by the store; it goes out while the app stays open.
         }
-    }
-
-    /// Deletes everything waiting, when the member signs out or deletes their account.
-    public func forget() {
-        try? FileManager.default.removeItem(at: list)
-        try? FileManager.default.removeItem(at: photos)
     }
 
     /// Stored JSON, so it carries a `version`.

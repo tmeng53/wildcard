@@ -5,6 +5,7 @@ import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// No posts yet: a window onto the squad's own scene, with my character there in the scene's kit
@@ -71,7 +72,8 @@ struct EmptyFeed: View {
         let persona = look?.moves ?? .energetic
         guard
             let scene = try? PlaceholderCharacter.sceneLoop(
-                for: theme, look: look?.outfit ?? PlaceholderCharacter.lifter, persona: persona),
+                for: theme, look: look?.outfit ?? PlaceholderCharacter.lifter, persona: persona,
+                in: SportList.shared.catalog),
             let figure = try? PlaceholderCharacter.figure(wearing: scene.outfit)
         else { return nil }
         return try? CharacterPlayer(figure: figure, idle: scene.clip)
