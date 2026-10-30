@@ -80,6 +80,7 @@ struct WildcardApp: App {
             scene: LaunchOptions.scene,
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
+            bubbleHold: LaunchOptions.bubbleHold,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _profile = State(initialValue: Self.sampleProfile())

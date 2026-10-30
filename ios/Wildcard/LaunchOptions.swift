@@ -142,6 +142,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
+    /// `-uitest-bubble-hold`: a teammate's bubble on 今天 stays up for a minute instead of 5
+    /// seconds, so a UI test checks it without racing its timer.
+    static var bubbleHold: Double? {
+        ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
+    }
+
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
     /// suite emptied at launch.
     static var todayDefaults: UserDefaults {
