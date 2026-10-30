@@ -192,6 +192,18 @@ struct WildcardApp: App {
             ZStack { Starting() }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .loadingCover(true) { OpeningLoader() }
+                // TEMPORARY diagnostics for CI, removed before merge.
+                .overlay(alignment: .topLeading) {
+                    Text(verbatim: "a").accessibilityIdentifier("diag.a").frame(width: 120, height: 160)
+                        .loadingCover(true) { OpeningLoader().accessibilityIdentifier("diag.a.cover") }
+                }
+                .overlay(alignment: .topTrailing) {
+                    Text(verbatim: "b").accessibilityIdentifier("diag.b").frame(width: 120, height: 160)
+                        .loadingCover(true) { LoadingCharacter().accessibilityIdentifier("diag.b.cover") }
+                }
+                .overlay(alignment: .bottom) {
+                    LoadingCharacter().accessibilityElement().accessibilityIdentifier("diag.c")
+                }
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {

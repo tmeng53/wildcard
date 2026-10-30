@@ -20,7 +20,7 @@ final class LoadingUITests: XCTestCase {
         keepScreenshot(named: "90-loading-page")
         let loader = app.descendants(matching: .any).matching(identifier: "loading.cover").firstMatch
         let shown = loader.waitForExistence(timeout: Self.wait)
-        if !shown { print(app.debugDescription) }
+        print(app.debugDescription)  // TEMPORARY diagnostics
         XCTAssertTrue(shown, "the launch page never showed its loader")
         XCTAssertEqual(loader.label, "加载中")
     }
