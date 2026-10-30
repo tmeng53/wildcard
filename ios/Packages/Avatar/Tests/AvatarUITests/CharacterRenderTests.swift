@@ -63,7 +63,7 @@ struct CharacterRenderTests {
         #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.iron))
     }
 
-    /// Picking a sport: the player draws the old clothes until the hop's squash, the kit after.
+    /// Picking a sport: the player draws the old prop until the hop's squash, the kit's after.
     @Test func thePlayerSwapsTheKitInMidHop() throws {
         let start = Date(timeIntervalSinceReferenceDate: 0)
         let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)

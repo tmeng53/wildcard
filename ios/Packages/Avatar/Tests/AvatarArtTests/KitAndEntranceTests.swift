@@ -98,6 +98,12 @@ import Testing
             #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#
         )
         .kit(for: .sport("parkour"), in: .empty).id == "run")
+    // A kit names only its prop: clothes are the member's own.
+    #expect(throws: AvatarError.self) {
+        try decode(
+            #"{"version": 1, "kits": [{"id": "run", "wear": {"top": "warmup-tank"}}], "categories": {}, "sports": {}, "otherwise": "run"}"#
+        )
+    }
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try decode(#"{"version": 2, "kits": [], "categories": {}, "sports": {}, "otherwise": "run"}"#)
     }
