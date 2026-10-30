@@ -2,6 +2,10 @@ import AccountDomain
 import Contracts
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 // Calling with the app's own sign-in.
 extension WildcardAPI {
     /// Calls with the account's tokens, and signs the account out when the API refuses a renewed
