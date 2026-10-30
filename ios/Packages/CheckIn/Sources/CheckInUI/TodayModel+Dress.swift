@@ -41,25 +41,33 @@ extension TodayModel {
         guard next != worn || player == nil,
             let figure = try? PlaceholderCharacter.figure(wearing: dress.outfit)
         else { return }
-        worn = next
+        // What it wears counts only once it is on, so a failed change is tried again next time.
         guard let player else {
             player = try? CharacterPlayer(figure: figure, idle: dress.idle)
+            if player != nil { worn = next }
             return
         }
-        if hop, let kitHop = try? PlaceholderCharacter.kitHop() {
-            try? player.change(into: figure, idle: dress.idle, hop: kitHop)
+        if hop, let kitHop = try? PlaceholderCharacter.kitHop(),
+            (try? player.change(into: figure, idle: dress.idle, hop: kitHop)) != nil
+        {
             hopEnds = Date.now.addingTimeInterval(kitHop.out.duration + kitHop.in.duration)
-        } else {
-            try? player.wear(figure, idle: dress.idle)
+            worn = next
+        } else if (try? player.wear(figure, idle: dress.idle)) != nil {
+            worn = next
         }
+    }
+
+    /// Whether my character is hopping into its kit: a clip played now would stop the change
+    /// halfway, in the clothes on screen.
+    var isChanging: Bool {
+        hopEnds.map { Date.now < $0 } ?? false
     }
 
     /// I tapped my own character: it plays its signature move once, the move of the prop it
     /// holds (the kit's, once I trained today), or its cheer. Not while a pat, a 练了's cheer, a
     /// hop into the kit or the squad's drop plays.
     func tapMe() {
-        guard pats.pat == nil, arrival == nil, !holdsDress, let player else { return }
-        if let hopEnds, Date.now < hopEnds { return }
+        guard pats.pat == nil, arrival == nil, !holdsDress, !isChanging, let player else { return }
         guard
             let move = try? PlaceholderCharacter.signatureMove(
                 wearing: worn?.outfit ?? myLook, persona: myPersona)
