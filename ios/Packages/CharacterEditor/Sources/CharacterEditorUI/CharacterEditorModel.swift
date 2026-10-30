@@ -46,9 +46,16 @@ public final class CharacterEditorModel {
             guard tab != oldValue else { return }
             // The 性格 tab counts its idle seconds from when it opens.
             if tab == .persona { moveEnds = .now }
+            knocked = nil
             restyle(move: nil)
         }
     }
+    /// The store open on the 穿搭 tab; nil shows the shopping street.
+    private(set) var store: String?
+    /// A closed store tapped on the street, whose opening line shows under it.
+    private(set) var knocked: String?
+    /// The slot of the piece last picked off the open store's rack, whose colors show over it.
+    private(set) var picked: Slot?
     /// Nil until the first figure is built.
     public private(set) var player: CharacterPlayer?
     /// Thumbnails of the tiles, kept while the editor is open.
@@ -112,6 +119,31 @@ public final class CharacterEditorModel {
         leaveTabsForPeople()
         restyle(move: .look)
     }
+
+    /// Walks into an open store, or tells how a closed one opens.
+    func visit(_ store: EditorChoices.Store) {
+        guard store.isOpen else {
+            knocked = store.id
+            return
+        }
+        (self.store, knocked, picked) = (store.id, nil, nil)
+    }
+
+    /// Back out to the shopping street.
+    func leaveStore() {
+        (store, picked) = (nil, nil)
+    }
+
+    /// Puts on a piece from the open store's rack; a second tap takes off a hat or an accessory,
+    /// which a look can go without.
+    func pickFromRack(_ variant: String, for slot: Slot) {
+        let takesOff = Self.optionalClothes.contains(slot) && draft.picks.variants[slot] == variant
+        pick(takesOff ? nil : variant, for: slot)
+        picked = takesOff ? nil : slot
+    }
+
+    /// The clothes a look can go without.
+    static let optionalClothes: Set<Slot> = ["hat", "acc"]
 
     func pickColor(_ color: RGBAColor?, for slot: Slot) {
         guard draft.pickColor(color, for: slot) else { return }

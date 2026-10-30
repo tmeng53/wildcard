@@ -3,49 +3,69 @@ import AvatarDomain
 import AvatarUI
 import SwiftUI
 
-/// Tile pictures: the person's own character in each choice, standing at rest. Each is built
-/// once, off the main actor, and kept while the editor is open.
+/// Tile pictures: the person's own character in each choice, standing at rest, or a piece of
+/// clothing on its own. Each is built once, off the main actor, and kept while the editor is
+/// open.
 @MainActor
 final class ThumbnailCache {
     struct Entry {
         let drawing: FigureDrawing
         let placements: [Placement]
+        /// What a piece on its own covers, which its tile fits; nil for the whole character.
+        let bounds: CGRect?
     }
 
-    private var entries: [Outfit: Entry] = [:]
+    /// An outfit, and the one slot to draw when a piece shows on its own.
+    struct Key: Hashable {
+        let outfit: Outfit
+        let only: Slot?
+    }
+
+    private var entries: [Key: Entry] = [:]
     /// Enough for every tile of a few looks; past it the cache starts over.
     private let limit = 400
 
-    func entry(for outfit: Outfit) -> Entry? {
-        entries[outfit]
+    func entry(for key: Key) -> Entry? {
+        entries[key]
     }
 
-    func load(_ outfit: Outfit) async -> Entry? {
-        if let entry = entries[outfit] { return entry }
-        guard let figure = try? await CharacterEditorModel.figure(wearing: outfit) else { return nil }
-        let entry = Entry(drawing: FigureDrawing(figure), placements: figure.layout(figure.restPose))
+    func load(_ key: Key) async -> Entry? {
+        if let entry = entries[key] { return entry }
+        guard var figure = try? await CharacterEditorModel.figure(wearing: key.outfit) else { return nil }
+        if let slot = key.only { figure = figure.wearing(only: slot) }
+        let drawing = FigureDrawing(figure)
+        let placements = figure.layout(figure.restPose)
+        let entry = Entry(
+            drawing: drawing, placements: placements, bounds: key.only == nil ? nil : drawing.bounds(placements))
         if entries.count >= limit { entries.removeAll() }
-        entries[outfit] = entry
+        entries[key] = entry
         return entry
     }
 }
 
-/// The character in `outfit`, cropped to the part that changes, such as the head for a hat.
+/// The character in `outfit`, cropped to the part that changes, such as the head for a hat;
+/// or, given `only`, that slot's piece on its own, filling the tile.
 struct Thumbnail: View {
     let outfit: Outfit
+    var only: Slot?
     let crop: CGRect
     let cache: ThumbnailCache
     /// The last picture shown, kept while the next one builds so the tile never blanks.
     @State private var shown: ThumbnailCache.Entry?
+    /// The room left around a piece on its own, in canvas points.
+    private let margin: Double = 6
 
     var body: some View {
+        let key = ThumbnailCache.Key(outfit: outfit, only: only)
         ZStack {
-            if let entry = cache.entry(for: outfit) ?? shown {
-                CharacterCanvas(drawing: entry.drawing, placements: entry.placements, crop: crop)
+            if let entry = cache.entry(for: key) ?? shown {
+                CharacterCanvas(
+                    drawing: entry.drawing, placements: entry.placements,
+                    crop: entry.bounds?.insetBy(dx: -margin, dy: -margin) ?? crop)
             }
         }
-        .task(id: outfit) {
-            shown = await cache.load(outfit)
+        .task(id: key) {
+            shown = await cache.load(key)
         }
         .accessibilityHidden(true)
     }
