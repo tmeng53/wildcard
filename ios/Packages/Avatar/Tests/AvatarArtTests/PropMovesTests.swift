@@ -85,3 +85,15 @@ func everyPropIsHeldInAFist(prop: String) throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "prop": prop]))
     #expect(try #require(figure.part("gripR").art.first).shapes.isEmpty == false)
 }
+
+/// Tapping my character on the home plays the move of the prop it holds, once, at my persona's
+/// tempo; holding nothing, it cheers.
+@Test func aTapPlaysThePropsMoveOrACheer() throws {
+    let lifting = try PlaceholderCharacter.signatureMove(wearing: Outfit(["prop": "dumbbell"]), persona: .drama)
+    #expect(lifting.name == "dumbbell")
+    #expect(!lifting.loops)
+    let press = try #require(try PlaceholderCharacter.propMove(for: Outfit(["prop": "dumbbell"])))
+    #expect(lifting.duration == press.duration / Persona.drama.accentTempo)
+    let emptyHanded = try PlaceholderCharacter.signatureMove(wearing: Outfit([:]), persona: .shy)
+    #expect(emptyHanded.name == "cheer")
+}

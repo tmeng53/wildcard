@@ -80,10 +80,17 @@ public final class TodayModel {
     private(set) var sendFailed = false
 
     let photoSource: PhotoSource
-    /// My character, as I made it once the home says so; the stand-in lifter until then.
-    private(set) var player: CharacterPlayer?
-    private var myLook = PlaceholderCharacter.lifter
-    private var myPersona = Persona.energetic
+    /// My character, as I made it once the home says so; the stand-in lifter until then. Once I
+    /// 练了 a sport today it wears that sport's kit and loops its move (`TodayModel+Dress.swift`).
+    var player: CharacterPlayer?
+    private(set) var myLook = PlaceholderCharacter.lifter
+    private(set) var myPersona = Persona.energetic
+    /// What my character has on and loops, so it changes only when that does.
+    var worn: Worn?
+    /// Keeps my kit off while a 练了's cheer plays; it goes on with a hop after.
+    var holdsDress = false
+    /// When the hop into my kit is over: a tap before it would stop the change halfway.
+    var hopEnds: Date?
     private let store: TodayStore
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
@@ -112,13 +119,7 @@ public final class TodayModel {
         self.photoSource = photoSource
         self.posted = posted
         litNight = defaults.string(forKey: Self.lightsKey)
-        player = Self.player(wearing: myLook, persona: myPersona)
-    }
-
-    private static func player(wearing look: Outfit, persona: Persona) -> CharacterPlayer? {
-        try? CharacterPlayer(
-            figure: PlaceholderCharacter.figure(wearing: look),
-            idle: PlaceholderCharacter.clip("idle", persona: persona, species: PlaceholderCharacter.species(of: look)))
+        dressMe(hop: false)
     }
 
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the
@@ -207,9 +208,10 @@ public final class TodayModel {
             let (look, persona) = (Outfit(character.look), Persona(character.look))
             if look != myLook || persona != myPersona {
                 (myLook, myPersona) = (look, persona)
-                player = Self.player(wearing: look, persona: persona)
+                (player, worn) = (nil, nil)
             }
         }
+        if !holdsDress || player == nil { dressMe(hop: false) }
         cast.update(home: home, scene: scene, phase: stagePhase)
     }
 
@@ -320,6 +322,8 @@ public final class TodayModel {
         do {
             // Posted or waiting to go out, it counts on the scene now.
             let outcome = try await store.post(draft)
+            // A 练了's kit goes on after its cheer.
+            if draft.kind == .trained { holdsDress = true }
             placeSquad()
             step = .scene
             photos = []
@@ -346,12 +350,12 @@ public final class TodayModel {
         let post: CheckIn? = if case .posted(let checkIn) = saved { checkIn } else { nil }
         payoff = Payoff(kind: draft.kind, line: line, post: post)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        if draft.kind != .disclaimer,
-            let cheer = try? PlaceholderCharacter.clip(
+        let cheer =
+            draft.kind == .disclaimer
+            ? nil
+            : try? PlaceholderCharacter.clip(
                 "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
-        {
-            try? player?.play(cheer)
-        }
+        if let cheer { try? player?.play(cheer) }
         guard draft.kind == .trained else { return }
         // The big moment: my ring draws and closes, the squad turns and cheers, and only then
         // does the week's count flip up.
@@ -363,6 +367,11 @@ public final class TodayModel {
             cast.cheerMe(at: phase)
             try? await Task.sleep(for: .seconds(Self.scoreDelay - Motion.ringFill))
             heldWeek = nil
+            // Then, the cheer over, I change into the sport's kit and train at it.
+            let rest = (cheer?.duration ?? 0) - Self.scoreDelay
+            if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+            holdsDress = false
+            dressMe(hop: true)
         }
     }
 }

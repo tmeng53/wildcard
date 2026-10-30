@@ -61,6 +61,15 @@ final class TodayUITests: XCTestCase {
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "16-today-trained-payoff")
+        // The cheer over, I hop into the sport's kit and train at it; a tap on me plays my
+        // prop's own move.
+        Thread.sleep(forTimeInterval: 2)
+        keepScreenshot(named: "16b-today-in-kit")
+        let me = app.buttons["today.me"]
+        XCTAssertTrue(me.waitForExistence(timeout: Self.wait), "my character isn't on the scene")
+        me.tap()
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "16c-today-tapped-me")
 
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
