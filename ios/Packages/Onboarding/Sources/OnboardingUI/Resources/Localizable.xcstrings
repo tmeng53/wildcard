@@ -1409,22 +1409,6 @@
         }
       }
     },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %lld 周"
-          }
-        }
-      }
-    },
     "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)": {
       "localizations": {
         "en": {

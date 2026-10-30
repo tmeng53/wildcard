@@ -19,7 +19,7 @@ struct WeekStep: View {
         StepPage(step: .week, title: Text("本周目标", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
-                    WeekPoster(model: model, week: week)
+                    PlanPoster(model: model, week: week)
                     DayChoices(model: model, week: week)
                 }
             }
@@ -39,10 +39,10 @@ struct WeekStep: View {
     }
 }
 
-/// The week on a card in the accent tone (the brand's, in sign-up), laid out as the approved board draws it: who and which dates,
-/// the week's number in italic, a row a day, the character in the corner and 每周训练 N/7 天
-/// along the bottom. A picture with a fixed layout, like the 出赛表 poster.
-private struct WeekPoster: View {
+/// The week on sign-up's `WeekPoster` card in the accent tone (the brand's, in sign-up), laid out as
+/// the approved board draws it: who and which dates, the week's number in italic, a row a day,
+/// the character in the corner and 每周训练 N/7 天 along the bottom.
+private struct PlanPoster: View {
     let model: SignUpModel
     let week: WeekDraft
     @Environment(\.sceneTheme) private var theme
@@ -50,68 +50,31 @@ private struct WeekPoster: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Positions from the approved board, in poster points.
-    /// The poster's height; its width is the page's.
-    private let height: Double = 460
-    /// The week's number: italic, 112 points, set tight.
-    private let weekNumberStyle = TypeStyle(
-        face: .scoreboard(.extraBoldItalic), size: 112, tracking: -4, anchor: .largeTitle)
-    /// Puts the number's baseline where the board's 0.86 line height does.
-    private let weekNumberTop: Double = 15
-    /// Where the rows start, under the week's number, and how wide they run.
-    private let rowsTop: Double = 138
-    private let rowsWidth: Double = 196
     private let rowHeight: Double = 38
     /// The day's name in front of its sport.
     private let dayLabelWidth: Double = 32
-    /// The character in the poster's corner, clear of the strip.
-    private let characterSize = CGSize(width: 92, height: 120)
-    private let characterInset = CGSize(width: 30, height: 56)
     /// Days that are 休息 or already over fade back, so the training days read first.
     private let restOpacity = 0.55
     /// The selected day's row: the ink over the card, faintly.
     private let selectedFill = 0.22
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color(role: tone.fill, in: theme)
-            Text(verbatim: "\(model.nickname) · \(dates)")
-                .typeStyle(TypeRamp.calloutEmphasis)
-                .lineLimit(1)
-                .padding(.leading, Space.m + 2)
-                .padding(.top, Space.s + 2)
-            Text(verbatim: "W\(model.weekNumber)")
-                .typeStyle(weekNumberStyle)
-                .fixedSize()
-                .padding(.leading, Space.s + 2)
-                .padding(.top, weekNumberTop)
-                .allowsHitTesting(false)
-                .accessibilityLabel(Text("第 \(model.weekNumber) 周", bundle: .module))
-            if let player = model.myCharacter?.player {
-                CharacterView(player: player)
-                    .frame(width: characterSize.width, height: characterSize.height)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(.trailing, characterInset.width)
-                    .padding(.bottom, characterInset.height)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-            }
+        WeekPoster(
+            title: "\(model.nickname) · \(dates)", weekNumber: model.weekNumber, layout: .card, fill: tone.fill,
+            ink: tone.onFill
+        ) {
             VStack(spacing: 0) {
                 ForEach(week.days.indices, id: \.self) { index in
                     dayRow(index)
                 }
             }
-            .frame(width: rowsWidth)
-            .padding(.leading, Space.xs + 2)
-            .padding(.top, rowsTop)
+        } character: {
+            if let player = model.myCharacter?.player {
+                CharacterView(player: player)
+            }
+        } strip: {
             WeekTotal(trainingDays: week.trainingDays)
-                .frame(maxHeight: .infinity, alignment: .bottom)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: height)
-        .foregroundStyle(Color(role: tone.onFill, in: theme))
-        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        // A picture with a fixed layout: its type doesn't grow with Dynamic Type.
-        .dynamicTypeSize(.large)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: week)
         .onChange(of: model.hops) { _, _ in model.myCharacter?.play("cheer") }
         // On the poster the character trains at the scene's sport, as on the scene.
@@ -177,15 +140,11 @@ private struct WeekPoster: View {
     }
 }
 
-/// The strip along the poster's bottom: 每周训练, the count turning over as a day changes, and
+/// What the poster's bottom strip holds: 每周训练, the count turning over as a day changes, and
 /// 天, all set to the right as the board has them.
 private struct WeekTotal: View {
     let trainingDays: Int
-    @Environment(\.sceneTheme) private var theme
 
-    /// The strip: the accent, a shade darker.
-    private let height: Double = 44
-    private let shade = 0.16
     private let labelOpacity = 0.85
     private let denominatorOpacity = 0.6
 
@@ -207,8 +166,6 @@ private struct WeekTotal: View {
                 .typeStyle(TypeRamp.footnoteEmphasis)
         }
         .padding(.horizontal, Space.s + 2)
-        .frame(height: height)
-        .background(Color(role: .fgDefault, in: theme).opacity(shade))
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isStaticText)
         .accessibilityLabel(Text("每周训练 \(trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module))
