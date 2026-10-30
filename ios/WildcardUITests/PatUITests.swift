@@ -75,14 +75,13 @@ final class PatUITests: XCTestCase {
     }
 
     /// Taps the bubble's 「拍一拍」. A bubble closes on its own after 5 seconds, and a slow CI
-    /// simulator can spend that long on the checks and screenshots before the tap, so if it has
-    /// closed, tapping the teammate opens their bubble again, still offering 「拍一拍」.
+    /// simulator can spend that long on the checks and screenshots before the tap, or close it
+    /// between a check and the tap, so tapping the teammate first opens a fresh bubble, still
+    /// offering 「拍一拍」, and the pat follows at once.
     private func tapPat(_ pat: XCUIElement, on nickname: String, bubble: XCUIElement, in app: XCUIApplication) {
-        if !pat.isHittable {
-            mate(nickname, in: app).tap()
-            XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
-            XCTAssertEqual(pat.label, "拍一拍")
-        }
+        mate(nickname, in: app).tap()
+        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
+        XCTAssertTrue(pat.waitForExistence(timeout: Self.wait), "\(nickname)'s bubble has no 「拍一拍」")
         pat.tap()
     }
 
