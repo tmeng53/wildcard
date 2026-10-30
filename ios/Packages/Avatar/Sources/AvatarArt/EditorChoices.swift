@@ -4,7 +4,7 @@ import Foundation
 /// What the character editor offers beyond every bundled variant: bodies grouped by species,
 /// in the order the editor shows them, the stores of its shopping street, the clothes on their
 /// racks with their preset colors, and the props of this release. Read from `editor.json`, so adding a species or putting a piece on the
-/// racks is a data change; bundled art the lists leave out (a swim cap only a sport's kit wears)
+/// racks is a data change; bundled art the lists leave out (a piece only a sport's kit wears)
 /// stays hidden. People show one body and take their skin tone from the swatches.
 public struct EditorChoices: Hashable, Sendable {
     public struct Species: Hashable, Sendable, Identifiable {

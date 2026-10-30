@@ -288,8 +288,8 @@ func outline(_ path: [PathElement]) -> [Point] {
 }
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
-/// clothing and prop it offers is bundled, and its first color is its art's own. The swim cap is
-/// only for the swim kit. The racks start with WARM-UP's twelve pieces.
+/// clothing and prop it offers is bundled, and its first color is its art's own. The racks start
+/// with WARM-UP's twelve pieces.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -315,8 +315,6 @@ func outline(_ path: [PathElement]) -> [Point] {
                 piece.swatches.first == PlaceholderCharacter.tones(for: slot, wearing: piece.id)?.base, "\(piece.id)")
         }
     }
-    #expect(PlaceholderCharacter.variants(for: "hat").contains("swimcap"))
-    #expect(!choices.wear.values.joined().contains { $0.id == "swimcap" })
     // A look that leaves its top, bottom or shoes out wears WARM-UP's first.
     let defaults = try PlaceholderCharacter.rig().defaults
     for slot: Slot in ["top", "bottom", "shoes"] {
@@ -364,5 +362,19 @@ func outline(_ path: [PathElement]) -> [Point] {
             Data(
                 #"{"version": 3, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
                     .utf8))
+    }
+}
+
+/// 秀肌肉's flexed arms and their biceps are the same fur as the arms at rest: a tuxedo's dark
+/// arm stays dark, with only the paw white.
+@Test(arguments: PlaceholderCharacter.variants(for: "body"))
+func theFlexedArmsKeepTheArmsColor(body: String) throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tank"]))
+    for (arm, flex, muscle) in [("armL", "flexL", "muscleL"), ("armR", "flexR", "muscleR")]
+        as [(PartID, PartID, PartID)]
+    {
+        let fur = try #require(figure.part(arm).art.first?.shapes[1].stroke?.color)
+        #expect(try figure.part(flex).art.first?.shapes[1].stroke?.color == fur, "\(body) \(flex)")
+        #expect(try figure.part(muscle).art.first?.shapes[0].fill == fur, "\(body) \(muscle)")
     }
 }

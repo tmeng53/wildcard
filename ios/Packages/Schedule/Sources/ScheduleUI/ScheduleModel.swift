@@ -100,7 +100,7 @@ public final class ScheduleModel {
         guard let loop else { return player?.restFrame }
         let start = Date(timeIntervalSinceReferenceDate: 0)
         guard let still = try? CharacterPlayer(figure: loop.figure, idle: loop.clip, now: start) else { return nil }
-        let into = PlaceholderCharacter.keyPose(for: scene) * loop.clip.duration
+        let into = PlaceholderCharacter.keyPose(of: loop.clip) * loop.clip.duration
         return still.frame(at: start.addingTimeInterval(into))
     }
 

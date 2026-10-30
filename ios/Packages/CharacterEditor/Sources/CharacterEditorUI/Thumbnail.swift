@@ -77,8 +77,8 @@ enum ThumbnailCrop {
     static let head = CGRect(x: 20, y: 40, width: 200, height: 200)
     static let top = CGRect(x: 30, y: 160, width: 180, height: 180)
     static let bottom = CGRect(x: 45, y: 195, width: 150, height: 150)
-    /// The hand and what it holds.
-    static let prop = CGRect(x: 50, y: 110, width: 190, height: 190)
+    /// The hand and what it holds, down to the foot of the longest prop (the yoga mat).
+    static let prop = CGRect(x: 40, y: 125, width: 190, height: 190)
     /// Close on the face, a little higher for brows and lower for the mouth.
     static let face = CGRect(x: 62, y: 112, width: 116, height: 116)
     static let brows = CGRect(x: 62, y: 100, width: 116, height: 116)

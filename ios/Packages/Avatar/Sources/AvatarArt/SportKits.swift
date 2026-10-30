@@ -2,9 +2,10 @@ import AvatarDomain
 import Contracts
 import Foundation
 
-/// What a character puts on and does for a sport: a swim cap and freestyle arms, running shoes
-/// and a jog. Picking a sport turns the character into its kit for a moment; the saved look
-/// never changes. Read from `kits.json`; each kit's move is `moves/sports/<id>.json`.
+/// What a character puts on and does for a sport: goggles and a breaststroke, running shoes and a
+/// jog. Picking a sport turns the character into its kit for a moment; the saved look never
+/// changes. Read from `kits.json`. A kit with its own `moves/sports/<id>.json` plays it; the
+/// others train at the signature move of the prop they hold.
 public struct SportKit: Hashable, Sendable, Identifiable {
     /// `swim`, `run`, ... `warmup` changes no clothes, for sports without a kit of their own.
     public let id: String
@@ -55,7 +56,7 @@ public struct SportKits: Hashable, Sendable {
         return kits.first { $0.id == id } ?? SportKit(id: otherwise, wear: [:])
     }
 
-    /// `{"version": 1, "kits": [{"id": "swim", "wear": {"hat": "swimcap", "prop": null}}],
+    /// `{"version": 1, "kits": [{"id": "swim", "wear": {"hat": null, "prop": "goggles"}}],
     /// "categories": {"water": "swim"}, "sports": {}, "otherwise": "swim"}`
     public static func decode(_ data: Data) throws(AvatarError) -> SportKits {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
@@ -100,9 +101,19 @@ extension PlaceholderCharacter {
     }
 
     /// A kit's move, looping, at `persona`'s tempo (`accentTempo`, the pace it plays its
-    /// species' moves at): a deadpan character swims slowly, an energetic one quickly.
+    /// species' moves at): a deadpan character swims slowly, an energetic one quickly. A kit with
+    /// a move of its own (the run kit's jog) plays it; any other loops the signature move of the
+    /// prop it holds (the goggles' breaststroke, the racket's serve), which ends at rest, so it
+    /// loops without a jump.
     public static func move(for kit: SportKit, persona: Persona) throws(AvatarError) -> Clip {
-        try Clip.decode(file("moves/sports/\(kit.id).json")).atTempo(persona.accentTempo)
+        if let own = try? file("moves/sports/\(kit.id).json") {
+            return try Clip.decode(own).atTempo(persona.accentTempo)
+        }
+        guard case let prop?? = kit.wear["prop"], var move = try propMove(for: Outfit(["prop": prop])) else {
+            throw .missingFile("moves/sports/\(kit.id).json")
+        }
+        move.loops = true
+        return try move.atTempo(persona.accentTempo)
     }
 
     /// The hop a character changes into a kit in: `out` squashes it down, where the kit goes on,

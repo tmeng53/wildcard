@@ -1,7 +1,7 @@
 import AvatarDomain
 
-/// What a character does for each kind of check-in, once: lifts a dumbbell (练了), eats a salad
-/// (健康餐), sneaks a boba (坦白放纵餐) or nods off on their feet (今日请假条).
+/// What a character does for each kind of check-in, once: the dumbbell's own lift (练了), eats a
+/// salad (健康餐), sneaks a boba (坦白放纵餐) or nods off on their feet (今日请假条).
 public enum CheckInMove: String, CaseIterable, Sendable {
     case workout, healthyMeal, treatMeal, excuse
 }
@@ -21,12 +21,13 @@ extension PlaceholderCharacter {
         return dressed
     }
 
-    /// `move` once (`moves/checkins/`), for a look `dressed(_:for:)` it. Meals have a clip per
-    /// persona: a bite takes a piece out of the food, then the cheeks puff while chewing. The
-    /// lift and the nap play at `persona`'s tempo, like a sport's move.
+    /// `move` once, for a look `dressed(_:for:)` it: the dumbbell's own move for a workout, the
+    /// rest from `moves/checkins/`. Meals have a clip per persona: a bite takes a piece out of the
+    /// food, then the cheeks puff while chewing. The lift and the nap play at `persona`'s tempo,
+    /// like a sport's move.
     public static func clip(for move: CheckInMove, persona: Persona) throws(AvatarError) -> Clip {
         switch move {
-        case .workout: try Clip.decode(file("moves/checkins/pump.json")).atTempo(persona.accentTempo)
+        case .workout: try Clip.decode(file("moves/props/dumbbell.json")).atTempo(persona.accentTempo)
         case .healthyMeal: try Clip.decode(file("moves/checkins/healthy-\(persona.rawValue).json"))
         case .treatMeal: try Clip.decode(file("moves/checkins/treat-\(persona.rawValue).json"))
         case .excuse: try Clip.decode(file("moves/checkins/doze.json")).atTempo(persona.accentTempo)

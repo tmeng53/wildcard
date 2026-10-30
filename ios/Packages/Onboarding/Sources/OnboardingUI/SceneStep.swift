@@ -1,8 +1,11 @@
 #if os(iOS)
 import CheckInUI
+import Contracts
 import DesignSystem
 import DesignSystemUI
+import Foundation
 import OnboardingDomain
+import ScenePickDomain
 import ScenePickUI
 import SwiftUI
 
@@ -47,6 +50,28 @@ struct SceneStep: View {
                 isEnabled: model.scenePicker?.canConfirm ?? false, action: model.confirmScene
             )
             .accessibilityIdentifier("scene.done")
+        }
+    }
+}
+
+/// The carton opening on 这周在哪练？.
+struct SceneReveal {
+    let unboxing: Unboxing
+    let scene: SceneTheme
+    let startedAt: Date
+}
+
+/// 这周在哪练？'s pick, saved through sign-up's backend for the squad just made.
+struct SignUpScenePick: ScenePickService {
+    let service: any SignUpService
+    let squad: SquadID
+
+    func pick(_ scene: SceneTheme) async throws(ScenePickError) {
+        guard let id = SceneID(rawValue: scene.rawValue) else { throw .notAllowed }
+        do throws(SignUpError) {
+            try await service.pickScene(id, for: squad)
+        } catch {
+            throw error == .unavailable ? .unavailable : .notAllowed
         }
     }
 }

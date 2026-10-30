@@ -202,6 +202,16 @@
         }
       }
     },
+    "乒乓球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ping pong paddle"
+          }
+        }
+      }
+    },
     "人": {
       "localizations": {
         "en": {
@@ -268,6 +278,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Create your Wildcard athlete"
+          }
+        }
+      }
+    },
+    "匹克球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pickleball paddle"
           }
         }
       }
@@ -478,6 +498,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Runners"
+          }
+        }
+      }
+    },
+    "壶铃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kettlebell"
           }
         }
       }
@@ -802,6 +832,16 @@
         }
       }
     },
+    "泳镜": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swim goggles"
+          }
+        }
+      }
+    },
     "浓眉": {
       "localizations": {
         "en": {
@@ -908,6 +948,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tortie"
+          }
+        }
+      }
+    },
+    "瑜伽垫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yoga mat"
           }
         }
       }
@@ -1028,6 +1078,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tennis, pickleball, squash"
+          }
+        }
+      }
+    },
+    "网球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tennis racket"
+          }
+        }
+      }
+    },
+    "羽毛球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badminton racket"
           }
         }
       }
@@ -1238,6 +1308,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Golden"
+          }
+        }
+      }
+    },
+    "镁粉袋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chalk bag"
           }
         }
       }
