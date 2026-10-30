@@ -64,10 +64,10 @@ final class PatUITests: XCTestCase {
         XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "豆豆's bubble never closed")
         mate("豆豆", in: app).tap()
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping 豆豆 showed no bubble")
-        let opened = Date()
+        let reopened = Date()
         mate("豆豆", in: app).tap()
         XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "tapping 豆豆 again left the bubble up")
-        XCTAssertLessThan(Date().timeIntervalSince(opened), 4.5, "the bubble closed on its own, not on the tap")
+        XCTAssertLessThan(Date().timeIntervalSince(reopened), 4.5, "the bubble closed on its own, not on the tap")
     }
 
     /// The bubble whole inside the window, below the status bar and above the tab bar, and its
