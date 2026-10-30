@@ -152,14 +152,22 @@ final class CharacterEditorUITests: XCTestCase {
         // The first tap on a field puts the cursor after its text; delete more than it holds.
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
+        // While the name is typed the button is 好了: it only puts the keyboard away, never
+        // finishes the character.
+        let named = app.buttons["editor.named"]
+        XCTAssertTrue(named.waitForExistence(timeout: Self.wait), "the button isn't 好了 while typing")
+        XCTAssertFalse(done.exists, "就这样 shows while the nickname is typed")
+        XCTAssertTrue(named.isHittable, "the keyboard covers 好了")
+        named.tap()
+        waitFor(app.keyboards.element, "exists == false", "好了 left the keyboard up")
         waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
+        nickname.tap()
         nickname.typeText("小汤")
-        waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
         XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
-        XCTAssertTrue(done.isHittable, "the keyboard covers 就这样")
+        keepScreenshot(named: "27-editor-nickname")
         nickname.typeText("\n")
         waitFor(app.keyboards.element, "exists == false", "Return left the keyboard up")
-        keepScreenshot(named: "27-editor-nickname")
+        waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
     }
 
     func testChangingTheCharacterFromProfileInEnglish() {

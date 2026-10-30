@@ -69,7 +69,9 @@ public struct CharacterEditorView: View {
         .background(Color(role: .bgCanvas, in: theme))
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            DoneBar(context: context, result: model.result, onDone: onDone)
+            DoneBar(
+                context: context, result: model.result, isNaming: isNaming, onNamed: { isNaming = false },
+                onDone: onDone)
         }
         .onAppear { model.start() }
         // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
@@ -117,19 +119,28 @@ private struct EditorHeader: View {
 }
 
 /// The finishing button, full width on the page: 就这样 in sign-up, 保存 from 我. It waits
-/// for a nickname.
+/// for a nickname. While the nickname is typed it is 好了 and only puts the keyboard away, so
+/// the button under the name never finishes the character by surprise.
 private struct DoneBar: View {
     let context: EditorContext
     let result: EditedCharacter?
+    let isNaming: Bool
+    let onNamed: () -> Void
     let onDone: (EditedCharacter) -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         Button {
-            if let result { onDone(result) }
+            if isNaming {
+                onNamed()
+            } else if let result {
+                onDone(result)
+            }
         } label: {
             Group {
-                if context == .profile {
+                if isNaming {
+                    Text("好了", bundle: .module)
+                } else if context == .profile {
                     Text("保存", bundle: .module)
                 } else {
                     Text("就这样", bundle: .module)
@@ -138,8 +149,8 @@ private struct DoneBar: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
-        .disabled(result == nil)
-        .accessibilityIdentifier("editor.done")
+        .disabled(!isNaming && result == nil)
+        .accessibilityIdentifier(isNaming ? "editor.named" : "editor.done")
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.s)
         .padding(.bottom, Space.xs)
