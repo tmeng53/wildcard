@@ -58,10 +58,7 @@ extension Figure {
     ) throws(AvatarError) {
         for (part, layer, hand) in held {
             guard let skin, let paint = Self.hand(bodies[hand]) else { throw .noHand(hand) }
-            var art = built[part].art
-            art[layer] = Self.painted(art[layer], from: skin, to: paint)
-            built[part] = Part(
-                id: built[part].id, pivot: built[part].pivot, restOpacity: built[part].restOpacity, art: art)
+            built[part].art[layer] = Self.painted(built[part].art[layer], from: skin, to: paint)
         }
     }
 }

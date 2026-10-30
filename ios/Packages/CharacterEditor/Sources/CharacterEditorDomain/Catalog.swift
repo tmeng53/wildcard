@@ -2,8 +2,9 @@ import AvatarArt
 import AvatarDomain
 
 /// Everything the editor offers: bodies by species, the variants of every other slot, the
-/// props of this release, and the preset colors per variant. A plain value, so the draft's
-/// rules test without the bundle; `CharacterEditorUI` reads the real one from the art.
+/// stores the clothes hang in, the props of this release, and the preset colors per variant.
+/// A plain value, so the draft's rules test without the bundle; `CharacterEditorUI` reads the
+/// real one from the art.
 public struct Catalog: Hashable, Sendable {
     public var species: [EditorChoices.Species]
     /// The variants of every slot but `body` and `prop`, in display order.
@@ -16,14 +17,26 @@ public struct Catalog: Hashable, Sendable {
     /// What the rig draws in a slot a look leaves out, such as round eyes, so its tile shows
     /// as picked.
     public var defaults: [Slot: String]
+    /// The shopping street's stores, in display order.
+    public var stores: [EditorChoices.Store]
+    /// The store each piece of clothing hangs in, by variant.
+    public var storeOf: [String: String]
 
     public init(
         species: [EditorChoices.Species], variants: [Slot: [String]], props: [String],
         swatches: [Slot: [String: [RGBAColor]]], originals: [Slot: [String: RGBAColor]],
-        defaults: [Slot: String] = [:]
+        defaults: [Slot: String] = [:], stores: [EditorChoices.Store] = [], storeOf: [String: String] = [:]
     ) {
         (self.species, self.variants, self.props) = (species, variants, props)
         (self.swatches, self.originals, self.defaults) = (swatches, originals, defaults)
+        (self.stores, self.storeOf) = (stores, storeOf)
+    }
+
+    /// What `store`'s rack holds, tops first, then bottoms, shoes, hats and accessories.
+    public func rack(of store: String) -> [(slot: Slot, variant: String)] {
+        Self.clothingSlots.flatMap { slot in
+            (variants[slot] ?? []).filter { storeOf[$0] == store }.map { (slot: slot, variant: $0) }
+        }
     }
 
     /// The preset colors `variant` offers in `slot`; empty when it keeps its art's colors.

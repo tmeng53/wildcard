@@ -28,7 +28,7 @@ public struct Figure: Hashable, Sendable {
     public let width: Double
     public let height: Double
     /// Back to front.
-    public let parts: [Part]
+    public private(set) var parts: [Part]
     /// Each part's parent, as an index into `parts`.
     let parents: [Int?]
     /// Part indices with every parent before its children.
@@ -49,7 +49,9 @@ public struct Figure: Hashable, Sendable {
         public let pivot: Point
         public let restOpacity: Double
         /// Back to front.
-        public let art: [Artwork]
+        public internal(set) var art: [Artwork]
+        /// The slot each of `art` is worn in, nil for the rig's own art.
+        public internal(set) var slots: [Slot?]
     }
 
     public init(rig: Rig, outfit: Outfit, art source: some ArtSource) throws(AvatarError) {
@@ -70,6 +72,7 @@ public struct Figure: Hashable, Sendable {
         var held: [(part: Int, layer: Int, hand: PartID)] = []
         for part in rig.parts {
             var artworks: [Artwork] = []
+            var slots: [Slot?] = []
             for layer in part.layers {
                 let path: String
                 if let slot = layer.slot {
@@ -85,14 +88,16 @@ public struct Figure: Hashable, Sendable {
                     if slot == "body" { bodies[part.id] = artwork }
                     if let hand = layer.hand { held.append((built.count, artworks.count, hand)) }
                     artworks.append(artwork)
+                    slots.append(slot)
                     used.insert(slot)
                 } else {
                     path = "base/\(layer.art).svg"
                     guard let svg = source.text(at: path) else { throw .missingArt(path) }
                     artworks.append(try Self.artwork(svg, path, rig))
+                    slots.append(nil)
                 }
             }
-            built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks))
+            built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks, slots: slots))
         }
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
@@ -172,14 +177,22 @@ public struct Figure: Hashable, Sendable {
     }
 
     private static func artwork(_ svg: String, _ path: String, _ rig: Rig) throws(AvatarError) -> Artwork {
-        let artwork: Artwork
-        do {
-            artwork = try Artwork(svg: svg)
-        } catch {
-            throw .invalidSVG(art: path, problem: error)
-        }
+        let artwork = try Artwork.read(svg: svg, path: path)
         guard artwork.width == rig.width, artwork.height == rig.height else { throw .canvasMismatch(art: path) }
         return artwork
+    }
+
+    /// The figure with nothing but what `slot` wears, as on a shop's rack: no body, face or
+    /// other clothes, each piece still where the rig puts it.
+    public func wearing(only slot: Slot) -> Figure {
+        var figure = self
+        for index in figure.parts.indices {
+            let part = figure.parts[index]
+            let kept = part.slots.indices.filter { part.slots[$0] == slot }
+            figure.parts[index].art = kept.map { part.art[$0] }
+            figure.parts[index].slots = kept.map { part.slots[$0] }
+        }
+        return figure
     }
 
     /// Every part at rest.

@@ -40,6 +40,21 @@ import Testing
     }
 }
 
+/// The shopping street: six stores, WARM-UP open at the start, and every piece of clothing on
+/// a rack, WARM-UP's twelve pieces, tops first, then bottoms, shoes, hats and accessories.
+@Test func everyPieceHangsInAStore() throws {
+    let catalog = try Catalog.placeholder()
+    #expect(catalog.stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"])
+    #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup"])
+    #expect(
+        catalog.rack(of: "warmup").map(\.variant) == [
+            "warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-shorts", "warmup-joggers", "warmup-leggings",
+            "warmup-canvas", "warmup-runner", "warmup-cap", "warmup-headband", "warmup-towel", "warmup-waistbag",
+        ])
+    let racked = catalog.stores.flatMap { catalog.rack(of: $0.id).map(\.variant) }
+    #expect(Set(racked) == Set(Catalog.clothingSlots.flatMap { catalog.variants[$0] ?? [] }))
+}
+
 /// Every random look the editor can start from is one the art can draw.
 @Test func randomLooksBuild() throws {
     let catalog = try Catalog.placeholder()

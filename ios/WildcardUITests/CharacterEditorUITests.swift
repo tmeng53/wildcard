@@ -23,8 +23,8 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "20-editor-look")
     }
 
-    /// 卷发 in the fourth hair color, then a hoodie in the third top color and a cap.
-    func testPickingHairAndClothes() {
+    /// 卷发 in the fourth hair color.
+    func testPickingHair() {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.hair"].tap()
@@ -38,19 +38,56 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertTrue(app.buttons["editor.undo"].isEnabled)
         settle()
         keepScreenshot(named: "21-editor-hair")
+    }
 
+    /// 穿搭 opens on the shopping street: a closed store says how it opens and WARM-UP lets the
+    /// person in, to a hoodie in the third color, a cap and the belt bag, then the cap off again.
+    func testShoppingForClothes() {
+        let app = launch(language: "zh-Hans")
+        XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
         app.buttons["editor.tab.outfit"].tap()
+        let warmup = app.buttons["editor.store.warmup"]
+        XCTAssertTrue(warmup.waitForExistence(timeout: Self.wait), "no WARM-UP on the street")
+        settle()
+        keepScreenshot(named: "22-editor-street")
+        let lap = app.buttons["editor.store.lap"]
+        scrollUntilHittable(lap, in: app)
+        lap.tap()
+        let closed = app.descendants(matching: .any).matching(identifier: "editor.store.closed").firstMatch
+        XCTAssertTrue(closed.waitForExistence(timeout: Self.wait), "a closed store didn't say how it opens")
+        XCTAssertTrue(closed.label.contains("跑步打卡 3 次开门"), closed.label)
+        XCTAssertFalse(app.buttons["editor.store.back"].exists, "a closed store let the person in")
+        settle()
+        keepScreenshot(named: "22b-editor-store-closed")
+
+        scrollUntilHittable(warmup, in: app)
+        warmup.tap()
         let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]
-        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 连帽卫衣 tile")
+        XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no 连帽卫衣 on WARM-UP's rack")
         hoodie.tap()
         waitUntilSelected(hoodie, "picking 连帽卫衣 didn't select it")
         app.buttons["editor.swatch.top.2"].tap()
-        // Hats come after the tops, bottoms and shoes, below the fold.
+        waitUntilSelected(app.buttons["editor.swatch.top.2"], "the top swatch didn't select")
+        settle()
+        keepScreenshot(named: "22c-editor-store")
+        // Hats and accessories come after the tops, bottoms and shoes, below the fold; a second
+        // tap on a hat takes it off.
         let cap = app.buttons["editor.tile.hat.warmup-cap"]
         scrollUntilHittable(cap, in: app)
         cap.tap()
+        waitUntilSelected(cap, "picking 棒球帽 didn't select it")
+        let waistbag = app.buttons["editor.tile.acc.warmup-waistbag"]
+        scrollUntilHittable(waistbag, in: app)
+        waistbag.tap()
+        waitUntilSelected(waistbag, "picking 运动腰包 didn't select it")
         settle()
-        keepScreenshot(named: "22-editor-outfit")
+        keepScreenshot(named: "22d-editor-outfit")
+        scrollUntilHittable(cap, in: app)
+        cap.tap()
+        waitFor(cap, "isSelected == false", "a second tap didn't take the cap off")
+
+        app.buttons["editor.store.back"].tap()
+        XCTAssertTrue(warmup.waitForExistence(timeout: Self.wait), "← 商店街 didn't go back to the street")
     }
 
     /// 脸 opens on the rig's round eyes; 星星眼 in the third eye color, then 坏笑 and round
@@ -178,9 +215,13 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
         XCTAssertEqual(app.buttons["editor.tab.look"].label, "Look")
         app.buttons["editor.tab.outfit"].tap()
-        let noHat = app.buttons["editor.tile.hat.none"]
-        scrollUntilHittable(noHat, in: app)
-        XCTAssertEqual(noHat.label, "No hat")
+        let warmup = app.buttons["editor.store.warmup"]
+        XCTAssertTrue(warmup.waitForExistence(timeout: Self.wait), "no WARM-UP on the street")
+        warmup.tap()
+        let back = app.buttons["editor.store.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: Self.wait), "WARM-UP didn't open")
+        XCTAssertTrue(back.label.contains("Shopping street"), back.label)
+        XCTAssertEqual(app.buttons["editor.tile.top.warmup-hoodie"].label, "Hoodie")
         settle()
         keepScreenshot(named: "28-editor-profile-en")
     }
