@@ -114,11 +114,13 @@ public struct ScheduleView: View {
                 break
             }
         }
-        .sheet(item: $sharing, onDismiss: { model.clearSaving() }) { poster in
-            PosterShareSheet(image: poster.image)
-                .presentationDetents([.medium, .large])
-                .ignoresSafeArea()
-        }
+        .sheet(
+            item: $sharing, onDismiss: { model.clearSaving() },
+            content: { poster in
+                PosterShareSheet(image: poster.image)
+                    .presentationDetents([.medium, .large])
+                    .ignoresSafeArea()
+            })
     }
 
     // MARK: Poster
