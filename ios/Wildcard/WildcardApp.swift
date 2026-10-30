@@ -189,6 +189,15 @@ struct WildcardApp: App {
             StyleGuideView()
         } else if LaunchOptions.showsLoading {
             Starting().loadingCover(true) { OpeningLoader() }
+                // TEMPORARY diagnostics for CI, removed before merge.
+                .overlay(alignment: .top) {
+                    LoadingCharacter().border(.red).accessibilityElement().accessibilityIdentifier("diag.character")
+                }
+                .overlay(alignment: .bottom) {
+                    Text("diag").accessibilityIdentifier("diag.text").loadingCover(true) {
+                        Color.red.frame(width: 40, height: 40)
+                    }
+                }
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {
