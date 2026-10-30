@@ -1,7 +1,8 @@
 import XCTest
 
 /// 拍一拍 on the home, the way a person meets it: 小米 and 阿杰 patted me, so opening the home
-/// plays 小米's pat and her bubble offers one back; I pat her back, then tap 豆豆 and pat her.
+/// plays 小米's pat and her bubble offers one back; I pat her back, then tap 豆豆 and pat her, and
+/// tapping 豆豆 twice opens and closes her bubble.
 /// Each bubble stays whole on screen, clear of the tab bar, and screenshots are kept for review.
 @MainActor
 final class PatUITests: XCTestCase {
@@ -27,11 +28,11 @@ final class PatUITests: XCTestCase {
         }
         XCTAssertTrue(labeled("小米拍了拍你", in: app).waitForExistence(timeout: Self.wait), "no bubble from 小米")
         XCTAssertTrue(labeled("阿杰 也拍了拍你", in: app).exists, "the bubble doesn't name 阿杰 too")
+        keepScreenshot(named: "52-patted-bubble")
+        // The bubble closes on its own 5 seconds after it opens, which a slow CI simulator can
+        // spend on these queries alone, so where it sits is checked on 豆豆's bubble below.
         let bubble = app.descendants(matching: .any).matching(identifier: "today.patBubble").firstMatch
         let pat = app.buttons["today.pat"]
-        expectOnScreen(bubble, pat, in: app)
-        XCTAssertEqual(pat.label, "拍一拍")
-        keepScreenshot(named: "52-patted-bubble")
 
         // I pat her back.
         tapPat(pat, on: "小米", bubble: bubble, in: app)
@@ -58,9 +59,15 @@ final class PatUITests: XCTestCase {
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "today.pat").firstMatch.label, "拍过了")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "55-mate-patted")
-        // A second tap on the same teammate closes their bubble.
+        // A second tap on the same teammate closes their bubble, well before it would close on
+        // its own.
+        XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "豆豆's bubble never closed")
+        mate("豆豆", in: app).tap()
+        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping 豆豆 showed no bubble")
+        let opened = Date()
         mate("豆豆", in: app).tap()
         XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "tapping 豆豆 again left the bubble up")
+        XCTAssertLessThan(Date().timeIntervalSince(opened), 4.5, "the bubble closed on its own, not on the tap")
     }
 
     /// The bubble whole inside the window, below the status bar and above the tab bar, and its
