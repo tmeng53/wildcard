@@ -116,11 +116,7 @@ public struct ScheduleView: View {
                 Label {
                     Text("存图", bundle: .module)
                 } icon: {
-                    LoadingSwap(model.saving == .working) {
-                        Image(systemName: model.saving == .saved ? "checkmark" : "square.and.arrow.down")
-                            .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-                            .contentTransition(.symbolEffect(.replace))
-                    }
+                    SaveIcon(saving: model.saving)
                 }
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -302,6 +298,20 @@ public struct ScheduleView: View {
         }
     }
 }
+
+/// 存图's icon: a check once saved, and 三拍 while saving.
+private struct SaveIcon: View {
+    let saving: ScheduleModel.Saving
+
+    var body: some View {
+        LoadingSwap(saving == .working) {
+            Image(systemName: saving == .saved ? "checkmark" : "square.and.arrow.down")
+                .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
+                .contentTransition(.symbolEffect(.replace))
+        }
+    }
+}
+
 /// The character jogging in place on the poster's grey card while the weeks are read.
 private struct PosterLoader: View {
     @Environment(\.sceneTheme) private var theme
