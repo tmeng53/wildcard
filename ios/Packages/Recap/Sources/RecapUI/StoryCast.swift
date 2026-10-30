@@ -3,8 +3,9 @@ import AvatarArt
 import AvatarDomain
 import Contracts
 import DesignSystem
+import RecapDomain
 
-/// Someone the story shows: their name and character, from the squad the app already read.
+/// Someone the story shows: their name and character as they were that week.
 public struct StoryMember: Hashable, Sendable {
     public let id: MemberID
     public let nickname: String
@@ -23,7 +24,8 @@ public struct StoryMember: Hashable, Sendable {
 }
 
 /// Who the story is about and who is reading it, and the squad's scene that week: the story
-/// takes that scene's colors.
+/// takes that scene's colors. All of it is the story's own, frozen at the week's awards, so
+/// someone who joined later isn't in it and a new look doesn't change it.
 public struct StoryCast: Sendable {
     public let members: [MemberID: StoryMember]
     public let viewer: MemberID
@@ -35,12 +37,19 @@ public struct StoryCast: Sendable {
         self.scene = scene
     }
 
+    /// The squad as the story keeps it; someone who hadn't made their character is left out.
+    public init(story: WeekStory, viewer: MemberID) {
+        self.init(
+            members: story.squadmates.compactMap { StoryMember(member: $0.member, character: $0.character) },
+            viewer: viewer, scene: story.scene)
+    }
+
     public subscript(id: MemberID) -> StoryMember? { members[id] }
 
     /// The one reading.
     public var reader: StoryMember? { members[viewer] }
 
-    /// A member who left the squad since the awards shows by id only; nobody else is shown.
+    /// Someone the story names without a character shows no name.
     func nickname(of id: MemberID) -> String { members[id]?.nickname ?? "" }
 }
 #endif

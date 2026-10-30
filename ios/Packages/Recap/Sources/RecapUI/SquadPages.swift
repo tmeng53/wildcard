@@ -259,7 +259,7 @@ struct EndingButtons: View {
                 if let picture = actions.picture {
                     ShareLink(
                         item: picture,
-                        preview: SharePreview(Text("本周战报", bundle: .module), image: picture)
+                        preview: SharePreview(Text("每周战报", bundle: .module), image: picture)
                     ) {
                         Text("存图", bundle: .module).frame(maxWidth: .infinity)
                     }

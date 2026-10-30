@@ -114,11 +114,13 @@ const StoryDay = z
 
 const storyFields = {
   version: bodyVersion(1),
-  squad: z.strictObject({
-    id: z.uuid(),
-    name: z.string().meta({ description: 'The squad’s name that week.' }),
-  }),
-  week: z.strictObject({ from: WeekStart, to: LocalDay }),
+  squad: z
+    .strictObject({
+      id: z.uuid(),
+      name: z.string().meta({ description: 'The squad’s name that week.' }),
+    })
+    .openapi('StorySquad'),
+  week: z.strictObject({ from: WeekStart, to: LocalDay }).openapi('StoryWeek'),
   scene: Scene.meta({
     description: 'The scene the squad trained on that week: the story takes its colours.',
   }),
@@ -127,9 +129,8 @@ const storyFields = {
       z
         .strictObject({
           member: z.uuid(),
-          character: CharacterBody.optional().meta({
-            description: 'Their character as it was that week; missing when they had none.',
-          }),
+          // Their character as it was that week; missing when they had none.
+          character: CharacterBody.optional(),
         })
         .openapi('StoryMember'),
     )
@@ -140,6 +141,7 @@ const storyFields = {
     }),
   podium: z
     .strictObject({ champion: z.uuid(), sides: z.array(z.uuid()).max(2) })
+    .openapi('StoryPodium')
     .optional()
     .meta({
       description:
@@ -155,6 +157,7 @@ const storyFields = {
       cheatMeals: count,
       reactionsReceived: count,
     })
+    .openapi('StoryMyWeek')
     .optional()
     .meta({
       description:
@@ -172,6 +175,7 @@ const storyFields = {
       cheat: count,
       eaters: z.array(z.strictObject({ member: z.uuid(), more: z.enum(['healthy', 'cheat']) })),
     })
+    .openapi('StoryMeals')
     .optional()
     .meta({
       description:
@@ -185,6 +189,7 @@ const storyFields = {
       text: z.string(),
       reactions: z.int().min(1),
     })
+    .openapi('StoryBestDisclaimer')
     .optional()
     .meta({
       description:
@@ -192,6 +197,7 @@ const storyFields = {
     }),
   ending: z
     .strictObject({ done: count, plan: count })
+    .openapi('StoryEnding')
     .optional()
     .meta({
       description:

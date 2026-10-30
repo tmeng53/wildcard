@@ -17,6 +17,9 @@ public final class RecapModel {
     /// Clip and page times count from here, so they stay small and precise.
     private let epoch: Date
     private let close: @MainActor () -> Void
+    @ObservationIgnored private let finished: @MainActor () -> Void
+    /// The ending was on screen, so the reader watched to the end.
+    @ObservationIgnored private var reachedEnd = false
     let planNextWeek: @MainActor () -> Void
     private let service: (any WeekStoryService)?
     /// The reader nudged the organizers about the late titles.
@@ -31,6 +34,7 @@ public final class RecapModel {
 
     /// - Parameters:
     ///   - close: the reader is done: the ✕, a swipe down, or a tap past the last page.
+    ///   - finished: the last page came on screen, once.
     ///   - planNextWeek: 排下周 on the last page.
     ///   - service: where 催一下主办方 goes; nil for the sample, whose nudge only shows.
     ///   - scenePicker: the scene pick on the last page, when the reader picks next week's scene.
@@ -40,7 +44,8 @@ public final class RecapModel {
     public init(
         story: WeekStory, cast: StoryCast, service: (any WeekStoryService)?, now: Date = .now,
         scenePicker: ScenePicker? = nil, heldReveal: (scene: SceneTheme, at: Double)? = nil,
-        close: @escaping @MainActor () -> Void, planNextWeek: @escaping @MainActor () -> Void,
+        close: @escaping @MainActor () -> Void, finished: @escaping @MainActor () -> Void = {},
+        planNextWeek: @escaping @MainActor () -> Void,
         scenePicked: @escaping @MainActor (SceneTheme, Date) -> Void = { _, _ in }
     ) {
         self.service = service
@@ -50,6 +55,7 @@ public final class RecapModel {
         self.story = story
         self.cast = cast
         self.close = close
+        self.finished = finished
         self.planNextWeek = planNextWeek
         pages = story.pages
         wardrobe = StoryWardrobe(cast: cast)
@@ -81,11 +87,19 @@ public final class RecapModel {
     /// Catches the stored player up with the clock, once per page change.
     func tick(_ date: Date) {
         playback.advance(to: seconds(date))
+        noteEnd()
+    }
+
+    private func noteEnd() {
+        guard !reachedEnd, onLastPage else { return }
+        reachedEnd = true
+        finished()
     }
 
     func next(_ date: Date = .now) {
         tick(date)
         if !playback.next(at: seconds(date)) { close() }
+        noteEnd()
     }
 
     func previous(_ date: Date = .now) {

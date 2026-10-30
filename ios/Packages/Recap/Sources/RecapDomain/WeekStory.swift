@@ -2,10 +2,11 @@ import Contracts
 import DesignSystem
 import Foundation
 
-/// One squad's week as the Sunday 战报 tells it, for the member reading it. The weekly AI run
-/// fills it once per squad-week: the facts (who finished their plan, counts, days, check-ins)
-/// come from the database, the words and moves from the model. Every AI part is optional, so a
-/// story still `pending` on the model is the same shape with those left out.
+/// One squad's week as the Sunday 战报 (每周战报) tells it, for the member reading it. The API
+/// freezes it at the week's awards (Sunday 8pm): who was in the squad, that week's scene and
+/// every page, so nothing that happens later changes it; the words and moves come from the
+/// model. Every AI part is optional, so a story still `pending` on the model is the same shape
+/// with those left out.
 public struct WeekStory: Hashable, Sendable {
     public enum Status: Hashable, Sendable {
         /// The awards are in.
@@ -20,6 +21,10 @@ public struct WeekStory: Hashable, Sendable {
     public let squadName: String
     /// Monday to Sunday.
     public let week: Week
+    /// The scene the squad trained on that week: the story and its tile take its colours.
+    public let scene: SceneTheme
+    /// Everyone in the squad at the awards, in the order they joined, as they looked that week.
+    public let squadmates: [Squadmate]
     /// The page order the AI picked, or nil to use `PageID.defaultOrder`.
     public let order: [PageID]?
     public let podium: Podium?
@@ -31,14 +36,17 @@ public struct WeekStory: Hashable, Sendable {
     public let ending: Ending?
 
     public init(
-        status: Status, squad: SquadID, squadName: String, week: Week, order: [PageID]? = nil,
-        podium: Podium? = nil, titles: [MemberTitles] = [], myWeek: MyWeek? = nil, hottest: Hottest? = nil,
+        status: Status, squad: SquadID, squadName: String, week: Week, scene: SceneTheme,
+        squadmates: [Squadmate], order: [PageID]? = nil, podium: Podium? = nil, titles: [MemberTitles] = [],
+        myWeek: MyWeek? = nil, hottest: Hottest? = nil,
         meals: Meals? = nil, bestDisclaimer: BestDisclaimer? = nil, ending: Ending? = nil
     ) {
         self.status = status
         self.squad = squad
         self.squadName = squadName
         self.week = week
+        self.scene = scene
+        self.squadmates = squadmates
         self.order = order
         self.podium = podium
         self.titles = titles
@@ -96,6 +104,18 @@ public struct WeekStory: Hashable, Sendable {
         meals?.eaters.map(\.member).forEach(add)
         bestDisclaimer.map { add($0.author) }
         return ids
+    }
+}
+
+/// Someone in the squad at the week's awards.
+public struct Squadmate: Hashable, Sendable {
+    public let member: MemberID
+    /// Their character that week; nil when they hadn't made one, whom the story leaves out.
+    public let character: MemberCharacter?
+
+    public init(member: MemberID, character: MemberCharacter?) {
+        self.member = member
+        self.character = character
     }
 }
 

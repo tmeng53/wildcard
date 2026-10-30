@@ -9,22 +9,23 @@ import RecapDomain
 import ScenePickDomain
 import SwiftUI
 
-/// Where the app keeps the squad's latest 战报: the story 动态's tile opens, and the one a tapped
-/// awards push opens. It reads the story from its service and the squad (who is in it, how they
-/// look, the reader's day) from the app.
+/// Where the app keeps the squad's latest 战报 (每周战报): the story 动态's tile opens, and the one a
+/// tapped awards push opens. It reads the story from its service, which carries the squad as it
+/// was that week, and the reader and their day from the app. It remembers on this phone which
+/// weeks the reader watched to the end, for the tile.
 @MainActor @Observable
 public final class RecapShelf {
-    /// The squad the story is about, as the app last read it.
+    /// The squad the reader is in and their day, as the app last read them.
     public struct Squad: Sendable {
         public let id: SquadID
         /// The reader's day, in their own time zone.
         public let today: LocalDay
-        public let cast: StoryCast
+        public let viewer: MemberID
 
-        public init(id: SquadID, today: LocalDay, cast: StoryCast) {
+        public init(id: SquadID, today: LocalDay, viewer: MemberID) {
             self.id = id
             self.today = today
-            self.cast = cast
+            self.viewer = viewer
         }
     }
 
@@ -33,8 +34,18 @@ public final class RecapShelf {
     public private(set) var latest: WeekStory?
     /// The story on screen.
     public var open: RecapModel?
-    /// Who is in the squad, for the tile's peeking reader.
-    public private(set) var cast: StoryCast?
+    /// Who was in the squad that week, for the tile's reader.
+    public var cast: StoryCast? {
+        guard let latest, let viewer else { return nil }
+        return StoryCast(story: latest, viewer: viewer)
+    }
+    /// The reader watched the newest story to its last page on this phone: the tile shows it
+    /// uncovered, with 再看一遍.
+    public var latestIsSeen: Bool {
+        latest.map { seen.contains(RecapSeen.key($0)) } ?? false
+    }
+    private var viewer: MemberID?
+    private var seen: Set<String>
     /// How many scenes the reader picked on a story's last page, counted as each reveal fills
     /// the screen: the app goes home onto the scene, the same one as last time or not, and the
     /// squad drops in.
@@ -47,6 +58,7 @@ public final class RecapShelf {
     @ObservationIgnored private let planNextWeek: @MainActor () -> Void
     @ObservationIgnored private let scenePicker: @MainActor (WeekStory) async -> ScenePicker?
     @ObservationIgnored private let scenePicked: @MainActor (SceneTheme) -> Void
+    @ObservationIgnored private let seenStore: RecapSeen
 
     /// - Parameters:
     ///   - squad: the squad and its people as the app holds them now; nil before the home loads.
@@ -55,8 +67,9 @@ public final class RecapShelf {
     ///     for the week after it (last week's crown winner, else the captain, as the API says)
     ///     and nobody has yet; nil otherwise.
     ///   - scenePicked: the reader picked, and the reveal filled the screen with that scene.
+    ///   - seen: where the weeks watched to the end are kept.
     public init(
-        service: any WeekStoryService, squad: @escaping @MainActor () -> Squad?,
+        service: any WeekStoryService, squad: @escaping @MainActor () -> Squad?, seen: RecapSeen = RecapSeen(),
         planNextWeek: @escaping @MainActor () -> Void = {},
         scenePicker: @escaping @MainActor (WeekStory) async -> ScenePicker? = { _ in nil },
         scenePicked: @escaping @MainActor (SceneTheme) -> Void = { _ in }
@@ -66,13 +79,15 @@ public final class RecapShelf {
         self.planNextWeek = planNextWeek
         self.scenePicker = scenePicker
         self.scenePicked = scenePicked
+        seenStore = seen
+        self.seen = seen.weeks()
     }
 
     /// Reads the newest story out: this week's, from Sunday 8pm Eastern, else last week's; a week
     /// whose 战报 never came out shows none. A failed read keeps the one already shown.
     public func refresh() async {
         guard let squad = readSquad() else { return }
-        cast = squad.cast
+        viewer = squad.viewer
         let thisWeek = squad.today.weekStart
         do {
             if let story = try await service.story(squad: squad.id, week: thisWeek), story.isPublished {
@@ -88,26 +103,27 @@ public final class RecapShelf {
 
     /// Opens the newest story, from 动态's tile.
     public func openLatest() {
-        guard let latest, let cast else { return }
-        show(latest, cast: cast)
+        guard let latest, let viewer else { return }
+        show(latest, viewer: viewer)
     }
 
     /// Opens the week a tapped awards push is about, once it can be read and has come out.
     public func open(squad id: SquadID, week monday: LocalDay) async {
         guard let squad = readSquad(), squad.id == id else { return }
-        cast = squad.cast
+        viewer = squad.viewer
         guard let story = try? await service.story(squad: id, week: monday), story.isPublished else { return }
         if monday >= (latest?.week.monday ?? monday) { latest = story }
-        show(story, cast: squad.cast)
+        show(story, viewer: squad.viewer)
     }
 
     /// Plays a story that came out: one that didn't may have no page at all, which the player
     /// can't start on.
-    private func show(_ story: WeekStory, cast: StoryCast) {
+    private func show(_ story: WeekStory, viewer: MemberID) {
         guard story.isPublished else { return }
         let model = RecapModel(
-            story: story, cast: cast, service: service,
+            story: story, cast: StoryCast(story: story, viewer: viewer), service: service,
             close: { [weak self] in self?.open = nil },
+            finished: { [weak self] in self?.watched(story) },
             planNextWeek: { [weak self] in
                 self?.open = nil
                 self?.planNextWeek()
@@ -126,6 +142,43 @@ public final class RecapShelf {
         // reader gets there.
         let lookup = scenePicker
         Task { model.scenePicker = await lookup(story) }
+    }
+
+    private func watched(_ story: WeekStory) {
+        let key = RecapSeen.key(story)
+        guard !seen.contains(key) else { return }
+        seen.insert(key)
+        seenStore.add(key)
+    }
+}
+
+/// The weeks whose 战报 the reader watched to the end on this phone, the newest few. Only the
+/// tile reads it, so losing it only covers the podium again.
+public struct RecapSeen: Sendable {
+    private let defaults: @Sendable () -> UserDefaults
+    private static let entry = "recap.seen"
+    private static let kept = 12
+
+    public init(defaults: @escaping @Sendable () -> UserDefaults = { .standard }) {
+        self.defaults = defaults
+    }
+
+    /// Forgotten at each launch: the sample squad's, so UI tests always start on the cloth.
+    public static func onlyThisLaunch() -> RecapSeen {
+        let suite = "recap.sample"
+        UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
+        return RecapSeen { UserDefaults(suiteName: suite) ?? .standard }
+    }
+
+    static func key(_ story: WeekStory) -> String { "\(story.squad)/\(story.week.monday)" }
+
+    func weeks() -> Set<String> {
+        Set(defaults().stringArray(forKey: Self.entry) ?? [])
+    }
+
+    func add(_ key: String) {
+        let kept = (defaults().stringArray(forKey: Self.entry) ?? []).filter { $0 != key }
+        defaults().set(Array((kept + [key]).suffix(Self.kept)), forKey: Self.entry)
     }
 }
 
@@ -147,7 +200,7 @@ extension StoryMember {
 extension RecapSample {
     /// The sample squad on `today`, for a shelf on `Service`.
     public static func squad(today: LocalDay) -> RecapShelf.Squad {
-        RecapShelf.Squad(id: story().squad, today: today, cast: cast)
+        RecapShelf.Squad(id: story().squad, today: today, viewer: cast.viewer)
     }
 
     /// The sample squad's story for any week, for the app without a backend and its UI tests.

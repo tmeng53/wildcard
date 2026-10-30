@@ -4471,57 +4471,9 @@ extension Components {
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/version`.
                 public var version: Components.Schemas.WeekStory.Case1Payload.VersionPayload
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
-                public struct SquadPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/id`.
-                    public var id: Swift.String
-                    /// The squad’s name that week.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/name`.
-                    public var name: Swift.String
-                    /// Creates a new `SquadPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - id:
-                    ///   - name: The squad’s name that week.
-                    public init(
-                        id: Swift.String,
-                        name: Swift.String
-                    ) {
-                        self.id = id
-                        self.name = name
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case id
-                        case name
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
-                public var squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload
+                public var squad: Components.Schemas.StorySquad
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
-                public struct WeekPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week/from`.
-                    public var from: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week/to`.
-                    public var to: Swift.String
-                    /// Creates a new `WeekPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - from:
-                    ///   - to:
-                    public init(
-                        from: Swift.String,
-                        to: Swift.String
-                    ) {
-                        self.from = from
-                        self.to = to
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case from
-                        case to
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
-                public var week: Components.Schemas.WeekStory.Case1Payload.WeekPayload
+                public var week: Components.Schemas.StoryWeek
                 /// The scene the squad trained on that week: the story takes its colours.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/scene`.
@@ -4540,227 +4492,18 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/members`.
                 public var members: [Components.Schemas.StoryMember]
-                /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
-                ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/podium`.
-                public struct PodiumPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/podium/champion`.
-                    public var champion: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/podium/sides`.
-                    public var sides: [Swift.String]
-                    /// Creates a new `PodiumPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - champion:
-                    ///   - sides:
-                    public init(
-                        champion: Swift.String,
-                        sides: [Swift.String]
-                    ) {
-                        self.champion = champion
-                        self.sides = sides
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case champion
-                        case sides
-                    }
-                }
-                /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/podium`.
-                public var podium: Components.Schemas.WeekStory.Case1Payload.PodiumPayload?
-                /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
-                ///
+                public var podium: Components.Schemas.StoryPodium?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek`.
-                public struct MyWeekPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek/plannedDays`.
-                    public var plannedDays: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek/trainedDays`.
-                    public var trainedDays: Swift.Int
-                    /// Monday first.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek/days`.
-                    public var days: [Components.Schemas.StoryDay]
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek/healthyMeals`.
-                    public var healthyMeals: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek/cheatMeals`.
-                    public var cheatMeals: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek/reactionsReceived`.
-                    public var reactionsReceived: Swift.Int
-                    /// Creates a new `MyWeekPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - plannedDays:
-                    ///   - trainedDays:
-                    ///   - days: Monday first.
-                    ///   - healthyMeals:
-                    ///   - cheatMeals:
-                    ///   - reactionsReceived:
-                    public init(
-                        plannedDays: Swift.Int,
-                        trainedDays: Swift.Int,
-                        days: [Components.Schemas.StoryDay],
-                        healthyMeals: Swift.Int,
-                        cheatMeals: Swift.Int,
-                        reactionsReceived: Swift.Int
-                    ) {
-                        self.plannedDays = plannedDays
-                        self.trainedDays = trainedDays
-                        self.days = days
-                        self.healthyMeals = healthyMeals
-                        self.cheatMeals = cheatMeals
-                        self.reactionsReceived = reactionsReceived
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case plannedDays
-                        case trainedDays
-                        case days
-                        case healthyMeals
-                        case cheatMeals
-                        case reactionsReceived
-                    }
-                }
-                /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek`.
-                public var myWeek: Components.Schemas.WeekStory.Case1Payload.MyWeekPayload?
+                public var myWeek: Components.Schemas.StoryMyWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
-                /// 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
-                ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals`.
-                public struct MealsPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/healthy`.
-                    public var healthy: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/cheat`.
-                    public var cheat: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/EatersPayload`.
-                    public struct EatersPayloadPayload: Codable, Hashable, Sendable {
-                        /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/EatersPayload/member`.
-                        public var member: Swift.String
-                        /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/EatersPayload/more`.
-                        @frozen public enum MorePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case healthy = "healthy"
-                            case cheat = "cheat"
-                        }
-                        /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/EatersPayload/more`.
-                        public var more: Components.Schemas.WeekStory.Case1Payload.MealsPayload.EatersPayloadPayload.MorePayload
-                        /// Creates a new `EatersPayloadPayload`.
-                        ///
-                        /// - Parameters:
-                        ///   - member:
-                        ///   - more:
-                        public init(
-                            member: Swift.String,
-                            more: Components.Schemas.WeekStory.Case1Payload.MealsPayload.EatersPayloadPayload.MorePayload
-                        ) {
-                            self.member = member
-                            self.more = more
-                        }
-                        public enum CodingKeys: String, CodingKey {
-                            case member
-                            case more
-                        }
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/eaters`.
-                    public typealias EatersPayload = [Components.Schemas.WeekStory.Case1Payload.MealsPayload.EatersPayloadPayload]
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals/eaters`.
-                    public var eaters: Components.Schemas.WeekStory.Case1Payload.MealsPayload.EatersPayload
-                    /// Creates a new `MealsPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - healthy:
-                    ///   - cheat:
-                    ///   - eaters:
-                    public init(
-                        healthy: Swift.Int,
-                        cheat: Swift.Int,
-                        eaters: Components.Schemas.WeekStory.Case1Payload.MealsPayload.EatersPayload
-                    ) {
-                        self.healthy = healthy
-                        self.cheat = cheat
-                        self.eaters = eaters
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case healthy
-                        case cheat
-                        case eaters
-                    }
-                }
-                /// 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals`.
-                public var meals: Components.Schemas.WeekStory.Case1Payload.MealsPayload?
-                /// 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
-                ///
+                public var meals: Components.Schemas.StoryMeals?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer`.
-                public struct BestDisclaimerPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer/checkIn`.
-                    public var checkIn: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer/author`.
-                    public var author: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer/text`.
-                    public var text: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer/reactions`.
-                    public var reactions: Swift.Int
-                    /// Creates a new `BestDisclaimerPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - checkIn:
-                    ///   - author:
-                    ///   - text:
-                    ///   - reactions:
-                    public init(
-                        checkIn: Swift.String,
-                        author: Swift.String,
-                        text: Swift.String,
-                        reactions: Swift.Int
-                    ) {
-                        self.checkIn = checkIn
-                        self.author = author
-                        self.text = text
-                        self.reactions = reactions
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case checkIn
-                        case author
-                        case text
-                        case reactions
-                    }
-                }
-                /// 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer`.
-                public var bestDisclaimer: Components.Schemas.WeekStory.Case1Payload.BestDisclaimerPayload?
-                /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
-                ///
+                public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending`.
-                public struct EndingPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending/done`.
-                    public var done: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending/plan`.
-                    public var plan: Swift.Int
-                    /// Creates a new `EndingPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - done:
-                    ///   - plan:
-                    public init(
-                        done: Swift.Int,
-                        plan: Swift.Int
-                    ) {
-                        self.done = done
-                        self.plan = plan
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case done
-                        case plan
-                    }
-                }
-                /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending`.
-                public var ending: Components.Schemas.WeekStory.Case1Payload.EndingPayload?
+                public var ending: Components.Schemas.StoryEnding?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case ready = "ready"
@@ -4808,26 +4551,26 @@ extension Components {
                 ///   - week:
                 ///   - scene: The scene the squad trained on that week: the story takes its colours.
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
-                ///   - podium: 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
-                ///   - myWeek: 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
+                ///   - podium:
+                ///   - myWeek:
                 ///   - hottest:
-                ///   - meals: 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
-                ///   - bestDisclaimer: 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
-                ///   - ending: 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
+                ///   - meals:
+                ///   - bestDisclaimer:
+                ///   - ending:
                 ///   - status:
                 ///   - titles: Every member in the squad at the awards who checked in before them and agreed to AI use, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
                 public init(
                     version: Components.Schemas.WeekStory.Case1Payload.VersionPayload,
-                    squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload,
-                    week: Components.Schemas.WeekStory.Case1Payload.WeekPayload,
+                    squad: Components.Schemas.StorySquad,
+                    week: Components.Schemas.StoryWeek,
                     scene: Components.Schemas.WeekStory.Case1Payload.ScenePayload,
                     members: [Components.Schemas.StoryMember],
-                    podium: Components.Schemas.WeekStory.Case1Payload.PodiumPayload? = nil,
-                    myWeek: Components.Schemas.WeekStory.Case1Payload.MyWeekPayload? = nil,
+                    podium: Components.Schemas.StoryPodium? = nil,
+                    myWeek: Components.Schemas.StoryMyWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
-                    meals: Components.Schemas.WeekStory.Case1Payload.MealsPayload? = nil,
-                    bestDisclaimer: Components.Schemas.WeekStory.Case1Payload.BestDisclaimerPayload? = nil,
-                    ending: Components.Schemas.WeekStory.Case1Payload.EndingPayload? = nil,
+                    meals: Components.Schemas.StoryMeals? = nil,
+                    bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
+                    ending: Components.Schemas.StoryEnding? = nil,
                     status: Components.Schemas.WeekStory.Case1Payload.StatusPayload,
                     titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
                 ) {
@@ -4876,57 +4619,9 @@ extension Components {
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/version`.
                 public var version: Components.Schemas.WeekStory.Case2Payload.VersionPayload
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
-                public struct SquadPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/id`.
-                    public var id: Swift.String
-                    /// The squad’s name that week.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/name`.
-                    public var name: Swift.String
-                    /// Creates a new `SquadPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - id:
-                    ///   - name: The squad’s name that week.
-                    public init(
-                        id: Swift.String,
-                        name: Swift.String
-                    ) {
-                        self.id = id
-                        self.name = name
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case id
-                        case name
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
-                public var squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload
+                public var squad: Components.Schemas.StorySquad
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
-                public struct WeekPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week/from`.
-                    public var from: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week/to`.
-                    public var to: Swift.String
-                    /// Creates a new `WeekPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - from:
-                    ///   - to:
-                    public init(
-                        from: Swift.String,
-                        to: Swift.String
-                    ) {
-                        self.from = from
-                        self.to = to
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case from
-                        case to
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
-                public var week: Components.Schemas.WeekStory.Case2Payload.WeekPayload
+                public var week: Components.Schemas.StoryWeek
                 /// The scene the squad trained on that week: the story takes its colours.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/scene`.
@@ -4945,227 +4640,18 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/members`.
                 public var members: [Components.Schemas.StoryMember]
-                /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
-                ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/podium`.
-                public struct PodiumPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/podium/champion`.
-                    public var champion: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/podium/sides`.
-                    public var sides: [Swift.String]
-                    /// Creates a new `PodiumPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - champion:
-                    ///   - sides:
-                    public init(
-                        champion: Swift.String,
-                        sides: [Swift.String]
-                    ) {
-                        self.champion = champion
-                        self.sides = sides
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case champion
-                        case sides
-                    }
-                }
-                /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/podium`.
-                public var podium: Components.Schemas.WeekStory.Case2Payload.PodiumPayload?
-                /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
-                ///
+                public var podium: Components.Schemas.StoryPodium?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek`.
-                public struct MyWeekPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek/plannedDays`.
-                    public var plannedDays: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek/trainedDays`.
-                    public var trainedDays: Swift.Int
-                    /// Monday first.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek/days`.
-                    public var days: [Components.Schemas.StoryDay]
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek/healthyMeals`.
-                    public var healthyMeals: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek/cheatMeals`.
-                    public var cheatMeals: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek/reactionsReceived`.
-                    public var reactionsReceived: Swift.Int
-                    /// Creates a new `MyWeekPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - plannedDays:
-                    ///   - trainedDays:
-                    ///   - days: Monday first.
-                    ///   - healthyMeals:
-                    ///   - cheatMeals:
-                    ///   - reactionsReceived:
-                    public init(
-                        plannedDays: Swift.Int,
-                        trainedDays: Swift.Int,
-                        days: [Components.Schemas.StoryDay],
-                        healthyMeals: Swift.Int,
-                        cheatMeals: Swift.Int,
-                        reactionsReceived: Swift.Int
-                    ) {
-                        self.plannedDays = plannedDays
-                        self.trainedDays = trainedDays
-                        self.days = days
-                        self.healthyMeals = healthyMeals
-                        self.cheatMeals = cheatMeals
-                        self.reactionsReceived = reactionsReceived
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case plannedDays
-                        case trainedDays
-                        case days
-                        case healthyMeals
-                        case cheatMeals
-                        case reactionsReceived
-                    }
-                }
-                /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek`.
-                public var myWeek: Components.Schemas.WeekStory.Case2Payload.MyWeekPayload?
+                public var myWeek: Components.Schemas.StoryMyWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
-                /// 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
-                ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals`.
-                public struct MealsPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/healthy`.
-                    public var healthy: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/cheat`.
-                    public var cheat: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/EatersPayload`.
-                    public struct EatersPayloadPayload: Codable, Hashable, Sendable {
-                        /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/EatersPayload/member`.
-                        public var member: Swift.String
-                        /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/EatersPayload/more`.
-                        @frozen public enum MorePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case healthy = "healthy"
-                            case cheat = "cheat"
-                        }
-                        /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/EatersPayload/more`.
-                        public var more: Components.Schemas.WeekStory.Case2Payload.MealsPayload.EatersPayloadPayload.MorePayload
-                        /// Creates a new `EatersPayloadPayload`.
-                        ///
-                        /// - Parameters:
-                        ///   - member:
-                        ///   - more:
-                        public init(
-                            member: Swift.String,
-                            more: Components.Schemas.WeekStory.Case2Payload.MealsPayload.EatersPayloadPayload.MorePayload
-                        ) {
-                            self.member = member
-                            self.more = more
-                        }
-                        public enum CodingKeys: String, CodingKey {
-                            case member
-                            case more
-                        }
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/eaters`.
-                    public typealias EatersPayload = [Components.Schemas.WeekStory.Case2Payload.MealsPayload.EatersPayloadPayload]
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals/eaters`.
-                    public var eaters: Components.Schemas.WeekStory.Case2Payload.MealsPayload.EatersPayload
-                    /// Creates a new `MealsPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - healthy:
-                    ///   - cheat:
-                    ///   - eaters:
-                    public init(
-                        healthy: Swift.Int,
-                        cheat: Swift.Int,
-                        eaters: Components.Schemas.WeekStory.Case2Payload.MealsPayload.EatersPayload
-                    ) {
-                        self.healthy = healthy
-                        self.cheat = cheat
-                        self.eaters = eaters
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case healthy
-                        case cheat
-                        case eaters
-                    }
-                }
-                /// 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals`.
-                public var meals: Components.Schemas.WeekStory.Case2Payload.MealsPayload?
-                /// 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
-                ///
+                public var meals: Components.Schemas.StoryMeals?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer`.
-                public struct BestDisclaimerPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer/checkIn`.
-                    public var checkIn: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer/author`.
-                    public var author: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer/text`.
-                    public var text: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer/reactions`.
-                    public var reactions: Swift.Int
-                    /// Creates a new `BestDisclaimerPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - checkIn:
-                    ///   - author:
-                    ///   - text:
-                    ///   - reactions:
-                    public init(
-                        checkIn: Swift.String,
-                        author: Swift.String,
-                        text: Swift.String,
-                        reactions: Swift.Int
-                    ) {
-                        self.checkIn = checkIn
-                        self.author = author
-                        self.text = text
-                        self.reactions = reactions
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case checkIn
-                        case author
-                        case text
-                        case reactions
-                    }
-                }
-                /// 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer`.
-                public var bestDisclaimer: Components.Schemas.WeekStory.Case2Payload.BestDisclaimerPayload?
-                /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
-                ///
+                public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending`.
-                public struct EndingPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending/done`.
-                    public var done: Swift.Int
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending/plan`.
-                    public var plan: Swift.Int
-                    /// Creates a new `EndingPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - done:
-                    ///   - plan:
-                    public init(
-                        done: Swift.Int,
-                        plan: Swift.Int
-                    ) {
-                        self.done = done
-                        self.plan = plan
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case done
-                        case plan
-                    }
-                }
-                /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
-                ///
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending`.
-                public var ending: Components.Schemas.WeekStory.Case2Payload.EndingPayload?
+                public var ending: Components.Schemas.StoryEnding?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case pending = "pending"
@@ -5180,25 +4666,25 @@ extension Components {
                 ///   - week:
                 ///   - scene: The scene the squad trained on that week: the story takes its colours.
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
-                ///   - podium: 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
-                ///   - myWeek: 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
+                ///   - podium:
+                ///   - myWeek:
                 ///   - hottest:
-                ///   - meals: 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
-                ///   - bestDisclaimer: 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
-                ///   - ending: 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
+                ///   - meals:
+                ///   - bestDisclaimer:
+                ///   - ending:
                 ///   - status:
                 public init(
                     version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
-                    squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload,
-                    week: Components.Schemas.WeekStory.Case2Payload.WeekPayload,
+                    squad: Components.Schemas.StorySquad,
+                    week: Components.Schemas.StoryWeek,
                     scene: Components.Schemas.WeekStory.Case2Payload.ScenePayload,
                     members: [Components.Schemas.StoryMember],
-                    podium: Components.Schemas.WeekStory.Case2Payload.PodiumPayload? = nil,
-                    myWeek: Components.Schemas.WeekStory.Case2Payload.MyWeekPayload? = nil,
+                    podium: Components.Schemas.StoryPodium? = nil,
+                    myWeek: Components.Schemas.StoryMyWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
-                    meals: Components.Schemas.WeekStory.Case2Payload.MealsPayload? = nil,
-                    bestDisclaimer: Components.Schemas.WeekStory.Case2Payload.BestDisclaimerPayload? = nil,
-                    ending: Components.Schemas.WeekStory.Case2Payload.EndingPayload? = nil,
+                    meals: Components.Schemas.StoryMeals? = nil,
+                    bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
+                    ending: Components.Schemas.StoryEnding? = nil,
                     status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
                 ) {
                     self.version = version
@@ -5262,49 +4748,68 @@ extension Components {
                 }
             }
         }
+        /// - Remark: Generated from `#/components/schemas/StorySquad`.
+        public struct StorySquad: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StorySquad/id`.
+            public var id: Swift.String
+            /// The squad’s name that week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquad/name`.
+            public var name: Swift.String
+            /// Creates a new `StorySquad`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name: The squad’s name that week.
+            public init(
+                id: Swift.String,
+                name: Swift.String
+            ) {
+                self.id = id
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryWeek`.
+        public struct StoryWeek: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryWeek/from`.
+            public var from: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryWeek/to`.
+            public var to: Swift.String
+            /// Creates a new `StoryWeek`.
+            ///
+            /// - Parameters:
+            ///   - from:
+            ///   - to:
+            public init(
+                from: Swift.String,
+                to: Swift.String
+            ) {
+                self.from = from
+                self.to = to
+            }
+            public enum CodingKeys: String, CodingKey {
+                case from
+                case to
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/StoryMember`.
         public struct StoryMember: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/StoryMember/member`.
             public var member: Swift.String
-            /// Their character as it was that week; missing when they had none.
-            ///
             /// - Remark: Generated from `#/components/schemas/StoryMember/character`.
-            public struct CharacterPayload: Codable, Hashable, Sendable {
-                /// What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
-                ///
-                /// - Remark: Generated from `#/components/schemas/StoryMember/character/nickname`.
-                public var nickname: Swift.String
-                /// - Remark: Generated from `#/components/schemas/StoryMember/character/look`.
-                public var look: Components.Schemas.Look
-                /// Creates a new `CharacterPayload`.
-                ///
-                /// - Parameters:
-                ///   - nickname: What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
-                ///   - look:
-                public init(
-                    nickname: Swift.String,
-                    look: Components.Schemas.Look
-                ) {
-                    self.nickname = nickname
-                    self.look = look
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case nickname
-                    case look
-                }
-            }
-            /// Their character as it was that week; missing when they had none.
-            ///
-            /// - Remark: Generated from `#/components/schemas/StoryMember/character`.
-            public var character: Components.Schemas.StoryMember.CharacterPayload?
+            public var character: Components.Schemas.Character?
             /// Creates a new `StoryMember`.
             ///
             /// - Parameters:
             ///   - member:
-            ///   - character: Their character as it was that week; missing when they had none.
+            ///   - character:
             public init(
                 member: Swift.String,
-                character: Components.Schemas.StoryMember.CharacterPayload? = nil
+                character: Components.Schemas.Character? = nil
             ) {
                 self.member = member
                 self.character = character
@@ -5312,6 +4817,82 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case member
                 case character
+            }
+        }
+        /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryPodium`.
+        public struct StoryPodium: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/champion`.
+            public var champion: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/sides`.
+            public var sides: [Swift.String]
+            /// Creates a new `StoryPodium`.
+            ///
+            /// - Parameters:
+            ///   - champion:
+            ///   - sides:
+            public init(
+                champion: Swift.String,
+                sides: [Swift.String]
+            ) {
+                self.champion = champion
+                self.sides = sides
+            }
+            public enum CodingKeys: String, CodingKey {
+                case champion
+                case sides
+            }
+        }
+        /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryMyWeek`.
+        public struct StoryMyWeek: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/plannedDays`.
+            public var plannedDays: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// Monday first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/days`.
+            public var days: [Components.Schemas.StoryDay]
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/reactionsReceived`.
+            public var reactionsReceived: Swift.Int
+            /// Creates a new `StoryMyWeek`.
+            ///
+            /// - Parameters:
+            ///   - plannedDays:
+            ///   - trainedDays:
+            ///   - days: Monday first.
+            ///   - healthyMeals:
+            ///   - cheatMeals:
+            ///   - reactionsReceived:
+            public init(
+                plannedDays: Swift.Int,
+                trainedDays: Swift.Int,
+                days: [Components.Schemas.StoryDay],
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                reactionsReceived: Swift.Int
+            ) {
+                self.plannedDays = plannedDays
+                self.trainedDays = trainedDays
+                self.days = days
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.reactionsReceived = reactionsReceived
+            }
+            public enum CodingKeys: String, CodingKey {
+                case plannedDays
+                case trainedDays
+                case days
+                case healthyMeals
+                case cheatMeals
+                case reactionsReceived
             }
         }
         /// - Remark: Generated from `#/components/schemas/StoryDay`.
@@ -5484,6 +5065,129 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case path
                 case url
+            }
+        }
+        /// 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryMeals`.
+        public struct StoryMeals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/healthy`.
+            public var healthy: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/cheat`.
+            public var cheat: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload`.
+            public struct EatersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/member`.
+                public var member: Swift.String
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/more`.
+                @frozen public enum MorePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case healthy = "healthy"
+                    case cheat = "cheat"
+                }
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/more`.
+                public var more: Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload
+                /// Creates a new `EatersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - more:
+                public init(
+                    member: Swift.String,
+                    more: Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload
+                ) {
+                    self.member = member
+                    self.more = more
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case more
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/eaters`.
+            public typealias EatersPayload = [Components.Schemas.StoryMeals.EatersPayloadPayload]
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/eaters`.
+            public var eaters: Components.Schemas.StoryMeals.EatersPayload
+            /// Creates a new `StoryMeals`.
+            ///
+            /// - Parameters:
+            ///   - healthy:
+            ///   - cheat:
+            ///   - eaters:
+            public init(
+                healthy: Swift.Int,
+                cheat: Swift.Int,
+                eaters: Components.Schemas.StoryMeals.EatersPayload
+            ) {
+                self.healthy = healthy
+                self.cheat = cheat
+                self.eaters = eaters
+            }
+            public enum CodingKeys: String, CodingKey {
+                case healthy
+                case cheat
+                case eaters
+            }
+        }
+        /// 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer`.
+        public struct StoryBestDisclaimer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/checkIn`.
+            public var checkIn: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/author`.
+            public var author: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/reactions`.
+            public var reactions: Swift.Int
+            /// Creates a new `StoryBestDisclaimer`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - author:
+            ///   - text:
+            ///   - reactions:
+            public init(
+                checkIn: Swift.String,
+                author: Swift.String,
+                text: Swift.String,
+                reactions: Swift.Int
+            ) {
+                self.checkIn = checkIn
+                self.author = author
+                self.text = text
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case author
+                case text
+                case reactions
+            }
+        }
+        /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryEnding`.
+        public struct StoryEnding: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/done`.
+            public var done: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/plan`.
+            public var plan: Swift.Int
+            /// Creates a new `StoryEnding`.
+            ///
+            /// - Parameters:
+            ///   - done:
+            ///   - plan:
+            public init(
+                done: Swift.Int,
+                plan: Swift.Int
+            ) {
+                self.done = done
+                self.plan = plan
+            }
+            public enum CodingKeys: String, CodingKey {
+                case done
+                case plan
             }
         }
         /// - Remark: Generated from `#/components/schemas/StoryTitle`.

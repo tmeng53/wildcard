@@ -4,7 +4,7 @@ import DesignSystem
 import Foundation
 import RecapDomain
 
-/// The Sunday 战报 from our API, as the story reads it.
+/// The Sunday 战报 (每周战报) from our API, as it was frozen at the week's awards.
 public struct APIWeekStoryService: WeekStoryService {
     private let api: WildcardAPI
 
@@ -12,28 +12,14 @@ public struct APIWeekStoryService: WeekStoryService {
         self.api = api
     }
 
-    /// The story, with the pages the API's story doesn't carry yet drawn from the week's summary,
-    /// the squad's check-ins and the reader's plan. A page whose facts can't be read is left out;
-    /// the story still opens.
+    /// The squad's story for the week, as the API froze it at the week's awards: every page and
+    /// the squad as it was then.
     public func story(squad: SquadID, week monday: LocalDay) async throws(RecapError) -> WeekStory? {
-        let story: WeekStory?
         do {
-            story = try await api.weekStory(of: squad, week: monday)
+            return try await api.weekStory(of: squad, week: monday)
         } catch {
             throw Self.reason(error)
         }
-        // The facts are read only for a story that is out, which before Sunday's awards it isn't.
-        guard let story else { return nil }
-        guard let facts = await Self.facts(api: api, squad: squad, week: monday) else { return story }
-        return story.filled(with: facts)
-    }
-
-    private static func facts(api: WildcardAPI, squad: SquadID, week monday: LocalDay) async -> WeekFacts? {
-        async let summary = try? await api.weekSummaryWire(of: squad, week: monday)
-        async let checkIns = try? await api.checkIns(of: squad, from: monday, through: monday.adding(days: 6))
-        async let plan = try? await api.weeklyPlan(weekStart: monday)
-        guard let summary = await summary, let plan = await plan else { return nil }
-        return WeekFacts(summary, viewer: plan.member, checkIns: await checkIns ?? [], plan: plan.days)
     }
 
     public func nudge(squad: SquadID, week monday: LocalDay) async throws(RecapError) {
@@ -68,73 +54,134 @@ extension WildcardAPI {
     }
 }
 
-extension WeekFacts {
-    init(_ summary: Components.Schemas.WeekSummary, viewer: MemberID, checkIns: [CheckIn], plan: [PlanDay]) {
-        func winners(_ kind: String) -> [Components.Schemas.WeekAward.WinnersPayloadPayload] {
-            summary.awards.first { $0.kind == kind }?.winners ?? []
-        }
-        func members(_ kind: String) -> [MemberID] {
-            winners(kind).compactMap { UUID(uuidString: $0.member).map(MemberID.init) }
-        }
-        func count(_ stats: [Components.Schemas.WeekStat], _ kind: String) -> Int {
-            stats.first { $0.kind == kind }?.value ?? 0
-        }
-        let best = winners("bestDisclaimer").first.flatMap { winner in
-            winner.checkIn.flatMap(UUID.init(uuidString:)).map { Best(checkIn: CheckInID($0), reactions: winner.value) }
-        }
-        self.init(
-            viewer: viewer, planCompleted: members("planCompleted"), crown: members("crown"), bestDisclaimer: best,
-            squadTrained: count(summary.squadTotals.stats, "trainedDays"),
-            squadPlanned: count(summary.squadTotals.stats, "plannedDays"),
-            myPlanned: count(summary.me.stats, "plannedDays"),
-            myReactionsReceived: count(summary.me.stats, "reactionsReceived"), checkIns: checkIns, plan: plan)
-    }
-}
-
 extension WeekStory {
-    /// What the API sends today: the titles (or that they're late) and the reader's hottest
-    /// check-in. The other pages come once the API writes them.
+    /// Every page as the API froze it. The podium's 颁奖词 and moves are the champion's and the
+    /// first side's first titles, once the titles are in.
     init?(_ wire: Components.Schemas.WeekStory) {
-        let status: Status
-        let squad: (id: String, name: String)
-        let week: (from: String, to: String)
-        let hottest: Components.Schemas.StoryHottest?
-        let titles: [MemberTitles]
         switch wire {
         case .case1(let ready):
-            status = .ready
-            squad = (ready.squad.id, ready.squad.name)
-            week = (ready.week.from, ready.week.to)
-            hottest = ready.hottest
-            var read: [MemberTitles] = []
+            var titles: [MemberTitles] = []
             for member in ready.titles {
                 guard let id = UUID(uuidString: member.member) else { return nil }
-                read.append(
+                titles.append(
                     MemberTitles(
                         member: MemberID(id),
                         titles: member.titles.map {
                             MemberTitles.Title(title: $0.title, speech: $0.speech, move: AwardMove(wire: $0.move))
                         }))
             }
-            titles = read
+            self.init(
+                status: .ready, titles: titles,
+                frozen: Frozen(
+                    squad: ready.squad, week: ready.week, scene: ready.scene.rawValue, members: ready.members,
+                    podium: ready.podium, myWeek: ready.myWeek, hottest: ready.hottest, meals: ready.meals,
+                    bestDisclaimer: ready.bestDisclaimer, ending: ready.ending))
         case .case2(let pending):
-            status = .pending
-            squad = (pending.squad.id, pending.squad.name)
-            week = (pending.week.from, pending.week.to)
-            hottest = pending.hottest
-            titles = []
+            self.init(
+                status: .pending, titles: [],
+                frozen: Frozen(
+                    squad: pending.squad, week: pending.week, scene: pending.scene.rawValue,
+                    members: pending.members, podium: pending.podium, myWeek: pending.myWeek,
+                    hottest: pending.hottest, meals: pending.meals, bestDisclaimer: pending.bestDisclaimer,
+                    ending: pending.ending))
         }
-        guard let squadID = UUID(uuidString: squad.id), let monday = try? LocalDay(week.from),
-            let sunday = try? LocalDay(week.to)
+    }
+
+    /// The pages both of the API's shapes carry: all but the titles.
+    private struct Frozen {
+        let squad: Components.Schemas.StorySquad
+        let week: Components.Schemas.StoryWeek
+        let scene: String
+        let members: [Components.Schemas.StoryMember]
+        let podium: Components.Schemas.StoryPodium?
+        let myWeek: Components.Schemas.StoryMyWeek?
+        let hottest: Components.Schemas.StoryHottest?
+        let meals: Components.Schemas.StoryMeals?
+        let bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
+        let ending: Components.Schemas.StoryEnding?
+    }
+
+    private init?(status: Status, titles: [MemberTitles], frozen: Frozen) {
+        guard let squad = UUID(uuidString: frozen.squad.id), let monday = try? LocalDay(frozen.week.from),
+            let sunday = try? LocalDay(frozen.week.to), let scene = SceneTheme(rawValue: frozen.scene),
+            let squadmates = Self.squadmates(frozen.members)
         else { return nil }
-        var readHottest: Hottest?
-        if let hottest {
-            guard let read = Hottest(hottest) else { return nil }
-            readHottest = read
+        func first(_ member: MemberID) -> MemberTitles.Title? {
+            titles.first { $0.member == member }?.titles.first
+        }
+        var podium: Podium?
+        if let wire = frozen.podium {
+            let sides = wire.sides.compactMap(Self.member)
+            guard let champion = Self.member(wire.champion), sides.count == wire.sides.count else { return nil }
+            podium = Podium(
+                champion: champion, sides: sides, speech: first(champion)?.speech,
+                championMove: first(champion)?.move, sideMove: sides.first.flatMap(first)?.move)
+        }
+        var bestDisclaimer: BestDisclaimer?
+        if let wire = frozen.bestDisclaimer {
+            guard let checkIn = UUID(uuidString: wire.checkIn), let author = Self.member(wire.author) else {
+                return nil
+            }
+            bestDisclaimer = BestDisclaimer(
+                checkIn: CheckInID(checkIn), author: author, text: wire.text, reactions: wire.reactions)
+        }
+        let hottest = frozen.hottest.map(Hottest.init)
+        let myWeek = frozen.myWeek.map(RecapDomain.MyWeek.init)
+        let meals = frozen.meals.map(Meals.init)
+        // A page the API sent that can't be read makes the story unreadable, not a page short.
+        if hottest == .some(nil) || myWeek == .some(nil) || meals == .some(nil) { return nil }
+        self.init(
+            status: status, squad: SquadID(squad), squadName: frozen.squad.name,
+            week: Week(monday: monday, sunday: sunday), scene: scene, squadmates: squadmates, podium: podium,
+            titles: titles, myWeek: myWeek ?? nil, hottest: hottest ?? nil, meals: meals ?? nil,
+            bestDisclaimer: bestDisclaimer, ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan) })
+    }
+
+    private static func member(_ id: String) -> MemberID? {
+        UUID(uuidString: id).map(MemberID.init)
+    }
+
+    private static func squadmates(_ members: [Components.Schemas.StoryMember]) -> [Squadmate]? {
+        var squadmates: [Squadmate] = []
+        for wire in members {
+            guard let member = member(wire.member) else { return nil }
+            // A character whose nickname no longer passes the app's rule shows as none.
+            squadmates.append(
+                Squadmate(member: member, character: wire.character.flatMap { try? MemberCharacter($0) }))
+        }
+        return squadmates
+    }
+}
+
+extension RecapDomain.MyWeek {
+    init?(_ wire: Components.Schemas.StoryMyWeek) {
+        var days: [Day] = []
+        for each in wire.days {
+            guard let day = try? LocalDay(each.day) else { return nil }
+            let kind: DayKind =
+                switch each.kind {
+                // A sport of the member's own has no art of its own: the day shows just that they trained.
+                case .trained: .trained(each.sport.flatMap(Sport.init(rawValue:)))
+                case .rest: .rest
+                case .disclaimer: .disclaimer
+                case .none: .none
+                }
+            days.append(Day(day: day, kind: kind))
         }
         self.init(
-            status: status, squad: SquadID(squadID), squadName: squad.name, week: Week(monday: monday, sunday: sunday),
-            titles: titles, hottest: readHottest)
+            plan: wire.plannedDays, days: days, healthyMeals: wire.healthyMeals, cheatMeals: wire.cheatMeals,
+            reactionsReceived: wire.reactionsReceived)
+    }
+}
+
+extension Meals {
+    init?(_ wire: Components.Schemas.StoryMeals) {
+        var eaters: [Eater] = []
+        for eater in wire.eaters {
+            guard let member = UUID(uuidString: eater.member) else { return nil }
+            eaters.append(Eater(member: MemberID(member), more: eater.more == .cheat ? .cheat : .healthy))
+        }
+        self.init(healthy: wire.healthy, cheat: wire.cheat, eaters: eaters)
     }
 }
 
