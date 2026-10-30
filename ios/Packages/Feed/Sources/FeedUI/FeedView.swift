@@ -50,19 +50,15 @@ public struct FeedView: View {
             // A held card's slide picks an emoji; the list stays put under it.
             .scrollDisabled(model.lifted)
             .refreshable { await model.load() }
-            .onChange(of: model.focus) { _, focus in
-                guard let focus else { return }
+            .task(id: model.focus) {
+                guard let focus = model.focus else { return }
+                // Waits a frame, so the list has laid out the post before scrolling to it: opened
+                // from the home, it hasn't yet, and the scroll would do nothing.
+                await Task.yield()
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                     scroller.scrollTo(focus, anchor: .top)
                 }
                 model.focus = nil
-            }
-            .onAppear {
-                // Opened from the home before the list was drawn.
-                if let focus = model.focus {
-                    scroller.scrollTo(focus, anchor: .top)
-                    model.focus = nil
-                }
             }
         }
         .overlayPreferenceValue(FeedAnchors.self) { anchors in
