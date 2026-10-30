@@ -71,12 +71,7 @@ final class AppModel {
         api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
         memberAPI = { [account] member in
             WildcardAPI(
-                url: config.apiURL,
-                accessToken: { rejected async throws(AccountError) in
-                    try await account.accessToken(for: member, rejected: rejected)
-                },
-                refused: { token in try? await account.signOut(ifCurrent: token) },
-                language: { AppLanguage.current.rawValue })
+                url: config.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue })
         }
         folders = MemberFolders(
             root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
@@ -197,6 +192,9 @@ final class AppModel {
         }
         let store = todayStore(of: member)
         await store.load()
+        // Someone else signed in while it loaded: their own sign-in opens their home, and this
+        // store's `signedOut` only means it was the earlier member's.
+        guard case .signedIn(member)? = try? await account.restore() else { return }
         switch store.phase {
         case .noSquad:
             // Consent is the account's: a member who agreed before, and left their squad since,

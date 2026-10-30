@@ -171,11 +171,10 @@ private func account(
 // MARK: - One member's tokens
 
 @Test func aMembersTokenComesOnlyWhileTheyAreSignedIn() async throws {
-    let someoneElse = MemberID(UUID(uuid: (9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9)))
     let account = account(FakeProvider(), MemoryStore(session("stored")))
 
     #expect(try await account.accessToken(for: tracy) == "access-stored")
-    await #expect(throws: AccountError.signedOut) { try await account.accessToken(for: someoneElse) }
+    await #expect(throws: AccountError.signedOut) { try await account.accessToken(for: sam) }
     try await account.signOut()
     await #expect(throws: AccountError.signedOut) { try await account.accessToken(for: tracy) }
 }
@@ -187,6 +186,20 @@ private func account(
 
     #expect(try await account.accessToken(for: tracy) == "access-renewed")
     #expect(await provider.refreshed == ["refresh-stored"])
+}
+
+@Test func aMembersTokenIsRefusedWhenSomeoneElseSignsInDuringTheRenewal() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))], gated: true)
+    await provider.signInAs(session("sam", member: sam))
+    let account = account(provider, MemoryStore(session("stored", expiresIn: 0)))
+
+    let token = Task { try await account.accessToken(for: tracy) }
+    while await provider.refreshesWaiting == 0 { await Task.yield() }
+    try await account.signIn(with: .apple(identityToken: "apple", nonce: "nonce"))
+    await provider.release()
+
+    await #expect(throws: AccountError.signedOut) { try await token.value }
+    #expect(try await account.accessToken(for: sam) == "access-sam")
 }
 
 // MARK: - Signing in and out
