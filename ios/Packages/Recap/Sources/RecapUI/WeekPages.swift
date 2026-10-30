@@ -147,7 +147,7 @@ extension MyWeekPage {
     /// points tall at the page's scale), the lowest it may come and still read as over the head,
     /// and beside it.
     private static let bubbleOverHead = 160.0
-    private static let lowestOverHead = 144.0
+    private static let lowestOverHead = 150.0
     private static let bubbleBesideHead = 150.0
     /// How far beside the character the bubble's centre sits.
     private static let bubbleBeside = 76.0
