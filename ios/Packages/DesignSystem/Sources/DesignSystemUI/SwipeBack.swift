@@ -61,15 +61,16 @@ private struct SwipeBackPan: UIGestureRecognizerRepresentable {
     }
 
     func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
-        let moved = max(recognizer.translation(in: recognizer.view).x, 0)
+        let moved = Double(max(recognizer.translation(in: recognizer.view).x, 0))
+        let width = Double(recognizer.view?.bounds.width ?? 0)
         switch recognizer.state {
         case .changed:
             changed(moved)
         case .ended:
-            ended(moved, recognizer.velocity(in: recognizer.view).x, recognizer.view?.bounds.width ?? 0)
+            ended(moved, Double(recognizer.velocity(in: recognizer.view).x), width)
         case .cancelled, .failed:
             // Interrupted (a call, the system taking the touch): the page springs back.
-            ended(0, 0, recognizer.view?.bounds.width ?? 0)
+            ended(0, 0, width)
         default:
             break
         }

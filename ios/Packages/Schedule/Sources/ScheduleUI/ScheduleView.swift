@@ -114,7 +114,7 @@ public struct ScheduleView: View {
                 break
             }
         }
-        .sheet(item: $sharing, onDismiss: model.clearSaving) { poster in
+        .sheet(item: $sharing, onDismiss: { model.clearSaving() }) { poster in
             PosterShareSheet(image: poster.image)
                 .presentationDetents([.medium, .large])
                 .ignoresSafeArea()
