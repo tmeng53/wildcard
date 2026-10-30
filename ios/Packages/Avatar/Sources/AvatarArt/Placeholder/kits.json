@@ -1,17 +1,17 @@
 {
   "version": 1,
   "kits": [
-    { "id": "swim", "wear": { "hat": null, "top": "warmup-tank", "shoes": "warmup-canvas", "prop": "goggles" } },
-    { "id": "run", "wear": { "hat": "warmup-headband", "top": "warmup-tank", "bottom": "warmup-shorts", "shoes": "warmup-runner", "prop": "bottle" } },
-    { "id": "strength", "wear": { "hat": null, "top": "warmup-tank", "shoes": "warmup-canvas", "prop": "dumbbell" } },
-    { "id": "tennis", "wear": { "hat": "warmup-cap", "top": "warmup-tee", "shoes": "warmup-canvas", "prop": "racket" } },
-    { "id": "climb", "wear": { "hat": null, "top": "warmup-tank", "bottom": "warmup-leggings", "shoes": "moss-trail", "prop": "chalkbag" } },
-    { "id": "yoga", "wear": { "hat": null, "top": "warmup-tee", "bottom": "warmup-leggings", "shoes": "warmup-canvas", "prop": "yogamat" } },
-    { "id": "kettlebell", "wear": { "hat": null, "top": "warmup-tank", "shoes": "warmup-canvas", "prop": "kettlebell" } },
-    { "id": "badminton", "wear": { "hat": null, "top": "warmup-tee", "shoes": "warmup-canvas", "prop": "badminton" } },
-    { "id": "pickleball", "wear": { "hat": "warmup-cap", "top": "warmup-tee", "shoes": "warmup-canvas", "prop": "pickleball" } },
-    { "id": "pingpong", "wear": { "hat": null, "top": "warmup-tee", "shoes": "warmup-canvas", "prop": "pingpong" } },
-    { "id": "warmup", "wear": {} }
+    { "id": "swim", "prop": "goggles" },
+    { "id": "run", "prop": "bottle" },
+    { "id": "strength", "prop": "dumbbell" },
+    { "id": "tennis", "prop": "racket" },
+    { "id": "climb", "prop": "chalkbag" },
+    { "id": "yoga", "prop": "yogamat" },
+    { "id": "kettlebell", "prop": "kettlebell" },
+    { "id": "badminton", "prop": "badminton" },
+    { "id": "pickleball", "prop": "pickleball" },
+    { "id": "pingpong", "prop": "pingpong" },
+    { "id": "warmup" }
   ],
   "categories": {
     "runWalk": "run", "cardio": "run", "strength": "strength", "combat": "strength", "mindBody": "yoga",

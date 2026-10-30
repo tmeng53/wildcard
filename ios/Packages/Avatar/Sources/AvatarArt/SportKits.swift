@@ -2,35 +2,30 @@ import AvatarDomain
 import Contracts
 import Foundation
 
-/// What a character puts on and does for a sport: goggles and a breaststroke, running shoes and a
-/// jog. Picking a sport turns the character into its kit for a moment; the saved look never
-/// changes. Read from `kits.json`. A kit with its own `moves/sports/<id>.json` plays it; the
-/// others train at the signature move of the prop they hold.
+/// What a character trains with for a sport: goggles and a breaststroke, a racket and a serve.
+/// A kit hands the character its prop and leaves the clothes as the member saved them, so a
+/// character looks the same on every screen. Read from `kits.json`. A kit with its own
+/// `moves/sports/<id>.json` plays it; the others train at the signature move of their prop.
 public struct SportKit: Hashable, Sendable, Identifiable {
-    /// `swim`, `run`, ... `warmup` changes no clothes, for sports without a kit of their own.
+    /// `swim`, `run`, ... `warmup` keeps the prop in hand, for sports without a kit of their own.
     public let id: String
-    /// The variant each slot changes to; nil takes the slot off. Slots left out stay as worn.
-    public let wear: [Slot: String?]
+    /// The prop the kit hands over; nil keeps the one worn.
+    public let prop: String?
 
-    public init(id: String, wear: [Slot: String?]) {
-        (self.id, self.wear) = (id, wear)
+    public init(id: String, prop: String?) {
+        (self.id, self.prop) = (id, prop)
     }
 
-    /// `look` in this kit. The rest of the look stays: body, hair, face, and the colors of the
-    /// slots it changes when the new variant can take them (a blue tee becomes a blue tank). A
-    /// slot changed to a variant that keeps its own colors, or taken off, drops the old color.
+    /// `look` holding this kit's prop; everything else stays as saved.
     public func dress(_ look: Outfit) -> Outfit {
+        guard let prop else { return look }
         var dressed = look
-        for (slot, variant) in wear {
-            dressed.variants[slot] = variant
-            if let variant, PlaceholderCharacter.tones(for: slot, wearing: variant) != nil { continue }
-            dressed.colors[slot] = nil
-        }
+        dressed.variants["prop"] = prop
         return dressed
     }
 }
 
-/// Which kit each sport wears: `kits.json`. A sport takes its own entry, else its category's in
+/// Which kit each sport takes: `kits.json`. A sport takes its own entry, else its category's in
 /// the sports list, else the warm-up. Sports and categories are data the API serves, so the
 /// file may name ones the list doesn't have, and a new sport takes its category's kit.
 public struct SportKits: Hashable, Sendable {
@@ -53,16 +48,14 @@ public struct SportKits: Hashable, Sendable {
         case .custom: id = otherwise
         }
         // `decode` checked that every id names a kit.
-        return kits.first { $0.id == id } ?? SportKit(id: otherwise, wear: [:])
+        return kits.first { $0.id == id } ?? SportKit(id: otherwise, prop: nil)
     }
 
-    /// `{"version": 1, "kits": [{"id": "swim", "wear": {"hat": null, "prop": "goggles"}}],
+    /// `{"version": 1, "kits": [{"id": "swim", "prop": "goggles"}],
     /// "categories": {"water": "swim"}, "sports": {}, "otherwise": "swim"}`
     public static func decode(_ data: Data) throws(AvatarError) -> SportKits {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
-        let kits = file.kits.map { kit in
-            SportKit(id: kit.id, wear: Dictionary(uniqueKeysWithValues: kit.wear.map { (Slot($0.key), $0.value) }))
-        }
+        let kits = file.kits.map { SportKit(id: $0.id, prop: $0.prop) }
         let ids = Set(kits.map(\.id))
         if let unknown = ([file.otherwise] + file.categories.values + file.sports.values).first(where: {
             !ids.contains($0)
@@ -78,9 +71,9 @@ public struct SportKits: Hashable, Sendable {
     private struct File: Decodable {
         static let shape = JSONShape.object([
             "version": .value, "otherwise": .value,
-            // Keyed by slot, category or sport, so any key goes.
+            // Keyed by category or sport, so any key goes.
             "categories": .value, "sports": .value,
-            "kits": .array(.object(["id": .value, "wear": .value])),
+            "kits": .array(.object(["id": .value, "prop": .value])),
         ])
 
         let kits: [KitFile]
@@ -91,7 +84,7 @@ public struct SportKits: Hashable, Sendable {
 
     private struct KitFile: Decodable {
         let id: String
-        let wear: [String: String?]
+        let prop: String?
     }
 }
 
@@ -109,7 +102,7 @@ extension PlaceholderCharacter {
         if let own = try? file("moves/sports/\(kit.id).json") {
             return try Clip.decode(own).atTempo(persona.accentTempo)
         }
-        guard case let prop?? = kit.wear["prop"], var move = try propMove(for: Outfit(["prop": prop])) else {
+        guard let prop = kit.prop, var move = try propMove(for: Outfit(["prop": prop])) else {
             throw .missingFile("moves/sports/\(kit.id).json")
         }
         move.loops = true
