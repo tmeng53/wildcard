@@ -1,42 +1,12 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "deadline 当前，先活下来": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deadline first, survival second"
-          }
-        }
-      }
-    },
-    "happy hour 有约，社交也是训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Happy hour. Socializing counts"
-          }
-        }
-      }
-    },
     "下一步": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Next"
-          }
-        }
-      }
-    },
-    "下雨，场地条件不允许": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rain. Field conditions say no"
           }
         }
       }
@@ -71,16 +41,6 @@
         }
       }
     },
-    "今天是战略性休息": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today is a strategic rest day"
-          }
-        }
-      }
-    },
     "今日请假条": {
       "localizations": {
         "en": {
@@ -107,16 +67,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Go go go!"
-          }
-        }
-      }
-    },
-    "加班到十点，算脑力训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Worked till ten: brain training"
           }
         }
       }
@@ -221,16 +171,6 @@
         }
       }
     },
-    "在 Costco 走了两小时，算有氧": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Two hours walking Costco. That's cardio"
-          }
-        }
-      }
-    },
     "坦白从宽…": {
       "localizations": {
         "en": {
@@ -287,16 +227,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Funny"
-          }
-        }
-      }
-    },
-    "昨天的腿还没回来": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My legs haven't come back from yesterday"
           }
         }
       }
@@ -467,16 +397,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Day off"
-          }
-        }
-      }
-    },
-    "身体说不，我尊重它": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My body said no, and I respect it"
           }
         }
       }

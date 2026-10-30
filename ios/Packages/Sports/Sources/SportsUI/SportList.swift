@@ -28,12 +28,12 @@ public final class SportList: Observable, Sendable {
     }
 }
 
-extension SportCatalog.Names {
-    /// The name in the language the app speaks now (`AppLanguage`, which a pick in the app
+extension CatalogNames {
+    /// The words in the language the app speaks now (`AppLanguage`, which a pick in the app
     /// changes at once).
     public var localized: String { localized(in: [AppLanguage.current.rawValue]) }
 
-    /// The name in the first of `languages` the list has a name in, else Simplified Chinese.
+    /// The words in the first of `languages` the catalog has words in, else Simplified Chinese.
     public func localized(in languages: [String]) -> String {
         for language in languages {
             if language.hasPrefix("zh-Hant") || language == "zh-TW" || language == "zh-HK" { return traditionalChinese }
