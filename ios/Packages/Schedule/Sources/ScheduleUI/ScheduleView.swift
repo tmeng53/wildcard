@@ -101,7 +101,11 @@ public struct ScheduleView: View {
             case .sharing(let poster):
                 // The poster flashes, then the share sheet opens on its picture.
                 flashes += 1
-                try? await Task.sleep(for: .seconds(Motion.fadeIn.duration))
+                // Left mid-flash (another tab), the share sheet doesn't open later on its own.
+                guard (try? await Task.sleep(for: .seconds(Motion.fadeIn.duration))) != nil else {
+                    model.clearSaving()
+                    return
+                }
                 sharing = poster
             case .failed:
                 try? await Task.sleep(for: failedNoteHold)

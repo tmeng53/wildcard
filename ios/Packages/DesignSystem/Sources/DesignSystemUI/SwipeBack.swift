@@ -65,8 +65,11 @@ private struct SwipeBackPan: UIGestureRecognizerRepresentable {
         switch recognizer.state {
         case .changed:
             changed(moved)
-        case .ended, .cancelled, .failed:
+        case .ended:
             ended(moved, recognizer.velocity(in: recognizer.view).x, recognizer.view?.bounds.width ?? 0)
+        case .cancelled, .failed:
+            // Interrupted (a call, the system taking the touch): the page springs back.
+            ended(0, 0, recognizer.view?.bounds.width ?? 0)
         default:
             break
         }
@@ -89,7 +92,7 @@ private struct SwipeBackPan: UIGestureRecognizerRepresentable {
 
         /// A sideways list that can still scroll back scrolls first.
         func gestureRecognizer(
-            _ recognizer: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer
+            _ recognizer: UIGestureRecognizer, shouldRequireFailureOf other: UIGestureRecognizer
         ) -> Bool {
             guard let scroll = Self.scrollView(panning: other) else { return false }
             return scroll.contentOffset.x > -scroll.adjustedContentInset.left
