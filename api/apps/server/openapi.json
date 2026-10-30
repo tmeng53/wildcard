@@ -99,11 +99,13 @@
           },
           "sports": {
             "$ref": "#/components/schemas/SportsCatalog"
+          },
+          "disclaimerDice": {
+            "$ref": "#/components/schemas/DisclaimerDiceCatalog"
           }
         },
         "required": [
-          "version",
-          "sports"
+          "version"
         ],
         "additionalProperties": {}
       },
@@ -222,6 +224,22 @@
           "zhHans",
           "en",
           "zhHant"
+        ],
+        "additionalProperties": {}
+      },
+      "DisclaimerDiceCatalog": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogNames"
+            },
+            "description": "Every line, in no set order: the app rolls three different ones at a time."
+          }
+        },
+        "required": [
+          "lines"
         ],
         "additionalProperties": {}
       },

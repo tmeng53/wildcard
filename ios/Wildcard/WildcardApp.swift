@@ -62,8 +62,9 @@ struct WildcardApp: App {
     // callback and the models are the main actor's.
     init() {
         CrashReports.start()
-        // The sports this build ships with; with a backend, `AppModel` shows the kept or newer list.
-        SportList.shared.show(CatalogClient.bundledSports)
+        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
+        SportList.shared.show(CatalogClient.bundled.sports)
+        DiceLines.shared.show(CatalogClient.bundled.diceLines)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
