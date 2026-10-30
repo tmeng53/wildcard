@@ -93,8 +93,7 @@ struct WildcardApp: App {
             initialValue: ScheduleModel(
                 store: ScheduleStore(
                     backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
-                    now: LaunchOptions.scheduleNow),
-                photos: LaunchOptions.posterSaver))
+                    now: LaunchOptions.scheduleNow)))
         _recap = State(initialValue: Self.sampleRecap(today: today))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil

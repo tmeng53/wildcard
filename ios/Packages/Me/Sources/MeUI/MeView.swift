@@ -48,6 +48,7 @@ public struct MeView: View {
         ZStack {
             if model.isDeletionOpen {
                 DeleteAccountView(model: model) { model.closeDeletion() }
+                    .swipesBack(isEnabled: model.deletion != .deleting) { model.closeDeletion() }
                     .accentTone(.ink)
                     .transition(.move(edge: .trailing))
             } else if isSettingsOpen {

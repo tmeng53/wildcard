@@ -183,16 +183,6 @@
         }
       }
     },
-    "去设置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
-          }
-        }
-      }
-    },
     "周一": {
       "localizations": {
         "en": {
@@ -299,16 +289,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save"
-          }
-        }
-      }
-    },
-    "存好了，去相册看看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saved to Photos"
           }
         }
       }
@@ -459,16 +439,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Write my own"
-          }
-        }
-      }
-    },
-    "要先允许存到相册": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allow adding to Photos first"
           }
         }
       }

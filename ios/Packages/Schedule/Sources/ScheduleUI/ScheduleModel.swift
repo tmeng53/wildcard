@@ -23,14 +23,21 @@ public final class ScheduleModel {
         case fuel
     }
 
-    /// Where saving the poster to Photos stands.
+    /// Where 存图 stands: drawing the poster, then sharing the picture (the poster flashes as a
+    /// screenshot does and the share sheet opens on it), or a picture that couldn't be drawn.
     public enum Saving: Equatable {
         case idle
         case working
-        case saved
-        /// The member hasn't let the app add to Photos.
-        case notAllowed
+        case sharing(SharedPoster)
         case failed
+    }
+
+    /// A drawn poster on its way to the share sheet; each 存图 is a new one.
+    public struct SharedPoster: Identifiable, Equatable {
+        public let id: Int
+        public let image: PosterImage
+
+        public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
     }
 
     public let store: ScheduleStore
@@ -47,12 +54,10 @@ public final class ScheduleModel {
     /// Typing a 饮食小目标 of their own.
     var writingFuel = false
     private(set) var saving = Saving.idle
+    private var shares = 0
 
-    private let photos: any PosterSaver
-
-    public init(store: ScheduleStore, photos: any PosterSaver = PhotoLibrarySaver()) {
+    public init(store: ScheduleStore) {
         self.store = store
-        self.photos = photos
         makePlayer()
     }
 
@@ -159,18 +164,19 @@ public final class ScheduleModel {
 
     // MARK: Saving the poster
 
-    /// Saves the poster, drawn by `render`, to Photos.
-    func savePoster(_ render: () -> PosterImage?) async {
-        guard saving != .working else { return }
+    /// Draws the poster with `render` and hands the picture to the share sheet.
+    func sharePoster(_ render: () -> PosterImage?) {
+        guard saving == .idle || saving == .failed else { return }
         saving = .working
         guard let image = render() else {
             saving = .failed
             return
         }
-        saving = await photos.save(image)
+        shares += 1
+        saving = .sharing(SharedPoster(id: shares, image: image))
     }
 
-    /// Lets go of the saved or failed note.
+    /// The share sheet closed, or the failed note has been read.
     func clearSaving() {
         if saving != .working { saving = .idle }
     }

@@ -22,9 +22,10 @@ struct SettingsView: View {
         ZStack {
             if isPickingNumber {
                 JerseyNumberView(model: model) { isPickingNumber = false }
+                    .swipesBack { isPickingNumber = false }
                     .transition(.move(edge: .trailing))
             } else {
-                menu
+                menu.swipesBack(perform: close)
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
