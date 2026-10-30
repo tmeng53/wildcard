@@ -9,6 +9,7 @@ import {
   randomInviteCodes,
   type SquadTables,
 } from '@wildcard/squads';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import {
@@ -25,10 +26,11 @@ import {
   photosOf,
   type CheckInRecord,
 } from '../domain/check-in.js';
+import { DEFAULT_PLAN_DAYS, WeekStart } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables & SquadTables>({
+const db = new Kysely<CheckInTables & SquadTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -48,6 +50,7 @@ const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) }
 // Nobody here has a time zone: these tests don't read members' days.
 const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
@@ -205,6 +208,7 @@ describe('saving a check-in', () => {
     const body = draft({ audience: [squad] });
     await checkIns.save({ id, member, draft: body });
     const late = createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),
@@ -266,6 +270,7 @@ describe('saving a check-in', () => {
     const overlapping = () => {
       let missed = false;
       return createCheckIns({
+        sports: createSports({ store: createPostgresSportStore(db) }),
         store: {
           ...real,
           find: (id) => {
@@ -333,6 +338,32 @@ describe('saving a check-in', () => {
     expect(tomorrow.created).toBe(true);
   });
 
+  it('makes a planned rest day a training day of the 练了’s sport, and leaves other days', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const plans = createPostgresWeeklyPlanStore(db);
+    // The 18th is a Sunday, a rest day in the default plan.
+    const swim = draft({ audience: [squad], training: { sport: 'swim' } });
+    await checkIns.save({ id: CheckInId.parse(randomUUID()), member, draft: swim });
+    const week = WeekStart.parse('2026-10-12');
+    const trained = await plans.latestFrom(member, week);
+    expect(trained?.days[6]).toStrictEqual({ kind: 'train', sport: 'swim' });
+    expect(trained?.days.slice(0, 6)).toStrictEqual(DEFAULT_PLAN_DAYS.slice(0, 6));
+    // Now a training day, a second 练了 leaves it as it is.
+    await checkIns.save({
+      id: CheckInId.parse(randomUUID()),
+      member,
+      draft: draft({ audience: [squad] }),
+    });
+    expect(await plans.latestFrom(member, week)).toStrictEqual(trained);
+    // Other kinds never change the plan.
+    const other = await newMember();
+    const theirs = await newSquad(other);
+    const meal = draft({ audience: [theirs], kind: 'healthyMeal', meal: {} });
+    await checkIns.save({ id: CheckInId.parse(randomUUID()), member: other, draft: meal });
+    expect(await plans.latestFrom(other, week)).toBeUndefined();
+  });
+
   it('refuses a squad the member isn’t in, or one that doesn’t exist', async () => {
     const member = await newMember();
     const mine = await newSquad(member);
@@ -372,6 +403,7 @@ describe('saving a check-in', () => {
     const member = await newMember();
     const squad = await newSquad(member);
     const inPagoPago = createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,
       reactions: createPostgresReactionStore(db),

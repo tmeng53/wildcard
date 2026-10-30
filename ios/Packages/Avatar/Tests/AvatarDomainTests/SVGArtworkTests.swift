@@ -34,6 +34,19 @@ import Testing
     #expect(art.shapes[2].path.count == 6)
 }
 
+/// A stitched line keeps its dashes; an odd list repeats, as in SVG, and `none` is solid.
+@Test func readsStitchedLines() throws {
+    let art = try Artwork(
+        svg: #"""
+            <svg viewBox="0 0 100 100">
+              <path d="M 0 0 L 10 0" stroke="#FFFFFF" stroke-dasharray="3 2"/>
+              <path d="M 0 0 L 10 0" stroke="#FFFFFF" stroke-dasharray="2.4"/>
+              <path d="M 0 0 L 10 0" stroke="#FFFFFF" stroke-dasharray="none"/>
+            </svg>
+            """#)
+    #expect(art.shapes.map { $0.stroke?.dash } == [[3, 2], [2.4, 2.4], []])
+}
+
 @Test func roundedRectCornersStayInsideTheRect() throws {
     let art = try Artwork(svg: #"<svg viewBox="0 0 100 100"><rect width="10" height="40" rx="8"/></svg>"#)
     // ry takes the given rx (8); then rx is clamped to half the width (5), ry fits as is.

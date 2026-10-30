@@ -12,19 +12,25 @@ import FoundationNetworking
 // The app's API client against the built API and local Supabase, never a stand-in: members sign
 // up and in through Supabase Auth, check-ins land in Postgres, photos in Supabase Storage.
 
-/// A minute ago, inside the API's 48-hour window, and its UTC day: what the app sends for a
-/// member in UTC.
-private func moment() throws -> (day: LocalDay, createdAt: Timestamp) {
-    let createdAt = Timestamp(Date().addingTimeInterval(-60))
+/// A minute before `now`, inside the API's 48-hour window, and its day for a member in UTC: the
+/// API's day starts at 3am, so before 3am UTC it is still the day before.
+func moment(now: Date = Date()) throws -> (day: LocalDay, createdAt: Timestamp) {
+    let createdAt = Timestamp(now.addingTimeInterval(-60))
     var utc = Calendar(identifier: .gregorian)
     utc.timeZone = try #require(TimeZone(identifier: "UTC"))
-    let parts = utc.dateComponents([.year, .month, .day], from: createdAt.date)
+    let parts = utc.dateComponents([.year, .month, .day], from: createdAt.date.addingTimeInterval(-3 * 3600))
     let day = try LocalDay(
         year: try #require(parts.year), month: try #require(parts.month), day: try #require(parts.day))
     return (day, createdAt)
 }
 
-private func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry) throws -> CheckIn {
+@Test func theDayStartsAtThreeInTheMorning() throws {
+    // 00:30 UTC on the 24th is still the 23rd; 03:30 is the 24th.
+    #expect(try moment(now: Date(timeIntervalSince1970: 1_792_801_800)).day == LocalDay(year: 2026, month: 10, day: 23))
+    #expect(try moment(now: Date(timeIntervalSince1970: 1_792_812_600)).day == LocalDay(year: 2026, month: 10, day: 24))
+}
+
+func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry) throws -> CheckIn {
     let now = try moment()
     return CheckIn(
         id: CheckInID(UUID()), member: member.id, day: now.day, createdAt: now.createdAt,
@@ -32,7 +38,7 @@ private func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: Chec
 }
 
 /// 2 KiB of noise standing in for a photo: storage checks the declared type, not the bytes.
-private func photoBytes() -> Data {
+func photoBytes() -> Data {
     Data((0..<2048).map { _ in UInt8.random(in: 0...255) })
 }
 
@@ -52,7 +58,7 @@ private func photoBytes() -> Data {
     let character = MemberCharacter(
         nickname: try Nickname(" 小周 "),
         look: CharacterLook(
-            persona: "deadpan", variants: ["body": "tuxedo", "top": "hoodie"], colors: ["top": "#2D5BA0"]))
+            persona: "deadpan", variants: ["body": "tuxedo", "top": "warmup-hoodie"], colors: ["top": "#2D5BA0"]))
     let moved = Profile(
         timeZone: try #require(TimeZone(identifier: "America/Toronto")), catchphrase: try Catchphrase("冲就完了🔥"),
         character: character)
@@ -162,7 +168,7 @@ private func photoBytes() -> Data {
     let author = try await stack.signedInMember()
     let outsider = try await stack.signedInMember()
     let squad = try await stack.squad(of: author)
-    let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport(.run))))
+    let trained = try checkIn(by: outsider, to: squad, .trained(Training(activity: .sport("run"))))
 
     await #expect(throws: APIError.refused(.squadNotJoined)) { try await outsider.api.save(trained) }
     await #expect(throws: APIError.refused(.squadNotJoined)) {
@@ -254,4 +260,18 @@ private struct RefusedTokens: AuthProvider {
             member: session.member, accessToken: "refused.token.here", refreshToken: session.refreshToken,
             expiresAt: session.expiresAt)
     }
+}
+
+@Test func thePlayerCardsRecordsStartEmptyAndCountTheSportTrainedMost() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let squad = try await stack.squad(of: member)
+
+    #expect(try await member.api.checkInTotals().topSport == nil)
+    #expect(try await member.api.awardTotals() == AwardTotals(titles: 0, latest: nil))
+
+    for activity in [Activity.sport("run"), .custom(try CustomSport("飞盘")), .sport("run")] {
+        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))
+    }
+    #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
 }

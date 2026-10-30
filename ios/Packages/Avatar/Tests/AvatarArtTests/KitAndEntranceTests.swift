@@ -5,44 +5,56 @@ import Contracts
 import Foundation
 import Testing
 
-/// Shoes are their own slot: bodies draw bare legs, and every look wears 小白鞋 unless it picks
-/// another pair, drawn over the bottoms.
+/// Shoes are their own slot: bodies draw bare legs, and every look wears WARM-UP's canvas shoes
+/// unless it picks another pair, drawn over the bottoms.
 @Test func everyLookWearsShoes() throws {
     for body in PlaceholderCharacter.variants(for: "body") {
-        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "bottom": "leggings"]))
+        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "bottom": "warmup-leggings"]))
         for leg in ["legL", "legR"] as [PartID] {
             #expect(try figure.part(leg).art.count == 3, "\(body) \(leg)")
         }
     }
     let plain = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
-    let sneakers = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "sneaker"]))
-    let runners = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "runner"]))
-    #expect(try plain.part("legL").art == sneakers.part("legL").art)
-    #expect(try runners.part("legL").art != sneakers.part("legL").art)
-    #expect(try runners.part("legL").art.last?.shapes.first?.fill == RGBAColor(hex: "#2D5BA0"))
+    let canvas = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "warmup-canvas"]))
+    let runners = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "lap-runner"]))
+    #expect(try plain.part("legL").art == canvas.part("legL").art)
+    #expect(try runners.part("legL").art != canvas.part("legL").art)
 }
 
-/// Shoes keep their art's colors, like hats and props.
-@Test func shoesKeepTheirColors() {
-    for shoes in PlaceholderCharacter.variants(for: "shoes") {
-        #expect(PlaceholderCharacter.tones(for: "shoes", wearing: shoes) == nil)
-        #expect(PlaceholderCharacter.swatches(for: "shoes", wearing: shoes).isEmpty)
-    }
+/// A look saved with a piece this build has no art for (retired, or released after it) wears
+/// the slot's default there, and drops a color the default can't take.
+@Test func aRetiredPieceGivesWayToTheDefault() throws {
+    let blue = try #require(RGBAColor(hex: "#2D5BA0"))
+    let saved = Outfit(
+        ["body": "peach", "top": "jersey", "shoes": "sneaker", "hat": "cap"], colors: ["top": blue, "hat": blue])
+    let drawn = try PlaceholderCharacter.drawable(saved)
+    #expect(drawn.variants == ["body": "peach"])
+    #expect(drawn.colors == ["top": blue])
+    let figure = try PlaceholderCharacter.figure(wearing: saved)
+    #expect(
+        try figure.part("torso").art
+            == PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"], colors: ["top": blue])).part("torso").art)
 }
 
 /// Each sport puts on its own kit, its category's, or the warm-up.
 @Test func sportsPickTheirKits() throws {
     let kits = try PlaceholderCharacter.sportKits()
     let picks: [Sport: String] = [
-        .swim: "swim", .surf: "swim", .run: "run", .hike: "run", .spin: "run", .strength: "strength",
-        .boxing: "strength", .tennis: "tennis", .badminton: "tennis", .climb: "climb", .ski: "warmup",
-        .yoga: "yoga", .matPilates: "yoga", .basketball: "warmup", .dance: "warmup", .dogWalk: "warmup",
+        "swim": "swim", "surf": "swim", "run": "run", "hike": "run", "spin": "run", "strength": "strength",
+        "boxing": "strength", "kettlebell": "kettlebell", "tennis": "tennis", "squash": "tennis",
+        "badminton": "badminton", "pickleball": "pickleball", "tableTennis": "pingpong", "climb": "climb",
+        "ski": "warmup",
+        "yoga": "yoga", "matPilates": "yoga", "basketball": "warmup", "dance": "warmup", "dogWalk": "warmup",
     ]
     for (sport, kit) in picks {
-        #expect(kits.kit(for: .sport(sport)).id == kit, "\(sport)")
+        #expect(kits.kit(for: .sport(sport), in: Looks.sports).id == kit, "\(sport)")
     }
-    #expect(kits.kit(for: .custom(try CustomSport("飞盘"))).id == "warmup")
-    #expect(kits.kits.map(\.id) == ["swim", "run", "strength", "tennis", "climb", "yoga", "warmup"])
+    #expect(kits.kit(for: .custom(try CustomSport("飞盘")), in: Looks.sports).id == "warmup")
+    #expect(
+        kits.kits.map(\.id) == [
+            "swim", "run", "strength", "tennis", "climb", "yoga", "kettlebell", "badminton", "pickleball", "pingpong",
+            "warmup",
+        ])
 }
 
 /// A kit changes the clothes it names and keeps the rest of the look: body, hair, face, and the
@@ -51,20 +63,24 @@ import Testing
     let kits = try PlaceholderCharacter.sportKits()
     let blue = try #require(RGBAColor(hex: "#2D5BA0"))
     let look = Outfit(
-        ["body": "peach", "hair": "bob", "eyes": "sharp", "hat": "cap", "top": "tee", "bottom": "leggings"],
+        [
+            "body": "peach", "hair": "bob", "eyes": "sharp", "hat": "warmup-cap", "top": "warmup-tee",
+            "bottom": "warmup-leggings",
+        ],
         colors: ["top": blue, "hair": try #require(RGBAColor(hex: "#2A2333"))])
-    let running = kits.kit(for: .sport(.run)).dress(look)
-    #expect(running.variants["top"] == "tank" && running.colors["top"] == blue)
-    #expect(running.variants["hat"] == "headband" && running.variants["shoes"] == "runner")
-    #expect(running.variants["prop"] == "stopwatch")
+    let running = kits.kit(for: .sport("run"), in: Looks.sports).dress(look)
+    #expect(running.variants["top"] == "warmup-tank" && running.colors["top"] == blue)
+    #expect(running.variants["hat"] == "warmup-headband" && running.variants["shoes"] == "warmup-runner")
+    #expect(running.variants["prop"] == "bottle")
+    #expect(kits.kit(for: .sport("swim"), in: Looks.sports).dress(look).variants["prop"] == "goggles")
     #expect(running.variants["hair"] == "bob" && running.variants["eyes"] == "sharp")
     #expect(running.colors["hair"] == look.colors["hair"])
-    let climbing = kits.kit(for: .sport(.climb)).dress(look)
-    #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "climbing")
-    #expect(kits.kit(for: .sport(.ski)).dress(look) == look)
+    let climbing = kits.kit(for: .sport("climb"), in: Looks.sports).dress(look)
+    #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "moss-trail")
+    #expect(kits.kit(for: .sport("ski"), in: Looks.sports).dress(look) == look)
 }
 
-@Test func kitsJSONIsChecked() {
+@Test func kitsJSONIsChecked() throws {
     func decode(_ json: String) throws(AvatarError) -> SportKits {
         try SportKits.decode(Data(json.utf8))
     }
@@ -73,13 +89,17 @@ import Testing
         try decode(
             #"{"version": 1, "kits": \#(kit), "categories": {"water": "swim"}, "sports": {}, "otherwise": "run"}"#)
     }
-    #expect(throws: AvatarError.unknownKit("pool")) {
-        try decode(#"{"version": 1, "kits": \#(kit), "categories": {"pool": "run"}, "sports": {}, "otherwise": "run"}"#)
-    }
-    #expect(throws: AvatarError.unknownKit("parkour")) {
+    // Sports and categories are the API's data, so the file may name ones this build hasn't
+    // seen; only a key that can't be an id is refused.
+    #expect(throws: AvatarError.unknownKit("Pool Party")) {
         try decode(
-            #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#)
+            #"{"version": 1, "kits": \#(kit), "categories": {"Pool Party": "run"}, "sports": {}, "otherwise": "run"}"#)
     }
+    #expect(
+        try decode(
+            #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#
+        )
+        .kit(for: .sport("parkour"), in: .empty).id == "run")
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try decode(#"{"version": 2, "kits": [], "categories": {}, "sports": {}, "otherwise": "run"}"#)
     }
@@ -87,7 +107,7 @@ import Testing
 
 /// Every kit on every kind of character: the hop squashes down, where the kit goes on, and pops
 /// back up from that same squash to land where the kit's move starts; the move loops without a
-/// jump. Nothing leaves the canvas.
+/// jump (a hidden part, such as a prop put away, may end anywhere). Nothing leaves the canvas.
 @Test(arguments: Persona.allCases)
 func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let kits = try PlaceholderCharacter.sportKits()
@@ -104,7 +124,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
             #expect(figure.pose(out, at: out.clip.duration).parts[root].scaleY < 0.9)
             #expect(nearlyEqual(figure.pose(out, at: out.clip.duration), figure.pose(back, at: 0)))
             #expect(nearlyEqual(figure.pose(back, at: back.clip.duration), figure.restPose))
-            #expect(nearlyEqual(figure.pose(move, at: move.clip.duration - 1e-9), figure.pose(move, at: 0)))
+            #expect(
+                nearlyEqual(shown(figure.pose(move, at: move.clip.duration - 1e-9)), shown(figure.pose(move, at: 0))))
             for clip in [out, back, move] {
                 expectOnCanvas(figure, clip, for: clip.clip.duration, "\(kit.id) \(persona.rawValue) \(clip.clip.name)")
             }
@@ -112,13 +133,25 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     }
 }
 
+/// The run kit jogs with the tumbler and the warm-up keeps its own move; every other kit trains
+/// at the signature move of the prop it holds.
+@Test func kitsTrainAtTheirPropsMoves() throws {
+    let kits = try PlaceholderCharacter.sportKits()
+    let moves = try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: .energetic).name }
+    #expect(
+        moves == [
+            "goggles", "run", "dumbbell", "racket", "chalkbag", "yogamat", "kettlebell", "badminton", "pickleball",
+            "pingpong", "warmup",
+        ])
+}
+
 /// A deadpan character swims slower than an energetic one.
 @Test func personasPlayKitMovesAtTheirOwnTempo() throws {
-    let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+    let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
     let deadpan = try PlaceholderCharacter.move(for: swim, persona: .deadpan)
     let energetic = try PlaceholderCharacter.move(for: swim, persona: .energetic)
-    #expect(abs(deadpan.duration - 1.3 / 0.7) < 1e-9)
-    #expect(abs(energetic.duration - 1.3 / 1.4) < 1e-9)
+    #expect(abs(deadpan.duration - 5.0 / 0.7) < 1e-9)
+    #expect(abs(energetic.duration - 5.0 / 1.4) < 1e-9)
 }
 
 /// 上场: the root carries the figure in from the right and up into the jump while the shadow
@@ -174,9 +207,21 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     let kits = try PlaceholderCharacter.sportKits()
     let hop = try PlaceholderCharacter.kitHop()
-    var clips = [hop.out, hop.in, try PlaceholderCharacter.entrance(), try PlaceholderCharacter.drop()]
+    var clips = [
+        hop.out, hop.in, try PlaceholderCharacter.entrance(), try PlaceholderCharacter.drop(),
+        try PlaceholderCharacter.woken(),
+    ]
+    clips += try PlaceholderCharacter.editorChoices().props.compactMap {
+        try PlaceholderCharacter.propMove(for: Outfit(["prop": $0]))
+    }
+    clips += PlaceholderCharacter.reactionMoves.compactMap(PlaceholderCharacter.reactionMove)
     for persona in Persona.allCases {
         clips += [try PlaceholderCharacter.typing(persona: persona), try PlaceholderCharacter.teary(persona: persona)]
+        clips += try Move.allCases.map { try PlaceholderCharacter.clip(for: $0, persona: persona) }
+        clips += [
+            try PlaceholderCharacter.sitting(persona: persona), try PlaceholderCharacter.holdingSign(persona: persona),
+            try PlaceholderCharacter.sleeping(persona: persona),
+        ]
         clips += try ["idle", "cheer", "welcome"].map { try PlaceholderCharacter.clip($0, persona: persona) }
         clips += try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: persona) }
     }
@@ -190,5 +235,23 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
                 #expect(abs(pose.parts[part].rotation) <= 15, "\(clip.name) at \(frame)")
             }
         }
+    }
+}
+
+/// A teammate's reaction makes the author's character play a move from the feed's library: each
+/// one drawn plays once on every look, stays on the canvas and ends at rest, so the character
+/// holds still again until the next reaction.
+@Test func reactionMovesPlayOnceAndEndAtRest() throws {
+    #expect(
+        PlaceholderCharacter.reactionMoves == ["chin-up", "drool", "flex", "heart", "laugh-bend", "pout", "shocked"])
+    #expect(PlaceholderCharacter.reactionMove("happy-hop") == nil)
+    #expect(PlaceholderCharacter.reactionMove("../moves/entrance") == nil)
+    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
+    for id in PlaceholderCharacter.reactionMoves {
+        let clip = try #require(PlaceholderCharacter.reactionMove(id))
+        #expect(!clip.loops, "\(id)")
+        let bound = try figure.bind(clip)
+        expectOnCanvas(figure, bound, for: clip.duration, id)
+        #expect(nearlyEqual(figure.pose(bound, at: clip.duration), figure.restPose), "\(id)")
     }
 }

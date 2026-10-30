@@ -9,6 +9,7 @@ import type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
+  SportList,
   SquadMembership,
   WeeklyPlanStore,
 } from '../ports.js';
@@ -84,6 +85,8 @@ export function createCheckIns(deps: {
   readonly membership: SquadMembership;
   readonly reactions: ReactionStore;
   readonly photos: PhotoFiles;
+  /** Which sports a 练了 may name. */
+  readonly sports: SportList;
   readonly plans: WeeklyPlanStore;
   readonly calendarOf: MemberCalendar;
   readonly clock: Clock;

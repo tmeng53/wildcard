@@ -32,8 +32,8 @@ final class TodayUITests: XCTestCase {
         app.buttons["today.capsule.trained"].tap()
         let post = app.buttons["compose.post"]
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        XCTAssertTrue(app.buttons["compose.sport.run"].isSelected, "the last sport used (跑步) isn't picked")
         app.buttons["compose.photo.2"].tap()
+        checkSportAndPickMinutes(in: app)
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         caption.tap()
         caption.typeText("晨跑 5 公里，腿还在")
@@ -63,10 +63,8 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "16-today-trained-payoff")
 
         checkIn.tap()
-        let disclaimer = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(disclaimer.waitForExistence(timeout: Self.wait))
-        disclaimer.tap()
-        XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "请假 opened after training")
+        XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
+        XCTAssertFalse(app.buttons["today.capsule.disclaimer"].exists, "请假 offered after training")
         settle()
         keepScreenshot(named: "17-today-disclaimer-unavailable")
     }
@@ -135,15 +133,18 @@ final class TodayUITests: XCTestCase {
         settle()
         keepScreenshot(named: "19-today-disclaimer-posted")
 
-        assertOpensItsPost(bubble, in: app)
+        assertOpensItsPost(bubble, saying: line, in: app)
     }
 
-    /// A caption's bubble opens its post: the 动态 tab, until the feed can scroll to it.
-    private func assertOpensItsPost(_ bubble: XCUIElement, in app: XCUIApplication) {
+    /// A caption's bubble opens its post in 动态, on screen.
+    private func assertOpensItsPost(_ bubble: XCUIElement, saying line: String, in app: XCUIApplication) {
         bubble.tap()
-        let feed = app.staticTexts["tab.upcoming"]
-        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "tapping the bubble didn't leave 今天")
-        XCTAssertEqual(feed.label, "动态", "tapping the bubble opened another tab")
+        XCTAssertTrue(
+            app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "tapping the bubble didn't open 动态")
+        let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
+        XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
+        waitFor(post, "isHittable == true", "动态 didn't open on my post")
+        keepScreenshot(named: "48-feed-my-post")
     }
 
     /// The excuse shows exactly what will be posted: Return finishes editing, and typing stops
@@ -233,7 +234,8 @@ final class TodayUITests: XCTestCase {
         capsule.tap()
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        XCTAssertEqual(caption.placeholderValue, "这顿很自律…")
+        // The caption is a text view whose placeholder is drawn over it and read as its label.
+        XCTAssertEqual(caption.label, "这顿很自律…")
         XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
         XCTAssertFalse(app.buttons["compose.photo.1"].exists, "one photo shows a cover choice")
         settle()
@@ -250,6 +252,10 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
         settle()
         keepScreenshot(named: "13-today-my-week")
+        // Tapping a day shows its line under the calendar.
+        pickADayNotToday(in: app)
+        settle()
+        keepScreenshot(named: "13b-today-my-week-picked")
         // Leave the card as the other tests expect it.
         app.buttons["squadcard.page.squad"].tap()
     }
@@ -310,4 +316,35 @@ final class TodayUITests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+}
+
+extension TodayUITests {
+    /// The 练了 page's sport starts on the last one used; 其他 opens a ruler for any other number
+    /// of minutes, which a swipe moves, then one tap on a usual length closes it.
+    fileprivate func checkSportAndPickMinutes(in app: XCUIApplication) {
+        XCTAssertTrue(app.buttons["compose.sport.run"].isSelected, "the last sport used (跑步) isn't picked")
+        app.buttons["compose.minutes.other"].tap()
+        let ruler = app.descendants(matching: .any).matching(identifier: "compose.minutes.ruler").firstMatch
+        XCTAssertTrue(ruler.waitForExistence(timeout: Self.wait), "其他 didn't open the minutes ruler")
+        XCTAssertEqual(ruler.value as? String, "60", "the ruler doesn't start on 60 minutes")
+        ruler.swipeLeft()
+        settle()
+        XCTAssertNotEqual(ruler.value as? String, "60", "swiping the ruler didn't change the minutes")
+        keepScreenshot(named: "15-compose-minutes-other")
+        let window = app.windows.firstMatch.frame
+        XCTAssertTrue(window.contains(ruler.frame), "the minutes ruler is cut off: \(ruler.frame)")
+        app.buttons["compose.minutes.45"].tap()
+        XCTAssertTrue(app.buttons["compose.minutes.45"].isSelected, "45 minutes isn't picked")
+        XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "the ruler stayed open after picking 45")
+    }
+}
+
+/// Taps Monday, or Tuesday when Monday is today and so already picked, and checks the line under
+/// the calendar follows it.
+private func pickADayNotToday(in app: XCUIApplication) {
+    let day = app.buttons["squadcard.day.0"].isSelected ? 1 : 0
+    app.buttons["squadcard.day.\(day)"].tap()
+    XCTAssertTrue(app.buttons["squadcard.day.\(day)"].isSelected, "the tapped day isn't picked")
+    let line = app.descendants(matching: .any).matching(identifier: "squadcard.dayLine").firstMatch.label
+    XCTAssertTrue(line.hasPrefix(day == 0 ? "周一" : "周二"), "the line isn't the tapped day's: \(line)")
 }

@@ -9,6 +9,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -22,11 +23,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -42,9 +44,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -59,6 +63,7 @@ const app = createApp({
   }),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -73,6 +78,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
   aiConsent: aiConsentOn(db),
+  nudges: nudgesOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -236,6 +242,24 @@ describe('PUT /check-ins/{id}', () => {
         day: '2020-01-01',
       }),
     ).toStrictEqual([400, 'application/problem+json', 'CHECK_IN_TOO_OLD']);
+    const trained = (sport: string) => ({
+      version: 1,
+      day,
+      createdAt,
+      audience: [squad],
+      kind: 'trained',
+      training: { sport },
+    });
+    expect(await put(randomUUID(), trained('quidditch'))).toStrictEqual([
+      400,
+      'application/problem+json',
+      'SPORT_NOT_LISTED',
+    ]);
+    expect(await put(randomUUID(), trained('not a sport id'))).toStrictEqual([
+      400,
+      'application/problem+json',
+      'REQUEST_INVALID',
+    ]);
     expect(await put(randomUUID(), { ...disclaimer('累'), calories: 300 })).toStrictEqual([
       400,
       'application/problem+json',
@@ -432,12 +456,49 @@ describe('GET /me/check-in-totals', () => {
     ).toStrictEqual({
       status: 200,
       type: 'application/json',
-      body: { version: 1, trainedDays: 2, healthyMeals: 2, cheatMeals: 1, disclaimers: 1 },
+      body: {
+        version: 1,
+        trainedDays: 2,
+        healthyMeals: 2,
+        cheatMeals: 1,
+        disclaimers: 1,
+        topSport: { sport: 'run', checkIns: 2 },
+      },
     });
     expect(
       (await call({ method: 'GET', path: '/me/check-in-totals', token: friend.token })).body,
     ).toStrictEqual({ version: 1, trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0 });
     expect((await call({ method: 'GET', path: '/me/check-in-totals' })).status).toBe(401);
+  });
+
+  it('counts a custom sport by its name for 最常练, and the latest sport wins a tie', async () => {
+    const me = await signUp();
+    const squad = await squadOf(me);
+    const train = async (minutesAgo: number, training: Record<string, unknown>) => {
+      const when = new Date(Date.now() - minutesAgo * 60_000);
+      const body = {
+        version: 1,
+        day: when.toISOString().slice(0, 10),
+        createdAt: when.toISOString(),
+        audience: [squad],
+        kind: 'trained',
+        training,
+      };
+      return (
+        await call({ method: 'PUT', path: `/check-ins/${randomUUID()}`, token: me.token, body })
+      ).status;
+    };
+    const topSport = async () =>
+      z
+        .object({ topSport: z.unknown() })
+        .parse((await call({ method: 'GET', path: '/me/check-in-totals', token: me.token })).body)
+        .topSport;
+
+    expect(await train(5, { sport: 'custom', customSport: '飞盘' })).toBe(201);
+    expect(await train(4, { sport: 'custom', customSport: '匹克球' })).toBe(201);
+    expect(await topSport()).toStrictEqual({ sport: 'custom', customSport: '匹克球', checkIns: 1 });
+    expect(await train(3, { sport: 'custom', customSport: '飞盘' })).toBe(201);
+    expect(await topSport()).toStrictEqual({ sport: 'custom', customSport: '飞盘', checkIns: 2 });
   });
 });
 

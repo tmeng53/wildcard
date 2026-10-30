@@ -9,6 +9,7 @@ import {
   randomInviteCodes,
   type SquadTables,
 } from '@wildcard/squads';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import {
@@ -22,7 +23,7 @@ import { WeekStart, type PlanDay } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables & SquadTables>({
+const db = new Kysely<CheckInTables & SquadTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -40,9 +41,13 @@ const now = new Date('2026-10-26T20:00:00.000Z');
 // Members' time zones, as the members module would give them.
 const zones = new Map<MemberId, string>();
 const plans = createPostgresWeeklyPlanStore(db);
+/** When every member joined: weeks before the weeks tested. */
+const JOINED = new Date('2026-09-01T00:00:00.000Z');
+
 /** The check-ins module with its clock at `moment`. */
-const checkInsAt = (moment: Date) =>
+const checkInsAt = (moment: Date, joinedAt = JOINED) =>
   createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership,
     reactions: createPostgresReactionStore(db),
@@ -50,7 +55,7 @@ const checkInsAt = (moment: Date) =>
     photos: { exists: () => Promise.reject(new Error('unused')) },
     calendarOf: (member) => {
       const timeZone = zones.get(member);
-      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: moment });
+      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt });
     },
     clock: () => moment,
   });
@@ -292,6 +297,17 @@ describe('a squad’s week summary', () => {
     );
     const monday = checkInsAt(new Date('2026-10-26T10:00:00.000Z'));
     expect((await monday.weekSummary({ viewer: la, squad, weekStart: week })).final).toBe(true);
+  });
+
+  it('counts the planned days from the day a member joined', async () => {
+    // Joined on Thursday morning in Los Angeles: the default plan's Thursday to Saturday count.
+    const joinedThursday = checkInsAt(now, new Date('2026-10-22T16:00:00.000Z'));
+    const la = await newMember('America/Los_Angeles');
+    const squad = await newSquad(la);
+    const summary = await joinedThursday.weekSummary({ viewer: la, squad, weekStart: week });
+    const planned = (rows: readonly { kind: string; value: number }[]) =>
+      rows.find(({ kind }) => kind === 'plannedDays')?.value;
+    expect([planned(summary.me.stats), planned(summary.squad.stats)]).toStrictEqual([3, 3]);
   });
 
   it('refuses a week that hasn’t started on the viewer’s clock', async () => {

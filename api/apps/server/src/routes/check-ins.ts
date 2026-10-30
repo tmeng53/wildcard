@@ -114,6 +114,22 @@ const CheckInTotals = z
     healthyMeals: count('健康餐 check-ins.'),
     cheatMeals: count('坦白放纵餐 check-ins.'),
     disclaimers: count('今日请假条 check-ins, at most one a day.'),
+    topSport: z
+      .strictObject({
+        sport: storedTrainingFields.sport,
+        customSport: z
+          .string()
+          .optional()
+          .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
+        checkIns: count('练了 check-ins of this sport.'),
+      })
+      .optional()
+      .meta({
+        description:
+          'The sport with the most 练了 (最常练; a custom sport counts by its name), the latest ' +
+          'one on a tie. Left out before the first 练了.',
+      })
+      .openapi('TopSport'),
   })
   .openapi('CheckInTotals');
 

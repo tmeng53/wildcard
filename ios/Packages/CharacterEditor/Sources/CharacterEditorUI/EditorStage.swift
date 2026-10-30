@@ -5,38 +5,41 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The character standing on its stage's floor, its nickname under its feet. A tap makes it
-/// cheer; on the 性格 tab a swipe across it tries the next persona. The editor puts it in a
-/// `CharacterStage`.
+/// The character standing in its ticket's light. A tap makes it cheer; on the 性格 tab a swipe
+/// across it tries the next persona, and a held prop plays its move now and then. The editor
+/// puts it in a `CharacterStage`, with its nickname on the stub under its feet.
 struct EditorStage: View {
     @Bindable var model: CharacterEditorModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     static let height: Double = 300
     private let character = CGSize(width: 200, height: 267)
-    /// How far above the stage's bottom the character's box sits, so its feet land on the floor.
+    /// How far above the stage's bottom the character's box sits, so its feet land in the light.
     private let feet: Double = 46
     /// How far a swipe must travel to change the persona.
     private let swipe: Double = 40
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                if let player = model.player {
-                    CharacterView(player: player)
-                } else {
-                    Color.clear
-                }
+        Group {
+            if let player = model.player {
+                CharacterView(player: player)
+            } else {
+                Color.clear
             }
-            .frame(width: character.width, height: character.height)
-            .contentShape(Rectangle())
-            .onTapGesture { model.cheer() }
-            .gesture(personaSwipe, isEnabled: model.tab == .persona)
-            .padding(.bottom, feet)
-            NicknameField(nickname: $model.nickname)
-                .padding(.bottom, Space.xs)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: Self.height)
+        .frame(width: character.width, height: character.height)
+        .contentShape(Rectangle())
+        .onTapGesture { model.cheer() }
+        .gesture(personaSwipe, isEnabled: model.tab == .persona)
+        .padding(.bottom, feet)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .task(id: model.tab == .persona && !reduceMotion) {
+            guard model.tab == .persona, !reduceMotion else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                model.propMoveIfIdle()
+            }
+        }
     }
 
     private var personaSwipe: some Gesture {
@@ -49,9 +52,10 @@ struct EditorStage: View {
     }
 }
 
-/// The nickname, typed straight onto a white tag under the character's feet.
-private struct NicknameField: View {
+/// The nickname, typed in white straight onto the ticket's stub.
+struct NicknameField: View {
     @Binding var nickname: String
+    var isFocused: FocusState<Bool>.Binding
     @Environment(\.sceneTheme) private var theme
     private let width: Double = 180
     /// Room for the pen on the trailing side, mirrored on the leading side to keep the name centered.
@@ -59,26 +63,30 @@ private struct NicknameField: View {
     private let pen: Double = 13
 
     var body: some View {
-        TextField(text: $nickname, prompt: Text("昵称", bundle: .module)) {
+        TextField(
+            text: $nickname,
+            prompt: Text("昵称", bundle: .module).foregroundStyle(Color(role: .fgBrandPen, in: theme))
+        ) {
             Text("昵称", bundle: .module)
         }
         .typeStyle(TypeRamp.headline)
-        .foregroundStyle(Color(role: .fgDefault, in: theme))
+        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+        // The cursor in white too: the brand's own colour would vanish on the stub.
+        .tint(Color(role: .fgOnBrand, in: theme))
         .multilineTextAlignment(.center)
         .submitLabel(.done)
+        .focused(isFocused)
+        .onSubmit { isFocused.wrappedValue = false }
         .autocorrectionDisabled()
         .padding(.horizontal, inset)
         .frame(width: width, height: Sizing.minimumTapTarget)
         .overlay(alignment: .trailing) {
             Image(systemName: "pencil")
                 .font(.system(size: pen, weight: .semibold))
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .foregroundStyle(Color(role: .fgBrandPen, in: theme))
                 .padding(.trailing, Space.m)
                 .accessibilityHidden(true)
         }
-        .background(
-            Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-        )
         .accessibilityIdentifier("editor.nickname")
     }
 }

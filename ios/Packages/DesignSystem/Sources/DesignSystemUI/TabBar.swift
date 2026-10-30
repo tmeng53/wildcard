@@ -17,8 +17,9 @@ public struct TabBarItem<ID: Hashable>: Identifiable {
     }
 }
 
-/// The app's floating tab bar: a Liquid Glass capsule over the scene, each tab an icon over its
-/// name. The selected tab sits on a light grey block in ink; the others are grey. It never takes
+/// The app's floating tab bar: an interactive Liquid Glass capsule over the scene, like the
+/// system's, each tab an icon over its name. The selected tab sits on a see-through ink block, so
+/// the glass shows through it too, in ink; the others are grey. It never takes
 /// the scene's color. The caller places it `Sizing.tabBarBottom` above the screen's bottom edge
 /// with page margins.
 public struct TabBar<ID: Hashable>: View {
@@ -41,9 +42,12 @@ public struct TabBar<ID: Hashable>: View {
         }
         .padding(.horizontal, Space.xxs)
         .frame(height: Sizing.tabBar)
-        .glassEffect(.regular, in: Capsule())
+        .glassEffect(.regular.interactive(), in: Capsule())
         .haptic(.pick, trigger: selection)
     }
+
+    /// How much ink the selected tab's block holds.
+    private static var selectedOpacity: Double { 0.08 }
 
     private func tab(_ item: TabBarItem<ID>) -> some View {
         let isSelected = item.id == selection
@@ -67,7 +71,7 @@ public struct TabBar<ID: Hashable>: View {
             .frame(width: Sizing.tabItemWidth, height: Sizing.tabItemHeight)
             .background {
                 if isSelected {
-                    shape.fill(Color(role: .bgSubtle, in: theme))
+                    shape.fill(Color(role: .fgDefault, in: theme).opacity(Self.selectedOpacity))
                 }
             }
             .contentShape(shape)

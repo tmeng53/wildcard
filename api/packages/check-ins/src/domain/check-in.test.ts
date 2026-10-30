@@ -87,24 +87,38 @@ describe('CheckInDraft', () => {
     ).toStrictEqual(['audience']);
   });
 
-  it('refuses minutes and meal types, which v1 doesn’t have', () => {
-    expect(issues({ ...trained, training: { sport: 'run', minutes: 30 } })).toStrictEqual([
-      'training',
-    ]);
+  it('refuses meal types, which v1 doesn’t have', () => {
     expect(issues({ ...base, kind: 'healthyMeal', meal: { slot: 'lunch' } })).toStrictEqual([
       'meal',
     ]);
   });
 
-  it('takes a listed sport without a name, or custom with one', () => {
+  it('takes a sport id without a name, or custom with one', () => {
     const training = (fields: object) => issues({ ...trained, training: { ...fields } });
     expect(training({ sport: 'pickleball' })).toBe('ok');
-    expect(training({ sport: 'quidditch' })).toStrictEqual(['training.sport']);
+    // Whether an id is listed is the sports list's to say, when the check-in is saved.
+    expect(training({ sport: 'quidditch' })).toBe('ok');
+    expect(training({ sport: 'Quidditch' })).toStrictEqual(['training.sport']);
+    expect(training({ sport: 'trail run' })).toStrictEqual(['training.sport']);
     expect(training({ sport: 'custom' })).toStrictEqual(['training.customSport']);
     expect(training({ sport: 'run', customSport: '慢跑' })).toStrictEqual(['training.customSport']);
     expect(training({ sport: 'custom', customSport: '   ' })).toStrictEqual([
       'training.customSport',
     ]);
+  });
+
+  it('takes whole minutes from 1 to 600 on a 练了, or none', () => {
+    const minutes = (value: unknown) =>
+      issues({ ...trained, training: { sport: 'run', minutes: value } });
+    expect(issues({ ...trained, training: { sport: 'run' } })).toBe('ok');
+    expect(minutes(1)).toBe('ok');
+    expect(minutes(600)).toBe('ok');
+    expect(minutes(0)).toStrictEqual(['training.minutes']);
+    expect(minutes(601)).toStrictEqual(['training.minutes']);
+    expect(minutes(45.5)).toStrictEqual(['training.minutes']);
+    expect(minutes('45')).toStrictEqual(['training.minutes']);
+    expect(minutes(null)).toStrictEqual(['training.minutes']);
+    expect(issues({ ...base, kind: 'healthyMeal', meal: { minutes: 30 } })).toStrictEqual(['meal']);
   });
 
   it('takes 1 to 3 different squads', () => {
@@ -191,6 +205,17 @@ describe('a saved check-in', () => {
     ).toStrictEqual({ kind: 'trained', training: { sport: 'run' } });
   });
 
+  it('stores minutes with the sport, and reads them back', () => {
+    const timed = recordFromDraft(
+      CheckInDraft.parse({ ...trained, training: { sport: 'run', minutes: 45 } }),
+      ids,
+    );
+    expect(storedPayload(timed)).toStrictEqual({ version: 1, sport: 'run', minutes: 45 });
+    expect(
+      entryFromStored({ kind: 'trained', payload: storedPayload(timed), photos: [] }),
+    ).toStrictEqual({ kind: 'trained', training: { sport: 'run', minutes: 45 } });
+  });
+
   it('keeps photos out of the stored fields, and reads them back from their rows', () => {
     const photos = [
       { path: PhotoPath.parse(`${ids.member}/3f4a5b6c-7d8e-4f9a-8b1c-2d3e4f5a6b7c`) },
@@ -218,7 +243,11 @@ describe('a saved check-in', () => {
       entryFromStored({ kind: 'trained', payload: { version: 2, sport: 'run' }, photos: [] }),
     ).toThrow('version');
     expect(() =>
-      entryFromStored({ kind: 'trained', payload: { version: 1, sport: 'skydiving' }, photos: [] }),
+      entryFromStored({
+        kind: 'trained',
+        payload: { version: 1, sport: 'sky diving' },
+        photos: [],
+      }),
     ).toThrow('sport');
   });
 

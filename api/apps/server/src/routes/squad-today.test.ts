@@ -9,6 +9,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -23,11 +24,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -44,9 +46,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -60,6 +64,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -73,6 +78,7 @@ const app = createApp({
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
+  nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
   log: createLog(() => undefined),
@@ -136,6 +142,15 @@ async function member(
   return signedUp;
 }
 
+/** Moves the members' join day weeks back, once their plans are saved, so this week counts from Monday. */
+async function joinedWeeksAgo(...members: readonly { readonly userId: string }[]) {
+  for (const { userId } of members) {
+    await sql`update profiles set created_at = now() - interval '30 days' where member_id = ${userId}`.execute(
+      db,
+    );
+  }
+}
+
 /** The Monday of the week `day` is in. */
 function mondayOf(day: string) {
   const date = new Date(`${day}T00:00:00.000Z`);
@@ -172,6 +187,7 @@ describe('GET /squads/{squadId}/today', () => {
     // East trains every day this week and West rests every day; me and friend keep the default.
     await planAll(east.token, { day: today(14), kind: 'train' });
     await planAll(west.token, { day: today(-11), kind: 'rest' });
+    await joinedWeeksAgo(me, friend, east, west);
     await checkIn(me.token, { squad, kind: 'disclaimer', disclaimer: { text: '加班' } });
     await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
     await checkIn(friend.token, { squad, kind: 'healthyMeal', meal: {} });

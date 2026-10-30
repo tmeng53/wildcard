@@ -19,9 +19,11 @@ private final class Schema: Decodable, Sendable {
     let minItems: Int?
     let maxItems: Int?
     let maxCharacters: Int?
+    let minimum: Int?
+    let maximum: Int?
 
     enum CodingKeys: String, CodingKey {
-        case properties, minItems, maxItems
+        case properties, minItems, maxItems, minimum, maximum
         case maxCharacters = "x-max-characters"
     }
 }
@@ -35,11 +37,6 @@ private func property(_ field: String, of name: String) throws -> Schema? {
     return document.components.schemas[name]?.properties?[field]
 }
 
-@Test func sportsAreTheAPIsListPlusCustom() {
-    #expect(
-        Components.Schemas.Sport.allCases.map(\.rawValue) == Sport.allCases.map(\.rawValue) + ["custom"])
-}
-
 @Test(arguments: ["Training", "Meal", "TrainingView", "MealView"])
 func captionLimitIsTheAPIs(schema: String) throws {
     #expect(try property("caption", of: schema)?.maxCharacters == Caption.maxLength)
@@ -50,12 +47,25 @@ func customSportLimitIsTheAPIs(schema: String) throws {
     #expect(try property("customSport", of: schema)?.maxCharacters == CustomSport.maxLength)
 }
 
+@Test(arguments: ["Training", "TrainingView"])
+func workoutMinutesRangeIsTheAPIs(schema: String) throws {
+    let minutes = try property("minutes", of: schema)
+    #expect(minutes?.minimum == WorkoutMinutes.range.lowerBound)
+    #expect(minutes?.maximum == WorkoutMinutes.range.upperBound)
+}
+
 @Test func disclaimerLimitIsTheAPIs() throws {
     #expect(try property("text", of: "Disclaimer")?.maxCharacters == Disclaimer.maxLength)
 }
 
 @Test func catchphraseLimitIsTheAPIs() throws {
     #expect(try property("catchphrase", of: "Profile")?.maxCharacters == Catchphrase.maxLength)
+}
+
+@Test func jerseyNumberRangeIsTheAPIs() throws {
+    let number = try property("jerseyNumber", of: "Profile")
+    #expect(number?.minimum == JerseyNumber.range.lowerBound)
+    #expect(number?.maximum == JerseyNumber.range.upperBound)
 }
 
 @Test func nicknameLimitIsTheAPIs() throws {

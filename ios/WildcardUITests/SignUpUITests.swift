@@ -34,12 +34,14 @@ final class SignUpUITests: XCTestCase {
     private func makeCharacter(in app: XCUIApplication) {
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
+        XCTAssertTrue(app.staticTexts["创建你的外卡运动员"].exists, "step 1 has no title")
         XCTAssertEqual(
             app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 4 步")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
-        nickname.typeText("Tracy")
+        // Return puts the keyboard away: the editor doesn't make room for it, so it covers 就这样.
+        nickname.typeText("Tracy\n")
         waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
         settle()
         keepScreenshot(named: "41-signup-character")
@@ -58,9 +60,9 @@ final class SignUpUITests: XCTestCase {
         code.tap()
         code.typeText("k7q2m9xd")
         // The found squad is one combined element, which reads as text rather than a group.
-        XCTAssertTrue(
-            app.descendants(matching: .any)["squad.found"].waitForExistence(timeout: Self.wait),
-            "the squad wasn't found")
+        let found = app.descendants(matching: .any)["squad.found"]
+        XCTAssertTrue(found.waitForExistence(timeout: Self.wait), "the squad wasn't found")
+        settle()
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(
             app.descendants(matching: .any)["squad.aiConsent"].exists, "no AI consent line under 加入小队")
@@ -86,15 +88,15 @@ final class SignUpUITests: XCTestCase {
     }
 
     private func planTheWeek(in app: XCUIApplication) {
-        let count = app.staticTexts["week.count"]
-        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "一周练几天？ never appeared")
+        let count = app.descendants(matching: .any)["week.count"]
+        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
         settle()
         keepScreenshot(named: "45-signup-week")
         // The whole poster and the day's choices show above the buttons, with no scrolling.
         let rest = app.buttons["week.choice.rest"]
         XCTAssertLessThanOrEqual(count.frame.maxY, rest.frame.minY, "the week's total is under the choices")
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
-        XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 44, "a day is a full tap target")
+        XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
         rest.tap()
         settle()
         keepScreenshot(named: "46-signup-week-changed")
@@ -102,7 +104,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     /// Frames of 上场 as fast as the simulator takes them, for the MP4; the squad card has
-    /// dropped in by three seconds, and home takes over at the end.
+    /// dropped in by four seconds, and home takes over at the end.
     private func watchTheEntrance(in app: XCUIApplication) {
         let entrance = app.descendants(matching: .any)["entrance"]
         XCTAssertTrue(entrance.waitForExistence(timeout: Self.wait), "上场 never started")
@@ -112,7 +114,7 @@ final class SignUpUITests: XCTestCase {
         while Date.now.timeIntervalSince(start) < 7 {
             keepScreenshot(named: String(format: "47-signup-entrance-%02d", frame))
             frame += 1
-            if !checkedCard, Date.now.timeIntervalSince(start) > 3.5 {
+            if !checkedCard, Date.now.timeIntervalSince(start) > 4 {
                 XCTAssertTrue(
                     app.descendants(matching: .any)["entrance.card"].exists, "the squad card never dropped in")
                 checkedCard = true
@@ -132,10 +134,11 @@ final class SignUpUITests: XCTestCase {
         signIn.tap()
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "the editor never appeared")
+        XCTAssertTrue(app.staticTexts["Create your Wildcard athlete"].exists, "step 1 has no title")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
-        nickname.typeText("Sam")
+        nickname.typeText("Sam\n")
         waitFor(editorDone, "isEnabled == true", "Done stays off with a nickname")
         editorDone.tap()
 
@@ -156,11 +159,69 @@ final class SignUpUITests: XCTestCase {
         squadDone.tap()
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the squad step didn't carry on to sports")
         skip.tap()
-        let count = app.staticTexts["week.count"]
+        let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "Training 5/7 days a week")
         settle()
         keepScreenshot(named: "50-signup-week-en")
+    }
+
+    /// Whoever makes their squad picks where it trains on 这周在哪练？: five cartons, then the
+    /// chosen one opens and they drop onto it at home, with no 上场.
+    func testMakingASquadPicksItsScene() {
+        let app = launch(language: "zh-Hans")
+        let signIn = app.buttons["signup.signIn"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
+        signIn.tap()
+        let editorDone = app.buttons["editor.done"]
+        XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
+        let nickname = app.textFields["editor.nickname"]
+        nickname.tap()
+        nickname.typeText("Tracy\n")
+        waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
+        editorDone.tap()
+        let squadDone = app.buttons["squad.done"]
+        XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "你的小队 never appeared")
+        waitFor(squadDone, "isEnabled == true", "建小队 stays off with a name")
+        squadDone.tap()
+        let skipSports = app.buttons["sports.skip"]
+        XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
+        skipSports.tap()
+        let skipWeek = app.buttons["week.skip"]
+        XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
+        skipWeek.tap()
+
+        let confirm = app.buttons["scene.done"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "这周在哪练？ never appeared")
+        XCTAssertTrue(app.staticTexts["这周在哪练？"].exists, "the scene step has no title")
+        XCTAssertFalse(confirm.isEnabled, "就它了 is on before a carton is chosen")
+        let tiles = ["track", "pool", "gym", "tennis", "climbing"].map { app.buttons["scenePick.\($0)"] }
+        let screen = app.windows.firstMatch.frame
+        for tile in tiles {
+            XCTAssertTrue(tile.exists, "a scene is missing from the cartons")
+            XCTAssertTrue(screen.contains(tile.frame), "a carton runs off the screen")
+            XCTAssertLessThanOrEqual(tile.frame.maxY, confirm.frame.minY, "就它了 covers a carton")
+        }
+        XCTAssertEqual(tiles[1].label, "游泳池，还没开过")
+        tiles[1].tap()
+        waitFor(confirm, "isEnabled == true", "就它了 stays off with a carton chosen")
+        settle()
+        keepScreenshot(named: "51-signup-scene")
+        confirm.tap()
+
+        // The carton opens, then home takes over on the pool and the member drops onto it.
+        let today = app.buttons["tab.today"]
+        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "home never took over")
+        // Frames a few times a second, to review the drop against the mockup.
+        let start = Date()
+        for frame in 0..<12 {
+            keepScreenshot(
+                named: String(
+                    format: "52-signup-scene-dropping-%02d-%04dms", frame, Int(Date().timeIntervalSince(start) * 1000)))
+        }
+        XCTAssertFalse(app.descendants(matching: .any)["entrance"].exists, "上场 played for whoever made the squad")
+        settle()
+        keepScreenshot(named: "53-signup-scene-home")
     }
 
     private func launch(language: String) -> XCUIApplication {

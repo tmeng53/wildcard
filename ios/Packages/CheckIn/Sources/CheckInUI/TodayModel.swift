@@ -40,15 +40,22 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the line in the bubble.
+    /// What lands on the scene after a post: the line in the bubble, and the post it opens once
+    /// the server saved it.
     struct Payoff: Equatable {
         let kind: CheckInKind
         let line: String?
+        let post: CheckIn?
     }
 
-    var isBurstOpen = false
+    /// Opening it closes a teammate's bubble, which would otherwise stay sharp over the blur.
+    var isBurstOpen = false {
+        didSet { if isBurstOpen { pats.dismissBubble() } }
+    }
     /// Everyone else on the scene.
     let cast = SquadCast()
+    /// 拍一拍 on the scene.
+    let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
     private(set) var step = Step.scene
@@ -81,19 +88,30 @@ public final class TodayModel {
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
 
-    private let now: () -> Date
+    let now: () -> Date
+    /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
+    /// the lights are on for.
+    let defaults: UserDefaults
 
-    /// - Parameter posted: called each time a check-in lands, after the payoff starts; the app
-    ///   asks for notifications after the first.
+    /// - Parameters:
+    ///   - scene: the squad's scene this week; the gym, the scene the designs are drawn on, until
+    ///     the app has read it.
+    ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
+    ///     notifications after the first.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        now: @escaping () -> Date = Date.init, posted: @escaping @MainActor () -> Void
+        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
+        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void
     ) {
+        pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
+        self.scene = scene
+        self.defaults = defaults
         self.store = store
         self.now = now
         self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
+        litNight = defaults.string(forKey: Self.lightsKey)
         player = Self.player(wearing: myLook, persona: myPersona)
     }
 
@@ -107,23 +125,52 @@ public final class TodayModel {
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
     private static let scoreDelay = 1.7
 
-    /// Each squad picks its scene once squad settings land; 跑道 until then.
-    private static let scene = SceneTheme.track
-
     /// The squad's home, with the member's own posts counted.
     var home: Home? { store.home }
 
-    /// The squad's scene.
-    var scene: SceneTheme { Self.scene }
+    /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
+    /// settled (`TodayModel+DropIn.swift`).
+    var arrival: Arrival?
+
+    /// The squad's scene this week, which the app reads with the squad: the gym until then, and
+    /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
+    public var scene: SceneTheme {
+        didSet { if scene != oldValue { placeSquad() } }
+    }
 
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
-    var suggestedActivity: Activity { store.suggestedActivity ?? .sport(.run) }
+    var suggestedActivity: Activity { store.suggestedActivity ?? .sport("run") }
+    var recentActivities: [Activity] { store.recentActivities }
 
     /// Day or night on the scene, on the member's own clock.
     var phase: DayPhase {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = store.home?.timeZone ?? .current
+        calendar.timeZone = timeZone
         return DayPhase(hour: calendar.component(.hour, from: now()))
+    }
+
+    var timeZone: TimeZone { store.home?.timeZone ?? .current }
+
+    /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
+    var recap: DayRecap? {
+        guard let home, home.showsRecap(at: now()) else { return nil }
+        return home.recap(pending: store.pending)
+    }
+
+    /// Noon of the member's today in their time zone: the day the recap's title names.
+    var dayDate: Date? {
+        guard let home, let day = home.mine?.day else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = home.timeZone
+        return calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
+    }
+
+    /// A member's head and name on 今日赛况: 我 for me, else their nickname, or 队友 before they
+    /// made their character.
+    func recapMember(_ member: MemberID) -> (head: CharacterPlayer?, name: String) {
+        if member == home?.member { return (player, String(localized: "我", bundle: .module.inAppLanguage)) }
+        let nickname = home?.today.members.first { $0.member == member }?.character?.nickname.text
+        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module.inAppLanguage))
     }
 
     /// The ring under my feet.
@@ -141,6 +188,11 @@ public final class TodayModel {
 
     private var heldWeek: (squad: WeekCount, mine: WeekCount)?
 
+    /// The night the lights are on for, as `lightsKey` keeps it (`TodayModel+Lights.swift`).
+    var litNight: String?
+    /// The latest pull of the cord, which the scene plays.
+    var lightsPull: LightsPull?
+
     /// The character whose head the card shows for a member (`MemberID`'s description).
     func head(of member: String) -> CharacterPlayer? {
         guard member != home?.member.description else { return player }
@@ -149,7 +201,8 @@ public final class TodayModel {
 
     /// Puts everyone where they belong after the home changed.
     func placeSquad() {
-        guard let home else { return }
+        // The squad is placed again once it has dropped in.
+        guard let home, arrival == nil else { return }
         if let character = home.mine?.character {
             let (look, persona) = (Outfit(character.look), Persona(character.look))
             if look != myLook || persona != myPersona {
@@ -157,11 +210,11 @@ public final class TodayModel {
                 player = Self.player(wearing: look, persona: persona)
             }
         }
-        cast.update(home: home, scene: scene, phase: phase)
+        cast.update(home: home, scene: scene, phase: stagePhase)
     }
 
     var unavailable: Set<CheckInKind> {
-        store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
+        store.myStatus.allowsDisclaimer && !store.restsToday ? [] : [.disclaimer]
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
@@ -173,6 +226,48 @@ public final class TodayModel {
     public func load() async {
         await store.load()
         placeSquad()
+        Task { await playPatsOnMe() }
+    }
+
+    // MARK: 拍一拍
+
+    /// A teammate on the scene was tapped: their status and 「拍一拍」.
+    func tapMate(_ id: MemberID) {
+        guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        pats.tap(mate, cast: cast, phase: stagePhase)
+    }
+
+    /// Whether I can still pat `id` today.
+    func canPat(_ id: MemberID) -> Bool {
+        store.canPat(id)
+    }
+
+    /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
+    func patMate(_ id: MemberID) {
+        guard store.canPat(id), let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        guard pats.pat(mate, mine: player) else { return }
+        Task { try? await store.pat(id) }
+    }
+
+    /// The key under which the latest pat already shown to `member` is kept, apart for each
+    /// account signed in on this phone.
+    private static func patsShownKey(for member: MemberID) -> String {
+        "today.patsShownUntil.\(member)"
+    }
+
+    /// Whoever patted me since the last pat shown pats me now, from where they stand: the
+    /// earliest, with the next one named on their bubble. Each pat plays once on this phone.
+    private func playPatsOnMe() async {
+        guard let member = store.home?.member else { return }
+        let shown = defaults.double(forKey: Self.patsShownKey(for: member))
+        let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
+        let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
+        guard let latest = fresh.last, let first = patters.first else { return }
+        try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
+        await untilArrived()
+        guard pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
+        else { return }
+        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
     }
 
     func pick(_ kind: CheckInKind) {
@@ -224,11 +319,11 @@ public final class TodayModel {
         let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
-            try await store.post(draft)
+            let outcome = try await store.post(draft)
             placeSquad()
             step = .scene
             photos = []
-            land(draft, weekBefore: before)
+            land(draft, weekBefore: before, saved: outcome)
             posted()
         } catch {
             sendFailed = true
@@ -237,16 +332,19 @@ public final class TodayModel {
 
     /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
     /// in the post, off the scene (the product owner: too busy).
-    private func land(_ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?) {
+    private func land(
+        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, saved: TodayStore.PostOutcome
+    ) {
         let line: String?
         switch draft {
-        case .trained(_, let body), .healthyMeal(let body), .cheatMeal(let body):
+        case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body):
             line = body.caption
         case .disclaimer(let disclaimer):
             line = disclaimer.text
         }
         posts += 1
-        payoff = Payoff(kind: draft.kind, line: line)
+        let post: CheckIn? = if case .posted(let checkIn) = saved { checkIn } else { nil }
+        payoff = Payoff(kind: draft.kind, line: line, post: post)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         if draft.kind != .disclaimer,
             let cheer = try? PlaceholderCharacter.clip(
@@ -259,7 +357,7 @@ public final class TodayModel {
         // does the week's count flip up.
         celebrations += 1
         heldWeek = weekBefore
-        let phase = phase
+        let phase = stagePhase
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(Motion.ringFill))
             cast.cheerMe(at: phase)

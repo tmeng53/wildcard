@@ -35,17 +35,18 @@ func sampleToday() -> SquadToday {
         today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false),
         myWeek: MyWeek(
             firstDay: tuesday.weekStart, lastDay: tuesday.weekStart.adding(days: 6),
-            week: WeekCount(trainedDays: 1, plannedDays: 5), lifetimeTrainedDays: 30),
+            week: WeekCount(trainedDays: 1, plannedDays: 5)),
         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22))
 }
 
 func sampleHome(today: SquadToday = sampleToday(), checkIns: [CheckIn] = []) -> Home {
     let plan = try? WeeklyPlan(
         member: myID, weekStart: tuesday.weekStart,
-        days: [.train(nil), .train(.sport(.yoga)), .rest, .train(nil), .train(nil), .train(nil), .rest])
+        days: [.train(nil), .train(.sport("yoga")), .rest, .train(nil), .train(nil), .train(nil), .rest])
     return Home(
         member: myID, timeZone: losAngeles,
-        squad: Squad(id: squadID, name: "周三不练腿", inviteCode: "K7M2QX9P", members: [mate, myID, resting]),
+        squad: Squad(
+            id: squadID, name: "周三不练腿", inviteCode: "K7M2QX9P", members: [mate, myID, resting], captain: myID),
         today: today, plan: plan ?? { fatalError("a seven-day plan") }(), checkIns: checkIns)
 }
 
@@ -123,6 +124,21 @@ actor ScriptedBackend: CheckInBackend {
     func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
         if let failure { throw failure }
         reactionList[checkIn] = []
+    }
+
+    var serverPokes = SquadPokes.none
+    private(set) var pats: [MemberID] = []
+    func set(pokes: SquadPokes) { serverPokes = pokes }
+
+    func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
+        if let failure { throw failure }
+        return serverPokes
+    }
+
+    func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
+        if let failure { throw failure }
+        pats.append(member)
+        serverPokes.sent.insert(member)
     }
 }
 

@@ -7,13 +7,21 @@ import {
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
 import {
+  createMembers,
+  createPostgresProfileStore,
+  MemberId as ProfileMember,
+} from '@wildcard/members';
+import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import {
   createOffSender,
+  createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
   createPush,
   type PushSender,
 } from '@wildcard/push';
+import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
@@ -85,15 +93,32 @@ export function aiConsentOn(db: Database) {
   });
 }
 
+/** Nudges on local Supabase, between squadmates as the squads module keeps them. */
+export function nudgesOn(db: Database) {
+  const members = createMembers({ store: createPostgresProfileStore(db) });
+  return createNudges({
+    store: createPostgresNudgeStore(db),
+    membership: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
+    timeZoneOf: async (member) =>
+      (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
+    clock: () => new Date(),
+  });
+}
+
 /** Push on local Supabase's database, sending nothing (no APNs key in tests). */
 export function pushOn(db: Database, sender: PushSender = createOffSender()) {
   return createPush({
     store: createPostgresDeviceStore(db),
     settings: createPostgresSettingsStore(db),
     daily: createPostgresDailyPushStore(db),
+    dailySettings: createPostgresDailyPushSettings(db),
     sender,
   });
 }
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */
-export const noJobs = { token: undefined, interactions: [], clock: () => new Date() };
+export const noJobs = { isScheduler: undefined, interactions: [], clock: () => new Date() };

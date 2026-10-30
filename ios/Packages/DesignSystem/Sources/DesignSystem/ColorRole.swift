@@ -18,14 +18,9 @@ public enum SceneTheme: String, CaseIterable, Sendable {
                 accent: Palette.trackSignature, subtle: Palette.trackWash, text: Palette.trackText,
                 floor: Palette.trackFloor)
         case .gym:
-            // Graphite is dark, so what sits on it is volt: the primary button's label, the ring,
-            // and the check-in kinds on the gym's dark floor. Volt on a white card is faint, so
-            // with Increase Contrast on the ring turns graphite.
-            SceneColors(
-                accent: Palette.graphite, accentSubtle: Palette.gymWash, onAccent: Palette.volt,
-                accentText: Palette.graphite, floor: Palette.graphite, onFloor: Palette.white, ring: Palette.volt,
-                ringIncreasedContrast: Palette.graphite, kindFill: Palette.gymKind, kindFillOnFloor: Palette.gymKind,
-                kindInk: Palette.volt)
+            .light(
+                accent: Palette.gymSignature, subtle: Palette.gymWash, text: Palette.gymText,
+                floor: Palette.gymFloor)
         case .tennis:
             .light(
                 accent: Palette.tennisSignature, subtle: Palette.tennisWash, text: Palette.tennisText,
@@ -54,8 +49,6 @@ public struct SceneColors: Sendable, Hashable {
     public let onFloor: SRGBColor
     /// A status ring once someone checked in: the scene's brightest color.
     public let ring: SRGBColor
-    /// The ring on a white card when the person turned on Increase Contrast.
-    public let ringIncreasedContrast: SRGBColor
     /// A check-in kind button on white.
     public let kindFill: SRGBColor
     /// A check-in kind button on the scene's floor.
@@ -67,7 +60,7 @@ public struct SceneColors: Sendable, Hashable {
     static func light(accent: SRGBColor, subtle: SRGBColor, text: SRGBColor, floor: SRGBColor) -> SceneColors {
         SceneColors(
             accent: accent, accentSubtle: subtle, onAccent: Palette.white, accentText: text, floor: floor,
-            onFloor: Palette.ink, ring: accent, ringIncreasedContrast: accent, kindFill: subtle,
+            onFloor: Palette.ink, ring: accent, kindFill: subtle,
             kindFillOnFloor: Palette.white, kindInk: text)
     }
 }
@@ -99,8 +92,23 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case fgMuted
     /// Placeholders, denominators and chevrons: large type and decoration only.
     case fgSubtle
+    /// An ink surface on a white page, such as 我's player card.
+    case bgInk
+    /// Text and numbers on `bgInk`.
+    case fgOnInk
+    /// Secondary text on `bgInk`.
+    case fgOnInkMuted
+    /// Dividers on `bgInk`.
+    case borderOnInk
+    /// Text saying something is open, such as a store's 营业中 on the editor's shopping street.
+    case fgPositive
 
-    /// The scene's accent: primary buttons and selection, nothing else.
+    /// The brand's colour: primary buttons and selection on brand screens. Never changes with the scene.
+    case bgBrand
+    /// Labels and icons on `bgBrand`.
+    case fgOnBrand
+
+    /// The scene's accent: primary buttons and selection on scene screens, nothing else.
     case bgAccent
     /// The scene's wash: tags.
     case bgAccentSubtle
@@ -121,9 +129,22 @@ public enum ColorRole: String, CaseIterable, Sendable {
     /// The icon on a check-in kind button.
     case fgKind
 
-    /// The color this role takes in a scene, and with Increase Contrast on (only the ring changes).
-    public func color(in theme: SceneTheme, contrast: ColorContrast = .standard) -> SRGBColor {
-        if self == .ring, contrast == .increased { return theme.colors.ringIncreasedContrast }
+    /// The brand's light gym, the same in every scene: the open screen's page, its floor and
+    /// the floor's tile lines, as on the website.
+    case bgBrandPage
+    case bgBrandFloor
+    case borderBrandFloor
+
+    /// The character's ticket in the editor, the same in every scene: its stub under the tear
+    /// line, the lamp over the character, the sign-up date and the pen by the nickname. The
+    /// ticket itself is `bgBrand`, and its light and lines are `fgOnBrand`.
+    case bgBrandStub
+    case bgBrandLamp
+    case fgBrandStamp
+    case fgBrandPen
+
+    /// The color this role takes in a scene.
+    public func color(in theme: SceneTheme) -> SRGBColor {
         switch source {
         case .fixed(let color): return color
         case .scene(let path): return theme.colors[keyPath: path]
@@ -143,6 +164,13 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgDefault: .fixed(Palette.ink)
         case .fgMuted: .fixed(Palette.inkSecondary)
         case .fgSubtle: .fixed(Palette.inkTertiary)
+        case .bgInk: .fixed(Palette.ink)
+        case .fgOnInk: .fixed(Palette.white)
+        case .fgOnInkMuted: .fixed(Palette.inkTertiary)
+        case .borderOnInk: .fixed(Palette.inkLine)
+        case .fgPositive: .fixed(Palette.positive)
+        case .bgBrand: .fixed(Palette.brand)
+        case .fgOnBrand: .fixed(Palette.onBrand)
         case .bgAccent: .scene(\.accent)
         case .bgAccentSubtle: .scene(\.accentSubtle)
         case .fgOnAccent: .scene(\.onAccent)
@@ -153,12 +181,41 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .bgKind: .scene(\.kindFill)
         case .bgKindOnScene: .scene(\.kindFillOnFloor)
         case .fgKind: .scene(\.kindInk)
+        case .bgBrandPage: .fixed(Palette.brandSky)
+        case .bgBrandFloor: .fixed(Palette.brandFloor)
+        case .borderBrandFloor: .fixed(Palette.brandTile)
+        case .bgBrandStub: .fixed(Palette.brandStub)
+        case .bgBrandLamp: .fixed(Palette.brandLamp)
+        case .fgBrandStamp: .fixed(Palette.brandStamp)
+        case .fgBrandPen: .fixed(Palette.brandPen)
         }
     }
 }
 
-/// Whether the person turned on Increase Contrast (Settings, Accessibility, Display & Text Size).
-public enum ColorContrast: Sendable {
-    case standard
-    case increased
+/// Whose colour a screen's primary button and selection marks wear. Brand screens (opening,
+/// sign-up, 我, the tab bar, writing a post, 请假条, the feed) use `.brand`; the squad's own turf
+/// (home, the check-in burst, the 出赛表 poster, 战报) uses `.scene`. 我's 设置 and 注销账号
+/// pages stay ink and white, so they use `.ink`.
+public enum AccentTone: Sendable {
+    case scene
+    case brand
+    case ink
+
+    /// The solid fill: a primary button, a check badge, a picked border, a switch that is on.
+    public var fill: ColorRole {
+        switch self {
+        case .scene: .bgAccent
+        case .brand: .bgBrand
+        case .ink: .fgDefault
+        }
+    }
+
+    /// Labels and icons on `fill`.
+    public var onFill: ColorRole {
+        switch self {
+        case .scene: .fgOnAccent
+        case .brand: .fgOnBrand
+        case .ink: .bgCanvas
+        }
+    }
 }

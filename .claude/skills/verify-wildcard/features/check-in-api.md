@@ -21,13 +21,14 @@ Ids differ each run; the shape doesn't. Copied from a real run:
 ```text
 server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
-check-in: saved trained <id> (201)
+check-in: saved trained <id> with 40 minutes (201)
+check-in: 601 minutes refused (400 REQUEST_INVALID)
 check-in: retry answered with the saved one (200)
 check-in: different contents under the same id refused (409 CHECK_IN_ID_CONFLICT)
 check-in: mate posted today's disclaimer <id> (201)
 check-in: a second disclaimer today refused (409 DISCLAIMER_ALREADY_POSTED)
 check-in: outsider posting to the squad refused (403 SQUAD_NOT_JOINED)
-check-in: mate sees both in the squad list (2 check-ins)
+check-in: mate sees both in the squad list (2 check-ins), minutes included
 check-in: outsider reading the squad refused (403 SQUAD_NOT_JOINED)
 check-in: signed-out read refused (401)
 check-in: my list holds only my own (<id>)
@@ -40,7 +41,7 @@ A `FAIL:` line (it prints the answer and the server's log), a missing line or a 
 
 Check at the source, with the ids from the log:
 
-- `psql "$DB_URL" -c "select id, member_id, day, kind, payload from public.check_ins where member_id in ('<me>', '<mate>')"`: exactly two rows, the 练了 (payload `{"version": 1, "sport": "custom", "customSport": "飞盘", "caption": "累但爽"}`) and the 请假条; the refused calls left nothing.
+- `psql "$DB_URL" -c "select id, member_id, day, kind, payload from public.check_ins where member_id in ('<me>', '<mate>')"`: exactly two rows, the 练了 (payload `{"version": 1, "sport": "custom", "customSport": "飞盘", "minutes": 40, "caption": "累但爽"}`) and the 请假条; the refused calls left nothing.
 - `select * from public.check_in_squads where check_in_id in ('<id>', '<id>')`: each lists the squad at position 1.
 
 ## Worth probing

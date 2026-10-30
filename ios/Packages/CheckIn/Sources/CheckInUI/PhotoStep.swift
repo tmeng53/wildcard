@@ -16,8 +16,10 @@ struct PhotoStep: View {
 
     var body: some View {
         NavigationStack {
+            // Continuous: the picker is inline with its Add button hidden, so a plain `.ordered`
+            // picker never handed back a selection and 下一步 never showed.
             PhotosPicker(
-                selection: $items, maxSelectionCount: Photos.maxCount, selectionBehavior: .ordered,
+                selection: $items, maxSelectionCount: Photos.maxCount, selectionBehavior: .continuousAndOrdered,
                 matching: .images, preferredItemEncoding: .current
             ) {
                 EmptyView()
@@ -59,7 +61,7 @@ struct PhotoStep: View {
                 }
             }
         }
-        .tint(Color(role: .fgAccent, in: theme))
+        .tint(Color(role: .fgDefault, in: theme))
     }
 
     /// Loads each picked photo and shrinks it off the main actor, in the order picked. A photo

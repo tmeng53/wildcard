@@ -98,14 +98,14 @@ export async function squadToday(
   // A squad has at most 8 members, so one plan read each is fine.
   const zones = await zonesOf(calendarOf, { members: memberIds, viewer });
   const members = await Promise.all(
-    zones.map(async ({ member, zone }) => {
+    zones.map(async ({ member, zone, joinedOn }) => {
       const day = localDayAt(now, zone);
       const week = weekOf(day);
       const plan = await findWeeklyPlan(
         { store: plans },
         { member, weekStart: WeekStart.parse(week.from) },
       );
-      return { member, day, week, plan: plan.days };
+      return { member, day, week, joinedOn, plan: plan.days };
     }),
   );
   const me = members.find(({ member }) => member === viewer);
@@ -122,7 +122,7 @@ export async function squadToday(
     store.totals(viewer),
   ]);
 
-  const rows = members.map(({ member, day, week, plan }) => {
+  const rows = members.map(({ member, day, week, joinedOn, plan }) => {
     const theirs = squadCheckIns.filter((each) => each.member === member);
     const today: SquadMemberToday = {
       member,
@@ -132,7 +132,11 @@ export async function squadToday(
       plannedRest: plan[week.days.indexOf(day)]?.kind === 'rest',
       firstCheckInAt: firstCheckInOn(theirs, day),
     };
-    return { today, trained: trainedDays(theirs, week.days), planned: plannedTrainingDays(plan) };
+    return {
+      today,
+      trained: trainedDays(theirs, week.days),
+      planned: plannedTrainingDays(plan, { weekDays: week.days, joinedOn }),
+    };
   });
   const todays = rows.map(({ today }) => today);
   const resting = ({ plannedRest, training }: SquadMemberToday) =>
@@ -150,7 +154,7 @@ export async function squadToday(
     myWeek: {
       ...me.week,
       trainedDays: trainedDays(mine, me.week.days),
-      plannedDays: plannedTrainingDays(me.plan),
+      plannedDays: plannedTrainingDays(me.plan, { weekDays: me.week.days, joinedOn: me.joinedOn }),
     },
     myLifetimeTrainedDays: myTotals.trainedDays,
     squadWeek: {

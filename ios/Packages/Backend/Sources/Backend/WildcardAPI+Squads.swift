@@ -1,7 +1,7 @@
 import Contracts
 import Foundation
 
-// Making and joining squads, the squad step of sign-up.
+// Making and joining squads, the squad step of sign-up, and pats between squadmates.
 extension WildcardAPI {
     /// Makes a squad under its own id with the member in it. Safe to retry with the same id: the
     /// squad already made answers.
@@ -23,7 +23,9 @@ extension WildcardAPI {
         let wire = try await call {
             try await client.getSquadInvite(path: .init(inviteCode: code.text)).ok.body.json
         }
-        return SquadInvite(name: wire.name, memberCount: wire.memberCount, isFull: wire.full, joined: wire.joined)
+        return SquadInvite(
+            name: wire.name, memberCount: wire.memberCount, isFull: wire.full, joined: wire.joined,
+            looks: wire.looks.map(CharacterLook.init))
     }
 
     /// Joins the squad an invite code belongs to. Safe to repeat: a member already in it gets
@@ -38,6 +40,30 @@ extension WildcardAPI {
         }
         return try read { () throws(ContractsError) in try Squad(wire) }
     }
+
+    // MARK: - 拍一拍
+
+    /// Whom the member patted today in `squad`, and who patted them in the last day.
+    public func pokes(in squad: SquadID) async throws(APIError) -> SquadPokes {
+        let wire = try await call {
+            try await client.listSquadNudges(path: .init(squadId: squad.description), query: .init(kind: .poke))
+                .ok.body.json
+        }
+        return try read { () throws(ContractsError) in try SquadPokes(wire) }
+    }
+
+    /// Pats a squadmate. Once a day each: patting them again the same day changes nothing.
+    public func pat(_ member: MemberID, in squad: SquadID) async throws(APIError) {
+        try await call {
+            switch try await client.nudgeSquadmate(
+                path: .init(squadId: squad.description),
+                body: .json(.init(version: ._1, to: member.description, kind: .poke)))
+            {
+            case .ok, .created: return
+            default: throw APIError.unreadableResponse
+            }
+        }
+    }
 }
 
 /// A squad as its invite code shows it, before joining.
@@ -48,4 +74,6 @@ public struct SquadInvite: Hashable, Sendable {
     public let isFull: Bool
     /// The member is in it already.
     public let joined: Bool
+    /// The members' characters, the earliest to join first; members without one are left out.
+    public let looks: [CharacterLook]
 }

@@ -15,8 +15,8 @@ enum Push {
 /// The app delegate, for what only it receives: the APNs token and taps on notifications.
 final class AppDelegate: NSObject, UIApplicationDelegate {
     /// What a tapped notification does; the scene sets it.
-    var opened: () -> Void = {}
-    private lazy var taps = NotificationTaps { [weak self] in self?.opened() }
+    var opened: (OpenedNotification) -> Void = { _ in }
+    private lazy var taps = NotificationTaps { [weak self] in self?.opened($0) }
 
     func application(
         _ application: UIApplication, didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]?

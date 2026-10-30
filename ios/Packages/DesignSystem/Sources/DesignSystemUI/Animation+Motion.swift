@@ -11,6 +11,13 @@ extension Animation {
         }
         return .spring(response: spring.response, dampingFraction: spring.dampingFraction)
     }
+
+    /// The animation for a timed motion token. It keeps its timing under Reduce Motion: the caller
+    /// leaves out the movement and keeps the fade.
+    public static func wildcard(_ curve: MotionCurve) -> Animation {
+        let points = curve.controlPoints
+        return .timingCurve(points[0], points[1], points[2], points[3], duration: curve.duration)
+    }
 }
 
 /// Shrinks a control while it is held and lets it go a fifth faster, both on `press`.

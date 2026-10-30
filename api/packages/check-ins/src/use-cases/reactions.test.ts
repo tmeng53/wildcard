@@ -9,6 +9,7 @@ import {
   randomInviteCodes,
   type SquadTables,
 } from '@wildcard/squads';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import {
@@ -27,7 +28,7 @@ const muscle = Emoji.parse('💪');
 const laughing = Emoji.parse('😂');
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables & SquadTables>({
+const db = new Kysely<CheckInTables & SquadTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -42,6 +43,7 @@ const membership = createSquads({
 
 let now = new Date('2026-10-18T20:00:00.000Z');
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),

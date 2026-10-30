@@ -63,7 +63,10 @@ export async function squadWeekSummary(
   ]);
   const members = memberIds.map((member, index) => ({
     member,
-    plannedDays: plannedTrainingDays(plansOf[index]?.days ?? []),
+    plannedDays: plannedTrainingDays(plansOf[index]?.days ?? [], {
+      weekDays: week.days,
+      joinedOn: zones[index]?.joinedOn,
+    }),
     checkIns: checkIns
       .filter((each) => each.member === member)
       .toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
