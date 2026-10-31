@@ -1,14 +1,23 @@
 import Contracts
 
-/// One check-in in the feed, with teammates' emoji.
+/// One check-in in the feed, with teammates' emoji and comments.
 public struct FeedPost: Hashable, Sendable, Identifiable {
+    /// How many of the latest comments a card shows under its emoji row.
+    public static let cardComments = 2
+
     public let checkIn: CheckIn
     public internal(set) var reactions: Responses<Emoji>
+    /// From the author and teammates, oldest first.
+    public internal(set) var comments: [Comment]
 
-    public init(checkIn: CheckIn, reactions: Responses<Emoji> = .init()) {
+    public init(checkIn: CheckIn, reactions: Responses<Emoji> = .init(), comments: [Comment] = []) {
         self.checkIn = checkIn
         self.reactions = reactions
+        self.comments = comments
     }
+
+    /// The latest comments the card shows, oldest of them first.
+    public var commentsOnCard: ArraySlice<Comment> { comments.suffix(Self.cardComments) }
 
     public var id: CheckInID { checkIn.id }
     public var author: MemberID { checkIn.member }

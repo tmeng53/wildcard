@@ -8,7 +8,7 @@ import SwiftUI
 /// The 动态 tab: the squad's posts by day, newest first, each a card with the author's character
 /// and the teammates' emoji (the approved feed, version 20, with the approved reaction bar). The app's tab bar floats over it;
 /// the safe area the app gives it already leaves room. Pull to load again; the end loads the
-/// week before.
+/// week before. A card's comments or comment button opens its own page (`PostDetailView`).
 public struct FeedView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -32,6 +32,21 @@ public struct FeedView: View {
     }
 
     public var body: some View {
+        // A post's own page slides in over the feed, which keeps its place underneath.
+        ZStack {
+            feed
+                .allowsHitTesting(model.opened == nil)
+                .accessibilityHidden(model.opened != nil)
+            if let opened = model.opened {
+                PostDetailView(model: model, post: opened) {
+                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { model.opened = nil }
+                }
+                .transition(.move(edge: .trailing))
+            }
+        }
+    }
+
+    private var feed: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Space.m) {
                 Text("动态", bundle: .module)
@@ -60,16 +75,7 @@ public struct FeedView: View {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
             model.focus = nil
         }
-        .overlayPreferenceValue(FeedAnchors.self) { anchors in
-            FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)
-        }
-        .coordinateSpace(.named(Self.space))
-        .background(Color(role: .bgCanvas, in: theme))
-        // A brand screen: buttons and selection wear the brand; only the kind tags keep the scene.
-        .accentTone(.brand)
-        .haptic(.pick, trigger: model.picks)
-        .haptic(.appear, trigger: model.lifts)
-        .haptic(.reaction, trigger: model.arrivals)
+        .feedSurface(model)
         .task { await model.load() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }

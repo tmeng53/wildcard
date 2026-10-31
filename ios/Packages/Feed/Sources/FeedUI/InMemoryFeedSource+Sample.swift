@@ -5,7 +5,7 @@ import Foundation
 
 extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
-    /// two photos and emoji, a 请假条 and a salad; yesterday a swim and my own leg day;
+    /// two photos, emoji and three comments, a 请假条 and a salad; yesterday a swim and my own leg day;
     /// two days ago a tennis serve and a confessed burger. `photos` are the sample photos by
     /// their names in `samplePhotoSizes`; without them the photos' places stay grey.
     public static func sample(
@@ -20,14 +20,16 @@ extension InMemoryFeedSource {
         var posts = [
             write.post(
                 jay, 0, 7, 42, .trained(write.training("run", minutes: 45, ["track", "tennis"], "下雨也跑了，鞋已阵亡")),
-                reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")]),
+                reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")],
+                comments: [(coco, nil, "鞋：我没签这个合同"), (jay, coco, "它会习惯的"), (mia, nil, "下次带我一起淋")]),
             write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
             write.post(
                 doudou, 1, 21, 5, .trained(write.training("swim", minutes: 40, "pool", "夜泳人，泳池是我的")),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
                 viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
-                reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")]),
+                reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
+                comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
             write.post(fish, 2, 18, 10, .trained(write.training("tennis", "tennis", "发球终于过网了"))),
             write.post(
                 kiki, 2, 20, 45, .cheatMeal(write.meal("burger", "坦白：两个汉堡，不后悔")),
@@ -96,7 +98,7 @@ extension InMemoryFeedSource {
 }
 
 /// Writes the sample's posts on days counted back from `today`, at times on the member's clock;
-/// teammates react ten minutes apart after each post.
+/// teammates react, then comment, ten minutes apart after each post.
 private struct SamplePosts {
     let today: LocalDay
     let zone: TimeZone
@@ -118,7 +120,8 @@ private struct SamplePosts {
 
     func post(
         _ author: MemberID, _ daysAgo: Int, _ hour: Int, _ minute: Int, _ entry: CheckIn.Entry,
-        reactions: [(MemberID, String)] = []
+        reactions: [(MemberID, String)] = [],
+        comments: [(MemberID, MemberID?, String)] = []
     ) -> FeedPost {
         let day = today.adding(days: -daysAgo)
         let made = time(on: day, hour, minute)
@@ -130,7 +133,14 @@ private struct SamplePosts {
             reactions: Responses(
                 reactions.enumerated().compactMap { index, pair in
                     (try? Emoji(pair.1)).map { .init(member: pair.0, kind: $0, moment: after(index)) }
-                }))
+                }),
+            comments: comments.enumerated().compactMap { index, comment in
+                (try? CommentText(InMemoryFeedSource.localized(comment.2))).map {
+                    Comment(
+                        id: CommentID(UUID()), member: comment.0, text: $0, replyTo: comment.1,
+                        commentedAt: after(reactions.count + index))
+                }
+            })
     }
 
     private func time(on day: LocalDay, _ hour: Int, _ minute: Int) -> Date {

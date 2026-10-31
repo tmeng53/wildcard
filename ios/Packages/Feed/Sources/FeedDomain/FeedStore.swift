@@ -2,9 +2,11 @@ import Contracts
 import Foundation
 import Observation
 
-/// The 动态 tab's data: the squad's posts as last loaded, with the member's own reactions shown
-/// the moment they tap and sent behind. It never reads the clock itself: the app
-/// passes the member's today and the time.
+/// The 动态 tab's data: the squad's posts as last loaded, with the member's own reactions and
+/// comments shown the moment they tap and sent behind. One post's own page reads the same store,
+/// or one that holds only that post (`init(source:post:...)`), for a page opened from elsewhere.
+/// It never reads the clock or makes ids itself: the app passes the member's today, the time and
+/// new comments' ids.
 ///
 /// Reactions go out one post at a time, newest wish last: tapping 💪 then 😂 quickly ends on 😂
 /// on the server too. When one can't go out, the post goes back to what the server has
@@ -41,6 +43,10 @@ public final class FeedStore {
     /// The member's own posts shown before the server listed them (`show(_:)`), kept across
     /// loads until it does.
     private var ownNotYetListed: [CheckInID: FeedPost] = [:]
+    /// The member's comments shown before the server took them, by post, oldest first.
+    private var pendingComments: [CheckInID: [Comment]] = [:]
+    /// The member's comments hidden while their deletion goes out.
+    private var deleting: Set<CommentID> = []
     /// The days loaded so far, from the earliest.
     private var range: FeedRange?
     /// Weeks in a row that came back empty while going further back.
@@ -49,21 +55,44 @@ public final class FeedStore {
     /// After this many empty weeks in a row going back, the feed stops looking further.
     static let emptyWeeksBeforeTheStart = 4
 
+    /// What the store holds: a squad's feed, or one post.
+    private enum Scope {
+        case squad(SquadID)
+        case post(CheckInID)
+    }
+
     private let source: any FeedSource
-    private let squad: SquadID
+    private let scope: Scope
     private let viewer: MemberID
     private let today: @Sendable () -> LocalDay
     private let now: @Sendable () -> Timestamp
+    private let newCommentID: @Sendable () -> CommentID
 
+    /// A squad's feed.
     public init(
         source: any FeedSource, squad: SquadID, viewer: MemberID, today: @escaping @Sendable () -> LocalDay,
-        now: @escaping @Sendable () -> Timestamp
+        now: @escaping @Sendable () -> Timestamp, newCommentID: @escaping @Sendable () -> CommentID
     ) {
         self.source = source
-        self.squad = squad
+        self.scope = .squad(squad)
         self.viewer = viewer
         self.today = today
         self.now = now
+        self.newCommentID = newCommentID
+    }
+
+    /// One post, for its own page opened from outside the feed (the member's past posts).
+    public init(
+        source: any FeedSource, post: CheckInID, viewer: MemberID, today: @escaping @Sendable () -> LocalDay,
+        now: @escaping @Sendable () -> Timestamp, newCommentID: @escaping @Sendable () -> CommentID
+    ) {
+        self.source = source
+        self.scope = .post(post)
+        self.viewer = viewer
+        self.today = today
+        self.now = now
+        self.newCommentID = newCommentID
+        hasEarlier = false
     }
 
     // MARK: - Reading
@@ -82,9 +111,19 @@ public final class FeedStore {
 
     /// Loads the latest week, in place of what was loaded for those days, and who is who. A
     /// squad that was quiet all week goes back until it finds its last posts, so the feed is
-    /// empty only for a squad that never posted.
+    /// empty only for a squad that never posted. A store of one post loads that post.
     public func load() async {
+        let squad: SquadID
+        switch scope {
+        case .post(let id):
+            await refresh(id)
+            guard let first = loaded[id]?.checkIn.audience.squads.first else { return }
+            squad = first
+        case .squad(let id):
+            squad = id
+        }
         if let characters = try? await source.characters(in: squad) { self.characters = characters }
+        guard case .squad = scope else { return }
         let latest = FeedRange.latest(today: today())
         if await load(latest) {
             range = range.map { FeedRange(first: min($0.first, latest.first), last: latest.last) } ?? latest
@@ -94,9 +133,30 @@ public final class FeedStore {
         }
     }
 
+    /// Loads a post for its own page: a store of one post loads it and who is who; a squad's
+    /// feed loads that post again.
+    public func loadPost(_ id: CheckInID) async {
+        if case .post = scope { await load() } else { await refresh(id) }
+    }
+
+    /// Loads one post again, with its latest reactions and comments.
+    public func refresh(_ id: CheckInID) async {
+        do {
+            loaded[id] = try await source.post(id)
+            ownNotYetListed[id] = nil
+            phase = .current
+        } catch {
+            switch error {
+            case .signedOut: phase = .signedOut
+            case .postGone: loaded[id] = nil
+            default: if phase == .loading { phase = .offline }
+            }
+        }
+    }
+
     /// Loads the week before the earliest loaded, as the member scrolls to the end.
     public func loadEarlier() async {
-        guard hasEarlier, let earlier = range?.earlier else { return }
+        guard case .squad = scope, hasEarlier, let earlier = range?.earlier else { return }
         let before = loaded.count
         guard await load(earlier) else { return }
         range = FeedRange(first: earlier.first, last: range?.last ?? earlier.last)
@@ -106,6 +166,7 @@ public final class FeedStore {
 
     /// True when the server answered.
     private func load(_ days: FeedRange) async -> Bool {
+        guard case .squad(let squad) = scope else { return false }
         do {
             let posts = try await source.posts(in: squad, from: days.first, through: days.last)
             loaded = loaded.filter { !(days.first...days.last).contains($0.value.checkIn.day) }
@@ -169,6 +230,50 @@ public final class FeedStore {
 
     public func dismissFailure() { failure = nil }
 
+    // MARK: - Comments
+
+    /// The member writes a comment under a post, replying to someone or not: shown at once and
+    /// sent. False when it couldn't go out, so the member's words stay in the box to try again;
+    /// `failure` says why.
+    @discardableResult
+    public func comment(_ text: CommentText, replyingTo member: MemberID?, on id: CheckInID) async -> Bool {
+        guard loaded[id] != nil else {
+            failure = .postGone
+            return false
+        }
+        let comment = Comment(id: newCommentID(), member: viewer, text: text, replyTo: member, commentedAt: now())
+        pendingComments[id, default: []].append(comment)
+        defer { pendingComments[id]?.removeAll { $0.id == comment.id } }
+        do {
+            let saved = try await source.comment(text, id: comment.id, replyingTo: member, on: id)
+            if var post = loaded[id], !post.comments.contains(where: { $0.id == saved.id }) {
+                post.comments.append(saved)
+                loaded[id] = post
+            }
+            return true
+        } catch {
+            if error == .postGone { loaded[id] = nil }
+            failure = error
+            return false
+        }
+    }
+
+    /// The member deletes their own comment: gone at once, and back if the server says no.
+    public func deleteComment(_ comment: CommentID, on id: CheckInID) async {
+        deleting.insert(comment)
+        defer { deleting.remove(comment) }
+        do {
+            try await source.deleteComment(comment, on: id)
+            if var post = loaded[id] {
+                post.comments.removeAll { $0.id == comment }
+                loaded[id] = post
+            }
+        } catch {
+            if error == .postGone { loaded[id] = nil }
+            failure = error
+        }
+    }
+
     private func send(_ key: CheckInID) async {
         guard !sending.contains(key) else { return }
         sending.insert(key)
@@ -188,7 +293,9 @@ public final class FeedStore {
     }
 
     private func showing(_ post: FeedPost) -> FeedPost {
-        wishes[post.id].map { $0.applied(to: post, by: viewer) } ?? post
+        var post = wishes[post.id].map { $0.applied(to: post, by: viewer) } ?? post
+        post.comments = post.comments.filter { !deleting.contains($0.id) } + (pendingComments[post.id] ?? [])
+        return post
     }
 }
 

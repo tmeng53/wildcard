@@ -7,9 +7,9 @@ import FeedDomain
 import SwiftUI
 
 /// The emoji row at the bottom of a card: up to four heads, newest first, each wearing that
-/// person's emoji, then +n for the rest; tapping them opens who reacted. At the right, my button:
-/// a smiley that opens the emoji bar, or my emoji, outlined, once I reacted. My own
-/// posts have no button, and no row until someone reacts.
+/// person's emoji, then +n for the rest; tapping them opens who reacted. At the right, the comment
+/// button, then my button: a smiley that opens the emoji bar, or my emoji, outlined, once I
+/// reacted. My own posts have the comment button only.
 struct ReactionRow: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -28,18 +28,42 @@ struct ReactionRow: View {
 
     var body: some View {
         let reactions = post.reactions
-        if canRespond || !reactions.isEmpty {
-            HStack(spacing: Space.xs) {
-                if !reactions.isEmpty {
-                    summary(reactions, open: model.listing == post.id)
-                }
-                Spacer(minLength: 0)
-                if canRespond {
-                    myButton(reactions.kind(of: model.viewer), open: model.picking == post.id)
+        HStack(spacing: Space.xs) {
+            if !reactions.isEmpty {
+                summary(reactions, open: model.listing == post.id)
+            }
+            Spacer(minLength: 0)
+            commentButton
+            if canRespond {
+                myButton(reactions.kind(of: model.viewer), open: model.picking == post.id)
+            }
+        }
+        .frame(height: Sizing.minimumTapTarget)
+    }
+
+    /// Opens the post's own page to comment; anyone who sees the post comments, its author too.
+    /// On the page itself it starts a comment to the post rather than to someone.
+    private var commentButton: some View {
+        Button {
+            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                if model.opened == post.id {
+                    model.replyingTo = nil
+                } else {
+                    model.openPage(post.id)
                 }
             }
-            .frame(height: Sizing.minimumTapTarget)
+        } label: {
+            Image(systemName: "bubble")
+                .font(.system(size: Self.buttonEmojiSize, weight: .regular))
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .frame(width: Self.buttonSize.width, height: Self.buttonSize.height)
+                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                .frame(minHeight: Sizing.minimumTapTarget)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel(Text("写评论", bundle: .module))
+        .accessibilityIdentifier("feed.comment")
     }
 
     // `open` is read in the body, so opening a panel redraws the row: SwiftUI calls an anchor's

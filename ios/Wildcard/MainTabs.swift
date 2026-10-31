@@ -117,12 +117,14 @@ struct MainTabs: View {
             look: character.outfit, persona: character.persona, nickname: character.nickname)
     }
 
-    /// A tab's full-screen step (writing a check-in, the 注销账号 page) covers the bar.
+    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) covers the
+    /// bar.
     private var showsTabBar: Bool {
         switch selection {
         case .today: today.showsTabBar
         case .profile: !profile.isDeletionOpen
-        case .feed, .schedule: true
+        case .feed: feed.opened == nil
+        case .schedule: true
         }
     }
 

@@ -54,6 +54,11 @@ func workoutMinutesRangeIsTheAPIs(schema: String) throws {
     #expect(minutes?.maximum == WorkoutMinutes.range.upperBound)
 }
 
+@Test(arguments: ["CommentDraft", "CommentEntry"])
+func commentLimitIsTheAPIs(schema: String) throws {
+    #expect(try property("text", of: schema)?.maxCharacters == CommentText.maxLength)
+}
+
 @Test func disclaimerLimitIsTheAPIs() throws {
     #expect(try property("text", of: "Disclaimer")?.maxCharacters == Disclaimer.maxLength)
 }

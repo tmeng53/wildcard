@@ -1,6 +1,36 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "%@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@  %3$@"
+          }
+        }
+      }
+    },
+    "%@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@%2$@"
+          }
+        }
+      }
+    },
     "%@回应了你：%@" : {
       "localizations" : {
         "en" : {
@@ -31,12 +61,32 @@
         }
       }
     },
+    "下次带我一起淋" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take me along for the next rain run"
+          }
+        }
+      }
+    },
     "下雨也跑了，鞋已阵亡" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ran in the rain. RIP, shoes"
+          }
+        }
+      }
+    },
+    "不回复了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel reply"
           }
         }
       }
@@ -81,6 +131,16 @@
         }
       }
     },
+    "全屏看" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens full screen"
+          }
+        }
+      }
+    },
     "全部" : {
       "localizations" : {
         "en" : {
@@ -97,6 +157,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All %lld"
+          }
+        }
+      }
+    },
+    "全部 %lld 条评论" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All %lld comments"
+          }
+        }
+      }
+    },
+    "写评论" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment"
+          }
+        }
+      }
+    },
+    "分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min"
+          }
+        }
+      }
+    },
+    "删除" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
           }
         }
       }
@@ -127,6 +227,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "My serve finally cleared the net"
+          }
+        }
+      }
+    },
+    "发送" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
           }
         }
       }
@@ -201,6 +311,46 @@
         }
       }
     },
+    "回复" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reply"
+          }
+        }
+      }
+    },
+    "回复 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↪ %@"
+          }
+        }
+      }
+    },
+    "回复 %@…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reply to %@…"
+          }
+        }
+      }
+    },
+    "回复 %@：" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↪ %@: "
+          }
+        }
+      }
+    },
     "回应" : {
       "localizations" : {
         "en" : {
@@ -241,12 +391,32 @@
         }
       }
     },
+    "复制" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        }
+      }
+    },
     "夜泳人，泳池是我的" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Night swim. The pool is mine"
+          }
+        }
+      }
+    },
+    "它会习惯的" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They'll get used to it"
           }
         }
       }
@@ -267,6 +437,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "My reaction: %@"
+          }
+        }
+      }
+    },
+    "扶手：今天也是被需要的一天" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handrail: needed again today"
           }
         }
       }
@@ -311,6 +491,16 @@
         }
       }
     },
+    "看全部评论" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See all comments"
+          }
+        }
+      }
+    },
     "看谁回应了" : {
       "localizations" : {
         "en" : {
@@ -351,6 +541,26 @@
         }
       }
     },
+    "给%@说点什么…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something to %@…"
+          }
+        }
+      }
+    },
+    "网络开小差了，没发出去" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't send. Check your connection."
+          }
+        }
+      }
+    },
     "腿说今天它请假，我尊重它的决定" : {
       "localizations" : {
         "en" : {
@@ -361,12 +571,72 @@
         }
       }
     },
+    "评论 %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comments %lld"
+          }
+        }
+      }
+    },
+    "说一句给%@打打气" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something to cheer %@ on"
+          }
+        }
+      }
+    },
+    "说点什么…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something…"
+          }
+        }
+      }
+    },
     "请假条" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Day-off note"
+          }
+        }
+      }
+    },
+    "返回" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        }
+      }
+    },
+    "还没有人说话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No one has said anything yet"
+          }
+        }
+      }
+    },
+    "这条动态不见了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This post is gone"
           }
         }
       }
@@ -391,22 +661,12 @@
         }
       }
     },
-    "分钟" : {
+    "鞋：我没签这个合同" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "min"
-          }
-        }
-      }
-    },
-    "全屏看" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens full screen"
+            "value" : "Shoes: I never signed up for this"
           }
         }
       }
