@@ -4558,7 +4558,7 @@
       "delete": {
         "operationId": "deleteComment",
         "summary": "Delete your comment",
-        "description": "It is gone for everyone. Safe to repeat.",
+        "description": "It is gone for everyone, and works even after you left the squad. Safe to repeat.",
         "security": [
           {
             "bearer": []
