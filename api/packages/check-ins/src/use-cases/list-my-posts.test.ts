@@ -16,11 +16,14 @@ import {
   createPostgresCheckInStore,
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
+import { createPostgresCommentStore } from '../adapters/postgres-comment-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
+import { CommentId } from '../domain/comment.js';
 import { decodeCursor, encodeCursor } from '../domain/post-cursor.js';
 import { Emoji } from '../domain/reaction.js';
+import { CommentText } from '../domain/text.js';
 import { createCheckIns } from './check-ins.js';
 
 const heart = Emoji.parse('❤️');
@@ -45,6 +48,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos: { exists: () => Promise.resolve(true) },
   calendarOf: () => Promise.resolve(undefined),
@@ -162,7 +166,7 @@ describe('a member’s history (历史动态)', () => {
     expect(page.next).toBeUndefined();
   });
 
-  it('keeps posts to a squad they left, without that squad’s reactions', async () => {
+  it('keeps posts to a squad they left, without that squad’s reactions or comments', async () => {
     const [me, friend, stranger] = [await newMember(), await newMember(), await newMember()];
     const [left, stayed] = [await newSquad(me, friend), await newSquad(me, stranger)];
     const toLeft = await post(me, { at: '2026-10-16T08:00:00.000Z', audience: [left] });
@@ -170,6 +174,16 @@ describe('a member’s history (历史动态)', () => {
     await checkIns.react({ checkIn: toLeft, member: friend, emoji: heart });
     await checkIns.react({ checkIn: toBoth, member: friend, emoji: heart });
     await checkIns.react({ checkIn: toBoth, member: stranger, emoji: muscle });
+    const say = (member: MemberId, words: string) =>
+      checkIns.comment({
+        checkIn: toBoth,
+        id: CommentId.parse(randomUUID()),
+        member,
+        text: CommentText.parse(words),
+      });
+    await say(friend, '我在左边');
+    await say(stranger, '加油');
+    await say(me, '谢谢');
     await leave(left, me);
 
     const page = await checkIns.listMyPosts({ member: me, limit: 30 });
@@ -182,6 +196,12 @@ describe('a member’s history (历史动态)', () => {
       { id: toBoth, from: [stranger] },
       { id: toLeft, from: [] },
     ]);
+    // Their own comment, and those of the squad they still share; never the one they left.
+    expect(page.posts[0]?.comments.map(({ member, text }) => ({ member, text }))).toStrictEqual([
+      { member: stranger, text: '加油' },
+      { member: me, text: '谢谢' },
+    ]);
+    expect(page.posts[1]?.comments).toStrictEqual([]);
     expect(page.counts).toStrictEqual({ posts: 2, reactions: 1 });
   });
 

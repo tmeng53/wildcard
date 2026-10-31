@@ -17,7 +17,7 @@ extension WildcardAPI {
     /// out under the next account signed in on the device.
     public init(
         url: URL, account: AccountSession, member: MemberID? = nil, language: LanguageTag? = nil,
-        http: URLSession = .shared
+        http: URLSession = .wildcard
     ) {
         self.init(
             url: url,

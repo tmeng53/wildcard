@@ -32,8 +32,9 @@ export interface GiveAwardsInput {
 
 /**
  * A squad's awards for the week: the ones saved already, or new ones the model writes for every
- * member who checked in and agreed to AI use, saved once. A squad where none of them did gets
- * none, without asking the model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
+ * member who checked in and agreed to AI use, saved once, read with the comments on their posts
+ * from members who agreed too. A squad where none of them did gets none, without asking the
+ * model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
  * the failed try and why.
  */
 export async function giveAwards(
@@ -50,10 +51,23 @@ export async function giveAwards(
   if (saved?.status === 'given') return saved.awards;
 
   const checkedIn = members.filter(({ checkIns }) => checkIns.length > 0);
-  const agreed = new Set(
-    checkedIn.length === 0 ? [] : await deps.aiConsented(checkedIn.map(({ member }) => member)),
-  );
-  const winners = checkedIn.filter(({ member }) => agreed.has(member));
+  // Whose words may go to the model: those who checked in, and whoever commented on their posts.
+  const writers = new Set(checkedIn.map(({ member }) => member));
+  for (const { checkIns } of checkedIn) {
+    for (const { comments = [] } of checkIns)
+      for (const { member } of comments) writers.add(member);
+  }
+  const agreed = new Set(writers.size === 0 ? [] : await deps.aiConsented([...writers]));
+  const winners = checkedIn
+    .filter(({ member }) => agreed.has(member))
+    .map((week) => ({
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.comments === undefined
+          ? each
+          : { ...each, comments: each.comments.filter(({ member }) => agreed.has(member)) },
+      ),
+    }));
   let titles: Titles = new Map<MemberId, Title[]>();
   if (winners.length > 0) {
     try {

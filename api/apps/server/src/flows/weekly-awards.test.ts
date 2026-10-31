@@ -7,6 +7,7 @@ import {
   SquadId as CheckInSquad,
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -68,11 +69,13 @@ const squads = createSquads({
 const aiConsent = aiConsentOn(db);
 const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
+const comments = createPostgresCommentStore(db);
 const checkIns = createCheckIns({
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: checkInStore,
   membership: squads,
   reactions,
+  comments,
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),

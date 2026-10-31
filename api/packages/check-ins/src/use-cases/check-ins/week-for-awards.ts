@@ -1,8 +1,9 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
+import type { Comment } from '../../domain/comment.js';
 import { weekOf } from '../../domain/days.js';
 import type { Reaction } from '../../domain/reaction.js';
 import type { WeekStart } from '../../domain/weekly-plan.js';
-import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
+import type { CheckInStore, CommentStore, ReactionStore, SquadMembership } from '../../ports.js';
 
 /** A squad's week as it stood at a moment, for the week's awards. */
 export interface SquadWeekCheckIns {
@@ -13,6 +14,11 @@ export interface SquadWeekCheckIns {
   }[];
   /** Reactions on those check-ins from members of the squad now; one without any is left out. */
   readonly reactions: ReadonlyMap<CheckInId, readonly Reaction[]>;
+  /**
+   * Comments on those check-ins written before the awards by members of the squad now, oldest
+   * first; one without any is left out.
+   */
+  readonly comments: ReadonlyMap<CheckInId, readonly Comment[]>;
 }
 
 /** The squads that got a check-in for a day of the week made before `before`. */
@@ -34,6 +40,7 @@ export async function squadWeekCheckIns(
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly reactions: ReactionStore;
+    readonly comments: CommentStore;
   },
   {
     squad,
@@ -47,11 +54,22 @@ export async function squadWeekCheckIns(
     .filter(({ createdAt }) => createdAt < before)
     .toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const inSquad = new Set(memberIds);
-  const all = await deps.reactions.listForAll(checkIns.map(({ id }) => id));
+  const ids = checkIns.map(({ id }) => id);
+  const [allReactions, allComments] = await Promise.all([
+    deps.reactions.listForAll(ids),
+    deps.comments.listForAll(ids),
+  ]);
   const reactions = new Map<CheckInId, Reaction[]>();
-  for (const [checkIn, each] of all) {
+  for (const [checkIn, each] of allReactions) {
     const fromSquad = each.filter(({ member }) => inSquad.has(member));
     if (fromSquad.length > 0) reactions.set(checkIn, fromSquad);
+  }
+  const comments = new Map<CheckInId, Comment[]>();
+  for (const [checkIn, each] of allComments) {
+    const fromSquad = each.filter(
+      ({ member, commentedAt }) => inSquad.has(member) && commentedAt < before,
+    );
+    if (fromSquad.length > 0) comments.set(checkIn, fromSquad);
   }
   return {
     members: memberIds.map((member) => ({
@@ -59,5 +77,6 @@ export async function squadWeekCheckIns(
       checkIns: checkIns.filter((each) => each.member === member),
     })),
     reactions,
+    comments,
   };
 }

@@ -25,6 +25,7 @@ import { bodyVersion } from '../body-version.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { CommentEntry, wireComment } from './comments.js';
 import { ReactionEntry, wireReaction } from './reactions.js';
 
 const checkInFields = {
@@ -96,12 +97,16 @@ const CheckInList = z
   .openapi('CheckInList');
 
 /** A check-in with what teammates left on it. */
-const SquadPost = z
-  .strictObject({
-    checkIn: CheckIn,
-    reactions: z.array(ReactionEntry).meta({ description: 'Teammates’ emoji, oldest first.' }),
-  })
-  .openapi('SquadPost');
+const postFields = {
+  checkIn: CheckIn,
+  reactions: z.array(ReactionEntry).meta({ description: 'Teammates’ emoji, oldest first.' }),
+  comments: z.array(CommentEntry).meta({
+    description:
+      'Comments from the author and the teammates the viewer shares a squad with, ' +
+      'oldest first. Builds from before comments read the feed without it.',
+  }),
+};
+const SquadPost = z.strictObject(postFields).openapi('SquadPost');
 
 /** A squad's check-ins, each with what teammates left on it. */
 const SquadPostList = z
@@ -115,7 +120,8 @@ const MyPostPage = z
     posts: z.array(SquadPost).meta({
       description:
         'Newest day first, then newest made. Each shows its whole audience, and the reactions ' +
-        'of members of the squads it went to that the member still shares with them.',
+        'and comments of the member and of members of the squads it went to that the member ' +
+        'still shares with them.',
     }),
     next: z
       .string()
@@ -159,6 +165,9 @@ const MyPostQuery = z.strictObject({
       description: `Check-ins on the page: 1 to ${String(MAX_PAGE)}, ${String(DEFAULT_PAGE)} when left out.`,
     }),
 });
+
+/** One check-in with what teammates left on it: a post's own page. */
+const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi('Post');
 
 /**
  * Installed builds from before the replies were removed (#180) still require `replies` on each
@@ -243,10 +252,10 @@ const signedInFailures = {
 };
 
 /**
- * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` (the
- * squad's feed, with reactions) and `GET /me/check-ins` read them back for a range of
- * days, and `GET /me/check-in-totals` counts
- * all of the member's own.
+ * Daily check-ins: `PUT /check-ins/{id}` saves one and `GET` the same path reads it as a post
+ * (its own page), `GET /squads/{squadId}/check-ins` (the squad's feed, with reactions and
+ * comments) and `GET /me/check-ins` read them back for a range of days, and
+ * `GET /me/check-in-totals` counts all of the member's own.
  */
 export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
@@ -295,10 +304,10 @@ export function checkIns(deps: {
     method: 'get',
     path: '/squads/{squadId}/check-ins',
     operationId: 'listSquadCheckIns',
-    summary: 'A squad’s check-ins for a range of days, with their reactions',
+    summary: 'A squad’s check-ins for a range of days, with their reactions and comments',
     description:
       'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
-      'each with the reactions of the teammates the viewer shares a squad with. ' +
+      'each with the reactions and comments of the teammates the viewer shares a squad with. ' +
       'Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -310,6 +319,25 @@ export function checkIns(deps: {
       },
       400: problem('Not a valid range of days (at most 31)'),
       403: problem('The member isn’t in this squad'),
+      ...signedInFailures,
+    },
+  });
+
+  const findPost = createRoute({
+    method: 'get',
+    path: '/check-ins/{id}',
+    operationId: 'getPost',
+    summary: 'One check-in, with its reactions and comments',
+    description:
+      'A post’s own page, as the feed shows it: for its author, even from a squad they left, ' +
+      'or a teammate who shares a squad it went to.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ id: CheckInId }) },
+    responses: {
+      200: { description: 'The post', content: { 'application/json': { schema: Post } } },
+      400: problem('Not a check-in id'),
+      404: problem('No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)'),
       ...signedInFailures,
     },
   });
@@ -394,11 +422,28 @@ export function checkIns(deps: {
       return c.json(
         {
           version: 1 as const,
-          posts: posts.map(({ checkIn, reactions }) => ({
+          posts: posts.map(({ checkIn, reactions, comments }) => ({
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
+            comments: comments.map(wireComment),
             ...installedBuildsReplies,
           })),
+        },
+        200,
+      );
+    })
+    .openapi(findPost, async (c) => {
+      const { checkIn, reactions, comments } = await deps.checkIns.post({
+        id: c.req.valid('param').id,
+        viewer: MemberId.parse(c.var.caller.userId),
+      });
+      const urls = await viewUrls(deps.photos, [checkIn]);
+      return c.json(
+        {
+          version: 1 as const,
+          checkIn: wire(checkIn, urls),
+          reactions: reactions.map(wireReaction),
+          comments: comments.map(wireComment),
         },
         200,
       );
@@ -429,9 +474,10 @@ export function checkIns(deps: {
       return c.json(
         {
           version: 1 as const,
-          posts: page.posts.map(({ checkIn, reactions }) => ({
+          posts: page.posts.map(({ checkIn, reactions, comments }) => ({
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
+            comments: comments.map(wireComment),
           })),
           ...(page.next === undefined ? {} : { next: encodeCursor(page.next) }),
           ...(page.counts === undefined ? {} : { counts: page.counts }),

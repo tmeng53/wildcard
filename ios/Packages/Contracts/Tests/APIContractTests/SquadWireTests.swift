@@ -86,7 +86,8 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     let wire = try decode(
         Components.Schemas.SquadPostList.self,
         #"{"version":1,"posts":[{"checkIn":\#(checkIn),"#
-            + #""reactions":[{"member":"\#(mate)","emoji":"🥹","reactedAt":"2026-10-19T15:00:00.000Z"}]}]}"#)
+            + #""reactions":[{"member":"\#(mate)","emoji":"🥹","reactedAt":"2026-10-19T15:00:00.000Z"}],"#
+            + #""comments":[]}]}"#)
     let post = try #require(wire.posts.first)
     #expect(try CheckIn(post.checkIn).member == MemberID(try #require(UUID(uuidString: myID))))
     #expect(

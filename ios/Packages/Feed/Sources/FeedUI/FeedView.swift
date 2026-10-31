@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -65,6 +66,12 @@ public struct FeedView: View {
         }
         .coordinateSpace(.named(Self.space))
         .background(Color(role: .bgCanvas, in: theme))
+        // Opened before any post was read: the character jogs in place until the list arrives.
+        .loadingCover(model.store.phase == .loading && model.store.sections.isEmpty) {
+            LoadingCharacter()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(role: .bgCanvas, in: theme))
+        }
         // A brand screen: buttons and selection wear the brand; only the kind tags keep the scene.
         .accentTone(.brand)
         .haptic(.pick, trigger: model.picks)
@@ -97,9 +104,15 @@ public struct FeedView: View {
                 }
             }
             if model.store.hasEarlier {
-                Color.clear
-                    .frame(height: Space.xxl)
-                    .task(id: sections.last?.id) { await model.store.loadEarlier() }
+                // Shown, it reads the week before; the dots say so once the wait lasts, and go
+                // when it ends, answered or not.
+                ZStack {
+                    if model.store.isLoadingEarlier {
+                        LoadingDots().foregroundStyle(Color(role: .fgDefault, in: theme))
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: Space.xxl)
+                .task(id: sections.last?.id) { await model.store.loadEarlier() }
             }
         }
     }

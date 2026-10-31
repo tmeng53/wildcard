@@ -1,7 +1,7 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
 import { cursorAfter, type CheckInKind, type PostCursor } from '../../domain/post-cursor.js';
 import { sharedSquads } from '../../domain/reaction.js';
-import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
+import type { CheckInStore, CommentStore, ReactionStore, SquadMembership } from '../../ports.js';
 import type { SquadPost } from './list-squad-check-ins.js';
 
 export interface ListMyPostsInput {
@@ -26,18 +26,21 @@ export interface MyPostsPage {
 
 /**
  * A member's own check-ins, wherever they went, newest first, a page at a time, each with the
- * reactions they see on it: as everywhere, only those from members of the squads they share now
- * among the ones it went to, so a squad they left takes its teammates' reactions with it.
+ * reactions and comments they see on it: as everywhere, their own and those from members of the
+ * squads they share now among the ones it went to, so a squad they left takes its teammates'
+ * responses with it.
  */
 export async function listMyPosts(
   {
     store,
     membership,
     reactions,
+    comments,
   }: {
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly reactions: ReactionStore;
+    readonly comments: CommentStore;
   },
   { member, kind, after, limit }: ListMyPostsInput,
 ): Promise<MyPostsPage> {
@@ -56,16 +59,24 @@ export async function listMyPosts(
   );
   // The member is the author, so they see each check-in through the squads it went to that they're in.
   const visible = (audience: readonly SquadId[]) => (from: MemberId) =>
+    from === member ||
     sharedSquads({ audience }, { viewerSquads: squads, authorSquads: squads }).some(
       (squad) => membersOf.get(squad)?.has(from) === true,
     );
-  const reactionsOf = await reactions.listForAll(page.map(({ id }) => id));
-  const posts = page.map((checkIn) => ({
-    checkIn,
-    reactions: (reactionsOf.get(checkIn.id) ?? []).filter(({ member: from }) =>
-      visible(checkIn.audience)(from),
-    ),
-  }));
+  const ids = page.map(({ id }) => id);
+  const [reactionsOf, commentsOf] = await Promise.all([
+    reactions.listForAll(ids),
+    comments.listForAll(ids),
+  ]);
+  const posts = page.map((checkIn) => {
+    const seen = ({ member: from }: { readonly member: MemberId }) =>
+      visible(checkIn.audience)(from);
+    return {
+      checkIn,
+      reactions: (reactionsOf.get(checkIn.id) ?? []).filter(seen),
+      comments: (commentsOf.get(checkIn.id) ?? []).filter(seen),
+    };
+  });
   const last = page.at(-1);
   const next = checkIns.length > limit && last !== undefined ? cursorAfter(last) : undefined;
   if (after !== undefined) return next === undefined ? { posts } : { posts, next };

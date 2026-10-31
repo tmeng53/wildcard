@@ -57,6 +57,7 @@ public struct MeView: View {
                     .transition(.move(edge: .trailing))
             } else {
                 content
+                    .loadingCover(model.load == .loading) { MeLoading() }
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.isDeletionOpen)
@@ -67,7 +68,7 @@ public struct MeView: View {
     @ViewBuilder private var content: some View {
         switch model.load {
         case .loading:
-            MeLoading()
+            Color.clear
         case .failed:
             MeFailed { Task { await model.reload() } }
         case .loaded(let overview):
