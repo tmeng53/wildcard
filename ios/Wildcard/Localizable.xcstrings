@@ -216,6 +216,12 @@
             "state": "translated",
             "value": "Loading"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "載入中"
+          }
         }
       }
     }

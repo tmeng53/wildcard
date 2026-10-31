@@ -600,6 +600,12 @@
             "state": "translated",
             "value": "Loading"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "載入中"
+          }
         }
       }
     },
@@ -1969,6 +1975,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Waiting: three hopping dots; a whole page jogs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待：三拍，整頁是小人原地跑"
           }
         }
       }
