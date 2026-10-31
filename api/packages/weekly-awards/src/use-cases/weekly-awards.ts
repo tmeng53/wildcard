@@ -7,7 +7,13 @@ import type {
   TitlesWon,
 } from '../domain/awards.js';
 import type { WeekStart } from '../domain/schedule.js';
-import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../ports.js';
+import type {
+  AiConsented,
+  AwardSettingsStore,
+  AwardsStore,
+  LanguageModel,
+  MemesInUse,
+} from '../ports.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
 
 /** Each squad's weekly awards (本周颁奖). */
@@ -45,6 +51,7 @@ export function createWeeklyAwards(deps: {
   readonly settings: AwardSettingsStore;
   readonly store: AwardsStore;
   readonly aiConsented: AiConsented;
+  readonly memes: MemesInUse;
 }): WeeklyAwards {
   return {
     give: (input) => giveAwards(deps, input),

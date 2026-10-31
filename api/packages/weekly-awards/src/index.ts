@@ -40,6 +40,13 @@ export {
   AwardsWriterUnavailableError,
   WeekStoryNotReadyError,
 } from './errors.js';
-export type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from './ports.js';
+export type { PromptMeme } from './domain/prompt.js';
+export type {
+  AiConsented,
+  AwardSettingsStore,
+  AwardsStore,
+  LanguageModel,
+  MemesInUse,
+} from './ports.js';
 export { createAwardSettings, type AwardSettingsAdmin } from './use-cases/award-settings.js';
 export { createWeeklyAwards, type WeeklyAwards } from './use-cases/weekly-awards.js';

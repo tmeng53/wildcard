@@ -6,9 +6,12 @@ import {
   CheckInInTheFutureError,
   CheckInNotFoundError,
   CheckInTooOldError,
+  CommentIdConflictError,
   DisclaimerAlreadyPostedError,
+  NotYourCommentError,
   OwnCheckInReactionError,
   PlanDayStartedError,
+  ReplyToNotInSquadError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
@@ -34,6 +37,9 @@ describe('check-in errors', () => {
         new CheckInNotFoundError('c1'),
         new OwnCheckInReactionError(),
         new WeekNotStartedError('2026-10-26'),
+        new CommentIdConflictError('k1'),
+        new ReplyToNotInSquadError(),
+        new NotYourCommentError(),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['CheckInIdConflictError', 'CHECK_IN_ID_CONFLICT', 'ALREADY_EXISTS'],
@@ -49,6 +55,9 @@ describe('check-in errors', () => {
       ['CheckInNotFoundError', 'CHECK_IN_NOT_FOUND', 'NOT_FOUND'],
       ['OwnCheckInReactionError', 'OWN_CHECK_IN_REACTION', 'FAILED_PRECONDITION'],
       ['WeekNotStartedError', 'WEEK_NOT_STARTED', 'FAILED_PRECONDITION'],
+      ['CommentIdConflictError', 'COMMENT_ID_CONFLICT', 'ALREADY_EXISTS'],
+      ['ReplyToNotInSquadError', 'REPLY_TO_NOT_IN_SQUAD', 'INVALID_ARGUMENT'],
+      ['NotYourCommentError', 'NOT_YOUR_COMMENT', 'PERMISSION_DENIED'],
     ]);
   });
 });
