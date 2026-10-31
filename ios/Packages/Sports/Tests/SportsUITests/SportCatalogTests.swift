@@ -10,9 +10,10 @@ struct SportCatalogTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("Sources/SportsUI/Resources/Localizable.xcstrings")
 
-    @Test func aSportTheListDoesNotHaveYetHasAChineseAndEnglishName() throws {
+    @Test func aSportTheListDoesNotHaveYetHasANameInEveryLanguage() throws {
         #expect(try Self.value(for: "sport.unknown", in: "zh-Hans") == "运动")
         #expect(try Self.value(for: "sport.unknown", in: "en") == "Workout")
+        #expect(try Self.value(for: "sport.unknown", in: "zh-Hant") == "運動")
     }
 
     /// SwiftLint's banned-terms rule can't read the catalog, so this covers its copy.

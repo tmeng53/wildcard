@@ -27,6 +27,7 @@ import {
 } from '@wildcard/weekly-awards';
 
 import type { Log } from '../log.js';
+import { pushAlert } from '../push-copy.js';
 
 // The weekly awards across modules: the week's check-ins from check-ins, members' clocks from
 // members, the awards from weekly-awards, the winners' push from push, and the admins a nudge
@@ -63,7 +64,7 @@ export interface WeeklyAwardsRun {
  */
 export function awardsReadyNotification(squad: SquadId, week: WeekStart): PushNotification {
   return {
-    alert: { key: 'push.weeklyAwards.ready' },
+    alert: pushAlert('push.weeklyAwards.ready', []),
     category: 'weeklyAwards',
     thread: 'weekly-awards',
     collapseId: `weekly-awards-${week}`,
@@ -87,10 +88,11 @@ export function awardsStuckNotification({
   readonly failures: Failures;
 }): PushNotification {
   return {
-    alert: {
-      key: 'push.weeklyAwards.stuck',
-      args: [squad.name, String(failures.count), failures.lastError ?? '-'],
-    },
+    alert: pushAlert('push.weeklyAwards.stuck', [
+      squad.name,
+      String(failures.count),
+      failures.lastError ?? '-',
+    ]),
     category: 'weeklyAwardsStuck',
     thread: 'weekly-awards-stuck',
     collapseId: `weekly-awards-stuck-${squad.id}-${week}`,
