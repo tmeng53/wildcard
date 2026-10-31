@@ -28,7 +28,7 @@ struct PosterLane: View {
     private let weekdayWidth: Double = 30
 
     private var isHeld: Bool { lane.look == .held }
-    private var isFaded: Bool { lane.plan == .rest && !isHeld }
+    private var isFaded: Bool { lane.shown == .rest && !isHeld }
     private var ink: Color { Color(role: .bgCanvas, in: theme) }
     private var shade: Color { Color(role: .fgDefault, in: theme) }
 
@@ -78,7 +78,7 @@ struct PosterLane: View {
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .frame(width: weekdayWidth, alignment: .leading)
-            ScheduleLabels.plan(lane.plan)
+            ScheduleLabels.plan(lane.shown)
                 .typeStyle(TypeRamp.headline)
                 .lineLimit(1)
                 .opacity(isFaded ? restOpacity : 1)
@@ -129,7 +129,7 @@ struct PosterLane: View {
             case .disclaimer: Text("，请假", bundle: .module)
             case .none: Text(verbatim: "")
             }
-        return Text("\(day) \(ScheduleLabels.plan(lane.plan))\(status)", bundle: .module)
+        return Text("\(day) \(ScheduleLabels.plan(lane.shown))\(status)", bundle: .module)
     }
 }
 
