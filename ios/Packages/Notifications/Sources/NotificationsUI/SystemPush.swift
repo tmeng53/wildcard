@@ -37,24 +37,44 @@ public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate,
         self.opened = opened
     }
 
-    // Both answers run on the main actor. iOS calls these through Objective-C completion handlers,
-    // and an async method off the main actor calls that handler from a background thread, which
-    // UIKit refuses (a tap on a notification crashed TestFlight build 82.1 this way).
-    @MainActor
+    // The completion-handler forms, not the async ones: iOS calls these through Objective-C, and
+    // the async forms finish on a background thread, which UIKit refuses (a tap on a notification
+    // crashed TestFlight build 82.1 this way). The parameters aren't Sendable, so only plain values
+    // cross to the main actor.
     public func userNotificationCenter(
-        _ center: UNUserNotificationCenter, willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .list, .sound])
     }
 
-    @MainActor
     public func userNotificationCenter(
-        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
-    ) async {
-        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else {
+            completionHandler()
+            return
+        }
         let payload = response.notification.request.content
         let event = (payload.userInfo["event"] as? [String: Any] ?? [:]).compactMapValues { $0 as? String }
-        await opened(OpenedNotification(category: payload.categoryIdentifier, event: event))
+        let tapped = OpenedNotification(category: payload.categoryIdentifier, event: event)
+        let done = MainThreadCompletion(completionHandler)
+        Task { @MainActor [opened] in
+            opened(tapped)
+            done.call()
+        }
+    }
+}
+
+// iOS's completion handler, carried to the main actor and called there once. @unchecked Sendable:
+// it is only ever called from the main actor, once, after the delegate method returned, so no two
+// threads touch it.
+private struct MainThreadCompletion: @unchecked Sendable {
+    let call: () -> Void
+
+    init(_ call: @escaping () -> Void) {
+        self.call = call
     }
 }
 #endif
