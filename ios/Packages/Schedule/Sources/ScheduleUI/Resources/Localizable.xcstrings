@@ -393,16 +393,6 @@
         }
       }
     },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
-          }
-        }
-      }
-    },
     "练了": {
       "localizations": {
         "en": {

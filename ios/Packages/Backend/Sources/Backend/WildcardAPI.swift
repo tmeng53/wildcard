@@ -15,7 +15,7 @@ import FoundationNetworking
 /// access token and fails with an `APIError`.
 public struct WildcardAPI: Sendable {
     /// A current access token; given the token the API just refused, a renewed one.
-    /// `AccountSession.accessToken(rejected:)` is the app's.
+    /// `AccountSession.accessToken(for:rejected:)` is the app's (`WildcardAPI+Account.swift`).
     public typealias AccessToken = @Sendable (_ rejected: String?) async throws(AccountError) -> String
 
     let client: Client
@@ -36,17 +36,6 @@ public struct WildcardAPI: Sendable {
             middlewares: [Problems(), BearerToken(accessToken: accessToken, refused: refused)]
                 + (language.map { [AcceptLanguage(language: $0)] } ?? []))
         self.http = http
-    }
-
-    /// Calls with the account's tokens, and signs the account out when the API refuses a renewed
-    /// one, so screens following `AccountSession.states()` see the member signed out (a session
-    /// signed in while that call was on its way stays).
-    public init(url: URL, account: AccountSession, language: LanguageTag? = nil, http: URLSession = .shared) {
-        self.init(
-            url: url,
-            accessToken: { rejected async throws(AccountError) in try await account.accessToken(rejected: rejected) },
-            refused: { token in try? await account.signOut(ifCurrent: token) },
-            language: language, http: http)
     }
 
     // MARK: - The member

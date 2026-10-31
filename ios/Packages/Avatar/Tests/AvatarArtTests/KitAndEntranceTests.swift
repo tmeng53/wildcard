@@ -57,26 +57,24 @@ import Testing
         ])
 }
 
-/// A kit changes the clothes it names and keeps the rest of the look: body, hair, face, and the
-/// colors of the slots it changes when the new variant can take them.
+/// A kit hands over its prop and keeps the rest of the look as saved: clothes and their colors,
+/// body, hair and face, so the character looks the same on every screen.
 @Test func aKitKeepsTheLook() throws {
     let kits = try PlaceholderCharacter.sportKits()
     let blue = try #require(RGBAColor(hex: "#2D5BA0"))
     let look = Outfit(
         [
             "body": "peach", "hair": "bob", "eyes": "sharp", "hat": "warmup-cap", "top": "warmup-tee",
-            "bottom": "warmup-leggings",
+            "bottom": "warmup-leggings", "shoes": "lap-runner", "prop": "dumbbell",
         ],
         colors: ["top": blue, "hair": try #require(RGBAColor(hex: "#2A2333"))])
-    let running = kits.kit(for: .sport("run"), in: Looks.sports).dress(look)
-    #expect(running.variants["top"] == "warmup-tank" && running.colors["top"] == blue)
-    #expect(running.variants["hat"] == "warmup-headband" && running.variants["shoes"] == "warmup-runner")
-    #expect(running.variants["prop"] == "bottle")
+    for kit in kits.kits {
+        var expected = look
+        if let prop = kit.prop { expected.variants["prop"] = prop }
+        #expect(kit.dress(look) == expected, "\(kit.id)")
+    }
+    #expect(kits.kit(for: .sport("run"), in: Looks.sports).dress(look).variants["prop"] == "bottle")
     #expect(kits.kit(for: .sport("swim"), in: Looks.sports).dress(look).variants["prop"] == "goggles")
-    #expect(running.variants["hair"] == "bob" && running.variants["eyes"] == "sharp")
-    #expect(running.colors["hair"] == look.colors["hair"])
-    let climbing = kits.kit(for: .sport("climb"), in: Looks.sports).dress(look)
-    #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "moss-trail")
     #expect(kits.kit(for: .sport("ski"), in: Looks.sports).dress(look) == look)
 }
 
@@ -84,7 +82,7 @@ import Testing
     func decode(_ json: String) throws(AvatarError) -> SportKits {
         try SportKits.decode(Data(json.utf8))
     }
-    let kit = #"[{"id": "run", "wear": {}}]"#
+    let kit = #"[{"id": "run"}]"#
     #expect(throws: AvatarError.unknownKit("swim")) {
         try decode(
             #"{"version": 1, "kits": \#(kit), "categories": {"water": "swim"}, "sports": {}, "otherwise": "run"}"#)
@@ -100,6 +98,12 @@ import Testing
             #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#
         )
         .kit(for: .sport("parkour"), in: .empty).id == "run")
+    // A kit names only its prop: clothes are the member's own.
+    #expect(throws: AvatarError.self) {
+        try decode(
+            #"{"version": 1, "kits": [{"id": "run", "wear": {"top": "warmup-tank"}}], "categories": {}, "sports": {}, "otherwise": "run"}"#
+        )
+    }
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try decode(#"{"version": 2, "kits": [], "categories": {}, "sports": {}, "otherwise": "run"}"#)
     }
