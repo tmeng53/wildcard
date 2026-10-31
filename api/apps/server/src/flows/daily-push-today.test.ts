@@ -64,6 +64,7 @@ function post(author: MemberId, minute: number): SquadPost {
     reactions: everyone
       .filter((member) => member !== author)
       .map((member, at) => ({ member, emoji: family, reactedAt: new Date(at * 1000) })),
+    comments: [],
   };
 }
 
@@ -92,7 +93,7 @@ describe('the push’s today', () => {
         ['reaction', new Set<string>(mates)],
         ['poke', new Set<string>(mates)],
       ]),
-      named: { kind: 'poke', nickname },
+      named: { kind: 'poke' as const, nickname },
     };
     // Every teammate patted the member: the view names three.
     const carried = await pushToday(everyoneNamed, {
@@ -121,7 +122,7 @@ describe('the push’s today', () => {
       squad,
       squadWeek: today.squadWeek,
       received: new Map([['poke', new Set<string>(mates)]]),
-      named: { kind: 'poke', nickname: long },
+      named: { kind: 'poke' as const, nickname: long },
     };
     const carried = await pushToday(everyoneNamed, {
       viewer,
