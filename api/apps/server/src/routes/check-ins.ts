@@ -5,6 +5,7 @@ import {
   CheckInKind,
   DEFAULT_PAGE,
   DayRange,
+  MyDayRange,
   MAX_PAGE,
   decodeCursor,
   encodeCursor,
@@ -347,10 +348,12 @@ export function checkIns(deps: {
     path: '/me/check-ins',
     operationId: 'listMyCheckIns',
     summary: 'The signed-in member’s check-ins for a range of days',
-    description: 'Newest day first, each with its whole audience.',
+    description:
+      'Newest day first, each with its whole audience. Posts shared to no squad only with ' +
+      '`unshared=include`.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { query: DayRange },
+    request: { query: MyDayRange },
     responses: {
       200: {
         description: 'The check-ins',
@@ -449,9 +452,11 @@ export function checkIns(deps: {
       );
     })
     .openapi(listMine, async (c) => {
+      const { from, to, unshared } = c.req.valid('query');
       const records = await deps.checkIns.listMine({
         member: MemberId.parse(c.var.caller.userId),
-        days: c.req.valid('query'),
+        days: { from, to },
+        ...(unshared === undefined ? {} : { unshared }),
       });
       const urls = await viewUrls(deps.photos, records);
       return c.json(

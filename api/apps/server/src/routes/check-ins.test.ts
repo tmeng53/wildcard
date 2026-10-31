@@ -397,6 +397,75 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
     ]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 
+  it('keeps a post shared to no squad to its member', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const body = {
+      version: 1,
+      day,
+      createdAt,
+      audience: [],
+      kind: 'disclaimer',
+      disclaimer: { text: '累' },
+    };
+    expect(
+      (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
+    ).toBe(201);
+    const range = `from=${day}&to=${day}`;
+    // Builds from before sharing was optional can't read it, so they aren't sent it.
+    expect(
+      await call({ method: 'GET', path: `/me/check-ins?${range}`, token: me.token }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, checkIns: [] },
+    });
+    expect(
+      await call({
+        method: 'GET',
+        path: `/me/check-ins?${range}&unshared=include`,
+        token: me.token,
+      }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: {
+        version: 1,
+        checkIns: [
+          {
+            version: 1,
+            id,
+            member: me.userId,
+            day,
+            createdAt,
+            audience: [],
+            kind: 'disclaimer',
+            disclaimer: { text: '累' },
+          },
+        ],
+      },
+    });
+    expect((await call({ method: 'GET', path: `/check-ins/${id}`, token: me.token })).status).toBe(
+      200,
+    );
+    expect(
+      (await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).status,
+    ).toBe(404);
+    expect(
+      await call({
+        method: 'GET',
+        path: `/squads/${squad}/check-ins?${range}`,
+        token: friend.token,
+      }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, posts: [] },
+    });
+  });
+
   it('refuses a range of more than 31 days, or one that runs backwards', async () => {
     const me = await signUp();
     const reasons = await Promise.all(
