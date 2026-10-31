@@ -77,8 +77,8 @@ public final class TodayStore {
     public var home: Home? {
         guard let saved = savedHome, let day else { return nil }
         var home = saved.rolled(to: day)
-        for post in pending {
-            home.today = home.today.countingMine(post)
+        for (index, post) in pending.enumerated() {
+            home.today = home.today.countingMine(post, squadSaw: home.squadSees(on: post.day, plus: pending[..<index]))
         }
         return home
     }
@@ -148,15 +148,18 @@ public final class TodayStore {
 
     // MARK: - Posting
 
-    /// Posts a check-in to the squad: counted on the home at once, saved by the server now or,
+    /// Posts a check-in, shared to `squads` (every squad the member is in when left out; none
+    /// keeps it to the member): counted on the home at once, saved by the server now or,
     /// offline, later. Throws when it can never be saved: a 请假条 after a 练了 or a second one
     /// today, or a refusal from the server.
     @discardableResult
-    public func post(_ draft: CheckInDraft) async throws(CheckInError) -> PostOutcome {
+    public func post(_ draft: CheckInDraft, sharedTo squads: [SquadID]? = nil) async throws(CheckInError)
+        -> PostOutcome
+    {
         try await check(draft)
         guard let home, let day else { throw .notSent }
         let audience: Audience
-        do { audience = try Audience([home.squad.id]) } catch { throw .refused }
+        do { audience = try Audience(squads ?? home.squads.map(\.id)) } catch { throw .refused }
         let post = PendingCheckIn(
             id: CheckInID(newID()), member: home.member, day: day, createdAt: Timestamp(now()), audience: audience,
             draft: draft)
@@ -254,12 +257,12 @@ public final class TodayStore {
     }
 
     /// Counts a check-in the server saved into the home it last sent, so the home doesn't
-    /// wait for the next load.
+    /// wait for the next load: in the squad's today only if it was shared there.
     private func fold(_ saved: CheckIn) {
-        guard var home = savedHome?.rolled(to: saved.day), saved.audience.squads.contains(home.squad.id),
+        guard var home = savedHome?.rolled(to: saved.day), saved.member == home.member,
             !home.checkIns.contains(where: { $0.id == saved.id })
         else { return }
-        home.today = home.today.countingMine(saved)
+        home.today = home.today.countingMine(saved, squadSaw: home.squadSees(on: saved.day))
         home.checkIns.append(saved)
         savedHome = home
     }

@@ -65,6 +65,22 @@
         }
       }
     },
+    "仅自己可见，只在「我的动态」里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only you can see it, in My posts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅自己可見，只在「我的動態」裡"
+          }
+        }
+      }
+    },
     "今日请假条": {
       "localizations": {
         "en": {
@@ -109,6 +125,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "衝衝衝！"
+          }
+        }
+      }
+    },
+    "分享到": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share to"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享到"
+          }
+        }
+      }
+    },
+    "分享到 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share to %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享到 %@"
           }
         }
       }
@@ -221,6 +269,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "可以"
+          }
+        }
+      }
+    },
+    "小队成员都能看到": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your squad can see it"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊成員都能看到"
           }
         }
       }
@@ -685,6 +749,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "這餐很自律…"
+          }
+        }
+      }
+    },
+    "都不选就是仅自己可见": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick none to keep it to yourself"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "都不選就是僅自己可見"
           }
         }
       }
