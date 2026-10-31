@@ -353,6 +353,9 @@ describe('the frozen 战报', () => {
     const { awards } = setup();
     const [squad, ana, bo] = [await newSquad(), await member(), await member()];
     expect(await awards.story({ squad, weekStart: week })).toBeUndefined();
+    const note = randomUUID();
+    await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+      values (${note}, ${ana}, '2026-10-21', now(), 'disclaimer', '{"version":1}')`.execute(db);
     const story = {
       squad,
       weekStart: week,
@@ -360,7 +363,7 @@ describe('the frozen 战报', () => {
       members: [
         {
           ...part(ana),
-          bestDisclaimer: { checkIn: randomUUID(), text: '今天腿说不', reactions: 2 },
+          bestDisclaimer: { checkIn: note, text: '今天腿说不', reactions: 2 },
         },
         part(bo),
       ],
@@ -372,6 +375,12 @@ describe('the frozen 战报', () => {
       members: [part(bo)],
     };
     expect(await awards.freezeStory(later)).toStrictEqual(story);
+    // Deleting the post takes its words with it; deleting the account, the rest of their part.
+    await sql`delete from public.check_ins where id = ${note}`.execute(db);
+    expect((await awards.story({ squad, weekStart: week }))?.members).toStrictEqual([
+      part(ana),
+      part(bo),
+    ]);
     await sql`delete from auth.users where id = ${ana}`.execute(db);
     expect(await awards.story({ squad, weekStart: week })).toStrictEqual({
       ...story,

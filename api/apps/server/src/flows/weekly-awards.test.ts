@@ -663,6 +663,13 @@ describe('weekly awards', () => {
     await sql`delete from public.check_ins where id = ${top}`.execute(db);
     const after = Story.parse((await read({ token: ana.token, squad })).body);
     expect(after.hottest).toBeUndefined();
+    // Its words and photos go with it, not only out of sight.
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.week_story_posts
+        where check_in_id = ${top}`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(0);
     expect(after.myWeek?.trainedDays).toBe(1);
   });
 

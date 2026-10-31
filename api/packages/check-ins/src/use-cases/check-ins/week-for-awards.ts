@@ -96,12 +96,3 @@ export async function squadWeekCheckIns(
     pages,
   };
 }
-
-/** Which of these check-ins are still posted: a deleted one takes its words and photos with it. */
-export async function stillPosted(
-  { store }: { readonly store: CheckInStore },
-  ids: readonly CheckInId[],
-): Promise<ReadonlySet<CheckInId>> {
-  const found = await Promise.all(ids.map((id) => store.find(id)));
-  return new Set(found.flatMap((each) => (each === undefined ? [] : [each.id])));
-}

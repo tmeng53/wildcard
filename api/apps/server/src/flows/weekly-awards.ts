@@ -1,5 +1,4 @@
 import {
-  CheckInId,
   MemberId as CheckInMember,
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
@@ -249,12 +248,6 @@ export async function squadStory(
   const best = members.flatMap(({ member, bestDisclaimer }) =>
     bestDisclaimer === undefined ? [] : [{ author: member, ...bestDisclaimer }],
   )[0];
-  const posted = await deps.checkIns.stillPosted(
-    [mine?.hottest?.checkIn, best?.checkIn].flatMap((id) =>
-      id === undefined ? [] : [CheckInId.parse(id)],
-    ),
-  );
-  const isPosted = (id: string) => posted.has(CheckInId.parse(id));
   // Someone on the podium whose account was deleted since leaves it; a side steps up.
   const podium =
     story.podium && [story.podium.champion, ...story.podium.sides].filter((id) => ids.has(id));
@@ -271,15 +264,9 @@ export async function squadStory(
     ...(champion === undefined ? {} : { podium: { champion, sides } }),
     ...(story.meals === undefined ? {} : { meals: story.meals }),
     ...(story.ending === undefined ? {} : { ending: story.ending }),
-    ...(best === undefined || !isPosted(best.checkIn) ? {} : { bestDisclaimer: best }),
-    ...(mine === undefined ? {} : { mine: withPosted(mine, isPosted) }),
+    ...(best === undefined ? {} : { bestDisclaimer: best }),
+    ...(mine === undefined ? {} : { mine }),
   };
-}
-
-/** A member's part with their hottest check-in only while it is still posted. */
-function withPosted(member: StoryMember, isPosted: (id: string) => boolean): StoryMember {
-  const { hottest, ...rest } = member;
-  return hottest === undefined || !isPosted(hottest.checkIn) ? rest : member;
 }
 
 /**

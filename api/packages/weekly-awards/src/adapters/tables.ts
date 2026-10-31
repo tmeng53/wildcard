@@ -73,9 +73,19 @@ export interface WeekStoryMembers {
   week_start: string;
 }
 
+export interface WeekStoryPosts {
+  check_in_id: string;
+  member_id: string;
+  post: Json;
+  role: string;
+  squad_id: string;
+  week_start: string;
+}
+
 export interface DB {
   week_stories: WeekStories;
   week_story_members: WeekStoryMembers;
+  week_story_posts: WeekStoryPosts;
   weekly_award_setting_events: WeeklyAwardSettingEvents;
   weekly_award_settings: WeeklyAwardSettings;
   weekly_award_winners: WeeklyAwardWinners;

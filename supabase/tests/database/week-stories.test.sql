@@ -1,6 +1,6 @@
 -- A frozen 每周战报 is never changed: only a deleted account or squad takes its rows.
 begin;
-select plan(7);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('e0000000-0000-0000-0000-000000000001', 'gus@example.com'),
@@ -15,6 +15,26 @@ insert into public.week_stories (squad_id, week_start, story) values
 insert into public.week_story_members (squad_id, week_start, member_id, position, page) values
   ('5e000000-0000-0000-0000-000000000001', '2026-10-19', 'e0000000-0000-0000-0000-000000000001', 0, '{"version":1}'),
   ('5e000000-0000-0000-0000-000000000001', '2026-10-19', 'e0000000-0000-0000-0000-000000000002', 1, '{"version":1}');
+insert into public.check_ins (id, member_id, day, created_at, kind, payload) values
+  ('e1111111-1111-1111-1111-111111111111', 'e0000000-0000-0000-0000-000000000002', '2026-10-21',
+   '2026-10-21 12:00+00', 'disclaimer', '{"version":1,"text":"今天进的是被窝"}');
+insert into public.week_story_posts (squad_id, week_start, member_id, role, check_in_id, post) values
+  ('5e000000-0000-0000-0000-000000000001', '2026-10-19', 'e0000000-0000-0000-0000-000000000002',
+   'bestDisclaimer', 'e1111111-1111-1111-1111-111111111111',
+   '{"version":1,"bestDisclaimer":{"checkIn":"e1111111-1111-1111-1111-111111111111","text":"今天进的是被窝","reactions":2}}');
+
+select throws_ok(
+  $$update public.week_story_posts set post = '{"version":1}'$$,
+  '42501', 'week_story_posts is frozen', 'a post on the story can''t be changed'
+);
+select throws_ok(
+  $$delete from public.week_story_posts$$, '42501', 'week_story_posts is frozen', 'or deleted'
+);
+delete from public.check_ins where id = 'e1111111-1111-1111-1111-111111111111';
+select is(
+  (select count(*)::int from public.week_story_posts), 0,
+  'deleting the post takes its words with it'
+);
 
 select throws_ok(
   $$update public.week_stories set story = '{"version":1,"name":"改名","scene":"pool"}'$$,
