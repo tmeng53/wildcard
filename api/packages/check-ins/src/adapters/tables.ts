@@ -55,13 +55,6 @@ export interface CheckInSquads {
   squad_id: string;
 }
 
-export interface DisclaimerReplies {
-  check_in_id: string;
-  kind: string;
-  member_id: string;
-  replied_at: Timestamp;
-}
-
 export interface FuelGoalEvents {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -107,7 +100,6 @@ export interface DB {
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
-  disclaimer_replies: DisclaimerReplies;
   fuel_goal_events: FuelGoalEvents;
   fuel_goals: FuelGoals;
   week_summary_word_events: WeekSummaryWordEvents;
