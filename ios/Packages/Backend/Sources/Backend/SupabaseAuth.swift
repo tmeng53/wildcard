@@ -18,7 +18,7 @@ public struct SupabaseAuth: AuthProvider {
     ///   - url: the project's URL, such as `https://<ref>.supabase.co`.
     ///   - publishableKey: the project's publishable key, which only identifies the project. It
     ///     ships in the app and grants nothing on its own: the database is closed to it.
-    public init(url: URL, publishableKey: String, http: URLSession = .shared) {
+    public init(url: URL, publishableKey: String, http: URLSession = .wildcard) {
         self.url = url
         self.publishableKey = publishableKey
         self.http = http
