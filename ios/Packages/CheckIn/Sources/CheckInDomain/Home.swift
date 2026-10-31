@@ -10,6 +10,8 @@ public struct Home: Hashable, Sendable {
     public let timeZone: TimeZone
     /// The squad the app shows: the earliest joined.
     public let squad: Squad
+    /// Every squad the member is in, the earliest joined first: where a post can be shared.
+    public let squads: [Squad]
     public var today: SquadToday
     /// The member's plan for this week.
     public let plan: WeeklyPlan
@@ -19,13 +21,17 @@ public struct Home: Hashable, Sendable {
     /// they went to; oldest first.
     public var checkIns: [CheckIn]
 
+    /// `squads` lists every squad the member is in; left out, just `squad`. The member's own
+    /// posts today not shared to `squad` show in their row (`showingMine`).
     public init(
-        member: MemberID, timeZone: TimeZone, squad: Squad, today: SquadToday, plan: WeeklyPlan, checkIns: [CheckIn]
+        member: MemberID, timeZone: TimeZone, squad: Squad, squads: [Squad]? = nil, today: SquadToday,
+        plan: WeeklyPlan, checkIns: [CheckIn]
     ) {
         self.member = member
         self.timeZone = timeZone
         self.squad = squad
-        self.today = today
+        self.squads = squads ?? [squad]
+        self.today = checkIns.filter { $0.member == member }.reduce(today) { $0.showingMine($1) }
         self.plan = plan
         self.checkIns = checkIns
     }
@@ -36,10 +42,13 @@ public struct Home: Hashable, Sendable {
     }
 
     /// `member`'s check-ins to this squad on their own today, oldest first: what tapping their
-    /// character shows. One sent only to another squad doesn't show here, as on the server.
+    /// character shows. A teammate's sent only to another squad doesn't show here, as on the
+    /// server; the member's own all do, wherever they were shared.
     public func todaysCheckIns(of member: MemberID) -> [CheckIn] {
         guard let day = today.members.first(where: { $0.member == member })?.day else { return [] }
-        return checkIns.filter { $0.member == member && $0.day == day && $0.audience.squads.contains(squad.id) }
+        return checkIns.filter {
+            $0.member == member && $0.day == day && (member == self.member || $0.audience.squads.contains(squad.id))
+        }
     }
 
     /// The sport `member` trained today, from their latest 练了: what their character plays.

@@ -61,6 +61,27 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(await backend.saves.count == 2)
 }
 
+@MainActor @Test func aPostSharedToNoSquadCountsOnlyForTheMember() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+
+    let outcome = try await today.post(run, sharedTo: [])
+    guard case .posted(let saved) = outcome else {
+        Issue.record("expected posted, got \(outcome)")
+        return
+    }
+    #expect(saved.audience.squads == [])
+    #expect(today.myStatus == .trained)
+    #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
+    #expect(today.home?.today.today.trained == 1)
+    #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
+    // A 请假条 after it is refused at once, as the server would.
+    await #expect(throws: CheckInError.alreadyTrained) {
+        try await today.post(.disclaimer(try Disclaimer("累")), sharedTo: [])
+    }
+}
+
 @MainActor @Test func offlineAPostWaitsCountedAndGoesOutOnceUnderItsID() async throws {
     let backend = ScriptedBackend()
     let outbox = MemoryOutbox()

@@ -145,6 +145,8 @@ public final class TodayModel {
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport("run") }
     var recentActivities: [Activity] { store.recentActivities }
+    /// The squads a post can be shared to, the earliest joined first.
+    var shareSquads: [Squad] { store.home?.squads ?? [] }
 
     /// Day or night on the scene, on the member's own clock.
     var phase: DayPhase {
@@ -316,7 +318,8 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    func post(_ draft: CheckInDraft) async {
+    /// Posts `draft` to the squads in `shared` (none keeps it to the member).
+    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>) async {
         guard !isSending else { return }
         isSending = true
         sendFailed = false
@@ -324,7 +327,8 @@ public final class TodayModel {
         let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
-            let outcome = try await store.post(draft)
+            let audience = shareSquads.map(\.id).filter(shared.contains)
+            let outcome = try await store.post(draft, sharedTo: audience)
             // A 练了's kit goes on after its cheer.
             if draft.kind == .trained {
                 dressHolds += 1

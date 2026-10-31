@@ -28,7 +28,14 @@ struct DisclaimerComposer: View {
     @State private var isWriting = false
     /// Counts lines that landed in the hero, for their haptic.
     @State private var landed = 0
+    /// The squads it goes to: all of them until the member unticks one.
+    @State private var shared: Set<SquadID>
     @FocusState private var isEditing: Bool
+
+    init(model: TodayModel) {
+        self.model = model
+        _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -50,7 +57,9 @@ struct DisclaimerComposer: View {
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .padding(.bottom, Space.xs)
             }
-            PostButton(model: model, disclaimer: entry.disclaimer)
+            ShareRow(squads: model.shareSquads, shared: $shared)
+                .padding(.bottom, Space.xs)
+            PostButton(model: model, disclaimer: entry.disclaimer, shared: shared)
         }
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
@@ -355,11 +364,12 @@ private struct PostButton: View {
     let model: TodayModel
     /// The excuse to post, or nil while it can't be.
     let disclaimer: Disclaimer?
+    let shared: Set<SquadID>
 
     var body: some View {
         Button {
             guard let disclaimer, !model.isSending else { return }
-            Task { await model.post(.disclaimer(disclaimer)) }
+            Task { await model.post(.disclaimer(disclaimer), sharedTo: shared) }
         } label: {
             Text("发布请假条", bundle: .module)
                 .loadingLabel(model.isSending)
