@@ -10,7 +10,7 @@ import {
   type WeekCheckIn,
 } from './awards.js';
 import { AwardMove } from './moves.js';
-import { promptFor } from './prompt.js';
+import { PROMPT_COMMENTS, promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
 const ana = MemberId.parse('a0000000-0000-4000-8000-000000000001');
@@ -271,6 +271,32 @@ describe('promptFor', () => {
       },
     ]);
     expect(JSON.stringify(prompt)).not.toContain(cy);
+  });
+
+  it('brings only a check-in’s latest comments, so a busy post can’t swell the call', () => {
+    const many = Array.from({ length: PROMPT_COMMENTS + 5 }, (_, index) => ({
+      member: bo,
+      text: `第${String(index)}条`,
+    }));
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves,
+          members: [{ member: ana, timeZone: 'UTC', checkIns: [checkIn({ comments: many })] }],
+        }),
+      ),
+    );
+    const [only] = z
+      .array(z.object({ checkIns: z.array(z.object({ comments: z.array(z.unknown()) })) }))
+      .parse(prompt.members);
+    const comments = only?.checkIns[0]?.comments ?? [];
+    expect(comments).toHaveLength(PROMPT_COMMENTS);
+    expect(comments[0]).toStrictEqual({ from: '队友', text: '第5条' });
+    expect(comments.at(-1)).toStrictEqual({
+      from: '队友',
+      text: `第${String(PROMPT_COMMENTS + 4)}条`,
+    });
   });
 
   it('lists the moves in their own order, whatever order the settings keep them in', () => {
