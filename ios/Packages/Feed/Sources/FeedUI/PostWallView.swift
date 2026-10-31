@@ -103,7 +103,16 @@ public struct PostWallView: View {
                     .padding(.top, month.id == months.first?.id ? 0 : Space.m)
                 }
             }
-            if store.hasMore {
+            if store.moreFailed {
+                Button {
+                    Task { await store.loadMore() }
+                } label: {
+                    Text("再试一次", bundle: .module)
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .padding(.vertical, Space.m)
+                .accessibilityIdentifier("wall.loadMore")
+            } else if store.hasMore {
                 Color.clear
                     .frame(height: Space.xxl)
                     .task(id: store.posts.last?.id) { await store.loadMore() }

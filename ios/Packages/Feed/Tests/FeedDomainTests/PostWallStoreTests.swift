@@ -96,6 +96,35 @@ private let septemberRun = FeedPost(checkIn: checkIn(3, by: owner, on: "2026-09-
     #expect(wall.phase == .signedOut)
 }
 
+@MainActor @Test func aFailedPageSaysSoAndTriesAgainFromTheSamePlace() async {
+    let source = FakeWall([octoberRun, octoberSlip, septemberRun])
+    let wall = PostWallStore(source: source)
+    await wall.load()
+    await source.fail(with: .notSent)
+    await wall.loadMore()
+    #expect(wall.moreFailed)
+    #expect(wall.posts == [octoberRun, octoberSlip])
+    #expect(wall.hasMore)
+    await source.fail(with: nil)
+    await wall.loadMore()
+    #expect(!wall.moreFailed)
+    #expect(wall.posts == [octoberRun, octoberSlip, septemberRun])
+    #expect(
+        await source.calls.map(\.after) == [nil, octoberSlip.id.description, octoberSlip.id.description])
+}
+
+@MainActor @Test func pickingAKindClearsAFailedPage() async {
+    let source = FakeWall([octoberRun, octoberSlip, septemberRun])
+    let wall = PostWallStore(source: source)
+    await wall.load()
+    await source.fail(with: .notSent)
+    await wall.loadMore()
+    await source.fail(with: nil)
+    await wall.show(.trained)
+    #expect(!wall.moreFailed)
+    #expect(wall.posts == [octoberRun, septemberRun])
+}
+
 @Test func monthsKeepThePostsOrderAndSplitAtEachNewMonth() {
     let months = WallMonth.months([octoberRun, octoberSlip, septemberRun])
     #expect(months.map(\.year) == [2026, 2026])

@@ -38,7 +38,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld"
+            "value" : "%lld posts"
           }
         },
         "zh-Hant" : {

@@ -104,12 +104,17 @@ public final class PostWallStore {
     public private(set) var counts: MyPostCounts?
     /// Whether scrolling further can still find posts.
     public var hasMore: Bool { next != nil }
+    /// Whether the last try at the next page didn't reach the server; scrolling stops there
+    /// until the member tries again.
+    public private(set) var moreFailed = false
 
     private var next: String?
     /// Bumped by every fresh load, so a page that comes back after the member picked another
     /// kind is dropped.
     private var generation = 0
-    private var loadingMore = false
+    /// The load whose next page is on its way, if any; a page for an earlier load (another kind)
+    /// doesn't hold up this one's.
+    private var loadingMore: Int?
     private let source: any MyPostsSource
 
     public init(source: any MyPostsSource) {
@@ -130,6 +135,7 @@ public final class PostWallStore {
             guard mine == generation else { return }
             posts = page.posts
             next = page.next
+            moreFailed = false
             if let counts = page.counts { self.counts = counts }
             phase = .current
         } catch {
@@ -144,19 +150,28 @@ public final class PostWallStore {
         self.kind = kind
         posts = []
         next = nil
+        moreFailed = false
         phase = .loading
         await load()
     }
 
-    /// Loads the next page, as the member scrolls to the end. Safe to call while one is loading.
+    /// Loads the next page, as the member scrolls to the end or tries again after a failed page.
+    /// Safe to call while one is loading.
     public func loadMore() async {
-        guard let after = next, !loadingMore else { return }
-        loadingMore = true
-        defer { loadingMore = false }
         let mine = generation
-        guard let page = try? await source.myPosts(kind: kind, after: after), mine == generation else { return }
-        let seen = Set(posts.map(\.id))
-        posts += page.posts.filter { !seen.contains($0.id) }
-        next = page.next
+        guard let after = next, loadingMore != mine else { return }
+        loadingMore = mine
+        defer { if loadingMore == mine { loadingMore = nil } }
+        moreFailed = false
+        do {
+            let page = try await source.myPosts(kind: kind, after: after)
+            guard mine == generation else { return }
+            let seen = Set(posts.map(\.id))
+            posts += page.posts.filter { !seen.contains($0.id) }
+            next = page.next
+        } catch {
+            guard mine == generation else { return }
+            moreFailed = true
+        }
     }
 }
