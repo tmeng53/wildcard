@@ -23,7 +23,8 @@ struct PosterContentTests {
 
     private func sheet(_ weekStart: LocalDay) throws -> WeekSheet {
         try WeekSheet(
-            weekStart: weekStart, plan: plan, marks: [.trained, .disclaimer, .none, .trained, .none, .none, .none],
+            weekStart: weekStart, plan: plan,
+            marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("tennis")), .none, .none, .none],
             titles: titles, squad: SquadCount(trained: 14, planned: 22), fuel: [.suggested(.water)])
     }
 
@@ -38,6 +39,19 @@ struct PosterContentTests {
         #expect(content.fuelOpen, "this week's goals open too")
         #expect(content.fuelEditable)
         #expect(content.weekEnd == Self.day("2026-10-25"))
+    }
+
+    @Test func aDayTrainedShowsTheSportLoggedNotThePlan() throws {
+        var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
+        let content = PosterContent(
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+        #expect(content.lanes[0].shown == .train(.sport("run")))
+        #expect(content.lanes[3].shown == .train(.sport("tennis")), "strength was planned, tennis was played")
+        #expect(content.lanes[1].shown == .train(.sport("tennis")), "a 请假条 keeps the plan")
+        board.tap(3)
+        let held = PosterContent(
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+        #expect(held.lanes[3].shown == .train(.sport("strength")), "a day being changed shows the plan")
     }
 
     @Test func aSelectedDayThisWeekIsHeld() throws {
@@ -120,7 +134,7 @@ struct InMemoryScheduleBackendTests {
         #expect(!last.titles.isEmpty, "a week that is over has titles")
         let this = try await backend.week(starting: profile.firstWeek.adding(days: 35))
         #expect(this.titles.isEmpty)
-        #expect(this.marks[3] == .trained, "today is trained")
+        #expect(this.marks[3].isTrained, "today is trained")
         #expect(this.marks[4...].allSatisfy { $0 == .none }, "nothing is marked ahead of today")
         #expect(try await backend.trainedDays() == 46)
     }

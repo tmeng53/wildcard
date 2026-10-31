@@ -1239,19 +1239,11 @@
               "$ref": "#/components/schemas/ReactionEntry"
             },
             "description": "Teammates’ emoji, oldest first."
-          },
-          "replies": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReplyEntry"
-            },
-            "description": "Teammates’ replies, oldest first. Always empty but on a 请假条."
           }
         },
         "required": [
           "checkIn",
-          "reactions",
-          "replies"
+          "reactions"
         ],
         "additionalProperties": false
       },
@@ -1279,37 +1271,6 @@
           "member",
           "emoji",
           "reactedAt"
-        ],
-        "additionalProperties": false
-      },
-      "ReplyEntry": {
-        "type": "object",
-        "properties": {
-          "member": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Who replied."
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "approved",
-              "hug",
-              "together"
-            ],
-            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
-          },
-          "repliedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When they replied, in UTC with milliseconds.",
-            "example": "2026-10-18T20:05:00.000Z"
-          }
-        },
-        "required": [
-          "member",
-          "kind",
-          "repliedAt"
         ],
         "additionalProperties": false
       },
@@ -1501,91 +1462,6 @@
         "required": [
           "version",
           "reactions"
-        ],
-        "additionalProperties": false
-      },
-      "Reply": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "member": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Who replied."
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "approved",
-              "hug",
-              "together"
-            ],
-            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
-          },
-          "repliedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When they replied, in UTC with milliseconds.",
-            "example": "2026-10-18T20:05:00.000Z"
-          }
-        },
-        "required": [
-          "version",
-          "member",
-          "kind",
-          "repliedAt"
-        ],
-        "additionalProperties": false
-      },
-      "ReplyDraft": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "approved",
-              "hug",
-              "together"
-            ],
-            "description": "Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy."
-          }
-        },
-        "required": [
-          "version",
-          "kind"
-        ],
-        "additionalProperties": false
-      },
-      "ReplyList": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "replies": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReplyEntry"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "replies"
         ],
         "additionalProperties": false
       },
@@ -3809,8 +3685,8 @@
     "/squads/{squadId}/check-ins": {
       "get": {
         "operationId": "listSquadCheckIns",
-        "summary": "A squad’s check-ins for a range of days, with their reactions and replies",
-        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and replies of the teammates the viewer shares a squad with. Only for members of the squad.",
+        "summary": "A squad’s check-ins for a range of days, with their reactions",
+        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions of the teammates the viewer shares a squad with. Only for members of the squad.",
         "security": [
           {
             "bearer": []
@@ -4259,252 +4135,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReactionList"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a check-in id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/check-ins/{checkInId}/replies/mine": {
-      "put": {
-        "operationId": "replyToDisclaimer",
-        "summary": "Reply to a teammate’s 请假条",
-        "description": "Leaves the caller’s reply, in place of any they left before. The same reply again changes nothing, so it is safe to repeat. Only a 请假条 takes replies.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "checkInId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReplyDraft"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Already there, or changed from another reply",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Reply"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Replied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Reply"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid reply, not a 请假条 (`NOT_A_DISCLAIMER`), or the caller’s own (`OWN_DISCLAIMER_REPLY`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "removeMyReply",
-        "summary": "Take your reply off a 请假条",
-        "description": "Safe to repeat.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "checkInId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Taken off"
-          },
-          "400": {
-            "description": "Not a check-in id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/check-ins/{checkInId}/replies": {
-      "get": {
-        "operationId": "listDisclaimerReplies",
-        "summary": "A 请假条’s replies",
-        "description": "Oldest first, for its author and the teammates who can see it. Empty for any other check-in.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "checkInId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The replies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReplyList"
                 }
               }
             }

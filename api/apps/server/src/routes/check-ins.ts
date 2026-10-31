@@ -21,7 +21,6 @@ import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { ReactionEntry, wireReaction } from './reactions.js';
-import { ReplyEntry, wireReply } from './replies.js';
 
 const checkInFields = {
   version: bodyVersion(1),
@@ -102,9 +101,6 @@ const SquadPostList = z
           reactions: z
             .array(ReactionEntry)
             .meta({ description: 'Teammates’ emoji, oldest first.' }),
-          replies: z.array(ReplyEntry).meta({
-            description: 'Teammates’ replies, oldest first. Always empty but on a 请假条.',
-          }),
         })
         .openapi('SquadPost'),
     ),
@@ -187,7 +183,7 @@ const signedInFailures = {
 
 /**
  * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` (the
- * squad's feed, with reactions and replies) and `GET /me/check-ins` read them back for a range of
+ * squad's feed, with reactions) and `GET /me/check-ins` read them back for a range of
  * days, and `GET /me/check-in-totals` counts
  * all of the member's own.
  */
@@ -238,10 +234,10 @@ export function checkIns(deps: {
     method: 'get',
     path: '/squads/{squadId}/check-ins',
     operationId: 'listSquadCheckIns',
-    summary: 'A squad’s check-ins for a range of days, with their reactions and replies',
+    summary: 'A squad’s check-ins for a range of days, with their reactions',
     description:
       'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
-      'each with the reactions and replies of the teammates the viewer shares a squad with. ' +
+      'each with the reactions of the teammates the viewer shares a squad with. ' +
       'Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -316,10 +312,9 @@ export function checkIns(deps: {
       return c.json(
         {
           version: 1 as const,
-          posts: posts.map(({ checkIn, reactions, replies }) => ({
+          posts: posts.map(({ checkIn, reactions }) => ({
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
-            replies: replies.map(wireReply),
           })),
         },
         200,

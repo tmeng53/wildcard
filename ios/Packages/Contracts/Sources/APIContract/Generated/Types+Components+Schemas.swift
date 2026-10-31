@@ -1922,29 +1922,21 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadPost/reactions`.
             public var reactions: [Components.Schemas.ReactionEntry]
-            /// Teammates’ replies, oldest first. Always empty but on a 请假条.
-            ///
-            /// - Remark: Generated from `#/components/schemas/SquadPost/replies`.
-            public var replies: [Components.Schemas.ReplyEntry]
             /// Creates a new `SquadPost`.
             ///
             /// - Parameters:
             ///   - checkIn:
             ///   - reactions: Teammates’ emoji, oldest first.
-            ///   - replies: Teammates’ replies, oldest first. Always empty but on a 请假条.
             public init(
                 checkIn: Components.Schemas.CheckIn,
-                reactions: [Components.Schemas.ReactionEntry],
-                replies: [Components.Schemas.ReplyEntry]
+                reactions: [Components.Schemas.ReactionEntry]
             ) {
                 self.checkIn = checkIn
                 self.reactions = reactions
-                self.replies = replies
             }
             public enum CodingKeys: String, CodingKey {
                 case checkIn
                 case reactions
-                case replies
             }
         }
         /// - Remark: Generated from `#/components/schemas/ReactionEntry`.
@@ -1980,49 +1972,6 @@ extension Components {
                 case member
                 case emoji
                 case reactedAt
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ReplyEntry`.
-        public struct ReplyEntry: Codable, Hashable, Sendable {
-            /// Who replied.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReplyEntry/member`.
-            public var member: Swift.String
-            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReplyEntry/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case approved = "approved"
-                case hug = "hug"
-                case together = "together"
-            }
-            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReplyEntry/kind`.
-            public var kind: Components.Schemas.ReplyEntry.KindPayload
-            /// When they replied, in UTC with milliseconds.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReplyEntry/repliedAt`.
-            public var repliedAt: Foundation.Date
-            /// Creates a new `ReplyEntry`.
-            ///
-            /// - Parameters:
-            ///   - member: Who replied.
-            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///   - repliedAt: When they replied, in UTC with milliseconds.
-            public init(
-                member: Swift.String,
-                kind: Components.Schemas.ReplyEntry.KindPayload,
-                repliedAt: Foundation.Date
-            ) {
-                self.member = member
-                self.kind = kind
-                self.repliedAt = repliedAt
-            }
-            public enum CodingKeys: String, CodingKey {
-                case member
-                case kind
-                case repliedAt
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheckInList`.
@@ -2282,123 +2231,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case reactions
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/Reply`.
-        public struct Reply: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/Reply/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/Reply/version`.
-            public var version: Components.Schemas.Reply.VersionPayload
-            /// Who replied.
-            ///
-            /// - Remark: Generated from `#/components/schemas/Reply/member`.
-            public var member: Swift.String
-            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/Reply/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case approved = "approved"
-                case hug = "hug"
-                case together = "together"
-            }
-            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/Reply/kind`.
-            public var kind: Components.Schemas.Reply.KindPayload
-            /// When they replied, in UTC with milliseconds.
-            ///
-            /// - Remark: Generated from `#/components/schemas/Reply/repliedAt`.
-            public var repliedAt: Foundation.Date
-            /// Creates a new `Reply`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - member: Who replied.
-            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///   - repliedAt: When they replied, in UTC with milliseconds.
-            public init(
-                version: Components.Schemas.Reply.VersionPayload,
-                member: Swift.String,
-                kind: Components.Schemas.Reply.KindPayload,
-                repliedAt: Foundation.Date
-            ) {
-                self.version = version
-                self.member = member
-                self.kind = kind
-                self.repliedAt = repliedAt
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case member
-                case kind
-                case repliedAt
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ReplyDraft`.
-        public struct ReplyDraft: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ReplyDraft/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ReplyDraft/version`.
-            public var version: Components.Schemas.ReplyDraft.VersionPayload
-            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReplyDraft/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case approved = "approved"
-                case hug = "hug"
-                case together = "together"
-            }
-            /// Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ReplyDraft/kind`.
-            public var kind: Components.Schemas.ReplyDraft.KindPayload
-            /// Creates a new `ReplyDraft`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - kind: Which reply: 准了 (`approved`), 抱抱 (`hug`) or 明天一起 (`together`). The app shows each with its own copy.
-            public init(
-                version: Components.Schemas.ReplyDraft.VersionPayload,
-                kind: Components.Schemas.ReplyDraft.KindPayload
-            ) {
-                self.version = version
-                self.kind = kind
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case kind
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ReplyList`.
-        public struct ReplyList: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ReplyList/version`.
-            public var version: Components.Schemas.ReplyList.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/ReplyList/replies`.
-            public var replies: [Components.Schemas.ReplyEntry]
-            /// Creates a new `ReplyList`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - replies:
-            public init(
-                version: Components.Schemas.ReplyList.VersionPayload,
-                replies: [Components.Schemas.ReplyEntry]
-            ) {
-                self.version = version
-                self.replies = replies
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case replies
             }
         }
         /// - Remark: Generated from `#/components/schemas/Device`.

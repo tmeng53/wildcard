@@ -95,11 +95,15 @@ public struct APIScheduleBackend: ScheduleBackend {
         return mine?.titles.map { AwardTitle(title: $0.title, speech: $0.speech) } ?? []
     }
 
-    /// How each day of the week went: a 练了 over a 请假条, Monday first.
+    /// How each day of the week went: a 练了 over a 请假条, Monday first. A day with more than
+    /// one 练了 shows the latest one's sport.
     static func marks(of checkIns: [CheckIn], weekStart: LocalDay) -> [DayMark] {
         (0..<WeeklyPlan.dayCount).map { offset in
             let day = checkIns.filter { $0.day == weekStart.adding(days: offset) }
-            if day.contains(where: { if case .trained = $0.entry { true } else { false } }) { return .trained }
+            let trained = day.compactMap { checkIn -> (Timestamp, Activity)? in
+                if case .trained(let training) = checkIn.entry { (checkIn.createdAt, training.activity) } else { nil }
+            }
+            if let latest = trained.max(by: { $0.0 < $1.0 }) { return .trained(latest.1) }
             if day.contains(where: { if case .disclaimer = $0.entry { true } else { false } }) { return .disclaimer }
             return .none
         }
