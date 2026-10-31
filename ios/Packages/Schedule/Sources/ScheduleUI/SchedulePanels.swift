@@ -62,7 +62,7 @@ struct WeekAwards: View {
     }
 }
 
-/// The picks for the day in hand: the week's sports and the usual ones, rest next week, and 更多.
+/// The picks for the day in hand: the week's sports and the usual ones, 休息, and 更多.
 struct DayPicks: View {
     let store: ScheduleStore
     let sheet: WeekSheet
