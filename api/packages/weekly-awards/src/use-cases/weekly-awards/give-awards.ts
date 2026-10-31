@@ -8,11 +8,17 @@ import {
   type SquadId,
   type Title,
 } from '../../domain/awards.js';
-import { promptFor } from '../../domain/prompt.js';
+import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
 import type { AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
-import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../../ports.js';
+import type {
+  AiConsented,
+  AwardSettingsStore,
+  AwardsStore,
+  LanguageModel,
+  MemesInUse,
+} from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
 const ATTEMPTS = 2;
@@ -36,6 +42,7 @@ export async function giveAwards(
     readonly settings: AwardSettingsStore;
     readonly store: AwardsStore;
     readonly aiConsented: AiConsented;
+    readonly memes: MemesInUse;
   },
   { squad, weekStart, members }: GiveAwardsInput,
 ): Promise<Awards> {
@@ -52,6 +59,7 @@ export async function giveAwards(
     try {
       titles = await writeTitles(deps.model, {
         settings: await deps.settings.current(),
+        memes: await deps.memes(),
         weekStart,
         winners,
       });
@@ -117,15 +125,17 @@ async function writeTitles(
   model: LanguageModel,
   {
     settings,
+    memes,
     weekStart,
     winners,
   }: {
     readonly settings: AwardSettings;
+    readonly memes: readonly PromptMeme[];
     readonly weekStart: WeekStart;
     readonly winners: readonly MemberWeek[];
   },
 ): Promise<Titles> {
-  const prompt = promptFor({ weekStart, members: winners, moves: settings.moves });
+  const prompt = promptFor({ weekStart, members: winners, moves: settings.moves, memes });
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {

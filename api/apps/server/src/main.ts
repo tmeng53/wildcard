@@ -160,6 +160,13 @@ const awards = createWeeklyAwards({
   store: createPostgresAwardsStore(db),
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+  // Every meme in use, so the awards can draw on any that fits; only what the prompt needs.
+  memes: async () =>
+    (await memes.listInUse()).map(({ phrase, meaning, background }) => ({
+      phrase,
+      meaning,
+      background,
+    })),
 });
 // The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
 // token on a local one.

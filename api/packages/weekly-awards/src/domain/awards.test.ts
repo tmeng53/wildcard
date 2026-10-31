@@ -159,6 +159,7 @@ describe('topCheckInOf', () => {
 const Prompt = z.object({
   members: z.unknown(),
   moves: z.array(z.object({ id: z.string(), description: z.string() })),
+  memes: z.array(z.unknown()).optional(),
 });
 
 const moves = z
@@ -172,6 +173,7 @@ describe('promptFor', () => {
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
           moves,
+          memes: [],
           members: [
             {
               member: bo,
@@ -220,6 +222,23 @@ describe('promptFor', () => {
     expect(prompt.moves).toContainEqual({ id: 'flat', description: 'flat 的样子' });
     expect(prompt.moves).toHaveLength(AwardMove.options.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
+    expect(prompt.memes).toBeUndefined();
+  });
+
+  it('brings the memes in use, with what each means', () => {
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves,
+          members: [],
+          memes: [{ phrase: '对自己很好', meaning: '照顾好自己', background: '小红书上流行' }],
+        }),
+      ),
+    );
+    expect(prompt.memes).toStrictEqual([
+      { phrase: '对自己很好', meaning: '照顾好自己', background: '小红书上流行' },
+    ]);
   });
 
   it('lists the moves in their own order, whatever order the settings keep them in', () => {
@@ -228,7 +247,12 @@ describe('promptFor', () => {
       .parse(Object.fromEntries(Object.entries(moves).reverse()));
     const prompt = Prompt.parse(
       JSON.parse(
-        promptFor({ weekStart: WeekStart.parse('2026-10-19'), moves: reversed, members: [] }),
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves: reversed,
+          members: [],
+          memes: [],
+        }),
       ),
     );
     expect(prompt.moves.map(({ id }) => id)).toStrictEqual([
