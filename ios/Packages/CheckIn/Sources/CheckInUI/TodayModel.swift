@@ -55,7 +55,7 @@ public final class TodayModel {
     /// Everyone else on the scene.
     let cast = SquadCast()
     /// 拍一拍 on the scene.
-    let pats = PatStage()
+    let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
     private(set) var step = Step.scene
@@ -80,10 +80,20 @@ public final class TodayModel {
     private(set) var sendFailed = false
 
     let photoSource: PhotoSource
-    /// My character, as I made it once the home says so; the stand-in lifter until then.
-    private(set) var player: CharacterPlayer?
-    private var myLook = PlaceholderCharacter.lifter
-    private var myPersona = Persona.energetic
+    /// My character, as I made it once the home says so; the stand-in lifter until then. Once I
+    /// 练了 a sport today it wears that sport's kit and loops its move (`TodayModel+Dress.swift`).
+    var player: CharacterPlayer?
+    private(set) var myLook = PlaceholderCharacter.lifter
+    private(set) var myPersona = Persona.energetic
+    /// What my character has on and loops, so it changes only when that does.
+    var worn: Worn?
+    /// Keeps my kit off while a 练了's cheer plays, by the 练了 that holds it (counted by
+    /// `dressHolds`); it goes on with a hop after the latest one's cheer.
+    var dressHeldBy: Int?
+    var dressHolds = 0
+    var holdsDress: Bool { dressHeldBy != nil }
+    /// When the hop into my kit is over: a tap before it would stop the change halfway.
+    var hopEnds: Date?
     private let store: TodayStore
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
@@ -101,8 +111,9 @@ public final class TodayModel {
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
-        posted: @escaping @MainActor () -> Void
+        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void
     ) {
+        pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -111,13 +122,7 @@ public final class TodayModel {
         self.photoSource = photoSource
         self.posted = posted
         litNight = defaults.string(forKey: Self.lightsKey)
-        player = Self.player(wearing: myLook, persona: myPersona)
-    }
-
-    private static func player(wearing look: Outfit, persona: Persona) -> CharacterPlayer? {
-        try? CharacterPlayer(
-            figure: PlaceholderCharacter.figure(wearing: look),
-            idle: PlaceholderCharacter.clip("idle", persona: persona, species: PlaceholderCharacter.species(of: look)))
+        dressMe(hop: false)
     }
 
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the
@@ -206,14 +211,15 @@ public final class TodayModel {
             let (look, persona) = (Outfit(character.look), Persona(character.look))
             if look != myLook || persona != myPersona {
                 (myLook, myPersona) = (look, persona)
-                player = Self.player(wearing: look, persona: persona)
+                (player, worn) = (nil, nil)
             }
         }
+        if !holdsDress || player == nil { dressMe(hop: false) }
         cast.update(home: home, scene: scene, phase: stagePhase)
     }
 
     var unavailable: Set<CheckInKind> {
-        store.myStatus.allowsDisclaimer ? [] : [.disclaimer]
+        store.myStatus.allowsDisclaimer && !store.restsToday ? [] : [.disclaimer]
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
@@ -243,7 +249,7 @@ public final class TodayModel {
 
     /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
     func patMate(_ id: MemberID) {
-        guard store.canPat(id), let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        guard store.canPat(id), !isChanging, let mate = cast.mates.first(where: { $0.id == id }) else { return }
         guard pats.pat(mate, mine: player) else { return }
         Task { try? await store.pat(id) }
     }
@@ -319,6 +325,11 @@ public final class TodayModel {
         do {
             // Posted or waiting to go out, it counts on the scene now.
             let outcome = try await store.post(draft)
+            // A 练了's kit goes on after its cheer.
+            if draft.kind == .trained {
+                dressHolds += 1
+                dressHeldBy = dressHolds
+            }
             placeSquad()
             step = .scene
             photos = []
@@ -345,23 +356,32 @@ public final class TodayModel {
         let post: CheckIn? = if case .posted(let checkIn) = saved { checkIn } else { nil }
         payoff = Payoff(kind: draft.kind, line: line, post: post)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        if draft.kind != .disclaimer,
-            let cheer = try? PlaceholderCharacter.clip(
+        let cheer =
+            draft.kind == .disclaimer
+            ? nil
+            : try? PlaceholderCharacter.clip(
                 "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
-        {
-            try? player?.play(cheer)
-        }
+        // A clip would stop a hop into the kit halfway, in the clothes on screen.
+        if let cheer, !isChanging { try? player?.play(cheer) }
         guard draft.kind == .trained else { return }
         // The big moment: my ring draws and closes, the squad turns and cheers, and only then
         // does the week's count flip up.
         celebrations += 1
         heldWeek = weekBefore
         let phase = stagePhase
+        let hold = dressHeldBy
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(Motion.ringFill))
             cast.cheerMe(at: phase)
             try? await Task.sleep(for: .seconds(Self.scoreDelay - Motion.ringFill))
             heldWeek = nil
+            // Then, the cheer over, I change into the sport's kit and train at it.
+            let rest = (cheer?.duration ?? 0) - Self.scoreDelay
+            if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+            // A later 练了 holds the kit until its own cheer is over.
+            guard dressHeldBy == hold else { return }
+            dressHeldBy = nil
+            dressMe(hop: true)
         }
     }
 }

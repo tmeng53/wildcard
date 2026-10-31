@@ -61,12 +61,11 @@ final class TodayUITests: XCTestCase {
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "16-today-trained-payoff")
+        tapMeInMyKit(in: app)
 
         checkIn.tap()
-        let disclaimer = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(disclaimer.waitForExistence(timeout: Self.wait))
-        disclaimer.tap()
-        XCTAssertFalse(app.buttons["disclaimer.post"].waitForExistence(timeout: 1), "请假 opened after training")
+        XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
+        XCTAssertFalse(app.buttons["today.capsule.disclaimer"].exists, "请假 offered after training")
         settle()
         keepScreenshot(named: "17-today-disclaimer-unavailable")
     }
@@ -236,7 +235,8 @@ final class TodayUITests: XCTestCase {
         capsule.tap()
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        XCTAssertEqual(caption.placeholderValue, "这顿很自律…")
+        // The caption is a text view whose placeholder is drawn over it and read as its label.
+        XCTAssertEqual(caption.label, "这顿很自律…")
         XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
         XCTAssertFalse(app.buttons["compose.photo.1"].exists, "one photo shows a cover choice")
         settle()
@@ -348,4 +348,18 @@ private func pickADayNotToday(in app: XCUIApplication) {
     XCTAssertTrue(app.buttons["squadcard.day.\(day)"].isSelected, "the tapped day isn't picked")
     let line = app.descendants(matching: .any).matching(identifier: "squadcard.dayLine").firstMatch.label
     XCTAssertTrue(line.hasPrefix(day == 0 ? "周一" : "周二"), "the line isn't the tapped day's: \(line)")
+}
+
+extension TodayUITests {
+    /// The cheer over, I hop into the sport's kit and train at it; a tap on me plays my prop's
+    /// own move.
+    fileprivate func tapMeInMyKit(in app: XCUIApplication) {
+        Thread.sleep(forTimeInterval: 2)
+        keepScreenshot(named: "16b-today-in-kit")
+        let myCharacter = app.buttons["today.me"]
+        XCTAssertTrue(myCharacter.waitForExistence(timeout: Self.wait), "my character isn't on the scene")
+        myCharacter.tap()
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "16c-today-tapped-me")
+    }
 }

@@ -1691,6 +1691,66 @@
         }
       }
     },
+    "第 %lld 周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week %lld"
+          }
+        }
+      }
+    },
+    "一周海报：一天一行，角色站在角落": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week poster: a row a day, the character in the corner"
+          }
+        }
+      }
+    },
+    "周一 跑步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mon Run"
+          }
+        }
+      }
+    },
+    "周二 力量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tue Strength"
+          }
+        }
+      }
+    },
+    "周三 休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wed Rest"
+          }
+        }
+      }
+    },
+    "每周训练 2/7 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training 2/7 days a week"
+          }
+        }
+      }
+    },
     "第 %lld 张，共 %lld 张": {
       "localizations": {
         "en": {

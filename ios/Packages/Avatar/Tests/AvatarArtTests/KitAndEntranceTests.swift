@@ -41,35 +41,40 @@ import Testing
     let kits = try PlaceholderCharacter.sportKits()
     let picks: [Sport: String] = [
         "swim": "swim", "surf": "swim", "run": "run", "hike": "run", "spin": "run", "strength": "strength",
-        "boxing": "strength", "tennis": "tennis", "badminton": "tennis", "climb": "climb", "ski": "warmup",
+        "boxing": "strength", "kettlebell": "kettlebell", "tennis": "tennis", "squash": "tennis",
+        "badminton": "badminton", "pickleball": "pickleball", "tableTennis": "pingpong", "climb": "climb",
+        "ski": "warmup",
         "yoga": "yoga", "matPilates": "yoga", "basketball": "warmup", "dance": "warmup", "dogWalk": "warmup",
     ]
     for (sport, kit) in picks {
         #expect(kits.kit(for: .sport(sport), in: Looks.sports).id == kit, "\(sport)")
     }
     #expect(kits.kit(for: .custom(try CustomSport("飞盘")), in: Looks.sports).id == "warmup")
-    #expect(kits.kits.map(\.id) == ["swim", "run", "strength", "tennis", "climb", "yoga", "warmup"])
+    #expect(
+        kits.kits.map(\.id) == [
+            "swim", "run", "strength", "tennis", "climb", "yoga", "kettlebell", "badminton", "pickleball", "pingpong",
+            "warmup",
+        ])
 }
 
-/// A kit changes the clothes it names and keeps the rest of the look: body, hair, face, and the
-/// colors of the slots it changes when the new variant can take them.
+/// A kit hands over its prop and keeps the rest of the look as saved: clothes and their colors,
+/// body, hair and face, so the character looks the same on every screen.
 @Test func aKitKeepsTheLook() throws {
     let kits = try PlaceholderCharacter.sportKits()
     let blue = try #require(RGBAColor(hex: "#2D5BA0"))
     let look = Outfit(
         [
             "body": "peach", "hair": "bob", "eyes": "sharp", "hat": "warmup-cap", "top": "warmup-tee",
-            "bottom": "warmup-leggings",
+            "bottom": "warmup-leggings", "shoes": "lap-runner", "prop": "dumbbell",
         ],
         colors: ["top": blue, "hair": try #require(RGBAColor(hex: "#2A2333"))])
-    let running = kits.kit(for: .sport("run"), in: Looks.sports).dress(look)
-    #expect(running.variants["top"] == "warmup-tank" && running.colors["top"] == blue)
-    #expect(running.variants["hat"] == "warmup-headband" && running.variants["shoes"] == "warmup-runner")
-    #expect(running.variants["prop"] == "stopwatch")
-    #expect(running.variants["hair"] == "bob" && running.variants["eyes"] == "sharp")
-    #expect(running.colors["hair"] == look.colors["hair"])
-    let climbing = kits.kit(for: .sport("climb"), in: Looks.sports).dress(look)
-    #expect(climbing.variants["hat"] == nil && climbing.variants["shoes"] == "moss-trail")
+    for kit in kits.kits {
+        var expected = look
+        if let prop = kit.prop { expected.variants["prop"] = prop }
+        #expect(kit.dress(look) == expected, "\(kit.id)")
+    }
+    #expect(kits.kit(for: .sport("run"), in: Looks.sports).dress(look).variants["prop"] == "bottle")
+    #expect(kits.kit(for: .sport("swim"), in: Looks.sports).dress(look).variants["prop"] == "goggles")
     #expect(kits.kit(for: .sport("ski"), in: Looks.sports).dress(look) == look)
 }
 
@@ -77,7 +82,7 @@ import Testing
     func decode(_ json: String) throws(AvatarError) -> SportKits {
         try SportKits.decode(Data(json.utf8))
     }
-    let kit = #"[{"id": "run", "wear": {}}]"#
+    let kit = #"[{"id": "run"}]"#
     #expect(throws: AvatarError.unknownKit("swim")) {
         try decode(
             #"{"version": 1, "kits": \#(kit), "categories": {"water": "swim"}, "sports": {}, "otherwise": "run"}"#)
@@ -93,6 +98,12 @@ import Testing
             #"{"version": 1, "kits": \#(kit), "categories": {}, "sports": {"parkour": "run"}, "otherwise": "run"}"#
         )
         .kit(for: .sport("parkour"), in: .empty).id == "run")
+    // A kit names only its prop: clothes are the member's own.
+    #expect(throws: AvatarError.self) {
+        try decode(
+            #"{"version": 1, "kits": [{"id": "run", "wear": {"top": "warmup-tank"}}], "categories": {}, "sports": {}, "otherwise": "run"}"#
+        )
+    }
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try decode(#"{"version": 2, "kits": [], "categories": {}, "sports": {}, "otherwise": "run"}"#)
     }
@@ -100,7 +111,7 @@ import Testing
 
 /// Every kit on every kind of character: the hop squashes down, where the kit goes on, and pops
 /// back up from that same squash to land where the kit's move starts; the move loops without a
-/// jump. Nothing leaves the canvas.
+/// jump (a hidden part, such as a prop put away, may end anywhere). Nothing leaves the canvas.
 @Test(arguments: Persona.allCases)
 func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let kits = try PlaceholderCharacter.sportKits()
@@ -117,7 +128,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
             #expect(figure.pose(out, at: out.clip.duration).parts[root].scaleY < 0.9)
             #expect(nearlyEqual(figure.pose(out, at: out.clip.duration), figure.pose(back, at: 0)))
             #expect(nearlyEqual(figure.pose(back, at: back.clip.duration), figure.restPose))
-            #expect(nearlyEqual(figure.pose(move, at: move.clip.duration - 1e-9), figure.pose(move, at: 0)))
+            #expect(
+                nearlyEqual(shown(figure.pose(move, at: move.clip.duration - 1e-9)), shown(figure.pose(move, at: 0))))
             for clip in [out, back, move] {
                 expectOnCanvas(figure, clip, for: clip.clip.duration, "\(kit.id) \(persona.rawValue) \(clip.clip.name)")
             }
@@ -125,13 +137,25 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     }
 }
 
+/// The run kit jogs with the tumbler and the warm-up keeps its own move; every other kit trains
+/// at the signature move of the prop it holds.
+@Test func kitsTrainAtTheirPropsMoves() throws {
+    let kits = try PlaceholderCharacter.sportKits()
+    let moves = try kits.kits.map { try PlaceholderCharacter.move(for: $0, persona: .energetic).name }
+    #expect(
+        moves == [
+            "goggles", "run", "dumbbell", "racket", "chalkbag", "yogamat", "kettlebell", "badminton", "pickleball",
+            "pingpong", "warmup",
+        ])
+}
+
 /// A deadpan character swims slower than an energetic one.
 @Test func personasPlayKitMovesAtTheirOwnTempo() throws {
     let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
     let deadpan = try PlaceholderCharacter.move(for: swim, persona: .deadpan)
     let energetic = try PlaceholderCharacter.move(for: swim, persona: .energetic)
-    #expect(abs(deadpan.duration - 1.3 / 0.7) < 1e-9)
-    #expect(abs(energetic.duration - 1.3 / 1.4) < 1e-9)
+    #expect(abs(deadpan.duration - 5.0 / 0.7) < 1e-9)
+    #expect(abs(energetic.duration - 5.0 / 1.4) < 1e-9)
 }
 
 /// 上场: the root carries the figure in from the right and up into the jump while the shadow

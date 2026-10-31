@@ -1,32 +1,133 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "%@ · %@": {
+      "comment": "A store on the shopping street: its Chinese name, then the sports it dresses.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "DEUCE CLUB": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEUCE CLUB"
+          }
+        }
+      }
+    },
+    "DEUCE CLUB 还没开门：网球、匹克球或壁球打卡 3 次开门。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEUCE CLUB isn't open yet: check in 3 tennis, pickleball or squash sessions to open it."
+          }
+        }
+      }
+    },
+    "HALF MOON": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HALF MOON"
+          }
+        }
+      }
+    },
+    "HALF MOON 还没开门：随便练什么，打卡 3 次就开门。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HALF MOON isn't open yet: check in any 3 workouts to open it."
+          }
+        }
+      }
+    },
+    "LAP NINE": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LAP NINE"
+          }
+        }
+      }
+    },
+    "LAP NINE 还没开门：跑步打卡 3 次开门。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LAP NINE isn't open yet: check in 3 runs to open it."
+          }
+        }
+      }
+    },
+    "MOSSWAY": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MOSSWAY"
+          }
+        }
+      }
+    },
+    "MOSSWAY 还没开门：徒步或攀岩打卡 3 次开门。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MOSSWAY isn't open yet: check in 3 hikes or climbs to open it."
+          }
+        }
+      }
+    },
+    "NO LOOK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO LOOK"
+          }
+        }
+      }
+    },
+    "NO LOOK 还没开门：篮球打卡 3 次开门。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO LOOK isn't open yet: check in 3 basketball sessions to open it."
+          }
+        }
+      }
+    },
+    "WARM-UP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WARM-UP"
+          }
+        }
+      }
+    },
     "三花": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Calico"
-          }
-        }
-      }
-    },
-    "上衣": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tops"
-          }
-        }
-      }
-    },
-    "下装": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bottoms"
           }
         }
       }
@@ -61,6 +162,16 @@
         }
       }
     },
+    "不看传球": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No-look pass"
+          }
+        }
+      }
+    },
     "中分": {
       "localizations": {
         "en": {
@@ -91,6 +202,16 @@
         }
       }
     },
+    "乒乓球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ping pong paddle"
+          }
+        }
+      }
+    },
     "人": {
       "localizations": {
         "en": {
@@ -107,6 +228,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save"
+          }
+        }
+      }
+    },
+    "做完半月式，再去喝一杯燕麦拿铁。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Half moon pose first, oat latte after."
+          }
+        }
+      }
+    },
+    "先热身，再上场。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm up, then step up."
           }
         }
       }
@@ -137,6 +278,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Create your Wildcard athlete"
+          }
+        }
+      }
+    },
+    "匹克球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pickleball paddle"
+          }
+        }
+      }
+    },
+    "半月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Half moon"
           }
         }
       }
@@ -241,6 +402,16 @@
         }
       }
     },
+    "商店街": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shopping street"
+          }
+        }
+      }
+    },
     "嘴巴": {
       "localizations": {
         "en": {
@@ -331,6 +502,16 @@
         }
       }
     },
+    "壶铃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kettlebell"
+          }
+        }
+      }
+    },
     "外卡水杯": {
       "localizations": {
         "en": {
@@ -401,12 +582,32 @@
         }
       }
     },
-    "帽子": {
+    "平分之后，才是真的比赛。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hats"
+            "value": "After deuce, the real match begins."
+          }
+        }
+      }
+    },
+    "平分俱乐部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deuce club"
+          }
+        }
+      }
+    },
+    "徒步 越野跑 攀岩": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiking, trail running, climbing"
           }
         }
       }
@@ -477,6 +678,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Undo"
+          }
+        }
+      }
+    },
+    "操场第九圈，才是今天真正开始的地方。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lap nine is where today really starts."
           }
         }
       }
@@ -621,6 +832,16 @@
         }
       }
     },
+    "泳镜": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swim goggles"
+          }
+        }
+      }
+    },
     "浓眉": {
       "localizations": {
         "en": {
@@ -647,6 +868,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Soft"
+          }
+        }
+      }
+    },
+    "热身社": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm-up club"
           }
         }
       }
@@ -721,6 +952,16 @@
         }
       }
     },
+    "瑜伽垫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yoga mat"
+          }
+        }
+      }
+    },
     "眉毛": {
       "localizations": {
         "en": {
@@ -737,6 +978,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Eyes"
+          }
+        }
+      }
+    },
+    "眼睛看左边，球已经到右边了。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eyes left, ball already right."
           }
         }
       }
@@ -781,12 +1032,72 @@
         }
       }
     },
+    "第九圈": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lap nine"
+          }
+        }
+      }
+    },
+    "篮球 排球": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basketball, volleyball"
+          }
+        }
+      }
+    },
     "红脸蛋": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Flushed"
+          }
+        }
+      }
+    },
+    "练什么都算": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any sport counts"
+          }
+        }
+      }
+    },
+    "网球 匹克球 壁球": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tennis, pickleball, squash"
+          }
+        }
+      }
+    },
+    "网球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tennis racket"
+          }
+        }
+      }
+    },
+    "羽毛球拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badminton racket"
           }
         }
       }
@@ -831,6 +1142,16 @@
         }
       }
     },
+    "苔径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moss trail"
+          }
+        }
+      }
+    },
     "荷兰兔": {
       "localizations": {
         "en": {
@@ -841,12 +1162,52 @@
         }
       }
     },
+    "营业中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
     "豆豆眼": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Dot eyes"
+          }
+        }
+      }
+    },
+    "走路 跑步 力量训练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walking, running, strength"
+          }
+        }
+      }
+    },
+    "跑步 走路": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running, walking"
+          }
+        }
+      }
+    },
+    "路不在地图上，在苔藓上。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The trail isn't on the map. It's on the moss."
           }
         }
       }
@@ -891,6 +1252,36 @@
         }
       }
     },
+    "还没开门": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not open yet"
+          }
+        }
+      }
+    },
+    "进店": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk in"
+          }
+        }
+      }
+    },
+    "进店挑衣服。灰色的店还没开门，点一下看怎么开。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walk into a store to pick clothes. Grey stores aren't open yet: tap one to see how it opens."
+          }
+        }
+      }
+    },
     "连帽卫衣": {
       "localizations": {
         "en": {
@@ -911,22 +1302,22 @@
         }
       }
     },
-    "配件": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Accessories"
-          }
-        }
-      }
-    },
     "金毛": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Golden"
+          }
+        }
+      }
+    },
+    "镁粉袋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chalk bag"
           }
         }
       }
@@ -957,16 +1348,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Freckles"
-          }
-        }
-      }
-    },
-    "鞋": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shoes"
           }
         }
       }

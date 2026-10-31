@@ -183,16 +183,6 @@
         }
       }
     },
-    "去设置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
-          }
-        }
-      }
-    },
     "周一": {
       "localizations": {
         "en": {
@@ -303,16 +293,6 @@
         }
       }
     },
-    "存好了，去相册看看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saved to Photos"
-          }
-        }
-      }
-    },
     "小目标写 1 到 8 个字就好": {
       "localizations": {
         "en": {
@@ -413,16 +393,6 @@
         }
       }
     },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
-          }
-        }
-      }
-    },
     "练了": {
       "localizations": {
         "en": {
@@ -459,16 +429,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Write my own"
-          }
-        }
-      }
-    },
-    "要先允许存到相册": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allow adding to Photos first"
           }
         }
       }

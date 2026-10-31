@@ -64,6 +64,13 @@ final class PatStage {
     nonisolated static let dotLands = PlaceholderCharacter.patContact - 0.1
     /// How long a tapped teammate's bubble stays up.
     nonisolated static let bubbleHold = 5.0
+    /// How long this stage's bubbles stay up: `bubbleHold`, or longer for UI tests, whose slow
+    /// simulators can spend 5 seconds on finding a bubble.
+    private let hold: Double
+
+    init(bubbleHold hold: Double = PatStage.bubbleHold) {
+        self.hold = hold
+    }
     /// How long after opening the home a teammate pats me.
     nonisolated static let patMeDelay = 1.0
     /// A tapped teammate's hop: how long, and how high in the rig's points at the stage's
@@ -73,9 +80,14 @@ final class PatStage {
     // MARK: Tapping a teammate
 
     /// A teammate was tapped: they hop, cheer if awake and not mid-sport, and their bubble says
-    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today).
+    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today). Tapped again while their
+    /// bubble is up, the bubble closes.
     func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) {
         guard pat == nil else { return }
+        if bubble?.mate == mate.id {
+            bubble = nil
+            return
+        }
         hops[mate.id] = now
         let pose = cast.stage.pose(of: mate.member, at: phase)
         switch pose {
@@ -90,7 +102,7 @@ final class PatStage {
         show(
             Bubble(
                 mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
-                id: nextBubble()), for: Self.bubbleHold)
+                id: nextBubble()), for: hold)
     }
 
     /// A tap anywhere else on the scene closes the bubble.
@@ -141,7 +153,7 @@ final class PatStage {
                             localized: "\($0.name ?? String(localized: "队友", bundle: .module.inAppLanguage)) 也拍了拍你",
                             bundle: .module.inAppLanguage)
                     },
-                    id: nextBubble()), for: Self.bubbleHold)
+                    id: nextBubble()), for: hold)
         }
         return true
     }

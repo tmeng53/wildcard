@@ -7,14 +7,15 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-/// The week as a 3:4 poster in the scene's color: who and which dates, the week's number, a
-/// swim lane a day, the member's character in the corner doing the scene's sport, the titles
-/// the weekly awards gave them as stickers (their 颁奖词 sit under the poster), and the week's
-/// 饮食小目标 and count along the bottom. Drawn at 360 × 480 points and scaled to fit, so the saved picture
-/// and the screen are the same drawing.
-struct WeekPoster: View {
+/// The week as the 出赛表's 3:4 poster (`WeekPoster`) in the scene's color: who and which dates,
+/// the week's number, a swim lane a day, the member's character in the corner doing the scene's
+/// sport, the titles the weekly awards gave them as stickers (their 颁奖词 sit under the poster),
+/// and the week's 饮食小目标 and count along the bottom. Drawn at 360 × 480 points and scaled to
+/// fit, so the saved picture and the screen are the same drawing.
+struct SchedulePoster: View {
     /// The poster's own size, in points; 3:4.
-    static let size = CGSize(width: 360, height: 480)
+    static let size = CGSize(width: layout.width ?? 0, height: layout.height)
+    static let layout = WeekPosterLayout.poster
 
     let content: PosterContent
     let player: CharacterPlayer?
@@ -27,65 +28,33 @@ struct WeekPoster: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Positions from the approved design, in poster points.
-    /// Where the lanes start, under the week's number.
-    private let lanesTop: Double = 150
-    /// The character's frame, its right edge just inside the poster's.
-    private let characterSize = CGSize(width: 132, height: 157)
-    /// The week's number sits so its baseline lands 140 points down.
-    private let weekNumberTop: Double = 12
     private let numberOpacity = 0.9
     /// The line over the first lane.
     private let lanesRule: Double = 2
     /// Each title sticker leans a little, like it was slapped on.
     private let stickerTilts: [Double] = [3, -2, 2]
     private let stickerHeight: Double = 28
-    /// The name and dates stop short of the title stickers.
-    private let titleWidth: Double = 200
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color(role: .bgAccent, in: theme)
+        WeekPoster(
+            title: "\(content.nickname) · \(ScheduleLabels.dates(content.weekStart, content.weekEnd))",
+            weekNumber: content.weekNumber, layout: Self.layout, fill: .bgAccent, ink: .bgCanvas
+        ) {
             PosterArt(theme: theme)
-                .allowsHitTesting(false)
-            header
+        } rows: {
             lanes
-                .offset(y: lanesTop)
+        } character: {
             character
+        } overlay: {
             stickers
+        } strip: {
             PosterBottomBar(content: content, theme: theme, onTapFuel: onTapFuel)
-                .frame(maxHeight: .infinity, alignment: .bottom)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
-        .foregroundStyle(ink)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        // The poster is a picture with a fixed layout: its type doesn't grow with Dynamic Type.
-        .dynamicTypeSize(.large)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: content)
     }
 
     /// White on the scene's color: the poster's ink, in every scene.
     private var ink: Color { Color(role: .bgCanvas, in: theme) }
-
-    // MARK: Header
-
-    private var header: some View {
-        ZStack(alignment: .topLeading) {
-            Text(verbatim: "\(content.nickname) · \(ScheduleLabels.dates(content.weekStart, content.weekEnd))")
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .lineLimit(1)
-                .frame(maxWidth: titleWidth, alignment: .leading)
-                .padding(.leading, Space.m + 2)
-                .padding(.top, Space.s + 2)
-                .accessibilityIdentifier("schedule.poster.title")
-            Text(verbatim: ScheduleLabels.week(content.weekNumber))
-                .typeStyle(TypeRamp.posterWeek)
-                .fixedSize()
-                .padding(.leading, Space.s + 2)
-                .padding(.top, weekNumberTop)
-                .allowsHitTesting(false)
-                .accessibilityLabel(Text("第 \(content.weekNumber) 周", bundle: .module))
-        }
-    }
 
     // MARK: Lanes
 
@@ -98,26 +67,18 @@ struct WeekPoster: View {
                 PosterLane(lane: lane, theme: theme, onTap: onTapLane)
             }
         }
-        .frame(width: Self.size.width)
     }
 
     // MARK: Character, titles
 
+    @ViewBuilder
     private var character: some View {
-        Group {
-            if let still {
-                CharacterCanvas(drawing: still.drawing, placements: still.placements)
-                    .aspectRatio(still.drawing.width / still.drawing.height, contentMode: .fit)
-            } else if let player {
-                CharacterView(player: player)
-            }
+        if let still {
+            CharacterCanvas(drawing: still.drawing, placements: still.placements)
+                .aspectRatio(still.drawing.width / still.drawing.height, contentMode: .fit)
+        } else if let player {
+            CharacterView(player: player)
         }
-        .frame(width: characterSize.width, height: characterSize.height)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-        .padding(.trailing, Space.xxs + 2)
-        .padding(.bottom, PosterBottomBar.height - Space.xxs)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
     private var stickers: some View {

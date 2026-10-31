@@ -4,15 +4,12 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-/// The poster's bottom bar: the week's 饮食小目标, a button next week, and the week's count.
+/// What the poster's bottom strip holds: the week's 饮食小目标, a button next week, and the
+/// week's count.
 struct PosterBottomBar: View {
-    static let height: Double = 44
-
     let content: PosterContent
     let theme: SceneTheme
     let onTapFuel: () -> Void
-
-    private let barShade = 0.16
 
     private var ink: Color { Color(role: .bgCanvas, in: theme) }
 
@@ -24,8 +21,6 @@ struct PosterBottomBar: View {
         }
         .padding(.leading, Space.s - 2)
         .padding(.trailing, Space.s)
-        .frame(width: WeekPoster.size.width, height: Self.height)
-        .background(Color(role: .fgDefault, in: theme).opacity(barShade))
     }
 
     private var fuelButton: some View {
@@ -43,7 +38,7 @@ struct PosterBottomBar: View {
             .padding(.horizontal, Space.s)
             .frame(height: Sizing.compactControl - Space.xxs)
             .background(open ? ink : Color.clear, in: Capsule())
-            .frame(minHeight: Self.height)
+            .frame(minHeight: WeekPosterLayout.stripHeight)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

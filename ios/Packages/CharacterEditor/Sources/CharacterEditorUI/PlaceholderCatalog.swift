@@ -3,8 +3,8 @@ import AvatarDomain
 import CharacterEditorDomain
 
 extension Catalog {
-    /// What the placeholder character's bundled art offers: the species, clothes and props in
-    /// its `editor.json`, every bundled hair and face part, and their preset colors.
+    /// What the placeholder character's bundled art offers: the species, stores, clothes and
+    /// props in its `editor.json`, every bundled hair and face part, and their preset colors.
     public static func placeholder() throws(AvatarError) -> Catalog {
         let choices = try PlaceholderCharacter.editorChoices()
         var variants = choices.wear.mapValues { $0.map(\.id) }
@@ -29,9 +29,14 @@ extension Catalog {
                 originals[slot, default: [:]][name] = tones.base
             }
         }
+        var storeOf: [String: String] = [:]
+        for piece in choices.wear.values.joined() {
+            storeOf[piece.id] = piece.store
+        }
         return Catalog(
             species: choices.species, variants: variants, props: choices.props, swatches: swatches,
             originals: originals,
-            defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) })
+            defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) },
+            stores: choices.stores, storeOf: storeOf)
     }
 }

@@ -39,7 +39,8 @@ struct PosterLane: View {
             row
                 .foregroundStyle(isHeld ? Color(role: .fgAccent, in: theme) : ink)
                 .padding(.horizontal, Space.m)
-                .frame(width: WeekPoster.size.width, height: Self.height)
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.height)
                 .background { fill }
                 .overlay(alignment: .bottom) {
                     LaneRope(theme: theme)

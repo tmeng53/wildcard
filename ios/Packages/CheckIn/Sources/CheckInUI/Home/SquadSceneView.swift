@@ -29,6 +29,8 @@ struct SquadSceneView: View {
     /// Whether I can still pat a teammate today; else their bubble says 「拍过了」.
     let canPat: (MemberID) -> Bool
     let tapMate: (MemberID) -> Void
+    /// I tapped my own character: it plays its signature move.
+    let tapMe: () -> Void
     let patMate: (MemberID) -> Void
     /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
     var arrival: TodayModel.Arrival?
@@ -67,8 +69,8 @@ struct SquadSceneView: View {
                     .onTapGesture { pats.dismissBubble() }
                 cast(unit: unit)
                 if phase == .night {
-                    NightLayer(lightsOn: lightsOn, pull: playingPull)
-                        .frame(width: proxy.size.width, height: Stage.height * unit)
+                    NightLayer(lightsOn: lightsOn, pull: playingPull, artHeight: Stage.height * unit)
+                        .frame(width: proxy.size.width, height: max(proxy.size.height, Stage.height * unit))
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)
@@ -113,12 +115,17 @@ struct SquadSceneView: View {
                 ForEach(figures) { figure in
                     StageFigure(figure: figure, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
                         .onTapGesture {
-                            if arrival == nil, case .mate(let id) = figure.id { tapMate(id) }
+                            guard arrival == nil else { return }
+                            switch figure.id {
+                            case .mate(let id): tapMate(id)
+                            case .mine: tapMe()
+                            }
                         }
-                        // Each teammate is a button by their nickname, for VoiceOver and UI tests.
+                        // Each teammate is a button by their nickname, and I am one by 我, for
+                        // VoiceOver and UI tests.
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(Text(verbatim: nickname(of: figure.id) ?? ""))
-                        .accessibilityIdentifier("today.mate")
+                        .accessibilityIdentifier(figure.id == .mine ? "today.me" : "today.mate")
                         .accessibilityAddTraits(.isButton)
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
@@ -193,9 +200,9 @@ struct SquadSceneView: View {
         return arrival.elapsed(at: date) - arrival.drop.start(of: arrival.index(of: member))
     }
 
-    /// A teammate's nickname; nil for me and for anyone without one yet.
+    /// A teammate's nickname, or 我 for me; nil for anyone without one yet.
     private func nickname(of id: Placed.ID) -> String? {
-        guard case .mate(let member) = id else { return nil }
+        guard case .mate(let member) = id else { return String(localized: "我", bundle: .module.inAppLanguage) }
         return cast.mates.first { $0.id == member }?.name
     }
 
@@ -205,16 +212,6 @@ struct SquadSceneView: View {
         let elapsed = date.timeIntervalSince(start)
         guard elapsed >= 0, elapsed < PatStage.hop.duration else { return 0 }
         return sin(elapsed / PatStage.hop.duration * .pi) * PatStage.hop.height * scale / 0.25
-    }
-}
-
-/// The design's stage: 390 (`StageLayout.width`) by 844 points, the screen it was drawn for.
-enum Stage {
-    static let height = 844.0
-
-    /// The venue's parts people stand behind, by depth: the tennis net.
-    static func fronts(of scene: SceneTheme) -> [Double] {
-        scene == .tennis ? [388.5] : []
     }
 }
 
@@ -381,20 +378,6 @@ private struct SignCard: View {
     /// The card as the design draws it in the rig's points: 108 by 58, corners of 9.
     private var card: RoundedRectangle {
         RoundedRectangle(cornerSize: CGSize(width: 9 * scale, height: 9 * scale))
-    }
-}
-#endif
-
-#if os(iOS)
-extension StageStatus {
-    /// The ring around the head and under the feet: closed once checked in (练了 or 请假条), grey
-    /// with the moon on a planned rest day, open otherwise.
-    var ring: RingStatus {
-        switch self {
-        case .trained, .disclaimer: .done
-        case .restDay: .restDay
-        case .notYet: .open
-        }
     }
 }
 #endif

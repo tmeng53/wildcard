@@ -11,7 +11,7 @@ final class ScheduleUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-tab", "schedule",
-            "-uitest-thursday", "-uitest-save-poster",
+            "-uitest-thursday",
         ]
         if let scene { app.launchArguments += ["-uitest-scene", scene] }
         app.launch()
@@ -151,15 +151,11 @@ final class ScheduleUITests: XCTestCase {
         app.swipeDown()
         settle()
 
+        // 存图 flashes the poster, then opens the share sheet on its picture.
         app.buttons["schedule.save"].tap()
-        let saved = find(app, "schedule.saved")
-        XCTAssertTrue(saved.waitForExistence(timeout: 10), "存图 didn't say it saved")
-        // The note shows by 存图, never below the fold under the award cards.
-        XCTAssertGreaterThanOrEqual(
-            saved.frame.minY, app.buttons["schedule.save"].frame.maxY, "the note isn't under 存图")
-        XCTAssertLessThanOrEqual(
-            saved.frame.maxY, find(app, "schedule.poster").frame.minY, "the note isn't over the poster")
-        keepScreenshot(named: "68-schedule-saved")
+        let share = app.otherElements["ActivityListView"]
+        XCTAssertTrue(share.waitForExistence(timeout: 10), "存图 opened no share sheet")
+        keepScreenshot(named: "68-schedule-share")
     }
 
     /// The poster on every other scene, for comparing its props and the character's sport with

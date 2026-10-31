@@ -42,8 +42,11 @@ const now = new Date('2026-10-21T20:00:00.000Z');
 // Members' time zones, as the members module would give them.
 const zones = new Map<MemberId, string>();
 const plans = createPostgresWeeklyPlanStore(db);
+/** When every member joined unless a test says otherwise: weeks before the weeks tested. */
+const JOINED = new Date('2026-09-01T00:00:00.000Z');
+
 /** The check-ins module with its clock at `moment`. */
-const checkInsAt = (moment: Date) =>
+const checkInsAt = (moment: Date, joinedAt = JOINED) =>
   createCheckIns({
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
@@ -54,7 +57,7 @@ const checkInsAt = (moment: Date) =>
     photos: { exists: () => Promise.reject(new Error('unused')) },
     calendarOf: (member) => {
       const timeZone = zones.get(member);
-      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt: moment });
+      return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt });
     },
     clock: () => moment,
   });
@@ -293,6 +296,15 @@ describe('a squad’s today', () => {
       // LA: Saturday. Tokyo: Monday only, since Saturday was in Tokyo's last week. Planned: 5 + 4.
       squadWeek: { trainedDays: 2, plannedDays: 9 },
     });
+  });
+
+  it('counts the planned days from the day a member joined', async () => {
+    // Joined today, Wednesday: the default plan's Thursday to Saturday are left to train.
+    const joinedToday = checkInsAt(now, now);
+    const me = await newMember('America/Los_Angeles');
+    const squad = await newSquad(me);
+    const today = await joinedToday.squadToday({ viewer: me, squad });
+    expect([today.myWeek.plannedDays, today.squadWeek.plannedDays]).toStrictEqual([3, 3]);
   });
 
   it('shows a squad only to its members', async () => {
