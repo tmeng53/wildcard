@@ -133,14 +133,15 @@ struct MyWeekPage: View {
 extension MyWeekPage {
     /// Over the character's head, just clear of it. Where that would reach the count, the bubble
     /// comes down to just under the count, still over the head, and only where even that would
-    /// cover the face (a short screen) does it go beside the head, on the side with more room.
+    /// cover the face (a short screen) does it go beside the head, on the side with more room,
+    /// and there too no higher than just under the count.
     fileprivate func bubbleSpot(feet: CGPoint, width: Double) -> CGPoint {
         let highest = titleBottom + Space.s + Self.bubbleHalfHeight
         let over = feet.y - Self.bubbleOverHead
         if over >= highest { return CGPoint(x: feet.x, y: over) }
         if highest <= feet.y - Self.lowestOverHead { return CGPoint(x: feet.x, y: highest) }
         let side = feet.x < width / 2 ? 1.0 : -1.0
-        return CGPoint(x: feet.x + side * Self.bubbleBeside, y: feet.y - Self.bubbleBesideHead)
+        return CGPoint(x: feet.x + side * Self.bubbleBeside, y: max(feet.y - Self.bubbleBesideHead, highest))
     }
 
     /// The bubble's centre above the feet: just over the head (the character stands about 130

@@ -85,12 +85,10 @@ struct DayPicks: View {
                     }
                     .accessibilityIdentifier("schedule.pick.\(activity.key)")
                 }
-                if store.board?.offersRest == true {
-                    PickPill(Text("休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
-                        onRest()
-                    }
-                    .accessibilityIdentifier("schedule.pick.rest")
+                PickPill(Text("休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
+                    onRest()
                 }
+                .accessibilityIdentifier("schedule.pick.rest")
                 PickPill(Text("更多", bundle: .module), systemImage: "magnifyingglass", isSelected: false) {
                     onMore()
                 }

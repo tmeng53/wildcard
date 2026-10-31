@@ -191,12 +191,12 @@
         }
       }
     },
-    "外卡运动员、昵称和口头禅会删掉": {
+    "外卡运动员和昵称会删掉": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your Wildcard athlete, nickname and catchphrase go"
+            "value": "Your Wildcard athlete and nickname go"
           }
         }
       }
