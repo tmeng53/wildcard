@@ -14,7 +14,7 @@ import type { WeekStart } from './schedule.js';
 const StoryDay = z.strictObject({
   day: z.iso.date(),
   kind: z.enum(['trained', 'rest', 'disclaimer', 'none']),
-  /** For a trained day: its first 练了's sport key, or the name of the member's own. */
+  /** For a trained day: its first 练了's listed sport; missing for a sport of the member's own. */
   sport: z.string().optional(),
 });
 export type StoryDay = z.infer<typeof StoryDay>;

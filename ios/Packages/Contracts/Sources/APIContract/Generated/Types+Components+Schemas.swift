@@ -4912,7 +4912,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryDay/kind`.
             public var kind: Components.Schemas.StoryDay.KindPayload
-            /// For a trained day: its first 练了’s sport key, or the name of the member’s own.
+            /// For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryDay/sport`.
             public var sport: Swift.String?
@@ -4921,7 +4921,7 @@ extension Components {
             /// - Parameters:
             ///   - day:
             ///   - kind: A 练了 wins over a 请假条, which wins over a planned rest day.
-            ///   - sport: For a trained day: its first 练了’s sport key, or the name of the member’s own.
+            ///   - sport: For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.
             public init(
                 day: Swift.String,
                 kind: Components.Schemas.StoryDay.KindPayload,

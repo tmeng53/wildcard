@@ -18,7 +18,7 @@ import type { PlanDay } from './weekly-plan.js';
 export interface StoryDay {
   readonly day: LocalDay;
   readonly kind: 'trained' | 'rest' | 'disclaimer' | 'none';
-  /** For a trained day: its first 练了's sport key, or the name of the member's own. */
+  /** For a trained day: its first 练了's listed sport; missing for a sport of the member's own. */
   readonly sport?: string;
 }
 
@@ -145,7 +145,9 @@ function dayOf(
   const posts = checkIns.filter((each) => each.day === day);
   const trained = posts.find((each) => each.kind === 'trained');
   if (trained?.kind === 'trained') {
-    return { day, kind: 'trained', sport: trained.training.customSport ?? trained.training.sport };
+    // A sport of the member's own is their words, which the frozen 战报 keeps only with the post.
+    const { sport } = trained.training;
+    return sport === 'custom' ? { day, kind: 'trained' } : { day, kind: 'trained', sport };
   }
   if (posts.some(({ kind }) => kind === 'disclaimer')) return { day, kind: 'disclaimer' };
   if (planned?.kind === 'rest') return { day, kind: 'rest' };

@@ -109,17 +109,19 @@ async function checkedIn(
     day,
     audience,
     hour = 18,
+    payload = payloads[kind],
   }: {
     readonly kind: CheckInRecord['kind'];
     readonly day: string;
     readonly audience: readonly SquadId[];
     readonly hour?: number;
+    readonly payload?: object;
   },
 ) {
   const id = randomUUID();
   const createdAt = `${day}T${String(hour).padStart(2, '0')}:00:00.000Z`;
   await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
-    values (${id}, ${member}, ${day}, ${createdAt}, ${kind}, ${JSON.stringify(payloads[kind])})`.execute(
+    values (${id}, ${member}, ${day}, ${createdAt}, ${kind}, ${JSON.stringify(payload)})`.execute(
     db,
   );
   for (const [index, squad] of audience.entries()) {
@@ -439,5 +441,24 @@ describe('a squad’s week for its awards', () => {
       members: [quiet],
     });
     expect(Object.keys(pages)).toStrictEqual(['members']);
+  });
+
+  it('keeps a sport of the member’s own off the days, as its name is their words', async () => {
+    const own = await newMember();
+    const squad = await newSquad(own);
+    await checkedIn(own, {
+      kind: 'trained',
+      day: '2026-10-20',
+      audience: [squad],
+      payload: { version: 1, sport: 'custom', customSport: '飞盘' },
+    });
+    const { pages } = await checkIns.squadWeekCheckIns({
+      squad,
+      weekStart: week,
+      before,
+      members: [own],
+    });
+    expect(pages.members[0]?.days[1]).toStrictEqual({ day: '2026-10-20', kind: 'trained' });
+    expect(pages.members[0]?.trainedDays).toBe(1);
   });
 });

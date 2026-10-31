@@ -107,7 +107,7 @@ const StoryDay = z
     }),
     sport: z.string().optional().meta({
       description:
-        'For a trained day: its first 练了’s sport key, or the name of the member’s own.',
+        'For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.',
     }),
   })
   .openapi('StoryDay');
