@@ -88,6 +88,8 @@ if want api && [ -f api/package.json ]; then
   pnpm --dir api lint
   pnpm --dir api typecheck
   pnpm --dir api boundaries
+  # Installed app builds must still read every reply: no breaking change to openapi.json.
+  scripts/api-compat.sh
   # The tests query local Supabase's database, sign members up through its Auth and upload to
   # its Storage, so they need `supabase start`. A subshell keeps the status variables out of the
   # rest of this script.

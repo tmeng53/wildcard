@@ -8,6 +8,12 @@
             "state": "translated",
             "value": "Next"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一步"
+          }
         }
       }
     },
@@ -17,6 +23,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "No photo"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不加照片"
           }
         }
       }
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "Anime hero"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中二"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Why no workout today?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "為什麼沒練？"
           }
         }
       }
@@ -48,6 +72,12 @@
             "state": "translated",
             "value": "Today's day-off note"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日假單"
+          }
         }
       }
     },
@@ -57,6 +87,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
           }
         }
       }
@@ -68,6 +104,12 @@
             "state": "translated",
             "value": "Go go go!"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "衝衝衝！"
+          }
         }
       }
     },
@@ -77,6 +119,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Worked till ten. My legs clocked out too"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加班到十點，腿說它也想下班"
           }
         }
       }
@@ -88,6 +136,12 @@
             "state": "translated",
             "value": "Post"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發布"
+          }
         }
       }
     },
@@ -97,6 +151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Post day-off note"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送出假單"
           }
         }
       }
@@ -108,6 +168,12 @@
             "state": "translated",
             "value": "Unhinged"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發瘋"
+          }
         }
       }
     },
@@ -117,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Text 988"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傳簡訊給 988"
           }
         }
       }
@@ -128,6 +200,12 @@
             "state": "translated",
             "value": "Cancel"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
         }
       }
     },
@@ -137,6 +215,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nice"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以"
           }
         }
       }
@@ -148,6 +232,12 @@
             "state": "translated",
             "value": "Look at me!"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看我！"
+          }
         }
       }
     },
@@ -157,6 +247,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skip Leg Day Club"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週三不練腿俱樂部"
           }
         }
       }
@@ -168,6 +264,12 @@
             "state": "translated",
             "value": "In denial"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "嘴硬"
+          }
         }
       }
     },
@@ -177,6 +279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Confess it…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坦白從寬…"
           }
         }
       }
@@ -188,6 +296,12 @@
             "state": "translated",
             "value": "Cover"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "封面"
+          }
         }
       }
     },
@@ -197,6 +311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡"
           }
         }
       }
@@ -208,6 +328,12 @@
             "state": "translated",
             "value": "Call 988"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打給 988"
+          }
         }
       }
     },
@@ -217,6 +343,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "New set"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換一組"
           }
         }
       }
@@ -228,6 +360,12 @@
             "state": "translated",
             "value": "Funny"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搞笑"
+          }
         }
       }
     },
@@ -237,6 +375,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "More"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多"
           }
         }
       }
@@ -248,6 +392,12 @@
             "state": "translated",
             "value": "Recents"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近的運動"
+          }
         }
       }
     },
@@ -257,6 +407,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "If you're in immediate danger, call 911."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有緊急危險請直接撥 911。"
           }
         }
       }
@@ -268,6 +424,12 @@
             "state": "translated",
             "value": "Didn't go through. Tap Post again."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒送出去，再點一次發布"
+          }
         }
       }
     },
@@ -277,6 +439,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Didn't go through. Tap Check in again."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒送出去，再點一次打卡"
           }
         }
       }
@@ -288,6 +456,12 @@
             "state": "translated",
             "value": "I'm crying"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "淚目了"
+          }
         }
       }
     },
@@ -297,6 +471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Idea: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靈感：%@"
           }
         }
       }
@@ -308,6 +488,12 @@
             "state": "translated",
             "value": "Idea: random"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靈感：隨機"
+          }
         }
       }
     },
@@ -317,6 +503,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show it off…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "炫耀一下成果…"
           }
         }
       }
@@ -328,6 +520,12 @@
             "state": "translated",
             "value": "Use my words"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改回我寫的"
+          }
         }
       }
     },
@@ -337,6 +535,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photo %lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %lld 張照片"
           }
         }
       }
@@ -348,6 +552,12 @@
             "state": "translated",
             "value": "Make up an excuse…"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找個藉口吧…"
+          }
         }
       }
     },
@@ -357,6 +567,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Write a few"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "幫我寫"
           }
         }
       }
@@ -368,6 +584,12 @@
             "state": "translated",
             "value": "Edit"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯"
+          }
         }
       }
     },
@@ -377,6 +599,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "988 works in the US and Canada, 24 hours a day, for free. The US line can bring in a Chinese interpreter."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "美國和加拿大都能撥 988，24 小時，免費。美國的專線可以要求中文口譯。"
           }
         }
       }
@@ -388,6 +616,12 @@
             "state": "translated",
             "value": "Make it the cover"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設為封面"
+          }
         }
       }
     },
@@ -397,6 +631,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Day off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "假單"
           }
         }
       }
@@ -408,6 +648,12 @@
             "state": "translated",
             "value": "Sport"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運動"
+          }
         }
       }
     },
@@ -417,6 +663,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "No joke for this one. If things are really hard lately, talk to someone."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這則先不寫梗了。最近如果真的很難受，找個人聊聊吧。"
           }
         }
       }
@@ -428,6 +680,12 @@
             "state": "translated",
             "value": "Disciplined, this one…"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這餐很自律…"
+          }
         }
       }
     },
@@ -438,6 +696,12 @@
             "state": "translated",
             "value": "Style"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "風格"
+          }
         }
       }
     },
@@ -447,6 +711,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "(quietly) go"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "（小聲）加油"
           }
         }
       }
@@ -465,6 +735,12 @@
             "state": "translated",
             "value": "%1$@ %2$lld"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld"
+          }
         }
       }
     },
@@ -474,6 +750,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pat"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍一拍"
           }
         }
       }
@@ -485,6 +767,12 @@
             "state": "translated",
             "value": "Patted"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍過了"
+          }
         }
       }
     },
@@ -494,6 +782,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Teammate"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊友"
           }
         }
       }
@@ -505,6 +799,12 @@
             "state": "translated",
             "value": "%@ patted you"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@拍了拍你"
+          }
         }
       }
     },
@@ -515,12 +815,24 @@
             "state": "translated",
             "value": "%@ patted you too"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也拍了拍你"
+          }
         }
       }
     },
     "%@ · %@": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ · %2$@"
@@ -535,6 +847,12 @@
             "state": "translated",
             "value": "Asleep"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "睡著了"
+          }
         }
       }
     },
@@ -544,6 +862,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 中"
           }
         }
       }
@@ -555,6 +879,12 @@
             "state": "translated",
             "value": "Trained today"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天練了"
+          }
         }
       }
     },
@@ -564,6 +894,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resting today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天休息"
           }
         }
       }
@@ -575,6 +911,12 @@
             "state": "translated",
             "value": "Rest day"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天是休息日"
+          }
         }
       }
     },
@@ -584,6 +926,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resting, as planned"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照計畫休息"
           }
         }
       }
@@ -595,6 +943,12 @@
             "state": "translated",
             "value": "Not checked in yet"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天還沒打卡"
+          }
         }
       }
     },
@@ -604,6 +958,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Millie"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小米"
           }
         }
       }
@@ -615,6 +975,12 @@
             "state": "translated",
             "value": "Bean"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "豆豆"
+          }
         }
       }
     },
@@ -624,6 +990,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "David"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大衛"
           }
         }
       }
@@ -635,6 +1007,12 @@
             "state": "translated",
             "value": "Jay"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阿傑"
+          }
         }
       }
     },
@@ -644,6 +1022,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Minutes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時長 · 分鐘"
           }
         }
       }
@@ -655,6 +1039,12 @@
             "state": "translated",
             "value": "Other"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他"
+          }
         }
       }
     },
@@ -664,6 +1054,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Minutes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分鐘"
           }
         }
       }
@@ -675,6 +1071,12 @@
             "state": "translated",
             "value": "%lld min"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 分鐘"
+          }
         }
       }
     },
@@ -684,6 +1086,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tonight's recap"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日賽況"
           }
         }
       }
@@ -695,6 +1103,12 @@
             "state": "translated",
             "value": "Tonight's recap, not seen yet"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日賽況，還沒看"
+          }
         }
       }
     },
@@ -704,6 +1118,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Squad's recharging today. See you tomorrow"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天小隊在養精蓄銳，明天見"
           }
         }
       }
@@ -715,6 +1135,12 @@
             "state": "translated",
             "value": "Clean meals %lld · Cheat meals %lld"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康餐 %1$lld · 放縱餐 %2$lld"
+          }
         }
       }
     },
@@ -724,6 +1150,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clean meal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康餐"
           }
         }
       }
@@ -735,6 +1167,12 @@
             "state": "translated",
             "value": "Cheat meal"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放縱餐"
+          }
         }
       }
     },
@@ -744,6 +1182,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rest day"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "休息日"
           }
         }
       }
@@ -755,6 +1199,12 @@
             "state": "translated",
             "value": "Hide"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起"
+          }
         }
       }
     },
@@ -764,6 +1214,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Me"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我"
           }
         }
       }
@@ -775,6 +1231,12 @@
             "state": "translated",
             "value": "Lights on"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開燈"
+          }
         }
       }
     },
@@ -784,6 +1246,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lights off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關燈"
           }
         }
       }
@@ -795,6 +1263,12 @@
             "state": "translated",
             "value": "…who turned the lights on"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "……誰開的燈"
+          }
         }
       }
     },
@@ -804,6 +1278,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Who's that?!"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "誰啊！"
           }
         }
       }
@@ -815,6 +1295,12 @@
             "state": "translated",
             "value": "…so bright"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…好亮"
+          }
         }
       }
     },
@@ -824,6 +1310,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "My beauty sleep!!"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的美容覺！！"
           }
         }
       }
@@ -835,6 +1327,12 @@
             "state": "translated",
             "value": "Off, off, off"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關掉關掉"
+          }
         }
       }
     },
@@ -844,6 +1342,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$lld min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld 分鐘"
           }
         }
       }
@@ -855,6 +1359,12 @@
             "state": "translated",
             "value": "Training day"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "訓練日"
+          }
         }
       }
     },
@@ -864,6 +1374,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Day off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假了"
           }
         }
       }

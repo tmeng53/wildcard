@@ -9,12 +9,24 @@
             "state": "translated",
             "value": "%1$@ · %2$@"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
         }
       }
     },
     "DEUCE CLUB": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEUCE CLUB"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "DEUCE CLUB"
@@ -29,12 +41,24 @@
             "state": "translated",
             "value": "DEUCE CLUB isn't open yet: check in 3 tennis, pickleball or squash sessions to open it."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEUCE CLUB 還沒開門：網球、匹克球或壁球打卡 3 次就開門。"
+          }
         }
       }
     },
     "HALF MOON": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HALF MOON"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "HALF MOON"
@@ -49,12 +73,24 @@
             "state": "translated",
             "value": "HALF MOON isn't open yet: check in any 3 workouts to open it."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HALF MOON 還沒開門：練什麼都行，打卡 3 次就開門。"
+          }
         }
       }
     },
     "LAP NINE": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LAP NINE"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "LAP NINE"
@@ -69,12 +105,24 @@
             "state": "translated",
             "value": "LAP NINE isn't open yet: check in 3 runs to open it."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LAP NINE 還沒開門：跑步打卡 3 次就開門。"
+          }
         }
       }
     },
     "MOSSWAY": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MOSSWAY"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "MOSSWAY"
@@ -89,12 +137,24 @@
             "state": "translated",
             "value": "MOSSWAY isn't open yet: check in 3 hikes or climbs to open it."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MOSSWAY 還沒開門：健行或攀岩打卡 3 次就開門。"
+          }
         }
       }
     },
     "NO LOOK": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO LOOK"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "NO LOOK"
@@ -109,12 +169,24 @@
             "state": "translated",
             "value": "NO LOOK isn't open yet: check in 3 basketball sessions to open it."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO LOOK 還沒開門：籃球打卡 3 次就開門。"
+          }
         }
       }
     },
     "WARM-UP": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WARM-UP"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "WARM-UP"
@@ -129,6 +201,12 @@
             "state": "translated",
             "value": "Calico"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三花"
+          }
         }
       }
     },
@@ -138,6 +216,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "No hat"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不戴"
           }
         }
       }
@@ -149,6 +233,12 @@
             "state": "translated",
             "value": "No glasses"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不戴眼鏡"
+          }
         }
       }
     },
@@ -158,6 +248,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不拿"
           }
         }
       }
@@ -169,6 +265,12 @@
             "state": "translated",
             "value": "No-look pass"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不看人傳球"
+          }
         }
       }
     },
@@ -178,6 +280,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Curtains"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中分"
           }
         }
       }
@@ -189,6 +297,12 @@
             "state": "translated",
             "value": "Bun"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丸子頭"
+          }
         }
       }
     },
@@ -198,6 +312,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Almond eyes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丹鳳眼"
           }
         }
       }
@@ -209,6 +329,12 @@
             "state": "translated",
             "value": "Ping pong paddle"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌球拍"
+          }
         }
       }
     },
@@ -218,6 +344,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Person"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人"
           }
         }
       }
@@ -229,6 +361,12 @@
             "state": "translated",
             "value": "Save"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "儲存"
+          }
         }
       }
     },
@@ -238,6 +376,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Half moon pose first, oat latte after."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "做完半月式，再去喝一杯燕麥拿鐵。"
           }
         }
       }
@@ -249,6 +393,12 @@
             "state": "translated",
             "value": "Warm up, then step up."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先熱身，再上場。"
+          }
         }
       }
     },
@@ -258,6 +408,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rabbit"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "兔子"
           }
         }
       }
@@ -269,6 +425,12 @@
             "state": "translated",
             "value": "Worried"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "八字眉"
+          }
         }
       }
     },
@@ -278,6 +440,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Create your Wildcard athlete"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建立你的外卡運動員"
           }
         }
       }
@@ -289,6 +457,12 @@
             "state": "translated",
             "value": "Pickleball paddle"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹克球拍"
+          }
         }
       }
     },
@@ -298,6 +472,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Half moon"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "半月"
           }
         }
       }
@@ -309,6 +489,12 @@
             "state": "translated",
             "value": "Curls"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "捲髮"
+          }
         }
       }
     },
@@ -318,6 +504,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Original"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原色"
           }
         }
       }
@@ -329,6 +521,12 @@
             "state": "translated",
             "value": "Space buns"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雙丸子"
+          }
         }
       }
     },
@@ -338,6 +536,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pigtails"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雙馬尾"
           }
         }
       }
@@ -349,6 +553,12 @@
             "state": "translated",
             "value": "Hair"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "髮型"
+          }
         }
       }
     },
@@ -358,6 +568,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
           }
         }
       }
@@ -369,6 +585,12 @@
             "state": "translated",
             "value": "Grin"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "咧嘴笑"
+          }
         }
       }
     },
@@ -378,6 +600,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Husky"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "哈士奇"
           }
         }
       }
@@ -389,6 +617,12 @@
             "state": "translated",
             "value": "Dumbbell"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啞鈴"
+          }
         }
       }
     },
@@ -398,6 +632,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Oh"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "喔"
           }
         }
       }
@@ -409,6 +649,12 @@
             "state": "translated",
             "value": "Shopping street"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店街"
+          }
         }
       }
     },
@@ -418,6 +664,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mouth"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "嘴巴"
           }
         }
       }
@@ -429,6 +681,12 @@
             "state": "translated",
             "value": "Sleepy eyes"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "睏睏眼"
+          }
         }
       }
     },
@@ -438,6 +696,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Round frames"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圓框"
           }
         }
       }
@@ -449,6 +713,12 @@
             "state": "translated",
             "value": "Round eyes"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圓眼"
+          }
         }
       }
     },
@@ -458,6 +728,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Crew tee"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圓領短T"
           }
         }
       }
@@ -469,6 +745,12 @@
             "state": "translated",
             "value": "Smirk"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壞笑"
+          }
         }
       }
     },
@@ -478,6 +760,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lop"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "垂耳兔"
           }
         }
       }
@@ -489,6 +777,12 @@
             "state": "translated",
             "value": "Leggings"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本款緊身褲"
+          }
         }
       }
     },
@@ -498,6 +792,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Runners"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本款慢跑鞋"
           }
         }
       }
@@ -509,6 +809,12 @@
             "state": "translated",
             "value": "Kettlebell"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壺鈴"
+          }
         }
       }
     },
@@ -518,6 +824,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wildcard tumbler"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外卡隨行杯"
           }
         }
       }
@@ -529,6 +841,12 @@
             "state": "translated",
             "value": "Tuxedo"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "乳牛貓"
+          }
         }
       }
     },
@@ -538,6 +856,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好了"
           }
         }
       }
@@ -549,6 +873,12 @@
             "state": "translated",
             "value": "Buzz cut"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平頭"
+          }
         }
       }
     },
@@ -558,6 +888,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "That's me"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就這樣"
           }
         }
       }
@@ -569,6 +905,12 @@
             "state": "translated",
             "value": "Ragdoll"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "布偶貓"
+          }
         }
       }
     },
@@ -578,6 +920,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Canvas shoes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帆布鞋"
           }
         }
       }
@@ -589,6 +937,12 @@
             "state": "translated",
             "value": "After deuce, the real match begins."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平分之後，才是真正的比賽。"
+          }
         }
       }
     },
@@ -598,6 +952,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deuce club"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平分俱樂部"
           }
         }
       }
@@ -609,6 +969,12 @@
             "state": "translated",
             "value": "Hiking, trail running, climbing"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健行 越野跑 攀岩"
+          }
         }
       }
     },
@@ -618,6 +984,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Smile"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "微笑"
           }
         }
       }
@@ -629,6 +1001,12 @@
             "state": "translated",
             "value": "Persona"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "個性"
+          }
         }
       }
     },
@@ -638,6 +1016,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Drama"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "戲精"
           }
         }
       }
@@ -649,6 +1033,12 @@
             "state": "translated",
             "value": "Drawstring shorts"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "抽繩運動短褲"
+          }
         }
       }
     },
@@ -658,6 +1048,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Neck towel"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "掛脖毛巾"
           }
         }
       }
@@ -669,6 +1065,12 @@
             "state": "translated",
             "value": "Arched"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "挑眉"
+          }
         }
       }
     },
@@ -678,6 +1080,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Undo"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "復原"
           }
         }
       }
@@ -689,6 +1097,12 @@
             "state": "translated",
             "value": "Lap nine is where today really starts."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操場第九圈，才是今天真正開始的地方。"
+          }
         }
       }
     },
@@ -698,6 +1112,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Square frames"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方框"
           }
         }
       }
@@ -709,6 +1129,12 @@
             "state": "translated",
             "value": "Starry eyes"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "星星眼"
+          }
         }
       }
     },
@@ -718,6 +1144,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nickname"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暱稱"
           }
         }
       }
@@ -729,6 +1161,12 @@
             "state": "translated",
             "value": "Show-off"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "愛現"
+          }
         }
       }
     },
@@ -738,6 +1176,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Siamese"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暹羅"
           }
         }
       }
@@ -749,6 +1193,12 @@
             "state": "translated",
             "value": "Joggers"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "縮口棉褲"
+          }
         }
       }
     },
@@ -758,6 +1208,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corgi"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "柯基"
           }
         }
       }
@@ -769,6 +1225,12 @@
             "state": "translated",
             "value": "Shiba"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "柴犬"
+          }
         }
       }
     },
@@ -778,6 +1240,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Look"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外型"
           }
         }
       }
@@ -789,6 +1257,12 @@
             "state": "translated",
             "value": "Cap"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "棒球帽"
+          }
         }
       }
     },
@@ -798,6 +1272,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ginger & white"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橘白貓"
           }
         }
       }
@@ -809,6 +1289,12 @@
             "state": "translated",
             "value": "Bichon"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比熊"
+          }
         }
       }
     },
@@ -818,6 +1304,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "No brows"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有眉毛"
           }
         }
       }
@@ -829,6 +1321,12 @@
             "state": "translated",
             "value": "Bob"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鮑伯頭"
+          }
         }
       }
     },
@@ -838,6 +1336,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Swim goggles"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蛙鏡"
           }
         }
       }
@@ -849,6 +1353,12 @@
             "state": "translated",
             "value": "Bold"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "濃眉"
+          }
         }
       }
     },
@@ -858,6 +1368,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deadpan"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "佛系"
           }
         }
       }
@@ -869,6 +1385,12 @@
             "state": "translated",
             "value": "Soft"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "淡眉"
+          }
         }
       }
     },
@@ -878,6 +1400,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Warm-up club"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "熱身社"
           }
         }
       }
@@ -889,6 +1417,12 @@
             "state": "translated",
             "value": "Bear"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "熊"
+          }
         }
       }
     },
@@ -898,6 +1432,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dog"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "狗"
           }
         }
       }
@@ -909,6 +1449,12 @@
             "state": "translated",
             "value": "Tabby"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "虎斑"
+          }
         }
       }
     },
@@ -918,6 +1464,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wolf cut"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "狼尾"
           }
         }
       }
@@ -929,6 +1481,12 @@
             "state": "translated",
             "value": "Cat"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貓"
+          }
         }
       }
     },
@@ -938,6 +1496,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cat mouth"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貓貓嘴"
           }
         }
       }
@@ -949,6 +1513,12 @@
             "state": "translated",
             "value": "Tortie"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "玳瑁"
+          }
         }
       }
     },
@@ -958,6 +1528,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yoga mat"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瑜珈墊"
           }
         }
       }
@@ -969,6 +1545,12 @@
             "state": "translated",
             "value": "Brows"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "眉毛"
+          }
         }
       }
     },
@@ -978,6 +1560,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Eyes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "眼睛"
           }
         }
       }
@@ -989,6 +1577,12 @@
             "state": "translated",
             "value": "Eyes left, ball already right."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "眼睛看左邊，球已經到右邊了。"
+          }
         }
       }
     },
@@ -998,6 +1592,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Glasses"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "眼鏡"
           }
         }
       }
@@ -1009,6 +1609,12 @@
             "state": "translated",
             "value": "Shy"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "社恐"
+          }
         }
       }
     },
@@ -1018,6 +1624,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Outfit"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "穿搭"
           }
         }
       }
@@ -1029,6 +1641,12 @@
             "state": "translated",
             "value": "Smiling eyes"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "笑眼"
+          }
         }
       }
     },
@@ -1038,6 +1656,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lap nine"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第九圈"
           }
         }
       }
@@ -1049,6 +1673,12 @@
             "state": "translated",
             "value": "Basketball, volleyball"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "籃球 排球"
+          }
         }
       }
     },
@@ -1058,6 +1688,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Flushed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "紅臉頰"
           }
         }
       }
@@ -1069,6 +1705,12 @@
             "state": "translated",
             "value": "Any sport counts"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練什麼都算"
+          }
         }
       }
     },
@@ -1078,6 +1720,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tennis, pickleball, squash"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球 匹克球 壁球"
           }
         }
       }
@@ -1089,6 +1737,12 @@
             "state": "translated",
             "value": "Tennis racket"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球拍"
+          }
         }
       }
     },
@@ -1098,6 +1752,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Badminton racket"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "羽球拍"
           }
         }
       }
@@ -1109,6 +1769,12 @@
             "state": "translated",
             "value": "Face"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉"
+          }
         }
       }
     },
@@ -1118,6 +1784,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cheeks"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉頰"
           }
         }
       }
@@ -1129,6 +1801,12 @@
             "state": "translated",
             "value": "Nothing on the cheeks"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉頰什麼都不加"
+          }
         }
       }
     },
@@ -1138,6 +1816,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Blush"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "腮紅"
           }
         }
       }
@@ -1149,6 +1833,12 @@
             "state": "translated",
             "value": "Moss trail"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "苔徑"
+          }
         }
       }
     },
@@ -1158,6 +1848,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dutch rabbit"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "荷蘭兔"
           }
         }
       }
@@ -1169,6 +1865,12 @@
             "state": "translated",
             "value": "Open"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "營業中"
+          }
         }
       }
     },
@@ -1178,6 +1880,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dot eyes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "豆豆眼"
           }
         }
       }
@@ -1189,6 +1897,12 @@
             "state": "translated",
             "value": "Walking, running, strength"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "走路 跑步 重訓"
+          }
         }
       }
     },
@@ -1198,6 +1912,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Running, walking"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步 走路"
           }
         }
       }
@@ -1209,6 +1929,12 @@
             "state": "translated",
             "value": "The trail isn't on the map. It's on the moss."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "路不在地圖上，在青苔上。"
+          }
         }
       }
     },
@@ -1218,6 +1944,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Border collie"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邊牧"
           }
         }
       }
@@ -1229,6 +1961,12 @@
             "state": "translated",
             "value": "Tank"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運動背心"
+          }
         }
       }
     },
@@ -1238,6 +1976,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Waist bag"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運動腰包"
           }
         }
       }
@@ -1249,6 +1993,12 @@
             "state": "translated",
             "value": "Back"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回"
+          }
         }
       }
     },
@@ -1258,6 +2008,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not open yet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒開門"
           }
         }
       }
@@ -1269,6 +2025,12 @@
             "state": "translated",
             "value": "Walk in"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進店"
+          }
         }
       }
     },
@@ -1278,6 +2040,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Walk into a store to pick clothes. Grey stores aren't open yet: tap one to see how it opens."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進店挑衣服。灰色的店還沒開門，點一下看看怎麼開。"
           }
         }
       }
@@ -1289,6 +2057,12 @@
             "state": "translated",
             "value": "Hoodie"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連帽T"
+          }
         }
       }
     },
@@ -1298,6 +2072,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Props"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "道具"
           }
         }
       }
@@ -1309,6 +2089,12 @@
             "state": "translated",
             "value": "Golden"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黃金"
+          }
         }
       }
     },
@@ -1318,6 +2104,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chalk bag"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "止滑粉袋"
           }
         }
       }
@@ -1329,6 +2121,12 @@
             "state": "translated",
             "value": "Long hair"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "長髮"
+          }
         }
       }
     },
@@ -1338,6 +2136,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shuffle"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨機換一個"
           }
         }
       }
@@ -1349,6 +2153,12 @@
             "state": "translated",
             "value": "Freckles"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雀斑"
+          }
         }
       }
     },
@@ -1358,6 +2168,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Color %lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顏色 %lld"
           }
         }
       }
@@ -1369,6 +2185,12 @@
             "state": "translated",
             "value": "Ribbon headband"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "飄帶髮帶"
+          }
         }
       }
     },
@@ -1379,6 +2201,12 @@
             "state": "translated",
             "value": "Ponytail"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "馬尾"
+          }
         }
       }
     },
@@ -1388,6 +2216,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "High energy"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高能量"
           }
         }
       }

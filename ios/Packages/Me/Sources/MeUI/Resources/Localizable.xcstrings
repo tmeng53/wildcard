@@ -8,6 +8,12 @@
             "state": "translated",
             "value": "You'll leave %@"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你會離開%@"
+          }
         }
       }
     },
@@ -17,6 +23,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先不要刪除"
           }
         }
       }
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "Try again"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再試一次"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Once it's gone, it can't come back."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪了就找不回來了。"
           }
         }
       }
@@ -48,6 +72,12 @@
             "state": "translated",
             "value": "Skip Leg Day Club"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週三不練腿俱樂部"
+          }
         }
       }
     },
@@ -57,6 +87,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lin"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小林"
           }
         }
       }
@@ -68,6 +104,12 @@
             "state": "translated",
             "value": "Past recaps"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "過往戰報"
+          }
         }
       }
     },
@@ -77,6 +119,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "My squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的小隊"
           }
         }
       }
@@ -88,6 +136,12 @@
             "state": "translated",
             "value": "All your check-ins, photos and day-off notes go"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有打卡、照片和假單都會刪除"
+          }
         }
       }
     },
@@ -97,6 +151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete account"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除帳號"
           }
         }
       }
@@ -108,6 +168,12 @@
             "state": "translated",
             "value": "Confirm with Apple"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用 Apple 確認刪除"
+          }
         }
       }
     },
@@ -117,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Terms of Use"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用條款"
           }
         }
       }
@@ -128,6 +200,12 @@
             "state": "translated",
             "value": "Your consent to the AI is withdrawn too"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "給 AI 的同意也會一起撤回"
+          }
         }
       }
     },
@@ -137,6 +215,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edit your Wildcard athlete"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯外卡運動員"
           }
         }
       }
@@ -148,6 +232,12 @@
             "state": "translated",
             "value": "The connection took a break"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路怪怪的"
+          }
         }
       }
     },
@@ -157,6 +247,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apple didn't confirm. Try again"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 那邊沒確認到，再試一次"
           }
         }
       }
@@ -168,6 +264,12 @@
             "state": "translated",
             "value": "The connection took a break. Try again"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路怪怪的，再試一次"
+          }
         }
       }
     },
@@ -177,6 +279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't save. Check your connection"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路怪怪的，沒存到"
           }
         }
       }
@@ -188,6 +296,12 @@
             "state": "translated",
             "value": "Your Wildcard athlete, nickname and catchphrase go"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外卡運動員、暱稱和口頭禪都會刪除"
+          }
         }
       }
     },
@@ -197,6 +311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Language"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語言"
           }
         }
       }
@@ -208,6 +328,12 @@
             "state": "translated",
             "value": "Back"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回"
+          }
         }
       }
     },
@@ -217,6 +343,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sign out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登出"
           }
         }
       }
@@ -228,6 +360,12 @@
             "state": "translated",
             "value": "Sign out?"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要登出嗎？"
+          }
         }
       }
     },
@@ -238,6 +376,12 @@
             "state": "translated",
             "value": "Notifications"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知"
+          }
         }
       }
     },
@@ -247,6 +391,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Privacy Policy"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隱私權政策"
           }
         }
       }
@@ -264,6 +414,12 @@
             "state": "translated",
             "value": "CAREER"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CAREER"
+          }
         }
       }
     },
@@ -273,6 +429,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Preferences"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偏好"
           }
         }
       }
@@ -284,6 +446,12 @@
             "state": "translated",
             "value": "Clean meals"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康餐"
+          }
         }
       }
     },
@@ -293,6 +461,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "About"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關於"
           }
         }
       }
@@ -304,6 +478,12 @@
             "state": "translated",
             "value": "Cheat meals"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坦白放縱餐"
+          }
         }
       }
     },
@@ -313,6 +493,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊"
           }
         }
       }
@@ -324,6 +510,12 @@
             "state": "translated",
             "value": "This week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週"
+          }
         }
       }
     },
@@ -333,6 +525,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次練了"
           }
         }
       }
@@ -344,6 +542,12 @@
             "state": "translated",
             "value": "Workouts"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練了"
+          }
         }
       }
     },
@@ -353,6 +557,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
           }
         }
       }
@@ -364,6 +574,12 @@
             "state": "translated",
             "value": "Days off"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "假單"
+          }
         }
       }
     },
@@ -373,6 +589,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Account"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帳號"
           }
         }
       }
@@ -384,6 +606,12 @@
             "state": "translated",
             "value": "Tap to flip the card"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下翻面"
+          }
         }
       }
     },
@@ -393,6 +621,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jersey number"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "球衣背號"
           }
         }
       }
@@ -404,6 +638,12 @@
             "state": "translated",
             "value": "Save"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "儲存"
+          }
         }
       }
     },
@@ -413,6 +653,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Top sport"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最常練"
           }
         }
       }
@@ -424,6 +670,12 @@
             "state": "translated",
             "value": "Weekly awards"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週獎"
+          }
         }
       }
     },
@@ -433,6 +685,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dawn Patrol"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "早八戰神"
           }
         }
       }
@@ -446,6 +704,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SINCE %@"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "SINCE %@"
@@ -465,6 +729,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@号"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@號"
           }
         }
       }
