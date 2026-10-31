@@ -1755,18 +1755,18 @@
         }
       }
     },
-    "换一个小人": {
+    "换一个外卡运动员": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change this character"
+            "value": "Change this Wildcard athlete"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "换一个小人"
+            "value": "换一个外卡运动员"
           }
         },
         "zh-Hant": {

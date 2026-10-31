@@ -1,9 +1,8 @@
 import type { CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
 import type { DayRange } from '../../domain/day-range.js';
 import { sharedSquads, type Reaction } from '../../domain/reaction.js';
-import type { Reply } from '../../domain/reply.js';
 import { SquadNotJoinedError } from '../../errors.js';
-import type { CheckInStore, ReactionStore, ReplyStore, SquadMembership } from '../../ports.js';
+import type { CheckInStore, ReactionStore, SquadMembership } from '../../ports.js';
 
 export interface ListSquadCheckInsInput {
   readonly viewer: MemberId;
@@ -15,13 +14,10 @@ export interface ListSquadCheckInsInput {
 export interface SquadPost {
   readonly checkIn: CheckInRecord;
   readonly reactions: readonly Reaction[];
-  /** Always empty on anything but a 请假条. */
-  readonly replies: readonly Reply[];
 }
 
 /**
- * A squad's check-ins for a range of days, for one of its members, each with its reactions and
- * replies. Only check-ins from members still in the squad: leaving a squad takes your check-ins
+ * A squad's check-ins for a range of days, for one of its members, each with its reactions. Only check-ins from members still in the squad: leaving a squad takes your check-ins
  * out of it. Someone else's check-in shows only the squads the viewer is in among its audience,
  * and, as everywhere, only the responses of members of the squads the viewer sees it through.
  */
@@ -30,12 +26,10 @@ export async function listSquadCheckIns(
     store,
     membership,
     reactions,
-    replies,
   }: {
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly reactions: ReactionStore;
-    readonly replies: ReplyStore;
   },
   { viewer, squad, days }: ListSquadCheckInsInput,
 ): Promise<SquadPost[]> {
@@ -44,9 +38,8 @@ export async function listSquadCheckIns(
   const members = await membership.membersOf(squad);
   const checkIns = await store.listForSquad({ ...days, squad, members });
   const ids = checkIns.map(({ id }) => id);
-  const [reactionsOf, repliesOf, squadsOfAuthor] = await Promise.all([
+  const [reactionsOf, squadsOfAuthor] = await Promise.all([
     reactions.listForAll(ids),
-    replies.listForAll(ids),
     Promise.all(
       members.map(async (member) => [member, await membership.squadIdsOf(member)] as const),
     ).then((pairs) => new Map(pairs)),
@@ -73,7 +66,6 @@ export async function listSquadCheckIns(
           ? checkIn
           : { ...checkIn, audience: checkIn.audience.filter((each) => viewerSquads.has(each)) },
       reactions: (reactionsOf.get(checkIn.id) ?? []).filter(visible),
-      replies: (repliesOf.get(checkIn.id) ?? []).filter(visible),
     };
   });
 }
