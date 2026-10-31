@@ -177,6 +177,10 @@ jobs:
       # The runner image ships Swift, for the app's Backend adapters.
       - run: swift --version
       - run: scripts/verify.sh supabase api backend
+        env:
+          # What scripts/api-compat.sh compares openapi.json with: the PR's base, or main before
+          # the push.
+          API_COMPAT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
       # The verify-wildcard API journeys, over HTTP against the built server.
       - run: scripts/api-journeys.sh
       # The image the deploy workflow ships builds, starts and reaches the database.
