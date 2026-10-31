@@ -15,9 +15,9 @@ public struct FeedView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: FeedModel
-    /// The post opened from the home, held at the top until the member scrolls: what is above it
-    /// (the 战报's tile, the posts the server lists, cards the lazy list measures only when drawn)
-    /// keeps arriving after the first move and would push it away.
+    /// The post opened from the home, held at the top for a moment or until the member scrolls:
+    /// what is above it (the 战报's tile, the posts the server lists, cards the lazy list measures
+    /// only when drawn) keeps arriving after the first move and would push it away.
     @State private var pinned: CheckInID?
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
@@ -27,6 +27,8 @@ public struct FeedView: View {
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
     static let space = "feed"
+    /// How long a post opened from the home stays held at the top.
+    static let pinFor = Duration.seconds(2)
 
     public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
@@ -59,6 +61,12 @@ public struct FeedView: View {
             }
             .onScrollPhaseChange { _, phase in
                 if phase == .interacting { pinned = nil }
+            }
+            // Lets go once the list has settled, so the pin can't keep moving the list.
+            .task(id: pinned) {
+                guard pinned != nil else { return }
+                try? await Task.sleep(for: Self.pinFor)
+                pinned = nil
             }
             .scrollDismissesKeyboard(.immediately)
             // A held card's slide picks an emoji; the list stays put under it.
