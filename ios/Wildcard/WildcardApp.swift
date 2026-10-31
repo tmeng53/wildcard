@@ -177,8 +177,8 @@ struct WildcardApp: App {
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 ContinueWithApple { signUp.signedIn(name: nil) }
-            } tabBar: {
-                MainTabs.entranceTabBar
+            } tabs: { showsBar, content in
+                MainTabs.entranceTabs(showsBar: showsBar, content: content)
             }
             .onChange(of: signUp.finished) { _, finished in
                 guard finished != nil else { return }
@@ -226,8 +226,8 @@ private struct AppRoot: View {
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
-                } tabBar: {
-                    MainTabs.entranceTabBar
+                } tabs: { showsBar, content in
+                    MainTabs.entranceTabs(showsBar: showsBar, content: content)
                 }
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }

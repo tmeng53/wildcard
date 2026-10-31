@@ -61,10 +61,11 @@ public final class TodayModel {
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
-    /// anywhere outside its capsules closes it) or a check-in is being written (the compose and
-    /// 请假条 pages take the whole screen).
+    /// anywhere outside its capsules closes it), a check-in is being written (the compose and
+    /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        switch step {
+        guard !holdsTabBar else { return false }
+        return switch step {
         case .scene, .pickingPhotos: !isBurstOpen
         case .composing, .disclaimer: false
         }
@@ -135,6 +136,8 @@ public final class TodayModel {
     /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
     /// settled (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
+    /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
+    var holdsTabBar = false
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.

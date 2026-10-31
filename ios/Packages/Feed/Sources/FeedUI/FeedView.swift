@@ -66,6 +66,8 @@ public struct FeedView: View {
             .task(id: pinned) {
                 guard pinned != nil else { return }
                 try? await Task.sleep(for: Self.pinFor)
+                // A newer pin or leaving 动态 cancels this wait; only a wait that ran out lets go.
+                guard !Task.isCancelled else { return }
                 pinned = nil
             }
             .scrollDismissesKeyboard(.immediately)

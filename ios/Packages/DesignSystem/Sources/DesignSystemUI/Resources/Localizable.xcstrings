@@ -1697,12 +1697,12 @@
         }
       }
     },
-    "标签栏：玻璃，选中是浅灰块": {
+    "标签栏：系统的液态玻璃，选中是墨色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tab bar: glass, the selected tab on light grey"
+            "value": "Tab bar: the system's Liquid Glass, the selected tab in ink"
           }
         },
         "zh-Hant": {

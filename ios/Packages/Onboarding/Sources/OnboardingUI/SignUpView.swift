@@ -8,23 +8,24 @@ import SwiftUI
 /// Sign-up, from the open screen to 上场, or for whoever made their squad to 这周在哪练？. Each step slides in from the side it comes from.
 /// `signIn` is the open screen's 通过 Apple 继续, which the app wires to its account; it calls
 /// `SignUpModel.signedIn(name:)` once the member is in. The open screen's terms line and the AI
-/// consent link to the published policy pages the app passes. `tabBar` is the app's tab bar as
-/// home opens with it, which rises at the end of 上场 so home takes over seamlessly.
-public struct SignUpView<SignIn: View, Bar: View>: View {
+/// consent link to the published policy pages the app passes. `tabs` are the app's tabs as home
+/// opens with them, around 上场 with their bar hidden (false) until it rises at the end, so home
+/// takes over seamlessly.
+public struct SignUpView<SignIn: View, Tabs: View>: View {
     private let model: SignUpModel
     private let policies: PolicyLinks
     private let signIn: SignIn
-    private let tabBar: Bar
+    private let tabs: (Bool, AnyView) -> Tabs
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         model: SignUpModel, privacyPolicy: URL, terms: URL, @ViewBuilder signIn: () -> SignIn,
-        @ViewBuilder tabBar: () -> Bar
+        tabs: @escaping (_ showsBar: Bool, _ content: AnyView) -> Tabs
     ) {
         self.model = model
         self.policies = PolicyLinks(privacyPolicy: privacyPolicy, terms: terms)
         self.signIn = signIn()
-        self.tabBar = tabBar()
+        self.tabs = tabs
     }
 
     public var body: some View {
@@ -56,7 +57,7 @@ public struct SignUpView<SignIn: View, Bar: View>: View {
                 SceneStep(model: model)
                     .transition(transition)
             case .entrance:
-                EntranceScreen(model: model, tabBar: tabBar)
+                EntranceScreen(model: model, tabs: tabs)
                     .transition(.opacity)
             }
         }

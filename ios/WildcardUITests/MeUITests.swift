@@ -157,7 +157,7 @@ final class MeUITests: XCTestCase {
     /// What must stay tappable sits above the floating tab bar.
     private func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(element.waitForExistence(timeout: 30), "\(element) never showed")
-        let bar = app.buttons["tab.today"].frame
+        let bar = tabButton("tab.today", in: app).frame
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.minY, "\(element) sits under the tab bar")
     }
 
