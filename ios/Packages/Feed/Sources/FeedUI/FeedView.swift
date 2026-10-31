@@ -109,11 +109,15 @@ public struct FeedView: View {
                 }
             }
             if model.store.hasEarlier {
-                // Shown, it reads the week before; the dots say so once the wait lasts.
-                LoadingDots()
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(maxWidth: .infinity, minHeight: Space.xxl)
-                    .task(id: sections.last?.id) { await model.store.loadEarlier() }
+                // Shown, it reads the week before; the dots say so once the wait lasts, and go
+                // when it ends, answered or not.
+                ZStack {
+                    if model.store.isLoadingEarlier {
+                        LoadingDots().foregroundStyle(Color(role: .fgDefault, in: theme))
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: Space.xxl)
+                .task(id: sections.last?.id) { await model.store.loadEarlier() }
             }
         }
     }

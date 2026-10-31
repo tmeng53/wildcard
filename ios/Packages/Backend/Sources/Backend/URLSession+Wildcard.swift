@@ -5,8 +5,8 @@ import FoundationNetworking
 #endif
 
 extension URLSession {
-    /// The session the app's calls share: like `shared`, but a request the server leaves
-    /// unanswered for `requestTimeout` fails, so a screen shows its error (or 编几句 its dice
+    /// The session the app's calls share: like `shared`, but a request that hears nothing from
+    /// the server for `requestTimeout` (an idle timeout, reset by each piece that arrives) fails, so a screen shows its error (or 编几句 its dice
     /// lines) instead of waiting on (loader design A, 2026-10-24).
     public static let wildcard: URLSession = {
         let configuration = URLSessionConfiguration.default

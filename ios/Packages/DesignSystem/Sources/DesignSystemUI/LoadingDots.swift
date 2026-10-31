@@ -10,11 +10,12 @@ import SwiftUI
 public struct LoadingDots: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let delay: Double
-    @State private var isShown = false
+    @State private var isShown: Bool
 
     /// `delay`: 0 shows the dots at once, for a caller that has already waited.
     public init(delay: Double = Loading.inlineDelay) {
         self.delay = delay
+        _isShown = State(initialValue: delay <= 0)
     }
 
     public var body: some View {
@@ -32,14 +33,14 @@ public struct LoadingDots: View {
         }
         .opacity(isShown ? 1 : 0)
         .task {
-            if delay > 0 {
-                try? await Task.sleep(for: .seconds(delay))
-                guard !Task.isCancelled else { return }
-            }
+            guard !isShown else { return }
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled else { return }
             isShown = true
         }
         .accessibilityElement()
         .accessibilityLabel(Text("加载中", bundle: .module))
+        .accessibilityHidden(!isShown)
     }
 }
 
@@ -88,6 +89,8 @@ struct LoadingLabel: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(gate.isShown ? 0 : 1)
+            // The dots speak for the control while they show.
+            .accessibilityHidden(gate.isShown)
             .overlay {
                 if gate.isShown { LoadingDots(delay: 0) }
             }
@@ -102,6 +105,8 @@ struct LoadingCover<Loader: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            // Under the cover, VoiceOver reads only the cover.
+            .accessibilityHidden(gate.isShown)
             .overlay {
                 if gate.isShown {
                     // One element saying it is loading, whatever the loader hides from VoiceOver.

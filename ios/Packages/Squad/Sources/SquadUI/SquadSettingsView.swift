@@ -155,6 +155,7 @@ public struct SquadSettingsView: View {
                         renaming = settings.squad.name
                     }
                     .accessibilityIdentifier("squad.rename")
+                    .disabled(isSaving(.rename))
                 }
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
