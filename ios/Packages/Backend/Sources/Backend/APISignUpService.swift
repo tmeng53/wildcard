@@ -53,7 +53,7 @@ public struct APISignUpService: SignUpService {
         }
     }
 
-    /// Saves the plan for the week today is in, on the member's own clock.
+    /// Saves the week as the member's 每周模板, which this week and every later one follow.
     public func savePlan(_ days: [PlanDay]) async throws(SignUpError) {
         try await signUp { () throws(APIError) in try await api.saveTemplate(days) }
     }

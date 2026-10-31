@@ -252,7 +252,7 @@ public protocol APIProtocol: Sendable {
     func getMyPlanTemplate(_ input: Operations.GetMyPlanTemplate.Input) async throws -> Operations.GetMyPlanTemplate.Output
     /// Save the signed-in member’s typical week
     ///
-    /// Replaces the typical week; repeating a save gives the same result. Saved in the week the member joined, it is that week’s plan too; a change in a later week applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    /// Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
     ///
     /// - Remark: HTTP `PUT /me/plan-template`.
     /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.
@@ -801,7 +801,7 @@ extension APIProtocol {
     }
     /// Save the signed-in member’s typical week
     ///
-    /// Replaces the typical week; repeating a save gives the same result. Saved in the week the member joined, it is that week’s plan too; a change in a later week applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    /// Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
     ///
     /// - Remark: HTTP `PUT /me/plan-template`.
     /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.

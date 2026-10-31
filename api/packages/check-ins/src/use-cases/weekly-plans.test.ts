@@ -163,12 +163,20 @@ describe('the typical week', () => {
     });
   });
 
-  it('changed again in the join week, as going back during sign-up does, is this week’s too', async () => {
+  it('changed again on the join day, as going back during sign-up does, is this week’s too', async () => {
     const member = await newMember();
     await plans.saveTemplate({ member, days: mine });
     const lighter: PlanDays = [swim, rest, rest, train, rest, rest, train];
     await plans.saveTemplate({ member, days: lighter });
     expect((await plans.find({ member, weekStart: thisWeek })).days).toStrictEqual(lighter);
+  });
+
+  it('made later in the join week waits for next week, so days already over keep their plan', async () => {
+    // Joined Monday; today is Wednesday.
+    const member = await newMember({ joinedAt: new Date('2026-10-19T17:00:00.000Z') });
+    await plans.saveTemplate({ member, days: mine });
+    expect((await plans.find({ member, weekStart: thisWeek })).source).toBe('default');
+    expect((await plans.find({ member, weekStart: nextWeek })).days).toStrictEqual(mine);
   });
 
   it('follows the newest change, even over an older one applying from a later week', async () => {

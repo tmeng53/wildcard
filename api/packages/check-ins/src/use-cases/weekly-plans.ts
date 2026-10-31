@@ -168,11 +168,10 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
       const { today, joinedOn } = await daysOf(member);
       await checkSports(days);
       const thisWeek = weekStartOf(today);
-      // Made in the week the member joined (sign-up, and going back to it), it is that week's
-      // plan too; a change in any later week waits for next week, so a week that has begun
-      // keeps its plan.
-      const fromWeek =
-        weekStartOf(joinedOn) === thisWeek ? thisWeek : WeekStart.parse(addDays(thisWeek, 7));
+      // Made on the day the member joined (sign-up, and going back to it), it is this week's
+      // plan too, as no day of it has been planned yet; a change on any later day waits for next
+      // week, so days already over keep their plan.
+      const fromWeek = joinedOn >= today ? thisWeek : WeekStart.parse(addDays(thisWeek, 7));
       await deps.store.saveTemplate({ member, fromWeek, days });
       return { days, source: 'saved' };
     },
