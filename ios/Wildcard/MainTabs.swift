@@ -116,9 +116,11 @@ struct MainTabs: View {
                 selection = .feed
             }
         case .feed:
-            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
-                .environment(\.sceneTheme, today.scene)
-                .task { await recap.refresh() }
+            FeedView(model: feed, header: AnyView(RecapTile(recap: recap)), isShown: selection == .feed) {
+                selection = .today
+            }
+            .environment(\.sceneTheme, today.scene)
+            .task { await recap.refresh() }
         case .schedule:
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)

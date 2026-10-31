@@ -16,20 +16,23 @@ public struct FeedView: View {
     @State private var model: FeedModel
     /// The post at the top of the list, set to open 动态 on one.
     @State private var position: CheckInID?
-    /// Whether 动态 is on screen: a post opened from the home while it isn't waits until it is,
-    /// as the tab stays alive behind another one.
-    @State private var isShown = false
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
     private let header: AnyView?
+    /// Whether 动态 is the tab on screen: the tab stays alive behind the others, and a post opened
+    /// from the home waits until it shows, since a scroll while it is hidden is lost.
+    private let isShown: Bool
 
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
     static let space = "feed"
 
-    public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
+    public init(
+        model: FeedModel, header: AnyView? = nil, isShown: Bool = true, checkIn: @escaping () -> Void
+    ) {
         _model = State(initialValue: model)
+        self.isShown = isShown
         self.header = header
         self.checkIn = checkIn
     }
@@ -59,11 +62,7 @@ public struct FeedView: View {
         .scrollDisabled(model.lifted)
         .refreshable { await model.load() }
         .onChange(of: model.focus) { scrollToFocus() }
-        .onAppear {
-            isShown = true
-            scrollToFocus()
-        }
-        .onDisappear { isShown = false }
+        .onChange(of: isShown, initial: true) { scrollToFocus() }
         .overlayPreferenceValue(FeedAnchors.self) { anchors in
             FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)
         }
