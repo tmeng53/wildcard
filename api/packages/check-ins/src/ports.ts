@@ -105,7 +105,7 @@ export type Clock = () => Date;
 export interface WeeklyPlanStore {
   /** The member's plan saved for `weekStart` itself. */
   savedFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
-  /** The member's template for `weekStart`: the latest one applying from that week or before. */
+  /** The member's template for `weekStart`: the newest one applying from that week or before. */
   templateFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
   /** The member's latest template, the one the weeks to come follow, and the week it applies from. */
   latestTemplate(

@@ -24,7 +24,7 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
         .select('payload')
         .where('member_id', '=', member)
         .where('from_week', '<=', weekStart)
-        .orderBy('from_week', 'desc')
+        // The newest change that applies, even over an older one applying from a later week.
         .orderBy('id', 'desc')
         .limit(1)
         .executeTakeFirst();

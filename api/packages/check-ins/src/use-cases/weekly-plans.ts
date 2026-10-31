@@ -66,9 +66,9 @@ export interface WeeklyPlans {
   /** The member's template: the one the weeks to come follow, or the default before they make one. */
   template(input: { readonly member: MemberId }): Promise<PlanTemplate>;
   /**
-   * Saves the member's template and returns it. The first one, made in the week the member
-   * joined, applies from that week; any other change applies from next week, so a week that has
-   * begun keeps its plan. A week before the first one follows the default. Throws
+   * Saves the member's template and returns it. Made in the week the member joined, it applies
+   * from that week; a change in any later week applies from next week, so a week that has begun
+   * keeps its plan. A week before the first one follows the default. Throws
    * `TimeZoneNotSetError` before the member has a profile. Safe to repeat.
    */
   saveTemplate(input: {
@@ -168,12 +168,11 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
       const { today, joinedOn } = await daysOf(member);
       await checkSports(days);
       const thisWeek = weekStartOf(today);
-      // Made in the week the member joined, the first one is that week's plan too; any other
-      // change waits for next week, so a week that has begun keeps its plan.
-      const isFirst =
-        weekStartOf(joinedOn) === thisWeek &&
-        (await deps.store.latestTemplate(member)) === undefined;
-      const fromWeek = isFirst ? thisWeek : WeekStart.parse(addDays(thisWeek, 7));
+      // Made in the week the member joined (sign-up, and going back to it), it is that week's
+      // plan too; a change in any later week waits for next week, so a week that has begun
+      // keeps its plan.
+      const fromWeek =
+        weekStartOf(joinedOn) === thisWeek ? thisWeek : WeekStart.parse(addDays(thisWeek, 7));
       await deps.store.saveTemplate({ member, fromWeek, days });
       return { days, source: 'saved' };
     },

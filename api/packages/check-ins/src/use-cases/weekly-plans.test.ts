@@ -163,6 +163,27 @@ describe('the typical week', () => {
     });
   });
 
+  it('changed again in the join week, as going back during sign-up does, is this week’s too', async () => {
+    const member = await newMember();
+    await plans.saveTemplate({ member, days: mine });
+    const lighter: PlanDays = [swim, rest, rest, train, rest, rest, train];
+    await plans.saveTemplate({ member, days: lighter });
+    expect((await plans.find({ member, weekStart: thisWeek })).days).toStrictEqual(lighter);
+  });
+
+  it('follows the newest change, even over an older one applying from a later week', async () => {
+    const member = await newMember({ joinedAt: new Date('2026-10-07T17:00:00.000Z') });
+    const store = createPostgresWeeklyPlanStore(db);
+    // Such rows come from the migration: a week saved ahead, before templates existed.
+    await store.saveTemplate({ member, fromWeek: week('2026-11-09'), days: mine });
+    const lighter: PlanDays = [swim, rest, rest, train, rest, rest, train];
+    await plans.saveTemplate({ member, days: lighter });
+    expect((await plans.find({ member, weekStart: nextWeek })).days).toStrictEqual(lighter);
+    expect((await plans.find({ member, weekStart: week('2026-11-16') })).days).toStrictEqual(
+      lighter,
+    );
+  });
+
   it('logs each change once, with the week it applies from', async () => {
     const member = await newMember();
     await plans.saveTemplate({ member, days: mine });
