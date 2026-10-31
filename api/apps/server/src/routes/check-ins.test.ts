@@ -467,7 +467,7 @@ describe('GET /me/posts', () => {
       type: 'application/json',
       body: {
         version: 1,
-        posts: [{ checkIn: meal, reactions: [] }],
+        posts: [{ checkIn: meal, reactions: [], comments: [] }],
         next,
         counts: { posts: 2, reactions: 1 },
       },
@@ -483,7 +483,13 @@ describe('GET /me/posts', () => {
       type: 'application/json',
       body: {
         version: 1,
-        posts: [{ checkIn: run, reactions: [{ member: friend.userId, emoji: '💪', reactedAt }] }],
+        posts: [
+          {
+            checkIn: run,
+            reactions: [{ member: friend.userId, emoji: '💪', reactedAt }],
+            comments: [],
+          },
+        ],
       },
     });
     const trained = await call({ method: 'GET', path: '/me/posts?kind=trained', token: me.token });

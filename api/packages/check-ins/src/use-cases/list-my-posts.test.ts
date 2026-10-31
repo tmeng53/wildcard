@@ -174,13 +174,15 @@ describe('a member’s history (历史动态)', () => {
     await checkIns.react({ checkIn: toLeft, member: friend, emoji: heart });
     await checkIns.react({ checkIn: toBoth, member: friend, emoji: heart });
     await checkIns.react({ checkIn: toBoth, member: stranger, emoji: muscle });
-    const say = (member: MemberId, words: string) =>
-      checkIns.comment({
+    const say = (member: MemberId, words: string) => {
+      now = new Date(now.getTime() + 60_000);
+      return checkIns.comment({
         checkIn: toBoth,
         id: CommentId.parse(randomUUID()),
         member,
         text: CommentText.parse(words),
       });
+    };
     await say(friend, '我在左边');
     await say(stranger, '加油');
     await say(me, '谢谢');
