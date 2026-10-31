@@ -47,6 +47,8 @@ struct WildcardApp: App {
     @State private var today: TodayModel
     @State private var schedule: ScheduleModel
     @State private var feed: FeedModel
+    /// The sample member's own posts, from the sample squad's 动态.
+    @State private var myPosts: any MyPostsSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     @State private var profile: MeModel
     @State private var squad: SquadSettingsModel
@@ -113,7 +115,9 @@ struct WildcardApp: App {
                     service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "",
                     now: LaunchOptions.signUpTime))
         }
-        _feed = State(initialValue: Self.feed(viewer: member, squad: squad))
+        let feedSource = Self.feedSource(viewer: member, squad: squad)
+        _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
+        _myPosts = State(initialValue: feedSource)
     }
 
     /// The sample member for 我. The in-memory member has no Apple account to confirm with and
@@ -134,15 +138,18 @@ struct WildcardApp: App {
             scenePicked: { scene in today.scene = scene })
     }
 
-    /// 动态 on the sample squad's week, or with no posts at all (`-uitest-empty-feed`).
-    private static func feed(viewer: MemberID, squad: SquadID) -> FeedModel {
-        let zone = TimeZone.current
-        let source =
-            LaunchOptions.showsEmptyFeed
+    /// The sample squad's week, or no posts at all (`-uitest-empty-feed`).
+    private static func feedSource(viewer: MemberID, squad: SquadID) -> InMemoryFeedSource {
+        LaunchOptions.showsEmptyFeed
             ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:])
             : InMemoryFeedSource.sample(
-                viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: zone,
+                viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
                 photos: InMemoryFeedSource.renderSamplePhotos())
+    }
+
+    /// 动态 on the sample squad.
+    private static func feed(viewer: MemberID, squad: SquadID, source: InMemoryFeedSource) -> FeedModel {
+        let zone = TimeZone.current
         let store = FeedStore(
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) })
@@ -198,7 +205,7 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                selection: $tab
+                myPosts: myPosts, selection: $tab
             )
             .onAppear {
                 delegate.opened = { [today, $tab] _ in
@@ -238,7 +245,7 @@ private struct AppRoot: View {
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    selection: $tab
+                    myPosts: app.myPosts, selection: $tab
                 ) {
                     Task { await app.leftSquad() }
                 }

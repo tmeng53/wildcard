@@ -18,16 +18,7 @@ public struct APIFeedSource: FeedSource {
         do throws(APIError) {
             let list = try await api.checkInsWire(of: squad, from: first, through: last)
             return try api.read { () throws(ContractsError) in
-                try list.posts.map { post throws(ContractsError) in
-                    FeedPost(
-                        checkIn: try CheckIn(post.checkIn),
-                        reactions: Responses(
-                            try post.reactions.map { entry throws(ContractsError) in
-                                let reaction = try Reaction(entry)
-                                return Responses<Emoji>.Response(
-                                    member: reaction.member, kind: reaction.emoji, moment: reaction.reactedAt)
-                            }))
-                }
+                try list.posts.map { post throws(ContractsError) in try FeedPost(post) }
             }
         } catch {
             throw FeedError(error)
