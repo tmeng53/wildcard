@@ -77,8 +77,8 @@ public final class TodayStore {
     public var home: Home? {
         guard let saved = savedHome, let day else { return nil }
         var home = saved.rolled(to: day)
-        for post in pending {
-            home.today = home.today.countingMine(post)
+        for (index, post) in pending.enumerated() {
+            home.today = home.today.countingMine(post, squadSaw: home.squadSees(on: post.day, plus: pending[..<index]))
         }
         return home
     }
@@ -262,7 +262,7 @@ public final class TodayStore {
         guard var home = savedHome?.rolled(to: saved.day), saved.member == home.member,
             !home.checkIns.contains(where: { $0.id == saved.id })
         else { return }
-        home.today = home.today.countingMine(saved)
+        home.today = home.today.countingMine(saved, squadSaw: home.squadSees(on: saved.day))
         home.checkIns.append(saved)
         savedHome = home
     }

@@ -6,7 +6,9 @@ extension SquadToday {
     /// marks a day not yet trained, a meal only shows as their latest. The home shows a post at
     /// once with this, before the server answers or while it waits to go out. One not shared to
     /// this squad counts only in the member's own row and week: teammates never see it.
-    public func countingMine(_ checkIn: CheckIn) -> SquadToday {
+    /// `squadSaw` is the member's day as this squad saw it before (`Home.squadSees`), which can
+    /// differ from their row once a post not shared here shows in it.
+    public func countingMine(_ checkIn: CheckIn, squadSaw: TrainingStatus) -> SquadToday {
         let kind: Kind =
             switch checkIn.entry {
             case .trained: .trained
@@ -16,7 +18,7 @@ extension SquadToday {
             }
         return counting(
             kind, by: checkIn.member, on: checkIn.day, at: checkIn.createdAt,
-            counts: checkIn.audience.squads.contains(squad) ? .squadAndMine : .mine)
+            counts: checkIn.audience.squads.contains(squad) ? .squadAndMine(saw: squadSaw) : .mine)
     }
 
     /// The member's own row with a check-in the server has already counted, in their week and,
@@ -35,7 +37,7 @@ extension SquadToday {
     }
 
     /// The same for a post still waiting to go out.
-    public func countingMine(_ post: PendingCheckIn) -> SquadToday {
+    public func countingMine(_ post: PendingCheckIn, squadSaw: TrainingStatus) -> SquadToday {
         let kind: Kind =
             switch post.draft {
             case .trained: .trained
@@ -45,15 +47,27 @@ extension SquadToday {
             }
         return counting(
             kind, by: post.member, on: post.day, at: post.createdAt,
-            counts: post.audience.squads.contains(squad) ? .squadAndMine : .mine)
+            counts: post.audience.squads.contains(squad) ? .squadAndMine(saw: squadSaw) : .mine)
     }
 
-    private enum Kind { case trained, disclaimer, healthyMeal, cheatMeal }
+    private enum Kind {
+        case trained, disclaimer, healthyMeal, cheatMeal
+
+        /// The member's day as the squad sees it once this is shared, after `saw`.
+        func after(_ saw: TrainingStatus) -> TrainingStatus {
+            switch self {
+            case .trained: .trained
+            case .disclaimer: saw == .notCheckedIn ? .disclaimer : saw
+            case .healthyMeal, .cheatMeal: saw
+            }
+        }
+    }
 
     /// Which counts a check-in adds to, besides the member's own row.
-    private enum Counts {
-        /// Shared to this squad: the squad's today and week, and the member's week.
-        case squadAndMine
+    private enum Counts: Equatable {
+        /// Shared to this squad: the squad's today and week, and the member's week. The squad
+        /// counts from what it saw of the member's day, never from their row.
+        case squadAndMine(saw: TrainingStatus)
         /// Not shared here: only the member's week.
         case mine
         /// Already counted where it counts.
@@ -84,32 +98,33 @@ extension SquadToday {
             counted.members.insert(member, at: after)
         }
         // The squad sees only what was shared to it.
-        guard counts == .squadAndMine else { return counted }
+        guard case .squadAndMine(let saw) = counts else { return counted }
+        let sees = kind.after(saw)
         counted.today.everyoneTrained =
             counted.today.trained > 0
-            && counted.members.allSatisfy { $0.training == .trained || $0.plannedRest }
+            && counted.members.allSatisfy { ($0.member == author ? sees : $0.training) == .trained || $0.plannedRest }
         return counted
     }
 
-    /// A 练了: the member's first today adds a trained day to their week and the squad's.
+    /// A 练了: the member's first today adds a trained day to their week, and the squad's
+    /// first it sees adds one to the squad's.
     private mutating func countTraining(of member: inout SquadmateToday, on day: LocalDay, counts: Counts) {
-        guard member.training != .trained else { return }
-        let before = member.training
+        let firstForMe = member.training != .trained
         member.training = .trained
-        guard counts != .none else { return }
-        if (myWeek.firstDay...myWeek.lastDay).contains(day) { myWeek.week.trainedDays += 1 }
-        guard counts == .squadAndMine else { return }
-        if before == .disclaimer { today.disclaimer -= 1 }
-        if member.plannedRest && before == .notCheckedIn { today.resting -= 1 }
+        if firstForMe, counts != .none, (myWeek.firstDay...myWeek.lastDay).contains(day) {
+            myWeek.week.trainedDays += 1
+        }
+        guard case .squadAndMine(let saw) = counts, saw != .trained else { return }
+        if saw == .disclaimer { today.disclaimer -= 1 }
+        if member.plannedRest && saw == .notCheckedIn { today.resting -= 1 }
         today.trained += 1
         squadWeek.trainedDays += 1
     }
 
     /// A 请假条, on a day not yet checked in.
     private mutating func countDisclaimer(of member: inout SquadmateToday, counts: Counts) {
-        guard member.training == .notCheckedIn else { return }
-        member.training = .disclaimer
-        guard counts == .squadAndMine else { return }
+        if member.training == .notCheckedIn { member.training = .disclaimer }
+        guard case .squadAndMine(let saw) = counts, saw == .notCheckedIn else { return }
         if member.plannedRest { today.resting -= 1 }
         today.disclaimer += 1
     }

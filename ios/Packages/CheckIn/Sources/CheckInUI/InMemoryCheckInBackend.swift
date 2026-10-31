@@ -168,7 +168,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             case .notCheckedIn: break
             }
         }
-        home.today = home.today.countingMine(checkIn)
+        home.today = home.today.countingMine(checkIn, squadSaw: home.squadSees(on: checkIn.day))
         home.checkIns.append(checkIn)
         current = home
         return checkIn

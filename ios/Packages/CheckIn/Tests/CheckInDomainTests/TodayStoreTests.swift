@@ -82,6 +82,34 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     }
 }
 
+@MainActor @Test func aSharedTrainingAfterAPrivateDisclaimerCountsWhatTheSquadSaw() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+
+    _ = try await today.post(.disclaimer(try Disclaimer("累")), sharedTo: [])
+    _ = try await today.post(run)
+    #expect(today.myStatus == .trained)
+    #expect(today.home?.today.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
+    #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
+}
+
+@MainActor @Test func waitingPostsCountWhatTheSquadSees() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+
+    #expect(try await today.post(run, sharedTo: []) == .queued)
+    #expect(today.home?.today.squadWeek.trainedDays == 14)
+    #expect(today.home?.today.today.everyoneTrained == false)
+    #expect(try await today.post(run) == .queued)
+    #expect(today.home?.today.today.trained == 2)
+    #expect(today.home?.today.squadWeek.trainedDays == 15)
+    #expect(today.home?.today.myWeek.week.trainedDays == 2)
+}
+
 @MainActor @Test func offlineAPostWaitsCountedAndGoesOutOnceUnderItsID() async throws {
     let backend = ScriptedBackend()
     let outbox = MemoryOutbox()

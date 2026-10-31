@@ -51,6 +51,47 @@ public struct Home: Hashable, Sendable {
         }
     }
 
+    /// The member's `day` as `squad` sees it, with `pending` posts still to go out. Their row
+    /// is it unless one of that day's posts wasn't shared here; then it is what their posts
+    /// shared here add up to. The squad's counts follow this, never a row a private post moved.
+    public func squadSees(on day: LocalDay, plus pending: some Sequence<PendingCheckIn> = []) -> TrainingStatus {
+        let posts =
+            checkIns.filter { $0.member == member && $0.day == day }.map {
+                (squads: $0.audience.squads, kind: Kind($0.entry))
+            }
+            + pending.filter { $0.member == member && $0.day == day }.map {
+                (squads: $0.audience.squads, kind: Kind($0.draft))
+            }
+        if let row = today.members.first(where: { $0.member == member && $0.day == day }),
+            posts.allSatisfy({ $0.squads.contains(squad.id) })
+        {
+            return row.training
+        }
+        let shared = posts.filter { $0.squads.contains(squad.id) }.map(\.kind)
+        if shared.contains(.trained) { return .trained }
+        return shared.contains(.disclaimer) ? .disclaimer : .notCheckedIn
+    }
+
+    private enum Kind {
+        case trained, disclaimer, meal
+
+        init(_ entry: CheckIn.Entry) {
+            switch entry {
+            case .trained: self = .trained
+            case .disclaimer: self = .disclaimer
+            case .healthyMeal, .cheatMeal: self = .meal
+            }
+        }
+
+        init(_ draft: CheckInDraft) {
+            switch draft {
+            case .trained: self = .trained
+            case .disclaimer: self = .disclaimer
+            case .healthyMeal, .cheatMeal: self = .meal
+            }
+        }
+    }
+
     /// The sport `member` trained today, from their latest 练了: what their character plays.
     public func todaysSport(of member: MemberID) -> Activity? {
         todaysCheckIns(of: member).last { if case .trained = $0.entry { true } else { false } }
@@ -74,7 +115,7 @@ public struct Home: Hashable, Sendable {
         else { return self }
         var home = self
         let old = today.members[index]
-        switch old.training {
+        switch squadSees(on: old.day) {
         case .trained: home.today.today.trained -= 1
         case .disclaimer: home.today.today.disclaimer -= 1
         case .notCheckedIn: if old.plannedRest { home.today.today.resting -= 1 }
