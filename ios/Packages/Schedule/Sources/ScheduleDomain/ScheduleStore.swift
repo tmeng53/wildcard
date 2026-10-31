@@ -78,14 +78,14 @@ public final class ScheduleStore {
     }
 
     /// The sports the picks under the poster offer: the shown week's, then this week's, then
-    /// a few common ones, without repeats.
-    public var suggestedActivities: [Activity] {
+    /// `common` (the sports list's quick picks), without repeats.
+    public func suggestedActivities(common: [Sport]) -> [Activity] {
         var seen: [Activity] = []
         let thisWeek = today.flatMap { sheets[$0.weekStart]?.plan } ?? []
         for day in (board?.days ?? []) + thisWeek {
             if case .train(let activity?) = day, !seen.contains(activity) { seen.append(activity) }
         }
-        for sport in [Sport.run, .strength, .yoga, .swim, .tennis] where !seen.contains(.sport(sport)) {
+        for sport in common where !seen.contains(.sport(sport)) {
             seen.append(.sport(sport))
         }
         return Array(seen.prefix(Self.suggestedSportCount))
@@ -146,17 +146,16 @@ public final class ScheduleStore {
 
     // MARK: - Planning
 
-    /// Taps a day on the poster; a swap is saved.
+    /// Taps a day on the poster.
     @discardableResult
     public func tap(_ index: Int) async -> WeekBoard.TapOutcome {
         guard var board else { return .locked }
         let outcome = board.tap(index)
         self.board = board
-        if outcome == .swapped { await savePlan() }
         return outcome
     }
 
-    /// Lets go of the selected or lifted day.
+    /// Lets go of the selected day.
     public func release() {
         board?.release()
     }
@@ -169,9 +168,9 @@ public final class ScheduleStore {
         await savePlan()
     }
 
-    /// Makes the selected day a rest day, in a week that hasn't started, and saves it.
+    /// Makes the selected day a rest day, any day but today, and saves it.
     public func rest() async {
-        guard var board, board.offersRest, case .selected = board.focus else { return }
+        guard var board, board.offersRest else { return }
         board.rest()
         self.board = board
         await savePlan()
@@ -187,8 +186,8 @@ public final class ScheduleStore {
 
     // MARK: - 饮食小目标
 
-    /// Whether the shown week's 饮食小目标 can change: only before the week starts.
-    public var canEditFuel: Bool { board?.tense == .upcoming }
+    /// Whether the shown week's 饮食小目标 can change: this week's and later ones'.
+    public var canEditFuel: Bool { board.map { $0.tense != .past } ?? false }
 
     /// Adds a goal to the shown week, or takes it off; a fourth is ignored. Saved at once.
     public func toggleFuel(_ goal: FuelGoal) async {

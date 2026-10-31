@@ -89,7 +89,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 }
 
 @Test func eachDayPlaysItsSportRestOrDisclaimerMove() throws {
-    #expect(DayKind.trained(.tennis).clip == .sport(.tennis))
+    #expect(DayKind.trained("tennis").clip == .sport("tennis"))
     #expect(DayKind.trained(nil).clip == .sport(nil))
     #expect(DayKind.rest.clip?.name == "doze")
     #expect(DayKind.disclaimer.clip?.name == "flat")
@@ -120,9 +120,33 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     let week = MyWeek(
         plan: 5,
         days: [
-            .init(day: try day(13), kind: .trained(.run)), .init(day: try day(14), kind: .trained(nil)),
+            .init(day: try day(13), kind: .trained("run")), .init(day: try day(14), kind: .trained(nil)),
             .init(day: try day(15), kind: .rest), .init(day: try day(16), kind: .disclaimer),
             .init(day: try day(17), kind: .none),
         ], healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(week.trainedDays == 2)
+}
+
+@Test func aWeekNobodyCheckedInHasNoRecap() throws {
+    let empty = WeekStory(
+        status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
+        week: Week(monday: try day(13), sunday: try day(19)), ending: Ending(done: 0, plan: 0))
+    #expect(empty.isPublished == false)
+}
+
+@Test func aStoryWithNoPageAtAllIsNotOut() throws {
+    // The shape behind a crash in build 5.1: the player can't start on no pages, so the shelf
+    // opens only stories that came out.
+    let blank = WeekStory(
+        status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
+        week: Week(monday: try day(13), sunday: try day(19)))
+    #expect(blank.pages.isEmpty)
+    #expect(blank.isPublished == false)
+}
+
+@Test func aStoryWithItsAwardsOrWaitingForThemIsOut() throws {
+    #expect(try story().isPublished)
+    #expect(try story(.pending, titles: false).isPublished)
+    // Awards given to nobody (no one had agreed to AI use) still leave the week's facts.
+    #expect(try story(titles: false).isPublished)
 }

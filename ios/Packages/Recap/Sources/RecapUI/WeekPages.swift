@@ -12,6 +12,8 @@ struct MyWeekPage: View {
     let week: RecapDomain.MyWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
+    /// Where the title and the count end, which the day's bubble keeps clear of.
+    @State private var titleBottom = 0.0
 
     private var beats: MyWeekBeats { MyWeekBeats(days: week.days) }
 
@@ -29,7 +31,7 @@ struct MyWeekPage: View {
                         .scaleEffect(1 + 0.16 * bump(index))
                         .position(x: xs[min(index, 6)], y: row)
                 }
-                walker(beat: beat, xs: xs, row: row)
+                walker(beat: beat, xs: xs, row: row, width: width)
                 stats
                     .padding(.horizontal, Space.l)
                     .frame(width: width, alignment: .leading)
@@ -52,6 +54,11 @@ struct MyWeekPage: View {
                 }
                 .foregroundStyle(Color(role: .fgOnScene, in: theme))
                 .padding(.horizontal, Space.l)
+            }
+            .onGeometryChange(for: Double.self) {
+                $0.size.height
+            } action: {
+                titleBottom = $0
             }
         }
     }
@@ -95,7 +102,7 @@ struct MyWeekPage: View {
 
     /// The reader's character: on a day while its move plays, hopping to the next one after.
     @ViewBuilder
-    private func walker(beat: MyWeekBeats.Beat?, xs: [Double], row: Double) -> some View {
+    private func walker(beat: MyWeekBeats.Beat?, xs: [Double], row: Double, width: Double) -> some View {
         let feet = row - DayDot.size / 2
         if let beat {
             let day = min(beat.day, 6)
@@ -114,13 +121,31 @@ struct MyWeekPage: View {
                 if playing, beat.clip != nil {
                     DayBubble(kind: week.days[beat.day].kind)
                         .opacity(page.ramp(beat.land, beat.land + 0.12) * (1 - page.ramp(beat.end - 0.12, beat.end)))
-                        .position(x: across, y: y - 196)
+                        .position(bubbleSpot(feet: CGPoint(x: across, y: y), width: width))
                 }
             }
         } else {
             page.character(page.cast.viewer).standing(feetAt: CGPoint(x: xs[0], y: feet), scale: 0.56)
         }
     }
+}
+
+extension MyWeekPage {
+    /// Over the character's head, or beside it where a short screen leaves no room under the
+    /// count, on the side with more room.
+    fileprivate func bubbleSpot(feet: CGPoint, width: Double) -> CGPoint {
+        let over = CGPoint(x: feet.x, y: feet.y - Self.bubbleOverHead)
+        guard over.y - Self.bubbleHalfHeight < titleBottom + Space.s else { return over }
+        let side = feet.x < width / 2 ? 1.0 : -1.0
+        return CGPoint(x: feet.x + side * Self.bubbleBeside, y: feet.y - Self.bubbleBesideHead)
+    }
+
+    /// The bubble's centre above the feet, over the head, and beside it.
+    private static let bubbleOverHead = 196.0
+    private static let bubbleBesideHead = 150.0
+    /// How far beside the character the bubble's centre sits.
+    private static let bubbleBeside = 76.0
+    private static let bubbleHalfHeight = 20.0
 }
 
 /// One day of the week under the character: lit in the accent when trained or on leave, grey on
@@ -191,13 +216,13 @@ struct HottestPage: View {
             let floor = proxy.size.height - StoryLayout.groundLow
             ZStack(alignment: .topLeading) {
                 Ground(height: StoryLayout.groundLow)
-                if let line = hottest.line {
-                    Text(verbatim: line)
-                        .typeStyle(TypeRamp.body)
-                        .foregroundStyle(Color(role: .fgOnScene, in: theme))
-                        .frame(width: width * 0.58, alignment: .leading)
-                        .position(x: Space.l + width * 0.29, y: floor - Space.xxl)
-                        .opacity(page.ramp(1.4, 1.7))
+                VStack(alignment: .leading, spacing: Space.l) {
+                    PageTitle(label: Text("本周", bundle: .module), title: Text("你最火的一条", bundle: .module))
+                    post(photoHeight: min(Self.photoHeight, max(Self.photoHeightMin, floor - Self.besidePhoto)))
+                        .padding(.horizontal, Space.l)
+                        .offset(y: 30 * (1 - page.pop(0, 0.5)))
+                        .rotationEffect(.degrees(-2 * page.pop(0, 0.5)))
+                        .opacity(page.ramp(0, 0.15))
                 }
                 HStack(spacing: Space.xs) {
                     ForEach(Array(hottest.reactions.enumerated()), id: \.element.emoji) { index, reaction in
@@ -208,8 +233,8 @@ struct HottestPage: View {
                     }
                 }
                 .padding(.horizontal, Space.l)
-                .position(x: width / 2, y: floor + Space.xl + Space.xs)
                 .frame(width: width, alignment: .leading)
+                .position(x: width / 2, y: floor + Space.xl + Space.xs)
                 page.character(
                     page.cast.viewer,
                     act: Act(
@@ -219,22 +244,18 @@ struct HottestPage: View {
                 .standing(feetAt: CGPoint(x: width - 72, y: floor), scale: 0.5)
             }
         }
-        .overlay(alignment: .top) {
-            VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(label: Text("本周", bundle: .module), title: Text("你最火的一条", bundle: .module))
-                post
-                    .padding(.horizontal, Space.l)
-                    .offset(y: 30 * (1 - page.pop(0, 0.5)))
-                    .rotationEffect(.degrees(-2 * page.pop(0, 0.5)))
-                    .opacity(page.ramp(0, 0.15))
-            }
-        }
     }
 
-    private var post: some View {
+    /// The photo at the design's 220 × 293, smaller on a short phone so the post stays above the
+    /// ground: the title over it and the words under it take `besidePhoto`.
+    private static let photoHeight: Double = 293
+    private static let photoHeightMin: Double = 120
+    private static let besidePhoto: Double = 300
+
+    private func post(photoHeight: Double) -> some View {
         VStack(alignment: .leading, spacing: Space.s) {
             photo
-                .frame(width: 220, height: 293)
+                .frame(width: photoHeight * 220 / 293, height: photoHeight)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             HStack(spacing: Space.xs) {
                 Tag(kindTag)
@@ -248,6 +269,14 @@ struct HottestPage: View {
                     .foregroundStyle(Color(role: .fgOnScene, in: theme))
                     .lineLimit(2)
                     .frame(width: 220, alignment: .leading)
+            }
+            if let line = hottest.line {
+                Text(verbatim: line)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .lineLimit(2)
+                    .frame(width: 220, alignment: .leading)
+                    .opacity(page.ramp(1.4, 1.7))
             }
         }
         .accessibilityElement(children: .combine)
@@ -288,7 +317,7 @@ extension LocalDay {
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
         let date = calendar.date(from: DateComponents(year: year, month: month, day: day)) ?? .distantPast
         let style = Date.FormatStyle(timeZone: calendar.timeZone).weekday(.abbreviated)
-        return date.formatted(style.locale(Locale.current))
+        return date.formatted(style.locale(AppLanguage.current.locale))
     }
 }
 #endif

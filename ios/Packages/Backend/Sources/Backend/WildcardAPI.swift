@@ -15,7 +15,7 @@ import FoundationNetworking
 /// access token and fails with an `APIError`.
 public struct WildcardAPI: Sendable {
     /// A current access token; given the token the API just refused, a renewed one.
-    /// `AccountSession.accessToken(rejected:)` is the app's.
+    /// `AccountSession.accessToken(for:rejected:)` is the app's (`WildcardAPI+Account.swift`).
     public typealias AccessToken = @Sendable (_ rejected: String?) async throws(AccountError) -> String
 
     let client: Client
@@ -24,27 +24,18 @@ public struct WildcardAPI: Sendable {
     /// - Parameters:
     ///   - url: where the API is served, such as `https://api.example.com`.
     ///   - refused: called with a freshly renewed token the API refuses too: its session is over.
+    ///   - language: the tag (`zh-Hans`, `en`) of the language the 战报's words come in.
     public init(
         url: URL, accessToken: @escaping AccessToken,
         refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
-        http: URLSession = .shared
+        language: LanguageTag? = nil, http: URLSession = .shared
     ) {
         client = Client(
             serverURL: url, configuration: .api, transport: URLSessionTransport(configuration: .init(session: http)),
             // The first wraps the rest: `Problems` reads the answer after any retry.
-            middlewares: [Problems(), BearerToken(accessToken: accessToken, refused: refused)])
+            middlewares: [Problems(), BearerToken(accessToken: accessToken, refused: refused)]
+                + (language.map { [AcceptLanguage(language: $0)] } ?? []))
         self.http = http
-    }
-
-    /// Calls with the account's tokens, and signs the account out when the API refuses a renewed
-    /// one, so screens following `AccountSession.states()` see the member signed out. A session
-    /// signed in while that call was on its way stays.
-    public init(url: URL, account: AccountSession, http: URLSession = .shared) {
-        self.init(
-            url: url,
-            accessToken: { rejected async throws(AccountError) in try await account.accessToken(rejected: rejected) },
-            refused: { token in try? await account.signOut(ifCurrent: token) },
-            http: http)
     }
 
     // MARK: - The member
@@ -65,10 +56,13 @@ public struct WildcardAPI: Sendable {
                 body: .json(
                     .init(
                         version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text,
-                        character: profile.character.map(Components.Schemas.Character.init)))
+                        character: profile.character.map(Components.Schemas.Character.init),
+                        jerseyNumber: profile.jerseyNumber?.value))
             ).ok.body.json
         }
-        return try Profile(timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character)
+        return try Profile(
+            timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character,
+            jerseyNumber: saved.jerseyNumber)
     }
 
     // MARK: - Check-ins
@@ -337,29 +331,40 @@ public struct Profile: Hashable, Sendable {
     /// Their nickname and character's look. Nil until they make it, right after signing in.
     /// A save without it clears it, since the profile is saved whole.
     public let character: MemberCharacter?
+    /// The number on their player card. Nil until they pick one, and the card shows their place
+    /// in their squad.
+    public let jerseyNumber: JerseyNumber?
 
-    public init(timeZone: TimeZone, catchphrase: Catchphrase? = nil, character: MemberCharacter? = nil) {
+    public init(
+        timeZone: TimeZone, catchphrase: Catchphrase? = nil, character: MemberCharacter? = nil,
+        jerseyNumber: JerseyNumber? = nil
+    ) {
         self.timeZone = timeZone
         self.catchphrase = catchphrase
         self.character = character
+        self.jerseyNumber = jerseyNumber
     }
 
-    init(timeZone identifier: String, catchphrase: String?, character: Components.Schemas.Character?)
-        throws(APIError)
-    {
+    init(
+        timeZone identifier: String, catchphrase: String?, character: Components.Schemas.Character?,
+        jerseyNumber: Int?
+    ) throws(APIError) {
         guard let timeZone = TimeZone(identifier: identifier) else { throw .unreadableResponse }
         do {
             self.init(
                 timeZone: timeZone,
                 catchphrase: try catchphrase.map { text throws(ContractsError) in try Catchphrase(text) },
-                character: try character.map { wire throws(ContractsError) in try MemberCharacter(wire) })
+                character: try character.map { wire throws(ContractsError) in try MemberCharacter(wire) },
+                jerseyNumber: try jerseyNumber.map { number throws(ContractsError) in try JerseyNumber(number) })
         } catch {
             throw .unreadableResponse
         }
     }
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
-        try self.init(timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character)
+        try self.init(
+            timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character,
+            jerseyNumber: wire.jerseyNumber)
     }
 }
 

@@ -3,9 +3,11 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import Contracts
+import DesignSystem
 import Foundation
 import Observation
 import ScheduleDomain
+import SportsUI
 
 /// The 出赛表 screen's state over its store: what is open under the poster, the title whose
 /// award line shows, the member's character on the poster and saving the poster to Photos.
@@ -21,39 +23,58 @@ public final class ScheduleModel {
         case fuel
     }
 
-    /// Where saving the poster to Photos stands.
+    /// Where 存图 stands: drawing the poster, then sharing the picture (the poster flashes as a
+    /// screenshot does and the share sheet opens on it), or a picture that couldn't be drawn.
     public enum Saving: Equatable {
         case idle
         case working
-        case saved
-        /// The member hasn't let the app add to Photos.
-        case notAllowed
+        case sharing(SharedPoster)
         case failed
     }
 
+    /// A drawn poster on its way to the share sheet; each 存图 is a new one.
+    public struct SharedPoster: Identifiable, Equatable {
+        public let id: Int
+        public let image: PosterImage
+
+        public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+    }
+
     public let store: ScheduleStore
-    /// The member's character, cheering in the poster's corner.
+    /// The member's character in the poster's corner, in the kit of the squad's scene, looping
+    /// its sport.
     private(set) var player: CharacterPlayer?
     /// The look `player` wears: the stand-in until the profile brings the member's own.
     private var look: CharacterLook?
+    /// The squad's scene, whose sport `player` trains at.
+    private var scene = SceneTheme.gym
+    /// What `player` was made from, for drawing its key pose when the poster is saved.
+    private var loop: (figure: Figure, clip: Clip)?
     private(set) var fuelOpen = false
     /// Typing a 饮食小目标 of their own.
     var writingFuel = false
     private(set) var saving = Saving.idle
-    /// Bumps when a rest day is lifted off the poster, for its haptic; a plain select has none.
-    private(set) var lifts = 0
-    private(set) var swaps = 0
+    private var shares = 0
 
-    private let photos: any PosterSaver
-
-    public init(store: ScheduleStore, photos: any PosterSaver = PhotoLibrarySaver()) {
+    public init(store: ScheduleStore) {
         self.store = store
-        self.photos = photos
-        player = Self.player(wearing: PlaceholderCharacter.lifter, persona: .energetic)
+        makePlayer()
     }
 
-    private static func player(wearing outfit: Outfit, persona: Persona) -> CharacterPlayer? {
-        try? CharacterPlayer(
+    /// The look in the scene's kit, looping its sport; cheering as worn if the kit can't be read.
+    private func makePlayer() {
+        let outfit = look.map { Outfit($0) } ?? PlaceholderCharacter.lifter
+        let persona = look.map { Persona($0) } ?? .energetic
+        if let training = try? PlaceholderCharacter.sceneLoop(
+            for: scene, look: outfit, persona: persona, in: SportList.shared.catalog),
+            let figure = try? PlaceholderCharacter.figure(wearing: training.outfit),
+            let player = try? CharacterPlayer(figure: figure, idle: training.clip)
+        {
+            (self.player, loop) = (player, (figure, training.clip))
+            return
+        }
+        loop = nil
+        player = try? CharacterPlayer(
             figure: PlaceholderCharacter.figure(wearing: outfit),
             idle: PlaceholderCharacter.clip(
                 "cheer", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
@@ -63,7 +84,24 @@ public final class ScheduleModel {
     private func dressPlayer() {
         guard let mine = store.profile?.look, mine != look else { return }
         look = mine
-        player = Self.player(wearing: Outfit(mine), persona: Persona(mine))
+        makePlayer()
+    }
+
+    /// Puts the character to the squad's scene's sport, once the screen knows the scene.
+    func train(on scene: SceneTheme) {
+        guard scene != self.scene else { return }
+        self.scene = scene
+        makePlayer()
+    }
+
+    /// The character as the saved poster shows it: holding its sport's signature pose, never
+    /// whichever frame was on screen.
+    var keyPose: (drawing: FigureDrawing, placements: [Placement])? {
+        guard let loop else { return player?.restFrame }
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        guard let still = try? CharacterPlayer(figure: loop.figure, idle: loop.clip, now: start) else { return nil }
+        let into = PlaceholderCharacter.keyPose(of: loop.clip) * loop.clip.duration
+        return still.frame(at: start.addingTimeInterval(into))
     }
 
     var panel: Panel {
@@ -89,14 +127,7 @@ public final class ScheduleModel {
 
     func tap(_ day: Int) {
         fuelOpen = false
-        Task {
-            let outcome = await store.tap(day)
-            switch outcome {
-            case .locked, .selected, .released: break
-            case .lifted: lifts += 1
-            case .swapped: swaps += 1
-            }
-        }
+        Task { await store.tap(day) }
     }
 
     func pick(_ activity: Activity) {
@@ -133,18 +164,19 @@ public final class ScheduleModel {
 
     // MARK: Saving the poster
 
-    /// Saves the poster, drawn by `render`, to Photos.
-    func savePoster(_ render: () -> PosterImage?) async {
-        guard saving != .working else { return }
+    /// Draws the poster with `render` and hands the picture to the share sheet.
+    func sharePoster(_ render: () -> PosterImage?) {
+        guard saving == .idle || saving == .failed else { return }
         saving = .working
         guard let image = render() else {
             saving = .failed
             return
         }
-        saving = await photos.save(image)
+        shares += 1
+        saving = .sharing(SharedPoster(id: shares, image: image))
     }
 
-    /// Lets go of the saved or failed note.
+    /// The share sheet closed, or the failed note has been read.
     func clearSaving() {
         if saving != .working { saving = .idle }
     }

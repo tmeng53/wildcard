@@ -30,8 +30,41 @@ public struct MeCharacter: Hashable, Sendable {
     }
 }
 
-/// What 我 shows: the character, the lifetime counts, this week, the squad and the notification
-/// switch.
+/// The sport a member logged the most 练了 for (最常练), and how many.
+public struct MostTrained: Hashable, Sendable {
+    public var activity: Activity
+    public var checkIns: Int
+
+    public init(activity: Activity, checkIns: Int) {
+        (self.activity, self.checkIns) = (activity, checkIns)
+    }
+}
+
+/// The weekly titles (周奖) a member has won, in all their squads.
+public struct TitlesWon: Hashable, Sendable {
+    /// The latest title, and how many times they have won it.
+    public struct Latest: Hashable, Sendable {
+        public var title: String
+        public var times: Int
+
+        public init(title: String, times: Int) {
+            (self.title, self.times) = (title, times)
+        }
+    }
+
+    public var count: Int
+    /// Nil before the first.
+    public var latest: Latest?
+
+    public init(count: Int, latest: Latest?) {
+        (self.count, self.latest) = (count, latest)
+    }
+
+    public static let none = TitlesWon(count: 0, latest: nil)
+}
+
+/// What 我 shows: the character, the player card's records, this week, the squad and the
+/// notification switch.
 public struct MeOverview: Hashable, Sendable {
     public var character: MeCharacter
     /// When the member signed up: the day on their character's ticket. Nil before they first
@@ -44,10 +77,18 @@ public struct MeOverview: Hashable, Sendable {
     public var squadName: String?
     /// The one daily push at 6pm with the squad's progress.
     public var dailyPushOn: Bool
+    /// The number the member picked for their card; nil until they pick one.
+    public var jerseyNumber: JerseyNumber?
+    /// Their place in their squad, the first to join being 1; nil before they are in one.
+    public var squadPlace: Int?
+    /// Nil before their first 练了.
+    public var mostTrained: MostTrained?
+    public var titles: TitlesWon
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
-        dailyPushOn: Bool
+        dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, mostTrained: MostTrained? = nil,
+        titles: TitlesWon = .none
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -55,5 +96,15 @@ public struct MeOverview: Hashable, Sendable {
         self.week = week
         self.squadName = squadName
         self.dailyPushOn = dailyPushOn
+        self.jerseyNumber = jerseyNumber
+        self.squadPlace = squadPlace
+        self.mostTrained = mostTrained
+        self.titles = titles
+    }
+
+    /// The number the card shows: the member's pick, else their place in their squad (the first
+    /// to join wears 01); nil with neither.
+    public var cardNumber: JerseyNumber? {
+        jerseyNumber ?? squadPlace.flatMap { place in try? JerseyNumber(min(place, JerseyNumber.range.upperBound)) }
     }
 }

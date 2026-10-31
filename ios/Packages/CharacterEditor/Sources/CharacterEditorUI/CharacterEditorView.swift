@@ -32,7 +32,7 @@ public struct CharacterEditorView: View {
     public var body: some View {
         VStack(spacing: 0) {
             EditorHeader(model: model, context: context, onBack: onBack)
-            if case .signUp = context {
+            if case .signUp = context, !isNaming {
                 Text("创建你的外卡运动员", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -50,31 +50,29 @@ public struct CharacterEditorView: View {
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("editor.stage")
             .padding(.horizontal, Space.pageMargin)
-            CategoryBar(
-                model.tabs.map {
-                    CategoryBarItem(
-                        id: $0, title: EditorNames.tab($0), accessibilityIdentifier: "editor.tab.\($0.rawValue)")
-                },
-                selection: $model.tab
-            )
-            .padding(.top, Space.s)
-            ChoicesPanel(model: model)
+            // The title, tabs and choices make room while the nickname is typed, so the page fits
+            // above the keyboard and 就这样 stays in reach.
+            if !isNaming {
+                CategoryBar(
+                    model.tabs.map {
+                        CategoryBarItem(
+                            id: $0, title: EditorNames.tab($0), accessibilityIdentifier: "editor.tab.\($0.rawValue)")
+                    },
+                    selection: $model.tab
+                )
+                .padding(.top, Space.s)
+                ChoicesPanel(model: model)
+            }
+            Spacer(minLength: 0)
         }
-        .background {
-            // A tap on the empty page puts the keyboard away; buttons and tiles keep their taps.
-            Color(role: .bgCanvas, in: theme)
-                .contentShape(Rectangle())
-                .onTapGesture { isNaming = false }
-        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(Color(role: .bgCanvas, in: theme))
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            DoneBar(context: context, result: model.result, onDone: onDone)
+            DoneBar(
+                context: context, result: model.result, isNaming: isNaming, onNamed: { isNaming = false },
+                onDone: onDone)
         }
-        // The page is taller than the room above the keyboard, so making way for it pushed the
-        // header under the status bar. The nickname sits high enough to stay clear of the
-        // keyboard, which covers the tabs and 就这样 until Return, a tap outside or a scroll puts
-        // it away.
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear { model.start() }
         // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
         // 我's tone. Its button, tabs, picks and swatches never wear the squad's scene.
@@ -121,19 +119,28 @@ private struct EditorHeader: View {
 }
 
 /// The finishing button, full width on the page: 就这样 in sign-up, 保存 from 我. It waits
-/// for a nickname.
+/// for a nickname. While the nickname is typed it is 好了 and only puts the keyboard away, so
+/// the button under the name never finishes the character by surprise.
 private struct DoneBar: View {
     let context: EditorContext
     let result: EditedCharacter?
+    let isNaming: Bool
+    let onNamed: () -> Void
     let onDone: (EditedCharacter) -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         Button {
-            if let result { onDone(result) }
+            if isNaming {
+                onNamed()
+            } else if let result {
+                onDone(result)
+            }
         } label: {
             Group {
-                if context == .profile {
+                if isNaming {
+                    Text("好了", bundle: .module)
+                } else if context == .profile {
                     Text("保存", bundle: .module)
                 } else {
                     Text("就这样", bundle: .module)
@@ -142,8 +149,8 @@ private struct DoneBar: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
-        .disabled(result == nil)
-        .accessibilityIdentifier("editor.done")
+        .disabled(!isNaming && result == nil)
+        .accessibilityIdentifier(isNaming ? "editor.named" : "editor.done")
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.s)
         .padding(.bottom, Space.xs)

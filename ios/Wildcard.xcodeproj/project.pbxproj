@@ -30,10 +30,12 @@
 		A1C0DE000000000000000084 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000083 /* FeedUI */; };
 		A1C0DE000000000000000077 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* AccountDomain */; };
 		A1C0DE000000000000000078 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000074 /* AccountUI */; };
+		A1C0DE0000000000000000D2 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D1 /* Sentry */; };
 		A1C0DE000000000000000079 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000075 /* Backend */; };
 		A1C0DE00000000000000007A /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000076 /* Contracts */; };
 		A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C1 /* ScheduleDomain */; };
 		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
+		A1C0DE0000000000000000D5 /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D4 /* SportsUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,9 +95,11 @@
 				A1C0DE000000000000000077 /* AccountDomain in Frameworks */,
 				A1C0DE000000000000000078 /* AccountUI in Frameworks */,
 				A1C0DE000000000000000079 /* Backend in Frameworks */,
+				A1C0DE0000000000000000D2 /* Sentry in Frameworks */,
 				A1C0DE00000000000000007A /* Contracts in Frameworks */,
 				A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */,
 				A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */,
+				A1C0DE0000000000000000D5 /* SportsUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +178,8 @@
 				A1C0DE000000000000000076 /* Contracts */,
 				A1C0DE0000000000000000C1 /* ScheduleDomain */,
 				A1C0DE0000000000000000C3 /* ScheduleUI */,
+				A1C0DE0000000000000000D4 /* SportsUI */,
+				A1C0DE0000000000000000D1 /* Sentry */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -245,6 +251,8 @@
 				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
 				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
 				A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */,
+				A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */,
+				A1C0DE0000000000000000D0 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1C0DE000000000000000003 /* Products */;
@@ -412,6 +420,7 @@
 				WILDCARD_API_URL = "https://wildcard-api-872064445161.us-east4.run.app";
 				WILDCARD_AUTH_PUBLISHABLE_KEY = sb_publishable_0k3jsx2o9G6SV3tyRMB-Rg_or-FTsVs;
 				WILDCARD_AUTH_URL = "https://uuxclkozpfbelhpheaae.supabase.co";
+				WILDCARD_SENTRY_DSN = "";
 			};
 			name = Release;
 		};
@@ -536,7 +545,22 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Schedule;
 		};
+		A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Sports;
+		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1C0DE0000000000000000D0 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = exactVersion;
+				version = 9.30.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A1C0DE000000000000000081 /* FeedDomain */ = {
@@ -673,6 +697,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */;
 			productName = ScheduleUI;
+		};
+		A1C0DE0000000000000000D4 /* SportsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */;
+			productName = SportsUI;
+		};
+		A1C0DE0000000000000000D1 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000D0 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

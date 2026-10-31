@@ -148,7 +148,7 @@ jobs:
           variable() { tr 'a-z-' 'A-Z_' <<<"$1"; }
           # Optional keys: the server runs without them, with that feature off. One deleted from
           # Secret Manager is unmapped, since Cloud Run can't start with a missing secret.
-          for key in openai-api-key anthropic-api-key; do
+          for key in openai-api-key anthropic-api-key sentry-dsn-api; do
             if present "$key"; then
               secrets="$secrets,$(variable "$key")=$key:latest"
               echo "$(variable "$key") is mapped"

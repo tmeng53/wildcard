@@ -4,6 +4,7 @@ import AvatarDomain
 import AvatarUI
 import CheckInDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 import Observation
 
@@ -63,6 +64,13 @@ final class PatStage {
     nonisolated static let dotLands = PlaceholderCharacter.patContact - 0.1
     /// How long a tapped teammate's bubble stays up.
     nonisolated static let bubbleHold = 5.0
+    /// How long this stage's bubbles stay up: `bubbleHold`, or longer for UI tests, whose slow
+    /// simulators can spend 5 seconds on finding a bubble.
+    private let hold: Double
+
+    init(bubbleHold hold: Double = PatStage.bubbleHold) {
+        self.hold = hold
+    }
     /// How long after opening the home a teammate pats me.
     nonisolated static let patMeDelay = 1.0
     /// A tapped teammate's hop: how long, and how high in the rig's points at the stage's
@@ -72,9 +80,14 @@ final class PatStage {
     // MARK: Tapping a teammate
 
     /// A teammate was tapped: they hop, cheer if awake and not mid-sport, and their bubble says
-    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today).
+    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today). Tapped again while their
+    /// bubble is up, the bubble closes.
     func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) {
         guard pat == nil else { return }
+        if bubble?.mate == mate.id {
+            bubble = nil
+            return
+        }
         hops[mate.id] = now
         let pose = cast.stage.pose(of: mate.member, at: phase)
         switch pose {
@@ -89,7 +102,7 @@ final class PatStage {
         show(
             Bubble(
                 mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
-                id: nextBubble()), for: Self.bubbleHold)
+                id: nextBubble()), for: hold)
     }
 
     /// A tap anywhere else on the scene closes the bubble.
@@ -130,17 +143,17 @@ final class PatStage {
             self?.landedOnMe += 1
         } finished: { [weak self] in
             guard let self else { return }
-            let name = mate.name ?? String(localized: "队友", bundle: .module)
+            let name = mate.name ?? String(localized: "队友", bundle: .module.inAppLanguage)
             show(
                 Bubble(
                     mate: mate.id, kind: .pattedMe,
-                    title: String(localized: "\(name)拍了拍你", bundle: .module),
+                    title: String(localized: "\(name)拍了拍你", bundle: .module.inAppLanguage),
                     detail: others.first.map {
                         String(
-                            localized: "\($0.name ?? String(localized: "队友", bundle: .module)) 也拍了拍你",
-                            bundle: .module)
+                            localized: "\($0.name ?? String(localized: "队友", bundle: .module.inAppLanguage)) 也拍了拍你",
+                            bundle: .module.inAppLanguage)
                     },
-                    id: nextBubble()), for: Self.bubbleHold)
+                    id: nextBubble()), for: hold)
         }
         return true
     }
@@ -186,30 +199,33 @@ final class PatStage {
     /// 「小米 · 今天还没打卡」, or the status alone for someone without a nickname yet.
     static func titled(_ name: String?, _ status: String) -> String {
         guard let name else { return status }
-        return String(localized: "\(name) · \(status)", bundle: .module)
+        return String(localized: "\(name) · \(status)", bundle: .module.inAppLanguage)
     }
 
     /// What a teammate is up to today, as the approved home says it: the status, and a second
     /// line where there is one.
     static func status(of mate: SquadCast.Mate, pose: StagePose) -> (title: String, detail: String?) {
-        if pose == .asleep { return (String(localized: "睡着了", bundle: .module), nil) }
+        if pose == .asleep { return (String(localized: "睡着了", bundle: .module.inAppLanguage), nil) }
         switch mate.member.status {
         case .trained(let activity?):
             return (
-                String(localized: "\(activity.localizedName) 中", bundle: .module),
-                String(localized: "今天练了", bundle: .module)
+                String(localized: "\(activity.localizedName) 中", bundle: .module.inAppLanguage),
+                String(localized: "今天练了", bundle: .module.inAppLanguage)
             )
         case .trained(nil):
-            return (String(localized: "今天练了", bundle: .module), nil)
+            return (String(localized: "今天练了", bundle: .module.inAppLanguage), nil)
         case .disclaimer:
             return (
-                String(localized: "请假条", bundle: .module),
-                mate.disclaimer ?? String(localized: "今天休息", bundle: .module)
+                String(localized: "请假条", bundle: .module.inAppLanguage),
+                mate.disclaimer ?? String(localized: "今天休息", bundle: .module.inAppLanguage)
             )
         case .restDay:
-            return (String(localized: "今天是休息日", bundle: .module), String(localized: "按计划休息", bundle: .module))
+            return (
+                String(localized: "今天是休息日", bundle: .module.inAppLanguage),
+                String(localized: "按计划休息", bundle: .module.inAppLanguage)
+            )
         case .notYet:
-            return (String(localized: "今天还没打卡", bundle: .module), nil)
+            return (String(localized: "今天还没打卡", bundle: .module.inAppLanguage), nil)
         }
     }
 }

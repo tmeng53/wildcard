@@ -13,7 +13,8 @@ import Testing
 
 private func character(_ nickname: String, body: String, persona: Persona) throws -> NewCharacter {
     NewCharacter(
-        outfit: Outfit(["body": body, "top": "tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
+        outfit: Outfit(
+            ["body": body, "top": "warmup-tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
         persona: persona, nickname: try Nickname(nickname))
 }
 
@@ -26,7 +27,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     try await signUp.save(try character("小林", body: "calico", persona: .shy))
     try await signUp.agreeToAI()
     let squad = try await signUp.create(named: try SquadName("周三不练腿"))
-    let week: [PlanDay] = [.train(.sport(.run)), .rest, .train(nil), .rest, .train(.sport(.yoga)), .rest, .rest]
+    let week: [PlanDay] = [.train(.sport("run")), .rest, .train(nil), .rest, .train(.sport("yoga")), .rest, .rest]
     try await signUp.savePlan(week)
 
     #expect(try await member.api.hasAgreedToAI())
@@ -40,7 +41,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
             == MemberCharacter(
                 nickname: try Nickname("小林"),
                 look: CharacterLook(
-                    persona: "shy", variants: ["body": "calico", "top": "tee"], colors: ["top": "#3A7BD5"])))
+                    persona: "shy", variants: ["body": "calico", "top": "warmup-tee"], colors: ["top": "#3A7BD5"])))
     let thisWeek = LocalDay(at: Date(), in: profile.timeZone).weekStart
     #expect(try await member.api.weeklyPlan(weekStart: thisWeek).days == week)
 
@@ -66,7 +67,8 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
                 code: code, name: "早八健身", memberCount: 1, isFull: false,
                 looks: [
                     CharacterLook(
-                        persona: "energetic", variants: ["body": "shiba", "top": "tee"], colors: ["top": "#3A7BD5"])
+                        persona: "energetic", variants: ["body": "shiba", "top": "warmup-tee"],
+                        colors: ["top": "#3A7BD5"])
                 ]))
     try await signUp.agreeToAI()
     let joined = try await signUp.join(code)
@@ -76,7 +78,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
             Squadmate(
                 id: creator.id, nickname: "阿杰",
                 outfit: Outfit(
-                    ["body": "shiba", "top": "tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
+                    ["body": "shiba", "top": "warmup-tee"], colors: ["top": RGBAColor(red: 58, green: 123, blue: 213)]),
                 persona: .energetic)
         ])
     // Joining again, after a lost answer, is the same squad.
@@ -157,7 +159,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(today.phase == .current)
     #expect(today.home?.squad.id == squad.id)
     #expect(today.home?.today.members.map(\.character?.nickname.text) == ["小林"])
-    guard case .posted = try await today.post(.trained(.sport(.run), nil, PostBody(photos: [], caption: "")))
+    guard case .posted = try await today.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
     else { Issue.record("the post was queued, not saved"); return }
     #expect(today.myStatus == .trained)
 }
@@ -166,17 +168,38 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
     _ = try await stack.squad(of: member)
-    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let folders = MemberFolders(
+        root: FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)"))
+    let directory = folders.folder(for: member.id)
     await home(member, in: directory).load()
     #expect(await APICheckInBackend(api: member.api, directory: directory).savedHome() != nil)
 
     try await member.account.signOut()
-    APICheckInBackend(api: member.api, directory: directory).forget()
-    await DeviceOutbox(directory: directory).forget()
+    folders.forgetAll()
 
     #expect(await APICheckInBackend(api: member.api, directory: directory).savedHome() == nil)
     #expect(await DeviceOutbox(directory: directory).load().isEmpty)
     let after = home(member, in: directory)
     await after.load()
     #expect(after.phase == .signedOut)
+}
+
+@Test func aSignUpClosedAfterJoiningCarriesOnWithTheSquadAndTheCharacter() async throws {
+    let stack = try LocalStack()
+    let creator = try await stack.signedInMember()
+    try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
+    try await APISignUpService(api: creator.api).agreeToAI()
+    _ = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
+    let code = try InviteCode(try await creator.api.mySquads()[0].inviteCode)
+    let friend = try await stack.signedInMember()
+    let saved = try character("小林", body: "calico", persona: .shy)
+    try await APISignUpService(api: friend.api).save(saved)
+    try await APISignUpService(api: friend.api).agreeToAI()
+    let joined = try await APISignUpService(api: friend.api).join(code)
+
+    // The app was closed here; the next launch reads the same squad and character back.
+    let resumed = try await APISignUpService(api: friend.api).resume(in: joined.id)
+
+    #expect(resumed.squad == joined)
+    #expect(resumed.character == saved)
 }

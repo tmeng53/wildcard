@@ -22,6 +22,29 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(performance.pose(at: 11.2).parts[1].rotation == 0)
 }
 
+/// Standing still (Reduce Motion) holds the idle's first frame, whatever plays on top: an idle
+/// that starts with the arm at 30° stands with it at 30°, not at rest.
+@Test func standingStillHoldsTheIdlesFirstFrame() throws {
+    let (figure, _, cheer) = try setUp()
+    let raised = try figure.bind(clip("idle", duration: 2, loops: true, [track("arm", .rotation, [(0, 30), (2, 30)])]))
+    var performance = Performance(figure: figure, idle: raised)
+    performance.play(cheer, at: 1)
+    #expect(performance.stillPose.parts[1].rotation == 30)
+    #expect(figure.restPose.parts[1].rotation == 0)
+}
+
+/// Mid-change, standing still already shows where the change ends up: the new outfit's idle.
+@Test func standingStillMidChangeHoldsTheNewIdlesFirstFrame() throws {
+    let (figure, idle, cheer) = try setUp()
+    var performance = Performance(figure: figure, idle: idle)
+    let dressed = try AvatarDomainTests.figure(Outfit(["top": "tee"]))
+    let raised = try dressed.bind(
+        clip("idle", duration: 2, loops: true, [track("arm", .rotation, [(0, 30), (2, 30)])]))
+    performance.change(into: dressed, idle: raised, leaving: cheer, arriving: try dressed.bind(cheer.clip), at: 1)
+    #expect(performance.stillPose.parts[1].rotation == 30)
+    #expect(performance.stillPose.parts.count == dressed.parts.count)
+}
+
 @Test func changesBlendFromWhatIsOnScreen() throws {
     let (figure, idle, cheer) = try setUp()
     var performance = Performance(figure: figure, idle: idle, blendDuration: 0.2)

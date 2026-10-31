@@ -46,8 +46,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                 ],
                 today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: true),
                 myWeek: MyWeek(
-                    firstDay: day, lastDay: try LocalDay("2026-10-25"), week: WeekCount(trainedDays: 2, plannedDays: 5),
-                    lifetimeTrainedDays: 40),
+                    firstDay: day, lastDay: try LocalDay("2026-10-25"), week: WeekCount(trainedDays: 2, plannedDays: 5)),
                 squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)))
 }
 
@@ -62,7 +61,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     #expect(plan.weekStart.description == "2026-10-19")
     #expect(
         plan.days == [
-            .train(.sport(.run)), .train(nil), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .train(nil),
+            .train(.sport("run")), .train(nil), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .train(nil),
             .rest,
         ])
 }

@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystemUI
 import FeedDomain
 import Foundation
 
@@ -18,16 +19,16 @@ extension InMemoryFeedSource {
         let write = SamplePosts(today: LocalDay(at: now, in: zone), zone: zone, audience: audience)
         var posts = [
             write.post(
-                jay, 0, 7, 42, .trained(write.training(.run, minutes: 45, "track", "下雨也跑了，鞋已阵亡")),
+                jay, 0, 7, 42, .trained(write.training("run", minutes: 45, "track", "下雨也跑了，鞋已阵亡")),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")]),
             write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
             write.post(
-                doudou, 1, 21, 5, .trained(write.training(.swim, minutes: 40, "pool", "夜泳人，泳池是我的")),
+                doudou, 1, 21, 5, .trained(write.training("swim", minutes: 40, "pool", "夜泳人，泳池是我的")),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
-                viewer, 1, 19, 20, .trained(write.training(.strength, minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
+                viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")]),
-            write.post(fish, 2, 18, 10, .trained(write.training(.tennis, "tennis", "发球终于过网了"))),
+            write.post(fish, 2, 18, 10, .trained(write.training("tennis", "tennis", "发球终于过网了"))),
             write.post(
                 kiki, 2, 20, 45, .cheatMeal(write.meal("burger", "坦白：两个汉堡，不后悔")),
                 reactions: [(jay, "🤤"), (fish, "🤤")]),
@@ -48,20 +49,27 @@ extension InMemoryFeedSource {
     private static func sampleCharacters(_ members: [String: MemberID]) -> [MemberID: MemberCharacter] {
         let looks: [String: CharacterLook] = [
             "阿杰": CharacterLook(
-                persona: "energetic", variants: ["body": "peach", "hair": "curls", "top": "tee", "bottom": "shorts"],
+                persona: "energetic",
+                variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
                 colors: ["body": "#C68A5E"]),
-            "Coco": CharacterLook(persona: "drama", variants: ["body": "lop", "top": "hoodie", "bottom": "leggings"]),
+            "Coco": CharacterLook(
+                persona: "drama", variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
             "Mia": CharacterLook(
-                persona: "deadpan", variants: ["body": "calico", "top": "tee", "bottom": "greenshorts"]),
+                persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
             "豆豆": CharacterLook(
-                persona: "energetic", variants: ["body": "shiba", "top": "jersey", "bottom": "shorts"]),
+                persona: "energetic", variants: ["body": "shiba", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
             "小鱼": CharacterLook(
-                persona: "shy", variants: ["body": "peach", "hair": "ponytail", "top": "tee", "bottom": "leggings"]),
+                persona: "shy",
+                variants: ["body": "peach", "hair": "ponytail", "top": "warmup-tee", "bottom": "warmup-leggings"]),
             "Kiki": CharacterLook(
                 persona: "showoff",
-                variants: ["body": "peach", "hair": "bob", "glasses": "round", "top": "hoodie", "bottom": "shorts"]),
+                variants: [
+                    "body": "peach", "hair": "bob", "glasses": "round", "top": "warmup-hoodie",
+                    "bottom": "warmup-shorts",
+                ]),
             "Momo": CharacterLook(
-                persona: "energetic", variants: ["body": "peach", "hair": "long", "top": "tank", "bottom": "shorts"]),
+                persona: "energetic",
+                variants: ["body": "peach", "hair": "long", "top": "warmup-tank", "bottom": "warmup-shorts"]),
         ]
         var characters: [MemberID: MemberCharacter] = [:]
         for (nickname, member) in members {
@@ -78,7 +86,7 @@ extension InMemoryFeedSource {
     public static let samplePhotoNames = ["track", "salad", "pool", "gym", "tennis", "burger"]
 
     fileprivate static func localized(_ key: String) -> String {
-        Bundle.module.localizedString(forKey: key, value: nil, table: nil)
+        Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
     }
 }
 

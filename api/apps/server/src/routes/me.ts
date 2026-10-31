@@ -1,5 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { Catchphrase, MemberId, TimeZone, type Members, type Profile } from '@wildcard/members';
+import {
+  Catchphrase,
+  JerseyNumber,
+  MemberId,
+  TimeZone,
+  type Members,
+  type Profile,
+} from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
 import { deleteAccount, type DeleteAccountDependencies } from '../flows/delete-account.js';
@@ -27,6 +34,15 @@ const profileFields = {
   // it out clears it. Left out rather than null: the Swift generator can't read a nullable
   // reference.
   character: CharacterBody.optional(),
+  jerseyNumber: JerseyNumber.nullable()
+    .optional()
+    .meta({
+      description:
+        'The number on the member’s player card in 我, 0 to 99, shown with two digits (07). ' +
+        'Null until they pick one; the app then shows their place in their squad. A save that ' +
+        'leaves it out keeps the number saved before. Squadmates may share a number.',
+      example: 22,
+    }),
 };
 
 /** The member's profile, as `PUT /me/profile` takes it and returns it. */
@@ -135,8 +151,8 @@ export function me(
     summary: 'Delete the signed-in member’s account',
     description:
       'Deletes the account and everything that is the member’s: profile, check-ins, photos and ' +
-      'squad memberships (squads they made stay with the other members), and revokes Sign in ' +
-      'with Apple when given a code. Can’t be undone. The session is checked with the sign-in ' +
+      'squad memberships (a squad stays with its other members, and goes with its last), and ' +
+      'revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in ' +
       'provider, so a signed-out token is refused even before it expires. Safe to repeat after ' +
       'a failure. Afterwards this route refuses the token; other routes accept it until it ' +
       'expires, so the app signs out.',
@@ -186,10 +202,12 @@ export function me(
       );
     })
     .openapi(putProfile, async (c) => {
-      const { timeZone, catchphrase, character } = c.req.valid('json');
+      const { timeZone, catchphrase, character, jerseyNumber } = c.req.valid('json');
+      const member = MemberId.parse(c.var.caller.userId);
+      // Builds from before the player card don't send the number; their saves keep it.
       const saved = await deps.members.saveProfile({
-        member: MemberId.parse(c.var.caller.userId),
-        profile: { timeZone, catchphrase, character: character ?? null },
+        member,
+        profile: { timeZone, catchphrase, character: character ?? null, jerseyNumber },
       });
       return c.json({ version: 1, ...wireProfile(saved) } as const, 200);
     })

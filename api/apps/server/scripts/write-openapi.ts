@@ -10,6 +10,7 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import {
   createOffSender,
@@ -20,11 +21,13 @@ import {
   createPush,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
 import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
 import { createLog } from '../src/log.js';
 import { openApiJson } from '../src/openapi.js';
+import { disclaimerDiceSection, sportsSection } from '../src/routes/catalog.js';
 
 const unused = (): never => {
   throw new Error('Writing the OpenAPI document serves no requests');
@@ -42,9 +45,17 @@ const app = createApp({
   verifyToken: unused,
   accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
   revokeAppleSignIn: undefined,
-  publicRoutes: { proxyHops: 1, inviteLookups: unused },
+  catalog: {
+    sections: [
+      sportsSection(createSports({ store: createPostgresSportStore(db) })),
+      disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    ],
+    clock: unused,
+  },
+  publicRoutes: { proxyHops: 1, inviteLookups: unused, catalogReads: unused },
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -61,6 +72,7 @@ const app = createApp({
   nudges: { send: unused, received: unused, inSquad: unused },
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: unused,
     clock: unused,
@@ -91,6 +103,7 @@ const app = createApp({
       find: unused,
       claimNudge: unused,
       claimWinners: unused,
+      titlesWon: unused,
     },
     clock: unused,
   },

@@ -1,8 +1,10 @@
 import AccountDomain
 import AccountUI
+import Backend
 import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
+import Combine
 import Contracts
 import DesignSystemUI
 import FeedDomain
@@ -14,9 +16,19 @@ import OnboardingUI
 import RecapUI
 import ScheduleDomain
 import ScheduleUI
+import SportsUI
 import SquadDomain
 import SquadUI
 import SwiftUI
+
+/// The app's entry point: the language first, then the app.
+@main
+enum Launch {
+    @MainActor static func main() {
+        DefaultLanguage.apply()
+        WildcardApp.main()
+    }
+}
 
 /// The app target only wires packages together. With a backend (the build names one, or a Debug
 /// build launched with `-local-backend`) it follows the account: sign-up until the member is in a
@@ -26,8 +38,7 @@ import SwiftUI
 /// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
-/// about.
-@main
+/// about. `Launch` starts it.
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
@@ -39,13 +50,23 @@ struct WildcardApp: App {
     @State private var recap: RecapShelf
     @State private var editor = CharacterEditorDemo.model()
     @State private var signUp: SignUpModel?
+    /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
+    /// made their squad only once the squad is dropping onto the scene they picked, so the
+    /// tabs never show the squad's old scene first.
+    @State private var signedUp = false
     @State private var app: AppModel?
+    /// The language the app speaks; a pick in the app draws everything again in it.
+    @State private var language = AppLanguage.current
 
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
-        _ = DefaultLanguage.applies
+        CrashReports.start()
+        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
+        SportList.shared.show(CatalogClient.bundled.sports)
+        DiceLines.shared.show(CatalogClient.bundled.diceLines)
         LaunchOptions.forgetSeenRecapIfAsked()
+        LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(
@@ -60,13 +81,10 @@ struct WildcardApp: App {
             scene: LaunchOptions.scene,
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
+            bubbleHold: LaunchOptions.bubbleHold,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
-        _profile = State(
-            initialValue: MeModel(
-                service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
-                // The in-memory member has no Apple account to confirm with and nothing to sign out of.
-                confirm: { .signedInSession }, signOut: {}))
+        _profile = State(initialValue: Self.sampleProfile())
         _squad = State(
             initialValue: SquadSettingsModel(
                 service: InMemorySquadSettingsService.sample(
@@ -75,8 +93,7 @@ struct WildcardApp: App {
             initialValue: ScheduleModel(
                 store: ScheduleStore(
                     backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
-                    now: LaunchOptions.scheduleNow),
-                photos: LaunchOptions.posterSaver))
+                    now: LaunchOptions.scheduleNow)))
         _recap = State(initialValue: Self.sampleRecap(today: today))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
@@ -94,6 +111,14 @@ struct WildcardApp: App {
                     now: LaunchOptions.signUpTime))
         }
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad))
+    }
+
+    /// The sample member for 我. The in-memory member has no Apple account to confirm with and
+    /// nothing to sign out of.
+    private static func sampleProfile() -> MeModel {
+        MeModel(
+            service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
+            confirm: { .signedInSession }, signOut: {})
     }
 
     /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on
@@ -132,7 +157,13 @@ struct WildcardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            root.environment(\.locale, DefaultLanguage.locale)
+            root
+                .environment(\.locale, language.locale)
+                .id(language)
+                .onReceive(NotificationCenter.default.publisher(for: AppLanguage.didChange)) { _ in
+                    language = AppLanguage.current
+                }
+                .dismissesKeyboardOnTapOutside()
         }
     }
 
@@ -140,11 +171,18 @@ struct WildcardApp: App {
         if let editor {
             CharacterEditorView(
                 model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
-        } else if let signUp, signUp.finished == nil {
+        } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
-                StandInSignIn { signUp.signedIn(name: nil) }
+                ContinueWithApple { signUp.signedIn(name: nil) }
             } tabBar: {
                 MainTabs.entranceTabBar
+            }
+            .onChange(of: signUp.finished) { _, finished in
+                guard finished != nil else { return }
+                Task {
+                    if let scene = signUp.landing { await today.dropIn(on: scene, coveredAt: .now) }
+                    signedUp = true
+                }
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
@@ -158,8 +196,6 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
-                // Whoever made their squad in `-onboarding` drops onto the scene they picked.
-                if let scene = signUp?.landing { Task { await today.dropIn(on: scene, coveredAt: .now) } }
                 delegate.opened = { [today, $tab] _ in
                     $tab.wrappedValue = .today
                     Task { await today.load() }
@@ -174,6 +210,7 @@ private struct AppRoot: View {
     let app: AppModel
     @Binding var tab: MainTabs.Tab
     let delegate: AppDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         // A ZStack, not a Group, so the task below starts once and outlives screen changes.
@@ -190,6 +227,9 @@ private struct AppRoot: View {
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
                 }
+                .onChange(of: signUp.joinedSquad) { _, squad in
+                    if let squad { SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad) }
+                }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
@@ -201,6 +241,16 @@ private struct AppRoot: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await app.run() }
+        // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
+        .onChange(of: app.showsTabs) { _, shows in
+            if !shows { tab = .today }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await app.refreshCatalog() }
+                Task { await app.refreshScene() }
+            }
+        }
         .onAppear {
             delegate.opened = { [app, $tab] opened in
                 switch opened {
@@ -216,32 +266,24 @@ private struct AppRoot: View {
     }
 }
 
-/// The open screen's sign-in: Sign in with Apple, or in Debug with `-test-member` a stand-in
-/// that signs in as that member of local Supabase.
+/// The open screen's sign-in: Sign in with Apple, or in Debug with `-test-member` that member of
+/// local Supabase.
 private struct SignInButton: View {
     let app: AppModel
     let signUp: SignUpModel
 
     var body: some View {
-        #if DEBUG
-        if let member = LaunchOptions.testMember {
-            StandInSignIn {
-                Task {
+        ContinueWithApple {
+            Task {
+                #if DEBUG
+                if let member = LaunchOptions.testMember {
                     await app.signIn(
                         with: .testMember(email: member.email, password: member.password), name: nil, from: signUp)
+                    return
                 }
+                #endif
+                await app.signIn(await AppleSignIn.authorize(), from: signUp)
             }
-        } else {
-            apple
-        }
-        #else
-        apple
-        #endif
-    }
-
-    private var apple: some View {
-        AppleSignInButton { result in
-            Task { await app.signIn(result, from: signUp) }
         }
     }
 }

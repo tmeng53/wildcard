@@ -2,13 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { z } from 'zod';
 
-import {
-  PlanDayStartedError,
-  RestDaysFixedError,
-  WeekOverError,
-  WeekStartedError,
-  WeekTooFarAheadError,
-} from '../errors.js';
+import { PlanDayStartedError, WeekOverError, WeekTooFarAheadError } from '../errors.js';
 import { LocalDay } from './check-in.js';
 import { SportKey } from './sports.js';
 import { CustomSportName } from './text.js';
@@ -63,9 +57,20 @@ export type PlanDay = z.infer<typeof PlanDay>;
 export const PlanDays = z.array(PlanDay).min(7).max(7);
 export type PlanDays = z.infer<typeof PlanDays>;
 
-/** How many of a plan's days are training days. */
-export const plannedTrainingDays = (days: readonly PlanDay[]) =>
-  days.filter(({ kind }) => kind === 'train').length;
+/**
+ * How many of a plan's days are training days. Given the week's dates and the day the member
+ * joined, the days before they joined don't count: a plan saved at sign-up on a Saturday asks
+ * for Saturday and Sunday only.
+ */
+export const plannedTrainingDays = (
+  days: readonly PlanDay[],
+  joined?: { readonly weekDays: readonly LocalDay[]; readonly joinedOn: LocalDay | undefined },
+) =>
+  days.filter(({ kind }, index) => {
+    if (kind !== 'train') return false;
+    const date = joined?.weekDays[index];
+    return joined?.joinedOn === undefined || date === undefined || date >= joined.joinedOn;
+  }).length;
 
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
 export const StoredPlan = z.discriminatedUnion('version', [
@@ -130,16 +135,14 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
   return Number(part('hour')) < GRACE_HOURS ? addDays(calendarDay, -1) : calendarDay;
 }
 
-const restDays = (days: readonly PlanDay[]) => days.filter((day) => day.kind === 'rest').length;
-
 /**
  * Checks that a member may replace `current` (the week's plan as it stands) with `next` on
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
  * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
  * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
- * days before today stay as they were, a training today stays a training day (its sport may
- * change), and the number of rest days stays the same, except that a rest today may become a
- * training day, one rest day fewer. Days before the member joined weren't
+ * days before today stay as they were; a training today stays a training day (its sport may
+ * change) and a rest today may become a training day; the days after today change freely, rest
+ * days included. Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
  * is still on the default plan: that is where they first make their plan.
  */
@@ -175,12 +178,6 @@ export function checkPlanChange({
       throw new PlanDayStartedError(date);
     }
   }
-  const todayIndex = Math.round((Date.parse(today) - Date.parse(thisWeek)) / DAY);
-  const tookUpToday =
-    current.days[todayIndex]?.kind === 'rest' && next[todayIndex]?.kind === 'train';
-  const kept = restDays(current.days.slice(first));
-  const rests = restDays(next.slice(first));
-  if (rests !== kept && !(tookUpToday && rests === kept - 1)) throw new RestDaysFixedError(kept);
 }
 
 /**
@@ -206,8 +203,8 @@ export function trainedOnRestDay({
 }
 
 /**
- * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: only
- * before the week starts, and at most `WEEKS_AHEAD` weeks ahead, as for the plan.
+ * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: this
+ * week or a later one, at most `WEEKS_AHEAD` weeks ahead, as for the plan; past weeks are over.
  */
 export function checkFuelGoalsChange({
   weekStart,
@@ -217,6 +214,6 @@ export function checkFuelGoalsChange({
   readonly today: LocalDay;
 }): void {
   const thisWeek = weekStartOf(today);
-  if (weekStart <= thisWeek) throw new WeekStartedError(weekStart);
+  if (weekStart < thisWeek) throw new WeekOverError(weekStart);
   if (weekStart > addDays(thisWeek, 7 * WEEKS_AHEAD)) throw new WeekTooFarAheadError(weekStart);
 }

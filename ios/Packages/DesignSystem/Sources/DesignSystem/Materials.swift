@@ -14,6 +14,13 @@ public enum Scrim {
     public static let fadeOut: Double = 0.16
 }
 
+/// The dark over a scene at night: the design's tint, which `CheckIn/SceneArt/render.mjs` bakes
+/// into each scene's night art, and which home also lays below the art on a phone taller than it.
+public enum NightTint {
+    public static let color = SRGBColor(red: 0x0E, green: 0x14, blue: 0x24)
+    public static let opacity: Double = 0.58
+}
+
 /// The scene-pick reveal's own colours, beside the scenes' (approved 2026-10-22).
 public enum Reveal {
     /// The ink the page dims under.

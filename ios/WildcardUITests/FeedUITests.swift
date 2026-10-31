@@ -50,13 +50,15 @@ final class FeedUITests: XCTestCase {
         let posts = app.descendants(matching: .any).matching(identifier: "feed.post")
         let tabBarTop = app.buttons["tab.feed"].frame.minY
         var swipes = 0
+        let feed = app.scrollViews.firstMatch
         while swipes < Self.maxSwipes, posts.element(boundBy: posts.count - 1).frame.maxY > tabBarTop {
-            app.swipeUp()
+            feed.swipeUp()
             swipes += 1
         }
         settle()
-        assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
+        // Kept before the check, so a failure shows where the list stopped.
         keepScreenshot(named: "45-feed-end")
+        assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
     }
 
     /// A 练了 with its minutes shows them as the card's big number. The newest posts on top are a
@@ -67,16 +69,18 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
         let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
         let tabBarTop = app.buttons["tab.feed"].frame.minY
+        let feed = app.scrollViews.firstMatch
         var drags = 0
         while drags < Self.maxSwipes, !(minutes.exists && minutes.frame.maxY <= tabBarTop) {
-            let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
             from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
             drags += 1
         }
         XCTAssertTrue(minutes.exists, "no minutes on a 练了")
         settle()
-        assertClearOfTheTabBar(minutes, in: app)
+        // Kept before the check, so a failure shows where the list stopped.
         keepScreenshot(named: "44-feed-minutes")
+        assertClearOfTheTabBar(minutes, in: app)
     }
 
     /// ＋ opens our own emoji grid, and holding a card then sliding along the bar picks.

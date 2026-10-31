@@ -72,6 +72,11 @@ const Environment = z.object({
   // The service account Cloud Scheduler signs its OIDC tokens as, on the hosted server. When
   // set, only its tokens (for PUBLIC_URL) start jobs, and JOBS_TOKEN isn't used.
   JOBS_SCHEDULER_ACCOUNT: z.email().optional(),
+  // Where error reports go: the API project's Sentry DSN. Without it nothing is reported, and
+  // errors are only logged.
+  SENTRY_DSN_API: z.url({ protocol: /^https$/ }).optional(),
+  // The revision Cloud Run is serving, which it sets itself; reports name it as the release.
+  K_REVISION: z.string().min(1).optional(),
   // The Google Cloud project the server runs in (set by the deploy), so each log entry names its
   // request's trace and Cloud Logging groups a request's entries. Unset off Google Cloud.
   GOOGLE_CLOUD_PROJECT: z
@@ -118,6 +123,8 @@ export interface Config {
     | { readonly kind: 'google'; readonly serviceAccount: string }
     | { readonly kind: 'token'; readonly token: string }
     | undefined;
+  /** Where error reports go; undefined until there is a DSN, and then none are sent. */
+  readonly errorReports: { readonly dsn: string; readonly release: string | undefined } | undefined;
   /** Undefined until there are APNs keys: then no pushes are sent. */
   readonly apns:
     | {
@@ -194,6 +201,10 @@ export function readConfig(environment: Record<string, string | undefined>): Con
           ? { kind: 'token', token: result.data.JOBS_TOKEN }
           : undefined,
     apns,
+    errorReports:
+      result.data.SENTRY_DSN_API === undefined
+        ? undefined
+        : { dsn: result.data.SENTRY_DSN_API, release: result.data.K_REVISION },
     traceProject: result.data.GOOGLE_CLOUD_PROJECT,
   };
 }

@@ -80,8 +80,8 @@ struct WhoPanel: View {
     }
 
     private func name(_ member: MemberID) -> String {
-        if member == model.viewer { return String(localized: "我", bundle: .module) }
-        return model.name(of: member) ?? String(localized: "队友", bundle: .module)
+        if member == model.viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
+        return model.name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
     }
 }
 #endif

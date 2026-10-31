@@ -75,10 +75,10 @@ public final class CharacterPlayer {
         }
     }
 
-    /// The character standing still, for Reduce Motion: in the outfit it ends up in, at rest.
+    /// The character standing still, for Reduce Motion: in the outfit it ends up in, holding
+    /// its idle's first frame (`Performance.stillPose`).
     public var restFrame: (drawing: FigureDrawing, placements: [Placement]) {
-        let figure = self.figure
-        return (nextDrawing?.drawing ?? drawing, figure.layout(figure.restPose))
+        (nextDrawing?.drawing ?? drawing, figure.layout(performance.stillPose))
     }
 }
 

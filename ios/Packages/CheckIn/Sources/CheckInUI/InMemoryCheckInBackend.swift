@@ -1,6 +1,7 @@
 import AvatarArt
 import CheckInDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 
 /// A squad kept in memory, for previews, UI tests and builds that don't talk to the API. It
@@ -54,21 +55,21 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
-            days: [.train(.sport(.run)), .train(nil), .rest, .train(.sport(.run)), .train(nil), .train(nil), .rest])
+            days: [.train(.sport("run")), .train(nil), .rest, .train(.sport("run")), .train(nil), .train(nil), .rest])
         return InMemoryCheckInBackend(
             home: plan.map { plan in
                 Home(
                     member: member, timeZone: zone,
                     squad: Squad(
                         id: squadID,
-                        name: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                        name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
                         inviteCode: "K7M2QX9P", members: mates + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
                         today: counts(of: members),
                         myWeek: MyWeek(
                             firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
-                            week: WeekCount(trainedDays: earlier.count, plannedDays: 5), lifetimeTrainedDays: 40),
+                            week: WeekCount(trainedDays: earlier.count, plannedDays: 5)),
                         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
             },
@@ -91,7 +92,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// A sample teammate's nickname, on the stand-in look and persona the scene gives them.
     private static func character(of member: MemberID, everyone: [MemberID]) -> MemberCharacter? {
         guard let index = everyone.firstIndex(of: member),
-            let nickname = try? Nickname(Bundle.module.localizedString(forKey: names[index], value: nil, table: nil))
+            let nickname = try? Nickname(
+                Bundle.module.inAppLanguage.localizedString(forKey: names[index], value: nil, table: nil))
         else { return nil }
         return MemberCharacter(
             nickname: nickname,
@@ -119,11 +121,11 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 entry: entry)
         }
         let leave = try? Disclaimer(
-            Bundle.module.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
+            Bundle.module.inAppLanguage.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
         return [
-            checkIn(mates[0], 5, .trained(Training(activity: .sport(.run)))),
-            checkIn(mates[1], 4, .trained(Training(activity: .sport(.yoga)))),
-            checkIn(mates[2], 3, .trained(Training(activity: .sport(.swim)))),
+            checkIn(mates[0], 5, .trained(Training(activity: .sport("run")))),
+            checkIn(mates[1], 4, .trained(Training(activity: .sport("yoga")))),
+            checkIn(mates[2], 3, .trained(Training(activity: .sport("swim")))),
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
     }
 
@@ -134,8 +136,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     ) -> [CheckIn] {
         guard let audience = try? Audience([squad]) else { return [] }
         let entries: [[CheckIn.Entry]] = [
-            [.trained(Training(activity: .sport(.run))), .healthyMeal(Meal())],
-            [.trained(Training(activity: .sport(.swim)))],
+            [.trained(Training(activity: .sport("run"))), .healthyMeal(Meal())],
+            [.trained(Training(activity: .sport("swim")))],
         ]
         return zip(days, entries).enumerated().flatMap { offset, pair in
             pair.1.map { entry in

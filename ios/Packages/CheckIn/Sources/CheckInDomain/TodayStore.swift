@@ -94,6 +94,13 @@ public final class TodayStore {
         return mine.training
     }
 
+    /// Whether this week's plan rests today. A rest day has nothing to take leave from, so it
+    /// offers no 请假条.
+    public var restsToday: Bool {
+        guard let mine = home?.mine, mine.day == day else { return false }
+        return mine.plannedRest
+    }
+
     /// The sport a new 练了 starts with: today's in the plan, else the latest 练了.
     public var suggestedActivity: Activity? {
         guard let home, let day else { return nil }

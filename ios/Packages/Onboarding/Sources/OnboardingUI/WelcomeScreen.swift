@@ -11,6 +11,7 @@ import SwiftUI
 /// and breaks the finish tape while the squad watches; they cheer, then each does a check-in
 /// once. Every so often one of them changes into another look, and a tap changes it too. The
 /// middle one's look is where 角色和昵称 starts. Then 通过 Apple 继续, and the terms under it.
+/// The globe in the top corner picks the app's language before signing up.
 struct WelcomeScreen<SignIn: View>: View {
     let model: SignUpModel
     let policies: PolicyLinks
@@ -20,6 +21,7 @@ struct WelcomeScreen<SignIn: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+    @State private var picksLanguage = false
     @State private var crowd = WelcomeCrowd()
     @State private var word: CGRect?
     @State private var sprint: SprintRunner?
@@ -44,10 +46,13 @@ struct WelcomeScreen<SignIn: View>: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .ignoresSafeArea(edges: .bottom)
                 if let sprint {
-                    // The tape, from above the screen's top down to the floor.
+                    // The tape, from above the screen's top down to the floor. It reaches past
+                    // the top inside a frame of the screen's own height, so the stack keeps its
+                    // size: a taller stack is centred in its frame, which lifted the floor and
+                    // the squad by half the status bar until the tape went and they dropped back.
                     FinishTape(runner: sprint, theme: theme)
                         .frame(width: proxy.size.width, height: proxy.size.height + top)
-                        .offset(y: -top)
+                        .frame(height: proxy.size.height, alignment: .bottom)
                 }
                 ForEach(crowd.spots.indices, id: \.self) { index in
                     crowdMember(index, unit: unit, bottom: proxy.size.height)
@@ -55,6 +60,7 @@ struct WelcomeScreen<SignIn: View>: View {
                 title(top: WelcomeCrowd.titleTop)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
+            .overlay(alignment: .topTrailing) { language }
             .coordinateSpace(.named(WelcomeTitle.space))
             // Once the word is measured, from where it stands then, and again on each reopen;
             // going to the background cancels it. Keyed on the layout, the sprint restarted
@@ -97,6 +103,14 @@ struct WelcomeScreen<SignIn: View>: View {
         .onDisappear { crowd.stop() }
         .onChange(of: scenePhase) { _, phase in reopen(phase) }
         .onChange(of: crowd.middleLook) { _, look in model.welcomeLook = look }
+    }
+
+    /// The globe that picks the app's language, before signing up.
+    private var language: some View {
+        HeaderButton(Text("语言", bundle: .module), systemImage: "globe", on: .scene) { picksLanguage = true }
+            .padding(.trailing, Space.pageMargin)
+            .accessibilityIdentifier("signup.language")
+            .languagePicker(isPresented: $picksLanguage)
     }
 
     /// WILDCARD, then the slogan under it. While the sprint plays the word is drawn where the
@@ -200,7 +214,7 @@ struct WelcomeScreen<SignIn: View>: View {
     /// The catalog marks them `terms:` and `privacy:`, which become the pages the app passes.
     private var termsLine: AttributedString {
         var line = AttributedString(
-            localized: "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module)
+            localized: "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module.inAppLanguage)
         for (link, range) in line.runs[\.link] {
             guard let link else { continue }
             line[range].link = link.scheme == "terms" ? policies.terms : policies.privacyPolicy

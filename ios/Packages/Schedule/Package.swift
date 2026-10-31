@@ -2,9 +2,9 @@
 import PackageDescription
 
 // 出赛表: the member's week as a poster they plan on and save to share. `ScheduleDomain` holds
-// which weeks show, what may change in each (the week starts Monday; this week only moves its
-// days still to come and keeps its number of rest days; next week changes freely; past weeks
-// are read-only) and the store the screen binds to. It is pure Swift, so it tests on Linux.
+// which weeks show, what may change in each (the week starts Monday; this week changes its
+// days still to come freely and today's sport; next week changes freely; past weeks are
+// read-only) and the store the screen binds to. It is pure Swift, so it tests on Linux.
 // `ScheduleUI` is the tab's screen and the 3:4 poster it saves.
 let package = Package(
     name: "Schedule",

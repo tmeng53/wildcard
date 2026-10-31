@@ -25,6 +25,18 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface DisclaimerDice {
+  lines: Json;
+  only_row: Generated<boolean>;
+}
+
+export interface DisclaimerDiceEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  dice: Json;
+  id: Generated<Int8>;
+}
+
 export interface DisclaimerDraftRequests {
   id: Generated<string>;
   member_id: string;
@@ -48,6 +60,8 @@ export interface DisclaimerDraftSettings {
 }
 
 export interface DB {
+  disclaimer_dice: DisclaimerDice;
+  disclaimer_dice_events: DisclaimerDiceEvents;
   disclaimer_draft_requests: DisclaimerDraftRequests;
   disclaimer_draft_setting_events: DisclaimerDraftSettingEvents;
   disclaimer_draft_settings: DisclaimerDraftSettings;

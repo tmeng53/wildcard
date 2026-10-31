@@ -47,6 +47,8 @@ public struct FeedView: View {
                 .padding(.bottom, Space.l)
             }
             .scrollDismissesKeyboard(.immediately)
+            // A held card's slide picks an emoji; the list stays put under it.
+            .scrollDisabled(model.lifted)
             .refreshable { await model.load() }
             .onChange(of: model.focus) { _, focus in
                 guard let focus else { return }
@@ -121,7 +123,7 @@ extension DayHeading {
         case .weekday(5): Text("周五", bundle: .module)
         case .weekday(6): Text("周六", bundle: .module)
         case .weekday: Text("周日", bundle: .module)
-        case .date(let day): Text(Self.noon(of: day).formatted(Self.dayStyle))
+        case .date(let day): Text(Self.noon(of: day), format: Self.dayStyle)
         }
     }
 

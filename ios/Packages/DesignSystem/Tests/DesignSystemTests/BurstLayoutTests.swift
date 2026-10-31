@@ -31,4 +31,24 @@ struct BurstLayoutTests {
             available: 390)
         #expect(spots.map { ($0.x * 10).rounded() / 10 } == [-121.7, -60.1, 60.1, 121.7])
     }
+
+    /// Without 请假 (a rest day, or a day that already has a 练了 or a 请假条) the other three
+    /// share the arc evenly, one on top, and never touch.
+    @Test func threeCapsulesShareTheArc() {
+        let kinds: [CheckInKind] = [.trained, .healthyMeal, .cheatMeal]
+        let spots = BurstLayout.positions(
+            kinds: kinds, widths: [74, 84, 84], height: Sizing.control,
+            button: (width: 100, height: Sizing.primaryControl), available: 390)
+        #expect(spots.map { ($0.x * 10).rounded() / 10 } == [-121.7, 0, 121.7])
+        #expect(spots.map { ($0.y * 10).rounded() / 10 } == [-39.6, -128, -39.6])
+        let narrow = BurstLayout.positions(
+            kinds: kinds, widths: [160, 200, 190], height: Sizing.control,
+            button: (width: 130, height: Sizing.primaryControl), available: 320)
+        let boxes = zip(narrow, [160.0, 200, 190]).map {
+            BurstLayout.Box(midX: $0.0.x, midY: $0.0.y, width: $0.1, height: Sizing.control)
+        }
+        for (index, box) in boxes.enumerated() {
+            for other in boxes.dropFirst(index + 1) { #expect(!box.collides(with: other)) }
+        }
+    }
 }

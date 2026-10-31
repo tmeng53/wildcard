@@ -4,6 +4,7 @@ import AvatarDomain
 import CharacterEditorDomain
 import CharacterEditorUI
 import Contracts
+import DesignSystemUI
 import Foundation
 import DesignSystem
 import Observation
@@ -31,6 +32,8 @@ public final class SignUpModel {
     /// The heads of the squad found, under its name: its members' characters, standing still.
     private(set) var previewHeads: [CastMember] = []
     private(set) var joined: JoinedSquad?
+    /// The squad joined or made, which the app keeps until 上场 to carry on a closed sign-up.
+    public var joinedSquad: SquadID? { joined?.id }
     /// The teammates who welcome the member at 上场, the earliest to join first.
     private(set) var teammates: [CastMember] = []
 
@@ -38,7 +41,7 @@ public final class SignUpModel {
     private(set) var week: WeekDraft?
 
     /// Whether the member made the squad they are in, rather than joined one: they pick its scene.
-    private(set) var madeTheSquad = false
+    public private(set) var madeTheSquad = false
     /// 这周在哪练？'s five cartons, once the squad is made.
     private(set) var scenePicker: ScenePicker?
     /// The picked carton opening over 这周在哪练？.
@@ -62,8 +65,8 @@ public final class SignUpModel {
 
     /// This week's days, Monday first, for the poster's dates.
     let weekDays: [LocalDay]
-    /// The week's number in the year, the poster's W43.
-    let weekNumber: Int
+    /// The poster's W1: weeks count from the one the member signs up in.
+    let weekNumber = 1
 
     @ObservationIgnored private let service: any SignUpService
     /// How many of this week's days are over: 0 on its first day.
@@ -85,7 +88,6 @@ public final class SignUpModel {
         let today = LocalDay(at: now, in: timeZone)
         weekDays = (0..<WeeklyPlan.dayCount).map { today.weekStart.adding(days: $0) }
         daysGone = today.weekday - 1
-        weekNumber = today.weekOfYear
     }
 
     /// The nickname so far, for the squad's suggested name and the poster.
@@ -98,6 +100,20 @@ public final class SignUpModel {
         failure = nil
         if let name, !name.isEmpty, editor == nil { nickname = name }
         show(.character)
+    }
+
+    /// Carries on a sign-up closed after 你的小队, at 平时练什么？ with its saved character; false if not.
+    public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
+        guard let resumed = try? await service.resume(in: squad) else { return false }
+        (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
+        teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
+        if let made = resumed.character {
+            (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
+            editor = try? CharacterEditorModel.placeholder(look: made.outfit, persona: made.persona, nickname: nickname)
+            await myCharacter?.load(idle: false)
+        }
+        show(.sports)
+        return true
     }
 
     /// Sign-in didn't work: the open screen says so above its button until the next try.
@@ -120,6 +136,11 @@ public final class SignUpModel {
         }
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, daysGone: daysGone).choices {
             week = WeekDraft(sports: sports.picked, daysGone: daysGone)
+        }
+        if step == .week, next == .sports {
+            // Back to the sports: the character wears the one picked last again, not the
+            // scene's kit the week's poster put on it.
+            myCharacter?.dress(for: sports.wearing)
         }
         if next == .scene, scenePicker == nil, let joined {
             scenePicker = .newSquad(service: SignUpScenePick(service: service, squad: joined.id))
@@ -149,11 +170,6 @@ public final class SignUpModel {
             }
             self.show(.squad)
         }
-    }
-
-    /// 「Tracy 的小队」.
-    static func suggestedName(for nickname: String) -> String {
-        String(localized: "\(nickname) 的小队", bundle: .module)
     }
 
     // MARK: 你的小队
@@ -268,12 +284,14 @@ public final class SignUpModel {
         week?.select(index)
     }
 
-    /// Sets the selected day; the character hops when a rest day becomes a training day.
+    /// Sets the selected day. A sport puts the character into its kit and plays its move, as
+    /// picking it in 平时练什么 does; plain 训练 on a rest day makes it hop.
     func setDay(_ day: PlanDay) {
-        if week?.set(day) == true { hops += 1 }
+        let becameTraining = week?.set(day) == true
+        if case .train(let activity?) = day { myCharacter?.dress(for: activity) } else if becameTraining { hops += 1 }
     }
 
-    /// Bumped each time a rest day becomes a training day.
+    /// Bumped each time a rest day becomes plain 训练.
     private(set) var hops = 0
 
     func finishWeek() {
@@ -352,27 +370,6 @@ public final class SignUpModel {
             } catch {
                 failure = error
             }
-        }
-    }
-}
-/// The carton opening on 这周在哪练？.
-struct SceneReveal {
-    let unboxing: Unboxing
-    let scene: SceneTheme
-    let startedAt: Date
-}
-
-/// 这周在哪练？'s pick, saved through sign-up's backend for the squad just made.
-private struct SignUpScenePick: ScenePickService {
-    let service: any SignUpService
-    let squad: SquadID
-
-    func pick(_ scene: SceneTheme) async throws(ScenePickError) {
-        guard let id = SceneID(rawValue: scene.rawValue) else { throw .notAllowed }
-        do throws(SignUpError) {
-            try await service.pickScene(id, for: squad)
-        } catch {
-            throw error == .unavailable ? .unavailable : .notAllowed
         }
     }
 }

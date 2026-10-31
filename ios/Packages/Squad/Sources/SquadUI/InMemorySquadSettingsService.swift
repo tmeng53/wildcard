@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystemUI
 import Foundation
 import SquadDomain
 
@@ -34,7 +35,7 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
             longNames
             ? (1...5).map { String(repeating: "长", count: Nickname.maxLength - 1) + "\($0)" }
             : ["小林", "Coco", "Mia", "阿杰", "大卫"].map {
-                Bundle.module.localizedString(forKey: $0, value: nil, table: nil)
+                Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil)
             }
         var characters: [MemberID: MemberCharacter] = [:]
         for (id, (name, look)) in zip(ids, zip(names, sampleLooks)) {
@@ -43,7 +44,7 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
         let squadName =
             longNames
             ? String(repeating: "超", count: SquadName.maxLength)
-            : Bundle.module.localizedString(forKey: "晨跑五人组", value: nil, table: nil)
+            : Bundle.module.inAppLanguage.localizedString(forKey: "晨跑五人组", value: nil, table: nil)
         let viewer: MemberID =
             switch seat {
             case .captain, .noWinner: ids[0]
@@ -121,11 +122,13 @@ extension Squad {
 /// The sample squad's looks, one each, so the page shows a squad of different characters.
 private let sampleLooks: [CharacterLook] = [
     CharacterLook(
-        persona: "energetic", variants: ["body": "peach", "hair": "long", "top": "tank", "bottom": "shorts"]),
-    CharacterLook(persona: "drama", variants: ["body": "lop", "top": "hoodie", "bottom": "leggings"]),
-    CharacterLook(persona: "deadpan", variants: ["body": "calico", "top": "tee", "bottom": "greenshorts"]),
+        persona: "energetic",
+        variants: ["body": "peach", "hair": "long", "top": "warmup-tank", "bottom": "warmup-shorts"]),
+    CharacterLook(persona: "drama", variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
+    CharacterLook(persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
     CharacterLook(
-        persona: "energetic", variants: ["body": "peach", "hair": "curls", "top": "tee", "bottom": "shorts"],
+        persona: "energetic",
+        variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
         colors: ["body": "#C68A5E"]),
-    CharacterLook(persona: "shy", variants: ["body": "shiba", "top": "jersey", "bottom": "shorts"]),
+    CharacterLook(persona: "shy", variants: ["body": "shiba", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
 ]

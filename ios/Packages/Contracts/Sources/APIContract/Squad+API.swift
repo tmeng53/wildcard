@@ -57,8 +57,7 @@ extension SquadToday {
                 everyoneTrained: wire.today.everyoneTrained),
             myWeek: MyWeek(
                 firstDay: try LocalDay(wire.me.week.from), lastDay: try LocalDay(wire.me.week.to),
-                week: WeekCount(trainedDays: wire.me.week.trainedDays, plannedDays: wire.me.week.plannedDays),
-                lifetimeTrainedDays: wire.me.lifetimeTrainedDays),
+                week: WeekCount(trainedDays: wire.me.week.trainedDays, plannedDays: wire.me.week.plannedDays)),
             squadWeek: WeekCount(trainedDays: wire.squadWeek.trainedDays, plannedDays: wire.squadWeek.plannedDays))
     }
 }

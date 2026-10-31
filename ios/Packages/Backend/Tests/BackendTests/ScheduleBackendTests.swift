@@ -37,7 +37,7 @@ private var thisWeek: LocalDay {
     let stack = try LocalStack()
     let (member, backend) = try await scheduleMember(stack)
     let squad = try await stack.squad(of: member)
-    let trained = try checkIn(by: member, to: squad, .trained(Training(activity: .sport(.run))))
+    let trained = try checkIn(by: member, to: squad, .trained(Training(activity: .sport("run"))))
     _ = try await member.api.save(trained)
 
     let week = try await backend.week(starting: trained.day.weekStart)
@@ -69,8 +69,8 @@ private var thisWeek: LocalDay {
     let (_, backend) = try await scheduleMember(try LocalStack())
     let nextWeek = try thisWeek.adding(days: 7)
     let plan: [PlanDay] = [
-        .train(.sport(.run)), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .rest, .rest,
-        .train(.sport(.swim)),
+        .train(.sport("run")), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .rest, .rest,
+        .train(.sport("swim")),
     ]
     let goals: [FuelGoal] = [.suggested(.water), .own("少喝可乐")]
 
@@ -83,11 +83,13 @@ private var thisWeek: LocalDay {
     #expect(week.squad == nil)
 }
 
-@Test func thisWeeksFoodGoalsCantChange() async throws {
+@Test func thisWeeksFoodGoalsChangeAndLastWeeksDont() async throws {
     let (_, backend) = try await scheduleMember(try LocalStack())
 
+    try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek)
+    #expect(try await backend.week(starting: try thisWeek).fuel == [.suggested(.breakfast)])
     await #expect(throws: ScheduleError.weekOver) {
-        try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek)
+        try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek.adding(days: -7))
     }
 }
 
@@ -103,10 +105,10 @@ private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn 
     let monday = try LocalDay(year: 2026, month: 10, day: 19)
     let checkIns = [
         try posted(.disclaimer(try Disclaimer("下雨")), on: monday),
-        try posted(.trained(Training(activity: .sport(.run))), on: monday),
+        try posted(.trained(Training(activity: .sport("run"))), on: monday),
         try posted(.disclaimer(try Disclaimer("加班")), on: monday.adding(days: 2)),
         try posted(.healthyMeal(Meal()), on: monday.adding(days: 3)),
-        try posted(.trained(Training(activity: .sport(.swim))), on: monday.adding(days: 7)),
+        try posted(.trained(Training(activity: .sport("swim"))), on: monday.adding(days: 7)),
     ]
 
     #expect(
@@ -118,7 +120,6 @@ private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn 
 @Test func eachRefusalMeansSomethingOnTheSchedule() {
     #expect(ScheduleError(.refused(.weekClosed)) == .weekOver)
     #expect(ScheduleError(.refused(.planDayStarted)) == .dayStarted)
-    #expect(ScheduleError(.refused(.restDaysFixed)) == .restDaysFixed)
     #expect(ScheduleError(.refused(.squadFull)) == .refused)
     #expect(ScheduleError(.unreadableResponse) == .refused)
     #expect(ScheduleError(.unavailable) == .notSent)

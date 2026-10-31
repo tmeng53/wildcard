@@ -4,8 +4,8 @@ import Contracts
 import Foundation
 import MeDomain
 
-/// 我 over our API: the profile's character, the lifetime counts, the squad, the daily push
-/// switch, and deleting the account.
+/// 我 over our API: the profile's character and card number, the card's records, the squad, the
+/// daily push switch, and deleting the account.
 public struct APIMeService: MeService {
     private let api: WildcardAPI
     private let beforeDeleting: @Sendable () async -> Void
@@ -26,6 +26,8 @@ public struct APIMeService: MeService {
             // that doesn't load leaves the week out rather than the whole page.
             var week: WeekCount?
             if let squad { week = try? await api.today(of: squad.id).myWeek.week }
+            // So do the titles: the card shows none rather than no card.
+            let titles = try? await api.awardTotals()
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -36,7 +38,27 @@ public struct APIMeService: MeService {
                 counts: LifetimeCounts(
                     trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
                     disclaimers: totals.disclaimers),
-                week: week, squadName: squad?.name, dailyPushOn: dailyPushOn)
+                week: week, squadName: squad?.name, dailyPushOn: dailyPushOn,
+                jerseyNumber: member.profile?.jerseyNumber,
+                // Members are listed in the order they joined.
+                squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
+                mostTrained: totals.topSport.map { MostTrained(activity: $0.activity, checkIns: $0.checkIns) },
+                titles: titles.map { titles in
+                    TitlesWon(
+                        count: titles.titles,
+                        latest: titles.latest.map { TitlesWon.Latest(title: $0.title, times: $0.times) })
+                } ?? .none)
+        }
+    }
+
+    /// Saves the card's number on the profile, keeping the rest of it.
+    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
+        try await me { () throws(APIError) in
+            let profile = try await api.me().profile
+            _ = try await api.save(
+                Profile(
+                    timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
+                    character: profile?.character, jerseyNumber: jerseyNumber))
         }
     }
 
@@ -55,7 +77,7 @@ public struct APIMeService: MeService {
                     timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
                     character: MemberCharacter(
                         nickname: nickname, look: CharacterLook(outfit: character.outfit, persona: character.persona)
-                    )))
+                    ), jerseyNumber: profile?.jerseyNumber))
         }
     }
 

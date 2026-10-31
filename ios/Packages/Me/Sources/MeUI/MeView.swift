@@ -1,5 +1,6 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
+import AvatarDomain
 import AvatarUI
 import DesignSystem
 import DesignSystemUI
@@ -47,6 +48,7 @@ public struct MeView: View {
         ZStack {
             if model.isDeletionOpen {
                 DeleteAccountView(model: model) { model.closeDeletion() }
+                    .swipesBack(isEnabled: model.deletion != .deleting) { model.closeDeletion() }
                     .accentTone(.ink)
                     .transition(.move(edge: .trailing))
             } else if isSettingsOpen {
@@ -118,10 +120,21 @@ struct SaveFailed: View {
     }
 }
 
-/// The member's character on a little floor shadow. It plays its persona's idle and changes
-/// clothes in place when the character is edited.
+/// The member's character on a little floor shadow: its persona's idle on the card, typing at
+/// its laptop on 设置, near tears on 注销账号, at its persona's pace. It changes clothes in
+/// place when the character is edited.
 struct MeStage: View {
+    enum Mood {
+        /// Standing and playing its persona's idle.
+        case idle
+        /// At a small desk behind a laptop, typing and peeking over the screen now and then.
+        case typing
+        /// Worried brows, a wobbly frown and tears rolling down.
+        case teary
+    }
+
     let character: MeCharacter?
+    var mood = Mood.idle
     var size = CGSize(width: 160, height: 200)
     /// The shadow's colour, so it shows on the page and in the card's window alike.
     var floor: ColorRole = .bgSubtle
@@ -150,8 +163,14 @@ struct MeStage: View {
     private func dress() {
         guard let character else { return }
         do {
-            let figure = try PlaceholderCharacter.figure(wearing: character.outfit)
-            let idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
+            let look = mood == .typing ? PlaceholderCharacter.atDesk(character.outfit) : character.outfit
+            let figure = try PlaceholderCharacter.figure(wearing: look)
+            let idle: Clip
+            switch mood {
+            case .idle: idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
+            case .typing: idle = try PlaceholderCharacter.typing(persona: character.persona)
+            case .teary: idle = try PlaceholderCharacter.teary(persona: character.persona)
+            }
             if let player {
                 try player.wear(figure, idle: idle)
             } else {

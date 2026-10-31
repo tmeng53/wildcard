@@ -1,14 +1,15 @@
-# Builds the app, signs it and uploads it to TestFlight. It runs on every push to `main` that
-# changes ios/ or this workflow, and by hand from `main` (Actions → testflight → Run workflow).
-# TEMPORARY, until full launch: while the repo is public GitHub's Macs are free, and internal
-# testers get every build. At launch (repo goes private, releases get gated) revisit this: switch
-# back to manual runs, or to a schedule, so macOS minutes and tester notices stay under control.
-# A burst of merges collapses into one build of the latest main: a newer push replaces the pending
-# upload, and the running one finishes. It shares the one free Mac with verify's scheduled `ios` job, but runs
-# at most one at a time (about 6 minutes), so that job waits at most one build.
+# Builds the app, signs it and uploads it to TestFlight. It runs every 3 hours for the latest
+# `main`, only when ios/ or this workflow changed since the last build that uploaded (nothing is
+# built otherwise), and by hand from `main` (Actions → testflight → Run workflow), which always
+# builds. A scheduled run is best effort: GitHub may start it late or skip it, so run it by hand
+# when a build is needed now.
+# Each build makes a new Apple Development certificate (see below), so builds are kept few and the
+# last step revokes the certificate the build made, or the account's limit fills up and archiving
+# fails. It shares the one free Mac with verify's scheduled `ios` job and runs one at a time.
 # Signing is automatic and Apple-managed: xcodebuild signs in to App Store Connect with an API key
 # and Apple's cloud-managed distribution certificate signs the export, so no certificate or
-# profile is kept anywhere. The key must have the Admin role: App Manager keys get "Cloud signing
+# profile is kept anywhere (cloud signing still makes an Apple Development certificate on each
+# fresh machine, which scripts/asc-revoke-dev-certs.py revokes after the upload). The key must have the Admin role: App Manager keys get "Cloud signing
 # permission error". Its .p8 is the repository secret ASC_PRIVATE_KEY (the whole file, BEGIN and
 # END lines included); its key id, the issuer and the team ids below are not secret.
 # The build number is this workflow's run number and attempt (12.1, 13.1, 13.2…), which only grows,
@@ -18,15 +19,14 @@
 name: testflight
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "ios/**"
-      - ".github/workflows/testflight.yml"
+  schedule:
+    # UTC; offset from verify's 23 minutes past so the two don't start together.
+    - cron: "47 */3 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: testflight
@@ -41,8 +41,41 @@ env:
   TEAM_ID: WFY3YV6SPP
 
 jobs:
-  upload:
+  # A scheduled run builds only if ios/ (or this workflow) changed since the last run that uploaded.
+  changes:
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      build: ${{ steps.diff.outputs.build }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "schedule" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          last="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/testflight.yml/runs?status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty')"
+          if [ -z "$last" ] || ! git cat-file -e "$last^{commit}" 2>/dev/null; then
+            echo "No earlier uploaded build: build."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$(git diff --name-only "$last" HEAD -- ios .github/workflows/testflight.yml)" ]; then
+            echo "ios/ changed since $last: build."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ios/ is unchanged since the last uploaded build $last: nothing to build."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  upload:
+    needs: changes
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.build == 'true'
     runs-on: macos-26
     timeout-minutes: 45
     steps:
@@ -62,6 +95,14 @@ jobs:
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$key"
           chmod 600 "$key"
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+      # The API gives a certificate no creation time, so note which exist now; the last step
+      # revokes the ones that appear during the build.
+      - name: Note the certificates that exist
+        continue-on-error: true
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet "pyjwt[crypto]==2.10.1"
+          "$RUNNER_TEMP/venv/bin/python" scripts/asc-revoke-dev-certs.py snapshot "$RUNNER_TEMP/certificates-before.json"
       - name: Archive
         env:
           BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
@@ -80,6 +121,21 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             2>&1 | tee build-archive.log
+      # Crash reports in Sentry name our functions only with the build's debug symbols. Skipped
+      # until the repository secret SENTRY_AUTH_TOKEN exists: a Sentry organization token, which
+      # can upload files but read nothing, and names the organization itself.
+      - name: Upload debug symbols to Sentry
+        # Symbols are a help, never a reason to hold back a build.
+        continue-on-error: true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "No SENTRY_AUTH_TOKEN: crash reports show our code as addresses."
+            exit 0
+          fi
+          npx --yes @sentry/cli@3.8.0 debug-files upload --project wildcard-ios \
+            build/testflight/Wildcard.xcarchive/dSYMs
       - name: Export and upload
         run: |
           set -o pipefail
@@ -95,6 +151,12 @@ jobs:
           version="$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' build/testflight/Wildcard.xcarchive/Info.plist)"
           build="$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' build/testflight/Wildcard.xcarchive/Info.plist)"
           echo "Uploaded Wildcard $version ($build). App Store Connect processes it before it shows in TestFlight." >> "$GITHUB_STEP_SUMMARY"
+      # Cloud signing made an Apple Development certificate on this fresh machine and nothing will
+      # reuse it. Revoke it (never a Distribution one) so the account's limit can't fill up.
+      - name: Revoke the certificate this build made
+        if: always()
+        continue-on-error: true
+        run: '"$RUNNER_TEMP/venv/bin/python" scripts/asc-revoke-dev-certs.py revoke "$RUNNER_TEMP/certificates-before.json"'
       - name: Remove the API key
         if: always()
         run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8

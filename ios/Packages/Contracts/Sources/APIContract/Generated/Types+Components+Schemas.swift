@@ -109,6 +109,500 @@ extension Components {
                 case errorStatus
             }
         }
+        /// - Remark: Generated from `#/components/schemas/Catalog`.
+        public struct Catalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Catalog/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Catalog/version`.
+            public var version: Components.Schemas.Catalog.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/Catalog/sports`.
+            public var sports: Components.Schemas.SportsCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/disclaimerDice`.
+            public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog?
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `Catalog`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - sports:
+            ///   - disclaimerDice:
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                version: Components.Schemas.Catalog.VersionPayload,
+                sports: Components.Schemas.SportsCatalog? = nil,
+                disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.version = version
+                self.sports = sports
+                self.disclaimerDice = disclaimerDice
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case sports
+                case disclaimerDice
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.version = try container.decode(
+                    Components.Schemas.Catalog.VersionPayload.self,
+                    forKey: .version
+                )
+                self.sports = try container.decodeIfPresent(
+                    Components.Schemas.SportsCatalog.self,
+                    forKey: .sports
+                )
+                self.disclaimerDice = try container.decodeIfPresent(
+                    Components.Schemas.DisclaimerDiceCatalog.self,
+                    forKey: .disclaimerDice
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "version",
+                    "sports",
+                    "disclaimerDice"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.version,
+                    forKey: .version
+                )
+                try container.encodeIfPresent(
+                    self.sports,
+                    forKey: .sports
+                )
+                try container.encodeIfPresent(
+                    self.disclaimerDice,
+                    forKey: .disclaimerDice
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SportsCatalog`.
+        public struct SportsCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload`.
+            public struct CategoriesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/id`.
+                public var id: Swift.String
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/names`.
+                public var names: Components.Schemas.CatalogNames
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload`.
+                public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                    /// What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/id`.
+                    public var id: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/names`.
+                    public var names: Components.Schemas.CatalogNames
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/shortNames`.
+                    public var shortNames: Components.Schemas.CatalogNames?
+                    /// An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/icon`.
+                    public var icon: Swift.String
+                    /// False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/offered`.
+                    public var offered: Swift.Bool
+                    /// A container of undocumented properties.
+                    public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                    /// Creates a new `SportsPayloadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - id: What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
+                    ///   - names:
+                    ///   - shortNames:
+                    ///   - icon: An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
+                    ///   - offered: False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    ///   - additionalProperties: A container of undocumented properties.
+                    public init(
+                        id: Swift.String,
+                        names: Components.Schemas.CatalogNames,
+                        shortNames: Components.Schemas.CatalogNames? = nil,
+                        icon: Swift.String,
+                        offered: Swift.Bool,
+                        additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                    ) {
+                        self.id = id
+                        self.names = names
+                        self.shortNames = shortNames
+                        self.icon = icon
+                        self.offered = offered
+                        self.additionalProperties = additionalProperties
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case id
+                        case names
+                        case shortNames
+                        case icon
+                        case offered
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.id = try container.decode(
+                            Swift.String.self,
+                            forKey: .id
+                        )
+                        self.names = try container.decode(
+                            Components.Schemas.CatalogNames.self,
+                            forKey: .names
+                        )
+                        self.shortNames = try container.decodeIfPresent(
+                            Components.Schemas.CatalogNames.self,
+                            forKey: .shortNames
+                        )
+                        self.icon = try container.decode(
+                            Swift.String.self,
+                            forKey: .icon
+                        )
+                        self.offered = try container.decode(
+                            Swift.Bool.self,
+                            forKey: .offered
+                        )
+                        additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                            "id",
+                            "names",
+                            "shortNames",
+                            "icon",
+                            "offered"
+                        ])
+                    }
+                    public func encode(to encoder: any Swift.Encoder) throws {
+                        var container = encoder.container(keyedBy: CodingKeys.self)
+                        try container.encode(
+                            self.id,
+                            forKey: .id
+                        )
+                        try container.encode(
+                            self.names,
+                            forKey: .names
+                        )
+                        try container.encodeIfPresent(
+                            self.shortNames,
+                            forKey: .shortNames
+                        )
+                        try container.encode(
+                            self.icon,
+                            forKey: .icon
+                        )
+                        try container.encode(
+                            self.offered,
+                            forKey: .offered
+                        )
+                        try encoder.encodeAdditionalProperties(additionalProperties)
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
+                public typealias SportsPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayloadPayload]
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
+                public var sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `CategoriesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - names:
+                ///   - sports:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    names: Components.Schemas.CatalogNames,
+                    sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.names = names
+                    self.sports = sports
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case names
+                    case sports
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.names = try container.decode(
+                        Components.Schemas.CatalogNames.self,
+                        forKey: .names
+                    )
+                    self.sports = try container.decode(
+                        Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
+                        forKey: .sports
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "names",
+                        "sports"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.names,
+                        forKey: .names
+                    )
+                    try container.encode(
+                        self.sports,
+                        forKey: .sports
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// The picker’s tabs, in order, each with its sports in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/categories`.
+            public typealias CategoriesPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload]
+            /// The picker’s tabs, in order, each with its sports in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/categories`.
+            public var categories: Components.Schemas.SportsCatalog.CategoriesPayload
+            /// The short lists some screens show before the whole list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
+            public struct PicksPayload: Codable, Hashable, Sendable {
+                /// Sign-up’s 最常见 grid. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/signUpCommon`.
+                public var signUpCommon: [Swift.String]
+                /// A 练了’s quick picks, before the whole list. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/checkInQuick`.
+                public var checkInQuick: [Swift.String]
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `PicksPayload`.
+                ///
+                /// - Parameters:
+                ///   - signUpCommon: Sign-up’s 最常见 grid. Sport ids, in order.
+                ///   - checkInQuick: A 练了’s quick picks, before the whole list. Sport ids, in order.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    signUpCommon: [Swift.String],
+                    checkInQuick: [Swift.String],
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.signUpCommon = signUpCommon
+                    self.checkInQuick = checkInQuick
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case signUpCommon
+                    case checkInQuick
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.signUpCommon = try container.decode(
+                        [Swift.String].self,
+                        forKey: .signUpCommon
+                    )
+                    self.checkInQuick = try container.decode(
+                        [Swift.String].self,
+                        forKey: .checkInQuick
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "signUpCommon",
+                        "checkInQuick"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.signUpCommon,
+                        forKey: .signUpCommon
+                    )
+                    try container.encode(
+                        self.checkInQuick,
+                        forKey: .checkInQuick
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// The short lists some screens show before the whole list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
+            public var picks: Components.Schemas.SportsCatalog.PicksPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `SportsCatalog`.
+            ///
+            /// - Parameters:
+            ///   - categories: The picker’s tabs, in order, each with its sports in order.
+            ///   - picks: The short lists some screens show before the whole list.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                categories: Components.Schemas.SportsCatalog.CategoriesPayload,
+                picks: Components.Schemas.SportsCatalog.PicksPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.categories = categories
+                self.picks = picks
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case categories
+                case picks
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.categories = try container.decode(
+                    Components.Schemas.SportsCatalog.CategoriesPayload.self,
+                    forKey: .categories
+                )
+                self.picks = try container.decode(
+                    Components.Schemas.SportsCatalog.PicksPayload.self,
+                    forKey: .picks
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "categories",
+                    "picks"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.categories,
+                    forKey: .categories
+                )
+                try container.encode(
+                    self.picks,
+                    forKey: .picks
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CatalogNames`.
+        public struct CatalogNames: Codable, Hashable, Sendable {
+            /// Simplified Chinese.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHans`.
+            public var zhHans: Swift.String
+            /// English.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/en`.
+            public var en: Swift.String
+            /// Traditional Chinese (Taiwan).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHant`.
+            public var zhHant: Swift.String
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `CatalogNames`.
+            ///
+            /// - Parameters:
+            ///   - zhHans: Simplified Chinese.
+            ///   - en: English.
+            ///   - zhHant: Traditional Chinese (Taiwan).
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                zhHans: Swift.String,
+                en: Swift.String,
+                zhHant: Swift.String,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.zhHans = zhHans
+                self.en = en
+                self.zhHant = zhHant
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case zhHans
+                case en
+                case zhHant
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.zhHans = try container.decode(
+                    Swift.String.self,
+                    forKey: .zhHans
+                )
+                self.en = try container.decode(
+                    Swift.String.self,
+                    forKey: .en
+                )
+                self.zhHant = try container.decode(
+                    Swift.String.self,
+                    forKey: .zhHant
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "zhHans",
+                    "en",
+                    "zhHant"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.zhHans,
+                    forKey: .zhHans
+                )
+                try container.encode(
+                    self.en,
+                    forKey: .en
+                )
+                try container.encode(
+                    self.zhHant,
+                    forKey: .zhHant
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DisclaimerDiceCatalog`.
+        public struct DisclaimerDiceCatalog: Codable, Hashable, Sendable {
+            /// Every line, in no set order: the app rolls three different ones at a time.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDiceCatalog/lines`.
+            public var lines: [Components.Schemas.CatalogNames]
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `DisclaimerDiceCatalog`.
+            ///
+            /// - Parameters:
+            ///   - lines: Every line, in no set order: the app rolls three different ones at a time.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                lines: [Components.Schemas.CatalogNames],
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.lines = lines
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case lines
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.lines = try container.decode(
+                    [Components.Schemas.CatalogNames].self,
+                    forKey: .lines
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "lines"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.lines,
+                    forKey: .lines
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Me`.
         public struct Me: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Me/version`.
@@ -135,6 +629,10 @@ extension Components {
                 public var catchphrase: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/Me/profile/character`.
                 public var character: Components.Schemas.Character?
+                /// The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/jerseyNumber`.
+                public var jerseyNumber: Swift.Int?
                 /// When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/joinedAt`.
@@ -145,22 +643,26 @@ extension Components {
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
                 ///   - character:
+                ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
                 ///   - joinedAt: When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 public init(
                     timeZone: Swift.String,
                     catchphrase: Swift.String? = nil,
                     character: Components.Schemas.Character? = nil,
+                    jerseyNumber: Swift.Int? = nil,
                     joinedAt: Foundation.Date
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
                     self.character = character
+                    self.jerseyNumber = jerseyNumber
                     self.joinedAt = joinedAt
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
                     case catchphrase
                     case character
+                    case jerseyNumber
                     case joinedAt
                 }
             }
@@ -311,6 +813,10 @@ extension Components {
             public var catchphrase: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Profile/character`.
             public var character: Components.Schemas.Character?
+            /// The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/jerseyNumber`.
+            public var jerseyNumber: Swift.Int?
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
@@ -318,22 +824,26 @@ extension Components {
             ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
             ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
             ///   - character:
+            ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
             public init(
                 version: Components.Schemas.Profile.VersionPayload,
                 timeZone: Swift.String,
                 catchphrase: Swift.String? = nil,
-                character: Components.Schemas.Character? = nil
+                character: Components.Schemas.Character? = nil,
+                jerseyNumber: Swift.Int? = nil
             ) {
                 self.version = version
                 self.timeZone = timeZone
                 self.catchphrase = catchphrase
                 self.character = character
+                self.jerseyNumber = jerseyNumber
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case timeZone
                 case catchphrase
                 case character
+                case jerseyNumber
             }
         }
         /// - Remark: Generated from `#/components/schemas/AccountDeletion`.
@@ -641,64 +1151,10 @@ extension Components {
                 case photos
             }
         }
-        /// A listed sport, or `custom` with the member’s own name in `customSport`.
+        /// A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`.
         ///
         /// - Remark: Generated from `#/components/schemas/Sport`.
-        @frozen public enum Sport: String, Codable, Hashable, Sendable, CaseIterable {
-            case run = "run"
-            case walk = "walk"
-            case hike = "hike"
-            case trailRun = "trailRun"
-            case strength = "strength"
-            case crossfit = "crossfit"
-            case hyrox = "hyrox"
-            case kettlebell = "kettlebell"
-            case spin = "spin"
-            case elliptical = "elliptical"
-            case rowing = "rowing"
-            case hiit = "hiit"
-            case jumpRope = "jumpRope"
-            case aerobics = "aerobics"
-            case yoga = "yoga"
-            case matPilates = "matPilates"
-            case reformerPilates = "reformerPilates"
-            case barre = "barre"
-            case stretching = "stretching"
-            case swim = "swim"
-            case surf = "surf"
-            case paddleboard = "paddleboard"
-            case kayak = "kayak"
-            case tennis = "tennis"
-            case badminton = "badminton"
-            case pickleball = "pickleball"
-            case tableTennis = "tableTennis"
-            case squash = "squash"
-            case basketball = "basketball"
-            case soccer = "soccer"
-            case volleyball = "volleyball"
-            case golf = "golf"
-            case baseballSoftball = "baseballSoftball"
-            case ultimate = "ultimate"
-            case roadCycling = "roadCycling"
-            case mountainBiking = "mountainBiking"
-            case climb = "climb"
-            case ski = "ski"
-            case snowboard = "snowboard"
-            case skate = "skate"
-            case boxing = "boxing"
-            case kickboxing = "kickboxing"
-            case jiuJitsu = "jiuJitsu"
-            case martialArts = "martialArts"
-            case dance = "dance"
-            case dogWalk = "dogWalk"
-            case walkCommute = "walkCommute"
-            case bikeCommute = "bikeCommute"
-            case deepClean = "deepClean"
-            case moving = "moving"
-            case strollerWalk = "strollerWalk"
-            case gardening = "gardening"
-            case custom = "custom"
-        }
+        public typealias Sport = Swift.String
         /// - Remark: Generated from `#/components/schemas/PhotoView`.
         public struct PhotoView: Codable, Hashable, Sendable {
             /// The photo’s name, as the check-in was saved with.
@@ -1581,6 +2037,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/topSport`.
+            public var topSport: Components.Schemas.TopSport?
             /// Creates a new `CheckInTotals`.
             ///
             /// - Parameters:
@@ -1589,18 +2047,21 @@ extension Components {
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
             ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
-                disclaimers: Swift.Int
+                disclaimers: Swift.Int,
+                topSport: Components.Schemas.TopSport? = nil
             ) {
                 self.version = version
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
                 self.disclaimers = disclaimers
+                self.topSport = topSport
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -1608,6 +2069,42 @@ extension Components {
                 case healthyMeals
                 case cheatMeals
                 case disclaimers
+                case topSport
+            }
+        }
+        /// The sport with the most 练了 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 练了.
+        ///
+        /// - Remark: Generated from `#/components/schemas/TopSport`.
+        public struct TopSport: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TopSport/sport`.
+            public var sport: Components.Schemas.Sport
+            /// The name of a `custom` sport; a listed sport has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TopSport/customSport`.
+            public var customSport: Swift.String?
+            /// 练了 check-ins of this sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TopSport/checkIns`.
+            public var checkIns: Swift.Int
+            /// Creates a new `TopSport`.
+            ///
+            /// - Parameters:
+            ///   - sport:
+            ///   - customSport: The name of a `custom` sport; a listed sport has none.
+            ///   - checkIns: 练了 check-ins of this sport.
+            public init(
+                sport: Components.Schemas.Sport,
+                customSport: Swift.String? = nil,
+                checkIns: Swift.Int
+            ) {
+                self.sport = sport
+                self.customSport = customSport
+                self.checkIns = checkIns
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sport
+                case customSport
+                case checkIns
             }
         }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
@@ -4394,6 +4891,70 @@ extension Components {
                 case title
                 case speech
                 case move
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AwardTotals`.
+        public struct AwardTotals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/version`.
+            public var version: Components.Schemas.AwardTotals.VersionPayload
+            /// Every title (周奖) the member has won, in all their squads and weeks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/titles`.
+            public var titles: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/latest`.
+            public var latest: Components.Schemas.LatestTitle?
+            /// Creates a new `AwardTotals`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - titles: Every title (周奖) the member has won, in all their squads and weeks.
+            ///   - latest:
+            public init(
+                version: Components.Schemas.AwardTotals.VersionPayload,
+                titles: Swift.Int,
+                latest: Components.Schemas.LatestTitle? = nil
+            ) {
+                self.version = version
+                self.titles = titles
+                self.latest = latest
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case titles
+                case latest
+            }
+        }
+        /// The latest title they won. Left out before the first.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LatestTitle`.
+        public struct LatestTitle: Codable, Hashable, Sendable {
+            /// The title, at most 6 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LatestTitle/title`.
+            public var title: Swift.String
+            /// How many times the member has won this title.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LatestTitle/times`.
+            public var times: Swift.Int
+            /// Creates a new `LatestTitle`.
+            ///
+            /// - Parameters:
+            ///   - title: The title, at most 6 characters.
+            ///   - times: How many times the member has won this title.
+            public init(
+                title: Swift.String,
+                times: Swift.Int
+            ) {
+                self.title = title
+                self.times = times
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case times
             }
         }
     }

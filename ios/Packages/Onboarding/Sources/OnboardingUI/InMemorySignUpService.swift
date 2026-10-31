@@ -1,6 +1,7 @@
 import AvatarArt
 import AvatarDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 import OnboardingDomain
 
@@ -28,11 +29,12 @@ public actor InMemorySignUpService: SignUpService {
         return InMemorySignUpService(
             sample: JoinedSquad(
                 id: SquadID(UUID()),
-                name: Bundle.module.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
                 teammates: teammates.map { name, body, persona in
                     Squadmate(
                         id: MemberID(UUID()), nickname: name,
-                        outfit: Outfit(["body": body, "top": "tee", "bottom": "shorts"]), persona: persona)
+                        outfit: Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"]), persona: persona
+                    )
                 },
                 weekGoal: 22, weekDone: 14))
     }
@@ -72,5 +74,10 @@ public actor InMemorySignUpService: SignUpService {
     public func pickScene(_ scene: SceneID, for squad: SquadID) async throws(SignUpError) {
         guard squad == self.squad?.id, self.scene == nil || self.scene == scene else { throw .rejected }
         self.scene = scene
+    }
+
+    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
+        guard let joined = self.squad, joined.id == squad else { throw .rejected }
+        return ResumedSignUp(squad: joined, character: character)
     }
 }

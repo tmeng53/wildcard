@@ -278,24 +278,50 @@ struct StatusSection: View {
 
     @State private var plusOnes = 0
     @State private var page = SquadCardPage.squad
+    @State private var pickedDay: Int?
 
     private let squad: [RingStatus] = [.done, .done, .restDay, .open, .open]
 
     private var squadWeek: SquadWeek {
         SquadWeek(
-            name: String(localized: "周三不练腿俱乐部", bundle: .module), done: mine == .done ? 15 : 14, goal: 22,
+            name: String(localized: "周三不练腿俱乐部", bundle: .module.inAppLanguage), done: mine == .done ? 15 : 14, goal: 22,
             members: members)
     }
 
     private var myWeek: MyWeek {
         MyWeek(
-            summary: String(localized: "游泳 1 · 跑步 1", bundle: .module), done: mine == .done ? 3 : 2, planned: 5,
+            summary: String(localized: "游泳 1 · 跑步 1", bundle: .module.inAppLanguage), done: mine == .done ? 3 : 2,
+            planned: 5,
             days: [
                 .trained(symbol: "figure.run"), .restDay, .trained(symbol: "figure.pool.swim"), .excused,
                 mine == .done ? .trained(symbol: "figure.run") : .planned(symbol: "figure.run"),
                 .planned(symbol: "figure.yoga"), .restDay,
             ],
-            today: 4, healthyMeals: 3, cheatMeals: 1, lifetimeTrained: mine == .done ? 48 : 47)
+            today: 4,
+            details: [
+                WeekDayDetail(
+                    line: String(localized: "跑步 32 分钟", bundle: .module.inAppLanguage), isPlan: false,
+                    meals: .init(healthy: 1, cheat: 0)),
+                WeekDayDetail(
+                    line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false,
+                    meals: .init(healthy: 2, cheat: 1)),
+                WeekDayDetail(
+                    line: String(localized: "游泳 45 分钟", bundle: .module.inAppLanguage), isPlan: false,
+                    meals: .init(healthy: 0, cheat: 0)),
+                WeekDayDetail(
+                    line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false,
+                    meals: .init(healthy: 0, cheat: 1)),
+                mine == .done
+                    ? WeekDayDetail(
+                        line: String(localized: "跑步", bundle: .module.inAppLanguage), isPlan: false,
+                        meals: .init(healthy: 1, cheat: 0))
+                    : WeekDayDetail(
+                        line: String(localized: "跑步", bundle: .module.inAppLanguage), isPlan: true,
+                        meals: .init(healthy: 1, cheat: 0)
+                    ),
+                WeekDayDetail(line: String(localized: "瑜伽", bundle: .module.inAppLanguage), isPlan: true, meals: nil),
+                WeekDayDetail(line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: nil),
+            ])
     }
 
     private var members: [SquadMember] {
@@ -307,7 +333,7 @@ struct StatusSection: View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 7, title: Text("卡片、状态圈、进度", bundle: .module))
             GuideGroup(Text("场景上：实心白卡片", bundle: .module)) {
-                SquadCard(squad: squadWeek, mine: myWeek, page: $page) { member in
+                SquadCard(squad: squadWeek, mine: myWeek, page: $page, pickedDay: $pickedDay) { member in
                     GuideFace(index: members.firstIndex(of: member) ?? 0)
                 }
                 .overlay(alignment: .topLeading) {

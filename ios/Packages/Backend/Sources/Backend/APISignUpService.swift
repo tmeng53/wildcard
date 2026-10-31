@@ -53,7 +53,8 @@ public struct APISignUpService: SignUpService {
                     timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
                     character: MemberCharacter(
                         nickname: character.nickname,
-                        look: CharacterLook(outfit: character.outfit, persona: character.persona))))
+                        look: CharacterLook(outfit: character.outfit, persona: character.persona)),
+                    jerseyNumber: profile?.jerseyNumber))
         }
     }
 
@@ -72,6 +73,17 @@ public struct APISignUpService: SignUpService {
             let week = try await api.scene(of: squad).week
             _ = try await api.pick(scene, for: squad, week: week)
         }
+    }
+
+    /// The squad the member is already in, as joining it returned it, and the character on
+    /// their profile.
+    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
+        let (found, member) = try await signUp { () throws(APIError) in (try await api.squad(squad), try await api.me())
+        }
+        let character = member.profile?.character.map { saved in
+            NewCharacter(outfit: Outfit(saved.look), persona: Persona(saved.look), nickname: saved.nickname)
+        }
+        return ResumedSignUp(squad: try await joined(found), character: character)
     }
 
     /// The squad as 上场 shows it: the teammates who have made their character, and the squad's

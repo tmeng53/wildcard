@@ -1,9 +1,9 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// Sports as people see them: each sport's name in the String Catalog, its symbol, search by
-// name, and `SportPicker`, the sheet of every sport. The list itself is `Contracts`' `Sport`, the
-// API's. Shared by 练了, sign-up's 平时练什么？ and 出赛表, so a sport is named the same everywhere.
+// Sports as people see them: `SportList`, the sports list the app shows now (data the API
+// serves, `Contracts`' `SportCatalog`), and each sport's name and symbol from it. Shared by 练了,
+// sign-up's 平时练什么？ and 出赛表, so a sport is named the same everywhere.
 let package = Package(
     name: "Sports",
     defaultLocalization: "zh-Hans",

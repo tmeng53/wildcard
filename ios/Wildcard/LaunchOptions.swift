@@ -142,6 +142,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
+    /// `-uitest-bubble-hold`: a teammate's bubble on 今天 stays up for a minute instead of 5
+    /// seconds, so a UI test checks it without racing its timer.
+    static var bubbleHold: Double? {
+        ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
+    }
+
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
     /// suite emptied at launch.
     static var todayDefaults: UserDefaults {
@@ -166,19 +172,16 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
     }
 
-    /// `-uitest-save-poster`: 存图 says it saved without asking for Photos, whose permission prompt
-    /// UI tests can't answer.
-    static var posterSaver: any PosterSaver {
-        ProcessInfo.processInfo.arguments.contains("-uitest-save-poster") ? PretendPosterSaver() : PhotoLibrarySaver()
-    }
-
     /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in
     /// daylight and the squad cheers whatever time CI runs the UI tests. `-uitest-evening` starts
-    /// it at 21:30 instead, when 今日赛况 is on the card; it wins over `-uitest-noon`.
+    /// it at 21:30 instead, when 今日赛况 is on the card, and `-uitest-night` at 23:30, when the
+    /// squad sleeps and the light cord hangs under the card; each wins over `-uitest-noon`.
     static let now: @Sendable () -> Date = {
         let arguments = ProcessInfo.processInfo.arguments
         let start: (hour: Int, minute: Int)? =
-            arguments.contains("-uitest-evening") ? (21, 30) : arguments.contains("-uitest-noon") ? (12, 0) : nil
+            arguments.contains("-uitest-night")
+            ? (23, 30)
+            : arguments.contains("-uitest-evening") ? (21, 30) : arguments.contains("-uitest-noon") ? (12, 0) : nil
         guard let start,
             let started = Calendar.current.date(
                 bySettingHour: start.hour, minute: start.minute, second: 0, of: Date())
@@ -193,6 +196,13 @@ enum LaunchOptions {
     static func forgetSeenRecapIfAsked() {
         guard ProcessInfo.processInfo.arguments.contains("-uitest-recap-unseen") else { return }
         UserDefaults.standard.removeObject(forKey: "today.recapSeen")
+    }
+
+    /// `-uitest-night` also forgets the lights this phone switched on, so each UI test's night
+    /// starts dark.
+    static func forgetLightsIfAsked() {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-night") else { return }
+        UserDefaults.standard.removeObject(forKey: "today.lightsOn")
     }
 
     /// `-uitest-thursday`: 出赛表's clock starts at noon on this week's Thursday and runs on, so

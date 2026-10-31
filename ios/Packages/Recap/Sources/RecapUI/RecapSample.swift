@@ -33,13 +33,13 @@ public enum RecapSample {
             myWeek: RecapDomain.MyWeek(
                 plan: 5,
                 days: [
-                    .init(day: day(12), kind: .trained(.run)), .init(day: day(13), kind: .trained(.tennis)),
-                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained(.strength)),
-                    .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained(.yoga)),
+                    .init(day: day(12), kind: .trained("run")), .init(day: day(13), kind: .trained("tennis")),
+                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained("strength")),
+                    .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained("yoga")),
                     .init(day: day(18), kind: .rest),
                 ], line: ready ? "周二那场网球最有灵魂" : nil, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),
             hottest: Hottest(
-                checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: .run, words: "晨跑 8 公里，腿还在",
+                checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: "run", words: "晨跑 8 公里，腿还在",
                 reactions: [
                     ReactionCount(emoji: "💪", count: 5),
                     ReactionCount(emoji: "😂", count: 3),
@@ -72,22 +72,27 @@ public enum RecapSample {
                 [
                     "body": "peach", "hair": "curls", "eyes": "happy", "brows": "arched", "mouth": "grin",
                     "cheeks": "flushed",
-                    "top": "jersey", "bottom": "shorts",
+                    "top": "nolook-jersey", "bottom": "warmup-shorts",
                 ]),
             member(
                 lin, "小林", .showoff, "person",
                 [
-                    "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk", "top": "tank",
-                    "bottom": "shorts",
+                    "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk",
+                    "top": "warmup-tank",
+                    "bottom": "warmup-shorts",
                 ]),
-            member(mia, "Mia", .drama, "cat", ["body": "tuxedo", "top": "tee", "bottom": "shorts", "hat": "headband"]),
-            member(jay, "阿杰", .shy, "dog", ["body": "shiba", "top": "tee", "bottom": "greenshorts", "hat": "cap"]),
+            member(
+                mia, "Mia", .drama, "cat",
+                ["body": "tuxedo", "top": "warmup-tee", "bottom": "warmup-shorts", "hat": "warmup-headband"]),
+            member(
+                jay, "阿杰", .shy, "dog",
+                ["body": "shiba", "top": "warmup-tee", "bottom": "moss-cargo", "hat": "warmup-cap"]),
             member(
                 reader, "我", .deadpan, "person",
                 [
                     "body": "peach", "hair": "long", "eyes": "sleepy", "brows": "soft", "mouth": "smile",
                     "cheeks": "rosy",
-                    "glasses": "square", "top": "hoodie", "bottom": "leggings",
+                    "glasses": "square", "top": "warmup-hoodie", "bottom": "warmup-leggings",
                 ]),
         ], viewer: reader, scene: .pool)
 

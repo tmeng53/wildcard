@@ -24,7 +24,7 @@ struct SceneLineText: View {
         switch line {
         case .youWon: Text("你是上周冠军，能选一次", bundle: .module)
         case .winnersPick(let names):
-            let winners = names.formatted(.list(type: .and))
+            let winners = names.formatted(.list(type: .and).locale(AppLanguage.current.locale))
             Text("上周冠军 \(winners) 来选", bundle: .module)
         case .youPickAsCaptain, .captainPicks: Text("上周没有冠军，队长选一次", bundle: .module)
         case .youPicked: Text("你选的，下周冠军再换", bundle: .module)
@@ -121,7 +121,10 @@ struct InviteCard: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("复制邀请码 \(squad.inviteCode)", bundle: .module))
             .accessibilityIdentifier("squad.copyInvite")
-            ShareLink(item: String(localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module)) {
+            ShareLink(
+                item: String(
+                    localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module.inAppLanguage)
+            ) {
                 Label {
                     Text("分享", bundle: .module)
                 } icon: {
@@ -155,7 +158,9 @@ struct MemberRow: View {
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
 
-    private var name: String { member.character?.nickname.text ?? String(localized: "新队友", bundle: .module) }
+    private var name: String {
+        member.character?.nickname.text ?? String(localized: "新队友", bundle: .module.inAppLanguage)
+    }
 
     var body: some View {
         HStack(spacing: Space.s) {

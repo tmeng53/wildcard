@@ -15,6 +15,8 @@ public enum Palette {
     public static let inkTertiary = SRGBColor(red: 0xAE, green: 0xB2, blue: 0xBC)
     /// Dividers on an ink surface.
     public static let inkLine = SRGBColor(red: 0x3A, green: 0x3E, blue: 0x49)
+    /// Text that says something is open, such as a store's 营业中 (5:1 on white).
+    public static let positive = SRGBColor(red: 0x1F, green: 0x7A, blue: 0x50)
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
@@ -93,6 +95,18 @@ public enum Palette {
     public static let kraftInk = SRGBColor(red: 0x9E, green: 0x78, blue: 0x49)
     /// The ink over a page while a carton is opened on it.
     public static let dusk = SRGBColor(red: 0x1A, green: 0x1C, blue: 0x22)
+
+    // MARK: Pull cord: the light switch hanging under the home's card at night (开灯)
+
+    /// The ball chain, and the bulb's outline and filament while the lights are off.
+    public static let cordChain = SRGBColor(red: 0xC9, green: 0xCE, blue: 0xD6)
+    /// The cap over the bulb, and the screw base's rings.
+    public static let cordCap = SRGBColor(red: 0x9A, green: 0xA2, blue: 0xAE)
+    public static let cordScrew = SRGBColor(red: 0xB9, green: 0xC0, blue: 0xCA)
+    /// The bulb lit: its glass, outline and filament.
+    public static let bulbLit = SRGBColor(red: 0xFF, green: 0xE9, blue: 0xA8)
+    public static let bulbLitLine = SRGBColor(red: 0xF2, green: 0xC1, blue: 0x4E)
+    public static let bulbFilament = SRGBColor(red: 0xE0, green: 0xA5, blue: 0x26)
 
     // MARK: Clothes: outfit swatches for the character only, never UI color
 

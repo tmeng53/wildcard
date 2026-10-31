@@ -56,7 +56,7 @@ struct NeutralTests {
         (ColorRole.fgDefault, ColorRole.bgCanvas),
         (.fgDefault, .bgSubtle),
         (.fgMuted, .bgCanvas),
-        (.fgMuted, .bgSubtle),
+        (.fgMuted, .bgSubtle), (.fgPositive, .bgCanvas),
     ])
     func neutralTextIsReadable(text: ColorRole, background: ColorRole) {
         #expect(text.color(in: .pool).contrastRatio(with: background.color(in: .pool)) >= 4.5)
@@ -325,6 +325,7 @@ struct HapticTests {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
                 "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown", "poke", "unbox",
+                "lights",
             ])
         #expect(Haptic.ringTicks == 3)
     }

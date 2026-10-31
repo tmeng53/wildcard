@@ -1,32 +1,53 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import DesignSystem
 import DesignSystemUI
 import MeDomain
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
 
-/// 设置: a plain menu of hairline rows under small group labels (小队, 偏好, 关于, 账号), with
-/// no icons and no chevrons, and an ink switch. Signing out and deleting the account come last.
+/// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
+/// small group labels (小队, 偏好, 关于, 账号), with no icons and no chevrons, and an ink switch.
+/// Signing out and deleting the account come last.
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
     let close: () -> Void
     @State private var isSigningOut = false
+    @State private var isPickingNumber = false
+    @State private var isPickingLanguage = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
+        ZStack {
+            if isPickingNumber {
+                JerseyNumberView(model: model) { isPickingNumber = false }
+                    .swipesBack { isPickingNumber = false }
+                    .transition(.move(edge: .trailing))
+            } else {
+                menu.swipesBack(perform: close)
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
+    }
+
+    private var menu: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
                     .accessibilityIdentifier("settings.back")
-                Text("设置", bundle: .module)
-                    .typeStyle(TypeRamp.largeTitle)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Space.s)
+                // The character types beside the heading, standing on its line, so the menu starts
+                // right under it.
+                HStack(alignment: .bottom, spacing: Space.s) {
+                    Text("设置", bundle: .module)
+                        .typeStyle(TypeRamp.largeTitle)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer(minLength: 0)
+                    MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
+                        .accessibilityHidden(true)
+                }
+                .padding(.top, Space.s)
                 squadGroup
                 preferencesGroup
                 aboutGroup
@@ -54,6 +75,13 @@ struct SettingsView: View {
                 .accessibilityIdentifier("me.squad")
             }
             ListRow(
+                Text("球衣号码", bundle: .module), value: Text(verbatim: model.overview?.cardNumber?.text ?? ""),
+                showsChevron: false
+            ) {
+                isPickingNumber = true
+            }
+            .accessibilityIdentifier("me.jerseyNumber")
+            ListRow(
                 Text("往期战报", bundle: .module), showsDivider: false, showsChevron: false, action: destinations.pastRecaps
             )
         }
@@ -69,12 +97,13 @@ struct SettingsView: View {
             )
             .accessibilityIdentifier("me.notifications")
             ListRow(
-                Text("语言", bundle: .module), value: Text("language.current", bundle: .module), showsDivider: false,
+                Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false,
                 showsChevron: false
             ) {
-                // iOS keeps each app's language in Settings; the app follows it.
-                if let settings = Self.appSettings { openURL(settings) }
+                isPickingLanguage = true
             }
+            .accessibilityIdentifier("me.language")
+            .languagePicker(isPresented: $isPickingLanguage)
         }
     }
 
@@ -111,15 +140,6 @@ struct SettingsView: View {
             }
             .accessibilityIdentifier("me.deleteAccount")
         }
-    }
-
-    /// This app's page in the Settings app.
-    @MainActor static var appSettings: URL? {
-        #if canImport(UIKit)
-        URL(string: UIApplication.openSettingsURLString)
-        #else
-        nil
-        #endif
     }
 }
 

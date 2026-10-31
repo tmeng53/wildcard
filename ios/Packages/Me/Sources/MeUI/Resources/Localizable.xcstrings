@@ -1,22 +1,6 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "language.current": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "English"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "简体中文"
-          }
-        }
-      }
-    },
     "你会离开%@": {
       "localizations": {
         "en": {
@@ -409,6 +393,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tap to flip the card"
+          }
+        }
+      }
+    },
+    "球衣号码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jersey number"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "最常练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top sport"
+          }
+        }
+      }
+    },
+    "周奖": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly awards"
+          }
+        }
+      }
+    },
+    "早八战神": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dawn Patrol"
+          }
+        }
+      }
+    },
+    "card.since %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SINCE %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SINCE %@"
+          }
+        }
+      }
+    },
+    "card.number %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Number %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@号"
           }
         }
       }

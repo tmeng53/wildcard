@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
+import { createPostgresSportStore, createSports, type SportTables } from '@wildcard/sports';
 import { z } from 'zod';
 
 import type { CheckInTables } from '../adapters/postgres-check-in-store.js';
@@ -11,15 +12,14 @@ import { MemberId } from '../domain/check-in.js';
 import { WeekStart, type PlanDays } from '../domain/weekly-plan.js';
 import {
   PlanDayStartedError,
-  RestDaysFixedError,
+  SportNotListedError,
   TimeZoneNotSetError,
   WeekOverError,
-  WeekStartedError,
 } from '../errors.js';
 import { createWeeklyPlans } from './weekly-plans.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
-const db = new Kysely<CheckInTables>({
+const db = new Kysely<CheckInTables & SportTables>({
   dialect: new PostgresDialect({
     pool: new pg.Pool({ connectionString: z.string().parse(process.env.DATABASE_URL) }),
   }),
@@ -31,6 +31,7 @@ let now = new Date('2026-10-21T20:00:00.000Z');
 // Members' time zones and when they joined: their profiles, which the members module keeps.
 const calendars = new Map<string, { timeZone: string; joinedAt: Date }>();
 const plans = createWeeklyPlans({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresWeeklyPlanStore(db),
   calendarOf: (member) => Promise.resolve(calendars.get(member)),
   clock: () => now,
@@ -105,6 +106,25 @@ describe('reading a week’s plan', () => {
   });
 });
 
+describe('a planned day’s sport', () => {
+  it('is a listed sport or 其他; another id is refused', async () => {
+    const member = await newMember();
+    const days = (sport: string, customSport?: string): PlanDays => [
+      { kind: 'train', sport, ...(customSport === undefined ? {} : { customSport }) },
+      ...mine.slice(1),
+    ];
+    await expect(
+      plans.save({ member, weekStart: nextWeek, days: days('quidditch') }),
+    ).rejects.toThrow(SportNotListedError);
+    await plans.save({ member, weekStart: nextWeek, days: days('custom', '魁地奇') });
+    await plans.save({ member, weekStart: nextWeek, days: days('pickleball') });
+    expect((await plans.find({ member, weekStart: nextWeek })).days[0]).toStrictEqual({
+      kind: 'train',
+      sport: 'pickleball',
+    });
+  });
+});
+
 describe('saving a week’s plan', () => {
   it('stores it as versioned JSON, once per week, and a repeat changes nothing', async () => {
     const member = await newMember();
@@ -158,28 +178,21 @@ describe('saving a week’s plan', () => {
         days: [rest, rest, rest, train, train, train, train],
       }),
     ).rejects.toThrow(new PlanDayStartedError('2026-10-20'));
-    // Monday can rest too: from Tuesday on, the week keeps its two rest days.
+    // Monday can rest too: it was before they joined.
     const days: PlanDays = [rest, train, rest, train, train, train, rest];
     expect((await plans.save({ member: tuesday, weekStart: thisWeek, days })).days).toStrictEqual(
       days,
     );
   });
 
-  it('keeps the rest days of this week, even when its plan is carried over', async () => {
+  it('lets later days of this week rest or train, even when its plan is carried over', async () => {
     const member = await newMember({ joinedAt: new Date('2026-10-14T17:00:00.000Z') });
     // Saved last week, so this week carries it over.
     now = new Date('2026-10-14T20:00:00.000Z');
     await plans.save({ member, weekStart: lastWeek, days: mine });
     now = new Date('2026-10-21T20:00:00.000Z');
-    await expect(
-      plans.save({
-        member,
-        weekStart: thisWeek,
-        days: [swim, rest, train, rest, train, rest, train],
-      }),
-    ).rejects.toThrow(new RestDaysFixedError(2));
-    // Swapping Saturday's rest with Thursday's training is fine.
-    const swapped: PlanDays = [swim, rest, train, rest, train, train, train];
+    // Thursday becomes a training day and Saturday a rest day: three rest days now.
+    const swapped: PlanDays = [swim, rest, train, train, train, rest, rest];
     await plans.save({ member, weekStart: thisWeek, days: swapped });
     expect(await storedRows(member)).toStrictEqual([
       { week_start: '2026-10-12', payload: { version: 1, days: mine } },
@@ -281,14 +294,14 @@ describe('a week’s 饮食小目标', () => {
     ]);
   });
 
-  it('refuses this week’s and past weeks’, and needs the member’s time zone', async () => {
+  it('takes this week’s, refuses past weeks’, and needs the member’s time zone', async () => {
     const member = await newMember();
-    await expect(
-      plans.saveFuelGoals({ member, weekStart: thisWeek, goals: [water] }),
-    ).rejects.toThrow(new WeekStartedError('2026-10-19'));
+    expect(
+      await plans.saveFuelGoals({ member, weekStart: thisWeek, goals: [water] }),
+    ).toMatchObject({ fuelGoals: [water] });
     await expect(
       plans.saveFuelGoals({ member, weekStart: lastWeek, goals: [water] }),
-    ).rejects.toThrow(new WeekStartedError('2026-10-12'));
+    ).rejects.toThrow(new WeekOverError('2026-10-12'));
     calendars.delete(member);
     await expect(
       plans.saveFuelGoals({ member, weekStart: nextWeek, goals: [water] }),
