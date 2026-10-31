@@ -382,10 +382,10 @@ if want weekly-plan; then
   [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"saved\",$template]" ] || fail "the typical week should read back: $body"
   call GET "/me/weekly-plans/$later" "$planner_token"
   expect 200
-  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"template\",$template]" ] || fail "the week after should follow the typical week: $body"
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"carriedOver\",$template]" ] || fail "the week after should follow the typical week: $body"
   call GET "/me/weekly-plans/$monday" "$planner_token"
   expect 200
-  [ "$(jq -c .source <<<"$body")" = '"template"' ] || fail "the first typical week should be this week's plan too: $body"
+  [ "$(jq -c .source <<<"$body")" = '"carriedOver"' ] || fail "the first typical week should be this week's plan too: $body"
   call GET "/me/weekly-plans/$next" "$planner_token"
   expect 200
   [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"saved\",$saved]" ] || fail "next week should keep its own plan: $body"

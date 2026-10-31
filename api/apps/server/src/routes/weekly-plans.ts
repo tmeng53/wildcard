@@ -36,9 +36,11 @@ export const WeeklyPlanBody = z
     member: z.uuid().meta({ description: 'The member whose plan it is.' }),
     weekStart: WeekStart.meta({ description: 'The week’s Monday.', example: '2026-10-19' }),
     days,
-    source: z.enum(['saved', 'template', 'default']).meta({
+    // Builds already installed decode this strictly, so a week following the typical week keeps
+    // the name it had when such a week followed an earlier one.
+    source: z.enum(['saved', 'carriedOver', 'default']).meta({
       description:
-        '`saved` for a plan saved for this week; `template` when the week follows the ' +
+        '`saved` for a plan saved for this week; `carriedOver` when the week follows the ' +
         'member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) ' +
         'before they make one.',
     }),
@@ -77,10 +79,11 @@ const FuelGoalsDraft = z
   .strictObject({ version: bodyVersion(1), goals: fuelGoals })
   .openapi('FuelGoalsDraft');
 
-const wire = (member: string, { firstWeek, ...week }: PlannedWeek) => ({
+const wire = (member: string, { firstWeek, source, ...week }: PlannedWeek) => ({
   version: 1 as const,
   member,
   ...week,
+  source: source === 'template' ? ('carriedOver' as const) : source,
   ...(firstWeek === undefined ? {} : { firstWeek }),
 });
 

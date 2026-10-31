@@ -159,7 +159,7 @@ describe('/me/plan-template', () => {
           member: userId,
           weekStart,
           days,
-          source: 'template',
+          source: 'carriedOver',
           fuelGoals: [],
           firstWeek: joinedWeek(),
         },

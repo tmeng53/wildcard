@@ -2728,10 +2728,10 @@
             "type": "string",
             "enum": [
               "saved",
-              "template",
+              "carriedOver",
               "default"
             ],
-            "description": "`saved` for a plan saved for this week; `template` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one."
+            "description": "`saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one."
           },
           "fuelGoals": {
             "$ref": "#/components/schemas/FuelGoals"

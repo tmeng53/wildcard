@@ -4088,15 +4088,15 @@ extension Components {
             public var weekStart: Swift.String
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
             public var days: Components.Schemas.PlanDays
-            /// `saved` for a plan saved for this week; `template` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case saved = "saved"
-                case template = "template"
+                case carriedOver = "carriedOver"
                 case _default = "default"
             }
-            /// `saved` for a plan saved for this week; `template` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             public var source: Components.Schemas.WeeklyPlan.SourcePayload
@@ -4113,7 +4113,7 @@ extension Components {
             ///   - member: The member whose plan it is.
             ///   - weekStart: The week’s Monday.
             ///   - days:
-            ///   - source: `saved` for a plan saved for this week; `template` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
+            ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///   - fuelGoals:
             ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
             public init(
