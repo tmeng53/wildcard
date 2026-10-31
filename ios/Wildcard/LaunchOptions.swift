@@ -10,8 +10,7 @@ import UIKit
 /// Launch arguments the UI tests pass in.
 enum LaunchOptions {
     /// `-styleguide`: open the style guide instead of 今天.
-    /// `-loading`: the launch page and its loader, which a fast launch never shows long enough
-    /// to see.
+    /// `-loading`: the launch cover, which a fast launch never shows long enough to see.
     static var showsLoading: Bool {
         ProcessInfo.processInfo.arguments.contains("-loading")
     }
