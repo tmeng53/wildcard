@@ -75,6 +75,7 @@ import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
+import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -160,6 +161,13 @@ const awards = createWeeklyAwards({
   store: createPostgresAwardsStore(db),
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+  // Every meme in use, so the awards can draw on any that fits; only what the prompt needs.
+  memes: async () =>
+    (await memes.listInUse()).map(({ phrase, meaning, background }) => ({
+      phrase,
+      meaning,
+      background,
+    })),
 });
 // The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
 // token on a local one.
@@ -297,6 +305,7 @@ const app = createApp({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+      ...testPushTools({ push, squads, clock: () => new Date() }),
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),

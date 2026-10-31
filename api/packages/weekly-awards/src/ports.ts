@@ -8,6 +8,7 @@ import type {
   SquadId,
   TitlesWon,
 } from './domain/awards.js';
+import type { PromptMeme } from './domain/prompt.js';
 import type { WeekStart } from './domain/schedule.js';
 import type { AwardSettings, ModelName } from './domain/settings.js';
 
@@ -80,3 +81,6 @@ export interface AwardsStore {
  * copy): only their weeks go to the model.
  */
 export type AiConsented = (members: readonly MemberId[]) => Promise<readonly string[]>;
+
+/** The memes in use, from the meme library. */
+export type MemesInUse = () => Promise<readonly PromptMeme[]>;

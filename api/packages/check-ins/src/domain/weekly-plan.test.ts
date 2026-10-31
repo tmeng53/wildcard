@@ -148,11 +148,11 @@ describe('checkPlanChange', () => {
     expect(change(plan('saved'), [run, train, swim, train, train, train, train])).toBe('allowed');
   });
 
-  it('keeps a training today a training day', () => {
+  it('lets a training today become a rest day', () => {
     // Today is Thursday, a training day.
     expect(
       changeOn('2026-10-22')(plan('saved'), [run, train, rest, rest, train, train, train]),
-    ).toStrictEqual(new PlanDayStartedError('2026-10-22'));
+    ).toBe('allowed');
   });
 
   it('holds a default plan to the same rules once the member has been here a day', () => {

@@ -8,6 +8,12 @@
             "state": "translated",
             "value": "Today"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
+          }
         }
       }
     },
@@ -17,6 +23,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Feed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "動態"
           }
         }
       }
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "Lineup"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Me"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我"
           }
         }
       }
@@ -56,6 +80,12 @@
             "state": "translated",
             "value": "本周小队已练 %1$@/%2$@ 次"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週小隊已練 %1$@/%2$@ 次"
+          }
         }
       }
     },
@@ -73,6 +103,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "本周小队已练 %1$@/%2$@ 次 · 今天 %3$@ 位队友给你打了气"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週小隊已練 %1$@/%2$@ 次 · 今天有 %3$@ 位隊友幫你加油"
           }
         }
       }
@@ -92,6 +128,12 @@
             "state": "translated",
             "value": "%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 次"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@拍了拍你 · 本週小隊已練 %1$@/%2$@ 次"
+          }
         }
       }
     },
@@ -109,6 +151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%3$@和另外 %4$@ 人拍了拍你 · 本周小队已练 %1$@/%2$@ 次"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@和另外 %4$@ 人拍了拍你 · 本週小隊已練 %1$@/%2$@ 次"
           }
         }
       }
@@ -128,6 +176,12 @@
             "state": "translated",
             "value": "本周颁奖出炉了，快来看看你拿了什么"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週頒獎出爐了，快來看看你拿了什麼"
+          }
         }
       }
     },
@@ -145,6 +199,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ 的本周颁奖卡住了：试了 %2$@ 次，最后一次是 %3$@。去充个值吧"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 的本週頒獎卡住了：試了 %2$@ 次，最後一次是 %3$@。去儲值吧"
           }
         }
       }

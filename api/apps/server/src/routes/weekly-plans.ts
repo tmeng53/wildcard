@@ -131,8 +131,7 @@ export function weeklyPlans(deps: {
       'Replaces the week’s plan; repeating a save gives the same result. Past weeks are ' +
       'read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the ' +
       'current week, from the day the member joined: days before today stay as they were, ' +
-      'a training today stays a training day (its sport may change), a rest today may ' +
-      'become one, and later days change freely. On the day a member joins, a week still on ' +
+      'and today and later days change freely. On the day a member joins, a week still on ' +
       'the default changes freely. Days are read in the member’s profile time zone, and a ' +
       'day lasts until 3am.',
     security: [{ bearer: [] }],

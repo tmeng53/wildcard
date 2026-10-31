@@ -862,7 +862,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -953,6 +953,21 @@ if want admin-mcp; then
   sport_calls="$(psql "$DB_URL" -tAc "select string_agg(action->>'tool', ',' order by at) from public.admin_actions where admin_id = '$admin' and action->>'tool' like '%sport%'")"
   [ "$sport_calls" = put_sport ] || fail "admin_actions should hold the put, not the refusal: $sport_calls"
   echo "admin-mcp: read the sports list (Strength), put a sport back as it was, logged once; an unlisted sport refused (SPORT_NOT_OFFERED)"
+
+  # A test push: refused while the admin is in no squad; then, in one with a phone, it reaches
+  # that phone, which this server (no APNs key) reports as off.
+  tool send_test_push '{"kind":"poke"}'
+  [[ "$is_error" = true && "$result" == TEST_PUSH_NO_SQUAD:* ]] || fail "a test push with no squad: $result"
+  psql "$DB_URL" -qc "with squad as (insert into public.squads (id, name, invite_code)
+    values (gen_random_uuid(), 'test push', '$(node -p '[...crypto.randomBytes(8)].map((b) => "23456789ABCDEFGHJKMNPQRSTUVWXYZ"[b % 31]).join("")')') returning id)
+    insert into public.squad_members (squad_id, member_id) select id, '$admin' from squad"
+  call PUT /me/devices "$admin_token" "{\"version\":1,\"token\":\"$(node -p 'crypto.randomBytes(32).toString("hex")')\",\"environment\":\"production\"}"
+  expect 200
+  tool send_test_push '{"kind":"poke"}'
+  [ "$(jq -c '[.phones, .sent, .off]' <<<"$result")" = "[1,0,1]" ] || fail "send_test_push: $result"
+  pushes="$(psql "$DB_URL" -tAc "select count(*) from public.admin_actions where admin_id = '$admin' and action->>'tool' = 'send_test_push'")"
+  [ "$pushes" = 1 ] || fail "admin_actions should hold the one test push, not the refusal: $pushes"
+  echo "admin-mcp: a test push refused with no squad (TEST_PUSH_NO_SQUAD); in a squad it reached the admin's phone (off here, no APNs key), logged once"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED
