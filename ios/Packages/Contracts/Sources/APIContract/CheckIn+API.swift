@@ -54,7 +54,8 @@ extension CheckIn {
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .trained,
                     training: .init(
                         sport: training.activity.wireSport, customSport: training.activity.wireCustomSport,
-                        caption: training.caption?.text, photos: training.photos?.wire)))
+                        minutes: training.minutes?.value, caption: training.caption?.text,
+                        photos: training.photos?.wire)))
         case .healthyMeal(let meal):
             .healthyMeal(
                 .init(
@@ -78,7 +79,8 @@ extension Training {
     init(_ wire: Components.Schemas.TrainingView) throws(ContractsError) {
         self.init(
             activity: try Activity(sport: wire.sport, customSport: wire.customSport),
-            photos: try Photos(wire: wire.photos), caption: try wire.caption.map(Caption.init))
+            minutes: try wire.minutes.map(WorkoutMinutes.init), photos: try Photos(wire: wire.photos),
+            caption: try wire.caption.map(Caption.init))
     }
 }
 
@@ -89,22 +91,26 @@ extension Meal {
 }
 
 extension Activity {
+    /// The sport the member trained most (最常练).
+    public init(_ wire: Components.Schemas.TopSport) throws(ContractsError) {
+        try self.init(sport: wire.sport, customSport: wire.customSport)
+    }
+
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {
         switch (sport, customSport) {
-        case (.custom, let name?): self = .custom(try CustomSport(name))
-        case (.custom, nil): throw .strayCustomSport
+        case ("custom", let name?): self = .custom(try CustomSport(name))
+        case ("custom", nil): throw .strayCustomSport
         case (_, .some): throw .strayCustomSport
         case (_, nil):
-            guard let listed = Sport(rawValue: sport.rawValue) else { throw .unknownSport(sport.rawValue) }
+            guard let listed = Sport(rawValue: sport) else { throw .unknownSport(sport) }
             self = .sport(listed)
         }
     }
 
     var wireSport: Components.Schemas.Sport {
         switch self {
-        // Every `Sport` is in the API's list: `APIContract`'s tests check it.
-        case .sport(let sport): Components.Schemas.Sport(rawValue: sport.rawValue) ?? .custom
-        case .custom: .custom
+        case .sport(let sport): sport.rawValue
+        case .custom: "custom"
         }
     }
 

@@ -7,6 +7,7 @@ export {
 } from './adapters/postgres-check-in-store.js';
 export { createPostgresReactionStore } from './adapters/postgres-reaction-store.js';
 export { createPostgresReplyStore } from './adapters/postgres-reply-store.js';
+export { createPostgresWeekSummaryWords } from './adapters/postgres-week-summary-words.js';
 export {
   Audience,
   CheckInDraft,
@@ -27,7 +28,7 @@ export {
 export { PhotoPath, PhotoRef, Photos, isOwnPhoto } from './domain/photos.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
 export { DayRange } from './domain/day-range.js';
-export type { CheckInTotals } from './domain/totals.js';
+export type { CheckInTotals, TopSport } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { ReplyKind, type Reply } from './domain/reply.js';
 export {
@@ -39,7 +40,7 @@ export {
   type PlanSource,
   type WeeklyPlan,
 } from './domain/weekly-plan.js';
-export { SPORTS, SportKey } from './domain/sports.js';
+export { SportKey } from './domain/sports.js';
 export {
   CheckInDayMismatchError,
   CheckInIdConflictError,
@@ -54,12 +55,11 @@ export {
   PhotoNotUploadedError,
   PhotoNotYoursError,
   PlanDayStartedError,
-  RestDaysFixedError,
+  SportNotListedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
   WeekOverError,
-  WeekStartedError,
   WeekTooFarAheadError,
 } from './errors.js';
 export type {
@@ -70,14 +70,26 @@ export type {
   PhotoFiles,
   ReactionStore,
   ReplyStore,
+  SportList,
   SquadMembership,
   WeeklyPlanStore,
+  WeekSummaryWordsStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';
 export type { Replied } from './use-cases/check-ins/reply-to-disclaimer.js';
 export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadPost } from './use-cases/check-ins/list-squad-check-ins.js';
+export {
+  Language,
+  WeekSummaryWords,
+  WeekSummaryWordsChange,
+  winnerText,
+} from './domain/week-summary-words.js';
+export {
+  createWeekSummaryWords,
+  type WeekSummaryWordsAdmin,
+} from './use-cases/week-summary-words.js';
 export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
 export { createWeeklyPlans, type PlannedWeek, type WeeklyPlans } from './use-cases/weekly-plans.js';
 export {

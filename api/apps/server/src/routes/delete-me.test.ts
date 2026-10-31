@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -27,12 +28,13 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signOut,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
 // its servers can't be called without a real key and a real sign-in.
@@ -54,9 +56,11 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
         store: createPostgresSquadStore(db),
@@ -71,6 +75,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
       clock: () => new Date(),
     }),
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: memberCalendar(members),
       clock: () => new Date(),
@@ -84,7 +89,9 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     push: pushOn(db),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     aiConsent: aiConsentOn(db),
+    nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
+    weekSummaryWords: unusedWeekSummaryWords,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),
@@ -262,6 +269,9 @@ const everything = {
   files: 2,
 };
 
+// Each request's entries carry its id, made up off Cloud Run.
+const aRequestId: unknown = expect.stringMatching(/^[0-9a-f]{32}$/);
+
 describe('DELETE /me', () => {
   it('deletes the account and all that is the member’s, and leaves the squad to the others', async () => {
     const { call } = appWith(undefined);
@@ -294,6 +304,31 @@ describe('DELETE /me', () => {
     // The deleted session no longer works here.
     const again = await call('DELETE', '/me', me.token, { version: 1 });
     expect([again.status, reasonOf(again.body)]).toStrictEqual([401, 'AUTH_TOKEN_INVALID']);
+  });
+
+  it('deletes the squad with its last member, and lets the next sign-up start afresh', async () => {
+    const { call } = appWith(undefined);
+    const { me, friend, squad } = await memberWithEverything(call);
+    expect(
+      (await call('DELETE', `/squads/${squad}/members/${friend.userId}`, friend.token)).status,
+    ).toBe(204);
+    const squadRows = async () =>
+      Number(
+        (
+          await sql<{
+            n: number;
+          }>`select count(*) as n from public.squads where id = ${squad}`.execute(db)
+        ).rows[0]?.n,
+      );
+    expect(await squadRows()).toBe(1);
+
+    expect((await call('DELETE', '/me', me.token, { version: 1 })).status).toBe(204);
+
+    expect([await whatIsLeftOf(me.userId), await squadRows()]).toStrictEqual([nothing, 0]);
+    // The friend who left keeps their check-in, now sent to no squad.
+    const kept = await sql<{ n: number }>`select count(*) as n from public.check_ins
+      where member_id = ${friend.userId}`.execute(db);
+    expect(Number(kept.rows[0]?.n)).toBe(1);
   });
 
   it('refuses a session that has signed out, though its token hasn’t expired', async () => {
@@ -382,11 +417,12 @@ describe('DELETE /me', () => {
       severity: 'WARNING',
       message: 'Sign in with Apple not revoked: no Apple key is configured',
       member: me.userId,
+      requestId: aRequestId,
     });
   });
 
-  it('refuses a body not sent as JSON, and deletes nothing', async () => {
-    const { call } = appWith(undefined);
+  it('refuses a body not sent as JSON, logs why, and deletes nothing', async () => {
+    const { call, logged } = appWith(undefined);
     const me = await signUp();
     const response = await call('DELETE', '/me', me.token, { version: 1 }, 'text/plain');
     expect([response.status, reasonOf(response.body)]).toStrictEqual([
@@ -394,6 +430,19 @@ describe('DELETE /me', () => {
       'MEDIA_TYPE_UNSUPPORTED',
     ]);
     expect((await whatIsLeftOf(me.userId)).user).toBe(1);
+    expect(logged).toStrictEqual([
+      {
+        severity: 'WARNING',
+        message: 'request refused',
+        method: 'DELETE',
+        route: '/me',
+        status: 415,
+        reason: 'MEDIA_TYPE_UNSUPPORTED',
+        // Each entry a signed-in request writes names the member by id and the request.
+        member: me.userId,
+        requestId: aRequestId,
+      },
+    ]);
   });
 
   it.each([

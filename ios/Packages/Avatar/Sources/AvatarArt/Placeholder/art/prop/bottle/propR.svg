@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 194 238 L 187 224" fill="none" stroke="#22252E" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 194 238 L 187 224" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 178 250 C 166 250 166 276 179 278" fill="none" stroke="#0E0F14" stroke-width="7.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 178 250 C 166 250 166 276 179 278" fill="none" stroke="#3A3E4A" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 177 246 L 203 246 L 200 292 Q 199.5 295 196 295 L 184 295 Q 180.5 295 180 292 Z" fill="#1F2128" stroke="#0E0F14" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 185.04 266.54 L 188.14 265.76 C 188.89 265.57 189.65 266.03 189.84 266.78 L 191.58 273.77 C 191.77 274.52 191.31 275.28 190.56 275.46 L 187.46 276.24 C 186.71 276.43 185.95 275.97 185.76 275.22 L 184.02 268.23 C 183.83 267.48 184.29 266.72 185.04 266.54 Z" fill="#FFFFFF" stroke="#1F2128" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 191.49 264.8 L 194.64 265.35 C 195.41 265.49 195.91 266.21 195.78 266.98 L 194.53 274.07 C 194.4 274.83 193.67 275.34 192.91 275.2 L 189.76 274.65 C 188.99 274.51 188.49 273.79 188.62 273.02 L 189.87 265.93 C 190 265.17 190.73 264.66 191.49 264.8 Z" fill="#FFFFFF" stroke="#1F2128" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 182 253 L 183.5 288" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.3"/>
+  <path d="M 178.5 237.5 L 201.5 237.5 C 203.16 237.5 204.5 238.84 204.5 240.5 L 204.5 243.5 C 204.5 245.16 203.16 246.5 201.5 246.5 L 178.5 246.5 C 176.84 246.5 175.5 245.16 175.5 243.5 L 175.5 240.5 C 175.5 238.84 176.84 237.5 178.5 237.5 Z" fill="#FFFFFF" stroke="#AEB2BC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 178.5 244 L 201.5 244" fill="none" stroke="#E8EBF0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

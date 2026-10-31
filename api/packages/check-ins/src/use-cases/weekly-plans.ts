@@ -5,16 +5,20 @@ import {
   checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
+  trainedOnRestDay,
   weekStartOf,
   type PlanDays,
   type WeekStart,
   type WeeklyPlan,
 } from '../domain/weekly-plan.js';
 import { TimeZoneNotSetError } from '../errors.js';
-import type { Clock, MemberCalendar, WeeklyPlanStore } from '../ports.js';
+import type { Clock, MemberCalendar, SportList, WeeklyPlanStore } from '../ports.js';
+import { checkSport } from './check-sport.js';
 
 interface Deps {
   readonly store: WeeklyPlanStore;
+  /** Which sports a planned day may name. */
+  readonly sports: SportList;
   readonly calendarOf: MemberCalendar;
   readonly clock: Clock;
 }
@@ -42,7 +46,7 @@ export interface WeeklyPlans {
     readonly days: PlanDays;
   }): Promise<PlannedWeek>;
   /**
-   * Saves the member's 饮食小目标 for a week that hasn't started and returns the week. Throws
+   * Saves the member's 饮食小目标 for this week or a later one and returns the week. Throws
    * `TimeZoneNotSetError` before the member has a profile, and the errors of
    * `checkFuelGoalsChange` otherwise. Safe to repeat.
    */
@@ -65,6 +69,27 @@ export async function findWeeklyPlan(
     days: latest.days,
     source: latest.weekStart === weekStart ? 'saved' : 'carriedOver',
   };
+}
+
+/**
+ * Makes `day` a training day of the 练了's sport in the member's plan when it was a rest day, so
+ * training on a planned rest day counts in the week like any training day. Safe to repeat.
+ */
+export async function planTrainedDay(
+  { store }: { readonly store: WeeklyPlanStore },
+  {
+    member,
+    day,
+    training,
+  }: {
+    readonly member: MemberId;
+    readonly day: LocalDay;
+    readonly training: Parameters<typeof trainedOnRestDay>[0]['training'];
+  },
+): Promise<void> {
+  const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
+  const days = trainedOnRestDay({ plan, day, training });
+  if (days !== undefined) await store.save({ member, weekStart: plan.weekStart, days });
 }
 
 export function createWeeklyPlans(deps: Deps): WeeklyPlans {
@@ -102,6 +127,10 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
       const { today, joinedOn } = await daysOf(member);
       const current = await findWeeklyPlan(deps, { member, weekStart });
       checkPlanChange({ current, next: days, today, joinedOn });
+      for (const day of days) {
+        if (day.kind === 'train' && day.sport !== undefined)
+          await checkSport(deps.sports, day.sport);
+      }
       await deps.store.save({ member, weekStart, days });
       return plannedWeek({ member, joinedOn }, { weekStart, days, source: 'saved' });
     },

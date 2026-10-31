@@ -14,6 +14,7 @@ export {
   SquadId,
   TITLE_MAX,
   TITLES_MAX,
+  titlesWonOf,
   topCheckInOf,
   type Awards,
   type AwardsState,
@@ -21,6 +22,7 @@ export {
   type MemberAwards,
   type MemberWeek,
   type Title,
+  type TitlesWon,
   type TopCheckIn,
   type WeekCheckIn,
 } from './domain/awards.js';

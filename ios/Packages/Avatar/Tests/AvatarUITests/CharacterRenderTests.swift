@@ -13,7 +13,9 @@ import Testing
 @MainActor
 struct CharacterRenderTests {
     static let skin = (0xF5, 0xCD, 0xAE)
-    static let plate = (0x1F, 0x21, 0x28)
+    /// The dumbbell's outer plate in the right hand, at rest: its iron, clear of the grip's collar.
+    static let plateSpot = Point(x: 187, y: 243)
+    static let iron = (0x2B, 0x2E, 0x37)
     static let white = (0xFF, 0xFF, 0xFF)
 
     @Test func drawsTheRestPoseWhereTheArtSays() throws {
@@ -21,12 +23,31 @@ struct CharacterRenderTests {
         let image = try lifter.render(lifter.figure.restPose)
         // The middle of the face, the outer dumbbell plate in the right hand, and empty canvas.
         #expect(matches(image.color(atColumn: 120, row: 150), Self.skin))
-        #expect(matches(image.color(atColumn: 193, row: 255), Self.plate))
+        #expect(matches(image.color(atColumn: 187, row: 243), Self.iron))
         #expect(matches(image.color(atColumn: 10, row: 10), Self.white))
 
         // The bear has no prop: the same spot, past the hand, is empty.
         let bear = try Frame(outfit: Looks.bear)
         #expect(matches(try bear.render(bear.figure.restPose).color(atColumn: 193, row: 255), Self.white))
+    }
+
+    /// A ring shows the face, not just ears or hair: every body's head has both pupils and
+    /// the mouth inside it.
+    @Test func everyHeadShowsTheFace() throws {
+        let idle = try PlaceholderCharacter.clip("idle", persona: .deadpan)
+        let pupil = (0x0E, 0x0F, 0x14)
+        let ink = (0x22, 0x25, 0x2E)
+        for body in PlaceholderCharacter.variants(for: "body") {
+            let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tee"]))
+            // 160 points square draws the head's crop one to one: canvas (x, y) is (x - 40, y - 74).
+            let view = CharacterHead(player: try CharacterPlayer(figure: figure, idle: idle))
+                .frame(width: 160, height: 160)
+                .background(.white)
+            let image = try Bitmap(try #require(ImageRenderer(content: view).cgImage))
+            #expect(matches(image.color(atColumn: 49, row: 87), pupil), "\(body): left pupil")
+            #expect(matches(image.color(atColumn: 111, row: 87), pupil), "\(body): right pupil")
+            #expect(matches(image.color(atColumn: 80, row: 113), ink), "\(body): mouth")
+        }
     }
 
     @Test func theCheerCarriesTheDumbbellUpWithTheArm() throws {
@@ -38,17 +59,17 @@ struct CharacterRenderTests {
         // The plate's rest spot is empty, and the plate is where the arm and prop transforms take it.
         #expect(matches(image.color(atColumn: 193, row: 255), Self.white))
         let prop = try #require(lifter.figure.parts.firstIndex { $0.id == "propR" })
-        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Point(x: 193, y: 255))
-        #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.plate))
+        let moved = lifter.figure.layout(peak)[prop].transform.apply(to: Self.plateSpot)
+        #expect(matches(image.color(atColumn: Int(moved.x.rounded()), row: Int(moved.y.rounded())), Self.iron))
     }
 
-    /// Picking a sport: the player draws the old clothes until the hop's squash, the kit after.
+    /// Picking a sport: the player draws the old prop until the hop's squash, the kit's after.
     @Test func thePlayerSwapsTheKitInMidHop() throws {
         let start = Date(timeIntervalSinceReferenceDate: 0)
         let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
         let player = try CharacterPlayer(
             figure: lifter, idle: PlaceholderCharacter.clip("idle", persona: .shy), now: start)
-        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
         let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
         let hop = try PlaceholderCharacter.kitHop()
         try player.change(
@@ -56,12 +77,13 @@ struct CharacterRenderTests {
             now: start.addingTimeInterval(1))
         let before = player.frame(at: start.addingTimeInterval(1 + hop.out.duration / 2))
         let after = player.frame(at: start.addingTimeInterval(1 + hop.out.duration + 0.01))
-        let hat = try #require(swimmer.parts.firstIndex { $0.id == "crown" })
+        let water = try #require(swimmer.parts.firstIndex { $0.id == "propOver" })
         #expect(before.drawing.width == after.drawing.width)
-        #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)
+        #expect(lifter.parts[water].art.isEmpty && !swimmer.parts[water].art.isEmpty)
         #expect(player.figure == swimmer)
-        // Reduce Motion shows the kit straight away, standing still.
-        #expect(player.restFrame.placements == swimmer.layout(swimmer.restPose))
+        // Reduce Motion shows the kit straight away, holding its move's first frame.
+        let move = try swimmer.bind(PlaceholderCharacter.move(for: swim, persona: .shy))
+        #expect(player.restFrame.placements == swimmer.layout(swimmer.pose(move, at: 0)))
     }
 
     /// Taking a sport off mid-hop: the outfit worn instead stays on, the kit never shows.
@@ -70,18 +92,18 @@ struct CharacterRenderTests {
         let lifter = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
         let idle = try PlaceholderCharacter.clip("idle", persona: .shy)
         let player = try CharacterPlayer(figure: lifter, idle: idle, now: start)
-        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport(.swim))
+        let swim = try PlaceholderCharacter.sportKits().kit(for: .sport("swim"), in: Looks.sports)
         let swimmer = try PlaceholderCharacter.figure(wearing: swim.dress(PlaceholderCharacter.lifter))
         try player.change(
             into: swimmer, idle: PlaceholderCharacter.move(for: swim, persona: .shy),
             hop: PlaceholderCharacter.kitHop(), now: start.addingTimeInterval(1))
         try player.wear(lifter, idle: idle, now: start.addingTimeInterval(1.05))
         let later = player.frame(at: start.addingTimeInterval(2))
-        let hat = try #require(swimmer.parts.firstIndex { $0.id == "crown" })
-        // The swim cap is drawn only in the kit.
-        #expect(lifter.parts[hat].art.isEmpty && !swimmer.parts[hat].art.isEmpty)
-        #expect(later.drawing.parts[hat].isEmpty)
-        #expect(player.restFrame.drawing.parts[hat].isEmpty)
+        let water = try #require(swimmer.parts.firstIndex { $0.id == "propOver" })
+        // The water the goggles swim in comes only with the swim kit.
+        #expect(lifter.parts[water].art.isEmpty && !swimmer.parts[water].art.isEmpty)
+        #expect(later.drawing.parts[water].isEmpty)
+        #expect(player.restFrame.drawing.parts[water].isEmpty)
         #expect(player.figure == lifter)
     }
 }

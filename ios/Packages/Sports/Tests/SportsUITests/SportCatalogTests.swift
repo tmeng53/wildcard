@@ -1,27 +1,19 @@
 import Contracts
 import Foundation
+import SportsUI
 import Testing
 
-/// SwiftPM doesn't extract string keys, so a sport whose key is missing from the String Catalog
-/// silently shows its raw id. This reads SportsUI's catalog as a file, so it runs on Linux too.
+/// SwiftPM doesn't extract string keys, so this reads SportsUI's String Catalog as a file, so it
+/// runs on Linux too. Sports' own names are data the API serves, not in the catalog.
 struct SportCatalogTests {
     private static let catalogURL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("Sources/SportsUI/Resources/Localizable.xcstrings")
 
-    @Test func everySportAndCategoryHasANameInEveryLanguage() throws {
-        let keys =
-            Sport.allCases.map { "sport.\($0.rawValue)" }
-            + SportCategory.allCases.map { "sportCategory.\($0.rawValue)" }
-        #expect(keys.count == 64)
-        let missing = try keys.filter {
-            try Self.value(for: $0, in: "en") == nil || Self.value(for: $0, in: "zh-Hans") == nil
-                || Self.value(for: $0, in: "zh-Hant") == nil
-        }
-        #expect(missing.isEmpty, "sports without a name in every language: \(missing)")
-        #expect(try Self.value(for: "sport.pickleball", in: "zh-Hans") == "匹克球")
-        #expect(try Self.value(for: "sport.tableTennis", in: "zh-Hant") == "桌球")
-        #expect(try Self.value(for: "sportCategory.everyday", in: "en") == "Everyday counts")
+    @Test func aSportTheListDoesNotHaveYetHasANameInEveryLanguage() throws {
+        #expect(try Self.value(for: "sport.unknown", in: "zh-Hans") == "运动")
+        #expect(try Self.value(for: "sport.unknown", in: "en") == "Workout")
+        #expect(try Self.value(for: "sport.unknown", in: "zh-Hant") == "運動")
     }
 
     /// SwiftLint's banned-terms rule can't read the catalog, so this covers its copy.
@@ -31,6 +23,38 @@ struct SportCatalogTests {
         for term in ["\u{5965}\u{8FD0}", "\u{6F}lympic"] {
             #expect(!text.contains(term), "the String Catalog uses a banned term")
         }
+    }
+
+    @Test func namesFollowTheAppsLanguage() {
+        let names = CatalogNames(simplifiedChinese: "羽毛球", english: "Badminton", traditionalChinese: "羽球")
+        #expect(names.localized(in: ["zh-Hans"]) == "羽毛球")
+        #expect(names.localized(in: ["zh-Hant"]) == "羽球")
+        #expect(names.localized(in: ["zh-Hant-TW"]) == "羽球")
+        #expect(names.localized(in: ["en"]) == "Badminton")
+        #expect(names.localized(in: ["en-US"]) == "Badminton")
+        #expect(names.localized(in: ["fr", "en"]) == "Badminton")
+        #expect(names.localized(in: ["fr"]) == "羽毛球")
+    }
+
+    @Test func theAppsListChangesWhenANewerOneArrives() {
+        let list = SportList.shared
+        let catalog = SportCatalog(
+            categories: [
+                SportCatalog.Category(
+                    id: "racket",
+                    names: CatalogNames(simplifiedChinese: "球拍", english: "Racket", traditionalChinese: "球拍"),
+                    entries: [
+                        SportCatalog.Entry(
+                            sport: "padel",
+                            names: CatalogNames(
+                                simplifiedChinese: "板式网球", english: "Padel", traditionalChinese: "板式網球"),
+                            icon: "figure.tennis", offered: true, category: "racket")
+                    ])
+            ], signUpCommon: [], checkInQuick: ["padel"])
+        list.show(catalog)
+        #expect(list.catalog.checkInQuick == ["padel"])
+        list.show(.empty)
+        #expect(list.catalog == .empty)
     }
 
     private static func value(for key: String, in language: String) throws -> String? {

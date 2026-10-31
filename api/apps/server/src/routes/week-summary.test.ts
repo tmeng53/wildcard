@@ -5,11 +5,13 @@ import {
   createPostgresCheckInStore,
   createPostgresReactionStore,
   createPostgresReplyStore,
+  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -24,10 +26,11 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -45,9 +48,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -62,6 +67,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -75,7 +81,9 @@ const app = createApp({
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
+  nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,
@@ -136,6 +144,15 @@ async function member(timeZone = 'UTC') {
   return signedUp;
 }
 
+/** Moves the members' join day weeks back, once their plans are saved, so this week counts from Monday. */
+async function joinedWeeksAgo(...members: readonly { readonly userId: string }[]) {
+  for (const { userId } of members) {
+    await sql`update profiles set created_at = now() - interval '30 days' where member_id = ${userId}`.execute(
+      db,
+    );
+  }
+}
+
 /** The Monday of the week `day` is in. */
 function mondayOf(day: string) {
   const date = new Date(`${day}T00:00:00.000Z`);
@@ -172,8 +189,9 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
   it('gives the week’s awards and counts', async () => {
     const [me, friend] = [await member(), await member()];
     const squad = await squadOf(me, friend);
-    // Me plans a week of rest, so one 练了 completes it.
+    // Me plans a week of rest; the 练了 makes today a training day, and completes the week.
     await planAll(me.token, { day: today(), kind: 'rest' });
+    await joinedWeeksAgo(me, friend);
     await checkIn(me.token, { squad, kind: 'trained', training: { sport: 'run' } });
     const excuse = await checkIn(friend.token, {
       squad,
@@ -219,8 +237,8 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       squadTotals: {
         stats: [
           { kind: 'trainedDays', label: '训练天数', value: 1 },
-          // Me plans none; friend keeps the default 5.
-          { kind: 'plannedDays', label: '计划天数', value: 5 },
+          // Me's 练了 day, and friend's default 5.
+          { kind: 'plannedDays', label: '计划天数', value: 6 },
           { kind: 'checkIns', label: '打卡', value: 2 },
           { kind: 'disclaimers', label: '请假条', value: 1 },
           { kind: 'healthyMeals', label: '健康餐', value: 0 },
@@ -232,7 +250,7 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       me: {
         stats: [
           { kind: 'trainedDays', value: 1 },
-          { kind: 'plannedDays', value: 0 },
+          { kind: 'plannedDays', value: 1 },
           { kind: 'checkIns', value: 1 },
           { kind: 'disclaimers', value: 0 },
           { kind: 'healthyMeals', value: 0 },

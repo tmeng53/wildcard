@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 166 262 C 150 286 176 300 178 296" fill="none" stroke="#E65345" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 174 262 C 206 276 206 296 196 302" fill="none" stroke="#E65345" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 181.88 300.01 C 183.06 303.63 180.17 307.81 175.43 309.35 C 170.69 310.89 165.9 309.21 164.72 305.59 C 163.55 301.97 166.44 297.79 171.17 296.25 C 175.91 294.71 180.7 296.4 181.88 300.01 Z" fill="#2D5BA0" stroke="#22252E" stroke-width="2.296" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 168.64 301.73 Q 171.15 298.84 175.41 298.67" fill="none" stroke="#FFFFFF" stroke-width="1.64" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.85"/>
+  <path d="M 176.5 304.69 L 178.23 302.06" fill="none" stroke="#7FA6DB" stroke-width="1.312" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 205.28 292.41 C 206.45 296.03 203.56 300.21 198.83 301.75 C 194.09 303.29 189.3 301.6 188.12 297.99 C 186.94 294.37 189.83 290.19 194.57 288.65 C 199.31 287.11 204.1 288.79 205.28 292.41 Z" fill="#2D5BA0" stroke="#22252E" stroke-width="2.296" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 192.04 294.13 Q 194.55 291.24 198.8 291.07" fill="none" stroke="#FFFFFF" stroke-width="1.64" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.85"/>
+  <path d="M 199.9 297.09 L 201.63 294.46" fill="none" stroke="#7FA6DB" stroke-width="1.312" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 180.85 299.49 Q 183.73 295.1 188.65 296.95" fill="none" stroke="#22252E" stroke-width="2.132" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

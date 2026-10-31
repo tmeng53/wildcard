@@ -15,6 +15,10 @@ extension Haptic {
         case .score: .impact(weight: .light, intensity: 0.6)
         case .land: .impact(weight: .medium)
         case .reaction: .impact(flexibility: .soft, intensity: 0.7)
+        case .crown: .impact(weight: .medium)
+        case .poke: .impact(flexibility: .rigid, intensity: 0.5)
+        case .unbox: .impact(weight: .heavy)
+        case .lights: .impact(flexibility: .rigid, intensity: 1)
         }
     }
 }

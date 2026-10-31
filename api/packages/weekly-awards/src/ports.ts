@@ -1,6 +1,13 @@
 import type { z } from 'zod';
 
-import type { Awards, AwardsState, Failures, MemberId, SquadId } from './domain/awards.js';
+import type {
+  Awards,
+  AwardsState,
+  Failures,
+  MemberId,
+  SquadId,
+  TitlesWon,
+} from './domain/awards.js';
 import type { WeekStart } from './domain/schedule.js';
 import type { AwardSettings, ModelName } from './domain/settings.js';
 
@@ -23,7 +30,11 @@ export interface LanguageModel {
 
 /** Where the award settings are kept: one value, and a log of every change to it. */
 export interface AwardSettingsStore {
-  current(): Promise<AwardSettings>;
+  /**
+   * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two
+   * admins changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<AwardSettings>;
   /**
    * Saves `settings` with `by` as who changed them, unless they are the settings already: then
    * nothing is saved or logged. Says whether anything changed.
@@ -60,6 +71,8 @@ export interface AwardsStore {
    * when none was claimed since the last failed try, else `undefined`, as it is once given.
    */
   claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
+  /** Every title the member has won, in all their squads. */
+  titlesWon(member: MemberId): Promise<TitlesWon>;
 }
 
 /**

@@ -1,11 +1,13 @@
 import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
+import type { NudgeTables } from '@wildcard/nudges';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
 import type { SquadTables } from '@wildcard/squads';
+import type { SportTables } from '@wildcard/sports';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -33,6 +35,12 @@ export interface Caller {
  * for a token that isn't a current sign-in, `AuthKeysUnavailableError` when it can't be checked.
  */
 export type VerifyToken = (token: string) => Promise<Caller>;
+
+/**
+ * Whether a bearer token is the scheduler's, which alone may start jobs such as the daily push.
+ * Never throws for a wrong token: it answers false.
+ */
+export type IsScheduler = (token: string) => Promise<boolean>;
 
 /** The sign-in provider's own records of its users, for what a token alone can't settle. */
 export interface Accounts {
@@ -64,6 +72,30 @@ export interface Accounts {
  * `AppleSignInUnavailableError` when Apple can't be reached.
  */
 export type RevokeAppleSignIn = (authorizationCode: string) => Promise<void>;
+
+/**
+ * Where errors the server couldn't handle go to be grouped and seen (Sentry today), beside the
+ * log. A report never names a member, a path or a body: only what failed, the request's method
+ * and route, and its trace id, which finds the request's log lines (the app sees it as
+ * `X-Request-Id`).
+ */
+export interface ErrorReports {
+  /** Queues a report and returns at once; it never throws, and a report that can't go is lost. */
+  readonly report: (error: unknown, context: ErrorContext) => void;
+  /** Sends what is queued, waiting at most `timeoutMs`; before the process stops. */
+  readonly flush: (timeoutMs: number) => Promise<void>;
+}
+
+/** Where an error happened, as far as a report may say. */
+export interface ErrorContext {
+  /** The log message, which says what failed (such as `request failed`). */
+  readonly message: string;
+  readonly method?: string | undefined;
+  /** The route's pattern (`/squads/:squadId`), never the path, which holds ids and codes. */
+  readonly route?: string | undefined;
+  /** The request's trace id: the `requestId` on its log lines and its `X-Request-Id`. */
+  readonly traceId?: string | undefined;
+}
 
 /** A member signed in on the consent page: their access token, used once and then signed out. */
 export interface ConsentSession {
@@ -126,7 +158,9 @@ export type Tables = CheckInTables &
   SquadTables &
   AdminTables &
   AiConsentTables &
-  WeeklyAwardTables;
+  NudgeTables &
+  WeeklyAwardTables &
+  SportTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

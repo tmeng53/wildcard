@@ -5,11 +5,15 @@ import Contracts
 
 extension MemberCharacter {
     public init(_ wire: Components.Schemas.Character) throws(ContractsError) {
+        self.init(nickname: try Nickname(wire.nickname), look: CharacterLook(wire.look))
+    }
+}
+
+extension CharacterLook {
+    public init(_ wire: Components.Schemas.Look) {
         self.init(
-            nickname: try Nickname(wire.nickname),
-            look: CharacterLook(
-                persona: wire.look.persona, variants: wire.look.variants.additionalProperties,
-                colors: wire.look.colors.additionalProperties))
+            persona: wire.persona, variants: wire.variants.additionalProperties,
+            colors: wire.colors.additionalProperties)
     }
 }
 

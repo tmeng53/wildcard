@@ -1,7 +1,7 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(28);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -101,10 +101,6 @@ select throws_ok(
   $$insert into public.check_in_squads (check_in_id, squad_id, position) values
     ('11111111-1111-1111-1111-111111111111', '5a000000-0000-0000-0000-000000000001', 2)$$,
   '23505', null, 'a check-in goes to each squad once'
-);
-select throws_ok(
-  $$delete from public.squads where id = '5a000000-0000-0000-0000-000000000001'$$,
-  '23503', null, 'a squad a check-in went to can''t be deleted'
 );
 delete from public.check_ins where id = '11111111-1111-1111-1111-111111111111';
 select is(

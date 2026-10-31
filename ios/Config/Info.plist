@@ -17,6 +17,10 @@
 	<string>$(WILDCARD_AUTH_URL)</string>
 	<key>WildcardAuthPublishableKey</key>
 	<string>$(WILDCARD_AUTH_PUBLISHABLE_KEY)</string>
+	<!-- Where crash reports go (CrashReports.swift): Sentry's DSN for the iOS project, which is
+	     public by design. Empty, as in Debug, reports nothing. -->
+	<key>WildcardSentryDSN</key>
+	<string>$(WILDCARD_SENTRY_DSN)</string>
 	<!-- Plain HTTP to this Mac's local backend from the simulator; every other host stays HTTPS. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

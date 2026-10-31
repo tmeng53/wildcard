@@ -29,3 +29,4 @@ supabase/.branches/
 .env
 .env.*
 !.env.example
+__pycache__/

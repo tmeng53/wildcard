@@ -55,8 +55,6 @@
     ['wave', 1.6],
   ];
   const START = [0.5, 0.58, 0.66, 0.74, 0.82];
-  // Everyone on the site holds a dumbbell, whatever prop their look carries.
-  const SWAP = { propR: C.dumbbell };
 
   const squad = document.getElementById('squad');
   const site = document.querySelector('.site');
@@ -128,7 +126,7 @@
   function draw(actor, t) {
     const idle = C.idle[actor.member.persona];
     const poses = actor.move ? A.perform(idle, actor.move, actor.start, t, 0.18) : A.pose(idle, t);
-    actor.g.innerHTML = A.figure(actor.member, poses, SWAP);
+    actor.g.innerHTML = A.figure(actor.member, poses);
   }
 
   if (reduce) {
@@ -158,7 +156,7 @@
     if (!reduce) word.style.opacity = 1;
     const floor = document.querySelector('.floor').getBoundingClientRect();
     window.playWordmarkB(word, {
-      tapeColor: getComputedStyle(document.documentElement).getPropertyValue('--graphite').trim(),
+      tapeColor: getComputedStyle(document.documentElement).getPropertyValue('--brand').trim(),
       floorY: floor.bottom + window.scrollY - 2,
       onSettle: () =>
         rest.forEach((el, i) => {

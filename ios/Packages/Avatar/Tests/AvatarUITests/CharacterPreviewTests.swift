@@ -14,7 +14,7 @@ import UniformTypeIdentifiers
 /// persona's idle loop, frame by frame as animated GIFs, a sheet of the color swatches, one
 /// of every body and hair, one of every face part with each persona's cheer face, a character
 /// changing into each sport's kit, the 上场 entrance with the welcome after it, 我's typing and
-/// crying, and the squad's 排队入场 lineup.
+/// crying, the squad's 排队入场 lineup, and every body's head in a ring at each size.
 /// Runs only when `AVATAR_PREVIEW_DIR` names a folder (`scripts/avatar-preview.sh` sets it),
 /// so ordinary test runs stay fast.
 @MainActor
@@ -80,14 +80,20 @@ struct CharacterPreviewTests {
                 to: folder.appendingPathComponent("04-idle-\(persona.rawValue).gif"))
         }
 
-        try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
-        try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
-        try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
+        try writeSheets(to: folder)
         try writeSpecies(to: folder.appendingPathComponent("08-species-moves.gif"))
         try writeMoves(to: folder)
         try writeLineup(to: folder.appendingPathComponent("13-lineup.gif"))
 
         try writeTimings(cast[0], performances[0], to: folder.appendingPathComponent("timings.txt"))
+    }
+
+    /// The stills: swatches, wardrobe, faces and heads.
+    private func writeSheets(to folder: URL) throws {
+        try writeSwatches(to: folder.appendingPathComponent("05-swatches.png"))
+        try writeWardrobe(to: folder.appendingPathComponent("06-wardrobe.png"))
+        try writeFaces(to: folder.appendingPathComponent("07-faces.png"))
+        try writeHeads(to: folder.appendingPathComponent("14-heads.png"))
     }
 
     /// The editor's swatches: a row per slot, a look in every color the slot offers.
@@ -116,7 +122,7 @@ struct CharacterPreviewTests {
     /// Every body (in a tee and shorts), then every hair (on the lifter), eight to a row.
     private func writeWardrobe(to url: URL) throws {
         let bodies = PlaceholderCharacter.variants(for: "body").map {
-            Outfit(["body": $0, "top": "tee", "bottom": "shorts"])
+            Outfit(["body": $0, "top": "warmup-tee", "bottom": "warmup-shorts"])
         }
         let hairs = PlaceholderCharacter.variants(for: "hair").map { hair in
             var look = PlaceholderCharacter.lifter
@@ -161,12 +167,12 @@ struct CharacterPreviewTests {
     private func writeSpecies(to url: URL) throws {
         let cast: [(Persona, Outfit)] = [
             (.drama, PlaceholderCharacter.lifter),
-            (.deadpan, Outfit(["body": "cat", "top": "tee", "bottom": "shorts"])),
-            (.energetic, Outfit(["body": "shiba", "top": "tee", "bottom": "shorts"])),
-            (.deadpan, Outfit(["body": "golden", "top": "tee", "bottom": "shorts"])),
-            (.showoff, Outfit(["body": "rabbit", "top": "tee", "bottom": "shorts"])),
+            (.deadpan, Outfit(["body": "cat", "top": "warmup-tee", "bottom": "warmup-shorts"])),
+            (.energetic, Outfit(["body": "shiba", "top": "warmup-tee", "bottom": "warmup-shorts"])),
+            (.deadpan, Outfit(["body": "golden", "top": "warmup-tee", "bottom": "warmup-shorts"])),
+            (.showoff, Outfit(["body": "rabbit", "top": "warmup-tee", "bottom": "warmup-shorts"])),
             (.shy, Looks.bear),
-            (.drama, Outfit(["body": "lop", "hat": "cap", "top": "tee", "bottom": "shorts"])),
+            (.drama, Outfit(["body": "lop", "hat": "warmup-cap", "top": "warmup-tee", "bottom": "warmup-shorts"])),
         ]
         var looks: [Frame] = []
         var performances: [(idling: Performance, cheering: Performance)] = []
@@ -219,7 +225,7 @@ struct CharacterPreviewTests {
     }
 
     /// Images one above the other, as one image.
-    private func stacked(_ images: [CGImage]) throws -> CGImage {
+    func stacked(_ images: [CGImage]) throws -> CGImage {
         let width = images.map(\.width).max() ?? 0
         let height = images.reduce(0) { $0 + $1.height }
         let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
@@ -239,7 +245,7 @@ struct CharacterPreviewTests {
         return try #require(context.makeImage())
     }
 
-    private func writePNG(_ sheet: CGImage, to url: URL) throws {
+    func writePNG(_ sheet: CGImage, to url: URL) throws {
         let destination = try #require(
             CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil))
         CGImageDestinationAddImage(destination, sheet, nil)

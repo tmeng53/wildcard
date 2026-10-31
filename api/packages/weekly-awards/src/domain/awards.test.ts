@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { MemberId, ModelReply, titlesOf, topCheckInOf, type WeekCheckIn } from './awards.js';
+import {
+  MemberId,
+  ModelReply,
+  titlesOf,
+  titlesWonOf,
+  topCheckInOf,
+  type WeekCheckIn,
+} from './awards.js';
 import { AwardMove } from './moves.js';
 import { promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
@@ -213,5 +220,49 @@ describe('promptFor', () => {
     expect(prompt.moves).toContainEqual({ id: 'flat', description: 'flat 的样子' });
     expect(prompt.moves).toHaveLength(AwardMove.options.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
+  });
+
+  it('lists the moves in their own order, whatever order the settings keep them in', () => {
+    const reversed = z
+      .record(AwardMove, z.string())
+      .parse(Object.fromEntries(Object.entries(moves).reverse()));
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({ weekStart: WeekStart.parse('2026-10-19'), moves: reversed, members: [] }),
+      ),
+    );
+    expect(prompt.moves.map(({ id }) => id)).toStrictEqual([
+      'cheer',
+      'pump',
+      'pose',
+      'warmup',
+      'stretch',
+      'doze',
+      'flat',
+      'laugh',
+      'wave',
+      'fullbelly',
+    ]);
+  });
+});
+
+describe('titlesWonOf', () => {
+  const award = (...titles: string[]) => ({
+    version: 1 as const,
+    titles: titles.map((title) => ({
+      title,
+      speech: '周三下着雨还去跑了。',
+      move: 'pump' as const,
+    })),
+  });
+
+  it('counts every title, and how often the latest week’s first title was won', () => {
+    expect(
+      titlesWonOf([award('早八战神', '雨中狠人'), award('早八战神'), award('夜跑王')]),
+    ).toStrictEqual({ count: 4, latest: { title: '早八战神', times: 2 } });
+  });
+
+  it('has no latest before the first award', () => {
+    expect(titlesWonOf([])).toStrictEqual({ count: 0 });
   });
 });

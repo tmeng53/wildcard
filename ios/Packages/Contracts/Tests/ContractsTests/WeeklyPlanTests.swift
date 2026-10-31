@@ -6,7 +6,7 @@ private let memberID = MemberID(UUID(uuidString: "22222222-2222-2222-2222-222222
 
 @Test func planKeepsItsSevenDaysInOrder() throws {
     let days: [PlanDay] = [
-        .train(.sport(.run)), .rest, .train(.sport(.strength)), .train(nil), .rest,
+        .train(.sport("run")), .rest, .train(.sport("strength")), .train(nil), .rest,
         .train(.custom(try CustomSport("飞盘"))), .rest,
     ]
     let plan = try WeeklyPlan(member: memberID, weekStart: try LocalDay("2025-10-20"), days: days)

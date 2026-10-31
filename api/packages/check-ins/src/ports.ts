@@ -6,6 +6,7 @@ import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { Reply, ReplyKind } from './domain/reply.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
+import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
@@ -41,6 +42,12 @@ export interface SquadMembership {
   membersOf(squad: SquadId): Promise<MemberId[]>;
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
+}
+
+/** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */
+export interface SportList {
+  /** Whether `id` names a listed sport (`custom` never does). */
+  isListed(id: string): Promise<boolean>;
 }
 
 /** Where reactions on check-ins are kept. */
@@ -124,3 +131,17 @@ export interface WeeklyPlanStore {
 export type MemberCalendar = (
   member: MemberId,
 ) => Promise<{ readonly timeZone: string; readonly joinedAt: Date } | undefined>;
+
+/** Where the Sunday summary's words are kept: one value, and a log of every change to it. */
+export interface WeekSummaryWordsStore {
+  /**
+   * The words now. `forUpdate` holds the row until the caller's transaction ends, so two
+   * admins changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<WeekSummaryWords>;
+  /**
+   * Saves `words` with `by` as who changed them, unless they are the words already: then
+   * nothing is saved or logged. Says whether anything changed.
+   */
+  save(words: WeekSummaryWords, by: MemberId): Promise<boolean>;
+}

@@ -15,24 +15,27 @@ extension StageLayout {
         }
     }
 
+    /// The track's lane lines, the first along the top of lane 1 and the last along the front of
+    /// lane 4, where the floor starts.
+    static let trackLines = [310.0, 361, 412, 463, 514]
+
+    // Runners jog lanes 1 to 3 in the middle of each, back and forth, turning before the edge.
     static let track = StageLayout(
         stations: [
             Station(
                 kind: .jogging, capacity: 6,
-                path: .loop(
-                    from: -30, to: 420,
-                    lanes: [
-                        StationPath.Lap(y: 354, direction: 1, speed: 56),
-                        StationPath.Lap(y: 405, direction: 1, speed: 48),
-                        StationPath.Lap(y: 456, direction: -1, speed: 48),
-                    ]), scale: nil)
+                path: .lanes(
+                    zip(trackLines, trackLines.dropFirst()).prefix(3).map {
+                        StationPath.Lane(from: 40, to: 350, y: ($0 + $1) / 2)
+                    }, speed: 52), scale: nil)
         ],
-        stationsBySport: [.run: [.jogging]],
+        stationsBySport: ["run": [.jogging]],
         standing: [StageRect(x: 0...390, y: 346...650)],
-        props: [])
+        props: [],
+        lines: trackLines)
 
     private static let poolLanes: [StationPath.Lane] = [328.0, 361, 394, 427].map {
-        StationPath.Lane(from: 36, to: 354, y: $0)
+        StationPath.Lane(from: 40, to: 350, y: $0)
     }
 
     // Only the deck in front of the water.
@@ -40,7 +43,7 @@ extension StageLayout {
         stations: [
             Station(kind: .swimming, capacity: 4, path: .lanes(poolLanes, speed: 34), scale: nil)
         ],
-        stationsBySport: [.swim: [.swimming]],
+        stationsBySport: ["swim": [.swimming]],
         standing: [StageRect(x: 0...390, y: 474...650)],
         props: [])
 
@@ -59,7 +62,7 @@ extension StageLayout {
                 kind: .yogaMat, capacity: 2, path: .spots([StagePoint(x: 250, y: 502), StagePoint(x: 326, y: 502)]),
                 scale: nil),
         ],
-        stationsBySport: [.run: [.treadmill], .strength: [.squatRack, .dumbbells], .yoga: [.yogaMat]],
+        stationsBySport: ["run": [.treadmill], "strength": [.squatRack, .dumbbells], "yoga": [.yogaMat]],
         standing: [StageRect(x: 0...390, y: 420...650)],
         props: [StageRect(x: 40...350, y: 350...392), StageRect(x: 40...178, y: 440...456)])
 
@@ -75,7 +78,7 @@ extension StageLayout {
                 kind: .serve, capacity: 2, path: .spots([StagePoint(x: 40, y: 322), StagePoint(x: 350, y: 466)]),
                 scale: nil),
         ],
-        stationsBySport: [.tennis: [.rally, .serve]],
+        stationsBySport: ["tennis": [.rally, .serve]],
         standing: [StageRect(x: 0...390, y: 346...650)],
         // The net.
         props: [StageRect(x: 0...390, y: 375...402)])
@@ -89,13 +92,13 @@ extension StageLayout {
                 scale: 0.19),
             Station(
                 kind: .bouldering, capacity: 2,
-                path: .climb([322.0, 362].map { StationPath.Column(x: $0, top: 370, bottom: 426) }, speed: 7),
+                path: .climb([322.0, 356].map { StationPath.Column(x: $0, top: 370, bottom: 426) }, speed: 7),
                 scale: 0.19),
             Station(
                 kind: .chalk, capacity: 2, path: .spots([StagePoint(x: 150, y: 530), StagePoint(x: 240, y: 530)]),
                 scale: nil),
         ],
-        stationsBySport: [.climb: [.topRope, .bouldering, .chalk]],
+        stationsBySport: ["climb": [.topRope, .bouldering, .chalk]],
         // From the foot of the wall.
         standing: [StageRect(x: 0...390, y: 470...650)],
         props: [])

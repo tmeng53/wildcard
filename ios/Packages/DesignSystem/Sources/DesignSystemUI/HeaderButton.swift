@@ -62,11 +62,12 @@ private struct SceneGlass: ViewModifier {
 
 /// The header of a task step in sign-up: a back button, then the step segments, centered.
 public struct StepHeader: View {
-    private let step: Int
+    private let step: Int?
     private let count: Int
     private let onBack: () -> Void
 
-    public init(step: Int, of count: Int, onBack: @escaping () -> Void) {
+    /// A nil `step` is a step the task doesn't count: back alone, no segments.
+    public init(step: Int?, of count: Int, onBack: @escaping () -> Void) {
         self.step = step
         self.count = count
         self.onBack = onBack
@@ -75,7 +76,11 @@ public struct StepHeader: View {
     public var body: some View {
         HStack(spacing: Space.l) {
             HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: onBack)
-            StepSegments(step: step, of: count)
+            if let step {
+                StepSegments(step: step, of: count)
+            } else {
+                Spacer(minLength: 0)
+            }
             // Keeps the segments centered: as wide as the back button.
             Color.clear.frame(width: Sizing.control, height: Sizing.control)
         }

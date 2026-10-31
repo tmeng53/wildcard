@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
 
@@ -17,9 +18,9 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
-import { aiConsentOn, noJobs, pushOn } from './test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from './test-kit/public-routes.js';
-import { unusedWeeklyAwards } from './test-kit/weekly-awards.js';
+import { aiConsentOn, noJobs, nudgesOn, pushOn } from './test-kit/local-supabase.js';
+import { catalogOn, unlimitedPublicRoutes } from './test-kit/public-routes.js';
+import { unusedWeekSummaryWords, unusedWeeklyAwards } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -39,8 +40,10 @@ describe('openapi.json', () => {
         signsInWithApple: () => Promise.reject(new Error('unused')),
       },
       revokeAppleSignIn: undefined,
+      catalog: catalogOn(db),
       publicRoutes: unlimitedPublicRoutes,
       checkIns: createCheckIns({
+        sports: createSports({ store: createPostgresSportStore(db) }),
         store: createPostgresCheckInStore(db),
         membership: createSquads({
           store: createPostgresSquadStore(db),
@@ -59,6 +62,7 @@ describe('openapi.json', () => {
       photos,
       disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       weeklyPlans: createWeeklyPlans({
+        sports: createSports({ store: createPostgresSportStore(db) }),
         store: createPostgresWeeklyPlanStore(db),
         calendarOf: () => Promise.resolve(undefined),
         clock: () => new Date(),
@@ -71,7 +75,9 @@ describe('openapi.json', () => {
         aiConsent: () => Promise.resolve(true),
       }),
       weeklyAwards: unusedWeeklyAwards,
+      weekSummaryWords: unusedWeekSummaryWords,
       aiConsent: aiConsentOn(db),
+      nudges: nudgesOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,
       admin: {

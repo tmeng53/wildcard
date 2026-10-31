@@ -16,6 +16,7 @@ import {
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -29,11 +30,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // Wired as main.ts wires it: squads and drafts ask the AI consent module itself.
 const db = createDatabase(config.databaseUrl);
@@ -58,9 +60,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: squads,
     reactions: createPostgresReactionStore(db),
@@ -71,6 +75,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -78,6 +83,7 @@ const app = createApp({
   members: createMembers({ store: createPostgresProfileStore(db) }),
   squads,
   aiConsent,
+  nudges: nudgesOn(db),
   disclaimerDrafts: createDisclaimerDrafts({
     model: {
       answer: ({ prompt }) => {
@@ -94,6 +100,7 @@ const app = createApp({
   }),
   push: pushOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  weekSummaryWords: unusedWeekSummaryWords,
   jobs: noJobs,
   log: createLog(() => undefined),
   admin: adminOn(),
@@ -114,7 +121,7 @@ async function call(
 
 const reasonOf = (body: unknown) => z.object({ reason: z.string() }).parse(body).reason;
 
-const agree = (token: string, copyVersion = 1) =>
+const agree = (token: string, copyVersion = 2) =>
   call('PUT', '/me/ai-consent', token, { version: 1, copyVersion });
 
 const SquadBody = z.object({
@@ -130,14 +137,14 @@ describe('GET and PUT /me/ai-consent', () => {
     const me = await signUp();
     expect(await call('GET', '/me/ai-consent', me.token)).toStrictEqual({
       status: 200,
-      body: { version: 1, copyVersion: 1, current: false },
+      body: { version: 1, copyVersion: 2, current: false },
     });
 
     const agreed = await agree(me.token);
     const Agreed = z.strictObject({
       version: z.literal(1),
-      copyVersion: z.literal(1),
-      given: z.strictObject({ copyVersion: z.literal(1), givenAt: z.iso.datetime() }),
+      copyVersion: z.literal(2),
+      given: z.strictObject({ copyVersion: z.literal(2), givenAt: z.iso.datetime() }),
       current: z.literal(true),
     });
     expect(agreed.status).toBe(200);
@@ -148,7 +155,7 @@ describe('GET and PUT /me/ai-consent', () => {
 
   it('refuses another version of the copy, and one that can’t be a version', async () => {
     const me = await signUp();
-    const outdated = await agree(me.token, 2);
+    const outdated = await agree(me.token, 1);
     expect([outdated.status, reasonOf(outdated.body)]).toStrictEqual([
       400,
       'AI_CONSENT_COPY_OUTDATED',
@@ -157,7 +164,7 @@ describe('GET and PUT /me/ai-consent', () => {
     expect([invalid.status, reasonOf(invalid.body)]).toStrictEqual([400, 'REQUEST_INVALID']);
     expect((await call('GET', '/me/ai-consent', me.token)).body).toStrictEqual({
       version: 1,
-      copyVersion: 1,
+      copyVersion: 2,
       current: false,
     });
   });

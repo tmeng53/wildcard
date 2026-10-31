@@ -99,6 +99,13 @@ export type Look = z.infer<typeof Look>;
 export const Character = z.strictObject({ nickname: Nickname, look: Look });
 export type Character = z.infer<typeof Character>;
 
+/** The highest number on a player card; numbers go from 00 to this. */
+export const JERSEY_NUMBER_MAX = 99;
+
+/** The number on the member's player card in 我, shown with two digits (00 to 99). */
+export const JerseyNumber = z.int().min(0).max(JERSEY_NUMBER_MAX);
+export type JerseyNumber = z.infer<typeof JerseyNumber>;
+
 /** A member's own settings. */
 export const Profile = z.strictObject({
   timeZone: TimeZone,
@@ -106,8 +113,15 @@ export const Profile = z.strictObject({
   catchphrase: Catchphrase.nullable(),
   /** Null until the member makes their character, right after signing in. */
   character: Character.nullable(),
+  /** Null until the member picks one; the app then shows their place in their squad. */
+  jerseyNumber: JerseyNumber.nullable(),
 });
 export type Profile = z.infer<typeof Profile>;
+
+/** A save of the profile. A number left out keeps the one saved, so builds that don't send one keep it. */
+export type ProfileSave = Omit<Profile, 'jerseyNumber'> & {
+  readonly jerseyNumber?: JerseyNumber | null | undefined;
+};
 
 /** What squadmates see of a member besides their check-ins. */
 export interface Squadmate {

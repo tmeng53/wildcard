@@ -40,9 +40,35 @@ describe('readConfig', () => {
       proxyHops: 1,
       languageModelKeys: { openai: undefined, anthropic: undefined },
       appleSignInKey: undefined,
-      jobsToken: undefined,
+      scheduler: undefined,
       apns: undefined,
+      errorReports: undefined,
+      traceProject: undefined,
     });
+  });
+
+  it('reports errors only once there is a DSN, naming the revision Cloud Run serves', () => {
+    const dsn = 'https://public@o1.ingest.us.sentry.io/2';
+    expect(
+      readConfig({ ...base, SENTRY_DSN_API: dsn, K_REVISION: 'wildcard-api-00042-abc' })
+        .errorReports,
+    ).toStrictEqual({
+      dsn,
+      release: 'wildcard-api-00042-abc',
+    });
+    expect(readConfig({ ...base, SENTRY_DSN_API: dsn }).errorReports).toStrictEqual({
+      dsn,
+      release: undefined,
+    });
+    expect(() => readConfig({ ...base, SENTRY_DSN_API: 'not a url' })).toThrow(/SENTRY_DSN_API/);
+  });
+
+  it('names log traces in the Google Cloud project the deploy says', () => {
+    const project = 'soy-transducer-512501-h1';
+    expect(readConfig({ ...base, GOOGLE_CLOUD_PROJECT: project }).traceProject).toBe(project);
+    expect(() => readConfig({ ...base, GOOGLE_CLOUD_PROJECT: 'Not/A project' })).toThrow(
+      /GOOGLE_CLOUD_PROJECT/,
+    );
   });
 
   it('keeps each provider’s key, and no longer reads which model writes what', () => {
@@ -59,6 +85,21 @@ describe('readConfig', () => {
     expect(
       readConfig({ ...base, LLM_PROVIDER: 'gemini' }).languageModelKeys.openai,
     ).toBeUndefined();
+  });
+
+  it('takes Cloud Scheduler’s account over a jobs token, and either alone', () => {
+    const token = 'a'.repeat(32);
+    const account = 'wildcard-scheduler@project.iam.gserviceaccount.com';
+    expect(readConfig({ ...base, JOBS_TOKEN: token }).scheduler).toStrictEqual({
+      kind: 'token',
+      token,
+    });
+    expect(
+      readConfig({ ...base, JOBS_TOKEN: token, JOBS_SCHEDULER_ACCOUNT: account }).scheduler,
+    ).toStrictEqual({ kind: 'google', serviceAccount: account });
+    expect(() => readConfig({ ...base, JOBS_SCHEDULER_ACCOUNT: 'not an email' })).toThrow(
+      /JOBS_SCHEDULER_ACCOUNT/,
+    );
   });
 
   it('reads the key, with a one-line PEM’s line breaks restored', () => {

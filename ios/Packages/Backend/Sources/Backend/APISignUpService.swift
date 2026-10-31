@@ -5,7 +5,7 @@ import Foundation
 import OnboardingDomain
 
 /// Sign-up over our API: the squad step makes or joins a squad, 角色和昵称 saves the character
-/// on the profile and 一周练几天？ saves this week's plan.
+/// on the profile, 本周目标 saves this week's plan and 这周在哪练？ the squad's first scene.
 public struct APISignUpService: SignUpService {
     private let api: WildcardAPI
     private let now: @Sendable () -> Date
@@ -23,7 +23,8 @@ public struct APISignUpService: SignUpService {
 
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {
         let invite = try await signUp { () throws(APIError) in try await api.invite(code) }
-        return SquadPreview(code: code, name: invite.name, memberCount: invite.memberCount, isFull: invite.isFull)
+        return SquadPreview(
+            code: code, name: invite.name, memberCount: invite.memberCount, isFull: invite.isFull, looks: invite.looks)
     }
 
     /// Agrees to the copy this build's 你的小队 step shows. Its version moves with that copy, and
@@ -32,7 +33,7 @@ public struct APISignUpService: SignUpService {
         try await signUp { () throws(APIError) in try await api.agreeToAI(copyVersion: Self.aiConsentCopyVersion) }
     }
 
-    static let aiConsentCopyVersion = 1
+    static let aiConsentCopyVersion = 2
 
     public func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad {
         try await joined(try await signUp { () throws(APIError) in try await api.join(code) })
@@ -52,7 +53,8 @@ public struct APISignUpService: SignUpService {
                     timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
                     character: MemberCharacter(
                         nickname: character.nickname,
-                        look: CharacterLook(outfit: character.outfit, persona: character.persona))))
+                        look: CharacterLook(outfit: character.outfit, persona: character.persona)),
+                    jerseyNumber: profile?.jerseyNumber))
         }
     }
 
@@ -62,6 +64,26 @@ public struct APISignUpService: SignUpService {
             let zone = try await api.me().profile?.timeZone ?? .current
             _ = try await api.save(days, weekStart: LocalDay(at: now(), in: zone).weekStart)
         }
+    }
+
+    /// Picks the scene for the week open for picking now, which a squad made today trains on at
+    /// once.
+    public func pickScene(_ scene: SceneID, for squad: SquadID) async throws(SignUpError) {
+        try await signUp { () throws(APIError) in
+            let week = try await api.scene(of: squad).week
+            _ = try await api.pick(scene, for: squad, week: week)
+        }
+    }
+
+    /// The squad the member is already in, as joining it returned it, and the character on
+    /// their profile.
+    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
+        let (found, member) = try await signUp { () throws(APIError) in (try await api.squad(squad), try await api.me())
+        }
+        let character = member.profile?.character.map { saved in
+            NewCharacter(outfit: Outfit(saved.look), persona: Persona(saved.look), nickname: saved.nickname)
+        }
+        return ResumedSignUp(squad: try await joined(found), character: character)
     }
 
     /// The squad as 上场 shows it: the teammates who have made their character, and the squad's
