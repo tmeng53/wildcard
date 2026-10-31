@@ -1446,7 +1446,7 @@ internal struct Client: APIProtocol {
     }
     /// The signed-in member’s check-ins for a range of days
     ///
-    /// Newest day first, each with its whole audience.
+    /// Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.
     ///
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
@@ -1477,6 +1477,13 @@ internal struct Client: APIProtocol {
                     explode: true,
                     name: "to",
                     value: input.query.to
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "unshared",
+                    value: input.query.unshared
                 )
                 converter.setAcceptHeader(
                     in: &request.headerFields,

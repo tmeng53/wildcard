@@ -414,8 +414,20 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
     ).toBe(201);
     const range = `from=${day}&to=${day}`;
+    // Builds from before sharing was optional can't read it, so they aren't sent it.
     expect(
       await call({ method: 'GET', path: `/me/check-ins?${range}`, token: me.token }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, checkIns: [] },
+    });
+    expect(
+      await call({
+        method: 'GET',
+        path: `/me/check-ins?${range}&unshared=include`,
+        token: me.token,
+      }),
     ).toStrictEqual({
       status: 200,
       type: 'application/json',
