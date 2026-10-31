@@ -120,7 +120,8 @@ final class SignUpUITests: XCTestCase {
                 checkedCard = true
             }
         }
-        XCTAssertTrue(app.buttons["tab.today"].waitForExistence(timeout: Self.wait), "home never took over")
+        // 上场 shows the tab bar too, so home is its own 打卡.
+        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "home never took over")
         keepScreenshot(named: "48-signup-home")
     }
 
