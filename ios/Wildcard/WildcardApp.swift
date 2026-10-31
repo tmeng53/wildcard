@@ -6,6 +6,7 @@ import CheckInDomain
 import CheckInUI
 import Combine
 import Contracts
+import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
@@ -217,7 +218,10 @@ private struct AppRoot: View {
         ZStack {
             switch app.screen {
             case .starting:
-                ProgressView()
+                LaunchCover()
+                    // Over the screen that replaces it while it fades.
+                    .zIndex(1)
+                    .transition(.opacity)
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
@@ -240,6 +244,7 @@ private struct AppRoot: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         .task { await app.run() }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in
