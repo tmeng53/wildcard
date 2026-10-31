@@ -38,6 +38,23 @@ public enum AppLanguage: String, CaseIterable, Sendable {
         NotificationCenter.default.post(name: Self.didChange, object: nil)
     }
 
+    /// Records this language for the app's extensions (the 6pm push's view), in the settings the
+    /// app shares with them: an extension is a process of its own, with its own `AppleLanguages`,
+    /// so it would otherwise speak the phone's language. Nil (no shared settings) records nothing.
+    public func share(in shared: UserDefaults?) {
+        shared?.set(rawValue, forKey: Self.sharedKey)
+    }
+
+    /// For an extension, before it draws or looks a string up: speaks the language the app last
+    /// shared from now on. With nothing shared (no shared settings, or the app hasn't recorded
+    /// one yet) it keeps its own.
+    public static func adopt(from shared: UserDefaults?) {
+        guard let tag = shared?.string(forKey: sharedKey), let language = AppLanguage(rawValue: tag) else { return }
+        UserDefaults.standard.set([language.rawValue], forKey: key)
+    }
+
+    private static let sharedKey = "appLanguage"
+
     /// Posted after a pick, for the app's root to draw everything again.
     public static let didChange = Notification.Name("AppLanguage.didChange")
 

@@ -63,6 +63,14 @@ enum LaunchOptions {
         }
     }
 
+    /// `-daily-push full` (or `empty`): the 6pm push's long-press view on the sample squad, as
+    /// its notification shows it, instead of the app.
+    static var dailyPush: DailyPushPreview.Day? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-daily-push"), flag + 1 < arguments.count else { return nil }
+        return DailyPushPreview.Day(rawValue: arguments[flag + 1])
+    }
+
     /// `-uitest-me-fails`: the in-memory member refuses every change, so UI tests see a switch
     /// flip back and a delete fail.
     static var meFailsSaving: Bool {
