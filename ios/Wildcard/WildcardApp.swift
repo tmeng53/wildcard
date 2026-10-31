@@ -37,7 +37,7 @@ enum Launch {
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor, `-loading` the launch page's loader and `-recap` the 战报's tile and sample story
+/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
 /// about. `Launch` starts it.
@@ -64,8 +64,9 @@ struct WildcardApp: App {
     // callback and the models are the main actor's.
     init() {
         CrashReports.start()
-        // The sports this build ships with; with a backend, `AppModel` shows the kept or newer list.
-        SportList.shared.show(CatalogClient.bundledSports)
+        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
+        SportList.shared.show(CatalogClient.bundled.sports)
+        DiceLines.shared.show(CatalogClient.bundled.diceLines)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
@@ -82,6 +83,7 @@ struct WildcardApp: App {
             scene: LaunchOptions.scene,
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
+            bubbleHold: LaunchOptions.bubbleHold,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _profile = State(initialValue: Self.sampleProfile())
@@ -93,8 +95,7 @@ struct WildcardApp: App {
             initialValue: ScheduleModel(
                 store: ScheduleStore(
                     backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
-                    now: LaunchOptions.scheduleNow),
-                photos: LaunchOptions.posterSaver))
+                    now: LaunchOptions.scheduleNow)))
         _recap = State(initialValue: Self.sampleRecap(today: today))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
@@ -187,23 +188,6 @@ struct WildcardApp: App {
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
-        } else if LaunchOptions.showsLoading {
-            // Built like `AppRoot`, so the loader is tested as the app shows it.
-            ZStack { Starting() }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .loadingCover(true) { OpeningLoader() }
-                // TEMPORARY diagnostics for CI, removed before merge.
-                .overlay(alignment: .topLeading) {
-                    Text(verbatim: "a").accessibilityIdentifier("diag.a").frame(width: 120, height: 160)
-                        .loadingCover(true) { OpeningLoader().accessibilityIdentifier("diag.a.cover") }
-                }
-                .overlay(alignment: .topTrailing) {
-                    Text(verbatim: "b").accessibilityIdentifier("diag.b").frame(width: 120, height: 160)
-                        .loadingCover(true) { LoadingCharacter().accessibilityIdentifier("diag.b.cover") }
-                }
-                .overlay(alignment: .bottom) {
-                    LoadingCharacter().accessibilityElement().accessibilityIdentifier("diag.c")
-                }
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {
@@ -262,8 +246,15 @@ private struct AppRoot: View {
         // that opened (loader design A, 2026-10-24).
         .loadingCover(app.isOpening) { OpeningLoader() }
         .task { await app.run() }
+        // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
+        .onChange(of: app.showsTabs) { _, shows in
+            if !shows { tab = .today }
+        }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await app.refreshCatalog() } }
+            if phase == .active {
+                Task { await app.refreshCatalog() }
+                Task { await app.refreshScene() }
+            }
         }
         .onAppear {
             delegate.opened = { [app, $tab] opened in

@@ -23,6 +23,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, the accent tone: scene, brand, or ink on the 我 pages), a second action (44, grey), a quiet text action |
 | `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask: filled, or `.outlined` when a gentler action leads |
 | `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button; a sign-up step's back button and ink segments |
+| `swipesBack(isEnabled:perform:)` | A page with 返回 also goes back on a swipe right from anywhere on it, following the finger |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `TabBar` | The app's floating glass tab bar |
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |
@@ -36,6 +37,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `PullCord`, `PullCordMotion` | The light switch hanging under the home's card at night: a ball chain and a bulb, white when off, warm when on; pulled down it clicks at 24 points, springs back and swings |
 | `SpeechBubble`, `CharacterStage` | What the character says (with an action, a button that opens it); the character's ticket in the editor (sign-up and 我), in the brand's colours under a flat spotlight, never the scene's |
 | `LoadingDots`, `.loadingLabel(_:)`, `.loadingCover(_:loader:)`, `LoadingSwap` | Waiting (三拍, loader design A): three dots hopping in the colour around them for a button or a line, shown only after `Loading.inlineDelay` and kept `Loading.minimumShown`; a whole page waits under a cover, `AvatarUI`'s `LoadingCharacter` jogging in place, after `Loading.pageDelay`. No words, ever |
+| `WeekPoster`, `WeekPosterLayout` | The week as a poster: name and dates, the big italic W43, a row a day, the character in the corner and a strip along the bottom. `.card` is sign-up's 本周目标 (the page's width, in the brand), `.poster` the 出赛表's 3:4 picture (in the scene); the screen draws the rows, the strip's content and the character |
 
 Conventions, as SwiftUI's own controls do it: the label comes first (`Text`, so it goes through the String Catalog), state comes in as a value (`isSelected`, `status`) and changes go out through an `action` closure or a `Binding`; button variants are `ButtonStyle`s; the scene and the accent tone come from the environment (`\.sceneTheme`, `\.accentTone`); UI-test identifiers are set by the caller. Each component's doc comment says when to use it and what its states look like, and the style guide shows every state.
 

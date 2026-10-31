@@ -442,6 +442,9 @@ if want squad-today; then
   done
   call PUT "/me/weekly-plans/$monday" "$rester_token" "$(plan_of rest)"
   expect 200
+  # Planned days count from the day a member joined, so these members joined weeks ago and the
+  # whole week counts.
+  psql "$DB_URL" -qc "update public.profiles set created_at = now() - interval '30 days' where member_id in ('$runner', '$napper', '$rester')"
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
   call PUT "/check-ins/$(new_id)" "$runner_token" "$(check_in_of "$squad" "$today" healthyMeal '"meal":{"caption":"沙拉"}')"
@@ -512,6 +515,8 @@ if want week-summary; then
   squad_of "$ace_token" "$writer_token" "$fan_token"
   call PUT "/me/weekly-plans/$monday" "$ace_token" "$(jq -cn '{version: 1, days: [range(7) | {kind: "rest"}]}')"
   expect 200
+  # Planned days count from the day a member joined, so these members joined weeks ago.
+  psql "$DB_URL" -qc "update public.profiles set created_at = now() - interval '30 days' where member_id in ('$ace', '$writer', '$fan')"
   call PUT "/check-ins/$(new_id)" "$ace_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
   expect 201
   excuse="$(new_id)"
@@ -896,7 +901,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -953,6 +958,17 @@ if want admin-mcp; then
   words="$(psql "$DB_URL" -tAc "select string_agg(words#>>'{stats,checkIns,zh-Hans}', ',' order by id) from public.week_summary_word_events where changed_by = '$admin'")"
   [ "$words" = "打卡次数,打卡" ] || fail "the words log should hold the two changes, not the refusal: $words"
   echo "admin-mcp: renamed a 战报 count and back, logged once each ($words); an unknown award refused"
+
+  tool get_disclaimer_dice '{}'
+  dice="$(jq -c '.lines' <<<"$result")"
+  [ "$(jq -r '"\(length) \(.[0].zhHant)"' <<<"$dice")" = "8 昨天的腿還沒回來" ] || fail "get_disclaimer_dice: $result"
+  tool change_disclaimer_dice "$(jq -c '{lines: (.[0].zhHans = "腿说休息")}' <<<"$dice")"
+  tool change_disclaimer_dice "$(jq -c '{lines: .}' <<<"$dice")"
+  tool change_disclaimer_dice "$(jq -c '{lines: .[0:2]}' <<<"$dice")"
+  [ "$is_error" = true ] || fail "two dice lines: $result"
+  firsts="$(psql "$DB_URL" -tAc "select string_agg(dice#>>'{lines,0,zhHans}', ',' order by id) from public.disclaimer_dice_events where changed_by = '$admin'")"
+  [ "$firsts" = "腿说休息,昨天的腿还没回来" ] || fail "the dice log should hold the two changes, not the refusal: $firsts"
+  echo "admin-mcp: changed a 请假条 dice line and back, logged once each ($firsts); two lines refused"
 
   tool get_daily_push_settings '{}'
   [ "$(jq -r '"\(.sending) \(.hour)"' <<<"$result")" = "true 18" ] || fail "get_daily_push_settings: $result"

@@ -4,27 +4,11 @@ import Foundation
 /// category, and the short lists some screens show first. Data the API serves, so a new sport,
 /// name, icon or order needs no app release; the app keeps the last list it read.
 public struct SportCatalog: Hashable, Sendable {
-    /// A name in each of the app's languages.
-    public struct Names: Hashable, Sendable {
-        public let simplifiedChinese: String
-        public let english: String
-        public let traditionalChinese: String
-
-        public init(simplifiedChinese: String, english: String, traditionalChinese: String) {
-            (self.simplifiedChinese, self.english, self.traditionalChinese) = (
-                simplifiedChinese, english, traditionalChinese
-            )
-        }
-
-        /// Each language's name, for search.
-        public var all: [String] { [simplifiedChinese, english, traditionalChinese] }
-    }
-
     public struct Entry: Hashable, Sendable {
         public let sport: Sport
-        public let names: Names
+        public let names: CatalogNames
         /// The name on a card or poster row, for a sport whose name is too long there.
-        public let shortNames: Names?
+        public let shortNames: CatalogNames?
         /// An SF Symbol name.
         public let icon: String
         /// False for a sport the pickers no longer offer; check-ins that name it still show it.
@@ -33,7 +17,8 @@ public struct SportCatalog: Hashable, Sendable {
         public let category: String
 
         public init(
-            sport: Sport, names: Names, shortNames: Names? = nil, icon: String, offered: Bool, category: String
+            sport: Sport, names: CatalogNames, shortNames: CatalogNames? = nil, icon: String, offered: Bool,
+            category: String
         ) {
             (self.sport, self.names, self.shortNames, self.icon, self.offered, self.category) = (
                 sport, names, shortNames, icon, offered, category
@@ -44,11 +29,11 @@ public struct SportCatalog: Hashable, Sendable {
     /// One of the picker's tabs.
     public struct Category: Hashable, Sendable, Identifiable {
         public let id: String
-        public let names: Names
+        public let names: CatalogNames
         /// Its sports in order, the ones no longer offered included.
         public let entries: [Entry]
 
-        public init(id: String, names: Names, entries: [Entry]) {
+        public init(id: String, names: CatalogNames, entries: [Entry]) {
             (self.id, self.names, self.entries) = (id, names, entries)
         }
 

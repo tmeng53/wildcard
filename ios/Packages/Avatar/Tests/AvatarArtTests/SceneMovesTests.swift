@@ -21,7 +21,7 @@ import Testing
 func eachScenesKeyPoseIsAtTheEndOfItsWidestSwing(scene: SceneTheme) throws {
     let look = Outfit(["body": "peach"])
     let (_, clip) = try PlaceholderCharacter.sceneLoop(for: scene, look: look, persona: .drama, in: Looks.sports)
-    let time = PlaceholderCharacter.keyPose(for: scene) * clip.duration
+    let time = PlaceholderCharacter.keyPose(of: clip) * clip.duration
     let swings = clip.tracks.filter { $0.channel == .rotation }.map { track in
         let values = track.keys.map(\.value)
         return (track: track, low: values.min() ?? 0, high: values.max() ?? 0)

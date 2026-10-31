@@ -13,12 +13,6 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
 
-    /// `-loading`: the launch page with its loader, the character jogging, which a fast load
-    /// never shows long enough to see.
-    static var showsLoading: Bool {
-        ProcessInfo.processInfo.arguments.contains("-loading")
-    }
-
     /// `-recap`: open the 战报's entry tile and sample story instead of 今天.
     static var showsRecap: Bool {
         ProcessInfo.processInfo.arguments.contains("-recap")
@@ -148,6 +142,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
+    /// `-uitest-bubble-hold`: a teammate's bubble on 今天 stays up for a minute instead of 5
+    /// seconds, so a UI test checks it without racing its timer.
+    static var bubbleHold: Double? {
+        ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
+    }
+
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
     /// suite emptied at launch.
     static var todayDefaults: UserDefaults {
@@ -170,12 +170,6 @@ enum LaunchOptions {
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {
         ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
-    }
-
-    /// `-uitest-save-poster`: 存图 says it saved without asking for Photos, whose permission prompt
-    /// UI tests can't answer.
-    static var posterSaver: any PosterSaver {
-        ProcessInfo.processInfo.arguments.contains("-uitest-save-poster") ? PretendPosterSaver() : PhotoLibrarySaver()
     }
 
     /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in

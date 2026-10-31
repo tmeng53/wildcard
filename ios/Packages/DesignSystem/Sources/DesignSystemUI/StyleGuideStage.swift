@@ -38,6 +38,26 @@ struct StageSection: View {
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
             }
             .frame(height: 300)
+            GuideGroup(Text("一周海报：一天一行，角色站在角落", bundle: .module)) {
+                WeekPoster(title: "小林 · 10.20–10.26", weekNumber: 43, layout: .card, fill: .bgBrand, ink: .fgOnBrand) {
+                    VStack(alignment: .leading, spacing: Space.s) {
+                        Text("周一 跑步", bundle: .module)
+                        Text("周二 力量", bundle: .module)
+                        Text("周三 休息", bundle: .module)
+                    }
+                    .typeStyle(TypeRamp.action)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Space.xs)
+                } character: {
+                    Image(systemName: "figure.run")
+                        .font(.system(size: Sizing.characterBust * 1.4))
+                } strip: {
+                    Text("每周训练 2/7 天", bundle: .module)
+                        .typeStyle(TypeRamp.label)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.horizontal, Space.s + 2)
+                }
+            }
             GuideGroup(Text("点人看状态：整段显示", bundle: .module)) {
                 HStack(alignment: .bottom, spacing: Space.s) {
                     SpeechBubble(

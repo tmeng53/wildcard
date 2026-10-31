@@ -57,28 +57,7 @@ struct ChoicesPanel: View {
                 }
             }
         case .outfit:
-            scroll {
-                ChoiceSection(label: Text("上衣", bundle: .module)) {
-                    SwatchRow(model: model, slot: "top")
-                    TileGrid(model: model, slot: "top", variants: variants("top"), offersNothing: false)
-                }
-                ChoiceSection(label: Text("下装", bundle: .module)) {
-                    SwatchRow(model: model, slot: "bottom")
-                    TileGrid(model: model, slot: "bottom", variants: variants("bottom"), offersNothing: false)
-                }
-                ChoiceSection(label: Text("鞋", bundle: .module)) {
-                    SwatchRow(model: model, slot: "shoes")
-                    TileGrid(model: model, slot: "shoes", variants: variants("shoes"), offersNothing: false)
-                }
-                ChoiceSection(label: Text("帽子", bundle: .module)) {
-                    SwatchRow(model: model, slot: "hat")
-                    TileGrid(model: model, slot: "hat", variants: variants("hat"), offersNothing: true)
-                }
-                ChoiceSection(label: Text("配件", bundle: .module)) {
-                    SwatchRow(model: model, slot: "acc")
-                    TileGrid(model: model, slot: "acc", variants: variants("acc"), offersNothing: true)
-                }
-            }
+            ShoppingStreet(model: model)
         case .prop:
             scroll {
                 ChoiceSection(label: nil) {
@@ -104,7 +83,7 @@ struct ChoicesPanel: View {
     }
 }
 
-/// A group of choices under a short label, such as 上衣.
+/// A group of choices under a short label, such as 眼睛.
 private struct ChoiceSection<Content: View>: View {
     let label: Text?
     @ViewBuilder let content: Content
@@ -163,20 +142,30 @@ private struct TileGrid: View {
     }
 }
 
-/// The preset colors of what `slot` wears, after a 原色 swatch for the art's own color.
-/// Nothing when it keeps its own colors.
-private struct SwatchRow: View {
+/// The preset colors of what `slot` wears, the first being the art's own (原色), after the
+/// piece's name when `named`. Nothing when it keeps its own colors.
+struct SwatchRow: View {
     let model: CharacterEditorModel
     let slot: Slot
+    var named = false
+    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         let catalog = model.draft.catalog
         if let variant = model.draft.picks.variants[slot],
             let original = catalog.originals[slot]?[variant]
         {
-            let colors = catalog.swatches(for: slot, wearing: variant)
+            // A list that starts with the art's own color has it once, as 原色.
+            let listed = catalog.swatches(for: slot, wearing: variant)
+            let colors = listed.first == original ? Array(listed.dropFirst()) : listed
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xxs) {
+                    if named {
+                        EditorNames.variant(variant, in: slot)
+                            .typeStyle(TypeRamp.caption)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .padding(.trailing, Space.xxs)
+                    }
                     swatch(original, value: nil, label: Text("原色", bundle: .module), index: 0)
                     ForEach(Array(colors.enumerated()), id: \.offset) { index, color in
                         swatch(color, value: color, label: Text("颜色 \(index + 1)", bundle: .module), index: index + 1)

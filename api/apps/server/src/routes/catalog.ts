@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { SportCatalog, Sports } from '@wildcard/sports';
 
 import { bodyVersion } from '../body-version.js';
@@ -99,16 +100,37 @@ const wireSports = (catalog: SportCatalog): z.input<typeof SportsCatalog> => ({
   },
 });
 
+export const DisclaimerDiceCatalog = z
+  .looseObject({
+    lines: z.array(Names).meta({
+      description: 'Every line, in no set order: the app rolls three different ones at a time.',
+    }),
+  })
+  .openapi('DisclaimerDiceCatalog');
+
+/** The `disclaimerDice` section: the 请假条 lines the app rolls when the AI can't write. */
+export function disclaimerDiceSection(
+  dice: Pick<DiceLinesAdmin, 'current'>,
+): CatalogSection<typeof DisclaimerDiceCatalog> {
+  return {
+    name: 'disclaimerDice',
+    schema: DisclaimerDiceCatalog,
+    load: async () => ({ lines: (await dice.current()).lines.map((line) => ({ ...line })) }),
+  };
+}
+
 /**
  * The catalog's body: its version, then each section under its name. Every object in it is
  * loose, unlike the other bodies, so a section, list or field added later still reads in the
- * builds already out: the catalog is how the app changes without a release.
+ * builds already out: the catalog is how the app changes without a release. Every section is
+ * optional in the contract, though this server sends them all, so a build that reaches a server
+ * from before a section was added keeps its own copy of that section and reads the rest.
  */
 export function catalogBody(sections: readonly CatalogSection[]) {
   return z
     .looseObject({
       version: bodyVersion(1),
-      ...Object.fromEntries(sections.map(({ name, schema }) => [name, schema])),
+      ...Object.fromEntries(sections.map(({ name, schema }) => [name, schema.optional()])),
     })
     .openapi('Catalog');
 }

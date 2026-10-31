@@ -18,6 +18,8 @@ struct MealsPage: View {
             let floor = proxy.size.height - StoryLayout.groundMeals
             let eaters = Array(meals.eaters.filter { page.cast[$0.member] != nil }.prefix(8))
             let spacing = (width - 2 * Space.l) / Double(max(eaters.count, 1))
+            // Everyone stands in one row; only a crowd too close to stand side by side staggers.
+            let stagger = eaters.count > Self.oneRow ? 14.0 : 0
             ZStack(alignment: .topLeading) {
                 Ground(height: StoryLayout.groundMeals)
                 ForEach(Array(eaters.enumerated()), id: \.element.member) { index, eater in
@@ -29,7 +31,8 @@ struct MealsPage: View {
                     )
                     .standing(
                         feetAt: CGPoint(
-                            x: Space.l + spacing * (Double(index) + 0.5), y: floor + Space.xl + Double(index % 2) * 14),
+                            x: Space.l + spacing * (Double(index) + 0.5),
+                            y: floor + Space.xl + Double(index % 2) * stagger),
                         scale: 0.4)
                 }
             }
@@ -51,6 +54,9 @@ struct MealsPage: View {
             .padding(.horizontal, Space.l)
         }
     }
+
+    /// How many eaters fit side by side on one line.
+    private static let oneRow = 4
 
     /// Eaters don't start in step.
     private static let offsets = [0, 0.5, 0.2, 0.7, 0.35]

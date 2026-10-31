@@ -57,9 +57,20 @@ export type PlanDay = z.infer<typeof PlanDay>;
 export const PlanDays = z.array(PlanDay).min(7).max(7);
 export type PlanDays = z.infer<typeof PlanDays>;
 
-/** How many of a plan's days are training days. */
-export const plannedTrainingDays = (days: readonly PlanDay[]) =>
-  days.filter(({ kind }) => kind === 'train').length;
+/**
+ * How many of a plan's days are training days. Given the week's dates and the day the member
+ * joined, the days before they joined don't count: a plan saved at sign-up on a Saturday asks
+ * for Saturday and Sunday only.
+ */
+export const plannedTrainingDays = (
+  days: readonly PlanDay[],
+  joined?: { readonly weekDays: readonly LocalDay[]; readonly joinedOn: LocalDay | undefined },
+) =>
+  days.filter(({ kind }, index) => {
+    if (kind !== 'train') return false;
+    const date = joined?.weekDays[index];
+    return joined?.joinedOn === undefined || date === undefined || date >= joined.joinedOn;
+  }).length;
 
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
 export const StoredPlan = z.discriminatedUnion('version', [

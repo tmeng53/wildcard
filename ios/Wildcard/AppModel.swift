@@ -42,8 +42,16 @@ final class AppModel {
         if case .starting = screen { return true }
         return isSigningIn
     }
+    /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
+    /// squad) puts the next tabs back on 今天.
+    var showsTabs: Bool {
+        if case .tabs = screen { return true }
+        return false
+    }
     /// An awards push tapped before the home was up, opened once it is.
     @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
+    /// The squad 今天 is on, whose scene it reads again each time the app comes back.
+    @ObservationIgnored private var homeSquad: SquadID?
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
@@ -70,7 +78,7 @@ final class AppModel {
         catalog = CatalogClient(
             api: api, directory: URL.applicationSupportDirectory.appending(path: "Catalog", directoryHint: .isDirectory)
         )
-        SportList.shared.show(catalog.keptSports())
+        Self.show(catalog.kept())
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -150,10 +158,24 @@ final class AppModel {
         await openHome()
     }
 
-    /// Reads the catalog again, as the app comes back to the front: a sport added on the server
-    /// shows without an app update.
+    /// Reads the catalog again, as the app comes back to the front: a sport or dice line added on
+    /// the server shows without an app update.
     func refreshCatalog() async {
-        if let sports = await catalog.refreshSports() { SportList.shared.show(sports) }
+        if let fresh = await catalog.refresh() { Self.show(fresh) }
+    }
+
+    /// Hands each part of the catalog to the screens that read it. Static, since `init` calls it
+    /// before every property is set.
+    private static func show(_ catalog: AppCatalog) {
+        SportList.shared.show(catalog.sports)
+        DiceLines.shared.show(catalog.diceLines)
+    }
+
+    /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
+    /// from their phone meanwhile.
+    func refreshScene() async {
+        guard case .tabs(let today, _, _, _, _, _) = screen else { return }
+        await readScene(of: homeSquad, into: today)
     }
 
     func signOut() async {
@@ -230,6 +252,7 @@ final class AppModel {
         screen = .tabs(
             today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
             recap: recap)
+        homeSquad = home.squad.id
         await readScene(of: home.squad.id, into: today)
         if let pending = pendingRecap {
             pendingRecap = nil

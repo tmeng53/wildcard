@@ -52,7 +52,7 @@ public struct SquadSettingsView: View {
                 case .failed:
                     SquadFailed { Task { await model.reload() } }
                 case .loaded(let settings):
-                    page(settings)
+                    page(settings).swipesBack(perform: close)
                 }
             }
             .loadingCover(model.load == .loading) {

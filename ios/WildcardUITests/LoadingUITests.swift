@@ -1,29 +1,11 @@
 import XCTest
 
-/// The loaders of design A, which a fast load never shows long enough to see: the launch page
-/// with the character jogging, and 三拍 in the style guide's buttons. Screenshots are kept to
-/// compare with the approved design.
+/// 三拍 in the style guide's buttons, which a fast load never shows long enough to see. The
+/// screenshot is kept to compare with the approved design.
 @MainActor
 final class LoadingUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
-
-    func testThePageJogs() {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments += [
-            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-loading",
-        ]
-        app.launch()
-        // Kept first, so a failure below still shows what the page drew.
-        Thread.sleep(forTimeInterval: 2)
-        keepScreenshot(named: "90-loading-page")
-        let loader = app.descendants(matching: .any).matching(identifier: "loading.cover").firstMatch
-        let shown = loader.waitForExistence(timeout: Self.wait)
-        print(app.debugDescription)  // TEMPORARY diagnostics
-        XCTAssertTrue(shown, "the launch page never showed its loader")
-        XCTAssertEqual(loader.label, "加载中")
-    }
 
     func testDotsInTheStyleGuide() {
         continueAfterFailure = false

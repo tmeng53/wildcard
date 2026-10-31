@@ -10,6 +10,7 @@ import {
   checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
+  plannedTrainingDays,
   trainedOnRestDay,
   weekStartOf,
   type PlanDays as Days,
@@ -274,5 +275,33 @@ describe('FuelGoals', () => {
     ]) {
       expect(FuelGoals.safeParse(refused).success).toBe(false);
     }
+  });
+});
+
+describe('plannedTrainingDays', () => {
+  const week = [
+    '2026-10-26',
+    '2026-10-27',
+    '2026-10-28',
+    '2026-10-29',
+    '2026-10-30',
+    '2026-10-31',
+    '2026-11-01',
+  ];
+
+  it('counts every training day of the plan', () => {
+    expect(plannedTrainingDays(DEFAULT_PLAN_DAYS)).toBe(5);
+  });
+
+  it('counts only the days from the day the member joined', () => {
+    expect(plannedTrainingDays(DEFAULT_PLAN_DAYS, { weekDays: week, joinedOn: '2026-10-30' })).toBe(
+      2,
+    );
+  });
+
+  it('counts the whole week for a member who joined before it', () => {
+    expect(plannedTrainingDays(DEFAULT_PLAN_DAYS, { weekDays: week, joinedOn: '2026-09-01' })).toBe(
+      5,
+    );
   });
 });
