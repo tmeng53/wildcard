@@ -181,11 +181,7 @@ public final class TodayStore {
             return
         }
         await refresh()
-        switch myStatus {
-        case .trained: throw .alreadyTrained
-        case .disclaimer: throw .disclaimerAlreadyPosted
-        case .notCheckedIn: break
-        }
+        if !myStatus.allowsDisclaimer { throw .alreadyTrained }
     }
 
     /// Sends every post still waiting, oldest first, and stops at the first that can't go out

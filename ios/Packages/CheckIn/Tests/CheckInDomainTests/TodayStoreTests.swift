@@ -170,7 +170,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(training.photos?.all.map(\.size) == Array(repeating: try PhotoSize(width: 1080, height: 1350), count: 3))
 }
 
-@MainActor @Test func aDisclaimerIsOnceADayAndNeverAfterTraining() async throws {
+@MainActor @Test func disclaimersAreAnyNumberADayButNeverAfterTraining() async throws {
     let backend = ScriptedBackend()
     let today = store(backend)
     await today.load()
@@ -179,9 +179,9 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(try await today.post(.disclaimer(try Disclaimer("加班到十点"))) == .queued)
     #expect(today.myStatus == .disclaimer)
     #expect(today.home?.today.today.disclaimer == 1)
-    await #expect(throws: CheckInError.disclaimerAlreadyPosted) {
-        try await today.post(.disclaimer(try Disclaimer("又加班")))
-    }
+    #expect(try await today.post(.disclaimer(try Disclaimer("又加班"))) == .queued)
+    #expect(today.myStatus == .disclaimer)
+    #expect(today.home?.today.today.disclaimer == 1)
 
     try await today.post(run)
     #expect(today.myStatus == .trained)
