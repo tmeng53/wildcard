@@ -55,7 +55,8 @@ final class PushBannerUITests: XCTestCase {
             }
             XCTAssertTrue(
                 app.wait(for: .runningForeground, timeout: Self.wait),
-                "\(sample.key) didn't open the app after \(taps) taps on \(shown.debugDescription.prefix(400)); "
+                "\(sample.key) didn't open the app (state \(app.state.rawValue), 1 = not running) after \(taps) taps on "
+                    + "\(shown.debugDescription.prefix(300)); "
                     + "Notification Center's buttons: \(springboard.buttons.allElementsBoundByIndex.map(\.label))")
             waitFor(app.buttons[sample.opens], "isSelected == true", "\(sample.key) didn't open \(sample.opens)")
             app.terminate()
