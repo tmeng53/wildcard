@@ -16,6 +16,10 @@ public struct FeedView: View {
     @State private var model: FeedModel
     /// The post at the top of the list, set to open 动态 on one.
     @State private var position: CheckInID?
+    /// The post opened from the home, held at the top until the member scrolls: what is above it
+    /// (the 战报's tile, the posts the server lists, cards the lazy list measures only when drawn)
+    /// keeps arriving after the first move and would push it away.
+    @State private var pinned: CheckInID?
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
@@ -48,9 +52,16 @@ public struct FeedView: View {
             .padding(.top, Space.l)
             .padding(.bottom, Space.l)
         }
-        // Keeps a focused post at the top while what is above it loads and grows (the 战报's
-        // tile, the posts the server lists), which a one-off scroll would lose.
         .scrollPosition(id: $position, anchor: .top)
+        // Each time the list's height changes, puts the pinned post back at the top.
+        .onScrollGeometryChange(for: CGFloat.self) {
+            $0.contentSize.height
+        } action: { _, _ in
+            if let pinned { position = pinned }
+        }
+        .onScrollPhaseChange { _, phase in
+            if phase == .interacting { pinned = nil }
+        }
         .scrollDismissesKeyboard(.immediately)
         // A held card's slide picks an emoji; the list stays put under it.
         .scrollDisabled(model.lifted)
@@ -60,6 +71,7 @@ public struct FeedView: View {
             // Waits a frame, so the list has laid out the post before moving to it: opened from
             // the home, it hasn't yet, and setting the position at once would do nothing.
             await Task.yield()
+            pinned = focus
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
             model.focus = nil
         }
