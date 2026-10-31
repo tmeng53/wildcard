@@ -256,7 +256,7 @@ final class AppModel {
         // from now rather than from when the scene covered the screen.
         if let scene {
             await today.dropIn(on: scene, coveredAt: .now)
-        } else if let read = await openingScene(of: home.squad.id) {
+        } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
             // the gym first and then switches.
             today.scene = read
@@ -318,6 +318,7 @@ final class AppModel {
 
     private func signedOut() async {
         SignUpProgress.clear()
+        KeptScene.forgetAll()
         folders.forgetAll()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
@@ -357,6 +358,14 @@ extension AppModel {
             group.cancelAll()
             return first
         }
+    }
+
+    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
+    /// member whose squad is already set up, rather than sitting on a button that seems to do
+    /// nothing.
+    private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
+        if case .signUp = screen { screen = .starting }
+        return await work()
     }
 
     /// The squad's scene this week from the server, kept on this phone for the next launch.

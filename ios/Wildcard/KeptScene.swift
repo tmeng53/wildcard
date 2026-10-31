@@ -10,7 +10,9 @@ enum KeptScene {
         let scene: String
     }
 
-    private static func key(_ squad: SquadID) -> String { "scene.\(squad)" }
+    private static let prefix = "scene."
+
+    private static func key(_ squad: SquadID) -> String { prefix + squad.description }
 
     static func save(_ scene: SceneTheme, of squad: SquadID) {
         guard let data = try? JSONEncoder().encode(Saved(scene: scene.rawValue)) else { return }
@@ -22,5 +24,13 @@ enum KeptScene {
             let saved = try? JSONDecoder().decode(Saved.self, from: data), saved.version == 1
         else { return nil }
         return SceneTheme(rawValue: saved.scene)
+    }
+
+    /// Signing out forgets every squad's scene with the rest of what the phone kept.
+    static func forgetAll() {
+        let defaults = UserDefaults.standard
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix(prefix) {
+            defaults.removeObject(forKey: key)
+        }
     }
 }
