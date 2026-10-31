@@ -8,6 +8,7 @@ import Foundation
 /// and iOS itself (notifications, the app's page in Settings) agree.
 public enum AppLanguage: String, CaseIterable, Sendable {
     case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
     case english = "en"
 
     private static let key = "AppleLanguages"
@@ -16,16 +17,19 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     public var name: String {
         switch self {
         case .simplifiedChinese: "简体中文"
+        case .traditionalChinese: "繁體中文"
         case .english: "English"
         }
     }
 
     /// The language the app speaks now: the first of the app's languages (picked in the app or
-    /// iOS Settings, else the phone's) that it has. Any Chinese reads as Simplified until the
-    /// app has Traditional; a list with neither Chinese nor English, as Simplified.
+    /// iOS Settings, else the phone's) that it has. Traditional Chinese (`zh-Hant…`, or Taiwan's,
+    /// Hong Kong's and Macau's `zh-TW`, `zh-HK`, `zh-MO`) reads as Traditional, any other Chinese
+    /// as Simplified; a list with neither Chinese nor English, as Simplified.
     public static var current: AppLanguage {
         let preferred = UserDefaults.standard.stringArray(forKey: key) ?? Locale.preferredLanguages
         for tag in preferred {
+            if tag.hasPrefix("zh-Hant") || ["zh-TW", "zh-HK", "zh-MO"].contains(tag) { return .traditionalChinese }
             if tag == "zh" || tag.hasPrefix("zh-") { return .simplifiedChinese }
             if tag == "en" || tag.hasPrefix("en-") { return .english }
         }
