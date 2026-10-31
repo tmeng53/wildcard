@@ -238,5 +238,31 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .execute();
       return withAudiences(rows);
     },
+
+    async pageForMember({ member, kind, after, limit }) {
+      let query = db.selectFrom('check_ins').select(checkInColumns).where('member_id', '=', member);
+      if (kind !== undefined) query = query.where('kind', '=', kind);
+      if (after !== undefined) {
+        query = query.where(
+          sql<boolean>`(check_ins.day, check_ins.created_at, check_ins.id) < (${after.day}::date, ${after.createdAt}, ${after.id}::uuid)`,
+        );
+      }
+      const rows = await query
+        .orderBy('day', 'desc')
+        .orderBy('created_at', 'desc')
+        .orderBy('id', 'desc')
+        .limit(limit)
+        .execute();
+      return withAudiences(rows);
+    },
+
+    async countForMember(member) {
+      const { count } = await db
+        .selectFrom('check_ins')
+        .select(sql<string>`count(*)`.as('count'))
+        .where('member_id', '=', member)
+        .executeTakeFirstOrThrow();
+      return Number(count);
+    },
   };
 }

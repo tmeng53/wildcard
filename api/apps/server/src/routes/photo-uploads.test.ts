@@ -1,6 +1,7 @@
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -59,6 +60,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
         aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
+      comments: createPostgresCommentStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),

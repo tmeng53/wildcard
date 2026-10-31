@@ -143,7 +143,9 @@ private struct SquadFound: View {
             EmptyView()
         case .looking:
             HStack(spacing: Space.xs) {
-                ProgressView()
+                // The card says what is happening, so its dots show at once.
+                LoadingDots(delay: 0)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Text("正在找这个小队", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))

@@ -42,6 +42,7 @@ import { me } from './routes/me.js';
 import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
+import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadScene } from './routes/squad-scene.js';
@@ -125,6 +126,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
+  app.route('/', comments(deps));
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));

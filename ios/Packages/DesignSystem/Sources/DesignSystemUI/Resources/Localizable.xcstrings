@@ -593,6 +593,22 @@
         }
       }
     },
+    "加载中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "載入中"
+          }
+        }
+      }
+    },
     "动态": {
       "localizations": {
         "en": {
@@ -1949,6 +1965,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "第 %1$lld 步，共 %2$lld 步"
+          }
+        }
+      }
+    },
+    "等待：三拍，整页是小人原地跑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting: three hopping dots; a whole page jogs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待：三拍，整頁是小人原地跑"
           }
         }
       }
