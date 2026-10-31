@@ -168,7 +168,7 @@ public final class CharacterEditorModel {
         restyle(move: .look)
     }
 
-    /// Back to 样子 when the character became an animal on 发型 or 脸, which it no longer has.
+    /// Back to 长相 when the character became an animal on 发型 or 脸, which it no longer has.
     private func leaveTabsForPeople() {
         if tab.isForPeople && !draft.wearsHair { tab = .look }
     }

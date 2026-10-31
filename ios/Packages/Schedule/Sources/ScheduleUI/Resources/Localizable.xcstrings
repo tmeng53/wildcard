@@ -619,18 +619,18 @@
         }
       }
     },
-    "网不太好，没存上，等下再改一次": {
+    "网络开小差了，没存上": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No connection, so it didn't save. Try again soon"
+            "value": "Couldn't save. Check your connection"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路不太好，沒存到，等一下再改一次"
+            "value": "網路開小差了，沒存上"
           }
         }
       }

@@ -35,7 +35,7 @@ struct SceneLineText: View {
     }
 }
 
-/// The five scenes as tiles, when the squad last trained at the one chosen, and 「就它了」.
+/// The five scenes as tiles, when the squad last trained at the one chosen, and 「确认」.
 struct ScenePickerGrid: View {
     let picker: ScenePicker
     let onPicked: (Unboxing, SceneTheme) -> Void
@@ -72,13 +72,13 @@ struct ScenePickerGrid: View {
                     }
                 }
             } label: {
-                Text("就它了", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
+                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
             .accessibilityIdentifier("squad.scene.confirm")
             if case .failed(.unavailable) = picker.phase {
-                Text("网络开小差了，没选上", bundle: .module)
+                Text("网络开小差了，没存上", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
             }
         }
