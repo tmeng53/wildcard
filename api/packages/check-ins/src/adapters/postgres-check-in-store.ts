@@ -21,9 +21,8 @@ import type { CheckIns, DB } from './tables.js';
 export type CheckInTables = DB;
 
 /** Which uniqueness rule a unique violation (23505) names. */
-const UNIQUE_RULES: Record<string, 'id' | 'dailyDisclaimer' | 'photo' | undefined> = {
+const UNIQUE_RULES: Record<string, 'id' | 'photo' | undefined> = {
   check_ins_pkey: 'id',
-  check_ins_one_disclaimer_a_day: 'dailyDisclaimer',
   // The path is the key, so a photo belongs to one check-in.
   check_in_photos_pkey: 'photo',
 };

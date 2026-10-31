@@ -229,11 +229,17 @@ describe('PUT /check-ins/{id}', () => {
       'application/problem+json',
       'CHECK_IN_ID_CONFLICT',
     ]);
-    expect(await put(randomUUID(), disclaimer('下雨'))).toStrictEqual([
-      409,
-      'application/problem+json',
-      'DISCLAIMER_ALREADY_POSTED',
-    ]);
+    // Any number of 请假条 a day.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${randomUUID()}`,
+          token: me.token,
+          body: disclaimer('下雨'),
+        })
+      ).status,
+    ).toBe(201);
     expect(
       await put(randomUUID(), { ...disclaimer('累'), audience: [randomUUID()] }),
     ).toStrictEqual([403, 'application/problem+json', 'SQUAD_NOT_JOINED']);

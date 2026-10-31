@@ -2534,7 +2534,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos
+            /// The id holds a different check-in, or another check-in uses one of the photos
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/409`.
             ///

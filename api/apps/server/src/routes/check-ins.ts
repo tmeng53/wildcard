@@ -186,7 +186,7 @@ const CheckInTotals = z
     trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
     healthyMeals: count('健康餐 check-ins.'),
     cheatMeals: count('坦白放纵餐 check-ins.'),
-    disclaimers: count('今日请假条 check-ins, at most one a day.'),
+    disclaimers: count('今日请假条 check-ins.'),
     topSport: z
       .strictObject({
         sport: storedTrainingFields.sport,
@@ -292,10 +292,7 @@ export function checkIns(deps: {
           'counted for the wrong day, or with a photo that isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
-      409: problem(
-        'The id holds a different check-in, today’s disclaimer is already posted, or another ' +
-          'check-in uses one of the photos',
-      ),
+      409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
       ...jsonBodyFailures,
       ...signedInFailures,
     },

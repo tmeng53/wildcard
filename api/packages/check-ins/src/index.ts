@@ -58,7 +58,6 @@ export {
   CheckInNotFoundError,
   CheckInTooOldError,
   CommentIdConflictError,
-  DisclaimerAlreadyPostedError,
   NotYourCommentError,
   OwnCheckInReactionError,
   PhotoInUseError,

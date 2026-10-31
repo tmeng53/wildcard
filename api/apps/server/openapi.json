@@ -1452,7 +1452,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins, at most one a day."
+            "description": "今日请假条 check-ins."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
@@ -3874,7 +3874,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos",
+            "description": "The id holds a different check-in, or another check-in uses one of the photos",
             "content": {
               "application/problem+json": {
                 "schema": {

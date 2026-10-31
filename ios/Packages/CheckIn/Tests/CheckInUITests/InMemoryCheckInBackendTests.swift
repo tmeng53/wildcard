@@ -36,7 +36,7 @@ import Testing
     #expect(week.days.count { $0 == .trained } == home.today.myWeek.week.trainedDays)
 }
 
-@MainActor @Test func theSampleSquadTakesOneDisclaimerBeforeTraining() async throws {
+@MainActor @Test func theSampleSquadTakesDisclaimersBeforeTraining() async throws {
     let store = sampleStore()
     await store.load()
     try await store.post(
@@ -44,7 +44,7 @@ import Testing
     #expect(store.home?.today.squadWeek.trainedDays == 14)
     try await store.post(.disclaimer(try Disclaimer("加班到十点")))
     #expect(store.myStatus == .disclaimer)
-    await #expect(throws: CheckInError.disclaimerAlreadyPosted) {
-        try await store.post(.disclaimer(try Disclaimer("又加班")))
-    }
+    try await store.post(.disclaimer(try Disclaimer("又加班")))
+    #expect(store.myStatus == .disclaimer)
+    #expect(store.home?.today.today.disclaimer == 2)
 }
