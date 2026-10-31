@@ -46,13 +46,17 @@ final class PushBannerUITests: XCTestCase {
             let shown = openNotificationCenter(showing: words)
             keepScreenshot(named: "\(sample.shot)-push-\(sample.key.replacingOccurrences(of: ".", with: "-"))")
 
-            shown.tap()
-            if !app.wait(for: .runningForeground, timeout: 10) {
-                // Logged so a miss says what the tap hit; then tapped once more, as a person would.
-                print("PushBannerUITests tapped:", shown.debugDescription)
+            // Notification Center may show it on a stack with the system's own, where the first tap
+            // only spreads the stack out; a person taps again.
+            var taps = 0
+            while taps < 3, !app.wait(for: .runningForeground, timeout: taps == 0 ? 0 : 8) {
                 shown.tap()
+                taps += 1
             }
-            XCTAssertTrue(app.wait(for: .runningForeground, timeout: Self.wait), "\(sample.key) didn't open the app")
+            XCTAssertTrue(
+                app.wait(for: .runningForeground, timeout: Self.wait),
+                "\(sample.key) didn't open the app after \(taps) taps on \(shown.debugDescription.prefix(400)); "
+                    + "Notification Center's buttons: \(springboard.buttons.allElementsBoundByIndex.map(\.label))")
             waitFor(app.buttons[sample.opens], "isSelected == true", "\(sample.key) didn't open \(sample.opens)")
             app.terminate()
         }
