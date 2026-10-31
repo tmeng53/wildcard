@@ -140,9 +140,8 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
  * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
  * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
- * days before today stay as they were; a training today stays a training day (its sport may
- * change) and a rest today may become a training day; the days after today change freely, rest
- * days included. Days before the member joined weren't
+ * days before today stay as they were; today and the days after it change freely, rest days
+ * included (a rest today is a 休息日, no 请假条 needed). Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
  * is still on the default plan: that is where they first make their plan.
  */
@@ -169,14 +168,8 @@ export function checkPlanChange({
   const first = Math.round((Date.parse(from) - Date.parse(thisWeek)) / DAY);
   for (let index = first; index < 7; index += 1) {
     const date = addDays(thisWeek, index);
-    if (date > today) break;
-    const before = current.days[index];
-    const after = next[index];
-    const unchanged =
-      date < today ? isDeepStrictEqual(before, after) : before?.kind === after?.kind;
-    if (!unchanged && !(date === today && before?.kind === 'rest')) {
-      throw new PlanDayStartedError(date);
-    }
+    if (date >= today) break;
+    if (!isDeepStrictEqual(current.days[index], next[index])) throw new PlanDayStartedError(date);
   }
 }
 

@@ -12,6 +12,7 @@ import {
   type WeeklyAwardTables,
 } from '../adapters/postgres-awards-store.js';
 import { MemberId, SquadId, type MemberWeek, type ModelReply } from '../domain/awards.js';
+import type { PromptMeme } from '../domain/prompt.js';
 import { WeekStart } from '../domain/schedule.js';
 import { AwardsModelMissingError, AwardsWriterUnavailableError } from '../errors.js';
 import type { LanguageModel } from '../ports.js';
@@ -41,7 +42,10 @@ const reply: ModelReply = {
 
 function setup(
   answers: (() => Promise<unknown>)[] = [() => Promise.resolve(reply)],
-  agreed: (member: MemberId) => boolean = () => true,
+  {
+    agreed = () => true,
+    memes = [],
+  }: { agreed?: (member: MemberId) => boolean; memes?: readonly PromptMeme[] } = {},
 ) {
   const asked: string[] = [];
   const settingsAsked: { model: string; instructions: string }[] = [];
@@ -63,6 +67,7 @@ function setup(
       consentAsked.push(members);
       return Promise.resolve(members.filter(agreed));
     },
+    memes: () => Promise.resolve(memes),
   });
   return { awards, asked, settingsAsked, consentAsked };
 }
@@ -108,6 +113,16 @@ async function reasonOf(promise: Promise<unknown>) {
 }
 
 describe('createWeeklyAwards', () => {
+  it('hands the model the memes in use', async () => {
+    const meme = { phrase: '对自己很好', meaning: '照顾好自己', background: '小红书上流行' };
+    const { awards, asked } = setup(undefined, { memes: [meme] });
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked[0]).toContain(
+      '"memes":[{"phrase":"对自己很好","meaning":"照顾好自己","background":"小红书上流行"}]',
+    );
+  });
+
   it('gives titles to members who checked in, nothing to anyone who didn’t, once', async () => {
     const { awards, asked, settingsAsked } = setup();
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
@@ -156,7 +171,7 @@ describe('createWeeklyAwards', () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const { awards, asked, consentAsked } = setup(
       [() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })],
-      (each) => each === ana,
+      { agreed: (each) => each === ana },
     );
     const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
     expect(consentAsked).toStrictEqual([[ana, bo]]);
@@ -194,7 +209,7 @@ describe('createWeeklyAwards', () => {
 
   it('asks the model nothing when nobody who checked in agreed to AI use', async () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
-    const { awards, asked } = setup(undefined, () => false);
+    const { awards, asked } = setup(undefined, { agreed: () => false });
     expect(
       await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) }),
     ).toStrictEqual({ members: [] });
