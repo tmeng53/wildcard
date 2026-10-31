@@ -1,5 +1,6 @@
 import CheckInDomain
 import CheckInUI
+import Contracts
 import DesignSystem
 import Foundation
 import ScheduleUI
@@ -249,8 +250,8 @@ enum LaunchOptions {
                 context.fill(CGRect(x: 0, y: 160 + Double(stripe) * 220, width: size.width, height: 80))
             }
         }
-        guard let jpeg = image.jpegData(compressionQuality: 0.7) else { return nil }
-        return PreparedPhoto(id: UUID(), jpeg: jpeg)
+        guard let jpeg = image.jpegData(compressionQuality: 0.7), let pixels = image.cgImage else { return nil }
+        return PreparedPhoto(id: UUID(), jpeg: jpeg, size: try? PhotoSize(width: pixels.width, height: pixels.height))
     }
 }
 

@@ -42,8 +42,8 @@ private var thisWeek: LocalDay {
 
     let week = try await backend.week(starting: trained.day.weekStart)
 
-    #expect(week.marks[trained.day.weekday - 1] == .trained)
-    #expect(week.marks.filter { $0 == .trained }.count == 1)
+    #expect(week.marks[trained.day.weekday - 1] == .trained(.sport("run")))
+    #expect(week.marks.filter(\.isTrained).count == 1)
     #expect(week.plan.count == 7)
     #expect(week.titles.isEmpty)
     #expect(week.fuel.isEmpty)
@@ -95,9 +95,10 @@ private var thisWeek: LocalDay {
 
 // The adapter's own rules, with no stack.
 
-private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn {
+private func posted(_ entry: CheckIn.Entry, on day: LocalDay, at milliseconds: Int64 = 0) throws -> CheckIn {
     CheckIn(
-        id: CheckInID(UUID()), member: MemberID(UUID()), day: day, createdAt: Timestamp(Date()),
+        id: CheckInID(UUID()), member: MemberID(UUID()), day: day,
+        createdAt: Timestamp(millisecondsSince1970: milliseconds),
         audience: try Audience([SquadID(UUID())]), entry: entry)
 }
 
@@ -113,8 +114,18 @@ private func posted(_ entry: CheckIn.Entry, on day: LocalDay) throws -> CheckIn 
 
     #expect(
         APIScheduleBackend.marks(of: checkIns, weekStart: monday) == [
-            .trained, .none, .disclaimer, .none, .none, .none, .none,
+            .trained(.sport("run")), .none, .disclaimer, .none, .none, .none, .none,
         ])
+}
+
+@Test func aDayTrainedTwiceShowsTheLatestSport() throws {
+    let monday = try LocalDay(year: 2026, month: 10, day: 19)
+    let checkIns = [
+        try posted(.trained(Training(activity: .sport("tennis"))), on: monday, at: 2_000),
+        try posted(.trained(Training(activity: .sport("run"))), on: monday, at: 1_000),
+    ]
+
+    #expect(APIScheduleBackend.marks(of: checkIns, weekStart: monday).first == .trained(.sport("tennis")))
 }
 
 @Test func eachRefusalMeansSomethingOnTheSchedule() {

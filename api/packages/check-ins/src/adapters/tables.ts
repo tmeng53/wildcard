@@ -29,8 +29,10 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface CheckInPhotos {
   check_in_id: string;
+  height: number | null;
   path: string;
   position: number;
+  width: number | null;
 }
 
 export interface CheckInReactions {
@@ -53,13 +55,6 @@ export interface CheckInSquads {
   check_in_id: string;
   position: number;
   squad_id: string;
-}
-
-export interface DisclaimerReplies {
-  check_in_id: string;
-  kind: string;
-  member_id: string;
-  replied_at: Timestamp;
 }
 
 export interface FuelGoalEvents {
@@ -107,7 +102,6 @@ export interface DB {
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
-  disclaimer_replies: DisclaimerReplies;
   fuel_goal_events: FuelGoalEvents;
   fuel_goals: FuelGoals;
   week_summary_word_events: WeekSummaryWordEvents;

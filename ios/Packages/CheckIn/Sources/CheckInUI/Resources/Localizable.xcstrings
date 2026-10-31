@@ -141,12 +141,12 @@
         }
       }
     },
-    "名场面": {
+    "看我！": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Iconic"
+            "value": "Look at me!"
           }
         }
       }
@@ -864,6 +864,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Day off"
+          }
+        }
+      }
+    },
+    "全屏看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens full screen"
           }
         }
       }

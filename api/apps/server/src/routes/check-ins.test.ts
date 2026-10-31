@@ -4,7 +4,6 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
-  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -57,7 +56,6 @@ const app = createApp({
       aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
-    replies: createPostgresReplyStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
@@ -352,7 +350,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
     expect(reacted.status).toBe(201);
     const { reactedAt } = z.object({ reactedAt: z.string() }).parse(reacted.body);
 
-    // The feed: each post with its reactions and, on a 请假条, its replies.
+    // The feed: each post with its reactions.
     expect(
       await call({ method: 'GET', path: `/squads/${squad}/check-ins?${range}`, token: me.token }),
     ).toStrictEqual({
@@ -364,6 +362,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
           {
             checkIn: { ...saved, audience: [squad] },
             reactions: [{ member: me.userId, emoji: '🤤', reactedAt }],
+            // Kept for installed builds from before #180, which fail to read the feed without it.
             replies: [],
           },
         ],
@@ -507,10 +506,18 @@ describe('GET /me/check-in-totals', () => {
 
 describe('photos on check-ins', () => {
   const ViewedPhotos = z.object({
-    training: z.object({ photos: z.array(z.object({ path: z.string(), url: z.url() })) }),
+    training: z.object({
+      photos: z.array(
+        z.object({
+          path: z.string(),
+          url: z.url(),
+          size: z.object({ width: z.int(), height: z.int() }).optional(),
+        }),
+      ),
+    }),
   });
 
-  it('saves photos by path and answers each with a URL to view it', async () => {
+  it('saves photos by path, with their sizes, and answers each with a URL to view it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const [cover, second] = [
@@ -519,31 +526,37 @@ describe('photos on check-ins', () => {
     ];
     const { day, createdAt } = todayAndNow();
     const id = randomUUID();
-    const saved = await call({
-      method: 'PUT',
-      path: `/check-ins/${id}`,
-      token: me.token,
-      body: {
-        version: 1,
-        day,
-        createdAt,
-        audience: [squad],
-        kind: 'trained',
-        training: { sport: 'run', photos: [{ path: cover }, { path: second }] },
+    const body = {
+      version: 1,
+      day,
+      createdAt,
+      audience: [squad],
+      kind: 'trained',
+      // A portrait cover, and a photo sent without its size, as older apps do.
+      training: {
+        sport: 'run',
+        photos: [{ path: cover, size: { width: 1080, height: 1350 } }, { path: second }],
       },
-    });
+    };
+    const saved = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
     expect(saved.status).toBe(201);
-    const viewed = async (body: unknown) =>
+    const viewed = async (checkIn: unknown) =>
       Promise.all(
-        ViewedPhotos.parse(body).training.photos.map(async ({ path, url }) => [
+        ViewedPhotos.parse(checkIn).training.photos.map(async ({ path, url, size }) => [
           path,
           await (await fetch(url)).text(),
+          size,
         ]),
       );
-    expect(await viewed(saved.body)).toStrictEqual([
-      [cover, 'cover'],
-      [second, 'two'],
-    ]);
+    const expected = [
+      [cover, 'cover', { width: 1080, height: 1350 }],
+      [second, 'two', undefined],
+    ];
+    expect(await viewed(saved.body)).toStrictEqual(expected);
+
+    // Sending it again is a retry: the sizes read back the same as they were sent.
+    const again = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
+    expect(again.status).toBe(200);
 
     // A squad mate sees them too, through the squad's list.
     const listed = await call({
@@ -554,10 +567,30 @@ describe('photos on check-ins', () => {
     const [{ checkIn }] = z
       .object({ posts: z.tuple([z.object({ checkIn: z.unknown() })]) })
       .parse(listed.body).posts;
-    expect(await viewed(checkIn)).toStrictEqual([
-      [cover, 'cover'],
-      [second, 'two'],
-    ]);
+    expect(await viewed(checkIn)).toStrictEqual(expected);
+  });
+
+  it('refuses a photo size of 0 or with one side', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const cover = await uploadPhoto(me.token, 'cover');
+    const { day, createdAt } = todayAndNow();
+    for (const size of [{ width: 0, height: 1350 }, { width: 1080 }]) {
+      const refused = await call({
+        method: 'PUT',
+        path: `/check-ins/${randomUUID()}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', photos: [{ path: cover, size }] },
+        },
+      });
+      expect(refused.status).toBe(400);
+    }
   });
 
   it('saves a disclaimer with a photo, viewed like any other', async () => {

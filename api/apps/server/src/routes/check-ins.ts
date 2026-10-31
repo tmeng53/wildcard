@@ -12,6 +12,7 @@ import {
   storedTrainingFields,
   type CheckInRecord,
   type CheckIns,
+  PhotoSize,
   type PhotoRef,
 } from '@wildcard/check-ins';
 
@@ -20,7 +21,6 @@ import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { ReactionEntry, wireReaction } from './reactions.js';
-import { ReplyEntry, wireReply } from './replies.js';
 
 const checkInFields = {
   version: bodyVersion(1),
@@ -53,6 +53,7 @@ const photoViews = {
             .string()
             .meta({ description: 'The photo’s name, as the check-in was saved with.' }),
           url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
+          size: PhotoSize.optional(),
         })
         .openapi('PhotoView'),
     )
@@ -100,14 +101,19 @@ const SquadPostList = z
           reactions: z
             .array(ReactionEntry)
             .meta({ description: 'Teammates’ emoji, oldest first.' }),
-          replies: z.array(ReplyEntry).meta({
-            description: 'Teammates’ replies, oldest first. Always empty but on a 请假条.',
-          }),
         })
         .openapi('SquadPost'),
     ),
   })
   .openapi('SquadPostList');
+
+/**
+ * Installed builds from before the replies were removed (#180) still require `replies` on each
+ * post and fail to read the whole feed without it, so every post keeps an empty one. It stays out
+ * of the contract: newer builds ignore keys they don't know. Remove it once no installed build
+ * predates #180.
+ */
+const installedBuildsReplies: { readonly replies: readonly never[] } = { replies: [] };
 
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
@@ -152,10 +158,10 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     ...fields
   }: T) => {
     if (photos === undefined) return fields;
-    const views = photos.map(({ path }) => {
+    const views = photos.map(({ path, size }) => {
       const url = urls.get(path);
       if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
-      return { path, url: url.href };
+      return size === undefined ? { path, url: url.href } : { path, url: url.href, size };
     });
     return { ...fields, photos: views };
   };
@@ -185,7 +191,7 @@ const signedInFailures = {
 
 /**
  * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` (the
- * squad's feed, with reactions and replies) and `GET /me/check-ins` read them back for a range of
+ * squad's feed, with reactions) and `GET /me/check-ins` read them back for a range of
  * days, and `GET /me/check-in-totals` counts
  * all of the member's own.
  */
@@ -236,10 +242,10 @@ export function checkIns(deps: {
     method: 'get',
     path: '/squads/{squadId}/check-ins',
     operationId: 'listSquadCheckIns',
-    summary: 'A squad’s check-ins for a range of days, with their reactions and replies',
+    summary: 'A squad’s check-ins for a range of days, with their reactions',
     description:
       'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
-      'each with the reactions and replies of the teammates the viewer shares a squad with. ' +
+      'each with the reactions of the teammates the viewer shares a squad with. ' +
       'Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -314,10 +320,10 @@ export function checkIns(deps: {
       return c.json(
         {
           version: 1 as const,
-          posts: posts.map(({ checkIn, reactions, replies }) => ({
+          posts: posts.map(({ checkIn, reactions }) => ({
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
-            replies: replies.map(wireReply),
+            ...installedBuildsReplies,
           })),
         },
         200,

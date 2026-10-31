@@ -61,6 +61,41 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
     }
 
+    /// The newest post is a portrait salad, shown taller than wide; a tap opens it full screen,
+    /// a pinch zooms in, and swiping down puts it back. 关闭 closes it too.
+    func testPhotoViewer() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos").firstMatch
+        XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "no photos in 动态")
+        XCTAssertGreaterThan(photos.frame.height, photos.frame.width, "the portrait salad isn't shown portrait")
+        settle()
+        keepScreenshot(named: "48-feed-portrait")
+
+        photos.tap()
+        let viewer = app.descendants(matching: .any).matching(identifier: "photoViewer").firstMatch
+        XCTAssertTrue(viewer.waitForExistence(timeout: Self.wait), "tapping the photo didn't open it full screen")
+        let close = app.buttons["photoViewer.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: Self.wait), "no 关闭")
+        assertOnScreen(close, in: app)
+        settle()
+        keepScreenshot(named: "48-feed-photo-viewer")
+        viewer.pinch(withScale: 2.5, velocity: 2)
+        settle()
+        keepScreenshot(named: "48-feed-photo-viewer-zoomed")
+        viewer.doubleTap()
+        settle()
+
+        viewer.swipeDown(velocity: .fast)
+        XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "swiping down didn't close the photo")
+        XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
+
+        photos.tap()
+        XCTAssertTrue(close.waitForExistence(timeout: Self.wait), "the photo didn't open again")
+        close.tap()
+        XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the photo")
+    }
+
     /// A 练了 with its minutes shows them as the card's big number. The newest posts on top are a
     /// salad and a 请假条, so the run's card is scrolled to, a little at a time.
     func testMinutes() {
