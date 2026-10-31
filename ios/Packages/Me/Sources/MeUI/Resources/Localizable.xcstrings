@@ -236,7 +236,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "編輯角色"
+            "value": "編輯外卡運動員"
           }
         }
       }
@@ -316,7 +316,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "角色、暱稱和口頭禪都會刪除"
+            "value": "外卡運動員、暱稱和口頭禪都會刪除"
           }
         }
       }
