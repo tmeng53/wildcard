@@ -248,6 +248,7 @@ describe('promptFor', () => {
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
           moves,
+          memes: [],
           members: [
             {
               member: ana,
@@ -302,6 +303,7 @@ describe('promptFor', () => {
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
           moves,
+          memes: [],
           members: [{ member: ana, timeZone: 'UTC', checkIns: [checkIn({ comments: many })] }],
         }),
       ),

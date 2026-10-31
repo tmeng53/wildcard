@@ -183,7 +183,7 @@ describe('createWeeklyAwards', () => {
 
   it('sends comments only from members who agreed to AI use, asking about every writer once', async () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
-    const { awards, asked, consentAsked } = setup(undefined, (each) => each !== cy);
+    const { awards, asked, consentAsked } = setup(undefined, { agreed: (each) => each !== cy });
     const members: MemberWeek[] = [
       {
         member: ana,
