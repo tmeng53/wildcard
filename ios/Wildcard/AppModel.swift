@@ -308,6 +308,9 @@ final class AppModel {
         return FeedModel(store: store, viewer: home.member, now: { Date() })
     }
 
+    /// 我的动态 over our API.
+    var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
+
     private func registerForPush() async {
         try? await Push.registration.signedIn(APIDeviceRegistry(api: api))
     }

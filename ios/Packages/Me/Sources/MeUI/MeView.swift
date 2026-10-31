@@ -13,23 +13,26 @@ public struct MeDestinations {
     public var squad: () -> Void
     public var pastRecaps: () -> Void
     public var editCharacter: () -> Void
+    /// 我的动态: everything the member posted.
+    public var myPosts: () -> Void
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
 
     public init(
         squad: @escaping () -> Void, pastRecaps: @escaping () -> Void, editCharacter: @escaping () -> Void,
-        privacyPolicy: URL, terms: URL
+        myPosts: @escaping () -> Void, privacyPolicy: URL, terms: URL
     ) {
         self.squad = squad
         self.pastRecaps = pastRecaps
         self.editCharacter = editCharacter
+        self.myPosts = myPosts
         self.privacyPolicy = privacyPolicy
         self.terms = terms
     }
 }
 
-/// 我: the member's player card (tap it to turn it over) and 编辑外卡运动员, with a small 设置 button
+/// 我: the member's player card (tap it to turn it over), 我的动态 and 编辑外卡运动员, with a small 设置 button
 /// that opens the settings menu, and from there 注销账号. Each page replaces the last in place.
 /// These pages keep out of the scene's colours: ink and white only.
 public struct MeView: View {
@@ -86,11 +89,22 @@ public struct MeView: View {
                     }
                     PlayerCard(overview: overview)
                     VStack(spacing: Space.xs) {
-                        Button(action: destinations.editCharacter) {
-                            Text("编辑外卡运动员", bundle: .module)
+                        HStack(spacing: Space.s) {
+                            Button(action: destinations.myPosts) {
+                                Label {
+                                    Text("我的动态", bundle: .module)
+                                } icon: {
+                                    Image(systemName: "square.grid.2x2.fill")
+                                }
+                            }
+                            .buttonStyle(PrimaryButtonStyle(.regular))
+                            .accessibilityIdentifier("me.myPosts")
+                            Button(action: destinations.editCharacter) {
+                                Text("编辑外卡运动员", bundle: .module)
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
+                            .accessibilityIdentifier("me.editCharacter")
                         }
-                        .buttonStyle(SecondaryButtonStyle())
-                        .accessibilityIdentifier("me.editCharacter")
                         if model.saveFailed {
                             SaveFailed()
                         }

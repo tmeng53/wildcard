@@ -738,6 +738,22 @@
           }
         }
       }
+    },
+    "我的动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My posts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的動態"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

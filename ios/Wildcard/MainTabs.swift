@@ -2,6 +2,7 @@ import CharacterEditorUI
 import CheckInUI
 import DesignSystem
 import DesignSystemUI
+import FeedDomain
 import FeedUI
 import MeDomain
 import MeUI
@@ -25,6 +26,8 @@ struct MainTabs: View {
     let feed: FeedModel
     let squad: SquadSettingsModel
     let recap: RecapShelf
+    /// The member's own posts, for 我的动态.
+    let myPosts: any MyPostsSource
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
@@ -33,6 +36,8 @@ struct MainTabs: View {
     @State private var editor: CharacterEditorModel?
     /// 小队设置, open from 我 over everything.
     @State private var showsSquad = false
+    /// 我的动态, open from 我 in its place.
+    @State private var wall: PostWallStore?
 
     var body: some View {
         GeometryReader { proxy in
@@ -143,15 +148,27 @@ struct MainTabs: View {
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
         case .profile:
-            MeView(
-                model: profile,
-                destinations: MeDestinations(
-                    // Past 战报 live in 动态 until they have a page of their own.
-                    squad: { showsSquad = true },
-                    pastRecaps: { selection = .feed },
-                    editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-            )
+            ZStack {
+                if let wall {
+                    // Tapping a tile opens the post once 动态's shared post page lands.
+                    PostWallView(
+                        store: wall, back: { self.wall = nil }, open: nil, checkIn: { selection = .today }
+                    )
+                    .transition(.move(edge: .trailing))
+                } else {
+                    MeView(
+                        model: profile,
+                        destinations: MeDestinations(
+                            // Past 战报 live in 动态 until they have a page of their own.
+                            squad: { showsSquad = true },
+                            pastRecaps: { selection = .feed },
+                            editCharacter: editCharacter,
+                            myPosts: { wall = PostWallStore(source: myPosts) },
+                            privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                    )
+                }
+            }
+            .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
             .accentTone(.brand)
         }
     }
