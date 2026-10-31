@@ -111,7 +111,8 @@ public struct Caption: Hashable, Sendable {
     }
 }
 
-/// The squads a check-in goes to: at least one, at most `maxSquads`, no repeats.
+/// The squads a check-in is shared to: at most `maxSquads`, no repeats. A post is the
+/// member's own; one shared to no squad only they see.
 public struct Audience: Hashable, Sendable {
     /// A member is in at most this many squads.
     public static let maxSquads = 3
@@ -120,7 +121,7 @@ public struct Audience: Hashable, Sendable {
     public let squads: [SquadID]
 
     public init(_ squads: [SquadID]) throws(ContractsError) {
-        guard (1...Self.maxSquads).contains(squads.count) else { throw .audienceSize(squads.count) }
+        guard squads.count <= Self.maxSquads else { throw .audienceSize(squads.count) }
         guard Set(squads).count == squads.count else { throw .repeatedSquad }
         self.squads = squads
     }

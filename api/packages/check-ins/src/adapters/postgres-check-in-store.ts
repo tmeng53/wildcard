@@ -114,16 +114,18 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               payload: JSON.stringify(storedPayload(checkIn)),
             })
             .execute();
-          await trx
-            .insertInto('check_in_squads')
-            .values(
-              checkIn.audience.map((squad, index) => ({
-                check_in_id: checkIn.id,
-                squad_id: squad,
-                position: index + 1,
-              })),
-            )
-            .execute();
+          if (checkIn.audience.length > 0) {
+            await trx
+              .insertInto('check_in_squads')
+              .values(
+                checkIn.audience.map((squad, index) => ({
+                  check_in_id: checkIn.id,
+                  squad_id: squad,
+                  position: index + 1,
+                })),
+              )
+              .execute();
+          }
           const photos = photosOf(checkIn);
           if (photos.length > 0) {
             await trx
