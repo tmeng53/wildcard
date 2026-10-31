@@ -280,7 +280,8 @@ extension ScheduleView {
                 Label {
                     Text("存图", bundle: .module)
                 } icon: {
-                    SaveIcon(working: model.saving == .working)
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
                 }
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -326,18 +327,6 @@ extension ScheduleView {
             Color(role: .bgSubtle, in: theme)
                 .aspectRatio(SchedulePoster.size.width / SchedulePoster.size.height, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        }
-    }
-}
-
-/// 存图's icon, and 三拍 while the poster is drawn for the share sheet.
-private struct SaveIcon: View {
-    let working: Bool
-
-    var body: some View {
-        LoadingSwap(working) {
-            Image(systemName: "square.and.arrow.up")
-                .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
         }
     }
 }

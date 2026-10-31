@@ -37,11 +37,6 @@ final class AppModel {
     private(set) var screen = Screen.starting
     /// Signing in on the open screen, until the screen after it opens.
     private(set) var isSigningIn = false
-    /// The app is reading who is signed in or their home, for the page's loader.
-    var isOpening: Bool {
-        if case .starting = screen { return true }
-        return isSigningIn
-    }
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -55,6 +50,9 @@ final class AppModel {
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
+    /// The API for one member's own home and outbox: it stops calling once someone else signs in,
+    /// so posts queued for one account never go out under the next.
+    @ObservationIgnored private let memberAPI: (MemberID) -> WildcardAPI
     /// Where the home's copy and the posts still to go out are kept, a folder per member, so a
     /// new account on this phone never opens on what was kept for one signed out or deleted.
     @ObservationIgnored private let folders: MemberFolders
@@ -73,6 +71,10 @@ final class AppModel {
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(), now: { Date() })
         api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
+        memberAPI = { [account] member in
+            WildcardAPI(
+                url: config.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue })
+        }
         folders = MemberFolders(
             root: URL.applicationSupportDirectory.appending(path: "Home", directoryHint: .isDirectory))
         catalog = CatalogClient(
@@ -194,6 +196,9 @@ final class AppModel {
         }
         let store = todayStore(of: member)
         await store.load()
+        // Someone else signed in while it loaded: their own sign-in opens their home, and this
+        // store's `signedOut` only means it was the earlier member's.
+        guard case .signedIn(member)? = try? await account.restore() else { return }
         switch store.phase {
         case .noSquad:
             // Consent is the account's: a member who agreed before, and left their squad since,
@@ -264,7 +269,8 @@ final class AppModel {
     private func todayStore(of member: MemberID) -> TodayStore {
         let directory = folders.folder(for: member)
         return TodayStore(
-            backend: APICheckInBackend(api: api, directory: directory), outbox: DeviceOutbox(directory: directory),
+            backend: APICheckInBackend(api: memberAPI(member), directory: directory),
+            outbox: DeviceOutbox(directory: directory),
             now: { Date() }, newID: { UUID() })
     }
 

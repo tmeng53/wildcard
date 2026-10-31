@@ -37,7 +37,8 @@ enum Launch {
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
+/// `-character-editor` the character editor, `-loading` the launch page and `-recap` the 战报's tile and
+/// sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
 /// about. `Launch` starts it.
@@ -188,6 +189,8 @@ struct WildcardApp: App {
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
+        } else if LaunchOptions.showsLoading {
+            Starting()
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {
@@ -242,9 +245,8 @@ private struct AppRoot: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Over every screen, so the character stays its minimum and fades out over the screen
-        // that opened (loader design A, 2026-10-24).
-        .loadingCover(app.isOpening) { OpeningLoader() }
+        // Signing in on the open screen: the character jogs over it until the next screen opens.
+        .loadingCover(app.isSigningIn) { OpeningLoader() }
         .task { await app.run() }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in
@@ -293,15 +295,30 @@ private struct SignInButton: View {
     }
 }
 
-/// While the app reads the member's home at launch: the brand's grey page, which the root's
-/// loader covers once the wait has lasted.
+/// While the app reads who is signed in and their home at launch: the brand's grey page, where
+/// the character jogs in place once the wait has lasted `Loading.pageDelay` (loader design A).
+/// It draws its own loader rather than sitting under a cover, so the launch never shows a blank
+/// page; whatever opens next replaces it.
 private struct Starting: View {
     @Environment(\.sceneTheme) private var theme
+    @State private var isShown = false
 
     var body: some View {
         Color(role: .bgSubtle, in: theme)
             .ignoresSafeArea()
-            .accessibilityIdentifier("app.starting")
+            .overlay {
+                LoadingCharacter()
+                    .opacity(isShown ? 1 : 0)
+                    .accessibilityElement()
+                    .accessibilityLabel(Text("加载中"))
+                    .accessibilityHidden(!isShown)
+                    .accessibilityIdentifier("loading.page")
+            }
+            .task {
+                try? await Task.sleep(for: .seconds(Loading.pageDelay))
+                guard !Task.isCancelled else { return }
+                withAnimation(.wildcard(Motion.fadeIn)) { isShown = true }
+            }
     }
 }
 

@@ -17,7 +17,6 @@ import {
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
-import { createPostgresReplyStore } from '../adapters/postgres-reply-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInDraft, CheckInId, MemberId, SquadId } from '../domain/check-in.js';
 import { Emoji } from '../domain/reaction.js';
@@ -48,7 +47,6 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership,
   reactions: createPostgresReactionStore(db),
-  replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos: { exists: () => Promise.resolve(true) },
   calendarOf: () => Promise.resolve(undefined),
@@ -253,18 +251,15 @@ describe('who sees which reactions', () => {
     await checkIns.react({ checkIn: run.id, member: bo, emoji: laughing });
     const days = { from: '2026-10-18', to: '2026-10-18' };
     const feed = async (viewer: MemberId, squad: SquadId) =>
-      (await checkIns.listForSquad({ viewer, squad, days })).map(
-        ({ checkIn, reactions, replies }) => ({
-          id: checkIn.id,
-          emoji: reactions.map(({ member, emoji }) => [member, emoji]),
-          replies,
-        }),
-      );
+      (await checkIns.listForSquad({ viewer, squad, days })).map(({ checkIn, reactions }) => ({
+        id: checkIn.id,
+        emoji: reactions.map(({ member, emoji }) => [member, emoji]),
+      }));
 
     // Ann sees the runners' feed, so only her own heart on Tracy's run; Tracy sees both.
     const annSees = [
-      { id: run.id, emoji: [[ann, heart]], replies: [] },
-      { id: quiet.id, emoji: [], replies: [] },
+      { id: run.id, emoji: [[ann, heart]] },
+      { id: quiet.id, emoji: [] },
     ];
     expect(new Set(await feed(ann, runners))).toStrictEqual(new Set(annSees));
     expect(await feed(tracy, climbers)).toStrictEqual([
@@ -274,7 +269,6 @@ describe('who sees which reactions', () => {
           [ann, heart],
           [bo, laughing],
         ],
-        replies: [],
       },
     ]);
     // Each post's reactions are the same as reading them one post at a time.

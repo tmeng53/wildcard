@@ -21,7 +21,7 @@ struct ScheduleStoreTests {
         await backend.set(
             try WeekSheet(
                 weekStart: thisWeek, plan: Fixtures.plan,
-                marks: [.trained, .disclaimer, .none, .trained, .none, .none, .none],
+                marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("run")), .none, .none, .none],
                 squad: SquadCount(trained: 14, planned: 22)))
         let store = store(backend)
         await store.load()
