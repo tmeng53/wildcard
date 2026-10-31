@@ -191,6 +191,16 @@
         }
       }
     },
+    "已看完 · 再看一遍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watched · Watch again"
+          }
+        }
+      }
+    },
     "吃了": {
       "localizations": {
         "en": {
@@ -281,6 +291,16 @@
         }
       }
     },
+    "新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
+          }
+        }
+      }
+    },
     "日": {
       "localizations": {
         "en": {
@@ -311,7 +331,7 @@
         }
       }
     },
-    "本周战报": {
+    "每周战报": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -321,12 +341,22 @@
         }
       }
     },
-    "本周战报，%@": {
+    "每周战报，%@，已看完": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Weekly recap, %@"
+            "value": "Weekly recap, %@, watched"
+          }
+        }
+      }
+    },
+    "每周战报，%@，未读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly recap, %@, new"
           }
         }
       }

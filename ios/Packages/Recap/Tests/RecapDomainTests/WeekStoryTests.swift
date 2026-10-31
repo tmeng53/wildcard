@@ -21,7 +21,7 @@ private func story(
 ) throws -> WeekStory {
     WeekStory(
         status: status, squad: SquadID(UUID()), squadName: "晨跑五人组",
-        week: Week(monday: try day(13), sunday: try day(19)),
+        week: Week(monday: try day(13), sunday: try day(19)), scene: .gym, squadmates: [],
         order: order,
         podium: podium ? Podium(champion: id(1), sides: [id(2), id(3), id(4)]) : nil,
         titles: titles ? [MemberTitles(member: id(1), titles: [.init(title: "早八战神")])] : [],
@@ -130,7 +130,8 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 @Test func aWeekNobodyCheckedInHasNoRecap() throws {
     let empty = WeekStory(
         status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
-        week: Week(monday: try day(13), sunday: try day(19)), ending: Ending(done: 0, plan: 0))
+        week: Week(monday: try day(13), sunday: try day(19)), scene: .gym, squadmates: [],
+        ending: Ending(done: 0, plan: 0))
     #expect(empty.isPublished == false)
 }
 
@@ -139,7 +140,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     // opens only stories that came out.
     let blank = WeekStory(
         status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
-        week: Week(monday: try day(13), sunday: try day(19)))
+        week: Week(monday: try day(13), sunday: try day(19)), scene: .gym, squadmates: [])
     #expect(blank.pages.isEmpty)
     #expect(blank.isPublished == false)
 }

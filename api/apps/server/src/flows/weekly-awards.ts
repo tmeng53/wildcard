@@ -1,4 +1,5 @@
 import {
+  MemberId as CheckInMember,
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
   photosOf,
@@ -9,7 +10,12 @@ import {
 import type { Admins } from '@wildcard/admins';
 import type { Members } from '@wildcard/members';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
-import { MemberId as SquadsMember, SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
+import {
+  MemberId as SquadsMember,
+  SceneWeek,
+  SquadId as SquadsSquad,
+  type Squads,
+} from '@wildcard/squads';
 import {
   MemberId,
   awardsTimeOf,
@@ -19,18 +25,20 @@ import {
   type MemberAwards,
   type MemberWeek,
   type SquadId,
-  type TopCheckIn,
+  type StoryMember,
   type WeekCheckIn,
   WeekStart,
+  type WeekStory,
   type WeeklyAwards,
   WeekStoryNotReadyError,
 } from '@wildcard/weekly-awards';
 
 import type { Log } from '../log.js';
 
-// The weekly awards across modules: the week's check-ins from check-ins, members' clocks from
-// members, the awards from weekly-awards, the winners' push from push, and the admins a nudge
-// tells from admins.
+// The weekly awards and the frozen 战报 across modules: who was in the squad and its scene from
+// squads, the week's check-ins and pages from check-ins, members' clocks and characters from
+// members, the awards and the stored 战报 from weekly-awards, the winners' push from push, and
+// the admins a nudge tells from admins.
 
 export interface WeeklyAwardsDependencies {
   readonly checkIns: CheckIns;
@@ -143,8 +151,15 @@ async function giveWeek(
     await Promise.all(
       squads.slice(start, start + AT_ONCE).map(async (squad) => {
         try {
+          // The 战报 freezes first, so the awards are written for the same members and week.
+          const story = await frozenStory(deps, { squad, weekStart: week });
           if ((await deps.awards.find({ squad, weekStart: week }))?.status !== 'given') {
-            const members = await memberWeeks(deps, { squad, week, before });
+            const members = await memberWeeks(deps, {
+              squad,
+              week,
+              before,
+              members: story.members.map(({ member }) => member),
+            });
             await deps.awards.give({ squad, weekStart: week, members });
             given += 1;
           }
@@ -176,52 +191,81 @@ async function giveWeek(
   return { squads: squads.length, given, failed, told };
 }
 
-/** A squad's week story as one of its members reads it: the awards, once they are due. */
+/** A squad's 战报 as one of its members reads it: frozen at the week's awards. */
 export interface SquadStory {
+  /** The squad's id, and its name that week. */
   readonly squad: { readonly id: SquadId; readonly name: string };
+  /** The scene the squad trained on that week. */
+  readonly scene: string;
   /**
    * `pending`: due, but the titles aren't written yet (the run hasn't reached the squad, or the
-   * model failed). Only the titles wait: the pages without AI are there either way.
+   * model failed). Only the titles wait: every other page is frozen either way.
    */
   readonly status: 'ready' | 'pending';
-  /** Members still in the squad, in the order they joined; empty until ready, or when nobody checked in. */
-  readonly members: readonly MemberAwards[];
-  /** The viewer's check-in with the most reactions before the awards, when one had any. */
-  readonly hottest?: TopCheckIn;
+  /** Everyone in the squad at the awards, in the order they joined, less accounts deleted since. */
+  readonly members: readonly StoryMember[];
+  /** The titles, in the members' order: empty until ready, or when nobody checked in. */
+  readonly titles: readonly MemberAwards[];
+  /** The crown winner in the middle, up to 2 others who finished their plan beside. */
+  readonly podium?: { readonly champion: string; readonly sides: readonly string[] };
+  /** The squad's meals; who ate more of what is in each member's part. */
+  readonly meals?: { readonly healthy: number; readonly cheat: number };
+  /** The squad's days trained against its plans; only when someone trained. */
+  readonly ending?: { readonly done: number; readonly plan: number };
+  /** The squad's best 请假条 and who wrote it, while it is still posted. */
+  readonly bestDisclaimer?: {
+    readonly author: string;
+    readonly checkIn: string;
+    readonly text: string;
+    readonly reactions: number;
+  };
+  /** The reader's part, when they were in the squad at the awards; its hottest only while posted. */
+  readonly mine?: StoryMember;
 }
 
 /**
- * A squad's week story for one of its members. Throws `WeekStoryNotReadyError` before the
- * week's awards (Sunday 8pm Eastern), `SquadNotJoinedError` for anyone not in the squad.
+ * A squad's 战报 for one of its members: the one frozen at the week's awards, frozen now if no
+ * run has yet. Nothing that happened since changes it, except that a deleted account or post
+ * takes its own words and photos with it. Throws `WeekStoryNotReadyError` before the week's
+ * awards (Sunday 8pm Eastern), `SquadNotJoinedError` for anyone not in the squad now.
  */
 export async function squadStory(
-  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'awards' | 'clock'>,
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'members' | 'awards' | 'clock'>,
   {
     viewer,
     squad,
     weekStart,
   }: { readonly viewer: string; readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<SquadStory> {
-  const found = await dueSquad(deps, { viewer, squad, weekStart });
-  const header = { squad: { id: squad, name: found.name } };
-  const state = await deps.awards.find({ squad, weekStart });
-  if (state?.status === 'given') {
-    // Members who left take their awards with them, as their check-ins leave the feed.
-    const inSquad = new Set<string>(found.members.map(({ member }) => member));
-    const members = state.awards.members.filter(({ member }) => inSquad.has(member));
-    const hottest = members.find(({ member }) => member === MemberId.parse(viewer))?.topCheckIn;
-    return { ...header, status: 'ready', members, ...(hottest === undefined ? {} : { hottest }) };
-  }
-  // Not written yet: the hottest check-in as the awards will see it, from the week so far.
-  const week = await weekBeforeAwards(deps, { squad, weekStart });
-  const anyone = week.members.some(({ checkIns }) => checkIns.length > 0);
-  const mine = week.members.find(({ member }) => member === viewer)?.checkIns ?? [];
-  const hottest = topCheckInOf(mine.map((record) => weekCheckIn(record, week.reactions)));
+  await dueSquad(deps, { viewer, squad, weekStart });
+  const [frozen, state] = await Promise.all([
+    frozenStory(deps, { squad, weekStart }),
+    deps.awards.find({ squad, weekStart }),
+  ]);
+  const { story, members } = frozen;
+  const ids = new Set<string>(members.map(({ member }) => member));
+  const mine = members.find(({ member }) => member === viewer);
+  const best = members.flatMap(({ member, bestDisclaimer }) =>
+    bestDisclaimer === undefined ? [] : [{ author: member, ...bestDisclaimer }],
+  )[0];
+  // Someone on the podium whose account was deleted since leaves it; a side steps up.
+  const podium =
+    story.podium && [story.podium.champion, ...story.podium.sides].filter((id) => ids.has(id));
+  const [champion, ...sides] = podium ?? [];
+  const titles =
+    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [];
+  const anyone = members.some(({ checkedIn }) => checkedIn);
   return {
-    ...header,
-    status: anyone ? 'pending' : 'ready',
-    members: [],
-    ...(hottest === undefined ? {} : { hottest }),
+    squad: { id: squad, name: story.name },
+    scene: story.scene,
+    status: state?.status === 'given' || !anyone ? 'ready' : 'pending',
+    members,
+    titles,
+    ...(champion === undefined ? {} : { podium: { champion, sides } }),
+    ...(story.meals === undefined ? {} : { meals: story.meals }),
+    ...(story.ending === undefined ? {} : { ending: story.ending }),
+    ...(best === undefined ? {} : { bestDisclaimer: best }),
+    ...(mine === undefined ? {} : { mine }),
   };
 }
 
@@ -235,7 +279,7 @@ export async function squadStory(
 export async function nudgeOrganisers(
   deps: Pick<
     WeeklyAwardsDependencies,
-    'checkIns' | 'squads' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
+    'checkIns' | 'squads' | 'members' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
   >,
   {
     viewer,
@@ -244,7 +288,8 @@ export async function nudgeOrganisers(
   }: { readonly viewer: string; readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<void> {
   const found = await dueSquad(deps, { viewer, squad, weekStart });
-  if (!(await anyoneCheckedIn(deps, { squad, weekStart }))) return;
+  const { members } = await frozenStory(deps, { squad, weekStart });
+  if (!members.some(({ checkedIn }) => checkedIn)) return;
   const failures = await deps.awards.claimNudge({ squad, weekStart });
   if (failures === undefined) return;
   const admins = await deps.admins.list();
@@ -266,25 +311,83 @@ export async function nudgeOrganisers(
   });
 }
 
-/** The squad's week as its awards read it: the check-ins made before them. */
-function weekBeforeAwards(
-  deps: Pick<WeeklyAwardsDependencies, 'checkIns'>,
+/**
+ * A squad's 战报 for the week, frozen at its awards (Sunday 8pm Eastern): the stored one, else
+ * frozen now from the squad as it stood then: who was in it, that week's scene, and their
+ * check-ins and reactions made before then. Members' characters and the squad's name are as
+ * they are when it freezes, which the hourly awards run does within the hour for every squad
+ * that checked in. A week nobody checked in is never stored.
+ */
+async function frozenStory(
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'members' | 'awards'>,
   { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
-) {
-  return deps.checkIns.squadWeekCheckIns({
+): Promise<WeekStory> {
+  const stored = await deps.awards.story({ squad, weekStart });
+  if (stored !== undefined) return stored;
+  const before = awardsTimeOf(weekStart);
+  const then = await deps.squads.squadAt({
+    squad: SquadsSquad.parse(squad),
+    week: SceneWeek.parse(weekStart),
+    moment: before,
+  });
+  if (then === undefined) throw new Error(`Squad ${squad} is gone`);
+  const week = await deps.checkIns.squadWeekCheckIns({
     squad: CheckInSquad.parse(squad),
     weekStart: CheckInWeek.parse(weekStart),
-    before: awardsTimeOf(weekStart),
+    before,
+    members: then.members.map((member) => CheckInMember.parse(member)),
   });
-}
-
-/** Whether anyone in the squad checked in before the week's awards, so it has any to wait for. */
-async function anyoneCheckedIn(
-  deps: Pick<WeeklyAwardsDependencies, 'checkIns'>,
-  week: { readonly squad: SquadId; readonly weekStart: WeekStart },
-): Promise<boolean> {
-  const { members } = await weekBeforeAwards(deps, week);
-  return members.some(({ checkIns }) => checkIns.length > 0);
+  const profiles = await Promise.all(
+    week.members.map(({ member }) => deps.members.findProfile(member)),
+  );
+  const { pages } = week;
+  const story: WeekStory = {
+    squad,
+    weekStart,
+    story: {
+      version: 1,
+      name: then.name,
+      scene: then.scene,
+      ...(pages.podium === undefined
+        ? {}
+        : { podium: { champion: pages.podium.champion, sides: [...pages.podium.sides] } }),
+      ...(pages.meals === undefined
+        ? {}
+        : { meals: { healthy: pages.meals.healthy, cheat: pages.meals.cheat } }),
+      ...(pages.ending === undefined ? {} : { ending: pages.ending }),
+    },
+    members: week.members.map(({ member, checkIns }, index): StoryMember => {
+      const page = pages.members[index];
+      if (page?.member !== member) throw new Error('The 战报’s pages don’t match its members');
+      const hottest = topCheckInOf(checkIns.map((record) => weekCheckIn(record, week.reactions)));
+      const best = pages.bestDisclaimer;
+      return {
+        member: MemberId.parse(member),
+        version: 1,
+        character: profiles[index]?.character ?? null,
+        checkedIn: page.checkedIn,
+        plannedDays: page.plannedDays,
+        trainedDays: page.trainedDays,
+        days: page.days.map(({ day, kind, sport }) => ({
+          day,
+          kind,
+          ...(sport === undefined ? {} : { sport }),
+        })),
+        healthyMeals: page.healthyMeals,
+        cheatMeals: page.cheatMeals,
+        reactionsReceived: page.reactionsReceived,
+        ...(hottest === undefined ? {} : { hottest }),
+        ...(best?.author === member
+          ? {
+              bestDisclaimer: { checkIn: best.checkIn, text: best.text, reactions: best.reactions },
+            }
+          : {}),
+      };
+    }),
+  };
+  // A week nobody in the squad checked in has no 战报 to keep (one before the squad began, say),
+  // so nothing is stored: any member can ask for any past week.
+  return story.members.some(({ checkedIn }) => checkedIn) ? deps.awards.freezeStory(story) : story;
 }
 
 /** The squad, for one of its members, once its week's awards are due. */
@@ -304,19 +407,26 @@ async function dueSquad(
   return found;
 }
 
-/** Everyone in the squad with their check-ins before the awards, as the awards read them. */
+/** These members with their check-ins before the awards, as the awards read them. */
 async function memberWeeks(
   deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'members'>,
   {
     squad,
     week,
     before,
-  }: { readonly squad: SquadId; readonly week: WeekStart; readonly before: Date },
+    members,
+  }: {
+    readonly squad: SquadId;
+    readonly week: WeekStart;
+    readonly before: Date;
+    readonly members: readonly string[];
+  },
 ): Promise<MemberWeek[]> {
   const squadWeek = await deps.checkIns.squadWeekCheckIns({
     squad: CheckInSquad.parse(squad),
     weekStart: CheckInWeek.parse(week),
     before,
+    members: members.map((member) => CheckInMember.parse(member)),
   });
   return Promise.all(
     squadWeek.members.map(async ({ member, checkIns }) => {
@@ -330,7 +440,6 @@ async function memberWeeks(
     }),
   );
 }
-
 function weekCheckIn(
   record: CheckInRecord,
   reactions: SquadWeekCheckIns['reactions'],

@@ -11,7 +11,8 @@ final class RecapUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         let tile = app.buttons["recap.entry"]
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
-        XCTAssertTrue(tile.label.contains("本周战报"))
+        XCTAssertTrue(tile.label.contains("每周战报"))
+        XCTAssertTrue(tile.label.contains("未读"), "a story not yet watched shows as read")
         keepScreenshot(named: "70-recap-tile")
         tile.tap()
 
@@ -32,6 +33,9 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(app.buttons["recap.planNextWeek"].exists)
         app.buttons["recap.close"].tap()
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't close the story")
+        XCTAssertTrue(tile.label.contains("已看完"), "a story watched to the end still shows as new")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "70b-recap-tile-seen")
     }
 
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.

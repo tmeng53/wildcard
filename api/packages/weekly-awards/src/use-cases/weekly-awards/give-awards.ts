@@ -2,7 +2,6 @@ import {
   ModelReply,
   type Awards,
   titlesOf,
-  topCheckInOf,
   type MemberId,
   type MemberWeek,
   type SquadId,
@@ -20,7 +19,10 @@ const ATTEMPTS = 2;
 export interface GiveAwardsInput {
   readonly squad: SquadId;
   readonly weekStart: WeekStart;
-  /** Everyone in the squad, in the order they joined, with their check-ins before the awards. */
+  /**
+   * Everyone in the squad at the awards, in the order they joined, with their check-ins before
+   * them.
+   */
   readonly members: readonly MemberWeek[];
 }
 
@@ -61,14 +63,7 @@ export async function giveAwards(
     }
   }
   const awards: Awards = {
-    members: winners.map(({ member, checkIns }) => {
-      const topCheckIn = topCheckInOf(checkIns);
-      return {
-        member,
-        titles: titles.get(member) ?? [],
-        ...(topCheckIn === undefined ? {} : { topCheckIn }),
-      };
-    }),
+    members: winners.map(({ member }) => ({ member, titles: titles.get(member) ?? [] })),
   };
   if (await deps.store.save({ squad, weekStart, awards })) return awards;
   // Another run saved first: theirs stand.

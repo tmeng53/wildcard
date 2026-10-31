@@ -1,5 +1,5 @@
 import type { InviteCodes } from '../domain/invite-code.js';
-import type { ScenePick, Scene, SceneWeek } from '../domain/scene.js';
+import { sceneIn, type ScenePick, type Scene, type SceneWeek } from '../domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
 import type { AiConsentCheck, PickOutcome, SquadStore } from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
@@ -13,6 +13,13 @@ import {
 } from './squads/preview-invite.js';
 import type { InviteCode } from '../domain/invite-code.js';
 import { handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
+
+/** A squad as it stood at a moment in a week. */
+export interface SquadAt {
+  readonly name: SquadName;
+  readonly scene: Scene;
+  readonly members: readonly MemberId[];
+}
 
 /** Squads: creating one, joining by invite code, leaving, and who is in each. */
 export interface Squads {
@@ -30,6 +37,12 @@ export interface Squads {
   membersOf(squad: SquadId): Promise<MemberId[]>;
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
+  /**
+   * A squad as it stood at a moment in a week, for its frozen 战报: its name, that week's scene
+   * and the members in it then, in the order they joined; `undefined` when there is no such
+   * squad.
+   */
+  squadAt(input: { squad: SquadId; week: SceneWeek; moment: Date }): Promise<SquadAt | undefined>;
   /**
    * Takes the member out of the squad; nothing happens if they aren't in it. When the last member
    * leaves, the squad ends: its invite stops working, and it stays. A squad is deleted only with
@@ -71,6 +84,15 @@ export function createSquads(deps: {
     squadIdsOf: (member) => deps.store.squadIdsOf(member),
     membersOf: (squad) => deps.store.membersOf(squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),
+    squadAt: async ({ squad, week, moment }) => {
+      const [found, picks, members] = await Promise.all([
+        deps.store.find(squad),
+        deps.store.scenePicks(squad),
+        deps.store.membersAt(squad, moment),
+      ]);
+      if (found === undefined) return undefined;
+      return { name: found.name, scene: sceneIn(picks, week), members };
+    },
     leave: ({ squad, member }) => deps.store.leave(squad, member),
     rename: (input) => renameSquad(deps, input),
     handCaptaincy: (input) => handCaptaincy(deps, input),

@@ -72,11 +72,15 @@ export interface CheckIns {
     readonly weekStart: WeekStart;
     readonly before: Date;
   }): Promise<SquadId[]>;
-  /** A squad's check-ins for the week made before `before`, for the week's awards. */
+  /**
+   * A squad's week as it stood at `before` for these members (who was in it then), for the
+   * week's awards and its frozen 战报.
+   */
   squadWeekCheckIns(input: {
     readonly squad: SquadId;
     readonly weekStart: WeekStart;
     readonly before: Date;
+    readonly members: readonly MemberId[];
   }): Promise<SquadWeekCheckIns>;
 }
 

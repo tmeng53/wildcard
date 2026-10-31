@@ -3,6 +3,7 @@
 // tables.
 
 export { createPostgresAwardSettings } from './adapters/postgres-award-settings.js';
+export { createPostgresWeekStoryStore } from './adapters/postgres-week-story-store.js';
 export {
   createPostgresAwardsStore,
   type WeeklyAwardTables,
@@ -26,6 +27,7 @@ export {
   type TopCheckIn,
   type WeekCheckIn,
 } from './domain/awards.js';
+export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
 export { AwardMove } from './domain/moves.js';
 export {
   AWARDS_HOUR,
@@ -40,6 +42,12 @@ export {
   AwardsWriterUnavailableError,
   WeekStoryNotReadyError,
 } from './errors.js';
-export type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from './ports.js';
+export type {
+  AiConsented,
+  AwardSettingsStore,
+  AwardsStore,
+  LanguageModel,
+  WeekStoryStore,
+} from './ports.js';
 export { createAwardSettings, type AwardSettingsAdmin } from './use-cases/award-settings.js';
 export { createWeeklyAwards, type WeeklyAwards } from './use-cases/weekly-awards.js';

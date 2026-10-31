@@ -7,7 +7,14 @@ import type {
   TitlesWon,
 } from '../domain/awards.js';
 import type { WeekStart } from '../domain/schedule.js';
-import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../ports.js';
+import type { WeekStory } from '../domain/week-story.js';
+import type {
+  AiConsented,
+  AwardSettingsStore,
+  AwardsStore,
+  LanguageModel,
+  WeekStoryStore,
+} from '../ports.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
 
 /** Each squad's weekly awards (本周颁奖). */
@@ -38,6 +45,16 @@ export interface WeeklyAwards {
   }): Promise<MemberId[]>;
   /** Every title the member has won, in all their squads (周奖 on their player card). */
   titlesWon(member: MemberId): Promise<TitlesWon>;
+  /** A squad's frozen 战报 for the week, or `undefined` before it is frozen. */
+  story(input: {
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+  }): Promise<WeekStory | undefined>;
+  /**
+   * Freezes a squad's 战报 for the week, unless it is frozen already, and returns the one that
+   * stands.
+   */
+  freezeStory(story: WeekStory): Promise<WeekStory>;
 }
 
 export function createWeeklyAwards(deps: {
@@ -45,6 +62,7 @@ export function createWeeklyAwards(deps: {
   readonly settings: AwardSettingsStore;
   readonly store: AwardsStore;
   readonly aiConsented: AiConsented;
+  readonly stories: WeekStoryStore;
 }): WeeklyAwards {
   return {
     give: (input) => giveAwards(deps, input),
@@ -57,5 +75,12 @@ export function createWeeklyAwards(deps: {
       return state.awards.members.map(({ member }) => member);
     },
     titlesWon: (member) => deps.store.titlesWon(member),
+    story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
+    freezeStory: async (story) => {
+      await deps.stories.freeze(story);
+      const frozen = await deps.stories.find(story.squad, story.weekStart);
+      if (frozen === undefined) throw new Error('A 战报 was frozen but can’t be read back');
+      return frozen;
+    },
   };
 }

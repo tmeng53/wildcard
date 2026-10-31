@@ -182,7 +182,7 @@ private struct RecapTile: View {
     var body: some View {
         if let story = recap.latest {
             RecapEntryTile(
-                week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
+                story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
         }
     }
 }
