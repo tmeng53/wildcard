@@ -58,7 +58,7 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertTrue(closed.label.contains("跑步打卡 3 次开门"), closed.label)
         XCTAssertFalse(app.buttons["editor.store.back"].exists, "a closed store let the person in")
         settle()
-        keepScreenshot(named: "22b-editor-store-closed")
+        keepScreenshot(named: "22-editor-store-closed")
 
         scrollUntilHittable(warmup, in: app)
         warmup.tap()
@@ -69,7 +69,7 @@ final class CharacterEditorUITests: XCTestCase {
         app.buttons["editor.swatch.top.2"].tap()
         waitUntilSelected(app.buttons["editor.swatch.top.2"], "the top swatch didn't select")
         settle()
-        keepScreenshot(named: "22c-editor-store")
+        keepScreenshot(named: "22-editor-store")
         // Hats and accessories come after the tops, bottoms and shoes, below the fold; a second
         // tap on a hat takes it off.
         let cap = app.buttons["editor.tile.hat.warmup-cap"]
@@ -81,7 +81,7 @@ final class CharacterEditorUITests: XCTestCase {
         waistbag.tap()
         waitUntilSelected(waistbag, "picking 运动腰包 didn't select it")
         settle()
-        keepScreenshot(named: "22d-editor-outfit")
+        keepScreenshot(named: "22-editor-outfit")
         scrollUntilHittable(cap, in: app)
         cap.tap()
         waitFor(cap, "isSelected == false", "a second tap didn't take the cap off")

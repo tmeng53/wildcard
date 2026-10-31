@@ -56,7 +56,7 @@ const WeeklyPlanDraft = z
   .strictObject({ version: bodyVersion(1), days })
   .openapi('WeeklyPlanDraft');
 
-/** The member's typical week (我的一周), which each week follows until it is changed for itself. */
+/** The member's typical week (每周模板), which each week follows until it is changed for itself. */
 const PlanTemplateBody = z
   .strictObject({
     version: bodyVersion(1),

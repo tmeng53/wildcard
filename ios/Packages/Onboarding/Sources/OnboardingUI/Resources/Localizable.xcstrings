@@ -1281,18 +1281,18 @@
         }
       }
     },
-    "换一个小人": {
+    "换一个外卡运动员": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change this character"
+            "value": "Change this Wildcard athlete"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "换一个小人"
+            "value": "换一个外卡运动员"
           }
         }
       }
@@ -1405,22 +1405,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "没找到这个邀请码"
-          }
-        }
-      }
-    },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %lld 周"
           }
         }
       }

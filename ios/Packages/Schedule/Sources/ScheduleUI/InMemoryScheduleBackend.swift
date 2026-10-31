@@ -30,13 +30,14 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
             let plan = offset.isMultiple(of: 2) ? planA : planB
             let marks = (0..<WeeklyPlan.dayCount).map { index -> DayMark in
                 let day = weekStart.adding(days: index)
-                guard day <= today, plan[index] != .rest else { return .none }
-                if day == today { return .trained }
+                guard day <= today, case .train(let planned) = plan[index] else { return .none }
+                let trained = DayMark.trained(planned ?? .sport("run"))
+                if day == today { return trained }
                 // Most planned days trained; now and then a 请假条 or a day missed.
                 switch (index + offset * 3 + 21) % 7 {
                 case 1: return .disclaimer
                 case 4: return .none
-                default: return .trained
+                default: return trained
                 }
             }
             let titles = offset < 0 ? Array(sampleTitles.shuffledBy(seed: offset).prefix(1 + (-offset % 3))) : []

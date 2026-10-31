@@ -3,7 +3,6 @@ import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
-import type { Reply, ReplyKind } from './domain/reply.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
 import type { WeekSummaryWords } from './domain/week-summary-words.js';
@@ -72,21 +71,6 @@ export interface ReactionStore {
     readonly since: Date;
     readonly until: Date;
   }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
-}
-
-/** Where teammates' replies to 请假条 are kept. */
-export interface ReplyStore {
-  /** Saves the member's reply to a 请假条, in place of any they left before. */
-  save(
-    checkIn: CheckInId,
-    reply: { readonly member: MemberId; readonly kind: ReplyKind; readonly repliedAt: Date },
-  ): Promise<SaveOutcome>;
-  /** Takes the member's reply off a 请假条, if there is one. */
-  remove(checkIn: CheckInId, member: MemberId): Promise<void>;
-  /** A 请假条's replies, oldest first. */
-  list(checkIn: CheckInId): Promise<Reply[]>;
-  /** The replies to each of these check-ins, oldest first; a check-in without any is left out. */
-  listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Reply[]>>;
 }
 
 /** Where uploaded photo files are kept. */

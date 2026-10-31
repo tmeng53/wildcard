@@ -2,7 +2,6 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresReactionStore,
-  createPostgresReplyStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
@@ -60,7 +59,6 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
         aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
-      replies: createPostgresReplyStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),

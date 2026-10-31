@@ -4,11 +4,13 @@ import Foundation
 import Synchronization
 
 let tracy = MemberID(UUID(uuid: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)))
+/// Someone else who signs in on the same device.
+let sam = MemberID(UUID(uuid: (9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9)))
 let start = Date(timeIntervalSince1970: 1_792_368_000)  // 2026-10-19T00:00:00Z
 
-func session(_ name: String, expiresIn seconds: TimeInterval = 3600) -> Session {
+func session(_ name: String, expiresIn seconds: TimeInterval = 3600, member: MemberID = tracy) -> Session {
     Session(
-        member: tracy, accessToken: "access-\(name)", refreshToken: "refresh-\(name)",
+        member: member, accessToken: "access-\(name)", refreshToken: "refresh-\(name)",
         expiresAt: start.addingTimeInterval(seconds))
 }
 
@@ -106,5 +108,6 @@ actor FakeProvider: AuthProvider {
     var refreshesWaiting: Int { waiting.count }
 
     func failSignIn(with error: AccountError) { signInResult = .failure(error) }
+    func signInAs(_ session: Session) { signInResult = .success(session) }
     func failSignOut() { signOutFails = true }
 }

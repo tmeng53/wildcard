@@ -32,7 +32,7 @@ export interface PlannedWeek extends WeeklyPlan {
   readonly firstWeek: WeekStart | undefined;
 }
 
-/** A member's typical week (我的一周): the plan each week follows until it is changed for itself. */
+/** A member's typical week (每周模板): the plan each week follows until it is changed for itself. */
 export interface PlanTemplate {
   readonly days: PlanDays;
   /** `default` before the member makes one. */

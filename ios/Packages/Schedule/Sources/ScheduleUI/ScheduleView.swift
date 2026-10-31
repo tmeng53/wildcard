@@ -134,11 +134,11 @@ public struct ScheduleView: View {
 
     private func poster(_ sheet: WeekSheet) -> some View {
         GeometryReader { proxy in
-            WeekPoster(
+            SchedulePoster(
                 content: content(sheet), player: model.player, onTapLane: model.tap,
                 onTapFuel: model.toggleFuelPanel
             )
-            .scaleEffect(proxy.size.width / WeekPoster.size.width, anchor: .topLeading)
+            .scaleEffect(proxy.size.width / SchedulePoster.size.width, anchor: .topLeading)
         }
         .keyframeAnimator(initialValue: 0.0, trigger: flashes) { content, flash in
             content.overlay { Color(role: .bgCanvas, in: theme).opacity(flash).allowsHitTesting(false) }
@@ -146,15 +146,15 @@ public struct ScheduleView: View {
             LinearKeyframe(1, duration: 0.01)
             CubicKeyframe(0, duration: Motion.fadeIn.duration)
         }
-        .aspectRatio(WeekPoster.size.width / WeekPoster.size.height, contentMode: .fit)
+        .aspectRatio(SchedulePoster.size.width / SchedulePoster.size.height, contentMode: .fit)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("schedule.poster")
     }
 
     @MainActor private func save() {
         guard let sheet = store.sheet else { return }
-        let still = WeekPoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
-        model.sharePoster { WeekPoster.picture(of: still, theme: theme, locale: locale) }
+        let still = SchedulePoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
+        model.sharePoster { SchedulePoster.picture(of: still, theme: theme, locale: locale) }
     }
 
     // MARK: Under the poster
@@ -320,7 +320,7 @@ extension ScheduleView {
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
         case .loading, .ready:
             Color(role: .bgSubtle, in: theme)
-                .aspectRatio(WeekPoster.size.width / WeekPoster.size.height, contentMode: .fit)
+                .aspectRatio(SchedulePoster.size.width / SchedulePoster.size.height, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         }
     }

@@ -1,4 +1,4 @@
--- Members' typical week (我的一周): the plan every week starts from. A week without a plan saved
+-- Members' typical week (每周模板): the plan every week starts from. A week without a plan saved
 -- for it follows the member's template, never an earlier week, so a change to one week stays in
 -- that week. The member makes it at sign-up and changes it in the app; before that a week follows
 -- the API's default. The shape and every rule live in the API's check-ins module.
