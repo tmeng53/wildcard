@@ -272,9 +272,10 @@ describe('a squad’s today', () => {
     // Saturday is Tokyo's last week; Monday is this week.
     await checkedIn(tokyo, { kind: 'trained', day: '2026-10-24', audience: [squad] });
     await checkedIn(tokyo, { kind: 'trained', day: '2026-10-26', audience: [squad], hour: 2 });
-    // Tokyo's plan for last week carries over: 4 training days, Monday a training day.
-    await planned(tokyo, {
-      monday: '2026-10-19',
+    // Tokyo's typical week, made last week: 4 training days, Monday a training day.
+    await plans.saveTemplate({
+      member: tokyo,
+      fromWeek: WeekStart.parse('2026-10-19'),
       days: [train, train, train, rest, train, rest, rest],
     });
 

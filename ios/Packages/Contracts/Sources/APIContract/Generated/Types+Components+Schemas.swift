@@ -3908,6 +3908,168 @@ extension Components {
                 case style
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PlanTemplate`.
+        public struct PlanTemplate: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/version`.
+            public var version: Components.Schemas.PlanTemplate.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/days`.
+            public var days: Components.Schemas.PlanDays
+            /// `saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/source`.
+            @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case saved = "saved"
+                case _default = "default"
+            }
+            /// `saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/source`.
+            public var source: Components.Schemas.PlanTemplate.SourcePayload
+            /// Creates a new `PlanTemplate`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - days:
+            ///   - source: `saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one.
+            public init(
+                version: Components.Schemas.PlanTemplate.VersionPayload,
+                days: Components.Schemas.PlanDays,
+                source: Components.Schemas.PlanTemplate.SourcePayload
+            ) {
+                self.version = version
+                self.days = days
+                self.source = source
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case days
+                case source
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlanDays`.
+        @frozen public enum PlanDaysPayload: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case1`.
+            public struct Case1Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case train = "train"
+                }
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/kind`.
+                public var kind: Components.Schemas.PlanDaysPayload.Case1Payload.KindPayload
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/sport`.
+                public var sport: Components.Schemas.Sport?
+                /// Trimmed, then 1 to 20 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/customSport`.
+                public var customSport: Swift.String?
+                /// Creates a new `Case1Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                ///   - sport:
+                ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
+                public init(
+                    kind: Components.Schemas.PlanDaysPayload.Case1Payload.KindPayload,
+                    sport: Components.Schemas.Sport? = nil,
+                    customSport: Swift.String? = nil
+                ) {
+                    self.kind = kind
+                    self.sport = sport
+                    self.customSport = customSport
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case sport
+                    case customSport
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case1`.
+            case case1(Components.Schemas.PlanDaysPayload.Case1Payload)
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case2`.
+            public struct Case2Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case2/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case rest = "rest"
+                }
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case2/kind`.
+                public var kind: Components.Schemas.PlanDaysPayload.Case2Payload.KindPayload
+                /// Creates a new `Case2Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                public init(kind: Components.Schemas.PlanDaysPayload.Case2Payload.KindPayload) {
+                    self.kind = kind
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case2`.
+            case case2(Components.Schemas.PlanDaysPayload.Case2Payload)
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
+                do {
+                    self = .case1(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case2(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .case1(value):
+                    try value.encode(to: encoder)
+                case let .case2(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlanDays`.
+        public typealias PlanDays = [Components.Schemas.PlanDaysPayload]
+        /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft`.
+        public struct PlanTemplateDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft/version`.
+            public var version: Components.Schemas.PlanTemplateDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft/days`.
+            public var days: Components.Schemas.PlanDays
+            /// Creates a new `PlanTemplateDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - days:
+            public init(
+                version: Components.Schemas.PlanTemplateDraft.VersionPayload,
+                days: Components.Schemas.PlanDays
+            ) {
+                self.version = version
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case days
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WeeklyPlan`.
         public struct WeeklyPlan: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/version`.
@@ -3924,104 +4086,9 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/weekStart`.
             public var weekStart: Swift.String
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload`.
-            @frozen public enum DaysPayloadPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
-                public struct Case1Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case train = "train"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/kind`.
-                    public var kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/sport`.
-                    public var sport: Components.Schemas.Sport?
-                    /// Trimmed, then 1 to 20 characters as people see them, on one line.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/customSport`.
-                    public var customSport: Swift.String?
-                    /// Creates a new `Case1Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    ///   - sport:
-                    ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
-                    public init(
-                        kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload,
-                        sport: Components.Schemas.Sport? = nil,
-                        customSport: Swift.String? = nil
-                    ) {
-                        self.kind = kind
-                        self.sport = sport
-                        self.customSport = customSport
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case sport
-                        case customSport
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
-                case case1(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload)
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
-                public struct Case2Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case rest = "rest"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2/kind`.
-                    public var kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload
-                    /// Creates a new `Case2Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    public init(kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload) {
-                        self.kind = kind
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
-                case case2(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try value.encode(to: encoder)
-                    case let .case2(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
-            public typealias DaysPayload = [Components.Schemas.WeeklyPlan.DaysPayloadPayload]
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
-            public var days: Components.Schemas.WeeklyPlan.DaysPayload
-            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            public var days: Components.Schemas.PlanDays
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -4029,7 +4096,7 @@ extension Components {
                 case carriedOver = "carriedOver"
                 case _default = "default"
             }
-            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             public var source: Components.Schemas.WeeklyPlan.SourcePayload
@@ -4045,15 +4112,15 @@ extension Components {
             ///   - version:
             ///   - member: The member whose plan it is.
             ///   - weekStart: The week’s Monday.
-            ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            ///   - days:
+            ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///   - fuelGoals:
             ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
             public init(
                 version: Components.Schemas.WeeklyPlan.VersionPayload,
                 member: Swift.String,
                 weekStart: Swift.String,
-                days: Components.Schemas.WeeklyPlan.DaysPayload,
+                days: Components.Schemas.PlanDays,
                 source: Components.Schemas.WeeklyPlan.SourcePayload,
                 fuelGoals: Components.Schemas.FuelGoals,
                 firstWeek: Swift.String? = nil
@@ -4188,111 +4255,16 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/version`.
             public var version: Components.Schemas.WeeklyPlanDraft.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload`.
-            @frozen public enum DaysPayloadPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
-                public struct Case1Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case train = "train"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/kind`.
-                    public var kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/sport`.
-                    public var sport: Components.Schemas.Sport?
-                    /// Trimmed, then 1 to 20 characters as people see them, on one line.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/customSport`.
-                    public var customSport: Swift.String?
-                    /// Creates a new `Case1Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    ///   - sport:
-                    ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
-                    public init(
-                        kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload,
-                        sport: Components.Schemas.Sport? = nil,
-                        customSport: Swift.String? = nil
-                    ) {
-                        self.kind = kind
-                        self.sport = sport
-                        self.customSport = customSport
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case sport
-                        case customSport
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
-                case case1(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload)
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
-                public struct Case2Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case rest = "rest"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2/kind`.
-                    public var kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload
-                    /// Creates a new `Case2Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    public init(kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload) {
-                        self.kind = kind
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
-                case case2(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try value.encode(to: encoder)
-                    case let .case2(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/days`.
-            public typealias DaysPayload = [Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload]
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/days`.
-            public var days: Components.Schemas.WeeklyPlanDraft.DaysPayload
+            public var days: Components.Schemas.PlanDays
             /// Creates a new `WeeklyPlanDraft`.
             ///
             /// - Parameters:
             ///   - version:
-            ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///   - days:
             public init(
                 version: Components.Schemas.WeeklyPlanDraft.VersionPayload,
-                days: Components.Schemas.WeeklyPlanDraft.DaysPayload
+                days: Components.Schemas.PlanDays
             ) {
                 self.version = version
                 self.days = days

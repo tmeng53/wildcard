@@ -243,9 +243,23 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /disclaimer-drafts`.
     /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
     func writeDisclaimerDrafts(_ input: Operations.WriteDisclaimerDrafts.Input) async throws -> Operations.WriteDisclaimerDrafts.Output
+    /// The signed-in member’s typical week
+    ///
+    /// The plan the weeks to come follow until one is changed for itself.
+    ///
+    /// - Remark: HTTP `GET /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/get(getMyPlanTemplate)`.
+    func getMyPlanTemplate(_ input: Operations.GetMyPlanTemplate.Input) async throws -> Operations.GetMyPlanTemplate.Output
+    /// Save the signed-in member’s typical week
+    ///
+    /// Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    ///
+    /// - Remark: HTTP `PUT /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.
+    func saveMyPlanTemplate(_ input: Operations.SaveMyPlanTemplate.Input) async throws -> Operations.SaveMyPlanTemplate.Output
     /// The signed-in member’s plan for a week
     ///
-    /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
+    /// Every week has a plan: the one saved for it, else the member’s typical week as it stood when the week began, else the default.
     ///
     /// - Remark: HTTP `GET /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/get(getMyWeeklyPlan)`.
@@ -776,9 +790,33 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The signed-in member’s typical week
+    ///
+    /// The plan the weeks to come follow until one is changed for itself.
+    ///
+    /// - Remark: HTTP `GET /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/get(getMyPlanTemplate)`.
+    public func getMyPlanTemplate(headers: Operations.GetMyPlanTemplate.Input.Headers = .init()) async throws -> Operations.GetMyPlanTemplate.Output {
+        try await getMyPlanTemplate(Operations.GetMyPlanTemplate.Input(headers: headers))
+    }
+    /// Save the signed-in member’s typical week
+    ///
+    /// Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    ///
+    /// - Remark: HTTP `PUT /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.
+    public func saveMyPlanTemplate(
+        headers: Operations.SaveMyPlanTemplate.Input.Headers = .init(),
+        body: Operations.SaveMyPlanTemplate.Input.Body
+    ) async throws -> Operations.SaveMyPlanTemplate.Output {
+        try await saveMyPlanTemplate(Operations.SaveMyPlanTemplate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// The signed-in member’s plan for a week
     ///
-    /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
+    /// Every week has a plan: the one saved for it, else the member’s typical week as it stood when the week began, else the default.
     ///
     /// - Remark: HTTP `GET /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/get(getMyWeeklyPlan)`.

@@ -14,6 +14,7 @@ import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const days = PlanDays.meta({
+  id: 'PlanDays',
   description:
     'Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and ' +
     '`customSport` for `"custom"`), or `{"kind": "rest"}`.',
@@ -35,11 +36,13 @@ export const WeeklyPlanBody = z
     member: z.uuid().meta({ description: 'The member whose plan it is.' }),
     weekStart: WeekStart.meta({ description: 'The week’s Monday.', example: '2026-10-19' }),
     days,
+    // Builds already installed decode this strictly, so a week following the typical week keeps
+    // the name it had when such a week followed an earlier one.
     source: z.enum(['saved', 'carriedOver', 'default']).meta({
       description:
         '`saved` for a plan saved for this week; `carriedOver` when the week follows the ' +
-        'member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their ' +
-        'first save.',
+        'member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) ' +
+        'before they make one.',
     }),
     fuelGoals,
     firstWeek: WeekStart.optional().meta({
@@ -55,14 +58,32 @@ const WeeklyPlanDraft = z
   .strictObject({ version: bodyVersion(1), days })
   .openapi('WeeklyPlanDraft');
 
+/** The member's typical week (每周模板), which each week follows until it is changed for itself. */
+const PlanTemplateBody = z
+  .strictObject({
+    version: bodyVersion(1),
+    days,
+    source: z.enum(['saved', 'default']).meta({
+      description:
+        '`saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they ' +
+        'make one.',
+    }),
+  })
+  .openapi('PlanTemplate');
+
+const PlanTemplateDraft = z
+  .strictObject({ version: bodyVersion(1), days })
+  .openapi('PlanTemplateDraft');
+
 const FuelGoalsDraft = z
   .strictObject({ version: bodyVersion(1), goals: fuelGoals })
   .openapi('FuelGoalsDraft');
 
-const wire = (member: string, { firstWeek, ...week }: PlannedWeek) => ({
+const wire = (member: string, { firstWeek, source, ...week }: PlannedWeek) => ({
   version: 1 as const,
   member,
   ...week,
+  source: source === 'template' ? ('carriedOver' as const) : source,
   ...(firstWeek === undefined ? {} : { firstWeek }),
 });
 
@@ -76,8 +97,8 @@ const params = z.strictObject({
 });
 
 /**
- * `GET` and `PUT /me/weekly-plans/{weekStart}`: the signed-in member's plan for a week, and
- * `PUT …/fuel-goals`: its 饮食小目标.
+ * `GET` and `PUT /me/weekly-plans/{weekStart}`: the signed-in member's plan for a week,
+ * `PUT …/fuel-goals`: its 饮食小目标, and `GET` and `PUT /me/plan-template`: their typical week.
  */
 export function weeklyPlans(deps: {
   readonly verifyToken: VerifyToken;
@@ -89,8 +110,8 @@ export function weeklyPlans(deps: {
     operationId: 'getMyWeeklyPlan',
     summary: 'The signed-in member’s plan for a week',
     description:
-      'Every week has a plan: the one saved for it, else the member’s latest earlier one, ' +
-      'else the default.',
+      'Every week has a plan: the one saved for it, else the member’s typical week as it ' +
+      'stood when the week began, else the default.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params },
@@ -156,7 +177,64 @@ export function weeklyPlans(deps: {
     },
   });
 
+  const getTemplate = createRoute({
+    method: 'get',
+    path: '/me/plan-template',
+    operationId: 'getMyPlanTemplate',
+    summary: 'The signed-in member’s typical week',
+    description: 'The plan the weeks to come follow until one is changed for itself.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    responses: {
+      200: {
+        description: 'The typical week',
+        content: { 'application/json': { schema: PlanTemplateBody } },
+      },
+      ...signedInFailures,
+    },
+  });
+
+  const putTemplate = createRoute({
+    method: 'put',
+    path: '/me/plan-template',
+    operationId: 'saveMyPlanTemplate',
+    summary: 'Save the signed-in member’s typical week',
+    description:
+      'Replaces the typical week; repeating a save gives the same result. Saved on the day the ' +
+      'member joined, it is that week’s plan too; a change on a later day applies from next ' +
+      'week, so this week keeps its plan. Weeks saved for themselves keep theirs.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      body: { required: true, content: { 'application/json': { schema: PlanTemplateDraft } } },
+    },
+    responses: {
+      200: {
+        description: 'Saved',
+        content: { 'application/json': { schema: PlanTemplateBody } },
+      },
+      400: problem(
+        'Not a valid plan, a sport the list doesn’t have (`SPORT_NOT_LISTED`), or no profile ' +
+          'yet (`TIME_ZONE_NOT_SET`)',
+      ),
+      ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
+    .openapi(getTemplate, async (c) => {
+      const member = MemberId.parse(c.var.caller.userId);
+      return c.json({ version: 1 as const, ...(await deps.weeklyPlans.template({ member })) }, 200);
+    })
+    .openapi(putTemplate, async (c) => {
+      const member = MemberId.parse(c.var.caller.userId);
+      const template = await deps.weeklyPlans.saveTemplate({
+        member,
+        days: c.req.valid('json').days,
+      });
+      return c.json({ version: 1 as const, ...template }, 200);
+    })
     .openapi(get, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
       const plan = await deps.weeklyPlans.find({
