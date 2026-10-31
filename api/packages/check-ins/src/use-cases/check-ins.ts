@@ -14,6 +14,7 @@ import type {
   WeeklyPlanStore,
 } from '../ports.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
+import { listMyPosts, type ListMyPostsInput, type MyPostsPage } from './check-ins/list-my-posts.js';
 import {
   listSquadCheckIns,
   type ListSquadCheckInsInput,
@@ -45,6 +46,8 @@ export interface CheckIns {
   /** A squad's feed: its check-ins for a range of days, each with its reactions. */
   listForSquad(input: ListSquadCheckInsInput): Promise<SquadPost[]>;
   listMine(input: { readonly member: MemberId; readonly days: DayRange }): Promise<CheckInRecord[]>;
+  /** The member's history (历史动态): their own check-ins, newest first, a page at a time. */
+  listMyPosts(input: ListMyPostsInput): Promise<MyPostsPage>;
   /** Everything the member ever checked in, counted by kind, wherever it went. */
   totals(member: MemberId): Promise<CheckInTotals>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
@@ -95,6 +98,7 @@ export function createCheckIns(deps: {
     save: (input) => saveCheckIn(deps, input),
     listForSquad: (input) => listSquadCheckIns(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),
+    listMyPosts: (input) => listMyPosts(deps, input),
     totals: (member) => deps.store.totals(member),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>

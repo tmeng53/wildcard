@@ -2001,6 +2001,78 @@ extension Components {
                 case checkIns
             }
         }
+        /// - Remark: Generated from `#/components/schemas/MyPostPage`.
+        public struct MyPostPage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/version`.
+            public var version: Components.Schemas.MyPostPage.VersionPayload
+            /// Newest day first, then newest made. Each shows its whole audience, and the reactions of members of the squads it went to that the member still shares with them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/posts`.
+            public var posts: [Components.Schemas.SquadPost]
+            /// Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/counts`.
+            public var counts: Components.Schemas.MyPostCounts?
+            /// Creates a new `MyPostPage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - posts: Newest day first, then newest made. Each shows its whole audience, and the reactions of members of the squads it went to that the member still shares with them.
+            ///   - next: Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in.
+            ///   - counts:
+            public init(
+                version: Components.Schemas.MyPostPage.VersionPayload,
+                posts: [Components.Schemas.SquadPost],
+                next: Swift.String? = nil,
+                counts: Components.Schemas.MyPostCounts? = nil
+            ) {
+                self.version = version
+                self.posts = posts
+                self.next = next
+                self.counts = counts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case posts
+                case next
+                case counts
+            }
+        }
+        /// On the first page only (no `after`); never narrowed to `kind`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MyPostCounts`.
+        public struct MyPostCounts: Codable, Hashable, Sendable {
+            /// Every check-in the member made.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostCounts/posts`.
+            public var posts: Swift.Int
+            /// The reactions on them the member can see, as on each post.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostCounts/reactions`.
+            public var reactions: Swift.Int
+            /// Creates a new `MyPostCounts`.
+            ///
+            /// - Parameters:
+            ///   - posts: Every check-in the member made.
+            ///   - reactions: The reactions on them the member can see, as on each post.
+            public init(
+                posts: Swift.Int,
+                reactions: Swift.Int
+            ) {
+                self.posts = posts
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case posts
+                case reactions
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
         public struct CheckInTotals: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.

@@ -74,6 +74,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
     func listMyCheckIns(_ input: Operations.ListMyCheckIns.Input) async throws -> Operations.ListMyCheckIns.Output
+    /// The signed-in member’s own check-ins, a page at a time, with their reactions
+    ///
+    /// 历史动态: everything the member posted, wherever it went, including squads they left. Pages follow from `next`, so posts made meanwhile never shift them.
+    ///
+    /// - Remark: HTTP `GET /me/posts`.
+    /// - Remark: Generated from `#/paths//me/posts/get(listMyPosts)`.
+    func listMyPosts(_ input: Operations.ListMyPosts.Input) async throws -> Operations.ListMyPosts.Output
     /// Everything the signed-in member ever checked in, counted by kind
     ///
     /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
@@ -413,6 +420,21 @@ extension APIProtocol {
         headers: Operations.ListMyCheckIns.Input.Headers = .init()
     ) async throws -> Operations.ListMyCheckIns.Output {
         try await listMyCheckIns(Operations.ListMyCheckIns.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// The signed-in member’s own check-ins, a page at a time, with their reactions
+    ///
+    /// 历史动态: everything the member posted, wherever it went, including squads they left. Pages follow from `next`, so posts made meanwhile never shift them.
+    ///
+    /// - Remark: HTTP `GET /me/posts`.
+    /// - Remark: Generated from `#/paths//me/posts/get(listMyPosts)`.
+    public func listMyPosts(
+        query: Operations.ListMyPosts.Input.Query = .init(),
+        headers: Operations.ListMyPosts.Input.Headers = .init()
+    ) async throws -> Operations.ListMyPosts.Output {
+        try await listMyPosts(Operations.ListMyPosts.Input(
             query: query,
             headers: headers
         ))
