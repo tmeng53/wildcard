@@ -189,7 +189,7 @@ final class SquadCast {
     static func personaLine(_ persona: Persona) -> String {
         switch persona {
         case .energetic: String(localized: "冲冲冲！", bundle: .module.inAppLanguage)
-        case .showoff: String(localized: "名场面", bundle: .module.inAppLanguage)
+        case .showoff: String(localized: "看我！", bundle: .module.inAppLanguage)
         case .drama: String(localized: "泪目了", bundle: .module.inAppLanguage)
         case .deadpan: String(localized: "可以", bundle: .module.inAppLanguage)
         case .shy: String(localized: "（小声）加油", bundle: .module.inAppLanguage)
