@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [devices] [daily-push] [weekly-awards] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [comments] [devices] [daily-push] [weekly-awards] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices daily-push weekly-awards account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions comments devices daily-push weekly-awards account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | daily-push | weekly-awards | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, daily-push, weekly-awards, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | comments | devices | daily-push | weekly-awards | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, comments, devices, daily-push, weekly-awards, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -582,6 +582,50 @@ if want reactions; then
   rows="$(psql "$DB_URL" -tAc "select count(*) from public.check_in_reactions where check_in_id = '$post'")"
   [ "$rows" = 0 ] || fail "the reaction should be gone: $rows rows"
   echo "reactions: mate took it off (204, again 204), no row left"
+fi
+
+if want comments; then
+  post="$(new_id)"
+  call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
+  expect 201
+  said="$(new_id)"
+  call PUT "/check-ins/$post/comments/$said" "$mate_token" '{"version":1,"text":"冲！"}'
+  expect 201
+  call PUT "/check-ins/$post/comments/$said" "$mate_token" '{"version":1,"text":"冲！"}'
+  expect 200
+  call PUT "/check-ins/$post/comments/$said" "$mate_token" '{"version":1,"text":"换一句"}'
+  expect 409 COMMENT_ID_CONFLICT
+  echo "comments: mate wrote one (201), the retry saved nothing new (200), another text under its id refused (409)"
+
+  reply="$(new_id)"
+  call PUT "/check-ins/$post/comments/$reply" "$me_token" "{\"version\":1,\"text\":\"谢谢\",\"replyTo\":\"$mate\"}"
+  expect 201
+  call GET "/check-ins/$post/comments" "$mate_token"
+  expect 200
+  [ "$(jq -c '[.comments[] | [.member, .text, .replyTo]]' <<<"$body")" = "$(jq -cn --arg m "$mate" --arg a "$me" '[[$m,"冲！",null],[$a,"谢谢",$m]]')" ] ||
+    fail "mate should read both, oldest first, the author's a reply to mate: $body"
+  call GET "/check-ins/$post" "$me_token"
+  expect 200
+  [ "$(jq '.comments | length' <<<"$body")" = 2 ] || fail "the post's page should carry both comments: $body"
+  echo "comments: the author replied to mate (201); both read them oldest first, here and on the post's page"
+
+  call PUT "/check-ins/$post/comments/$(new_id)" "$outsider_token" '{"version":1,"text":"嗨"}'
+  expect 404 CHECK_IN_NOT_FOUND
+  call PUT "/check-ins/$post/comments/$(new_id)" "$me_token" "{\"version\":1,\"text\":\"嗨\",\"replyTo\":\"$outsider\"}"
+  expect 400 REPLY_TO_NOT_IN_SQUAD
+  call PUT "/check-ins/$post/comments/$(new_id)" "$mate_token" "{\"version\":1,\"text\":\"$(printf '加%.0s' $(seq 101))\"}"
+  expect 400 REQUEST_INVALID
+  call DELETE "/check-ins/$post/comments/$said" "$me_token"
+  expect 403 NOT_YOUR_COMMENT
+  echo "comments: outsider sees nothing (404), a reply to an outsider (400), 101 characters (400) and deleting mate's (403) refused"
+
+  call DELETE "/check-ins/$post/comments/$said" "$mate_token"
+  expect 204
+  call DELETE "/check-ins/$post/comments/$said" "$mate_token"
+  expect 204
+  rows="$(psql "$DB_URL" -tAc "select count(*) from public.check_in_comments where check_in_id = '$post'")"
+  [ "$rows" = 1 ] || fail "only the author's reply should be left: $rows rows"
+  echo "comments: mate deleted theirs (204, again 204), one row left"
 fi
 
 if want devices; then
