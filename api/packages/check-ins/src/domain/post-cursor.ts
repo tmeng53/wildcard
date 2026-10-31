@@ -21,11 +21,18 @@ export interface PostCursor {
   readonly id: CheckInId;
 }
 
-const Fields = z.tuple([LocalDay, z.iso.datetime(), CheckInId]);
+const Fields = z.strictObject({
+  version: z.literal(1),
+  day: LocalDay,
+  createdAt: z.iso.datetime(),
+  id: CheckInId,
+});
 
 /** The cursor as the app holds it: opaque, URL-safe text. */
 export function encodeCursor({ day, createdAt, id }: PostCursor): string {
-  return Buffer.from(JSON.stringify([day, createdAt.toISOString(), id])).toString('base64url');
+  return Buffer.from(
+    JSON.stringify({ version: 1, day, createdAt: createdAt.toISOString(), id }),
+  ).toString('base64url');
 }
 
 /** The cursor from its text, or undefined when it isn't one this server made. */
@@ -38,7 +45,7 @@ export function decodeCursor(text: string): PostCursor | undefined {
   }
   const parsed = Fields.safeParse(json);
   if (!parsed.success) return undefined;
-  const [day, createdAt, id] = parsed.data;
+  const { day, createdAt, id } = parsed.data;
   return { day, createdAt: new Date(createdAt), id };
 }
 

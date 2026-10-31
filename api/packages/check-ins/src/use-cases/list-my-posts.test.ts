@@ -206,5 +206,16 @@ describe('the history’s cursor', () => {
     expect(decodeCursor(encodeCursor(cursor))).toStrictEqual(cursor);
     expect(decodeCursor('not-a-cursor')).toBeUndefined();
     expect(decodeCursor(Buffer.from('["2026-10-18"]').toString('base64url'))).toBeUndefined();
+    const unversioned = ['2026-10-18', '2026-10-18T19:30:00.123Z', cursor.id];
+    expect(
+      decodeCursor(Buffer.from(JSON.stringify(unversioned)).toString('base64url')),
+    ).toBeUndefined();
+    const later = {
+      version: 2,
+      day: '2026-10-18',
+      createdAt: '2026-10-18T19:30:00.123Z',
+      id: cursor.id,
+    };
+    expect(decodeCursor(Buffer.from(JSON.stringify(later)).toString('base64url'))).toBeUndefined();
   });
 });
