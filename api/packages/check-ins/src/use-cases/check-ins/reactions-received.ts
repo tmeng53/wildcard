@@ -1,17 +1,25 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
 import { sharedSquads } from '../../domain/reaction.js';
-import type { ReactionStore, SquadMembership } from '../../ports.js';
+import type { SquadMembership } from '../../ports.js';
 
 /**
- * Who reacted to the member's check-ins in `[since, until)`: each teammate once, however many
- * check-ins they reacted to and with whichever emoji. A reaction counts only while its author
- * and the member still share a squad the check-in went to, as in the reactions the member sees.
+ * Who responded to the member's check-ins in `[since, until)` (reacted, or commented), from
+ * `receivedBy`: each teammate once, however many check-ins they responded to. A response counts
+ * only while its author and the member still share a squad the check-in went to, as in the
+ * responses the member sees.
  */
-export async function reactionsReceived(
+export async function responsesReceived(
   {
     membership,
-    reactions,
-  }: { readonly membership: SquadMembership; readonly reactions: ReactionStore },
+    receivedBy,
+  }: {
+    readonly membership: SquadMembership;
+    readonly receivedBy: (query: {
+      readonly member: MemberId;
+      readonly since: Date;
+      readonly until: Date;
+    }) => Promise<readonly { readonly member: MemberId; readonly audience: readonly SquadId[] }[]>;
+  },
   {
     member,
     since,
@@ -19,7 +27,7 @@ export async function reactionsReceived(
   }: { readonly member: MemberId; readonly since: Date; readonly until: Date },
 ): Promise<ReadonlySet<MemberId>> {
   const [received, squads] = await Promise.all([
-    reactions.receivedBy({ member, since, until }),
+    receivedBy({ member, since, until }),
     membership.squadIdsOf(member),
   ]);
   if (received.length === 0) return new Set();

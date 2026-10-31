@@ -2,6 +2,7 @@ import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check
 import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { PhotoPath } from './domain/photos.js';
+import type { Comment, CommentId } from './domain/comment.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
@@ -71,6 +72,35 @@ export interface ReactionStore {
     readonly since: Date;
     readonly until: Date;
   }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
+}
+
+/** What writing a comment did: saved it, found it saved already, or found its id holding another. */
+export type CommentWriteOutcome = 'created' | 'unchanged' | 'conflict';
+
+/** Where comments on check-ins are kept. A comment is never changed once written. */
+export interface CommentStore {
+  /**
+   * Saves a new comment on a check-in. Says `unchanged` when the id holds this very comment
+   * already and `conflict` when it holds another, saving nothing either way.
+   */
+  insert(checkIn: CheckInId, comment: Comment): Promise<CommentWriteOutcome>;
+  /** The comment saved under `id`, with the check-in it is on. */
+  find(id: CommentId): Promise<(Comment & { readonly checkIn: CheckInId }) | undefined>;
+  /** Deletes a comment, if it is there. */
+  remove(id: CommentId): Promise<void>;
+  /** A check-in's comments, oldest first. */
+  list(checkIn: CheckInId): Promise<Comment[]>;
+  /** The comments on each of these check-ins, oldest first; a check-in without any is left out. */
+  listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Comment[]>>;
+  /**
+   * Comments written in `[since, until)` on any of the member's check-ins by someone else,
+   * oldest first, each with the squads that check-in went to.
+   */
+  receivedBy(query: {
+    readonly member: MemberId;
+    readonly since: Date;
+    readonly until: Date;
+  }): Promise<(Comment & { readonly audience: readonly SquadId[] })[]>;
 }
 
 /** Where uploaded photo files are kept. */

@@ -222,6 +222,57 @@ describe('promptFor', () => {
     expect(JSON.stringify(prompt)).not.toContain(ana);
   });
 
+  it('gives each check-in its comments, writers by letter or as 队友 when they aren’t listed', () => {
+    const cy = MemberId.parse('a0000000-0000-4000-8000-000000000003');
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves,
+          members: [
+            {
+              member: ana,
+              timeZone: 'UTC',
+              checkIns: [
+                checkIn({
+                  comments: [
+                    { member: bo, text: '腿还在吗' },
+                    { member: ana, text: '不在了', replyTo: bo },
+                    { member: cy, text: '下周带我', replyTo: ana },
+                  ],
+                }),
+              ],
+            },
+            { member: bo, timeZone: 'UTC', checkIns: [checkIn({ comments: [] })] },
+          ],
+        }),
+      ),
+    );
+    expect(prompt.members).toStrictEqual([
+      {
+        member: 'A',
+        checkIns: [
+          {
+            day: '2026-10-21 周三',
+            time: '12:00',
+            kind: '练了',
+            sport: 'run',
+            comments: [
+              { from: 'B', text: '腿还在吗' },
+              { from: 'A', to: 'B', text: '不在了' },
+              { from: '队友', to: 'A', text: '下周带我' },
+            ],
+          },
+        ],
+      },
+      {
+        member: 'B',
+        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '练了', sport: 'run' }],
+      },
+    ]);
+    expect(JSON.stringify(prompt)).not.toContain(cy);
+  });
+
   it('lists the moves in their own order, whatever order the settings keep them in', () => {
     const reversed = z
       .record(AwardMove, z.string())

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -56,6 +57,7 @@ const app = createApp({
       aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
@@ -362,6 +364,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
           {
             checkIn: { ...saved, audience: [squad] },
             reactions: [{ member: me.userId, emoji: '🤤', reactedAt }],
+            comments: [],
             // Kept for installed builds from before #180, which fail to read the feed without it.
             replies: [],
           },

@@ -18,13 +18,13 @@ import { pushToday, type PushToday } from './daily-push-today.js';
 const AT_ONCE = 4;
 
 /**
- * Teammates who did something for a member, by kind (`reaction`, a nudge's `poke`): each
+ * Teammates who did something for a member, by kind (`reaction`, `comment`, a nudge's `poke`): each
  * person once per kind. The kind is the name the app's String Catalog keys the copy by.
  */
 export type Interactions = ReadonlyMap<string, ReadonlySet<string>>;
 
 /**
- * Where one sort of interaction comes from: reactions and nudges now, others as they land. A new
+ * Where one sort of interaction comes from: reactions, comments and nudges now, others as they land. A new
  * kind of interaction is one more source, or one more kind from an existing one; nothing else
  * in the daily push changes.
  */
@@ -34,15 +34,21 @@ export type InteractionSource = (query: {
   readonly until: Date;
 }) => Promise<Interactions>;
 
-/** The interactions sources built on check-ins: teammates' reactions, with any emoji. */
-export function reactionInteractions(checkIns: CheckIns): InteractionSource {
+/**
+ * The interactions source built on check-ins: teammates who reacted (`reaction`, with any emoji)
+ * and who commented (`comment`) on the member's posts.
+ */
+export function checkInInteractions(checkIns: CheckIns): InteractionSource {
   return async ({ member, since, until }) => {
-    const people = await checkIns.reactionsReceived({
-      member: CheckInMember.parse(member),
-      since,
-      until,
-    });
-    return new Map([['reaction', people]]);
+    const query = { member: CheckInMember.parse(member), since, until };
+    const [reacted, commented] = await Promise.all([
+      checkIns.reactionsReceived(query),
+      checkIns.commentsReceived(query),
+    ]);
+    return new Map([
+      ['reaction', reacted],
+      ['comment', commented],
+    ]);
   };
 }
 

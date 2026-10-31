@@ -4,6 +4,7 @@ import { MemberId as ConsentMember } from '@wildcard/ai-consent';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -67,6 +68,7 @@ const app = createApp({
     store: createPostgresCheckInStore(db),
     membership: squads,
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),

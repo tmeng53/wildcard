@@ -216,7 +216,7 @@ export async function squadStory(
   const week = await weekBeforeAwards(deps, { squad, weekStart });
   const anyone = week.members.some(({ checkIns }) => checkIns.length > 0);
   const mine = week.members.find(({ member }) => member === viewer)?.checkIns ?? [];
-  const hottest = topCheckInOf(mine.map((record) => weekCheckIn(record, week.reactions)));
+  const hottest = topCheckInOf(mine.map((record) => weekCheckIn(record, week)));
   return {
     ...header,
     status: anyone ? 'pending' : 'ready',
@@ -325,7 +325,7 @@ async function memberWeeks(
         member: MemberId.parse(member),
         // A member who checked in has saved a time zone; UTC only for one who never did.
         timeZone: profile?.timeZone ?? 'UTC',
-        checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek.reactions)),
+        checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek)),
       };
     }),
   );
@@ -333,7 +333,7 @@ async function memberWeeks(
 
 function weekCheckIn(
   record: CheckInRecord,
-  reactions: SquadWeekCheckIns['reactions'],
+  { reactions, comments }: Pick<SquadWeekCheckIns, 'reactions' | 'comments'>,
 ): WeekCheckIn {
   const counts: Record<string, number> = {};
   for (const { emoji } of reactions.get(record.id) ?? []) counts[emoji] = (counts[emoji] ?? 0) + 1;
@@ -344,6 +344,11 @@ function weekCheckIn(
     kind: record.kind,
     photos: photosOf(record).map(({ path }) => path),
     reactions: counts,
+    comments: (comments.get(record.id) ?? []).map(({ member, text, replyTo }) => ({
+      member: MemberId.parse(member),
+      text,
+      ...(replyTo === undefined ? {} : { replyTo: MemberId.parse(replyTo) }),
+    })),
   };
   switch (record.kind) {
     case 'trained':
