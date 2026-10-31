@@ -12,13 +12,14 @@ enum Push {
     static let promptDelay = Duration.seconds(1.5)
 
     #if DEBUG
-    /// Shows an APNs payload as iOS would, from the app's own String Catalog: its `loc-key` and
+    /// Shows the payload `-uitest-push` passed (if any) as iOS would, from the app's own String Catalog: its `loc-key` and
     /// `loc-args`, category, thread and interruption level, with the payload as `userInfo` so a
     /// tap reaches the app as a pushed one does. The simulator can't take a push from APNs here,
     /// so the UI tests deliver the server's samples this way.
-    static func deliver(sample payload: [String: Any]) async {
+    static func deliverLaunchSample() async {
         let center = UNUserNotificationCenter.current()
-        guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true,
+        guard let payload = LaunchOptions.pushSample,
+            (try? await center.requestAuthorization(options: [.alert, .sound])) == true,
             let aps = payload["aps"] as? [String: Any],
             let alert = aps["alert"] as? [String: Any],
             let key = alert["loc-key"] as? String
@@ -49,7 +50,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = taps
         Task { await Push.registration.launched() }
         #if DEBUG
-        if let sample = LaunchOptions.pushSample { Task { await Push.deliver(sample: sample) } }
+        Task { await Push.deliverLaunchSample() }
         #endif
         return true
     }
