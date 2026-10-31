@@ -46,7 +46,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
                     content(item.id)
                         // Back to the system's tint inside: only the bar's selected tab is ink.
                         .tint(Color?.none)
-                        .toolbarVisibility(showsBar ? .visible : .hidden, for: .tabBar)
+                        .modifier(TabBarVisibility(isVisible: showsBar))
                 } label: {
                     Label {
                         item.title
@@ -59,6 +59,20 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
         }
         .tint(Color(role: .fgDefault, in: theme))
         .haptic(.pick, trigger: selection)
+    }
+}
+
+/// Shows or hides the system tab bar over a tab's screen; the bar exists on iOS only (the
+/// package also builds for the Mac host its tests run on).
+private struct TabBarVisibility: ViewModifier {
+    let isVisible: Bool
+
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        content.toolbarVisibility(isVisible ? .visible : .hidden, for: .tabBar)
+        #else
+        content
+        #endif
     }
 }
 #endif
