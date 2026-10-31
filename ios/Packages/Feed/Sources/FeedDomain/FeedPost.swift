@@ -49,6 +49,33 @@ public struct MoveID: Hashable, Sendable, CustomStringConvertible {
     public var description: String { id }
 }
 
+extension Emoji {
+    /// The emoji bar's six, in the approved order, wherever a member reacts (动态, the 6pm push);
+    /// ＋ offers any other.
+    public static let quick: [Emoji] = ["❤️", "💪", "😂", "🤤", "😮", "😡"].compactMap { try? Emoji($0) }
+
+    /// Every single emoji ＋ offers wherever a member reacts, faces first, each skin tone left to
+    /// the keyboard.
+    public static let all: [Emoji] = {
+        let ranges: [ClosedRange<UInt32>] = [
+            0x1F600...0x1F64F, 0x1F900...0x1F9FF, 0x1FA70...0x1FAFF, 0x1F300...0x1F5FF, 0x1F680...0x1F6FF,
+            0x2600...0x27BF,
+        ]
+        var emoji: [Emoji] = []
+        for range in ranges {
+            for value in range {
+                guard let scalar = Unicode.Scalar(value), scalar.properties.isEmojiPresentation,
+                    !(0x1F3FB...0x1F3FF).contains(value), let one = try? Emoji(String(scalar))
+                else { continue }
+                emoji.append(one)
+            }
+        }
+        // ❤️ draws as an emoji only with its variation selector.
+        if let heart = try? Emoji("❤️") { emoji.insert(heart, at: 0) }
+        return emoji
+    }()
+}
+
 /// How a member reacted.
 public enum ReactionGesture: Hashable, Sendable {
     /// Picked an emoji from the bar or the keyboard: the same one again takes it back.
