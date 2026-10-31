@@ -327,8 +327,9 @@ export async function nudgeOrganisers(
 /**
  * A squad's 战报 for the week, frozen at its awards (Sunday 8pm Eastern): the stored one, else
  * frozen now from the squad as it stood then: who was in it, that week's scene, and their
- * check-ins and reactions made before then. Members' characters are as they are when it
- * freezes, which the hourly awards run does within the hour for every squad that checked in.
+ * check-ins and reactions made before then. Members' characters and the squad's name are as
+ * they are when it freezes, which the hourly awards run does within the hour for every squad
+ * that checked in. A week nobody checked in is never stored.
  */
 async function frozenStory(
   deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'members' | 'awards'>,
@@ -353,7 +354,7 @@ async function frozenStory(
     week.members.map(({ member }) => deps.members.findProfile(member)),
   );
   const { pages } = week;
-  return deps.awards.freezeStory({
+  const story: WeekStory = {
     squad,
     weekStart,
     story: {
@@ -396,7 +397,10 @@ async function frozenStory(
           : {}),
       };
     }),
-  });
+  };
+  // A week nobody in the squad checked in has no 战报 to keep (one before the squad began, say),
+  // so nothing is stored: any member can ask for any past week.
+  return story.members.some(({ checkedIn }) => checkedIn) ? deps.awards.freezeStory(story) : story;
 }
 
 /** The squad, for one of its members, once its week's awards are due. */

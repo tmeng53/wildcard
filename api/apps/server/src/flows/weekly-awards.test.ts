@@ -578,6 +578,13 @@ describe('weekly awards', () => {
         where squad_id = ${squad}`.execute(db)
       ).rows[0]?.n,
     ).toBe(0);
+    // A week with nothing to tell keeps no story, so asking for any past week stores nothing.
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.week_stories
+        where squad_id = ${squad}`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(0);
   });
 
   it('is frozen at the awards: later joins, leaves, check-ins and scenes don’t change it', async () => {
