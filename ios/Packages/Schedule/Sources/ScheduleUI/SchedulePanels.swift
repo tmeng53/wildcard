@@ -62,7 +62,7 @@ struct WeekAwards: View {
     }
 }
 
-/// The picks for the day in hand: the week's sports and the usual ones, rest next week, and 更多.
+/// The picks for the day in hand: the week's sports and the usual ones, 休息, and 更多.
 struct DayPicks: View {
     let store: ScheduleStore
     let sheet: WeekSheet
@@ -85,12 +85,10 @@ struct DayPicks: View {
                     }
                     .accessibilityIdentifier("schedule.pick.\(activity.key)")
                 }
-                if store.board?.offersRest == true {
-                    PickPill(Text("休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
-                        onRest()
-                    }
-                    .accessibilityIdentifier("schedule.pick.rest")
+                PickPill(Text("休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
+                    onRest()
                 }
+                .accessibilityIdentifier("schedule.pick.rest")
                 PickPill(Text("更多", bundle: .module), systemImage: "magnifyingglass", isSelected: false) {
                     onMore()
                 }

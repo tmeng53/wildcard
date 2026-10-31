@@ -10,7 +10,7 @@ import {
   type WeekCheckIn,
 } from './awards.js';
 import { AwardMove } from './moves.js';
-import { promptFor } from './prompt.js';
+import { PROMPT_COMMENTS, promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
 const ana = MemberId.parse('a0000000-0000-4000-8000-000000000001');
@@ -159,6 +159,7 @@ describe('topCheckInOf', () => {
 const Prompt = z.object({
   members: z.unknown(),
   moves: z.array(z.object({ id: z.string(), description: z.string() })),
+  memes: z.array(z.unknown()).optional(),
 });
 
 const moves = z
@@ -172,6 +173,7 @@ describe('promptFor', () => {
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
           moves,
+          memes: [],
           members: [
             {
               member: bo,
@@ -220,6 +222,23 @@ describe('promptFor', () => {
     expect(prompt.moves).toContainEqual({ id: 'flat', description: 'flat 的样子' });
     expect(prompt.moves).toHaveLength(AwardMove.options.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
+    expect(prompt.memes).toBeUndefined();
+  });
+
+  it('brings the memes in use, with what each means', () => {
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves,
+          members: [],
+          memes: [{ phrase: '对自己很好', meaning: '照顾好自己', background: '小红书上流行' }],
+        }),
+      ),
+    );
+    expect(prompt.memes).toStrictEqual([
+      { phrase: '对自己很好', meaning: '照顾好自己', background: '小红书上流行' },
+    ]);
   });
 
   it('gives each check-in its comments, writers by letter or as 队友 when they aren’t listed', () => {
@@ -229,6 +248,7 @@ describe('promptFor', () => {
         promptFor({
           weekStart: WeekStart.parse('2026-10-19'),
           moves,
+          memes: [],
           members: [
             {
               member: ana,
@@ -273,13 +293,45 @@ describe('promptFor', () => {
     expect(JSON.stringify(prompt)).not.toContain(cy);
   });
 
+  it('brings only a check-in’s latest comments, so a busy post can’t swell the call', () => {
+    const many = Array.from({ length: PROMPT_COMMENTS + 5 }, (_, index) => ({
+      member: bo,
+      text: `第${String(index)}条`,
+    }));
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves,
+          memes: [],
+          members: [{ member: ana, timeZone: 'UTC', checkIns: [checkIn({ comments: many })] }],
+        }),
+      ),
+    );
+    const [only] = z
+      .array(z.object({ checkIns: z.array(z.object({ comments: z.array(z.unknown()) })) }))
+      .parse(prompt.members);
+    const comments = only?.checkIns[0]?.comments ?? [];
+    expect(comments).toHaveLength(PROMPT_COMMENTS);
+    expect(comments[0]).toStrictEqual({ from: '队友', text: '第5条' });
+    expect(comments.at(-1)).toStrictEqual({
+      from: '队友',
+      text: `第${String(PROMPT_COMMENTS + 4)}条`,
+    });
+  });
+
   it('lists the moves in their own order, whatever order the settings keep them in', () => {
     const reversed = z
       .record(AwardMove, z.string())
       .parse(Object.fromEntries(Object.entries(moves).reverse()));
     const prompt = Prompt.parse(
       JSON.parse(
-        promptFor({ weekStart: WeekStart.parse('2026-10-19'), moves: reversed, members: [] }),
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves: reversed,
+          members: [],
+          memes: [],
+        }),
       ),
     );
     expect(prompt.moves.map(({ id }) => id)).toStrictEqual([

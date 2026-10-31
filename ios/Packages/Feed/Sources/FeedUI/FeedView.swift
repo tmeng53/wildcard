@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -76,6 +77,12 @@ public struct FeedView: View {
             model.focus = nil
         }
         .feedSurface(model, isActive: model.opened == nil)
+        // Opened before any post was read: the character jogs in place until the list arrives.
+        .loadingCover(model.store.phase == .loading && model.store.sections.isEmpty) {
+            LoadingCharacter()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(role: .bgCanvas, in: theme))
+        }
         .task { await model.load() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
@@ -103,9 +110,15 @@ public struct FeedView: View {
                 }
             }
             if model.store.hasEarlier {
-                Color.clear
-                    .frame(height: Space.xxl)
-                    .task(id: sections.last?.id) { await model.store.loadEarlier() }
+                // Shown, it reads the week before; the dots say so once the wait lasts, and go
+                // when it ends, answered or not.
+                ZStack {
+                    if model.store.isLoadingEarlier {
+                        LoadingDots().foregroundStyle(Color(role: .fgDefault, in: theme))
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: Space.xxl)
+                .task(id: sections.last?.id) { await model.store.loadEarlier() }
             }
         }
     }
