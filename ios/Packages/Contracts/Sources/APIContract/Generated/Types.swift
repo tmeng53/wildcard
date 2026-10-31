@@ -53,6 +53,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
     func putMyAiConsent(_ input: Operations.PutMyAiConsent.Input) async throws -> Operations.PutMyAiConsent.Output
+    /// One check-in, with its reactions and comments
+    ///
+    /// A post’s own page, as the feed shows it: for its author, even from a squad they left, or a teammate who shares a squad it went to.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/get(getPost)`.
+    func getPost(_ input: Operations.GetPost.Input) async throws -> Operations.GetPost.Output
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -60,9 +67,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)`.
     func saveCheckIn(_ input: Operations.SaveCheckIn.Input) async throws -> Operations.SaveCheckIn.Output
-    /// A squad’s check-ins for a range of days, with their reactions
+    /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
-    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions of the teammates the viewer shares a squad with. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -107,6 +114,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
     func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
+    /// Comment on a check-in
+    ///
+    /// Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/put(commentOnCheckIn)`.
+    func commentOnCheckIn(_ input: Operations.CommentOnCheckIn.Input) async throws -> Operations.CommentOnCheckIn.Output
+    /// Delete your comment
+    ///
+    /// It is gone for everyone. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/delete(deleteComment)`.
+    func deleteComment(_ input: Operations.DeleteComment.Input) async throws -> Operations.DeleteComment.Output
+    /// A check-in’s comments
+    ///
+    /// Oldest first, for its author and the teammates who can see it.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/comments`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/get(listCheckInComments)`.
+    func listCheckInComments(_ input: Operations.ListCheckInComments.Input) async throws -> Operations.ListCheckInComments.Output
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -368,6 +396,21 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// One check-in, with its reactions and comments
+    ///
+    /// A post’s own page, as the feed shows it: for its author, even from a squad they left, or a teammate who shares a squad it went to.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/get(getPost)`.
+    public func getPost(
+        path: Operations.GetPost.Input.Path,
+        headers: Operations.GetPost.Input.Headers = .init()
+    ) async throws -> Operations.GetPost.Output {
+        try await getPost(Operations.GetPost.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -385,9 +428,9 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// A squad’s check-ins for a range of days, with their reactions
+    /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
-    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions of the teammates the viewer shares a squad with. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -476,6 +519,53 @@ extension APIProtocol {
         headers: Operations.ListCheckInReactions.Input.Headers = .init()
     ) async throws -> Operations.ListCheckInReactions.Output {
         try await listCheckInReactions(Operations.ListCheckInReactions.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Comment on a check-in
+    ///
+    /// Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/put(commentOnCheckIn)`.
+    public func commentOnCheckIn(
+        path: Operations.CommentOnCheckIn.Input.Path,
+        headers: Operations.CommentOnCheckIn.Input.Headers = .init(),
+        body: Operations.CommentOnCheckIn.Input.Body
+    ) async throws -> Operations.CommentOnCheckIn.Output {
+        try await commentOnCheckIn(Operations.CommentOnCheckIn.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Delete your comment
+    ///
+    /// It is gone for everyone. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/delete(deleteComment)`.
+    public func deleteComment(
+        path: Operations.DeleteComment.Input.Path,
+        headers: Operations.DeleteComment.Input.Headers = .init()
+    ) async throws -> Operations.DeleteComment.Output {
+        try await deleteComment(Operations.DeleteComment.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A check-in’s comments
+    ///
+    /// Oldest first, for its author and the teammates who can see it.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/comments`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/get(listCheckInComments)`.
+    public func listCheckInComments(
+        path: Operations.ListCheckInComments.Input.Path,
+        headers: Operations.ListCheckInComments.Input.Headers = .init()
+    ) async throws -> Operations.ListCheckInComments.Output {
+        try await listCheckInComments(Operations.ListCheckInComments.Input(
             path: path,
             headers: headers
         ))

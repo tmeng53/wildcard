@@ -11,6 +11,7 @@ import {
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
@@ -72,7 +73,7 @@ import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
-import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
+import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
@@ -198,6 +199,7 @@ const checkIns = createCheckIns({
   // Which sports exist is the sports module's to keep: check-ins and plans ask it.
   sports,
   reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -280,7 +282,7 @@ const app = createApp({
   jobs: {
     isScheduler,
     // Each kind of interaction the daily push counts comes from one of these.
-    interactions: [reactionInteractions(checkIns), nudgeInteractions(nudges)],
+    interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
   },
   admin: {

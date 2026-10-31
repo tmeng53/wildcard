@@ -13,6 +13,7 @@ import {
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
@@ -108,6 +109,7 @@ beforeAll(async () => {
               aiConsent: () => Promise.resolve(true),
             }),
             reactions: createPostgresReactionStore(db),
+            comments: createPostgresCommentStore(db),
             photos,
             plans: createPostgresWeeklyPlanStore(db),
             calendarOf: () => Promise.resolve(undefined),

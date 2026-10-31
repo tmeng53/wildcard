@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -39,7 +40,7 @@ import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-a
 import {
   dailyProgressNotification,
   nudgeInteractions,
-  reactionInteractions,
+  checkInInteractions,
   sendDailyProgress,
 } from './daily-progress-push.js';
 
@@ -62,6 +63,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership: squads,
   reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -80,7 +82,7 @@ const push = pushOn(db, recorder);
 const log = createLog(() => undefined);
 const JOBS_TOKEN = randomBytes(32).toString('hex');
 const nudges = nudgesOn(db);
-const interactions = [reactionInteractions(checkIns), nudgeInteractions(nudges)];
+const interactions = [checkInInteractions(checkIns), nudgeInteractions(nudges)];
 
 const deps = {
   db,
@@ -259,6 +261,15 @@ async function react({
   expect(reacted.status).toBe(201);
 }
 
+async function comment({ token, checkIn }: { readonly token: string; readonly checkIn: string }) {
+  const written = await call('PUT', {
+    path: `/check-ins/${checkIn}/comments/${randomUUID()}`,
+    token,
+    body: { version: 1, text: '加油' },
+  });
+  expect(written.status).toBe(201);
+}
+
 async function nudge(
   from: { readonly token: string },
   { squad, to, kind }: { readonly squad: string; readonly to: { userId: string }; kind: string },
@@ -310,6 +321,25 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toHaveLength(1);
     expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: false }]);
+  });
+
+  it('counts teammates who commented on the member’s posts, never the member’s own comments', async () => {
+    const eve = await member(evening);
+    const [early, other] = [await member(morning), await member(morning)];
+    const squad = await squadOf(eve, early, other);
+    const run1 = await trained(eve, squad);
+    await comment({ token: early.token, checkIn: run1 });
+    await comment({ token: early.token, checkIn: run1 });
+    await comment({ token: eve.token, checkIn: run1 });
+    await react({ token: other.token, checkIn: run1, emoji: '😂' });
+
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      {
+        alert: { key: 'push.dailyProgress.received', args: ['1', '15', '2'] },
+        event: { received: { reaction: 1, comment: 1 } },
+      },
+    ]);
   });
 
   it('follows the push settings: off for everyone, or at another hour', async () => {

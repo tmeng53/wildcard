@@ -1,10 +1,11 @@
 // @wildcard/check-ins: daily check-ins (练了, 健康餐, 坦白放纵餐, 今日请假条), teammates'
-// reactions, the weekly plans 本周 counts them against, their rules and their tables.
+// reactions and comments, the weekly plans 本周 counts them against, their rules and their tables.
 
 export {
   createPostgresCheckInStore,
   type CheckInTables,
 } from './adapters/postgres-check-in-store.js';
+export { createPostgresCommentStore } from './adapters/postgres-comment-store.js';
 export { createPostgresReactionStore } from './adapters/postgres-reaction-store.js';
 export { createPostgresWeekSummaryWords } from './adapters/postgres-week-summary-words.js';
 
@@ -30,6 +31,8 @@ export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-s
 export { DayRange } from './domain/day-range.js';
 export type { CheckInTotals, TopSport } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
+export { CommentId, type Comment } from './domain/comment.js';
+export { CommentText } from './domain/text.js';
 export {
   DEFAULT_PLAN_DAYS,
   PlanDay,
@@ -46,12 +49,15 @@ export {
   CheckInInTheFutureError,
   CheckInNotFoundError,
   CheckInTooOldError,
+  CommentIdConflictError,
   DisclaimerAlreadyPostedError,
+  NotYourCommentError,
   OwnCheckInReactionError,
   PhotoInUseError,
   PhotoNotUploadedError,
   PhotoNotYoursError,
   PlanDayStartedError,
+  ReplyToNotInSquadError,
   SportNotListedError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
@@ -62,6 +68,8 @@ export {
 export type {
   CheckInStore,
   Clock,
+  CommentStore,
+  CommentWriteOutcome,
   InsertOutcome,
   MemberCalendar,
   PhotoFiles,
@@ -72,6 +80,7 @@ export type {
   WeekSummaryWordsStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';
+export type { CommentInput, Commented } from './use-cases/check-ins/comments.js';
 export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadPost } from './use-cases/check-ins/list-squad-check-ins.js';

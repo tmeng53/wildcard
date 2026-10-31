@@ -181,6 +181,32 @@ describe('createWeeklyAwards', () => {
     expect(asked[0]).not.toContain('"member":"B"');
   });
 
+  it('sends comments only from members who agreed to AI use, asking about every writer once', async () => {
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const { awards, asked, consentAsked } = setup(undefined, { agreed: (each) => each !== cy });
+    const members: MemberWeek[] = [
+      {
+        member: ana,
+        timeZone: 'UTC',
+        checkIns: [
+          {
+            ...checkIn(),
+            comments: [
+              { member: bo, text: '雨天也跑' },
+              { member: cy, text: '不想给 AI 看' },
+            ],
+          },
+        ],
+      },
+      { member: bo, timeZone: 'UTC', checkIns: [checkIn()] },
+      { member: cy, timeZone: 'UTC', checkIns: [] },
+    ];
+    await awards.give({ squad, weekStart: week, members });
+    expect(consentAsked).toStrictEqual([[ana, bo, cy]]);
+    expect(asked[0]).toContain('雨天也跑');
+    expect(asked[0]).not.toContain('不想给 AI 看');
+  });
+
   it('asks the model nothing when nobody who checked in agreed to AI use', async () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const { awards, asked } = setup(undefined, { agreed: () => false });
