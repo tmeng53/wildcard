@@ -105,15 +105,17 @@ struct LoadingCover<Loader: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // Under the cover, VoiceOver reads only the cover.
-            .accessibilityHidden(gate.isShown)
             .overlay {
                 if gate.isShown {
                     // One element saying it is loading, whatever the loader hides from VoiceOver.
+                    // Modal, so VoiceOver reads only the cover. Hiding the content instead would
+                    // also unhide what the content itself hides from accessibility, such as a
+                    // tap-to-close layer, which then covers every element under it.
                     loader
                         .transition(.opacity)
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(Text("加载中", bundle: .module))
+                        .accessibilityAddTraits(.isModal)
                         .accessibilityIdentifier("loading.cover")
                 }
             }
