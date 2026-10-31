@@ -46,17 +46,20 @@ final class PushBannerUITests: XCTestCase {
             let shown = openNotificationCenter(showing: words)
             keepScreenshot(named: "\(sample.shot)-push-\(sample.key.replacingOccurrences(of: ".", with: "-"))")
 
-            // Notification Center may show it on a stack with the system's own, where the first tap
-            // only spreads the stack out; a person taps again.
-            var taps = 0
-            while taps < 3, !app.wait(for: .runningForeground, timeout: taps == 0 ? 0 : 8) {
-                shown.tap()
-                taps += 1
+            // Notification Center is the lock screen's cover: a tap hands the notification to the app,
+            // which wakes in the background, and the app comes forward once the cover is put away.
+            shown.tap()
+            if !app.wait(for: .runningForeground, timeout: 5) { XCUIDevice.shared.press(.home) }
+            if !app.wait(for: .runningForeground, timeout: 5) {
+                let bottom = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.99))
+                bottom.press(
+                    forDuration: 0.1,
+                    thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)))
             }
             XCTAssertTrue(
                 app.wait(for: .runningForeground, timeout: Self.wait),
-                "\(sample.key) didn't open the app (state \(app.state.rawValue), 1 = not running) after \(taps) taps on "
-                    + "\(shown.debugDescription.prefix(300)); "
+                "\(sample.key) didn't open the app (state \(app.state.rawValue), 1 = not running, 3 = in the "
+                    + "background) after tapping \(shown.debugDescription.prefix(300)); "
                     + "Notification Center's buttons: \(springboard.buttons.allElementsBoundByIndex.map(\.label))")
             waitFor(app.buttons[sample.opens], "isSelected == true", "\(sample.key) didn't open \(sample.opens)")
             app.terminate()
