@@ -105,6 +105,14 @@ const SquadPostList = z
   })
   .openapi('SquadPostList');
 
+/**
+ * Installed builds from before the replies were removed (#180) still require `replies` on each
+ * post and fail to read the whole feed without it, so every post keeps an empty one. It stays out
+ * of the contract: newer builds ignore keys they don't know. Remove it once no installed build
+ * predates #180.
+ */
+const installedBuildsReplies: { readonly replies: readonly never[] } = { replies: [] };
+
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
 const CheckInTotals = z
@@ -313,6 +321,7 @@ export function checkIns(deps: {
           posts: posts.map(({ checkIn, reactions }) => ({
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
+            ...installedBuildsReplies,
           })),
         },
         200,
