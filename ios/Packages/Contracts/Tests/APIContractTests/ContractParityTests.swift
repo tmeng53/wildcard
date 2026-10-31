@@ -81,6 +81,13 @@ func photoCountIsTheAPIs(schema: String) throws {
     #expect(try property("photos", of: schema)?.maxItems == Photos.maxCount)
 }
 
+@Test(arguments: ["width", "height"])
+func photoSideRangeIsTheAPIs(side: String) throws {
+    let range = try property(side, of: "PhotoSize")
+    #expect(range?.minimum == PhotoSize.sideRange.lowerBound)
+    #expect(range?.maximum == PhotoSize.sideRange.upperBound)
+}
+
 @Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
 func audienceSizeIsTheAPIs(schema: String) throws {
     #expect(try property("audience", of: schema)?.maxItems == Audience.maxSquads)

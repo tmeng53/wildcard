@@ -50,9 +50,10 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     #expect(throws: FeedError.ownPost) { try feed.react(.doubleTap, on: mine.id) }
 }
 
-/// Each sample post's photo comes back by the name it was rendered under.
+/// Each sample post's photo comes back by the name it was rendered under, with its size.
 @MainActor @Test func theSamplePhotosLoadByName() async throws {
-    let photos = Dictionary(uniqueKeysWithValues: InMemoryFeedSource.samplePhotoNames.map { ($0, Data($0.utf8)) })
+    let names = Array(InMemoryFeedSource.samplePhotoSizes.keys)
+    let photos = Dictionary(uniqueKeysWithValues: names.map { ($0, Data($0.utf8)) })
     let source = InMemoryFeedSource.sample(viewer: viewer, squad: squad, now: thursday, zone: newYork, photos: photos)
     let today = LocalDay(at: thursday, in: newYork)
     let feed = FeedStore(source: source, squad: squad, viewer: viewer, today: { today }, now: { Timestamp(thursday) })
@@ -64,13 +65,16 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
         case .disclaimer(let disclaimer): disclaimer.photos?.all ?? []
         }
     }
-    #expect(refs.count == 6)
+    #expect(refs.count == 7)
     var loaded: [String] = []
     for ref in refs {
         let data = try #require(await feed.photo(ref))
-        loaded.append(try #require(String(bytes: data, encoding: .utf8)))
+        let name = try #require(String(bytes: data, encoding: .utf8))
+        loaded.append(name)
+        #expect(ref.size?.width == InMemoryFeedSource.samplePhotoSizes[name]?.width)
+        #expect(ref.size?.height == InMemoryFeedSource.samplePhotoSizes[name]?.height)
     }
-    #expect(Set(loaded) == Set(InMemoryFeedSource.samplePhotoNames))
+    #expect(Set(loaded) == Set(names))
 }
 
 /// Every move an emoji asks for is drawn, for every persona; the rest cheer.
