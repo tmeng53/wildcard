@@ -37,12 +37,17 @@ public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate,
         self.opened = opened
     }
 
+    // Both answers run on the main actor. iOS calls these through Objective-C completion handlers,
+    // and an async method off the main actor calls that handler from a background thread, which
+    // UIKit refuses (a tap on a notification crashed TestFlight build 82.1 this way).
+    @MainActor
     public func userNotificationCenter(
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         [.banner, .list, .sound]
     }
 
+    @MainActor
     public func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
