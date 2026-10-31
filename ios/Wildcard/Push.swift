@@ -12,10 +12,12 @@ enum Push {
     static let promptDelay = Duration.seconds(1.5)
 
     #if DEBUG
-    /// Shows the payload `-uitest-push` passed (if any) as iOS would, from the app's own String Catalog: its `loc-key` and
-    /// `loc-args`, category, thread and interruption level, with the payload as `userInfo` so a
-    /// tap reaches the app as a pushed one does. The simulator can't take a push from APNs here,
-    /// so the UI tests deliver the server's samples this way.
+    /// Shows the payload `-uitest-push` passed (if any) as iOS would, from the app's own String
+    /// Catalog: its `loc-key` and `loc-args`, category and thread, with the payload as `userInfo` so
+    /// a tap reaches the app as a pushed one does. The simulator can't take a push from APNs here,
+    /// so the UI tests deliver the server's samples this way. Always as a banner, which a test can
+    /// tap; a passive push (the daily one) goes only to Notification Center on a phone, which the
+    /// server's own tests check.
     static func deliverLaunchSample() async {
         let center = UNUserNotificationCenter.current()
         guard let payload = LaunchOptions.pushSample,
@@ -29,9 +31,8 @@ enum Push {
         content.body = String(format: format, arguments: alert["loc-args"] as? [String] ?? [])
         content.categoryIdentifier = aps["category"] as? String ?? ""
         content.threadIdentifier = aps["thread-id"] as? String ?? ""
-        content.interruptionLevel = aps["interruption-level"] as? String == "passive" ? .passive : .active
         content.userInfo = payload
-        let soon = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+        let soon = UNTimeIntervalNotificationTrigger(timeInterval: 8, repeats: false)
         try? await center.add(UNNotificationRequest(identifier: key, content: content, trigger: soon))
     }
     #endif

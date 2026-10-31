@@ -1,9 +1,9 @@
 import XCTest
 
 /// Every push the server sends, as the member sees it: each sample in `push-samples.json` (which
-/// the API writes from its own push code, with the longest names a push can carry) is shown in
-/// Notification Center in Chinese, then tapped, which must open the screen the push points at.
-/// Keeps a screenshot of each for review.
+/// the API writes from its own push code, with the longest names a push can carry) is shown as a
+/// banner on the home screen in Chinese, then tapped, which must open the screen the push points
+/// at. Keeps a screenshot of each for review.
 ///
 /// Showing a notification needs the permission, which `NotificationPromptUITests` expects not to
 /// have been asked yet; XCTest runs the classes in name order, so that one runs first.
@@ -43,46 +43,24 @@ final class PushBannerUITests: XCTestCase {
             if allow.waitForExistence(timeout: 5) { allow.buttons.element(boundBy: 1).tap() }
 
             XCUIDevice.shared.press(.home)
-            let shown = openNotificationCenter(showing: words)
+            let banner = self.banner(showing: words)
             keepScreenshot(named: "\(sample.shot)-push-\(sample.key.replacingOccurrences(of: ".", with: "-"))")
-
-            // Notification Center is the lock screen's cover: a tap hands the notification to the app,
-            // which wakes in the background, and the app comes forward once the cover is put away.
-            shown.tap()
-            if !app.wait(for: .runningForeground, timeout: 5) { XCUIDevice.shared.press(.home) }
-            if !app.wait(for: .runningForeground, timeout: 5) {
-                let bottom = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.99))
-                bottom.press(
-                    forDuration: 0.1,
-                    thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)))
-            }
+            banner.tap()
             XCTAssertTrue(
                 app.wait(for: .runningForeground, timeout: Self.wait),
-                "\(sample.key) didn't open the app (state \(app.state.rawValue), 1 = not running, 3 = in the "
-                    + "background) after tapping \(shown.debugDescription.prefix(300)); "
-                    + "Notification Center's buttons: \(springboard.buttons.allElementsBoundByIndex.map(\.label))")
+                "\(sample.key) didn't open the app (state \(app.state.rawValue)) after tapping "
+                    + "\(banner.debugDescription.prefix(300))")
             waitFor(app.buttons[sample.opens], "isSelected == true", "\(sample.key) didn't open \(sample.opens)")
             app.terminate()
         }
     }
 
-    /// Pulls Notification Center down from the top left until the notification with these words
-    /// is in it (it arrives a few seconds after launch).
-    private func openNotificationCenter(showing words: String) -> XCUIElement {
-        let reading = NSPredicate(format: "label CONTAINS %@", words)
-        let notification = springboard.descendants(matching: .any).matching(reading).firstMatch
-        // The notification itself is a button. Notification Center also lists it in a `ListCell`
-        // button headed by the app's name, whose tap only spreads or folds the list.
-        let button = springboard.buttons.matching(reading)
-            .matching(NSPredicate(format: "identifier != 'ListCell'")).firstMatch
-        let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.01))
-        let down = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.6))
-        sleep(4)
-        top.press(forDuration: 0.1, thenDragTo: down)
-        XCTAssertTrue(
-            notification.waitForExistence(timeout: Self.wait), "no notification reading「\(words)」in Notification Center"
-        )
-        return button.exists ? button : notification
+    /// The banner with these words on the home screen (it arrives a few seconds after launch). The
+    /// banner itself is a button; the words alone are a text inside it.
+    private func banner(showing words: String) -> XCUIElement {
+        let banner = springboard.buttons.matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "no banner reading「\(words)」")
+        return banner
     }
 
     /// What iOS shows for a payload: its `loc-key`'s Chinese line with `loc-args` in its placeholders.

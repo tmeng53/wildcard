@@ -117,7 +117,7 @@ enum LaunchOptions {
 
     /// `-uitest-push JSON`: an APNs payload (one of `WildcardUITests/push-samples.json`, which the
     /// API writes) that the app shows as a notification a few seconds after launch, so a UI test
-    /// can look at it in Notification Center and tap it.
+    /// can look at its banner and tap it.
     static var pushSample: [String: Any]? {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-uitest-push"), flag + 1 < arguments.count else { return nil }
