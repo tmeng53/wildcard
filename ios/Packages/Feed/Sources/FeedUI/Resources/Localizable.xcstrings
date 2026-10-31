@@ -648,6 +648,12 @@
             "state" : "translated",
             "value" : "Opens full screen"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全螢幕看"
+          }
         }
       }
     }

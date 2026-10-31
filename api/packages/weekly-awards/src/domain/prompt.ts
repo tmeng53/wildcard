@@ -7,7 +7,8 @@ import type { WeekStart } from './schedule.js';
 // descriptions are settings, kept in the database (AwardSettings), so their wording changes
 // without a deploy; the product spec owns it and its eval cases (the awards prompt next to the
 // 请假条 one). Members go by a letter, never their id or name, and only those who checked in are
-// listed, so the model can't write about anyone who didn't.
+// listed, so the model can't write about anyone who didn't. The memes in use from the meme
+// library come along, for the model to use where one fits.
 
 const KIND_NAMES: Record<WeekCheckIn['kind'], string> = {
   trained: '练了',
@@ -28,14 +29,23 @@ function timeOfDay(moment: Date, timeZone: string): string {
   }).format(moment);
 }
 
+/** A meme from the meme library, as the prompt has it. */
+export interface PromptMeme {
+  readonly phrase: string;
+  readonly meaning: string;
+  readonly background: string;
+}
+
 /**
  * The user message: the week as JSON, members who checked in by letter in the order given,
- * each day's check-ins, and the moves to pick from, described as the settings have them.
+ * each day's check-ins, the moves to pick from, described as the settings have them, and the
+ * memes in use (left out when there are none).
  */
 export function promptFor(week: {
   readonly weekStart: WeekStart;
   readonly members: readonly MemberWeek[];
   readonly moves: AwardSettings['moves'];
+  readonly memes: readonly PromptMeme[];
 }): string {
   return JSON.stringify({
     version: 1,
@@ -54,5 +64,14 @@ export function promptFor(week: {
     })),
     // In the moves' own order, whatever order the database keeps them in.
     moves: AwardMove.options.map((id) => ({ id, description: week.moves[id] })),
+    ...(week.memes.length === 0
+      ? {}
+      : {
+          memes: week.memes.map(({ phrase, meaning, background }) => ({
+            phrase,
+            meaning,
+            background,
+          })),
+        }),
   });
 }
