@@ -32,7 +32,7 @@ export function sendTestPush({ push, squads, clock }: TestPushToolDependencies) 
       'Sends one push notification to your own phones only, built as the real one: ' +
       '`dailyProgress` (the 6pm push, with sample counts), `poke` (the 6pm push naming a ' +
       'teammate who patted you) or `weeklyAwards` (the 战报 is ready, for your squad’s latest ' +
-      'week). Nobody else gets it, and the daily push still comes as usual. Returns how many ' +
+      'week). Nobody else gets it, and it never replaces or hides the real push. Returns how many ' +
       'phones it reached: `off` above 0 means the server has no APNs key; `phones` 0 means the ' +
       'app hasn’t registered one (allow notifications after a check-in); `failures` gives ' +
       'Apple’s reasons.',
@@ -42,7 +42,7 @@ export function sendTestPush({ push, squads, clock }: TestPushToolDependencies) 
       const [squad] = await squads.listMine(SquadMember.parse(admin));
       if (squad === undefined) throw new TestPushNoSquadError();
       const now = clock();
-      const notification =
+      const built =
         kind === 'weeklyAwards'
           ? awardsReadyNotification(SquadId.parse(squad.id), latestAwardedWeek(now))
           : dailyProgressNotification({
@@ -52,6 +52,9 @@ export function sendTestPush({ push, squads, clock }: TestPushToolDependencies) 
               received: kind === 'poke' ? new Map([['poke', new Set([SAMPLE_POKER])]]) : new Map(),
               named: kind === 'poke' ? { kind: 'poke', nickname: SAMPLE_POKER } : undefined,
             });
+      // Its own collapse id, so on the phone it never replaces the real push of the day or week,
+      // nor is replaced by it.
+      const notification = { ...built, collapseId: `test-${kind}-${String(now.getTime())}` };
       const outcome = await push.notifyMembers({
         members: [PushMember.parse(admin)],
         notification,

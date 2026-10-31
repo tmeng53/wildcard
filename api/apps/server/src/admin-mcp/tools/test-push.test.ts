@@ -93,6 +93,12 @@ describe('send_test_push', () => {
       squad,
     ]);
     expect(sent[2]?.notification.event.weekStart).toBe('2026-10-19');
+    // Never collapsing into the real push of the day or week on the phone.
+    expect(sent.map(({ notification }) => notification.collapseId)).toStrictEqual([
+      `test-dailyProgress-${String(NOW.getTime())}`,
+      `test-poke-${String(NOW.getTime())}`,
+      `test-weeklyAwards-${String(NOW.getTime())}`,
+    ]);
   });
 
   it('says when the server has no APNs key, so nothing reached the phone', async () => {
