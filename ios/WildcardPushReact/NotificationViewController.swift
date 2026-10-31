@@ -19,6 +19,8 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
     private var hosting: UIHostingController<AnyView>?
 
     func didReceive(_ notification: UNNotification) {
+        // The language the member picked in the app, before anything is looked up or drawn.
+        AppLanguage.adopt(from: AppGroup.defaults)
         let content = notification.request.content
         guard let event = Self.event(content.userInfo), let push = try? DailyPush(event: event) else {
             // A push this build can't read: its words, as the banner shows them.

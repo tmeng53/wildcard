@@ -110,6 +110,40 @@ private actor Sender: ReactionSender {
     #expect(store.mine(on: id(slip)) == nil)
 }
 
+/// A server that holds the first reaction until `release()`, as a slow network might.
+private actor HeldSender: ReactionSender {
+    var taken: [String?] = []
+    private var first = true
+    private var gate: CheckedContinuation<Void, Never>?
+
+    var holding: Bool { gate != nil }
+
+    func release() {
+        gate?.resume()
+        gate = nil
+    }
+
+    func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(DailyPushError) {
+        if first {
+            first = false
+            await withCheckedContinuation { gate = $0 }
+        }
+        taken.append(emoji?.text)
+    }
+}
+
+@MainActor @Test func theLastPickIsWhatTheServerKeeps() async throws {
+    let sender = HeldSender()
+    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: sender, now: { noon })
+    try store.pick(try Emoji("💪"), on: id(slip))
+    while await !sender.holding { await Task.yield() }
+    try store.pick(try Emoji("😂"), on: id(slip))
+    await sender.release()
+    await store.sending?.value
+    #expect(await sender.taken == ["💪", "😂"])
+    #expect(store.mine(on: id(slip))?.text == "😂")
+}
+
 @MainActor @Test func nobodyReactsToAPostNotInThePush() async throws {
     let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: Sender(), now: { noon })
     #expect(throws: DailyPushError.unknownPost) { try store.pick(try Emoji("❤️"), on: id(meID)) }

@@ -4,21 +4,27 @@ import Foundation
 import Observation
 
 /// The push's view state: the squad day it carried, with the member's reactions applied at once
-/// and sent behind. A reaction that doesn't reach the server is put back.
+/// and sent behind, one call at a time per post with its latest wish last, as 动态's `FeedStore`
+/// does, so the server ends with the member's last pick. A reaction that doesn't reach the server
+/// is put back.
 @MainActor @Observable
 public final class DailyPushStore {
     public private(set) var push: DailyPush
     @ObservationIgnored private let sender: any ReactionSender
     @ObservationIgnored private let now: () -> Date
-    /// Bumps on every reaction, so a late failure only undoes the latest one on its post.
-    @ObservationIgnored private var sent: [CheckInID: Int] = [:]
-    /// The latest reaction going out, for tests to wait on.
+    /// Each post's reactions as the server last took them.
+    @ObservationIgnored private var taken: [CheckInID: Responses<Emoji>]
+    /// The member's reaction not yet taken by the server, latest wish per post.
+    @ObservationIgnored private var wishes: [CheckInID: Wish] = [:]
+    /// The latest send going out, for tests to wait on.
     @ObservationIgnored private(set) var sending: Task<Void, Never>?
+    @ObservationIgnored private var sendingPosts: Set<CheckInID> = []
 
     public init(push: DailyPush, sender: any ReactionSender, now: @escaping () -> Date) {
         self.push = push
         self.sender = sender
         self.now = now
+        taken = Dictionary(push.posts.map { ($0.id, $0.reactions) }, uniquingKeysWith: { first, _ in first })
     }
 
     public func post(_ id: CheckInID) -> PushPost? { push.posts.first { $0.id == id } }
@@ -34,25 +40,43 @@ public final class DailyPushStore {
         guard let index = push.posts.firstIndex(where: { $0.id == id }) else { throw .unknownPost }
         let before = push.posts[index]
         guard before.author != push.viewer else { throw .ownPost }
-        let had = before.reactions.kind(of: push.viewer)
-        let now: Emoji? = emoji == had ? nil : emoji
-        push.posts[index].reactions = before.reactions.setting(now, for: push.viewer, at: Timestamp(self.now()))
-        let attempt = (sent[id] ?? 0) + 1
-        sent[id] = attempt
-        let sender = sender
-        sending = Task {
-            do throws(DailyPushError) {
-                try await sender.setReaction(now, on: id)
-            } catch {
-                undo(id, to: before.reactions, attempt: attempt)
-            }
+        let wish = Wish(emoji: emoji == before.reactions.kind(of: push.viewer) ? nil : emoji, since: Timestamp(now()))
+        push.posts[index].reactions = wish.applied(to: before.reactions, by: push.viewer)
+        wishes[id] = wish
+        if !sendingPosts.contains(id) {
+            sending = Task { await send(id) }
         }
-        return now.map(MoveID.init)
+        return wish.emoji.map(MoveID.init)
     }
 
-    /// Puts a post's row back after its latest reaction failed.
-    private func undo(_ id: CheckInID, to reactions: Responses<Emoji>, attempt: Int) {
-        guard sent[id] == attempt, let index = push.posts.firstIndex(where: { $0.id == id }) else { return }
-        push.posts[index].reactions = reactions
+    /// Sends the post's wishes one at a time until none is left: a pick made while one is going
+    /// out goes next, so the server never takes an older pick after a newer one.
+    private func send(_ id: CheckInID) async {
+        sendingPosts.insert(id)
+        defer { sendingPosts.remove(id) }
+        while let wish = wishes[id] {
+            do throws(DailyPushError) {
+                try await sender.setReaction(wish.emoji, on: id)
+                taken[id] = taken[id].map { wish.applied(to: $0, by: push.viewer) }
+                if wishes[id] == wish { wishes[id] = nil }
+            } catch {
+                // A newer pick still goes out; otherwise the post shows what the server has.
+                guard wishes[id] == wish else { continue }
+                wishes[id] = nil
+                if let index = push.posts.firstIndex(where: { $0.id == id }), let reactions = taken[id] {
+                    push.posts[index].reactions = reactions
+                }
+            }
+        }
+    }
+}
+
+/// The reaction the member wants on a post, or none.
+private struct Wish: Hashable, Sendable {
+    let emoji: Emoji?
+    let since: Timestamp
+
+    func applied(to reactions: Responses<Emoji>, by member: MemberID) -> Responses<Emoji> {
+        reactions.setting(emoji, for: member, at: since)
     }
 }
