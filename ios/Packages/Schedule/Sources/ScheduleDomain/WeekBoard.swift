@@ -4,8 +4,7 @@ import Contracts
 public enum WeekTense: Hashable, Sendable {
     /// Over: read-only.
     case past
-    /// This week: the days still to come change freely; today's sport changes, and a rest today
-    /// may become a training day; the days before today stay.
+    /// This week: today and the days still to come change freely; the days before today stay.
     case current
     /// Next week or later: every day changes freely.
     case upcoming
@@ -16,8 +15,8 @@ public enum WeekTense: Hashable, Sendable {
 ///
 /// - Next week, or a day still to come this week: tap a day to select it, then pick its sport
 ///   or 休息 under the poster. Every change is saved, and the server logs each one.
-/// - This week, today picks a sport, never 休息: a rest today becomes a training day. The days
-///   before today stay as they are.
+/// - This week, today may also become 休息 (a 休息日, no 请假条 needed). The days before today
+///   stay as they are.
 /// - A past week: nothing changes.
 public struct WeekBoard: Hashable, Sendable {
     /// What the board has hold of.
@@ -71,12 +70,6 @@ public struct WeekBoard: Hashable, Sendable {
         }
     }
 
-    /// Whether 休息 is among the picks for the selected day: any day but today.
-    public var offersRest: Bool {
-        guard case .selected(let index) = focus else { return false }
-        return index != today
-    }
-
     public var plannedDays: Int { days.count { $0 != .rest } }
 
     @discardableResult
@@ -101,9 +94,9 @@ public struct WeekBoard: Hashable, Sendable {
         days[index] = .train(activity)
     }
 
-    /// Makes the selected day a rest day; nothing without a selected day, or for today.
+    /// Makes the selected day a rest day; nothing without a selected day.
     public mutating func rest() {
-        guard offersRest, case .selected(let index) = focus else { return }
+        guard case .selected(let index) = focus else { return }
         days[index] = .rest
     }
 
