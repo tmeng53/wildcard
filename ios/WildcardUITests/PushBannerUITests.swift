@@ -67,8 +67,10 @@ final class PushBannerUITests: XCTestCase {
     private func openNotificationCenter(showing words: String) -> XCUIElement {
         let reading = NSPredicate(format: "label CONTAINS %@", words)
         let notification = springboard.descendants(matching: .any).matching(reading).firstMatch
-        // The notification itself is a button; the words alone are a text inside it that a tap may not open.
-        let button = springboard.buttons.matching(reading).firstMatch
+        // The notification itself is a button. Notification Center also lists it in a `ListCell`
+        // button headed by the app's name, whose tap only spreads or folds the list.
+        let button = springboard.buttons.matching(reading)
+            .matching(NSPredicate(format: "identifier != 'ListCell'")).firstMatch
         let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.01))
         let down = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.6))
         sleep(4)
