@@ -31,7 +31,7 @@ struct WeekStep: View {
             )
             .accessibilityIdentifier("week.done")
             Button(action: model.skipWeek) {
-                Text("跳过", bundle: .module)
+                Text("以后再说", bundle: .module)
             }
             .buttonStyle(TextButtonStyle())
             .accessibilityIdentifier("week.skip")

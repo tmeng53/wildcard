@@ -178,13 +178,13 @@ struct DisclaimerComposer: View {
         .padding(.bottom, Space.s)
     }
 
-    /// 「灵感：deadline」, or 「灵感：随机」 before the member typed anything.
+    /// 「照着「deadline」编」, or 「随便编几句」 before the member typed anything.
     private var source: some View {
         Group {
             if entry.mine.isEmpty {
-                Text("灵感：随机", bundle: .module)
+                Text("随便编几句", bundle: .module)
             } else {
-                Text("灵感：\(entry.mine)", bundle: .module)
+                Text("照着「\(entry.mine)」编", bundle: .module)
             }
         }
         .typeStyle(TypeRamp.footnote)

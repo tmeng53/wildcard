@@ -84,7 +84,7 @@ final class TodayUITests: XCTestCase {
         // The page opens on writing the reason, with nothing to post yet.
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "the keyboard isn't up")
         XCTAssertEqual(field.placeholderValue, "为什么没练？")
-        XCTAssertEqual(source.label, "灵感：随机")
+        XCTAssertEqual(source.label, "随便编几句")
         XCTAssertFalse(post.isEnabled, "an empty excuse can be posted")
 
         field.typeText("deadline")
@@ -98,7 +98,7 @@ final class TodayUITests: XCTestCase {
         // lands at once.
         let write = app.buttons["disclaimer.write"]
         let first = writeFunnyLines(in: app)
-        XCTAssertEqual(source.label, "灵感：deadline")
+        XCTAssertEqual(source.label, "照着「deadline」编")
         XCTAssertEqual(field.value as? String, first.label, "编几句 didn't put its first line up")
         XCTAssertTrue(first.isSelected, "the line in the excuse isn't marked")
         keepScreenshot(named: "18-disclaimer-styled")

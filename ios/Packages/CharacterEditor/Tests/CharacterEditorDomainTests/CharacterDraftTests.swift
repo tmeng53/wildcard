@@ -105,6 +105,20 @@ import Testing
     #expect(editing.outfit.colors["top"] == nil)
 }
 
+@Test func takingAPieceOffAndOnAgainKeepsItsColor() {
+    var editing = draft()
+    let worn = editing.outfit.variants["top"]
+    editing.pickColor(blue, for: "top")
+    editing.pick(nil, for: "top")
+    editing.pick(worn, for: "top")
+    #expect(editing.outfit.colors["top"] == blue)
+    // Taken off in its own color, it comes back in its own color.
+    editing.pickColor(nil, for: "top")
+    editing.pick(nil, for: "top")
+    editing.pick(worn, for: "top")
+    #expect(editing.outfit.colors["top"] == nil)
+}
+
 @Test func undoGoesBackOneLookAtATime() {
     var editing = draft()
     editing.pick("racket", for: "prop")

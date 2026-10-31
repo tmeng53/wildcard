@@ -165,7 +165,7 @@ private struct CardFront: View {
                     Score(count: week.trainedDays, goal: week.plannedDays, size: .card, onInk: true)
                 }
             }
-            FrontStat(label: Text("周奖", bundle: .module)) {
+            FrontStat(label: Text("拿过的奖", bundle: .module)) {
                 Score(count: overview.titles.count, size: .card, onInk: true)
                     .accessibilityIdentifier("me.titles")
             }
@@ -224,7 +224,7 @@ private struct CardBack: View {
                 .padding(.top, Space.m)
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 Score(count: overview.counts.trainedDays, size: .hero, onInk: true)
-                Text("次练了", bundle: .module)
+                Text("次训练", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
             }
@@ -233,7 +233,7 @@ private struct CardBack: View {
                 BackStat(label: Text("健康餐", bundle: .module), isLast: false) {
                     Score(count: overview.counts.healthyMeals, size: .inline, onInk: true)
                 }
-                BackStat(label: Text("坦白放纵餐", bundle: .module), isLast: false) {
+                BackStat(label: Text("放纵餐", bundle: .module), isLast: false) {
                     Score(count: overview.counts.cheatMeals, size: .inline, onInk: true)
                 }
                 BackStat(label: Text("请假条", bundle: .module), isLast: false) {
@@ -256,7 +256,7 @@ private struct CardBack: View {
                     }
                     .accessibilityIdentifier("me.mostTrained")
                 }
-                BackStat(label: Text("周奖", bundle: .module), isLast: true) {
+                BackStat(label: Text("拿过的奖", bundle: .module), isLast: true) {
                     if let latest = overview.titles.latest {
                         HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                             Text(verbatim: latest.title)

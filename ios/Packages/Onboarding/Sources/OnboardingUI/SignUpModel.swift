@@ -271,7 +271,7 @@ public final class SignUpModel {
         show(.week)
     }
 
-    /// 以后再选: on with no sports, so training days name none.
+    /// 以后再说: on with no sports, so training days name none.
     func skipSports() {
         if sports.wearing != nil { myCharacter?.dress(for: nil) }
         sports = SportPicks()
@@ -310,7 +310,7 @@ public final class SignUpModel {
 
     // MARK: 这周在哪练？
 
-    /// 「就它了」: saves the pick, then its carton opens.
+    /// 「确认」: saves the pick, then its carton opens.
     func confirmScene() {
         guard let picker = scenePicker, picker.canConfirm else { return }
         failure = nil

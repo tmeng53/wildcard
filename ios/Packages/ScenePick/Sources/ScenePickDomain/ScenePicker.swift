@@ -2,7 +2,7 @@ import Contracts
 import DesignSystem
 import Observation
 
-/// When the squad last trained at a scene, as the picker says it above 「就它了」.
+/// When the squad last trained at a scene, as the picker says it above 「确认」.
 public enum LastTrained: Hashable, Sendable {
     /// The squad's scene this week.
     case thisWeek
@@ -65,7 +65,7 @@ public enum ScenePickError: Error, Hashable, Sendable {
 /// Where the picker is.
 public enum ScenePickPhase: Hashable, Sendable {
     case choosing
-    /// 「就它了」 was pressed and the pick is being saved.
+    /// 「确认」 was pressed and the pick is being saved.
     case saving
     /// Saved: the reveal plays, and the picker is locked for the week.
     case picked(SceneTheme)
@@ -73,7 +73,7 @@ public enum ScenePickPhase: Hashable, Sendable {
     case failed(ScenePickError)
 }
 
-/// Picking next week's scene, once (spec rev 269): tap a tile to choose it, 「就它了」 to pick
+/// Picking next week's scene, once (spec rev 269): tap a tile to choose it, 「确认」 to pick
 /// it, then the reveal. A pick can't be changed.
 @MainActor @Observable
 public final class ScenePicker {
@@ -103,12 +103,12 @@ public final class ScenePicker {
         selection = scene
     }
 
-    /// When the squad last trained at the chosen scene, for the line above 「就它了」.
+    /// When the squad last trained at the chosen scene, for the line above 「确认」.
     public var selectionLastTrained: LastTrained? {
         options.first { $0.scene == selection }?.lastTrained
     }
 
-    /// Whether 「就它了」 can be pressed.
+    /// Whether 「确认」 can be pressed.
     public var canConfirm: Bool { canChoose && selection != nil }
 
     private var canChoose: Bool {

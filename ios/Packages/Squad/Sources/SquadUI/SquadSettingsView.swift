@@ -73,7 +73,7 @@ public struct SquadSettingsView: View {
                     .accessibilityIdentifier("squad.back")
                 header(settings)
                 if model.changeFailed {
-                    Text("网络开小差了，没改成", bundle: .module)
+                    Text("网络开小差了，没存上", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .accessibilityIdentifier("squad.changeFailed")
@@ -261,7 +261,7 @@ public struct SquadSettingsView: View {
             .accessibilityIdentifier("squad.leave.confirm")
         } message: {
             if settings.squad.members.count == 1 {
-                Text("你是最后一个人，小队会解散", bundle: .module)
+                Text("你走了，小队就散了", bundle: .module)
             } else if model.isCaptain {
                 Text("队长会交给最早加入的队友", bundle: .module)
             }
@@ -269,7 +269,7 @@ public struct SquadSettingsView: View {
     }
 }
 
-/// The scene picker's reveal, once 「就它了」 saved.
+/// The scene picker's reveal, once 「确认」 saved.
 private struct Reveal {
     let unboxing: Unboxing
     let scene: SceneTheme

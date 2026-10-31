@@ -9,12 +9,12 @@ final class CharacterEditorUITests: XCTestCase {
     /// query; a wait that succeeds returns as soon as it does.
     private static let wait: TimeInterval = 30
 
-    /// Sign-up opens on 样子 with the step, the person picked and nothing to undo yet.
+    /// Sign-up opens on 长相 with the step, the person picked and nothing to undo yet.
     func testOpeningInSignUp() {
         let app = launch(language: "zh-Hans")
         let done = app.buttons["editor.done"]
         XCTAssertTrue(done.waitForExistence(timeout: Self.wait), "the editor never appeared")
-        XCTAssertEqual(done.label, "就这样")
+        XCTAssertEqual(done.label, "确认")
         let steps = app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch
         XCTAssertEqual(steps.label, "第 2 步，共 4 步")
         XCTAssertTrue(app.buttons["editor.tile.body.peach"].isSelected, "the sample isn't a person")
@@ -158,7 +158,7 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "25-editor-persona-showoff")
     }
 
-    /// A cat wears no hair or person's face, so 发型 and 脸 go away; 就这样 waits for a nickname.
+    /// A cat wears no hair or person's face, so 发型 and 脸 go away; 确认 waits for a nickname.
     func testBecomingACatWithANickname() {
         let app = launch(language: "zh-Hans")
         let done = app.buttons["editor.done"]
@@ -193,18 +193,18 @@ final class CharacterEditorUITests: XCTestCase {
         // finishes the character.
         let named = app.buttons["editor.named"]
         XCTAssertTrue(named.waitForExistence(timeout: Self.wait), "the button isn't 好了 while typing")
-        XCTAssertFalse(done.exists, "就这样 shows while the nickname is typed")
+        XCTAssertFalse(done.exists, "确认 shows while the nickname is typed")
         XCTAssertTrue(named.isHittable, "the keyboard covers 好了")
         named.tap()
         waitFor(app.keyboards.element, "exists == false", "好了 left the keyboard up")
-        waitFor(done, "isEnabled == false", "就这样 is on with no nickname")
+        waitFor(done, "isEnabled == false", "确认 is on with no nickname")
         nickname.tap()
         nickname.typeText("小汤")
         XCTAssertEqual(undo.frame.minY, headerTop, accuracy: 1, "the keyboard moved the header")
         keepScreenshot(named: "27-editor-nickname")
         nickname.typeText("\n")
         waitFor(app.keyboards.element, "exists == false", "Return left the keyboard up")
-        waitFor(done, "isEnabled == true", "就这样 stays off with a nickname")
+        waitFor(done, "isEnabled == true", "确认 stays off with a nickname")
     }
 
     func testChangingTheCharacterFromProfileInEnglish() {
@@ -213,7 +213,7 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "the editor never appeared")
         XCTAssertEqual(save.label, "Save")
         XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
-        XCTAssertEqual(app.buttons["editor.tab.look"].label, "Look")
+        XCTAssertEqual(app.buttons["editor.tab.look"].label, "Looks")
         app.buttons["editor.tab.outfit"].tap()
         let warmup = app.buttons["editor.store.warmup"]
         XCTAssertTrue(warmup.waitForExistence(timeout: Self.wait), "no WARM-UP on the street")
@@ -254,7 +254,7 @@ final class CharacterEditorUITests: XCTestCase {
     private func scrollUntilHittable(_ element: XCUIElement, in app: XCUIApplication) {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
-        // Clear of 就这样 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
+        // Clear of 确认 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
         let done = app.buttons["editor.done"]
         func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
         for _ in 0..<12 where !inView() {

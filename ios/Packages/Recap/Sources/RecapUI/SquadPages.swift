@@ -42,7 +42,7 @@ struct MealsPage: View {
                 PageTitle(label: Text("全队", bundle: .module), title: Text("吃了", bundle: .module))
                 HStack(alignment: .top, spacing: Space.xl) {
                     count(meals.healthy, Text("健康餐", bundle: .module), size: .story)
-                    count(meals.cheat, Text("坦白放纵餐", bundle: .module), size: .hero)
+                    count(meals.cheat, Text("放纵餐", bundle: .module), size: .hero)
                 }
                 if let line = meals.line {
                     Text(verbatim: line)

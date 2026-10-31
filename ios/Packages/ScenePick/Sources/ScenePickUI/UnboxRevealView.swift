@@ -4,7 +4,7 @@ import DesignSystemUI
 import ScenePickDomain
 import SwiftUI
 
-/// The reveal after 「就它了」, over the page it was picked on: it draws `Unboxing`'s frames,
+/// The reveal after 「确认」, over the page it was picked on: it draws `Unboxing`'s frames,
 /// scaled from the design's 390-point width to the screen. `page` is what it plays over (the
 /// 战报's last page), so the carton's landing can shake it; `backdrop` is the picked scene as
 /// home draws it, filling the screen, which the card shows cropped as it rises. Once the card
@@ -62,7 +62,7 @@ public struct UnboxRevealView<Page: View, Backdrop: View>: View {
         .accessibilityHidden(true)
     }
 
-    /// The reveal's clock: the time since 「就它了」, or with Reduce Motion the page, then the
+    /// The reveal's clock: the time since 「确认」, or with Reduce Motion the page, then the
     /// scene filling the screen.
     private func clock(at date: Date) -> Double {
         let elapsed = date.timeIntervalSince(startedAt)

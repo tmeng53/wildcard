@@ -198,7 +198,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Healthy meals"
+            "value": "Clean meals"
           }
         },
         "zh-Hant": {
@@ -337,18 +337,18 @@
         }
       }
     },
-    "坦白放纵餐": {
+    "放纵餐": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Confessed treats"
+            "value": "Cheat meals"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "坦白放縱餐"
+            "value": "放縱餐"
           }
         }
       }
@@ -385,18 +385,18 @@
         }
       }
     },
-    "打卡照片": {
+    "照片": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check-in photo"
+            "value": "Photo"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "打卡照片"
+            "value": "照片"
           }
         }
       }
@@ -433,22 +433,6 @@
         }
       }
     },
-    "放纵餐": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Treats"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "放縱餐"
-          }
-        }
-      }
-    },
     "日": {
       "localizations": {
         "en": {
@@ -470,7 +454,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Best excuse note"
+            "value": "Best day-off note"
           }
         },
         "zh-Hant": {
@@ -582,7 +566,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excuse note"
+            "value": "Day-off note"
           }
         },
         "zh-Hant": {

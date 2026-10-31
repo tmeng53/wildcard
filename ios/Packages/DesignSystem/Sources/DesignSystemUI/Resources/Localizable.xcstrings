@@ -918,7 +918,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cheat meal confession"
+            "value": "Cheat meal"
           }
         },
         "zh-Hant": {
@@ -2081,18 +2081,18 @@
         }
       }
     },
-    "被戳提醒": {
+    "拍一拍": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pokes"
+            "value": "Pat"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "被戳提醒"
+            "value": "拍一拍"
           }
         }
       }
@@ -2429,22 +2429,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天練了"
-          }
-        }
-      }
-    },
-    "拍一拍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pat"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拍一拍"
           }
         }
       }
