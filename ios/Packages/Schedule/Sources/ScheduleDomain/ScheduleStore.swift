@@ -168,9 +168,9 @@ public final class ScheduleStore {
         await savePlan()
     }
 
-    /// Makes the selected day a rest day, any day but today, and saves it.
+    /// Makes the selected day a rest day and saves it.
     public func rest() async {
-        guard var board, board.offersRest else { return }
+        guard var board, case .selected = board.focus else { return }
         board.rest()
         self.board = board
         await savePlan()

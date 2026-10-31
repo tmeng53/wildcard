@@ -60,8 +60,9 @@ struct SettingsView: View {
             .padding(.top, Space.xs)
             .padding(.bottom, Space.l)
         }
+        // Always scrollable: the room left for the tab bar is a safe-area inset, which a size-based
+        // bounce doesn't count, so the last rows could fit the page yet sit under the bar.
         .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize)
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityIdentifier("settings.page")
     }
