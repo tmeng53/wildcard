@@ -161,6 +161,27 @@ final class MeUITests: XCTestCase {
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.minY, "\(element) sits under the tab bar")
     }
 
+    /// 我 in Traditional Chinese reads in Taiwan's words, not converted ones.
+    func testMePageInTraditionalChinese() {
+        let app = launch(language: "zh-Hant")
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30))
+        XCTAssertTrue(card.label.contains("練了"), "the card isn't in Traditional Chinese: \(card.label)")
+        XCTAssertTrue(app.buttons["編輯外卡運動員"].exists)
+        settle()
+        keepScreenshot(named: "49-me-zh-hant")
+        app.buttons["me.settings"].tap()
+        let language = app.buttons["me.language"]
+        XCTAssertTrue(language.waitForExistence(timeout: 30), "設定 has no 語言 row")
+        XCTAssertTrue(language.label.contains("繁體中文"), "the row doesn't name the language: \(language.label)")
+        app.swipeUp()
+        let deleteAccount = app.buttons["me.deleteAccount"]
+        XCTAssertTrue(deleteAccount.waitForExistence(timeout: 30), "no delete-account row in 設定")
+        XCTAssertTrue(deleteAccount.label.contains("刪除帳號"), "the row reads \(deleteAccount.label)")
+        settle()
+        keepScreenshot(named: "50-settings-zh-hant")
+    }
+
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

@@ -14,6 +14,12 @@
             "state" : "translated",
             "value" : "外卡"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外卡"
+          }
         }
       }
     },
@@ -29,6 +35,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "存图时把出赛表海报存到你的相册。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存圖時把出賽表海報存到你的相簿。"
           }
         }
       }

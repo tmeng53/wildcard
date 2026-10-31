@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -50,6 +51,7 @@ describe('openapi.json', () => {
           aiConsent: () => Promise.resolve(true),
         }),
         reactions: createPostgresReactionStore(db),
+        comments: createPostgresCommentStore(db),
         plans: createPostgresWeeklyPlanStore(db),
         photos,
         calendarOf: () => Promise.resolve(undefined),

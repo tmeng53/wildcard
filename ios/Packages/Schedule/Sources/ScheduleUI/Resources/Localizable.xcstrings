@@ -8,12 +8,24 @@
             "state": "translated",
             "value": "%1$@ %2$@%3$@"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@%3$@"
+          }
         }
       }
     },
     "%@ · %@": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ · %2$@"
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "%1$lld on · %2$lld off"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld 練 %2$lld 休"
+          }
         }
       }
     },
@@ -41,6 +59,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好好吃早餐"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "好好吃早餐"
@@ -62,6 +86,12 @@
             "state": "translated",
             "value": "自己做饭"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自己煮"
+          }
         }
       }
     },
@@ -78,6 +108,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "晚饭早点吃"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "晚餐早點吃"
           }
         }
       }
@@ -96,6 +132,12 @@
             "state": "translated",
             "value": "奶茶减半"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手搖飲減半"
+          }
         }
       }
     },
@@ -112,6 +154,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "每天有菜"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每天吃蔬菜"
           }
         }
       }
@@ -130,6 +178,12 @@
             "state": "translated",
             "value": "喝够水"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "喝夠水"
+          }
         }
       }
     },
@@ -139,6 +193,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trained in all"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "總共練了"
           }
         }
       }
@@ -150,6 +210,12 @@
             "state": "translated",
             "value": "Next week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下週"
+          }
         }
       }
     },
@@ -159,6 +225,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
           }
         }
       }
@@ -170,6 +242,12 @@
             "state": "translated",
             "value": "Rest"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "休息"
+          }
         }
       }
     },
@@ -179,6 +257,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加上"
           }
         }
       }
@@ -190,6 +274,12 @@
             "state": "translated",
             "value": "Mon"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週一"
+          }
         }
       }
     },
@@ -199,6 +289,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mon %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週一 %@"
           }
         }
       }
@@ -210,6 +306,12 @@
             "state": "translated",
             "value": "Wed"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週三"
+          }
         }
       }
     },
@@ -219,6 +321,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tue"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週二"
           }
         }
       }
@@ -230,6 +338,12 @@
             "state": "translated",
             "value": "Fri"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週五"
+          }
         }
       }
     },
@@ -239,6 +353,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sat"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週六"
           }
         }
       }
@@ -250,6 +370,12 @@
             "state": "translated",
             "value": "Thu"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週四"
+          }
         }
       }
     },
@@ -259,6 +385,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sun"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週日"
           }
         }
       }
@@ -270,6 +402,12 @@
             "state": "translated",
             "value": "days"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天"
+          }
         }
       }
     },
@@ -279,6 +417,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Title: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頭銜：%@"
           }
         }
       }
@@ -290,6 +434,12 @@
             "state": "translated",
             "value": "Save"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存圖"
+          }
         }
       }
     },
@@ -299,6 +449,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep a goal to 8 characters or fewer"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小目標寫 1 到 8 個字就好"
           }
         }
       }
@@ -310,6 +466,12 @@
             "state": "translated",
             "value": "Days that have started can't change"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已經開始的日子不能改囉"
+          }
         }
       }
     },
@@ -319,6 +481,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "More"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多"
           }
         }
       }
@@ -330,6 +498,12 @@
             "state": "translated",
             "value": "This week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週"
+          }
         }
       }
     },
@@ -339,6 +513,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Squad this week"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週小隊訓練"
           }
         }
       }
@@ -350,6 +530,12 @@
             "state": "translated",
             "value": "times"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次"
+          }
         }
       }
     },
@@ -359,6 +545,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Didn't save. Try again"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒存到，再試一次"
           }
         }
       }
@@ -370,6 +562,12 @@
             "state": "translated",
             "value": "Didn't save. Try another plan"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒存到，換個排法試試"
+          }
         }
       }
     },
@@ -379,6 +577,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "You've been signed out. Sign in to plan"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登入過期了，重新登入再來排"
           }
         }
       }
@@ -390,6 +594,12 @@
             "state": "translated",
             "value": "Games start in"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "離開賽還有"
+          }
         }
       }
     },
@@ -399,6 +609,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練了"
           }
         }
       }
@@ -410,6 +626,12 @@
             "state": "translated",
             "value": "No connection, so it didn't save. Try again soon"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路不太好，沒存到，等一下再改一次"
+          }
         }
       }
     },
@@ -419,6 +641,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "No connection. Plan once you're back online"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路不太好，連上了再來排"
           }
         }
       }
@@ -430,6 +658,12 @@
             "state": "translated",
             "value": "Write my own"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自己寫"
+          }
         }
       }
     },
@@ -439,6 +673,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Train"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "訓練"
           }
         }
       }
@@ -450,6 +690,12 @@
             "state": "translated",
             "value": "Day off"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假"
+          }
         }
       }
     },
@@ -459,6 +705,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "This week is over, so it stays as it was"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這週已經結束了，就讓它留在這裡吧"
           }
         }
       }
@@ -470,6 +722,12 @@
             "state": "translated",
             "value": "Food"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "飲食"
+          }
         }
       }
     },
@@ -479,6 +737,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Food goals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "飲食小目標"
           }
         }
       }
@@ -490,6 +754,12 @@
             "state": "translated",
             "value": "Food goals · %1$lld/%2$lld"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "飲食小目標 · %1$lld/%2$lld"
+          }
         }
       }
     },
@@ -500,6 +770,12 @@
             "state": "translated",
             "value": ", trained"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "，練了"
+          }
         }
       }
     },
@@ -509,6 +785,12 @@
           "stringUnit": {
             "state": "translated",
             "value": ", day off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "，請假"
           }
         }
       }

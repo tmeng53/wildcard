@@ -31,6 +31,16 @@ export interface WeekCheckIn {
   readonly photos: readonly string[];
   /** Teammates' reactions on it, by emoji; an emoji nobody left is left out. */
   readonly reactions: Readonly<Record<string, number>>;
+  /** Comments on it from the squad, its author's included, oldest first; none when left out. */
+  readonly comments?: readonly WeekComment[] | undefined;
+}
+
+/** A comment on a check-in, as the awards read it. */
+export interface WeekComment {
+  readonly member: MemberId;
+  readonly text: string;
+  /** Whom it replies to, when it does. */
+  readonly replyTo?: MemberId | undefined;
 }
 
 /** One member's week, as the awards are written from it. */

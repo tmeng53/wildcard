@@ -147,6 +147,42 @@ export class OwnCheckInReactionError extends AppError {
   }
 }
 
+/**
+ * Thrown when a comment id is already saved with a different comment, or on another check-in.
+ * The app reused an id: give the comment a new one.
+ */
+export class CommentIdConflictError extends AppError {
+  override readonly name = 'CommentIdConflictError';
+  readonly reason = 'COMMENT_ID_CONFLICT';
+  readonly status = 'ALREADY_EXISTS';
+
+  constructor(readonly commentId: string) {
+    super(`Comment ${commentId} is already saved with different contents.`);
+  }
+}
+
+/** Thrown for a reply to someone who can't see the check-in: a reply names a teammate. */
+export class ReplyToNotInSquadError extends AppError {
+  override readonly name = 'ReplyToNotInSquadError';
+  readonly reason = 'REPLY_TO_NOT_IN_SQUAD';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('You can only reply to someone in the squad.');
+  }
+}
+
+/** Thrown when a member deletes someone else's comment: each deletes only their own. */
+export class NotYourCommentError extends AppError {
+  override readonly name = 'NotYourCommentError';
+  readonly reason = 'NOT_YOUR_COMMENT';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('You can only delete your own comments.');
+  }
+}
+
 /** Thrown for a change to a past week's plan: past weeks are kept as they were. */
 export class WeekOverError extends AppError {
   override readonly name = 'WeekOverError';
@@ -181,8 +217,7 @@ export class WeekTooFarAheadError extends AppError {
 }
 
 /**
- * Thrown for a change to a day of the current week that has already started: earlier days stay
- * as planned, and a training today stays a training day.
+ * Thrown for a change to a day of the current week before today: those days stay as planned.
  */
 export class PlanDayStartedError extends AppError {
   override readonly name = 'PlanDayStartedError';
