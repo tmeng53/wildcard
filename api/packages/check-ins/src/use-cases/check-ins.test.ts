@@ -312,7 +312,7 @@ describe('saving a check-in', () => {
     ).rejects.toMatchObject({ reason: 'CHECK_IN_ID_CONFLICT' });
   });
 
-  it('allows one disclaimer a day, even when two are saved at once', async () => {
+  it('allows any number of disclaimers a day, even two saved at once', async () => {
     const member = await newMember();
     const squad = await newSquad(member);
     const results = await Promise.allSettled(
@@ -324,10 +324,7 @@ describe('saving a check-in', () => {
         }),
       ),
     );
-    expect(results.map((result) => result.status).sort()).toStrictEqual(['fulfilled', 'rejected']);
-    expect(results.find((result) => result.status === 'rejected')).toMatchObject({
-      reason: { reason: 'DISCLAIMER_ALREADY_POSTED' },
-    });
+    expect(results.map((result) => result.status)).toStrictEqual(['fulfilled', 'fulfilled']);
     // A training on the same day, and a disclaimer the next day, are fine.
     await checkIns.save({
       id: CheckInId.parse(randomUUID()),

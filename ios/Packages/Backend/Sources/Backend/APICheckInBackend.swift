@@ -168,7 +168,6 @@ extension CheckInError {
             case .unavailable: .notSent
             case .account(.signedOut), .account(.credentialRejected), .account(.canceled): .signedOut
             case .account: .notSent
-            case .refused(.disclaimerAlreadyPosted): .disclaimerAlreadyPosted
             case .refused(.squadNotJoined): .notInSquad
             case .refused(.checkInOutOfTime): .outOfTime
             case .refused(.photoRejected): .photoRejected

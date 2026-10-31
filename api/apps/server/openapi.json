@@ -1452,7 +1452,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins, at most one a day."
+            "description": "今日请假条 check-ins."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"

@@ -18,8 +18,6 @@ public enum APIError: Error, Equatable, Sendable {
 public enum Refusal: Equatable, Sendable {
     /// The check-in id already holds a different check-in.
     case checkInIDConflict
-    /// Today's 请假条 is already posted; one a day.
-    case disclaimerAlreadyPosted
     /// The member isn't in a squad the request names.
     case squadNotJoined
     /// Made more than 48 hours ago, ahead of the server's clock, or counted for the wrong day.
@@ -76,7 +74,6 @@ public enum Refusal: Equatable, Sendable {
 
     private static let byReason: [String: Refusal] = [
         "CHECK_IN_ID_CONFLICT": .checkInIDConflict,
-        "DISCLAIMER_ALREADY_POSTED": .disclaimerAlreadyPosted,
         "SQUAD_NOT_JOINED": .squadNotJoined,
         "CHECK_IN_TOO_OLD": .checkInOutOfTime,
         "CHECK_IN_IN_THE_FUTURE": .checkInOutOfTime,

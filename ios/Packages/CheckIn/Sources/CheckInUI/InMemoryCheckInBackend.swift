@@ -161,13 +161,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     public func save(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
         guard var home = current else { throw .notInSquad }
         if let saved = home.checkIns.first(where: { $0.id == checkIn.id }) { return saved }
-        if case .disclaimer = checkIn.entry, let mine = home.mine {
-            switch mine.training {
-            case .trained: throw .alreadyTrained
-            case .disclaimer: throw .disclaimerAlreadyPosted
-            case .notCheckedIn: break
-            }
-        }
+        if case .disclaimer = checkIn.entry, home.mine?.training == .trained { throw .alreadyTrained }
         home.today = home.today.countingMine(checkIn, squadSaw: home.squadSees(on: checkIn.day))
         home.checkIns.append(checkIn)
         current = home

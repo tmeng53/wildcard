@@ -11,8 +11,7 @@ import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
-  | { readonly saved: true }
-  | { readonly saved: false; readonly taken: 'id' | 'dailyDisclaimer' | 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' };
 
 /** Where check-ins are kept. */
 export interface CheckInStore {
