@@ -60,7 +60,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .execute(),
       db
         .selectFrom('check_in_photos')
-        .select(['check_in_id', 'path'])
+        .select(['check_in_id', 'path', 'width', 'height'])
         .where('check_in_id', 'in', ids)
         .orderBy('check_in_id')
         .orderBy('position')
@@ -71,11 +71,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       audiences.set(check_in_id, [...(audiences.get(check_in_id) ?? []), SquadId.parse(squad_id)]);
     }
     const photos = new Map<string, PhotoRef[]>();
-    for (const { check_in_id, path } of photoRows) {
-      photos.set(check_in_id, [
-        ...(photos.get(check_in_id) ?? []),
-        { path: PhotoPath.parse(path) },
-      ]);
+    for (const { check_in_id, path, width, height } of photoRows) {
+      // The key is left out, never undefined, so a retry compares equal to the saved check-in.
+      const photo: PhotoRef =
+        width === null || height === null
+          ? { path: PhotoPath.parse(path) }
+          : { path: PhotoPath.parse(path), size: { width, height } };
+      photos.set(check_in_id, [...(photos.get(check_in_id) ?? []), photo]);
     }
     return rows.map((row) => ({
       id: CheckInId.parse(row.id),
@@ -127,10 +129,12 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
             await trx
               .insertInto('check_in_photos')
               .values(
-                photos.map(({ path }, index) => ({
+                photos.map(({ path, size }, index) => ({
                   path,
                   check_in_id: checkIn.id,
                   position: index + 1,
+                  width: size?.width ?? null,
+                  height: size?.height ?? null,
                 })),
               )
               .execute();

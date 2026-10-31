@@ -14,6 +14,8 @@ public struct FeedView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: FeedModel
+    /// The post at the top of the list, set to open 动态 on one.
+    @State private var position: CheckInID?
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
@@ -30,40 +32,33 @@ public struct FeedView: View {
     }
 
     public var body: some View {
-        ScrollViewReader { scroller in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: Space.m) {
-                    Text("动态", bundle: .module)
-                        .typeStyle(TypeRamp.largeTitle)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .accessibilityAddTraits(.isHeader)
-                        .accessibilityIdentifier("feed.title")
-                        .blur(radius: model.lifted ? Scrim.blurRadius : 0)
-                    header
-                    content
-                }
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.top, Space.l)
-                .padding(.bottom, Space.l)
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: Space.m) {
+                Text("动态", bundle: .module)
+                    .typeStyle(TypeRamp.largeTitle)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityIdentifier("feed.title")
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                header
+                content
             }
-            .scrollDismissesKeyboard(.immediately)
-            // A held card's slide picks an emoji; the list stays put under it.
-            .scrollDisabled(model.lifted)
-            .refreshable { await model.load() }
-            .onChange(of: model.focus) { _, focus in
-                guard let focus else { return }
-                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
-                    scroller.scrollTo(focus, anchor: .top)
-                }
-                model.focus = nil
-            }
-            .onAppear {
-                // Opened from the home before the list was drawn.
-                if let focus = model.focus {
-                    scroller.scrollTo(focus, anchor: .top)
-                    model.focus = nil
-                }
-            }
+            .scrollTargetLayout()
+            .padding(.horizontal, Space.pageMargin)
+            .padding(.top, Space.l)
+            .padding(.bottom, Space.l)
+        }
+        // Keeps a focused post at the top while what is above it loads and grows (the 战报's
+        // tile, the posts the server lists), which a one-off scroll would lose.
+        .scrollPosition(id: $position, anchor: .top)
+        .scrollDismissesKeyboard(.immediately)
+        // A held card's slide picks an emoji; the list stays put under it.
+        .scrollDisabled(model.lifted)
+        .refreshable { await model.load() }
+        .onChange(of: model.focus, initial: true) { _, focus in
+            guard let focus else { return }
+            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
+            model.focus = nil
         }
         .overlayPreferenceValue(FeedAnchors.self) { anchors in
             FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)

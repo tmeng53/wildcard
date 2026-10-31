@@ -34,9 +34,12 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
 
     /// The check-in to save, once every photo is uploaded; nil before.
     public func checkIn() throws(CheckInError) -> CheckIn? {
-        let refs = draft.photos.compactMap { uploaded[$0.id] }
-        guard refs.count == draft.photos.count else { return nil }
+        let uploads = draft.photos.compactMap { photo in uploaded[photo.id].map { (ref: $0, size: photo.size) } }
+        guard uploads.count == draft.photos.count else { return nil }
         do {
+            let refs = try uploads.map { upload throws(ContractsError) in
+                try PhotoRef(path: upload.ref.path, size: upload.size)
+            }
             let photos = refs.isEmpty ? nil : try Photos(refs)
             let entry: CheckIn.Entry =
                 switch draft {

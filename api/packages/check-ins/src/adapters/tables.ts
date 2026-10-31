@@ -29,8 +29,10 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface CheckInPhotos {
   check_in_id: string;
+  height: number | null;
   path: string;
   position: number;
+  width: number | null;
 }
 
 export interface CheckInReactions {

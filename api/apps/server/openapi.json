@@ -646,6 +646,9 @@
             "type": "string",
             "format": "uri",
             "description": "`GET` the photo here. It works for an hour."
+          },
+          "size": {
+            "$ref": "#/components/schemas/PhotoSize"
           }
         },
         "required": [
@@ -653,6 +656,27 @@
           "url"
         ],
         "additionalProperties": false
+      },
+      "PhotoSize": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "additionalProperties": false,
+        "description": "Its width and height in pixels. Missing on photos saved without one."
       },
       "HealthyMealCheckIn": {
         "type": "object",
@@ -988,6 +1012,9 @@
           "path": {
             "type": "string",
             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "size": {
+            "$ref": "#/components/schemas/PhotoSize"
           }
         },
         "required": [
