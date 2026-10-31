@@ -80,22 +80,24 @@ describe('reading a week’s plan', () => {
     });
   });
 
-  it('carries the latest saved plan into later weeks, but not earlier ones', async () => {
+  it('keeps a week’s own plan to that week; other weeks follow the template', async () => {
     const member = await newMember();
-    await plans.save({ member, weekStart: thisWeek, days: mine });
-    expect(await plans.find({ member, weekStart: thisWeek })).toStrictEqual({
-      weekStart: '2026-10-19',
-      days: mine,
+    await plans.saveTemplate({ member, days: mine });
+    const tired: PlanDays = [swim, rest, rest, rest, rest, rest, rest];
+    await plans.save({ member, weekStart: nextWeek, days: tired });
+    expect(await plans.find({ member, weekStart: nextWeek })).toStrictEqual({
+      weekStart: '2026-10-26',
+      days: tired,
       source: 'saved',
       ...joinedThisWeek,
     });
     expect(await plans.find({ member, weekStart: week('2026-11-09') })).toStrictEqual({
       weekStart: '2026-11-09',
       days: mine,
-      source: 'carriedOver',
+      source: 'template',
       ...joinedThisWeek,
     });
-    expect((await plans.find({ member, weekStart: lastWeek })).source).toBe('default');
+    expect((await plans.find({ member, weekStart: thisWeek })).source).toBe('template');
   });
 
   it('keeps each member’s plan to themselves', async () => {
@@ -103,6 +105,79 @@ describe('reading a week’s plan', () => {
     const friend = await newMember();
     await plans.save({ member: tracy, weekStart: thisWeek, days: mine });
     expect((await plans.find({ member: friend, weekStart: thisWeek })).source).toBe('default');
+  });
+});
+
+describe('the typical week', () => {
+  it('is the default before the member makes one', async () => {
+    const member = await newMember();
+    expect(await plans.template({ member })).toStrictEqual({
+      days: [train, train, rest, train, train, train, rest],
+      source: 'default',
+    });
+  });
+
+  it('made at sign-up is this week’s plan and every later week’s', async () => {
+    const member = await newMember();
+    expect(await plans.saveTemplate({ member, days: mine })).toStrictEqual({
+      days: mine,
+      source: 'saved',
+    });
+    expect(await plans.template({ member })).toStrictEqual({ days: mine, source: 'saved' });
+    for (const weekStart of [thisWeek, nextWeek, week('2026-11-16')]) {
+      expect(await plans.find({ member, weekStart })).toMatchObject({
+        days: mine,
+        source: 'template',
+      });
+    }
+    expect(await storedRows(member)).toStrictEqual([]);
+  });
+
+  it('changed later applies from next week, so this week and past weeks keep theirs', async () => {
+    const member = await newMember({ joinedAt: new Date('2026-10-07T17:00:00.000Z') });
+    now = new Date('2026-10-07T20:00:00.000Z');
+    await plans.saveTemplate({ member, days: mine });
+    now = new Date('2026-10-21T20:00:00.000Z');
+    const lighter: PlanDays = [swim, rest, rest, train, rest, rest, train];
+    await plans.saveTemplate({ member, days: lighter });
+    expect(await plans.template({ member })).toStrictEqual({ days: lighter, source: 'saved' });
+    expect((await plans.find({ member, weekStart: lastWeek })).days).toStrictEqual(mine);
+    expect((await plans.find({ member, weekStart: thisWeek })).days).toStrictEqual(mine);
+    expect((await plans.find({ member, weekStart: nextWeek })).days).toStrictEqual(lighter);
+    // Changed again the same week: the latest change is the one next week follows.
+    await plans.saveTemplate({ member, days: mine });
+    expect((await plans.find({ member, weekStart: nextWeek })).days).toStrictEqual(mine);
+  });
+
+  it('logs each change once, with the week it applies from', async () => {
+    const member = await newMember();
+    await plans.saveTemplate({ member, days: mine });
+    await plans.saveTemplate({ member, days: mine });
+    const { rows } = await sql<{ from_week: string; payload: unknown }>`
+      select from_week::text, payload from plan_templates where member_id = ${member} order by id
+    `.execute(db);
+    expect(rows).toStrictEqual([{ from_week: '2026-10-19', payload: { version: 1, days: mine } }]);
+  });
+
+  it('is refused before a profile, or naming a sport the list doesn’t have', async () => {
+    const member = await newMember();
+    calendars.delete(member);
+    await expect(plans.saveTemplate({ member, days: mine })).rejects.toThrow(TimeZoneNotSetError);
+    const other = await newMember();
+    await expect(
+      plans.saveTemplate({
+        member: other,
+        days: [{ kind: 'train', sport: 'quidditch' }, ...mine.slice(1)],
+      }),
+    ).rejects.toThrow(SportNotListedError);
+  });
+
+  it('lets the member change any day of this week on the day they join', async () => {
+    const member = await newMember();
+    await plans.saveTemplate({ member, days: mine });
+    const allRest: PlanDays = [rest, rest, rest, rest, rest, rest, rest];
+    await plans.save({ member, weekStart: thisWeek, days: allRest });
+    expect((await plans.find({ member, weekStart: thisWeek })).days).toStrictEqual(allRest);
   });
 });
 
@@ -185,17 +260,16 @@ describe('saving a week’s plan', () => {
     );
   });
 
-  it('lets later days of this week rest or train, even when its plan is carried over', async () => {
+  it('lets later days of this week rest or train, even when it follows the template', async () => {
     const member = await newMember({ joinedAt: new Date('2026-10-14T17:00:00.000Z') });
-    // Saved last week, so this week carries it over.
+    // Made last week, so this week follows it.
     now = new Date('2026-10-14T20:00:00.000Z');
-    await plans.save({ member, weekStart: lastWeek, days: mine });
+    await plans.saveTemplate({ member, days: mine });
     now = new Date('2026-10-21T20:00:00.000Z');
     // Thursday becomes a training day and Saturday a rest day: three rest days now.
     const swapped: PlanDays = [swim, rest, train, train, train, rest, rest];
     await plans.save({ member, weekStart: thisWeek, days: swapped });
     expect(await storedRows(member)).toStrictEqual([
-      { week_start: '2026-10-12', payload: { version: 1, days: mine } },
       { week_start: '2026-10-19', payload: { version: 1, days: swapped } },
     ]);
   });
@@ -205,7 +279,7 @@ describe('saving a week’s plan', () => {
     // Rest today, Wednesday, and Sunday.
     const resting: PlanDays = [swim, train, rest, train, train, train, rest];
     now = new Date('2026-10-14T20:00:00.000Z');
-    await plans.save({ member, weekStart: lastWeek, days: resting });
+    await plans.saveTemplate({ member, days: resting });
     now = new Date('2026-10-21T20:00:00.000Z');
     const trained: PlanDays = [swim, train, swim, train, train, train, rest];
     expect((await plans.save({ member, weekStart: thisWeek, days: trained })).days).toStrictEqual(

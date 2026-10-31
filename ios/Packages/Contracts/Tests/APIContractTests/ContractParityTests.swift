@@ -21,20 +21,25 @@ private final class Schema: Decodable, Sendable {
     let maxCharacters: Int?
     let minimum: Int?
     let maximum: Int?
+    let ref: String?
 
     enum CodingKeys: String, CodingKey {
         case properties, minItems, maxItems, minimum, maximum
+        case ref = "$ref"
         case maxCharacters = "x-max-characters"
     }
 }
 
 /// `field` of the schema `name` in the committed `api/apps/server/openapi.json`, which
-/// scripts/swift-openapi.sh generates from.
+/// scripts/swift-openapi.sh generates from; a field that refers to a shared schema is that schema.
 private func property(_ field: String, of name: String) throws -> Schema? {
     let url = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().appending(path: "../../../../../api/apps/server/openapi.json")
     let document = try JSONDecoder().decode(Document.self, from: Data(contentsOf: url.standardizedFileURL))
-    return document.components.schemas[name]?.properties?[field]
+    let schemas = document.components.schemas
+    let found = schemas[name]?.properties?[field]
+    guard let ref = found?.ref else { return found }
+    return schemas[String(ref.split(separator: "/").last ?? "")]
 }
 
 @Test(arguments: ["Training", "Meal", "TrainingView", "MealView"])
@@ -86,7 +91,7 @@ func audienceSizeIsTheAPIs(schema: String) throws {
     #expect(try property("audience", of: schema)?.maxItems == Audience.maxSquads)
 }
 
-@Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft"])
+@Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft", "PlanTemplate", "PlanTemplateDraft"])
 func planLengthIsTheAPIs(schema: String) throws {
     let days = try property("days", of: schema)
     #expect(days?.minItems == WeeklyPlan.dayCount)

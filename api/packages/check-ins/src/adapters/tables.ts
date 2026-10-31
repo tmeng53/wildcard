@@ -76,6 +76,14 @@ export interface FuelGoals {
   week_start: string;
 }
 
+export interface PlanTemplates {
+  at: Generated<Timestamp>;
+  from_week: string;
+  id: Generated<Int8>;
+  member_id: string;
+  payload: Json;
+}
+
 export interface WeeklyPlanEvents {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -110,6 +118,7 @@ export interface DB {
   disclaimer_replies: DisclaimerReplies;
   fuel_goal_events: FuelGoalEvents;
   fuel_goals: FuelGoals;
+  plan_templates: PlanTemplates;
   week_summary_word_events: WeekSummaryWordEvents;
   week_summary_words: WeekSummaryWords;
   weekly_plan_events: WeeklyPlanEvents;

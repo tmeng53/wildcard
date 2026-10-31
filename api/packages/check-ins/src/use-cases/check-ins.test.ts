@@ -350,22 +350,22 @@ describe('saving a check-in', () => {
     const swim = draft({ audience: [squad], training: { sport: 'swim' } });
     await checkIns.save({ id: CheckInId.parse(randomUUID()), member, draft: swim });
     const week = WeekStart.parse('2026-10-12');
-    const trained = await plans.latestFrom(member, week);
-    expect(trained?.days[6]).toStrictEqual({ kind: 'train', sport: 'swim' });
-    expect(trained?.days.slice(0, 6)).toStrictEqual(DEFAULT_PLAN_DAYS.slice(0, 6));
+    const trained = await plans.savedFor(member, week);
+    expect(trained?.[6]).toStrictEqual({ kind: 'train', sport: 'swim' });
+    expect(trained?.slice(0, 6)).toStrictEqual(DEFAULT_PLAN_DAYS.slice(0, 6));
     // Now a training day, a second 练了 leaves it as it is.
     await checkIns.save({
       id: CheckInId.parse(randomUUID()),
       member,
       draft: draft({ audience: [squad] }),
     });
-    expect(await plans.latestFrom(member, week)).toStrictEqual(trained);
+    expect(await plans.savedFor(member, week)).toStrictEqual(trained);
     // Other kinds never change the plan.
     const other = await newMember();
     const theirs = await newSquad(other);
     const meal = draft({ audience: [theirs], kind: 'healthyMeal', meal: {} });
     await checkIns.save({ id: CheckInId.parse(randomUUID()), member: other, draft: meal });
-    expect(await plans.latestFrom(other, week)).toBeUndefined();
+    expect(await plans.savedFor(other, week)).toBeUndefined();
   });
 
   it('refuses a squad the member isn’t in, or one that doesn’t exist', async () => {

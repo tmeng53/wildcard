@@ -5,20 +5,15 @@ import Foundation
 import OnboardingDomain
 
 /// Sign-up over our API: the squad step makes or joins a squad, 角色和昵称 saves the character
-/// on the profile, 本周目标 saves this week's plan and 这周在哪练？ the squad's first scene.
+/// on the profile, the week step saves the member's typical week and 这周在哪练？ the squad's
+/// first scene.
 public struct APISignUpService: SignUpService {
     private let api: WildcardAPI
-    private let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
 
-    /// - Parameters:
-    ///   - now: the clock this week's plan is read from.
-    ///   - newID: the id a new squad is made under, so a retry makes the same squad.
-    public init(
-        api: WildcardAPI, now: @escaping @Sendable () -> Date = { Date() },
-        newID: @escaping @Sendable () -> UUID = { UUID() }
-    ) {
-        (self.api, self.now, self.newID) = (api, now, newID)
+    /// - Parameter newID: the id a new squad is made under, so a retry makes the same squad.
+    public init(api: WildcardAPI, newID: @escaping @Sendable () -> UUID = { UUID() }) {
+        (self.api, self.newID) = (api, newID)
     }
 
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {
@@ -60,10 +55,7 @@ public struct APISignUpService: SignUpService {
 
     /// Saves the plan for the week today is in, on the member's own clock.
     public func savePlan(_ days: [PlanDay]) async throws(SignUpError) {
-        try await signUp { () throws(APIError) in
-            let zone = try await api.me().profile?.timeZone ?? .current
-            _ = try await api.save(days, weekStart: LocalDay(at: now(), in: zone).weekStart)
-        }
+        try await signUp { () throws(APIError) in try await api.saveTemplate(days) }
     }
 
     /// Picks the scene for the week open for picking now, which a squad made today trains on at

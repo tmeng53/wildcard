@@ -116,8 +116,8 @@ public struct WildcardAPI: Sendable {
         return try read { () throws(ContractsError) in try SquadToday(wire) }
     }
 
-    /// The member's plan for the week starting on `weekStart`, a Monday: the one saved, else
-    /// last week's carried over, else the default.
+    /// The member's plan for the week starting on `weekStart`, a Monday: the one saved for it,
+    /// else their typical week, else the default.
     public func weeklyPlan(weekStart: LocalDay) async throws(APIError) -> WeeklyPlan {
         let wire = try await weeklyPlanWire(weekStart: weekStart)
         return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
