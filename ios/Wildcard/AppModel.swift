@@ -50,6 +50,9 @@ final class AppModel {
     @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
     /// The squad 今天 is on, whose scene it reads again each time the app comes back.
     @ObservationIgnored private var homeSquad: SquadID?
+    /// A home opening under the launch cover after a sign-in on the open screen, so the account's
+    /// next signed-in state doesn't open it a second time.
+    @ObservationIgnored private var openingUnderCover = false
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
@@ -109,7 +112,7 @@ final class AppModel {
             case .signedOut: await signedOut()
             case .signedIn:
                 await registerForPush()
-                if case .starting = screen { await openHome() }
+                if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
     }
@@ -364,7 +367,10 @@ extension AppModel {
     /// member whose squad is already set up, rather than sitting on a button that seems to do
     /// nothing.
     private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
-        if case .signUp = screen { screen = .starting }
+        guard case .signUp = screen else { return await work() }
+        screen = .starting
+        openingUnderCover = true
+        defer { openingUnderCover = false }
         return await work()
     }
 
