@@ -8,6 +8,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -16,7 +17,7 @@ import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 import { adminOn, aiConsentOn, noJobs, nudgesOn, pushOn } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 
 const config = readConfig(process.env);
@@ -29,6 +30,7 @@ const photos = {
 };
 const checkInsOn = (db: Database) =>
   createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -50,11 +52,13 @@ async function getHealth(db: Database) {
     verifyToken: notCalled,
     accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     checkIns: checkInsOn(db),
     photos,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
@@ -117,7 +121,7 @@ describe('GET /health', () => {
           severity: 'ERROR',
           message: 'request failed',
           method: 'GET',
-          path: '/health',
+          route: '/health',
           error: {
             name: 'DatabaseUnavailableError',
             cause: { message: 'connect ECONNREFUSED 127.0.0.1:1' },
@@ -136,11 +140,13 @@ describe('an unknown route', () => {
       verifyToken: notCalled,
       accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
       revokeAppleSignIn: undefined,
+      catalog: catalogOn(db),
       publicRoutes: unlimitedPublicRoutes,
       checkIns: checkInsOn(db),
       photos,
       disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
       weeklyPlans: createWeeklyPlans({
+        sports: createSports({ store: createPostgresSportStore(db) }),
         store: createPostgresWeeklyPlanStore(db),
         calendarOf: () => Promise.resolve(undefined),
         clock: () => new Date(),

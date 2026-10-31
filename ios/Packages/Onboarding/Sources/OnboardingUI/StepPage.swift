@@ -22,8 +22,12 @@ struct StepPage<Content: View, Actions: View>: View {
     static var characterSize: CGSize { CGSize(width: 96, height: 128) }
 
     var body: some View {
+        page.swipesBack(perform: onBack)
+    }
+
+    private var page: some View {
         VStack(spacing: 0) {
-            StepHeader(step: step.number ?? 1, of: SignUpStep.counted.count, onBack: onBack)
+            StepHeader(step: step.number, of: SignUpStep.counted.count, onBack: onBack)
                 .padding(.horizontal, Space.pageMargin)
                 .padding(.top, Space.xs)
             ScrollView {

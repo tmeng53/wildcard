@@ -29,6 +29,7 @@ export interface ProfileEvents {
   at: Generated<Timestamp>;
   catchphrase: string | null;
   id: Generated<Int8>;
+  jersey_number: number | null;
   look: Json | null;
   member_id: string;
   nickname: string | null;
@@ -38,6 +39,7 @@ export interface ProfileEvents {
 export interface Profiles {
   catchphrase: string | null;
   created_at: Generated<Timestamp>;
+  jersey_number: number | null;
   look: Json | null;
   member_id: string;
   nickname: string | null;

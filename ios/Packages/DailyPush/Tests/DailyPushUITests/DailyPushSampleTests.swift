@@ -1,3 +1,5 @@
+import AvatarArt
+import AvatarDomain
 import Contracts
 import DailyPushDomain
 import DailyPushUI
@@ -26,4 +28,13 @@ private let utc = TimeZone(identifier: "UTC") ?? .current
     let push = try #require(DailyPushSample.push(empty: true, now: noon, zone: utc))
     #expect(push.posts.isEmpty)
     #expect(push.more == 0)
+}
+
+@Test func everySampleLookIsDrawnFromArtThisBuildHas() throws {
+    for look in DailyPushSample.looks.values {
+        for (slot, variant) in look.variants {
+            #expect(PlaceholderCharacter.variants(for: Slot(slot)).contains(variant), "\(slot): \(variant)")
+        }
+        _ = try PlaceholderCharacter.figure(wearing: Outfit(look))
+    }
 }

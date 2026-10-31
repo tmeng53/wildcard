@@ -13,13 +13,16 @@ public enum DailyPushSample {
     /// The squad's looks, as the app keeps them for the push.
     public static let looks: [MemberID: CharacterLook] = [
         member(1): CharacterLook(
-            persona: "energetic", variants: ["body": "peach", "hair": "curls", "top": "tee", "bottom": "shorts"],
+            persona: "energetic",
+            variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
             colors: ["body": "#C68A5E"]),
-        member(2): CharacterLook(persona: "drama", variants: ["body": "shiba", "top": "hoodie", "bottom": "shorts"]),
+        member(2): CharacterLook(
+            persona: "drama", variants: ["body": "shiba", "top": "warmup-hoodie", "bottom": "warmup-shorts"]),
         member(3): CharacterLook(
-            persona: "deadpan", variants: ["body": "calico", "top": "tee", "bottom": "greenshorts"]),
+            persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
         member(4): CharacterLook(
-            persona: "showoff", variants: ["body": "peach", "hair": "ponytail", "top": "tank", "bottom": "leggings"]),
+            persona: "showoff",
+            variants: ["body": "peach", "hair": "ponytail", "top": "warmup-tank", "bottom": "warmup-leggings"]),
     ]
 
     private static func member(_ number: Int) -> MemberID {

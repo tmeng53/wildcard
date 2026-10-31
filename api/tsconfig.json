@@ -20,6 +20,12 @@
       "path": "packages/disclaimer-styles"
     },
     {
+      "path": "packages/sport-ids"
+    },
+    {
+      "path": "packages/sports"
+    },
+    {
       "path": "packages/check-ins"
     },
     {

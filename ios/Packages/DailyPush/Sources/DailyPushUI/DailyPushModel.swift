@@ -4,9 +4,11 @@ import AvatarDomain
 import AvatarUI
 import Contracts
 import DailyPushDomain
+import DesignSystemUI
 import FeedDomain
 import Foundation
 import Observation
+import SportsUI
 
 /// The push view's state over its `DailyPushStore`: which post's emoji bar is open, the emoji
 /// in flight to its author, and the move the author's character plays. Only the character
@@ -74,8 +76,8 @@ public final class DailyPushModel {
 
     /// What a member is called; a stand-in before they made their character.
     func name(of member: MemberID) -> String {
-        if member == push.viewer { return String(localized: "我", bundle: .module) }
-        return push.name(of: member) ?? String(localized: "队友", bundle: .module)
+        if member == push.viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
+        return push.name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
     }
 
     /// Teammates for the squad standing on an empty day: up to four, me left out.
@@ -118,9 +120,10 @@ public final class DailyPushModel {
     private func play(_ move: MoveID, on id: CheckInID) {
         guard let post = store.post(id), let player = player(for: post) else { return }
         let persona = looks[post.author].map(Persona.init) ?? .energetic
+        let species = PlaceholderCharacter.species(of: outfit(of: post.author))
         guard
             let clip = PlaceholderCharacter.reactionMove(move.id, persona: persona)
-                ?? (try? PlaceholderCharacter.clip("cheer", persona: persona))
+                ?? (try? PlaceholderCharacter.clip("cheer", persona: persona, species: species))
         else { return }
         let start = now()
         try? player.play(clip, now: start)
@@ -134,7 +137,7 @@ public final class DailyPushModel {
         if let player = players[post.id] { return player }
         var outfit = outfit(of: post.author)
         if case .trained(let activity?) = post.entry, let kits = try? PlaceholderCharacter.sportKits() {
-            outfit = kits.kit(for: activity).dress(outfit)
+            outfit = kits.kit(for: activity, in: SportList.shared.catalog).dress(outfit)
         }
         guard let player = Self.still(outfit, now: now()) else { return nil }
         players[post.id] = player

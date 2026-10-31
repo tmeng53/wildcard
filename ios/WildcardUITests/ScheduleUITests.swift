@@ -6,20 +6,21 @@ import XCTest
 /// rest, tennis this week.
 @MainActor
 final class ScheduleUITests: XCTestCase {
-    private func launch(_ language: String = "zh-Hans") -> XCUIApplication {
+    private func launch(_ language: String = "zh-Hans", scene: String? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-tab", "schedule",
-            "-uitest-thursday", "-uitest-save-poster",
+            "-uitest-thursday",
         ]
+        if let scene { app.launchArguments += ["-uitest-scene", scene] }
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         XCTAssertTrue(app.buttons["schedule.lane.0"].waitForExistence(timeout: 30), "the poster never showed")
         return app
     }
 
-    func testThisWeekMovesOnlyDaysStillToCome() {
+    func testThisWeekChangesTodayAndDaysStillToCome() {
         let app = launch()
         let tabBar = app.buttons["tab.schedule"]
         XCTAssertTrue(tabBar.isSelected)
@@ -32,33 +33,40 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertTrue(squad.waitForExistence(timeout: 10))
         XCTAssertLessThanOrEqual(squad.frame.maxY, tabBar.frame.minY, "the counts sit under the tab bar")
         XCTAssertTrue(lane(app, 3).label.hasPrefix("今天"), "Thursday isn't today: \(lane(app, 3).label)")
+        XCTAssertTrue(lane(app, 3).label.contains("力量训练"), "strength's short name is missing: \(lane(app, 3).label)")
         settle()
         keepScreenshot(named: "60-schedule-this-week")
 
-        // Today and the days before it stay as they are.
+        // The days before today stay as they are.
         XCTAssertFalse(lane(app, 1).isEnabled, "Tuesday can still change")
-        XCTAssertFalse(lane(app, 3).isEnabled, "today can still change")
 
-        // A training day still to come takes another sport, never 休息.
+        // Today's training day takes another sport, never 休息.
+        lane(app, 3).tap()
+        XCTAssertTrue(app.buttons["schedule.pick.more"].waitForExistence(timeout: 10), "today's picks didn't open")
+        XCTAssertFalse(app.buttons["schedule.pick.rest"].exists, "today offers 休息")
+        app.buttons["schedule.pick.swim"].tap()
+        waitFor(lane(app, 3), "label CONTAINS '游泳'", "today didn't turn to swimming")
+        lane(app, 3).tap()
+
+        // A training day still to come takes another sport, or 休息.
         lane(app, 4).tap()
         let more = app.buttons["schedule.pick.more"]
         XCTAssertTrue(more.waitForExistence(timeout: 10), "Friday's picks didn't open")
-        XCTAssertFalse(app.buttons["schedule.pick.rest"].exists, "this week offers 休息")
+        XCTAssertTrue(app.buttons["schedule.pick.rest"].exists, "this week offers no 休息")
         XCTAssertLessThanOrEqual(more.frame.maxY, tabBar.frame.minY, "the picks open under the tab bar")
         settle()
         keepScreenshot(named: "61-schedule-pick-a-sport")
         app.buttons["schedule.pick.yoga"].tap()
         waitFor(lane(app, 4), "label CONTAINS '瑜伽'", "Friday didn't turn to yoga")
 
-        // A rest day lifts, then swaps with a training day.
+        // A rest day still to come becomes a training day.
         lane(app, 5).tap()
-        waitFor(lane(app, 5), "isSelected == true", "Saturday didn't lift")
+        waitFor(lane(app, 5), "isSelected == true", "Saturday wasn't selected")
         settle()
-        keepScreenshot(named: "62-schedule-lift-a-rest-day")
-        lane(app, 6).tap()
-        waitFor(lane(app, 6), "label CONTAINS '休息'", "Sunday didn't take the rest day")
-        XCTAssertTrue(lane(app, 5).label.contains("网球"), "Saturday didn't take Sunday's tennis: \(lane(app, 5).label)")
-        XCTAssertTrue(find(app, "schedule.tally").label.contains("5"), "the week's count changed")
+        keepScreenshot(named: "62-schedule-rest-day-picks")
+        app.buttons["schedule.pick.yoga"].tap()
+        waitFor(lane(app, 5), "label CONTAINS '瑜伽'", "Saturday didn't turn to yoga")
+        XCTAssertTrue(find(app, "schedule.tally").label.contains("6"), "the week's count didn't grow")
     }
 
     func testNextWeekChangesFreelyWithFoodGoals() {
@@ -143,15 +151,22 @@ final class ScheduleUITests: XCTestCase {
         app.swipeDown()
         settle()
 
+        // 存图 flashes the poster, then opens the share sheet on its picture.
         app.buttons["schedule.save"].tap()
-        let saved = find(app, "schedule.saved")
-        XCTAssertTrue(saved.waitForExistence(timeout: 10), "存图 didn't say it saved")
-        // The note shows by 存图, never below the fold under the award cards.
-        XCTAssertGreaterThanOrEqual(
-            saved.frame.minY, app.buttons["schedule.save"].frame.maxY, "the note isn't under 存图")
-        XCTAssertLessThanOrEqual(
-            saved.frame.maxY, find(app, "schedule.poster").frame.minY, "the note isn't over the poster")
-        keepScreenshot(named: "68-schedule-saved")
+        let share = app.otherElements["ActivityListView"]
+        XCTAssertTrue(share.waitForExistence(timeout: 10), "存图 opened no share sheet")
+        keepScreenshot(named: "68-schedule-share")
+    }
+
+    /// The poster on every other scene, for comparing its props and the character's sport with
+    /// the approved design; the gym is in the other screenshots.
+    func testEveryScene() {
+        for scene in ["tennis", "pool", "track", "climbing"] {
+            _ = launch(scene: scene)
+            settle()
+            keepScreenshot(named: "60-schedule-scene-\(scene)")
+            XCUIApplication().terminate()
+        }
     }
 
     func testEnglish() {

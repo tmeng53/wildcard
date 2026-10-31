@@ -93,7 +93,7 @@ struct PostRow: View {
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: .gym))
                     .lineLimit(1)
-                Text(post.posted.date.formatted(.dateTime.hour().minute()))
+                Text(post.posted.date, format: .dateTime.hour().minute())
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: .gym))
                     .lineLimit(1)

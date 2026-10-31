@@ -42,7 +42,7 @@ private func id<Tag>(_ text: String) -> ID<Tag> { ID(UUID(uuidString: text) ?? U
     #expect(push.more == 2)
     #expect(push.name(of: id(miID)) == "小米")
     #expect(push.name(of: id(meID)) == nil)
-    #expect(push.posts.map(\.entry) == [.trained(.sport(.strength)), .disclaimer])
+    #expect(push.posts.map(\.entry) == [.trained(.sport("strength")), .disclaimer])
     let squatPost = try #require(push.posts.first)
     #expect(squatPost.latest(4).map(\.member) == [id(meID), id(leo)])
     #expect(squatPost.latest(4).map(\.kind.text) == ["😂", "💪"])

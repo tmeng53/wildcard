@@ -94,7 +94,7 @@ private func day(daysFromThisMonday days: Int) throws -> LocalDay {
     #expect(story.squadName == "晨跑五人组")
     #expect(story.week.monday.description == "2026-10-12")
     let hottest = try #require(story.hottest)
-    #expect(hottest.sport == .run)
+    #expect(hottest.sport == "run")
     #expect(hottest.words == "雨里 5 公里")
     #expect(hottest.photos == [try #require(URL(string: "https://example.com/b.jpg"))])
     #expect(hottest.reactions == [ReactionCount(emoji: "💪", count: 3)])

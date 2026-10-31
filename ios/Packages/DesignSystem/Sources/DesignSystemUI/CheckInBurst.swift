@@ -7,7 +7,8 @@ import SwiftUI
 /// Liquid Glass with the icon in the accent's text color. The caller owns `isOpen`, so it can blur
 /// the scene behind an open burst and close it from a tap outside.
 ///
-/// A type in `unavailable` shows grey; tapping it shakes it and picks nothing.
+/// A type in `unavailable` is left out, and the others share the arc: a choice the member can't
+/// make isn't shown.
 public struct CheckInBurst: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding private var isOpen: Bool
@@ -15,6 +16,10 @@ public struct CheckInBurst: View {
     private let identifierPrefix: String
     private let onPick: (CheckInKind) -> Void
     @State private var picks = 0
+    // Measured, so the capsules stand apart whatever the language and text size.
+    @State private var widths: [CheckInKind: Double] = [:]
+    @State private var button = CGSize(width: 0, height: Sizing.primaryControl)
+    @State private var screenWidth: Double = 0
 
     /// `identifierPrefix` names the button `<prefix>.checkin` and each capsule
     /// `<prefix>.capsule.<kind>` for UI tests.
@@ -29,40 +34,71 @@ public struct CheckInBurst: View {
     }
 
     public var body: some View {
-        GlassEffectContainer {
+        let kinds = shown
+        let spots = positions(of: kinds)
+        return GlassEffectContainer {
             ZStack {
                 if isOpen {
-                    ForEach(Array(CheckInKind.allCases.enumerated()), id: \.element) { index, kind in
-                        BurstCapsule(kind: kind, isAvailable: !unavailable.contains(kind)) {
+                    ForEach(Array(kinds.enumerated()), id: \.element) { index, kind in
+                        BurstCapsule(kind: kind) {
                             picks += 1
                             withAnimation(.wildcard(Motion.sheet.exit, reduceMotion: reduceMotion)) { isOpen = false }
                             onPick(kind)
                         }
                         .accessibilityIdentifier("\(identifierPrefix).capsule.\(kind.rawValue)")
-                        .offset(x: BurstLayout.offset(for: kind).x, y: BurstLayout.offset(for: kind).y)
-                        .transition(burst(for: kind, index: index))
+                        .offset(x: spots[index].x, y: spots[index].y)
+                        .transition(burst(index: index, of: kinds.count, spot: spots[index]))
                     }
                 }
                 BurstButton(isOpen: $isOpen)
                     .accessibilityIdentifier("\(identifierPrefix).checkin")
+                    .onGeometryChange(for: CGSize.self, of: \.size) { button = $0 }
             }
         }
         .frame(height: Sizing.primaryControl)
+        .background { measuring }
         // Haptics only where the spec puts them: the burst opening and picking a type.
         .haptic(.appear, trigger: isOpen) { _, opened in opened }
         .haptic(.pick, trigger: picks)
     }
 
+    private var shown: [CheckInKind] { CheckInKind.allCases.filter { !unavailable.contains($0) } }
+
+    /// Each capsule's center, from the widths measured below; the arc until they are known.
+    private func positions(of kinds: [CheckInKind]) -> [(x: Double, y: Double)] {
+        let measured = kinds.compactMap { widths[$0] }
+        guard measured.count == kinds.count, screenWidth > 0 else { return BurstLayout.arc(for: kinds) }
+        return BurstLayout.positions(
+            kinds: kinds, widths: measured, height: Sizing.control,
+            button: (width: button.width, height: button.height),
+            available: screenWidth)
+    }
+
+    /// Invisible copies of the capsules, always laid out, and the screen's width.
+    private var measuring: some View {
+        ZStack {
+            ForEach(CheckInKind.allCases, id: \.self) { kind in
+                BurstCapsuleLabel(kind: kind)
+                    .onGeometryChange(for: Double.self, of: { $0.size.width }, action: { widths[kind] = $0 })
+            }
+        }
+        .hidden()
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+        .background {
+            Color.clear.containerRelativeFrame(.horizontal)
+                .onGeometryChange(for: Double.self, of: { $0.size.width }, action: { screenWidth = $0 })
+        }
+    }
+
     /// Out of the button along the arc, staggered; back in faster, in reverse order.
-    private func burst(for kind: CheckInKind, index: Int) -> AnyTransition {
+    private func burst(index: Int, of count: Int, spot: (x: Double, y: Double)) -> AnyTransition {
         if reduceMotion {
             return .opacity.animation(.easeOut(duration: Motion.reducedDuration))
         }
-        let offset = BurstLayout.offset(for: kind)
-        let shape = AnyTransition.offset(x: -offset.x, y: -offset.y)
+        let shape = AnyTransition.offset(x: -spot.x, y: -spot.y)
             .combined(with: .scale(scale: 0.4))
             .combined(with: .opacity)
-        let count = CheckInKind.allCases.count
         return .asymmetric(
             insertion: shape.animation(.wildcard(Motion.sheet).delay(Motion.burstStagger * Double(index))),
             removal: shape.animation(
@@ -108,41 +144,40 @@ private struct BurstButton: View {
     }
 }
 
-/// One check-in type on clear glass. Unavailable, it greys out and shakes when tapped.
-private struct BurstCapsule: View {
+/// A capsule's icon and name at their natural size.
+private struct BurstCapsuleLabel: View {
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let kind: CheckInKind
-    let isAvailable: Bool
-    let action: () -> Void
-    @State private var refusals = 0
 
     var body: some View {
-        Button {
-            if isAvailable {
-                action()
-            } else {
-                refusals += 1
-            }
-        } label: {
-            HStack(spacing: Space.xs) {
-                Image(systemName: kind.symbol)
-                    .font(.system(size: Sizing.kindIcon * 0.8, weight: .semibold))
-                    .frame(width: Sizing.kindIcon, height: Sizing.kindIcon)
-                    .foregroundStyle(Color(role: isAvailable ? .fgAccent : .fgSubtle, in: theme))
-                    .accessibilityHidden(true)
-                kind.shortName
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: isAvailable ? .fgDefault : .fgSubtle, in: theme))
-                    .fixedSize()
-            }
-            .padding(.horizontal, Space.m)
-            .frame(height: Sizing.control)
-            .contentShape(Capsule())
+        HStack(spacing: Space.xs) {
+            Image(systemName: kind.symbol)
+                .font(.system(size: Sizing.kindIcon * 0.8, weight: .semibold))
+                .frame(width: Sizing.kindIcon, height: Sizing.kindIcon)
+                .foregroundStyle(Color(role: .fgAccent, in: theme))
+                .accessibilityHidden(true)
+            kind.shortName
+                .typeStyle(TypeRamp.callout)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .fixedSize()
+        }
+        .padding(.horizontal, Space.m)
+        .frame(height: Sizing.control)
+    }
+}
+
+/// One check-in type on clear glass.
+private struct BurstCapsule: View {
+    let kind: CheckInKind
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            BurstCapsuleLabel(kind: kind)
+                .contentShape(Capsule())
         }
         .buttonStyle(PressableButtonStyle())
         .glassEffect(.regular.interactive(), in: Capsule())
-        .shake(trigger: refusals, reduceMotion: reduceMotion)
     }
 }
 #endif

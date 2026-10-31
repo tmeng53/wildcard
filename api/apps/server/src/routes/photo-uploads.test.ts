@@ -8,6 +8,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -26,8 +27,8 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
@@ -47,9 +48,11 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
         store: createPostgresSquadStore(db),
@@ -65,6 +68,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     }),
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),

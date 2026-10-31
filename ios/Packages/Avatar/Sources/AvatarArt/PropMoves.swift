@@ -9,3 +9,13 @@ extension PlaceholderCharacter {
         return try Clip.decode(data)
     }
 }
+
+extension PlaceholderCharacter {
+    /// What a character plays once when its member taps it on the home: the move of the prop it
+    /// holds (the kit's, once it trained today) at the persona's tempo, or, holding none with a
+    /// move, the persona's cheer.
+    public static func signatureMove(wearing outfit: Outfit, persona: Persona) throws(AvatarError) -> Clip {
+        if let move = try propMove(for: outfit) { return try move.atTempo(persona.accentTempo) }
+        return try clip("cheer", persona: persona, species: species(of: outfit))
+    }
+}

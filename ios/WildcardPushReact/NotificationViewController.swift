@@ -6,6 +6,7 @@ import DailyPushDomain
 import DailyPushUI
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 import UIKit
 import UserNotifications
@@ -24,8 +25,11 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
             show(AnyView(PlainPush(title: content.title, text: content.body)))
             return
         }
+        // Sport names, from the list this build ships with: the app's newer copy is its own.
+        SportList.shared.show(CatalogClient.bundled.sports)
         let model = DailyPushModel(
-            store: DailyPushStore(push: push, sender: Self.sender(), now: { Date() }), arrived: notification.date,
+            store: DailyPushStore(push: push, sender: Self.sender(for: push.viewer), now: { Date() }),
+            arrived: notification.date,
             looks: AppGroup.directory.map(SharedSquad.init)?.looks() ?? [:]
         ) { [weak self] destination in
             self?.open(destination)
@@ -42,7 +46,7 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
     private func show(_ content: AnyView) {
         hosting?.view.removeFromSuperview()
         hosting?.removeFromParent()
-        let hosting = UIHostingController(rootView: content)
+        let hosting = UIHostingController(rootView: AnyView(content.environment(\.locale, AppLanguage.current.locale)))
         hosting.sizingOptions = .preferredContentSize
         hosting.view.backgroundColor = .clear
         addChild(hosting)
@@ -69,14 +73,16 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
         return try? JSONSerialization.data(withJSONObject: event)
     }
 
-    /// Reacting through our API, as the member signed in on the app. A build that names no
-    /// backend (Debug) can't send.
-    private static func sender() -> any ReactionSender {
+    /// Reacting through our API, as the member signed in on the app, and only while that is the
+    /// member the push is for. A build that names no backend (Debug) can't send.
+    private static func sender(for member: MemberID) -> any ReactionSender {
         guard let address = BackendAddress(info: Bundle.main.infoDictionary ?? [:]) else { return Unsent() }
         let account = AccountSession(
             provider: SupabaseAuth(url: address.authURL, publishableKey: address.authPublishableKey),
             store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
-        return APIReactionSender(api: WildcardAPI(url: address.apiURL, account: account))
+        return APIReactionSender(
+            api: WildcardAPI(
+                url: address.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue }))
     }
 }
 

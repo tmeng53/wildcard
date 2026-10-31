@@ -173,6 +173,270 @@ public enum Operations {
             }
         }
     }
+    /// The lists the app shows, such as every sport
+    ///
+    /// No sign-in. Send the last `ETag` as `If-None-Match` to get 304 while it is unchanged. An edit shows within about a minute. Limited per client address.
+    ///
+    /// - Remark: HTTP `GET /public/catalog`.
+    /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)`.
+    public enum GetCatalog {
+        public static let id: Swift.String = "getCatalog"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/public/catalog/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                /// The `ETag` of the catalog the app has.
+                ///
+                /// - Remark: Generated from `#/paths/public/catalog/GET/header/if-none-match`.
+                public var ifNoneMatch: Swift.String?
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetCatalog.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - ifNoneMatch: The `ETag` of the catalog the app has.
+                ///   - accept:
+                public init(
+                    ifNoneMatch: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetCatalog.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.ifNoneMatch = ifNoneMatch
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GetCatalog.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.GetCatalog.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/public/catalog/GET/responses/200/headers`.
+                public struct Headers: Sendable, Hashable {
+                    /// Names this version of the catalog.
+                    ///
+                    /// - Remark: Generated from `#/paths/public/catalog/GET/responses/200/headers/ETag`.
+                    public var eTag: Swift.String?
+                    /// `no-cache`: keep it, but ask again before using it as current.
+                    ///
+                    /// - Remark: Generated from `#/paths/public/catalog/GET/responses/200/headers/Cache-Control`.
+                    public var cacheControl: Swift.String?
+                    /// Creates a new `Headers`.
+                    ///
+                    /// - Parameters:
+                    ///   - eTag: Names this version of the catalog.
+                    ///   - cacheControl: `no-cache`: keep it, but ask again before using it as current.
+                    public init(
+                        eTag: Swift.String? = nil,
+                        cacheControl: Swift.String? = nil
+                    ) {
+                        self.eTag = eTag
+                        self.cacheControl = cacheControl
+                    }
+                }
+                /// Received HTTP response headers
+                public var headers: Operations.GetCatalog.Output.Ok.Headers
+                /// - Remark: Generated from `#/paths/public/catalog/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/public/catalog/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Catalog)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Catalog {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetCatalog.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - headers: Received HTTP response headers
+                ///   - body: Received HTTP response body
+                public init(
+                    headers: Operations.GetCatalog.Output.Ok.Headers = .init(),
+                    body: Operations.GetCatalog.Output.Ok.Body
+                ) {
+                    self.headers = headers
+                    self.body = body
+                }
+            }
+            /// The catalog
+            ///
+            /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GetCatalog.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GetCatalog.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct NotModified: Sendable, Hashable {
+                /// Creates a new `NotModified`.
+                public init() {}
+            }
+            /// Unchanged since the `If-None-Match` version
+            ///
+            /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)/responses/304`.
+            ///
+            /// HTTP response code: `304 notModified`.
+            case notModified(Operations.GetCatalog.Output.NotModified)
+            /// Unchanged since the `If-None-Match` version
+            ///
+            /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)/responses/304`.
+            ///
+            /// HTTP response code: `304 notModified`.
+            public static var notModified: Self {
+                .notModified(.init())
+            }
+            /// The associated value of the enum case if `self` is `.notModified`.
+            ///
+            /// - Throws: An error if `self` is not `.notModified`.
+            /// - SeeAlso: `.notModified`.
+            public var notModified: Operations.GetCatalog.Output.NotModified {
+                get throws {
+                    switch self {
+                    case let .notModified(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "notModified",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct TooManyRequests: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/public/catalog/GET/responses/429/headers`.
+                public struct Headers: Sendable, Hashable {
+                    /// Seconds until reads from this address are taken again.
+                    ///
+                    /// - Remark: Generated from `#/paths/public/catalog/GET/responses/429/headers/Retry-After`.
+                    public var retryAfter: Swift.Int?
+                    /// Creates a new `Headers`.
+                    ///
+                    /// - Parameters:
+                    ///   - retryAfter: Seconds until reads from this address are taken again.
+                    public init(retryAfter: Swift.Int? = nil) {
+                        self.retryAfter = retryAfter
+                    }
+                }
+                /// Received HTTP response headers
+                public var headers: Operations.GetCatalog.Output.TooManyRequests.Headers
+                /// - Remark: Generated from `#/paths/public/catalog/GET/responses/429/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/public/catalog/GET/responses/429/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetCatalog.Output.TooManyRequests.Body
+                /// Creates a new `TooManyRequests`.
+                ///
+                /// - Parameters:
+                ///   - headers: Received HTTP response headers
+                ///   - body: Received HTTP response body
+                public init(
+                    headers: Operations.GetCatalog.Output.TooManyRequests.Headers = .init(),
+                    body: Operations.GetCatalog.Output.TooManyRequests.Body
+                ) {
+                    self.headers = headers
+                    self.body = body
+                }
+            }
+            /// Too many reads from this address (`REQUESTS_TOO_FREQUENT`)
+            ///
+            /// - Remark: Generated from `#/paths//public/catalog/get(getCatalog)/responses/429`.
+            ///
+            /// HTTP response code: `429 tooManyRequests`.
+            case tooManyRequests(Operations.GetCatalog.Output.TooManyRequests)
+            /// The associated value of the enum case if `self` is `.tooManyRequests`.
+            ///
+            /// - Throws: An error if `self` is not `.tooManyRequests`.
+            /// - SeeAlso: `.tooManyRequests`.
+            public var tooManyRequests: Operations.GetCatalog.Output.TooManyRequests {
+                get throws {
+                    switch self {
+                    case let .tooManyRequests(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "tooManyRequests",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case applicationProblemJson
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .applicationProblemJson
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .applicationProblemJson:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .applicationProblemJson
+                ]
+            }
+        }
+    }
     /// The signed-in member
     ///
     /// Who the bearer token belongs to, and their profile once they have saved one.
@@ -395,7 +659,7 @@ public enum Operations {
     }
     /// Delete the signed-in member’s account
     ///
-    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (squads they made stay with the other members), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
+    /// Deletes the account and everything that is the member’s: profile, check-ins, photos and squad memberships (a squad stays with its other members, and goes with its last), and revokes Sign in with Apple when given a code. Can’t be undone. The session is checked with the sign-in provider, so a signed-out token is refused even before it expires. Safe to repeat after a failure. Afterwards this route refuses the token; other routes accept it until it expires, so the app signs out.
     ///
     /// - Remark: HTTP `DELETE /me`.
     /// - Remark: Generated from `#/paths//me/delete(deleteMe)`.
@@ -12830,7 +13094,7 @@ public enum Operations {
     }
     /// Save the signed-in member’s plan for a week
     ///
-    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, today stays a training or a rest day (its sport may change), and the number of rest days is fixed. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
@@ -12966,7 +13230,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid plan or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`) or to this week’s number of rest days (`REST_DAYS_FIXED`); or no profile yet (`TIME_ZONE_NOT_SET`)
+            /// Not a valid plan or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); a change to a day that has started (`PLAN_DAY_STARTED`); or no profile yet (`TIME_ZONE_NOT_SET`)
             ///
             /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)/responses/400`.
             ///
@@ -13181,7 +13445,7 @@ public enum Operations {
     }
     /// Set the signed-in member’s 饮食小目标 for a week
     ///
-    /// Replaces the week’s goals; repeating a save gives the same result. Only for a week that hasn’t started on the member’s clock, up to 4 weeks ahead. Answers with the whole week.
+    /// Replaces the week’s goals; repeating a save gives the same result. For this week on the member’s clock or a later one, up to 4 weeks ahead. Answers with the whole week.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
@@ -13317,7 +13581,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not valid goals or not a Monday; a week that has started (`WEEK_STARTED`) or is too far ahead (`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)
+            /// Not valid goals or not a Monday; a week that is over (`WEEK_OVER`) or too far ahead (`WEEK_TOO_FAR_AHEAD`); or no profile yet (`TIME_ZONE_NOT_SET`)
             ///
             /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)/responses/400`.
             ///
@@ -14259,6 +14523,226 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.serviceUnavailable`.
             /// - SeeAlso: `.serviceUnavailable`.
             public var serviceUnavailable: Operations.GetSquadWeekStory.Output.ServiceUnavailable {
+                get throws {
+                    switch self {
+                    case let .serviceUnavailable(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "serviceUnavailable",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case applicationProblemJson
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .applicationProblemJson
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .applicationProblemJson:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .applicationProblemJson
+                ]
+            }
+        }
+    }
+    /// The weekly titles the signed-in member has won
+    ///
+    /// Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.
+    ///
+    /// - Remark: HTTP `GET /me/award-totals`.
+    /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
+    public enum GetMyAwardTotals {
+        public static let id: Swift.String = "getMyAwardTotals"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/me/award-totals/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetMyAwardTotals.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetMyAwardTotals.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GetMyAwardTotals.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/award-totals/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/award-totals/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AwardTotals)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AwardTotals {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetMyAwardTotals.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetMyAwardTotals.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// The titles
+            ///
+            /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GetMyAwardTotals.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GetMyAwardTotals.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Unauthorized: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/award-totals/GET/responses/401/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/award-totals/GET/responses/401/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetMyAwardTotals.Output.Unauthorized.Body
+                /// Creates a new `Unauthorized`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetMyAwardTotals.Output.Unauthorized.Body) {
+                    self.body = body
+                }
+            }
+            /// No bearer token, or not a valid one
+            ///
+            /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)/responses/401`.
+            ///
+            /// HTTP response code: `401 unauthorized`.
+            case unauthorized(Operations.GetMyAwardTotals.Output.Unauthorized)
+            /// The associated value of the enum case if `self` is `.unauthorized`.
+            ///
+            /// - Throws: An error if `self` is not `.unauthorized`.
+            /// - SeeAlso: `.unauthorized`.
+            public var unauthorized: Operations.GetMyAwardTotals.Output.Unauthorized {
+                get throws {
+                    switch self {
+                    case let .unauthorized(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unauthorized",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct ServiceUnavailable: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/award-totals/GET/responses/503/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/award-totals/GET/responses/503/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetMyAwardTotals.Output.ServiceUnavailable.Body
+                /// Creates a new `ServiceUnavailable`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetMyAwardTotals.Output.ServiceUnavailable.Body) {
+                    self.body = body
+                }
+            }
+            /// Sign-in can’t be checked right now
+            ///
+            /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)/responses/503`.
+            ///
+            /// HTTP response code: `503 serviceUnavailable`.
+            case serviceUnavailable(Operations.GetMyAwardTotals.Output.ServiceUnavailable)
+            /// The associated value of the enum case if `self` is `.serviceUnavailable`.
+            ///
+            /// - Throws: An error if `self` is not `.serviceUnavailable`.
+            /// - SeeAlso: `.serviceUnavailable`.
+            public var serviceUnavailable: Operations.GetMyAwardTotals.Output.ServiceUnavailable {
                 get throws {
                     switch self {
                     case let .serviceUnavailable(response):

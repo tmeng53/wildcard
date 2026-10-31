@@ -2,7 +2,7 @@
 // shows the squad's name and size over its members' own characters in the 排队入场 queue, each
 // playing its persona's idle. The button opens the App Store; the code is there for anyone who
 // already has the app. The language follows ?lang=, else the browser's.
-import { dress } from '/character/dress.js';
+import { dress, leveled } from '/character/dress.js';
 import { lineup } from '/character/lineup.js';
 
 const API = 'https://api.wildcardsquad.com';
@@ -152,6 +152,7 @@ function play(looks) {
     .filter((look) => C.variants.body.includes(look.variants?.body))
     .map((look) => ({
       art: dress(C, look.variants, look.colors ?? {}),
+      level: leveled(C, look.variants),
       idle: C.idle[C.personas.includes(look.persona) ? look.persona : 'deadpan'],
     }));
   const figures = members.map(() => {

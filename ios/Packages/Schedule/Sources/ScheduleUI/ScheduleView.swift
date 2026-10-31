@@ -18,12 +18,15 @@ public struct ScheduleView: View {
     @State private var picksAll = false
     @State private var ownFuel = ""
     @FocusState private var typingFuel: Bool
+    /// Bumps as 存图 takes its picture: the poster flashes white, like a screenshot.
+    @State private var flashes = 0
+    /// The picture the share sheet is open on, once the flash has played.
+    @State private var sharing: ScheduleModel.SharedPoster?
 
     private static let panelID = "schedule.panel"
     private static let posterID = "schedule.posterFrame"
-    /// How long 存好了 stays before it goes: long enough to read after looking up from the tap,
-    /// and for a UI test to find it after a slow render.
-    private let savedNoteHold: Duration = .seconds(5)
+    /// How long 没存上 stays before it goes.
+    private let failedNoteHold: Duration = .seconds(5)
 
     public init(model: ScheduleModel) {
         self.model = model
@@ -85,109 +88,73 @@ public struct ScheduleView: View {
             }
         }
         .task { await model.load() }
+        .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
-            SportPicker(selected: selectedActivity) { activity in
+            SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
                 picksAll = false
                 model.pick(activity)
             }
         }
-        .haptic(.pick, trigger: model.lifts)
-        .haptic(.land, trigger: model.swaps)
-        .haptic(.appear, trigger: model.saving == .saved)
+        .haptic(.appear, trigger: sharing?.id)
         .task(id: model.saving) {
-            guard model.saving == .saved || model.saving == .failed else { return }
-            try? await Task.sleep(for: savedNoteHold)
-            model.clearSaving()
-        }
-    }
-
-    // MARK: Top bar
-
-    private var topBar: some View {
-        HStack(spacing: Space.xs) {
-            CategoryBar(weekChips, selection: weekSelection)
-                .frame(maxWidth: .infinity)
-            Button {
-                Task { await save() }
-            } label: {
-                Label {
-                    Text("存图", bundle: .module)
-                } icon: {
-                    Image(systemName: model.saving == .saved ? "checkmark" : "square.and.arrow.down")
-                        .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-                        .contentTransition(.symbolEffect(.replace))
+            switch model.saving {
+            case .sharing(let poster):
+                // The poster flashes, then the share sheet opens on its picture.
+                flashes += 1
+                // Left mid-flash (another tab), the share sheet doesn't open later on its own.
+                guard (try? await Task.sleep(for: .seconds(Motion.fadeIn.duration))) != nil else {
+                    model.clearSaving()
+                    return
                 }
+                sharing = poster
+            case .failed:
+                try? await Task.sleep(for: failedNoteHold)
+                model.clearSaving()
+            case .idle, .working:
+                break
             }
-            .buttonStyle(SecondaryButtonStyle())
-            .disabled(store.sheet == nil || model.saving == .working)
-            .accessibilityIdentifier("schedule.save")
         }
-    }
-
-    private var weekChips: [CategoryBarItem<LocalDay>] {
-        let thisWeek = store.today?.weekStart
-        return store.weeks.map { week in
-            let title: Text =
-                if week == thisWeek {
-                    Text("本周", bundle: .module)
-                } else if let thisWeek, week > thisWeek {
-                    Text("下周", bundle: .module)
-                } else {
-                    Text(verbatim: ScheduleLabels.week(week))
-                }
-            return CategoryBarItem(id: week, title: title, accessibilityIdentifier: "schedule.week.\(week)")
-        }
-    }
-
-    private var weekSelection: Binding<LocalDay> {
-        Binding(
-            get: { store.shownWeek ?? store.today?.weekStart ?? LocalDay(at: .now, in: .current) },
-            set: { model.show($0) })
-    }
-
-    @ViewBuilder
-    private var loading: some View {
-        switch store.phase {
-        case .offline:
-            Text("网不太好，连上了再来排", bundle: .module)
-                .typeStyle(TypeRamp.body)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-        case .signedOut:
-            Text("登录过期了，重新登录再来排", bundle: .module)
-                .typeStyle(TypeRamp.body)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-        case .loading, .ready:
-            Color(role: .bgSubtle, in: theme)
-                .aspectRatio(WeekPoster.size.width / WeekPoster.size.height, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        }
+        .sheet(
+            item: $sharing, onDismiss: { model.clearSaving() },
+            content: { poster in
+                PosterShareSheet(image: poster.image)
+                    .presentationDetents([.medium, .large])
+                    .ignoresSafeArea()
+            })
     }
 
     // MARK: Poster
 
     private func content(_ sheet: WeekSheet) -> PosterContent {
         PosterContent(
-            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "", fuelOpen: model.panel == .fuel,
+            sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "",
+            weekNumber: store.profile?.weekNumber(of: sheet.weekStart) ?? 1, fuelOpen: model.panel == .fuel,
             typingFuel: model.writingFuel ? ownFuel : "")
     }
 
     private func poster(_ sheet: WeekSheet) -> some View {
         GeometryReader { proxy in
-            WeekPoster(
+            SchedulePoster(
                 content: content(sheet), player: model.player, onTapLane: model.tap,
                 onTapFuel: model.toggleFuelPanel
             )
-            .scaleEffect(proxy.size.width / WeekPoster.size.width, anchor: .topLeading)
+            .scaleEffect(proxy.size.width / SchedulePoster.size.width, anchor: .topLeading)
         }
-        .aspectRatio(WeekPoster.size.width / WeekPoster.size.height, contentMode: .fit)
+        .keyframeAnimator(initialValue: 0.0, trigger: flashes) { content, flash in
+            content.overlay { Color(role: .bgCanvas, in: theme).opacity(flash).allowsHitTesting(false) }
+        } keyframes: { _ in
+            LinearKeyframe(1, duration: 0.01)
+            CubicKeyframe(0, duration: Motion.fadeIn.duration)
+        }
+        .aspectRatio(SchedulePoster.size.width / SchedulePoster.size.height, contentMode: .fit)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("schedule.poster")
     }
 
-    @MainActor private func save() async {
+    @MainActor private func save() {
         guard let sheet = store.sheet else { return }
-        let still = WeekPoster(content: content(sheet).forSaving, player: model.player, isStill: true)
-        await model.savePoster { WeekPoster.picture(of: still, theme: theme, locale: locale) }
+        let still = SchedulePoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
+        model.sharePoster { SchedulePoster.picture(of: still, theme: theme, locale: locale) }
     }
 
     // MARK: Under the poster
@@ -214,10 +181,19 @@ public struct ScheduleView: View {
         .transition(.opacity)
     }
 
+    /// 常用运动: the sports in the week on the poster, in the order planned.
+    private var recentActivities: [Activity] {
+        var seen: [Activity] = []
+        for case .train(let activity?) in store.sheet?.plan ?? [] where !seen.contains(activity) {
+            seen.append(activity)
+        }
+        return seen
+    }
+
     private var selectedActivity: Activity {
         guard let sheet = store.sheet, case .selected(let index) = store.board?.focus,
             case .train(let activity?) = sheet.plan[index]
-        else { return .sport(.run) }
+        else { return .sport("run") }
         return activity
     }
 
@@ -279,6 +255,73 @@ public struct ScheduleView: View {
         if await model.addFuel(typed: ownFuel) {
             ownFuel = ""
             typingFuel = false
+        } else {
+            // The tap on 加上 put the keyboard away; bring the typed goal back to try again.
+            model.writingFuel = true
+            typingFuel = true
+        }
+    }
+}
+
+extension ScheduleView {
+    // MARK: Top bar
+
+    fileprivate var topBar: some View {
+        HStack(spacing: Space.xs) {
+            CategoryBar(weekChips, selection: weekSelection)
+                .frame(maxWidth: .infinity)
+            Button {
+                save()
+            } label: {
+                Label {
+                    Text("存图", bundle: .module)
+                } icon: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
+                }
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
+            .accessibilityIdentifier("schedule.save")
+        }
+    }
+
+    fileprivate var weekChips: [CategoryBarItem<LocalDay>] {
+        let thisWeek = store.today?.weekStart
+        return store.weeks.map { week in
+            let title: Text =
+                if week == thisWeek {
+                    Text("本周", bundle: .module)
+                } else if let thisWeek, week > thisWeek {
+                    Text("下周", bundle: .module)
+                } else {
+                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
+                }
+            return CategoryBarItem(id: week, title: title, accessibilityIdentifier: "schedule.week.\(week)")
+        }
+    }
+
+    private var weekSelection: Binding<LocalDay> {
+        Binding(
+            get: { store.shownWeek ?? store.today?.weekStart ?? LocalDay(at: .now, in: .current) },
+            set: { model.show($0) })
+    }
+
+    @ViewBuilder
+    private var loading: some View {
+        switch store.phase {
+        case .offline:
+            Text("网不太好，连上了再来排", bundle: .module)
+                .typeStyle(TypeRamp.body)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+        case .signedOut:
+            Text("登录过期了，重新登录再来排", bundle: .module)
+                .typeStyle(TypeRamp.body)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+        case .loading, .ready:
+            Color(role: .bgSubtle, in: theme)
+                .aspectRatio(SchedulePoster.size.width / SchedulePoster.size.height, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         }
     }
 }

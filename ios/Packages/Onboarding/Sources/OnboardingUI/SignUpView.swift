@@ -5,7 +5,7 @@ import DesignSystemUI
 import OnboardingDomain
 import SwiftUI
 
-/// Sign-up, from the open screen to 上场. Each step slides in from the side it comes from.
+/// Sign-up, from the open screen to 上场, or for whoever made their squad to 这周在哪练？. Each step slides in from the side it comes from.
 /// `signIn` is the open screen's 通过 Apple 继续, which the app wires to its account; it calls
 /// `SignUpModel.signedIn(name:)` once the member is in. The open screen's terms line and the AI
 /// consent link to the published policy pages the app passes. `tabBar` is the app's tab bar as
@@ -36,7 +36,9 @@ public struct SignUpView<SignIn: View, Bar: View>: View {
             case .character:
                 if let editor = model.editor {
                     CharacterEditorView(
-                        model: editor, context: .signUp(step: 1, total: SignUpStep.counted.count), onBack: model.back,
+                        model: editor, context: .signUp(step: 1, total: SignUpStep.counted.count),
+                        // The member is signing up today, so today is the day on the ticket.
+                        issued: .now, onBack: model.back,
                         onDone: model.finishCharacter
                     )
                     .transition(transition)
@@ -49,6 +51,9 @@ public struct SignUpView<SignIn: View, Bar: View>: View {
                     .transition(transition)
             case .week:
                 WeekStep(model: model)
+                    .transition(transition)
+            case .scene:
+                SceneStep(model: model)
                     .transition(transition)
             case .entrance:
                 EntranceScreen(model: model, tabBar: tabBar)

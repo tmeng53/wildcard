@@ -2,13 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { z } from 'zod';
 
-import {
-  PlanDayStartedError,
-  RestDaysFixedError,
-  WeekOverError,
-  WeekStartedError,
-  WeekTooFarAheadError,
-} from '../errors.js';
+import { PlanDayStartedError, WeekOverError, WeekTooFarAheadError } from '../errors.js';
 import { LocalDay } from './check-in.js';
 import { SportKey } from './sports.js';
 import { CustomSportName } from './text.js';
@@ -63,9 +57,20 @@ export type PlanDay = z.infer<typeof PlanDay>;
 export const PlanDays = z.array(PlanDay).min(7).max(7);
 export type PlanDays = z.infer<typeof PlanDays>;
 
-/** How many of a plan's days are training days. */
-export const plannedTrainingDays = (days: readonly PlanDay[]) =>
-  days.filter(({ kind }) => kind === 'train').length;
+/**
+ * How many of a plan's days are training days. Given the week's dates and the day the member
+ * joined, the days before they joined don't count: a plan saved at sign-up on a Saturday asks
+ * for Saturday and Sunday only.
+ */
+export const plannedTrainingDays = (
+  days: readonly PlanDay[],
+  joined?: { readonly weekDays: readonly LocalDay[]; readonly joinedOn: LocalDay | undefined },
+) =>
+  days.filter(({ kind }, index) => {
+    if (kind !== 'train') return false;
+    const date = joined?.weekDays[index];
+    return joined?.joinedOn === undefined || date === undefined || date >= joined.joinedOn;
+  }).length;
 
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
 export const StoredPlan = z.discriminatedUnion('version', [
@@ -130,15 +135,14 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
   return Number(part('hour')) < GRACE_HOURS ? addDays(calendarDay, -1) : calendarDay;
 }
 
-const restDays = (days: readonly PlanDay[]) => days.filter((day) => day.kind === 'rest').length;
-
 /**
  * Checks that a member may replace `current` (the week's plan as it stands) with `next` on
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
  * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
  * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
- * days before today stay as they were, today stays a training or a rest day (its sport may
- * change), and the number of rest days stays the same. Days before the member joined weren't
+ * days before today stay as they were; a training today stays a training day (its sport may
+ * change) and a rest today may become a training day; the days after today change freely, rest
+ * days included. Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
  * is still on the default plan: that is where they first make their plan.
  */
@@ -170,15 +174,37 @@ export function checkPlanChange({
     const after = next[index];
     const unchanged =
       date < today ? isDeepStrictEqual(before, after) : before?.kind === after?.kind;
-    if (!unchanged) throw new PlanDayStartedError(date);
+    if (!unchanged && !(date === today && before?.kind === 'rest')) {
+      throw new PlanDayStartedError(date);
+    }
   }
-  const kept = restDays(current.days.slice(first));
-  if (restDays(next.slice(first)) !== kept) throw new RestDaysFixedError(kept);
 }
 
 /**
- * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: only
- * before the week starts, and at most `WEEKS_AHEAD` weeks ahead, as for the plan.
+ * The plan with `day` a training day of `training`'s sport when it was a rest day: a 练了 on a
+ * planned rest day makes it a training day. Undefined when the day was already a training day.
+ */
+export function trainedOnRestDay({
+  plan,
+  day,
+  training,
+}: {
+  readonly plan: WeeklyPlan;
+  readonly day: LocalDay;
+  readonly training: { readonly sport: SportKey; readonly customSport?: string | undefined };
+}): PlanDays | undefined {
+  const index = Math.round((Date.parse(day) - Date.parse(plan.weekStart)) / DAY);
+  if (plan.days[index]?.kind !== 'rest') return undefined;
+  const trained: PlanDay =
+    training.customSport === undefined
+      ? { kind: 'train', sport: training.sport }
+      : { kind: 'train', sport: training.sport, customSport: training.customSport };
+  return plan.days.map((planned, at) => (at === index ? trained : planned));
+}
+
+/**
+ * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: this
+ * week or a later one, at most `WEEKS_AHEAD` weeks ahead, as for the plan; past weeks are over.
  */
 export function checkFuelGoalsChange({
   weekStart,
@@ -188,6 +214,6 @@ export function checkFuelGoalsChange({
   readonly today: LocalDay;
 }): void {
   const thisWeek = weekStartOf(today);
-  if (weekStart <= thisWeek) throw new WeekStartedError(weekStart);
+  if (weekStart < thisWeek) throw new WeekOverError(weekStart);
   if (weekStart > addDays(thisWeek, 7 * WEEKS_AHEAD)) throw new WeekTooFarAheadError(weekStart);
 }

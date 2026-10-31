@@ -11,6 +11,8 @@ public struct SceneArt: View {
         case day
         /// The dark tint and the lamps, over everything on the scene.
         case night
+        /// The lamp tubes alone, flickering on over the lifting dark as the lights come on (开灯).
+        case lamps
         /// A part of the venue people stand behind.
         case front(Int)
 
@@ -18,6 +20,7 @@ public struct SceneArt: View {
             switch self {
             case .day: "day"
             case .night: "night"
+            case .lamps: "lamps"
             case .front(let index): "front-\(index)"
             }
         }

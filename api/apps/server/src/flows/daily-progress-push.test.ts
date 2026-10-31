@@ -16,6 +16,7 @@ import {
   type PushSender,
 } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -34,7 +35,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -58,6 +59,7 @@ const squads = createSquads({
   aiConsent: () => Promise.resolve(true),
 });
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership: squads,
   reactions: createPostgresReactionStore(db),
@@ -93,6 +95,7 @@ const deps = {
   photos,
   checkIns,
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -106,6 +109,7 @@ const deps = {
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,
@@ -185,6 +189,10 @@ async function member(at: { readonly zone: string; readonly offset: number }, ni
     body: { version: 1, timeZone: at.zone, ...character },
   });
   expect(saved.status).toBe(200);
+  // Joined weeks ago, so this week's plan counts from Monday.
+  await sql`update profiles set created_at = now() - interval '30 days' where member_id = ${signedUp.userId}`.execute(
+    db,
+  );
   const phone = randomBytes(32).toString('hex');
   const registered = await call('PUT', {
     path: '/me/devices',
@@ -444,12 +452,14 @@ describe('the daily progress push', () => {
   });
 
   it('carries teammates’ posts today, newest first, with their reactions and names', async () => {
-    const [eve, mate, third] = [
+    // The 请假条 is someone else's: a 练了 the same day would take it back.
+    const [eve, mate, third, resting] = [
       await member(evening),
       await member(evening),
       await member(morning),
+      await member(evening),
     ];
-    const squad = await squadOf(eve, mate, third);
+    const squad = await squadOf(eve, mate, third, resting);
     await call('PUT', {
       path: '/me/profile',
       token: mate.token,
@@ -470,10 +480,10 @@ describe('the daily progress push', () => {
       (
         await call('PUT', {
           path: `/check-ins/${id}`,
-          token: mate.token,
+          token: resting.token,
           body: {
             version: 1,
-            day: dayAt(mate.offset),
+            day: dayAt(resting.offset),
             createdAt: new Date(Date.now() - 30_000).toISOString(),
             audience: [squad],
             kind: 'disclaimer',
@@ -490,7 +500,12 @@ describe('the daily progress push', () => {
     await run();
     const [sent] = sentTo.get(eve.phone) ?? [];
     expect(sent?.event.today).toStrictEqual({
-      members: [{ id: eve.userId }, { id: mate.userId, name: '小米' }, { id: third.userId }],
+      members: [
+        { id: eve.userId },
+        { id: resting.userId },
+        { id: third.userId },
+        { id: mate.userId, name: '小米' },
+      ],
       posts: [
         {
           id,
@@ -512,7 +527,7 @@ describe('the daily progress push', () => {
         },
         {
           id: older,
-          by: 1,
+          by: 3,
           kind: 'trained',
           sport: 'run',
           at: anyTime,

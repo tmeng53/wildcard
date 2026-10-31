@@ -51,12 +51,14 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     }
 
     private static let planA: [PlanDay] = [
-        .train(.sport(.run)), .train(.sport(.tennis)), .rest, .train(.sport(.strength)), .train(.sport(.run)), .rest,
-        .train(.sport(.tennis)),
+        .train(.sport("run")), .train(.sport("tennis")), .rest, .train(.sport("strength")), .train(.sport("run")),
+        .rest,
+        .train(.sport("tennis")),
     ]
     private static let planB: [PlanDay] = [
-        .train(.sport(.run)), .rest, .train(.sport(.strength)), .train(.sport(.tennis)), .rest, .train(.sport(.swim)),
-        .train(.sport(.run)),
+        .train(.sport("run")), .rest, .train(.sport("strength")), .train(.sport("tennis")), .rest,
+        .train(.sport("swim")),
+        .train(.sport("run")),
     ]
 
     /// What the weekly awards might say; the real ones come from the API.
@@ -82,11 +84,12 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         var sheet = try await week(starting: weekStart)
         if weekStart == thisWeek {
             let before = sheet.plan
-            let started = today.weekday
-            guard days.prefix(started) == before.prefix(started) else { throw .dayStarted }
-            guard days.count(where: { $0 == .rest }) == before.count(where: { $0 == .rest }) else {
-                throw .restDaysFixed
-            }
+            // Days before today stay as they were; a training today stays a training day, and a
+            // rest today may become one. Later days change freely.
+            let todayIndex = today.weekday - 1
+            guard days.count == before.count, days.prefix(todayIndex) == before.prefix(todayIndex),
+                before[todayIndex] == .rest || days[todayIndex] != .rest
+            else { throw .dayStarted }
         }
         sheet.plan = days
         sheets[weekStart] = sheet
@@ -94,7 +97,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     }
 
     public func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        guard weekStart > thisWeek else { throw .weekOver }
+        guard weekStart >= thisWeek else { throw .weekOver }
         var sheet = try await week(starting: weekStart)
         sheet.fuel = goals
         sheets[weekStart] = sheet

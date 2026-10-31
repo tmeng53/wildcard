@@ -128,7 +128,6 @@ extension ScheduleError {
             case .account: .notSent
             case .refused(.weekClosed): .weekOver
             case .refused(.planDayStarted): .dayStarted
-            case .refused(.restDaysFixed): .restDaysFixed
             case .refused, .unreadableResponse: .refused
             }
     }

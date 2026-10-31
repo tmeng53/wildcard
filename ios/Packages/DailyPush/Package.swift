@@ -43,6 +43,11 @@ let package = Package(
         .testTarget(
             name: "DailyPushDomainTests",
             dependencies: ["DailyPushDomain", "Contracts", .product(name: "FeedDomain", package: "Feed")]),
-        .testTarget(name: "DailyPushUITests", dependencies: ["DailyPushUI", "DailyPushDomain", "Contracts"]),
+        .testTarget(
+            name: "DailyPushUITests",
+            dependencies: [
+                "DailyPushUI", "DailyPushDomain", "Contracts", .product(name: "AvatarArt", package: "Avatar"),
+                .product(name: "AvatarDomain", package: "Avatar"),
+            ]),
     ]
 )

@@ -37,11 +37,6 @@ private func property(_ field: String, of name: String) throws -> Schema? {
     return document.components.schemas[name]?.properties?[field]
 }
 
-@Test func sportsAreTheAPIsListPlusCustom() {
-    #expect(
-        Components.Schemas.Sport.allCases.map(\.rawValue) == Sport.allCases.map(\.rawValue) + ["custom"])
-}
-
 @Test(arguments: ["Training", "Meal", "TrainingView", "MealView"])
 func captionLimitIsTheAPIs(schema: String) throws {
     #expect(try property("caption", of: schema)?.maxCharacters == Caption.maxLength)
@@ -65,6 +60,12 @@ func workoutMinutesRangeIsTheAPIs(schema: String) throws {
 
 @Test func catchphraseLimitIsTheAPIs() throws {
     #expect(try property("catchphrase", of: "Profile")?.maxCharacters == Catchphrase.maxLength)
+}
+
+@Test func jerseyNumberRangeIsTheAPIs() throws {
+    let number = try property("jerseyNumber", of: "Profile")
+    #expect(number?.minimum == JerseyNumber.range.lowerBound)
+    #expect(number?.maximum == JerseyNumber.range.upperBound)
 }
 
 @Test func nicknameLimitIsTheAPIs() throws {

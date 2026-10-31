@@ -29,8 +29,10 @@ public enum Radius {
     public static let thumbnail: Double = 6
     /// Pick rows, picture tiles and inputs.
     public static let pick: Double = 10
-    /// Cards and the character's stage.
+    /// Cards.
     public static let card: Double = 12
+    /// The character's ticket in the editor.
+    public static let ticket: Double = 14
 
     /// Capsules (buttons, pills, tags): half the height, so the ends are fully round.
     public static func capsule(height: Double) -> Double {

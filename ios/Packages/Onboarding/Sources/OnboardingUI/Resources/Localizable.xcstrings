@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
     "%@ 的小队": {
       "localizations": {
         "en": {
@@ -993,18 +1003,18 @@
         }
       }
     },
-    "一周练几天？": {
+    "本周目标": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How many days a week?"
+            "value": "Set your goal for this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一周练几天？"
+            "value": "本周目标"
           }
         }
       }
@@ -1133,38 +1143,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你的小队"
-          }
-        }
-      }
-    },
-    "其他": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Other"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "其他"
-          }
-        }
-      }
-    },
-    "加上「%@」": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add “%@”"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加上「%@」"
           }
         }
       }
@@ -1319,22 +1297,6 @@
         }
       }
     },
-    "搜索": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索"
-          }
-        }
-      }
-    },
     "更多": {
       "localizations": {
         "en": {
@@ -1415,22 +1377,6 @@
         }
       }
     },
-    "比如：飞盘": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "e.g. Ultimate frisbee"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "比如：飞盘"
-          }
-        }
-      }
-    },
     "没存上，换个写法试试": {
       "localizations": {
         "en": {
@@ -1459,22 +1405,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "没找到这个邀请码"
-          }
-        }
-      }
-    },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %lld 周"
           }
         }
       }
@@ -1587,6 +1517,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "邀请码"
+          }
+        }
+      }
+    },
+    "就它了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This one"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就它了"
+          }
+        }
+      }
+    },
+    "这周在哪练？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where this week?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这周在哪练？"
           }
         }
       }

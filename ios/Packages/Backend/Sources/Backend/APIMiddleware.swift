@@ -13,10 +13,14 @@ struct BearerToken: ClientMiddleware {
     /// Called with the renewed token the API refused too.
     let refused: @Sendable (_ token: String) async -> Void
 
+    static let publicOperations: Set<String> = [Operations.GetCatalog.id]
+
     func intercept(
         _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
+        // Routes anyone may call send no token, so they work signed out, as sign-up's are.
+        if Self.publicOperations.contains(operationID) { return try await next(request, body, baseURL) }
         // Read once, so the retry can send it again: request bodies are a check-in or a profile.
         var sent: Data?
         if let body { sent = try await Data(collecting: body, upTo: 1024 * 1024) }
@@ -40,6 +44,24 @@ struct BearerToken: ClientMiddleware {
         } catch {
             throw .account(error)
         }
+    }
+}
+
+/// The language the app speaks now, as a tag (`zh-Hans`, `en`).
+public typealias LanguageTag = @Sendable () -> String
+
+/// Asks for the API's words in the language the app speaks now, which a pick in the app can
+/// change after the system's own header was set.
+struct AcceptLanguage: ClientMiddleware {
+    let language: LanguageTag
+
+    func intercept(
+        _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
+        next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        var request = request
+        request.headerFields[.acceptLanguage] = language()
+        return try await next(request, body, baseURL)
     }
 }
 

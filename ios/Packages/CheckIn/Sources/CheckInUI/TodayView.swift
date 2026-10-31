@@ -16,6 +16,9 @@ public struct TodayView: View {
     @State private var model: TodayModel
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
+    /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
+    /// view is made anew on coming back to the tab, and going to the background clears it.
+    @State private var pickedDay: Int?
     /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
     /// shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
@@ -70,10 +73,13 @@ public struct TodayView: View {
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
         .haptic(.poke, trigger: model.pats.landed)
         .haptic(.reaction, trigger: model.pats.landedOnMe)
+        // The cord clicking the lights on; switching them off is quiet.
+        .haptic(.lights, trigger: model.lightsPull) { _, pull in pull?.isOn == true }
         .task { await model.load() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
+            if phase == .background { pickedDay = nil }
         }
     }
 
@@ -82,7 +88,8 @@ public struct TodayView: View {
         ZStack {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
-                celebration: model.celebrations, pats: model.pats, canPat: model.canPat, tapMate: model.tapMate,
+                lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
+                pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
                 patMate: model.patMate, arrival: model.arrival
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
@@ -95,6 +102,7 @@ public struct TodayView: View {
                     // Read again each minute, so 今日赛况 arrives at 21:00 with the app open.
                     TimelineView(.everyMinute) { _ in
                         topCard(home: home, week: week, day: day, recap: model.recap)
+                            .overlay(alignment: .bottom) { lightCord }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
@@ -175,7 +183,7 @@ public struct TodayView: View {
             Group {
                 if let recap {
                     SquadCard(
-                        squad: squad, mine: mine, page: $cardPage, avatar: { head($0) },
+                        squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay, avatar: { head($0) },
                         footer: {
                             RecapTag(recap: recap, isSeen: recapSeen == day.description) {
                                 recapSeen = day.description
@@ -185,7 +193,7 @@ public struct TodayView: View {
                             }
                         })
                 } else {
-                    SquadCard(squad: squad, mine: mine, page: $cardPage) { head($0) }
+                    SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                 }
             }
             .accessibilityIdentifier("today.card")
@@ -193,32 +201,93 @@ public struct TodayView: View {
         }
     }
 
+    /// The pull cord hanging under the card at night (the approved 开灯), its centre 40 points
+    /// from the screen's right edge; it follows the card as 今日赛况 makes it taller and fades out
+    /// while the 打卡 burst is open.
+    @ViewBuilder
+    private var lightCord: some View {
+        if model.phase == .night {
+            let isOn = model.lightsOn
+            PullCord(isOn ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isOn) {
+                model.pullCord(reduceMotion: reduceMotion)
+            }
+            .accessibilityIdentifier("today.lights")
+            .padding(.trailing, Self.cordInset)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            // Hangs from the card's bottom edge: the overlay puts its bottom there, so it moves
+            // down by its own height (an offset moves its taps and VoiceOver frame with it).
+            .offset(y: PullCord.size.height)
+            .opacity(model.isBurstOpen ? 0 : 1)
+            .allowsHitTesting(!model.isBurstOpen)
+            .accessibilityHidden(model.isBurstOpen)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.isBurstOpen)
+            .transition(.opacity)
+        }
+    }
+
+    /// From the screen's right edge to the cord's frame: its centre sits 40 points in.
+    private static let cordInset = 40 - PullCord.size.width / 2
+
     /// A teammate's head in the squad card's ring.
     @ViewBuilder
     private func head(_ member: SquadMember) -> some View {
         if let player = model.head(of: member.id) { CharacterHead(player: player) }
     }
 
-    /// My week for the card's second page: this week's days, what I trained and my meals, with
-    /// the counts the squad's today carries.
+    /// My week for the card's second page: this week's days, what I trained, and each day's line
+    /// (what I trained or the plan's sport, and my meals up to today), with the count the squad's
+    /// today carries.
     private func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
             summary: record.trained.map {
-                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module)
+                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module.inAppLanguage)
             }
             .joined(separator: " · "),
             done: week.trainedDays, planned: week.plannedDays,
-            days: record.days.map {
-                switch $0 {
-                case .trained: .trained
+            days: zip(record.days, record.activities).map { status, activity in
+                switch status {
+                case .trained: .trained(symbol: activity?.symbol)
                 case .disclaimer: .excused
                 case .restDay: .restDay
-                case .open: .open
+                // A training day without a sport gets a generic icon.
+                case .open: .planned(symbol: activity?.symbol ?? "figure.run")
                 }
             },
-            today: record.today, healthyMeals: record.healthyMeals, cheatMeals: record.cheatMeals,
-            lifetimeTrained: home.today.myWeek.lifetimeTrainedDays)
+            today: record.today,
+            details: record.days.indices.map { index in
+                dayDetail(
+                    record.days[index], activity: record.activities[index], log: record.logs[index],
+                    isToCome: index > record.today)
+            })
+    }
+
+    /// A day's line: what I trained with its minutes, 请假了 or 休息日, else the plan's sport, light.
+    private func dayDetail(
+        _ status: WeekRecord.Day, activity: Activity?, log: WeekRecord.DayLog, isToCome: Bool
+    ) -> WeekDayDetail {
+        let meals = isToCome ? nil : WeekDayDetail.Meals(healthy: log.healthyMeals, cheat: log.cheatMeals)
+        switch status {
+        case .trained:
+            let line = log.sessions.map { session in
+                if let minutes = session.minutes {
+                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module.inAppLanguage)
+                } else {
+                    session.activity.localizedName
+                }
+            }
+            return WeekDayDetail(line: line.joined(separator: " · "), isPlan: false, meals: meals)
+        case .disclaimer:
+            return WeekDayDetail(
+                line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
+        case .restDay:
+            return WeekDayDetail(
+                line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
+        case .open:
+            return WeekDayDetail(
+                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module.inAppLanguage), isPlan: true,
+                meals: meals)
+        }
     }
 
     private var isPickingPhotos: Binding<Bool> {

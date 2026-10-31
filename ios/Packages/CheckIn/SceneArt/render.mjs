@@ -1,7 +1,7 @@
 // Renders the home scenes' art from the approved simple home design's source (scenes.js,
 // 2026-10-20) into the PNGs CheckInUI draws: per scene the day art, the night overlay (dark
-// tint and lamps) and, where the venue has one, the front layer people stand behind (the
-// tennis net). Run: node ios/Packages/CheckIn/SceneArt/render.mjs (needs Playwright's Chromium).
+// tint and lamps), the lamp tubes alone (which flicker on as the lights come on, 开灯) and,
+// where the venue has one, the front layer people stand behind (the tennis net). Run: node ios/Packages/CheckIn/SceneArt/render.mjs (needs Playwright's Chromium).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,6 +35,7 @@ for (const [key, name] of Object.entries(names)) {
   const scene = scenes.liftScene(scenes.SCENES[key]());
   await shoot(`${name}-day`, scene.bg, false);
   await shoot(`${name}-night`, night + scene.lamps + scene.lampsTop, true);
+  await shoot(`${name}-lamps`, scene.lampsTop, true);
   for (const [i, front] of scene.fronts.entries()) await shoot(`${name}-front-${i}`, front.svg, true);
   console.log(name, scene.fronts.map(front => front.y));
 }

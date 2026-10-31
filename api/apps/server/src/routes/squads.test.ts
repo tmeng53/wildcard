@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -29,7 +30,8 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import { catalogOn } from '../test-kit/public-routes.js';
 
 /** The `index`th entry of a list a test made long enough. */
 function nth<T>(list: readonly T[], index: number): T {
@@ -53,12 +55,15 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: {
     proxyHops: 1,
     inviteLookups: createMemoryRateLimit({ limit: 3, windowSeconds: 600, clock: () => new Date() }),
+    catalogReads: () => ({ allowed: true }),
   },
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -73,6 +78,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),

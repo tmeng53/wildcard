@@ -13,6 +13,7 @@ import {
   type CheckInRecord,
 } from '../domain/check-in.js';
 import { PhotoPath, type PhotoRef } from '../domain/photos.js';
+import { SportKey } from '../domain/sports.js';
 import type { CheckInStore, InsertOutcome } from '../ports.js';
 import type { CheckIns, DB } from './tables.js';
 
@@ -155,11 +156,34 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         ])
         .where('member_id', '=', member)
         .executeTakeFirstOrThrow();
+      const top = await db
+        .selectFrom('check_ins')
+        .select([
+          sql<string>`payload ->> 'sport'`.as('sport'),
+          sql<string | null>`payload ->> 'customSport'`.as('customSport'),
+          sql<string>`count(*)`.as('checkIns'),
+        ])
+        .where('member_id', '=', member)
+        .where('kind', '=', 'trained')
+        .groupBy([sql`payload ->> 'sport'`, sql`payload ->> 'customSport'`])
+        .orderBy(sql`count(*)`, 'desc')
+        .orderBy(sql`max(created_at)`, 'desc')
+        .limit(1)
+        .executeTakeFirst();
       return {
         trainedDays: Number(counts.trainedDays),
         healthyMeals: Number(counts.healthyMeals),
         cheatMeals: Number(counts.cheatMeals),
         disclaimers: Number(counts.disclaimers),
+        ...(top === undefined
+          ? {}
+          : {
+              topSport: {
+                sport: SportKey.parse(top.sport),
+                ...(top.customSport === null ? {} : { customSport: top.customSport }),
+                checkIns: Number(top.checkIns),
+              },
+            }),
       };
     },
 

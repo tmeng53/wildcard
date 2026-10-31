@@ -1,6 +1,13 @@
 import type { z } from 'zod';
 
-import type { Awards, AwardsState, Failures, MemberId, SquadId } from './domain/awards.js';
+import type {
+  Awards,
+  AwardsState,
+  Failures,
+  MemberId,
+  SquadId,
+  TitlesWon,
+} from './domain/awards.js';
 import type { WeekStart } from './domain/schedule.js';
 import type { AwardSettings, ModelName } from './domain/settings.js';
 
@@ -64,6 +71,8 @@ export interface AwardsStore {
    * when none was claimed since the last failed try, else `undefined`, as it is once given.
    */
   claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
+  /** Every title the member has won, in all their squads. */
+  titlesWon(member: MemberId): Promise<TitlesWon>;
 }
 
 /**

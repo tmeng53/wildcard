@@ -1,4 +1,6 @@
 import AvatarArt
+import Contracts
+import Foundation
 import Testing
 
 @testable import MeDomain
@@ -36,6 +38,11 @@ private actor FakeService: MeService {
         current.character = character
     }
 
+    func save(jerseyNumber: JerseyNumber) async throws(MeError) {
+        if let failing { throw failing }
+        current.jerseyNumber = jerseyNumber
+    }
+
     func setDailyPush(_ isOn: Bool) async throws(MeError) {
         pushSaves.append(isOn)
         if let failing { throw failing }
@@ -56,8 +63,10 @@ private actor FakeService: MeService {
 
 private let sample = MeOverview(
     character: MeCharacter(nickname: "小林", outfit: PlaceholderCharacter.lifter, persona: .energetic),
+    joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
     counts: LifetimeCounts(trainedDays: 128, healthyMeals: 46, cheatMeals: 12, disclaimers: 9),
-    squadName: "周三不练腿俱乐部", dailyPushOn: true)
+    week: WeekCount(trainedDays: 3, plannedDays: 5), squadName: "周三不练腿俱乐部", dailyPushOn: true,
+    squadPlace: 2)
 
 @MainActor
 struct MeModelTests {
@@ -123,6 +132,23 @@ struct MeModelTests {
         let refused = MeCharacter(nickname: "x", outfit: PlaceholderCharacter.lifter, persona: .drama)
         await page.save(refused)
         #expect(page.overview?.character == edited)
+        #expect(page.saveFailed)
+    }
+
+    @Test func savesThePickedNumberAndKeepsTheOldOneWhenSavingFails() async throws {
+        let service = FakeService(sample)
+        let page = model(service)
+        await page.reload()
+        // Before a pick, the card wears the member's place in their squad.
+        #expect(page.overview?.cardNumber?.text == "02")
+
+        await page.save(jerseyNumber: try JerseyNumber(0))
+        #expect(page.overview?.cardNumber?.text == "00")
+        #expect(await service.current.jerseyNumber == (try JerseyNumber(0)))
+
+        await service.fail(with: .unavailable)
+        await page.save(jerseyNumber: try JerseyNumber(99))
+        #expect(page.overview?.cardNumber?.text == "00")
         #expect(page.saveFailed)
     }
 
@@ -217,6 +243,27 @@ struct MeModelTests {
         await page.setDailyPush(false)
         #expect(page.dailyPushOn)
         #expect(page.overview?.character.nickname == "阿林")
+    }
+}
+
+struct CardNumberTests {
+    private func overview(picked: Int?, place: Int?) throws -> MeOverview {
+        var overview = sample
+        overview.jerseyNumber = try picked.map { number throws(ContractsError) in try JerseyNumber(number) }
+        overview.squadPlace = place
+        return overview
+    }
+
+    @Test func isThePickElseThePlaceInTheSquad() throws {
+        #expect(try overview(picked: 7, place: 3).cardNumber?.text == "07")
+        #expect(try overview(picked: nil, place: 1).cardNumber?.text == "01")
+        #expect(try overview(picked: nil, place: nil).cardNumber == nil)
+    }
+
+    @Test func numbersOnlyUpTo99() throws {
+        #expect(try overview(picked: nil, place: 120).cardNumber?.text == "99")
+        #expect(throws: ContractsError.jerseyNumberOutOfRange(100)) { try JerseyNumber(100) }
+        #expect(throws: ContractsError.jerseyNumberOutOfRange(-1)) { try JerseyNumber(-1) }
     }
 }
 

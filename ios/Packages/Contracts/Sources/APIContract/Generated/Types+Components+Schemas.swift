@@ -37,21 +37,6 @@ extension Components {
                 case version
                 case status
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Health.VersionPayload.self,
-                    forKey: .version
-                )
-                self.status = try container.decode(
-                    Components.Schemas.Health.StatusPayload.self,
-                    forKey: .status
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "status"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/Problem`.
         public struct Problem: Codable, Hashable, Sendable {
@@ -123,45 +108,499 @@ extension Components {
                 case reason
                 case errorStatus
             }
+        }
+        /// - Remark: Generated from `#/components/schemas/Catalog`.
+        public struct Catalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Catalog/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Catalog/version`.
+            public var version: Components.Schemas.Catalog.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/Catalog/sports`.
+            public var sports: Components.Schemas.SportsCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/disclaimerDice`.
+            public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog?
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `Catalog`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - sports:
+            ///   - disclaimerDice:
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                version: Components.Schemas.Catalog.VersionPayload,
+                sports: Components.Schemas.SportsCatalog? = nil,
+                disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.version = version
+                self.sports = sports
+                self.disclaimerDice = disclaimerDice
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case sports
+                case disclaimerDice
+            }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self.version = try container.decode(
-                    Components.Schemas.Problem.VersionPayload.self,
+                    Components.Schemas.Catalog.VersionPayload.self,
                     forKey: .version
                 )
-                self._type = try container.decode(
-                    Components.Schemas.Problem._TypePayload.self,
-                    forKey: ._type
+                self.sports = try container.decodeIfPresent(
+                    Components.Schemas.SportsCatalog.self,
+                    forKey: .sports
                 )
-                self.title = try container.decode(
-                    Swift.String.self,
-                    forKey: .title
+                self.disclaimerDice = try container.decodeIfPresent(
+                    Components.Schemas.DisclaimerDiceCatalog.self,
+                    forKey: .disclaimerDice
                 )
-                self.status = try container.decode(
-                    Swift.Int.self,
-                    forKey: .status
-                )
-                self.detail = try container.decode(
-                    Swift.String.self,
-                    forKey: .detail
-                )
-                self.reason = try container.decode(
-                    Swift.String.self,
-                    forKey: .reason
-                )
-                self.errorStatus = try container.decode(
-                    Swift.String.self,
-                    forKey: .errorStatus
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
-                    "type",
-                    "title",
-                    "status",
-                    "detail",
-                    "reason",
-                    "errorStatus"
+                    "sports",
+                    "disclaimerDice"
                 ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.version,
+                    forKey: .version
+                )
+                try container.encodeIfPresent(
+                    self.sports,
+                    forKey: .sports
+                )
+                try container.encodeIfPresent(
+                    self.disclaimerDice,
+                    forKey: .disclaimerDice
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SportsCatalog`.
+        public struct SportsCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload`.
+            public struct CategoriesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/id`.
+                public var id: Swift.String
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/names`.
+                public var names: Components.Schemas.CatalogNames
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload`.
+                public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                    /// What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/id`.
+                    public var id: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/names`.
+                    public var names: Components.Schemas.CatalogNames
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/shortNames`.
+                    public var shortNames: Components.Schemas.CatalogNames?
+                    /// An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/icon`.
+                    public var icon: Swift.String
+                    /// False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload/offered`.
+                    public var offered: Swift.Bool
+                    /// A container of undocumented properties.
+                    public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                    /// Creates a new `SportsPayloadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - id: What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.
+                    ///   - names:
+                    ///   - shortNames:
+                    ///   - icon: An SF Symbol name. One the phone’s iOS doesn’t have shows a general figure.
+                    ///   - offered: False for a sport the pickers no longer offer: show it only for check-ins and plans that already name it.
+                    ///   - additionalProperties: A container of undocumented properties.
+                    public init(
+                        id: Swift.String,
+                        names: Components.Schemas.CatalogNames,
+                        shortNames: Components.Schemas.CatalogNames? = nil,
+                        icon: Swift.String,
+                        offered: Swift.Bool,
+                        additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                    ) {
+                        self.id = id
+                        self.names = names
+                        self.shortNames = shortNames
+                        self.icon = icon
+                        self.offered = offered
+                        self.additionalProperties = additionalProperties
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case id
+                        case names
+                        case shortNames
+                        case icon
+                        case offered
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        self.id = try container.decode(
+                            Swift.String.self,
+                            forKey: .id
+                        )
+                        self.names = try container.decode(
+                            Components.Schemas.CatalogNames.self,
+                            forKey: .names
+                        )
+                        self.shortNames = try container.decodeIfPresent(
+                            Components.Schemas.CatalogNames.self,
+                            forKey: .shortNames
+                        )
+                        self.icon = try container.decode(
+                            Swift.String.self,
+                            forKey: .icon
+                        )
+                        self.offered = try container.decode(
+                            Swift.Bool.self,
+                            forKey: .offered
+                        )
+                        additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                            "id",
+                            "names",
+                            "shortNames",
+                            "icon",
+                            "offered"
+                        ])
+                    }
+                    public func encode(to encoder: any Swift.Encoder) throws {
+                        var container = encoder.container(keyedBy: CodingKeys.self)
+                        try container.encode(
+                            self.id,
+                            forKey: .id
+                        )
+                        try container.encode(
+                            self.names,
+                            forKey: .names
+                        )
+                        try container.encodeIfPresent(
+                            self.shortNames,
+                            forKey: .shortNames
+                        )
+                        try container.encode(
+                            self.icon,
+                            forKey: .icon
+                        )
+                        try container.encode(
+                            self.offered,
+                            forKey: .offered
+                        )
+                        try encoder.encodeAdditionalProperties(additionalProperties)
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
+                public typealias SportsPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayloadPayload]
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/sports`.
+                public var sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `CategoriesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - names:
+                ///   - sports:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    names: Components.Schemas.CatalogNames,
+                    sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.names = names
+                    self.sports = sports
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case names
+                    case sports
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.names = try container.decode(
+                        Components.Schemas.CatalogNames.self,
+                        forKey: .names
+                    )
+                    self.sports = try container.decode(
+                        Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
+                        forKey: .sports
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "names",
+                        "sports"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.names,
+                        forKey: .names
+                    )
+                    try container.encode(
+                        self.sports,
+                        forKey: .sports
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// The picker’s tabs, in order, each with its sports in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/categories`.
+            public typealias CategoriesPayload = [Components.Schemas.SportsCatalog.CategoriesPayloadPayload]
+            /// The picker’s tabs, in order, each with its sports in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/categories`.
+            public var categories: Components.Schemas.SportsCatalog.CategoriesPayload
+            /// The short lists some screens show before the whole list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
+            public struct PicksPayload: Codable, Hashable, Sendable {
+                /// Sign-up’s 最常见 grid. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/signUpCommon`.
+                public var signUpCommon: [Swift.String]
+                /// A 练了’s quick picks, before the whole list. Sport ids, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks/checkInQuick`.
+                public var checkInQuick: [Swift.String]
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `PicksPayload`.
+                ///
+                /// - Parameters:
+                ///   - signUpCommon: Sign-up’s 最常见 grid. Sport ids, in order.
+                ///   - checkInQuick: A 练了’s quick picks, before the whole list. Sport ids, in order.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    signUpCommon: [Swift.String],
+                    checkInQuick: [Swift.String],
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.signUpCommon = signUpCommon
+                    self.checkInQuick = checkInQuick
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case signUpCommon
+                    case checkInQuick
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.signUpCommon = try container.decode(
+                        [Swift.String].self,
+                        forKey: .signUpCommon
+                    )
+                    self.checkInQuick = try container.decode(
+                        [Swift.String].self,
+                        forKey: .checkInQuick
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "signUpCommon",
+                        "checkInQuick"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.signUpCommon,
+                        forKey: .signUpCommon
+                    )
+                    try container.encode(
+                        self.checkInQuick,
+                        forKey: .checkInQuick
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// The short lists some screens show before the whole list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SportsCatalog/picks`.
+            public var picks: Components.Schemas.SportsCatalog.PicksPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `SportsCatalog`.
+            ///
+            /// - Parameters:
+            ///   - categories: The picker’s tabs, in order, each with its sports in order.
+            ///   - picks: The short lists some screens show before the whole list.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                categories: Components.Schemas.SportsCatalog.CategoriesPayload,
+                picks: Components.Schemas.SportsCatalog.PicksPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.categories = categories
+                self.picks = picks
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case categories
+                case picks
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.categories = try container.decode(
+                    Components.Schemas.SportsCatalog.CategoriesPayload.self,
+                    forKey: .categories
+                )
+                self.picks = try container.decode(
+                    Components.Schemas.SportsCatalog.PicksPayload.self,
+                    forKey: .picks
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "categories",
+                    "picks"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.categories,
+                    forKey: .categories
+                )
+                try container.encode(
+                    self.picks,
+                    forKey: .picks
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CatalogNames`.
+        public struct CatalogNames: Codable, Hashable, Sendable {
+            /// Simplified Chinese.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHans`.
+            public var zhHans: Swift.String
+            /// English.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/en`.
+            public var en: Swift.String
+            /// Traditional Chinese (Taiwan).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CatalogNames/zhHant`.
+            public var zhHant: Swift.String
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `CatalogNames`.
+            ///
+            /// - Parameters:
+            ///   - zhHans: Simplified Chinese.
+            ///   - en: English.
+            ///   - zhHant: Traditional Chinese (Taiwan).
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                zhHans: Swift.String,
+                en: Swift.String,
+                zhHant: Swift.String,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.zhHans = zhHans
+                self.en = en
+                self.zhHant = zhHant
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case zhHans
+                case en
+                case zhHant
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.zhHans = try container.decode(
+                    Swift.String.self,
+                    forKey: .zhHans
+                )
+                self.en = try container.decode(
+                    Swift.String.self,
+                    forKey: .en
+                )
+                self.zhHant = try container.decode(
+                    Swift.String.self,
+                    forKey: .zhHant
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "zhHans",
+                    "en",
+                    "zhHant"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.zhHans,
+                    forKey: .zhHans
+                )
+                try container.encode(
+                    self.en,
+                    forKey: .en
+                )
+                try container.encode(
+                    self.zhHant,
+                    forKey: .zhHant
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DisclaimerDiceCatalog`.
+        public struct DisclaimerDiceCatalog: Codable, Hashable, Sendable {
+            /// Every line, in no set order: the app rolls three different ones at a time.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerDiceCatalog/lines`.
+            public var lines: [Components.Schemas.CatalogNames]
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `DisclaimerDiceCatalog`.
+            ///
+            /// - Parameters:
+            ///   - lines: Every line, in no set order: the app rolls three different ones at a time.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                lines: [Components.Schemas.CatalogNames],
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.lines = lines
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case lines
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.lines = try container.decode(
+                    [Components.Schemas.CatalogNames].self,
+                    forKey: .lines
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "lines"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.lines,
+                    forKey: .lines
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
             }
         }
         /// - Remark: Generated from `#/components/schemas/Me`.
@@ -190,45 +629,41 @@ extension Components {
                 public var catchphrase: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/Me/profile/character`.
                 public var character: Components.Schemas.Character?
+                /// The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/jerseyNumber`.
+                public var jerseyNumber: Swift.Int?
+                /// When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/joinedAt`.
+                public var joinedAt: Foundation.Date
                 /// Creates a new `ProfilePayload`.
                 ///
                 /// - Parameters:
                 ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
                 ///   - character:
+                ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///   - joinedAt: When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 public init(
                     timeZone: Swift.String,
                     catchphrase: Swift.String? = nil,
-                    character: Components.Schemas.Character? = nil
+                    character: Components.Schemas.Character? = nil,
+                    jerseyNumber: Swift.Int? = nil,
+                    joinedAt: Foundation.Date
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
                     self.character = character
+                    self.jerseyNumber = jerseyNumber
+                    self.joinedAt = joinedAt
                 }
                 public enum CodingKeys: String, CodingKey {
                     case timeZone
                     case catchphrase
                     case character
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.timeZone = try container.decode(
-                        Swift.String.self,
-                        forKey: .timeZone
-                    )
-                    self.catchphrase = try container.decodeIfPresent(
-                        Swift.String.self,
-                        forKey: .catchphrase
-                    )
-                    self.character = try container.decodeIfPresent(
-                        Components.Schemas.Character.self,
-                        forKey: .character
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "timeZone",
-                        "catchphrase",
-                        "character"
-                    ])
+                    case jerseyNumber
+                    case joinedAt
                 }
             }
             /// Null until the member first saves one, right after signing up.
@@ -254,26 +689,6 @@ extension Components {
                 case version
                 case userId
                 case profile
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Me.VersionPayload.self,
-                    forKey: .version
-                )
-                self.userId = try container.decode(
-                    Swift.String.self,
-                    forKey: .userId
-                )
-                self.profile = try container.decodeIfPresent(
-                    Components.Schemas.Me.ProfilePayload.self,
-                    forKey: .profile
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "userId",
-                    "profile"
-                ])
             }
         }
         /// The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then.
@@ -301,21 +716,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case nickname
                 case look
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.nickname = try container.decode(
-                    Swift.String.self,
-                    forKey: .nickname
-                )
-                self.look = try container.decode(
-                    Components.Schemas.Look.self,
-                    forKey: .look
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "nickname",
-                    "look"
-                ])
             }
         }
         /// How a member’s character looks and moves, by the ids of the app’s character art. The API keeps no list of them, so new art needs no API change; an app that doesn’t know an id draws that slot’s default.
@@ -394,26 +794,6 @@ extension Components {
                 case variants
                 case colors
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.persona = try container.decode(
-                    Swift.String.self,
-                    forKey: .persona
-                )
-                self.variants = try container.decode(
-                    Components.Schemas.Look.VariantsPayload.self,
-                    forKey: .variants
-                )
-                self.colors = try container.decode(
-                    Components.Schemas.Look.ColorsPayload.self,
-                    forKey: .colors
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "persona",
-                    "variants",
-                    "colors"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/Profile`.
         public struct Profile: Codable, Hashable, Sendable {
@@ -433,6 +813,10 @@ extension Components {
             public var catchphrase: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Profile/character`.
             public var character: Components.Schemas.Character?
+            /// The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Profile/jerseyNumber`.
+            public var jerseyNumber: Swift.Int?
             /// Creates a new `Profile`.
             ///
             /// - Parameters:
@@ -440,47 +824,26 @@ extension Components {
             ///   - timeZone: The member’s IANA time zone (iOS: `TimeZone.current.identifier`), for their weekly reset.
             ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
             ///   - character:
+            ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
             public init(
                 version: Components.Schemas.Profile.VersionPayload,
                 timeZone: Swift.String,
                 catchphrase: Swift.String? = nil,
-                character: Components.Schemas.Character? = nil
+                character: Components.Schemas.Character? = nil,
+                jerseyNumber: Swift.Int? = nil
             ) {
                 self.version = version
                 self.timeZone = timeZone
                 self.catchphrase = catchphrase
                 self.character = character
+                self.jerseyNumber = jerseyNumber
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case timeZone
                 case catchphrase
                 case character
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Profile.VersionPayload.self,
-                    forKey: .version
-                )
-                self.timeZone = try container.decode(
-                    Swift.String.self,
-                    forKey: .timeZone
-                )
-                self.catchphrase = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .catchphrase
-                )
-                self.character = try container.decodeIfPresent(
-                    Components.Schemas.Character.self,
-                    forKey: .character
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "timeZone",
-                    "catchphrase",
-                    "character"
-                ])
+                case jerseyNumber
             }
         }
         /// - Remark: Generated from `#/components/schemas/AccountDeletion`.
@@ -510,21 +873,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case appleAuthorizationCode
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.AccountDeletion.VersionPayload.self,
-                    forKey: .version
-                )
-                self.appleAuthorizationCode = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .appleAuthorizationCode
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "appleAuthorizationCode"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/AiConsent`.
@@ -567,21 +915,6 @@ extension Components {
                     case copyVersion
                     case givenAt
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.copyVersion = try container.decode(
-                        Swift.Int.self,
-                        forKey: .copyVersion
-                    )
-                    self.givenAt = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .givenAt
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "copyVersion",
-                        "givenAt"
-                    ])
-                }
             }
             /// The member’s latest consent, left out when they never gave one. It may be to an older version.
             ///
@@ -615,31 +948,6 @@ extension Components {
                 case given
                 case current
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.AiConsent.VersionPayload.self,
-                    forKey: .version
-                )
-                self.copyVersion = try container.decode(
-                    Swift.Int.self,
-                    forKey: .copyVersion
-                )
-                self.given = try container.decodeIfPresent(
-                    Components.Schemas.AiConsent.GivenPayload.self,
-                    forKey: .given
-                )
-                self.current = try container.decode(
-                    Swift.Bool.self,
-                    forKey: .current
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "copyVersion",
-                    "given",
-                    "current"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/AiConsentGiven`.
         public struct AiConsentGiven: Codable, Hashable, Sendable {
@@ -668,21 +976,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case copyVersion
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.AiConsentGiven.VersionPayload.self,
-                    forKey: .version
-                )
-                self.copyVersion = try container.decode(
-                    Swift.Int.self,
-                    forKey: .copyVersion
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "copyVersion"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheckIn`.
@@ -808,51 +1101,6 @@ extension Components {
                 case kind
                 case training
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.TrainedCheckIn.VersionPayload.self,
-                    forKey: .version
-                )
-                self.id = try container.decode(
-                    Swift.String.self,
-                    forKey: .id
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.TrainedCheckIn.KindPayload.self,
-                    forKey: .kind
-                )
-                self.training = try container.decode(
-                    Components.Schemas.TrainingView.self,
-                    forKey: .training
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "id",
-                    "member",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "training"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/TrainingView`.
         public struct TrainingView: Codable, Hashable, Sendable {
@@ -902,95 +1150,11 @@ extension Components {
                 case caption
                 case photos
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.sport = try container.decode(
-                    Components.Schemas.Sport.self,
-                    forKey: .sport
-                )
-                self.customSport = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .customSport
-                )
-                self.minutes = try container.decodeIfPresent(
-                    Swift.Int.self,
-                    forKey: .minutes
-                )
-                self.caption = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .caption
-                )
-                self.photos = try container.decodeIfPresent(
-                    [Components.Schemas.PhotoView].self,
-                    forKey: .photos
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "sport",
-                    "customSport",
-                    "minutes",
-                    "caption",
-                    "photos"
-                ])
-            }
         }
-        /// A listed sport, or `custom` with the member’s own name in `customSport`.
+        /// A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`.
         ///
         /// - Remark: Generated from `#/components/schemas/Sport`.
-        @frozen public enum Sport: String, Codable, Hashable, Sendable, CaseIterable {
-            case run = "run"
-            case walk = "walk"
-            case hike = "hike"
-            case trailRun = "trailRun"
-            case strength = "strength"
-            case crossfit = "crossfit"
-            case hyrox = "hyrox"
-            case kettlebell = "kettlebell"
-            case spin = "spin"
-            case elliptical = "elliptical"
-            case rowing = "rowing"
-            case hiit = "hiit"
-            case jumpRope = "jumpRope"
-            case aerobics = "aerobics"
-            case yoga = "yoga"
-            case matPilates = "matPilates"
-            case reformerPilates = "reformerPilates"
-            case barre = "barre"
-            case stretching = "stretching"
-            case swim = "swim"
-            case surf = "surf"
-            case paddleboard = "paddleboard"
-            case kayak = "kayak"
-            case tennis = "tennis"
-            case badminton = "badminton"
-            case pickleball = "pickleball"
-            case tableTennis = "tableTennis"
-            case squash = "squash"
-            case basketball = "basketball"
-            case soccer = "soccer"
-            case volleyball = "volleyball"
-            case golf = "golf"
-            case baseballSoftball = "baseballSoftball"
-            case ultimate = "ultimate"
-            case roadCycling = "roadCycling"
-            case mountainBiking = "mountainBiking"
-            case climb = "climb"
-            case ski = "ski"
-            case snowboard = "snowboard"
-            case skate = "skate"
-            case boxing = "boxing"
-            case kickboxing = "kickboxing"
-            case jiuJitsu = "jiuJitsu"
-            case martialArts = "martialArts"
-            case dance = "dance"
-            case dogWalk = "dogWalk"
-            case walkCommute = "walkCommute"
-            case bikeCommute = "bikeCommute"
-            case deepClean = "deepClean"
-            case moving = "moving"
-            case strollerWalk = "strollerWalk"
-            case gardening = "gardening"
-            case custom = "custom"
-        }
+        public typealias Sport = Swift.String
         /// - Remark: Generated from `#/components/schemas/PhotoView`.
         public struct PhotoView: Codable, Hashable, Sendable {
             /// The photo’s name, as the check-in was saved with.
@@ -1016,21 +1180,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case path
                 case url
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.path = try container.decode(
-                    Swift.String.self,
-                    forKey: .path
-                )
-                self.url = try container.decode(
-                    Swift.String.self,
-                    forKey: .url
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "path",
-                    "url"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn`.
@@ -1107,51 +1256,6 @@ extension Components {
                 case kind
                 case meal
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.HealthyMealCheckIn.VersionPayload.self,
-                    forKey: .version
-                )
-                self.id = try container.decode(
-                    Swift.String.self,
-                    forKey: .id
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.HealthyMealCheckIn.KindPayload.self,
-                    forKey: .kind
-                )
-                self.meal = try container.decode(
-                    Components.Schemas.MealView.self,
-                    forKey: .meal
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "id",
-                    "member",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "meal"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/MealView`.
         public struct MealView: Codable, Hashable, Sendable {
@@ -1178,21 +1282,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case photos
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.caption = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .caption
-                )
-                self.photos = try container.decodeIfPresent(
-                    [Components.Schemas.PhotoView].self,
-                    forKey: .photos
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "caption",
-                    "photos"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn`.
@@ -1269,51 +1358,6 @@ extension Components {
                 case kind
                 case meal
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.CheatMealCheckIn.VersionPayload.self,
-                    forKey: .version
-                )
-                self.id = try container.decode(
-                    Swift.String.self,
-                    forKey: .id
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.CheatMealCheckIn.KindPayload.self,
-                    forKey: .kind
-                )
-                self.meal = try container.decode(
-                    Components.Schemas.MealView.self,
-                    forKey: .meal
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "id",
-                    "member",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "meal"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn`.
         public struct DisclaimerCheckIn: Codable, Hashable, Sendable {
@@ -1389,51 +1433,6 @@ extension Components {
                 case kind
                 case disclaimer
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.DisclaimerCheckIn.VersionPayload.self,
-                    forKey: .version
-                )
-                self.id = try container.decode(
-                    Swift.String.self,
-                    forKey: .id
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.DisclaimerCheckIn.KindPayload.self,
-                    forKey: .kind
-                )
-                self.disclaimer = try container.decode(
-                    Components.Schemas.DisclaimerView.self,
-                    forKey: .disclaimer
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "id",
-                    "member",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "disclaimer"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/DisclaimerView`.
         public struct DisclaimerView: Codable, Hashable, Sendable {
@@ -1460,21 +1459,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case text
                 case photos
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.text = try container.decode(
-                    Swift.String.self,
-                    forKey: .text
-                )
-                self.photos = try container.decodeIfPresent(
-                    [Components.Schemas.PhotoView].self,
-                    forKey: .photos
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "text",
-                    "photos"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheckInDraft`.
@@ -1580,41 +1564,6 @@ extension Components {
                 case kind
                 case training
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.TrainedCheckInDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.TrainedCheckInDraft.KindPayload.self,
-                    forKey: .kind
-                )
-                self.training = try container.decode(
-                    Components.Schemas.Training.self,
-                    forKey: .training
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "training"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/Training`.
         public struct Training: Codable, Hashable, Sendable {
@@ -1664,36 +1613,6 @@ extension Components {
                 case caption
                 case photos
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.sport = try container.decode(
-                    Components.Schemas.Sport.self,
-                    forKey: .sport
-                )
-                self.customSport = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .customSport
-                )
-                self.minutes = try container.decodeIfPresent(
-                    Swift.Int.self,
-                    forKey: .minutes
-                )
-                self.caption = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .caption
-                )
-                self.photos = try container.decodeIfPresent(
-                    [Components.Schemas.PhotoRef].self,
-                    forKey: .photos
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "sport",
-                    "customSport",
-                    "minutes",
-                    "caption",
-                    "photos"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/PhotoRef`.
         public struct PhotoRef: Codable, Hashable, Sendable {
@@ -1708,16 +1627,6 @@ extension Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case path
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.path = try container.decode(
-                    Swift.String.self,
-                    forKey: .path
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "path"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft`.
@@ -1774,41 +1683,6 @@ extension Components {
                 case kind
                 case meal
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.HealthyMealCheckInDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.HealthyMealCheckInDraft.KindPayload.self,
-                    forKey: .kind
-                )
-                self.meal = try container.decode(
-                    Components.Schemas.Meal.self,
-                    forKey: .meal
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "meal"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/Meal`.
         public struct Meal: Codable, Hashable, Sendable {
@@ -1835,21 +1709,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case photos
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.caption = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .caption
-                )
-                self.photos = try container.decodeIfPresent(
-                    [Components.Schemas.PhotoRef].self,
-                    forKey: .photos
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "caption",
-                    "photos"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheatMealCheckInDraft`.
@@ -1906,41 +1765,6 @@ extension Components {
                 case kind
                 case meal
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.CheatMealCheckInDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.CheatMealCheckInDraft.KindPayload.self,
-                    forKey: .kind
-                )
-                self.meal = try container.decode(
-                    Components.Schemas.Meal.self,
-                    forKey: .meal
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "meal"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInDraft`.
         public struct DisclaimerCheckInDraft: Codable, Hashable, Sendable {
@@ -1996,41 +1820,6 @@ extension Components {
                 case kind
                 case disclaimer
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.DisclaimerCheckInDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.audience = try container.decode(
-                    [Swift.String].self,
-                    forKey: .audience
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.DisclaimerCheckInDraft.KindPayload.self,
-                    forKey: .kind
-                )
-                self.disclaimer = try container.decode(
-                    Components.Schemas.Disclaimer.self,
-                    forKey: .disclaimer
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "day",
-                    "createdAt",
-                    "audience",
-                    "kind",
-                    "disclaimer"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/Disclaimer`.
         public struct Disclaimer: Codable, Hashable, Sendable {
@@ -2058,21 +1847,6 @@ extension Components {
                 case text
                 case photos
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.text = try container.decode(
-                    Swift.String.self,
-                    forKey: .text
-                )
-                self.photos = try container.decodeIfPresent(
-                    [Components.Schemas.PhotoRef].self,
-                    forKey: .photos
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "text",
-                    "photos"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/SquadPostList`.
         public struct SquadPostList: Codable, Hashable, Sendable {
@@ -2099,21 +1873,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case posts
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadPostList.VersionPayload.self,
-                    forKey: .version
-                )
-                self.posts = try container.decode(
-                    [Components.Schemas.SquadPost].self,
-                    forKey: .posts
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "posts"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadPost`.
@@ -2147,26 +1906,6 @@ extension Components {
                 case checkIn
                 case reactions
                 case replies
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.checkIn = try container.decode(
-                    Components.Schemas.CheckIn.self,
-                    forKey: .checkIn
-                )
-                self.reactions = try container.decode(
-                    [Components.Schemas.ReactionEntry].self,
-                    forKey: .reactions
-                )
-                self.replies = try container.decode(
-                    [Components.Schemas.ReplyEntry].self,
-                    forKey: .replies
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "checkIn",
-                    "reactions",
-                    "replies"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/ReactionEntry`.
@@ -2202,26 +1941,6 @@ extension Components {
                 case member
                 case emoji
                 case reactedAt
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.emoji = try container.decode(
-                    Swift.String.self,
-                    forKey: .emoji
-                )
-                self.reactedAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .reactedAt
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "member",
-                    "emoji",
-                    "reactedAt"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/ReplyEntry`.
@@ -2266,26 +1985,6 @@ extension Components {
                 case kind
                 case repliedAt
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.ReplyEntry.KindPayload.self,
-                    forKey: .kind
-                )
-                self.repliedAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .repliedAt
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "member",
-                    "kind",
-                    "repliedAt"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/CheckInList`.
         public struct CheckInList: Codable, Hashable, Sendable {
@@ -2313,21 +2012,6 @@ extension Components {
                 case version
                 case checkIns
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.CheckInList.VersionPayload.self,
-                    forKey: .version
-                )
-                self.checkIns = try container.decode(
-                    [Components.Schemas.CheckIn].self,
-                    forKey: .checkIns
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "checkIns"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
         public struct CheckInTotals: Codable, Hashable, Sendable {
@@ -2353,6 +2037,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/topSport`.
+            public var topSport: Components.Schemas.TopSport?
             /// Creates a new `CheckInTotals`.
             ///
             /// - Parameters:
@@ -2361,18 +2047,21 @@ extension Components {
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
             ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
-                disclaimers: Swift.Int
+                disclaimers: Swift.Int,
+                topSport: Components.Schemas.TopSport? = nil
             ) {
                 self.version = version
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
                 self.disclaimers = disclaimers
+                self.topSport = topSport
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -2380,36 +2069,42 @@ extension Components {
                 case healthyMeals
                 case cheatMeals
                 case disclaimers
+                case topSport
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.CheckInTotals.VersionPayload.self,
-                    forKey: .version
-                )
-                self.trainedDays = try container.decode(
-                    Swift.Int.self,
-                    forKey: .trainedDays
-                )
-                self.healthyMeals = try container.decode(
-                    Swift.Int.self,
-                    forKey: .healthyMeals
-                )
-                self.cheatMeals = try container.decode(
-                    Swift.Int.self,
-                    forKey: .cheatMeals
-                )
-                self.disclaimers = try container.decode(
-                    Swift.Int.self,
-                    forKey: .disclaimers
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "trainedDays",
-                    "healthyMeals",
-                    "cheatMeals",
-                    "disclaimers"
-                ])
+        }
+        /// The sport with the most 练了 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 练了.
+        ///
+        /// - Remark: Generated from `#/components/schemas/TopSport`.
+        public struct TopSport: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TopSport/sport`.
+            public var sport: Components.Schemas.Sport
+            /// The name of a `custom` sport; a listed sport has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TopSport/customSport`.
+            public var customSport: Swift.String?
+            /// 练了 check-ins of this sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TopSport/checkIns`.
+            public var checkIns: Swift.Int
+            /// Creates a new `TopSport`.
+            ///
+            /// - Parameters:
+            ///   - sport:
+            ///   - customSport: The name of a `custom` sport; a listed sport has none.
+            ///   - checkIns: 练了 check-ins of this sport.
+            public init(
+                sport: Components.Schemas.Sport,
+                customSport: Swift.String? = nil,
+                checkIns: Swift.Int
+            ) {
+                self.sport = sport
+                self.customSport = customSport
+                self.checkIns = checkIns
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sport
+                case customSport
+                case checkIns
             }
         }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
@@ -2447,26 +2142,6 @@ extension Components {
                 case version
                 case path
                 case uploadUrl
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.PhotoUpload.VersionPayload.self,
-                    forKey: .version
-                )
-                self.path = try container.decode(
-                    Swift.String.self,
-                    forKey: .path
-                )
-                self.uploadUrl = try container.decode(
-                    Swift.String.self,
-                    forKey: .uploadUrl
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "path",
-                    "uploadUrl"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/Reaction`.
@@ -2513,31 +2188,6 @@ extension Components {
                 case emoji
                 case reactedAt
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Reaction.VersionPayload.self,
-                    forKey: .version
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.emoji = try container.decode(
-                    Swift.String.self,
-                    forKey: .emoji
-                )
-                self.reactedAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .reactedAt
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "member",
-                    "emoji",
-                    "reactedAt"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/ReactionDraft`.
         public struct ReactionDraft: Codable, Hashable, Sendable {
@@ -2567,21 +2217,6 @@ extension Components {
                 case version
                 case emoji
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.ReactionDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.emoji = try container.decode(
-                    Swift.String.self,
-                    forKey: .emoji
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "emoji"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/ReactionList`.
         public struct ReactionList: Codable, Hashable, Sendable {
@@ -2608,21 +2243,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case reactions
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.ReactionList.VersionPayload.self,
-                    forKey: .version
-                )
-                self.reactions = try container.decode(
-                    [Components.Schemas.ReactionEntry].self,
-                    forKey: .reactions
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "reactions"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/Reply`.
@@ -2677,31 +2297,6 @@ extension Components {
                 case kind
                 case repliedAt
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Reply.VersionPayload.self,
-                    forKey: .version
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.Reply.KindPayload.self,
-                    forKey: .kind
-                )
-                self.repliedAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .repliedAt
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "member",
-                    "kind",
-                    "repliedAt"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/ReplyDraft`.
         public struct ReplyDraft: Codable, Hashable, Sendable {
@@ -2739,21 +2334,6 @@ extension Components {
                 case version
                 case kind
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.ReplyDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.ReplyDraft.KindPayload.self,
-                    forKey: .kind
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "kind"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/ReplyList`.
         public struct ReplyList: Codable, Hashable, Sendable {
@@ -2780,21 +2360,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case replies
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.ReplyList.VersionPayload.self,
-                    forKey: .version
-                )
-                self.replies = try container.decode(
-                    [Components.Schemas.ReplyEntry].self,
-                    forKey: .replies
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "replies"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/Device`.
@@ -2840,26 +2405,6 @@ extension Components {
                 case token
                 case environment
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Device.VersionPayload.self,
-                    forKey: .version
-                )
-                self.token = try container.decode(
-                    Swift.String.self,
-                    forKey: .token
-                )
-                self.environment = try container.decode(
-                    Components.Schemas.Device.EnvironmentPayload.self,
-                    forKey: .environment
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "token",
-                    "environment"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/DeviceRemoval`.
         public struct DeviceRemoval: Codable, Hashable, Sendable {
@@ -2888,21 +2433,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case token
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.DeviceRemoval.VersionPayload.self,
-                    forKey: .version
-                )
-                self.token = try container.decode(
-                    Swift.String.self,
-                    forKey: .token
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "token"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/PushSettings`.
@@ -2950,21 +2480,6 @@ extension Components {
                 case version
                 case settings
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.PushSettings.VersionPayload.self,
-                    forKey: .version
-                )
-                self.settings = try container.decode(
-                    Components.Schemas.PushSettings.SettingsPayload.self,
-                    forKey: .settings
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "settings"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
         public struct SquadList: Codable, Hashable, Sendable {
@@ -2993,21 +2508,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case squads
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadList.VersionPayload.self,
-                    forKey: .version
-                )
-                self.squads = try container.decode(
-                    [Components.Schemas.Squad].self,
-                    forKey: .squads
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "squads"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/Squad`.
@@ -3062,21 +2562,6 @@ extension Components {
                     case userId
                     case joinedAt
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.userId = try container.decode(
-                        Swift.String.self,
-                        forKey: .userId
-                    )
-                    self.joinedAt = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .joinedAt
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "userId",
-                        "joinedAt"
-                    ])
-                }
             }
             /// Who is in it now, the earliest to join first: 1 to 8.
             ///
@@ -3122,46 +2607,6 @@ extension Components {
                 case captain
                 case members
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Squad.VersionPayload.self,
-                    forKey: .version
-                )
-                self.id = try container.decode(
-                    Swift.String.self,
-                    forKey: .id
-                )
-                self.name = try container.decode(
-                    Swift.String.self,
-                    forKey: .name
-                )
-                self.inviteCode = try container.decode(
-                    Swift.String.self,
-                    forKey: .inviteCode
-                )
-                self.createdAt = try container.decode(
-                    Foundation.Date.self,
-                    forKey: .createdAt
-                )
-                self.captain = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .captain
-                )
-                self.members = try container.decode(
-                    Components.Schemas.Squad.MembersPayload.self,
-                    forKey: .members
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "id",
-                    "name",
-                    "inviteCode",
-                    "createdAt",
-                    "captain",
-                    "members"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/NewSquad`.
         public struct NewSquad: Codable, Hashable, Sendable {
@@ -3190,21 +2635,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case name
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.NewSquad.VersionPayload.self,
-                    forKey: .version
-                )
-                self.name = try container.decode(
-                    Swift.String.self,
-                    forKey: .name
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "name"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNameChange`.
@@ -3235,21 +2665,6 @@ extension Components {
                 case version
                 case name
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadNameChange.VersionPayload.self,
-                    forKey: .version
-                )
-                self.name = try container.decode(
-                    Swift.String.self,
-                    forKey: .name
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "name"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/SquadCaptainChange`.
         public struct SquadCaptainChange: Codable, Hashable, Sendable {
@@ -3278,21 +2693,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case member
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadCaptainChange.VersionPayload.self,
-                    forKey: .version
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "member"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadInvite`.
@@ -3355,41 +2755,6 @@ extension Components {
                 case joined
                 case looks
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadInvite.VersionPayload.self,
-                    forKey: .version
-                )
-                self.name = try container.decode(
-                    Swift.String.self,
-                    forKey: .name
-                )
-                self.memberCount = try container.decode(
-                    Swift.Int.self,
-                    forKey: .memberCount
-                )
-                self.full = try container.decode(
-                    Swift.Bool.self,
-                    forKey: .full
-                )
-                self.joined = try container.decode(
-                    Swift.Bool.self,
-                    forKey: .joined
-                )
-                self.looks = try container.decode(
-                    [Components.Schemas.Look].self,
-                    forKey: .looks
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "name",
-                    "memberCount",
-                    "full",
-                    "joined",
-                    "looks"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/PublicSquadInvite`.
         public struct PublicSquadInvite: Codable, Hashable, Sendable {
@@ -3442,36 +2807,6 @@ extension Components {
                 case memberCount
                 case full
                 case looks
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.PublicSquadInvite.VersionPayload.self,
-                    forKey: .version
-                )
-                self.name = try container.decode(
-                    Swift.String.self,
-                    forKey: .name
-                )
-                self.memberCount = try container.decode(
-                    Swift.Int.self,
-                    forKey: .memberCount
-                )
-                self.full = try container.decode(
-                    Swift.Bool.self,
-                    forKey: .full
-                )
-                self.looks = try container.decode(
-                    [Components.Schemas.Look].self,
-                    forKey: .looks
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "name",
-                    "memberCount",
-                    "full",
-                    "looks"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
@@ -3569,51 +2904,6 @@ extension Components {
                     case plannedRest
                     case firstCheckInAt
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.member = try container.decode(
-                        Swift.String.self,
-                        forKey: .member
-                    )
-                    self.catchphrase = try container.decodeIfPresent(
-                        Swift.String.self,
-                        forKey: .catchphrase
-                    )
-                    self.character = try container.decodeIfPresent(
-                        Components.Schemas.Character.self,
-                        forKey: .character
-                    )
-                    self.day = try container.decode(
-                        Swift.String.self,
-                        forKey: .day
-                    )
-                    self.training = try container.decode(
-                        Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload.self,
-                        forKey: .training
-                    )
-                    self.latestMeal = try container.decodeIfPresent(
-                        Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload.self,
-                        forKey: .latestMeal
-                    )
-                    self.plannedRest = try container.decode(
-                        Swift.Bool.self,
-                        forKey: .plannedRest
-                    )
-                    self.firstCheckInAt = try container.decodeIfPresent(
-                        Foundation.Date.self,
-                        forKey: .firstCheckInAt
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "member",
-                        "catchphrase",
-                        "character",
-                        "day",
-                        "training",
-                        "latestMeal",
-                        "plannedRest",
-                        "firstCheckInAt"
-                    ])
-                }
             }
             /// Everyone in the squad now, the signed-in member included, in the home screen’s order: first those who checked in today, by their first check-in; then those on a planned rest day; then everyone else. Ties keep the order members joined.
             ///
@@ -3665,31 +2955,6 @@ extension Components {
                     case resting
                     case everyoneTrained
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.trained = try container.decode(
-                        Swift.Int.self,
-                        forKey: .trained
-                    )
-                    self.disclaimer = try container.decode(
-                        Swift.Int.self,
-                        forKey: .disclaimer
-                    )
-                    self.resting = try container.decode(
-                        Swift.Int.self,
-                        forKey: .resting
-                    )
-                    self.everyoneTrained = try container.decode(
-                        Swift.Bool.self,
-                        forKey: .everyoneTrained
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "trained",
-                        "disclaimer",
-                        "resting",
-                        "everyoneTrained"
-                    ])
-                }
             }
             /// - Remark: Generated from `#/components/schemas/SquadToday/today`.
             public var today: Components.Schemas.SquadToday.TodayPayload
@@ -3733,31 +2998,6 @@ extension Components {
                         case trainedDays
                         case plannedDays
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.from = try container.decode(
-                            Swift.String.self,
-                            forKey: .from
-                        )
-                        self.to = try container.decode(
-                            Swift.String.self,
-                            forKey: .to
-                        )
-                        self.trainedDays = try container.decode(
-                            Swift.Int.self,
-                            forKey: .trainedDays
-                        )
-                        self.plannedDays = try container.decode(
-                            Swift.Int.self,
-                            forKey: .plannedDays
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "from",
-                            "to",
-                            "trainedDays",
-                            "plannedDays"
-                        ])
-                    }
                 }
                 /// - Remark: Generated from `#/components/schemas/SquadToday/me/week`.
                 public var week: Components.Schemas.SquadToday.MePayload.WeekPayload
@@ -3780,21 +3020,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case week
                     case lifetimeTrainedDays
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.week = try container.decode(
-                        Components.Schemas.SquadToday.MePayload.WeekPayload.self,
-                        forKey: .week
-                    )
-                    self.lifetimeTrainedDays = try container.decode(
-                        Swift.Int.self,
-                        forKey: .lifetimeTrainedDays
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "week",
-                        "lifetimeTrainedDays"
-                    ])
                 }
             }
             /// - Remark: Generated from `#/components/schemas/SquadToday/me`.
@@ -3824,21 +3049,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
                     case plannedDays
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.trainedDays = try container.decode(
-                        Swift.Int.self,
-                        forKey: .trainedDays
-                    )
-                    self.plannedDays = try container.decode(
-                        Swift.Int.self,
-                        forKey: .plannedDays
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "trainedDays",
-                        "plannedDays"
-                    ])
                 }
             }
             /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek`.
@@ -3874,41 +3084,6 @@ extension Components {
                 case today
                 case me
                 case squadWeek
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadToday.VersionPayload.self,
-                    forKey: .version
-                )
-                self.squad = try container.decode(
-                    Swift.String.self,
-                    forKey: .squad
-                )
-                self.members = try container.decode(
-                    Components.Schemas.SquadToday.MembersPayload.self,
-                    forKey: .members
-                )
-                self.today = try container.decode(
-                    Components.Schemas.SquadToday.TodayPayload.self,
-                    forKey: .today
-                )
-                self.me = try container.decode(
-                    Components.Schemas.SquadToday.MePayload.self,
-                    forKey: .me
-                )
-                self.squadWeek = try container.decode(
-                    Components.Schemas.SquadToday.SquadWeekPayload.self,
-                    forKey: .squadWeek
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "squad",
-                    "members",
-                    "today",
-                    "me",
-                    "squadWeek"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadScene`.
@@ -3972,21 +3147,6 @@ extension Components {
                     case by
                     case members
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.by = try container.decode(
-                        Components.Schemas.SquadScene.PickersPayload.ByPayload.self,
-                        forKey: .by
-                    )
-                    self.members = try container.decode(
-                        [Swift.String].self,
-                        forKey: .members
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "by",
-                        "members"
-                    ])
-                }
             }
             /// Who picks this week’s scene, once.
             ///
@@ -4036,26 +3196,6 @@ extension Components {
                     case by
                     case at
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.scene = try container.decode(
-                        Components.Schemas.SquadScene.PickedPayload.ScenePayload.self,
-                        forKey: .scene
-                    )
-                    self.by = try container.decodeIfPresent(
-                        Swift.String.self,
-                        forKey: .by
-                    )
-                    self.at = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .at
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "scene",
-                        "by",
-                        "at"
-                    ])
-                }
             }
             /// This week’s pick, once made; it can’t be changed.
             ///
@@ -4100,21 +3240,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case scene
                     case weeksAgo
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.scene = try container.decode(
-                        Components.Schemas.SquadScene.ScenesPayloadPayload.ScenePayload.self,
-                        forKey: .scene
-                    )
-                    self.weeksAgo = try container.decodeIfPresent(
-                        Swift.Int.self,
-                        forKey: .weeksAgo
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "scene",
-                        "weeksAgo"
-                    ])
                 }
             }
             /// Every scene, in the order the picker shows them.
@@ -4161,46 +3286,6 @@ extension Components {
                 case canPick
                 case scenes
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadScene.VersionPayload.self,
-                    forKey: .version
-                )
-                self.week = try container.decode(
-                    Swift.String.self,
-                    forKey: .week
-                )
-                self.scene = try container.decode(
-                    Components.Schemas.SquadScene.ScenePayload.self,
-                    forKey: .scene
-                )
-                self.pickers = try container.decode(
-                    Components.Schemas.SquadScene.PickersPayload.self,
-                    forKey: .pickers
-                )
-                self.picked = try container.decodeIfPresent(
-                    Components.Schemas.SquadScene.PickedPayload.self,
-                    forKey: .picked
-                )
-                self.canPick = try container.decode(
-                    Swift.Bool.self,
-                    forKey: .canPick
-                )
-                self.scenes = try container.decode(
-                    Components.Schemas.SquadScene.ScenesPayload.self,
-                    forKey: .scenes
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "week",
-                    "scene",
-                    "pickers",
-                    "picked",
-                    "canPick",
-                    "scenes"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/ScenePick`.
         public struct ScenePick: Codable, Hashable, Sendable {
@@ -4239,21 +3324,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case scene
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.ScenePick.VersionPayload.self,
-                    forKey: .version
-                )
-                self.scene = try container.decode(
-                    Components.Schemas.ScenePick.ScenePayload.self,
-                    forKey: .scene
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "scene"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
@@ -4304,21 +3374,6 @@ extension Components {
                     case from
                     case at
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.from = try container.decode(
-                        Swift.String.self,
-                        forKey: .from
-                    )
-                    self.at = try container.decode(
-                        Foundation.Date.self,
-                        forKey: .at
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "from",
-                        "at"
-                    ])
-                }
             }
             /// Who sent the caller one in the last 24 hours, each once at their latest, oldest first.
             ///
@@ -4351,31 +3406,6 @@ extension Components {
                 case kind
                 case sent
                 case received
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.SquadNudges.VersionPayload.self,
-                    forKey: .version
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.SquadNudges.KindPayload.self,
-                    forKey: .kind
-                )
-                self.sent = try container.decode(
-                    [Swift.String].self,
-                    forKey: .sent
-                )
-                self.received = try container.decode(
-                    Components.Schemas.SquadNudges.ReceivedPayload.self,
-                    forKey: .received
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "kind",
-                    "sent",
-                    "received"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/Nudge`.
@@ -4420,26 +3450,6 @@ extension Components {
                 case to
                 case kind
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.Nudge.VersionPayload.self,
-                    forKey: .version
-                )
-                self.to = try container.decode(
-                    Swift.String.self,
-                    forKey: .to
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.Nudge.KindPayload.self,
-                    forKey: .kind
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "to",
-                    "kind"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/NudgeDraft`.
         public struct NudgeDraft: Codable, Hashable, Sendable {
@@ -4483,26 +3493,6 @@ extension Components {
                 case to
                 case kind
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.NudgeDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.to = try container.decode(
-                    Swift.String.self,
-                    forKey: .to
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.NudgeDraft.KindPayload.self,
-                    forKey: .kind
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "to",
-                    "kind"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/WeekSummary`.
         public struct WeekSummary: Codable, Hashable, Sendable {
@@ -4539,21 +3529,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case from
                     case to
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.from = try container.decode(
-                        Swift.String.self,
-                        forKey: .from
-                    )
-                    self.to = try container.decode(
-                        Swift.String.self,
-                        forKey: .to
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "from",
-                        "to"
-                    ])
                 }
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/week`.
@@ -4598,21 +3573,6 @@ extension Components {
                         case emoji
                         case count
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.emoji = try container.decode(
-                            Swift.String.self,
-                            forKey: .emoji
-                        )
-                        self.count = try container.decode(
-                            Swift.Int.self,
-                            forKey: .count
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "emoji",
-                            "count"
-                        ])
-                    }
                 }
                 /// Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first.
                 ///
@@ -4637,21 +3597,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case stats
                     case reactions
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.stats = try container.decode(
-                        [Components.Schemas.WeekStat].self,
-                        forKey: .stats
-                    )
-                    self.reactions = try container.decode(
-                        Components.Schemas.WeekSummary.SquadTotalsPayload.ReactionsPayload.self,
-                        forKey: .reactions
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "stats",
-                        "reactions"
-                    ])
                 }
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/squadTotals`.
@@ -4696,26 +3641,6 @@ extension Components {
                         case received
                         case given
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.emoji = try container.decode(
-                            Swift.String.self,
-                            forKey: .emoji
-                        )
-                        self.received = try container.decode(
-                            Swift.Int.self,
-                            forKey: .received
-                        )
-                        self.given = try container.decode(
-                            Swift.Int.self,
-                            forKey: .given
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "emoji",
-                            "received",
-                            "given"
-                        ])
-                    }
                 }
                 /// One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first.
                 ///
@@ -4740,21 +3665,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case stats
                     case reactions
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.stats = try container.decode(
-                        [Components.Schemas.WeekStat].self,
-                        forKey: .stats
-                    )
-                    self.reactions = try container.decode(
-                        Components.Schemas.WeekSummary.MePayload.ReactionsPayload.self,
-                        forKey: .reactions
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "stats",
-                        "reactions"
-                    ])
                 }
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/me`.
@@ -4798,51 +3708,6 @@ extension Components {
                 case awards
                 case squadTotals
                 case me
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.WeekSummary.VersionPayload.self,
-                    forKey: .version
-                )
-                self.language = try container.decode(
-                    Swift.String.self,
-                    forKey: .language
-                )
-                self.squad = try container.decode(
-                    Swift.String.self,
-                    forKey: .squad
-                )
-                self.week = try container.decode(
-                    Components.Schemas.WeekSummary.WeekPayload.self,
-                    forKey: .week
-                )
-                self.final = try container.decode(
-                    Swift.Bool.self,
-                    forKey: .final
-                )
-                self.awards = try container.decode(
-                    [Components.Schemas.WeekAward].self,
-                    forKey: .awards
-                )
-                self.squadTotals = try container.decode(
-                    Components.Schemas.WeekSummary.SquadTotalsPayload.self,
-                    forKey: .squadTotals
-                )
-                self.me = try container.decode(
-                    Components.Schemas.WeekSummary.MePayload.self,
-                    forKey: .me
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "language",
-                    "squad",
-                    "week",
-                    "final",
-                    "awards",
-                    "squadTotals",
-                    "me"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/WeekAward`.
@@ -4899,31 +3764,6 @@ extension Components {
                     case text
                     case checkIn
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.member = try container.decode(
-                        Swift.String.self,
-                        forKey: .member
-                    )
-                    self.value = try container.decode(
-                        Swift.Int.self,
-                        forKey: .value
-                    )
-                    self.text = try container.decode(
-                        Swift.String.self,
-                        forKey: .text
-                    )
-                    self.checkIn = try container.decodeIfPresent(
-                        Swift.String.self,
-                        forKey: .checkIn
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "member",
-                        "value",
-                        "text",
-                        "checkIn"
-                    ])
-                }
             }
             /// Who won it, in the order members joined the squad.
             ///
@@ -4956,31 +3796,6 @@ extension Components {
                 case title
                 case symbol
                 case winners
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.kind = try container.decode(
-                    Swift.String.self,
-                    forKey: .kind
-                )
-                self.title = try container.decode(
-                    Swift.String.self,
-                    forKey: .title
-                )
-                self.symbol = try container.decode(
-                    Swift.String.self,
-                    forKey: .symbol
-                )
-                self.winners = try container.decode(
-                    Components.Schemas.WeekAward.WinnersPayload.self,
-                    forKey: .winners
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "kind",
-                    "title",
-                    "symbol",
-                    "winners"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/WeekStat`.
@@ -5016,26 +3831,6 @@ extension Components {
                 case kind
                 case label
                 case value
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.kind = try container.decode(
-                    Swift.String.self,
-                    forKey: .kind
-                )
-                self.label = try container.decode(
-                    Swift.String.self,
-                    forKey: .label
-                )
-                self.value = try container.decode(
-                    Swift.Int.self,
-                    forKey: .value
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "kind",
-                    "label",
-                    "value"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts`.
@@ -5080,26 +3875,6 @@ extension Components {
                     case kind
                     case drafts
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.version = try container.decode(
-                        Components.Schemas.DisclaimerDrafts.Case1Payload.VersionPayload.self,
-                        forKey: .version
-                    )
-                    self.kind = try container.decode(
-                        Components.Schemas.DisclaimerDrafts.Case1Payload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    self.drafts = try container.decode(
-                        [Swift.String].self,
-                        forKey: .drafts
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "version",
-                        "kind",
-                        "drafts"
-                    ])
-                }
             }
             /// Drafts to pick from.
             ///
@@ -5137,21 +3912,6 @@ extension Components {
                     case version
                     case kind
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.version = try container.decode(
-                        Components.Schemas.DisclaimerDrafts.Case2Payload.VersionPayload.self,
-                        forKey: .version
-                    )
-                    self.kind = try container.decode(
-                        Components.Schemas.DisclaimerDrafts.Case2Payload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "version",
-                        "kind"
-                    ])
-                }
             }
             /// The reason speaks of self-harm. No drafts: show the member the care line and the 988 buttons. Nobody else sees anything.
             ///
@@ -5188,21 +3948,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case version
                     case kind
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.version = try container.decode(
-                        Components.Schemas.DisclaimerDrafts.Case3Payload.VersionPayload.self,
-                        forKey: .version
-                    )
-                    self.kind = try container.decode(
-                        Components.Schemas.DisclaimerDrafts.Case3Payload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "version",
-                        "kind"
-                    ])
                 }
             }
             /// The AI doesn’t write about this reason. Show the dice suggestions.
@@ -5291,26 +4036,6 @@ extension Components {
                 case reason
                 case style
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.DisclaimerDraftRequest.VersionPayload.self,
-                    forKey: .version
-                )
-                self.reason = try container.decode(
-                    Swift.String.self,
-                    forKey: .reason
-                )
-                self.style = try container.decode(
-                    Components.Schemas.DisclaimerDraftRequest.StylePayload.self,
-                    forKey: .style
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "reason",
-                    "style"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/WeeklyPlan`.
         public struct WeeklyPlan: Codable, Hashable, Sendable {
@@ -5364,26 +4089,6 @@ extension Components {
                         case sport
                         case customSport
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
-                            Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload.self,
-                            forKey: .kind
-                        )
-                        self.sport = try container.decodeIfPresent(
-                            Components.Schemas.Sport.self,
-                            forKey: .sport
-                        )
-                        self.customSport = try container.decodeIfPresent(
-                            Swift.String.self,
-                            forKey: .customSport
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind",
-                            "sport",
-                            "customSport"
-                        ])
-                    }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
                 case case1(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload)
@@ -5404,16 +4109,6 @@ extension Components {
                     }
                     public enum CodingKeys: String, CodingKey {
                         case kind
-                    }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
-                            Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload.self,
-                            forKey: .kind
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind"
-                        ])
                     }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
@@ -5509,46 +4204,6 @@ extension Components {
                 case fuelGoals
                 case firstWeek
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.WeeklyPlan.VersionPayload.self,
-                    forKey: .version
-                )
-                self.member = try container.decode(
-                    Swift.String.self,
-                    forKey: .member
-                )
-                self.weekStart = try container.decode(
-                    Swift.String.self,
-                    forKey: .weekStart
-                )
-                self.days = try container.decode(
-                    Components.Schemas.WeeklyPlan.DaysPayload.self,
-                    forKey: .days
-                )
-                self.source = try container.decode(
-                    Components.Schemas.WeeklyPlan.SourcePayload.self,
-                    forKey: .source
-                )
-                self.fuelGoals = try container.decode(
-                    Components.Schemas.FuelGoals.self,
-                    forKey: .fuelGoals
-                )
-                self.firstWeek = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .firstWeek
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "member",
-                    "weekStart",
-                    "days",
-                    "source",
-                    "fuelGoals",
-                    "firstWeek"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/FuelGoals`.
         @frozen public enum FuelGoalsPayload: Codable, Hashable, Sendable {
@@ -5587,21 +4242,6 @@ extension Components {
                     case kind
                     case suggestion
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.kind = try container.decode(
-                        Components.Schemas.FuelGoalsPayload.Case1Payload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    self.suggestion = try container.decode(
-                        Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload.self,
-                        forKey: .suggestion
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "kind",
-                        "suggestion"
-                    ])
-                }
             }
             /// - Remark: Generated from `#/components/schemas/FuelGoals/case1`.
             case case1(Components.Schemas.FuelGoalsPayload.Case1Payload)
@@ -5632,21 +4272,6 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case kind
                     case text
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.kind = try container.decode(
-                        Components.Schemas.FuelGoalsPayload.Case2Payload.KindPayload.self,
-                        forKey: .kind
-                    )
-                    self.text = try container.decode(
-                        Swift.String.self,
-                        forKey: .text
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "kind",
-                        "text"
-                    ])
                 }
             }
             /// - Remark: Generated from `#/components/schemas/FuelGoals/case2`.
@@ -5728,26 +4353,6 @@ extension Components {
                         case sport
                         case customSport
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
-                            Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload.self,
-                            forKey: .kind
-                        )
-                        self.sport = try container.decodeIfPresent(
-                            Components.Schemas.Sport.self,
-                            forKey: .sport
-                        )
-                        self.customSport = try container.decodeIfPresent(
-                            Swift.String.self,
-                            forKey: .customSport
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind",
-                            "sport",
-                            "customSport"
-                        ])
-                    }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
                 case case1(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload)
@@ -5768,16 +4373,6 @@ extension Components {
                     }
                     public enum CodingKeys: String, CodingKey {
                         case kind
-                    }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.kind = try container.decode(
-                            Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload.self,
-                            forKey: .kind
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "kind"
-                        ])
                     }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
@@ -5835,21 +4430,6 @@ extension Components {
                 case version
                 case days
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.WeeklyPlanDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.days = try container.decode(
-                    Components.Schemas.WeeklyPlanDraft.DaysPayload.self,
-                    forKey: .days
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "days"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/FuelGoalsDraft`.
         public struct FuelGoalsDraft: Codable, Hashable, Sendable {
@@ -5876,21 +4456,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case goals
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.version = try container.decode(
-                    Components.Schemas.FuelGoalsDraft.VersionPayload.self,
-                    forKey: .version
-                )
-                self.goals = try container.decode(
-                    Components.Schemas.FuelGoals.self,
-                    forKey: .goals
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "version",
-                    "goals"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/WeekStory`.
@@ -5927,21 +4492,6 @@ extension Components {
                         case id
                         case name
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.id = try container.decode(
-                            Swift.String.self,
-                            forKey: .id
-                        )
-                        self.name = try container.decode(
-                            Swift.String.self,
-                            forKey: .name
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "id",
-                            "name"
-                        ])
-                    }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
                 public var squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload
@@ -5966,21 +4516,6 @@ extension Components {
                     public enum CodingKeys: String, CodingKey {
                         case from
                         case to
-                    }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.from = try container.decode(
-                            Swift.String.self,
-                            forKey: .from
-                        )
-                        self.to = try container.decode(
-                            Swift.String.self,
-                            forKey: .to
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "from",
-                            "to"
-                        ])
                     }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
@@ -6016,21 +4551,6 @@ extension Components {
                     public enum CodingKeys: String, CodingKey {
                         case member
                         case titles
-                    }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.member = try container.decode(
-                            Swift.String.self,
-                            forKey: .member
-                        )
-                        self.titles = try container.decode(
-                            [Components.Schemas.StoryTitle].self,
-                            forKey: .titles
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "member",
-                            "titles"
-                        ])
                     }
                 }
                 /// Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
@@ -6073,41 +4593,6 @@ extension Components {
                     case status
                     case titles
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.version = try container.decode(
-                        Components.Schemas.WeekStory.Case1Payload.VersionPayload.self,
-                        forKey: .version
-                    )
-                    self.squad = try container.decode(
-                        Components.Schemas.WeekStory.Case1Payload.SquadPayload.self,
-                        forKey: .squad
-                    )
-                    self.week = try container.decode(
-                        Components.Schemas.WeekStory.Case1Payload.WeekPayload.self,
-                        forKey: .week
-                    )
-                    self.hottest = try container.decodeIfPresent(
-                        Components.Schemas.StoryHottest.self,
-                        forKey: .hottest
-                    )
-                    self.status = try container.decode(
-                        Components.Schemas.WeekStory.Case1Payload.StatusPayload.self,
-                        forKey: .status
-                    )
-                    self.titles = try container.decode(
-                        Components.Schemas.WeekStory.Case1Payload.TitlesPayload.self,
-                        forKey: .titles
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "version",
-                        "squad",
-                        "week",
-                        "hottest",
-                        "status",
-                        "titles"
-                    ])
-                }
             }
             /// The week’s titles are written.
             ///
@@ -6145,21 +4630,6 @@ extension Components {
                         case id
                         case name
                     }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.id = try container.decode(
-                            Swift.String.self,
-                            forKey: .id
-                        )
-                        self.name = try container.decode(
-                            Swift.String.self,
-                            forKey: .name
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "id",
-                            "name"
-                        ])
-                    }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
                 public var squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload
@@ -6184,21 +4654,6 @@ extension Components {
                     public enum CodingKeys: String, CodingKey {
                         case from
                         case to
-                    }
-                    public init(from decoder: any Swift.Decoder) throws {
-                        let container = try decoder.container(keyedBy: CodingKeys.self)
-                        self.from = try container.decode(
-                            Swift.String.self,
-                            forKey: .from
-                        )
-                        self.to = try container.decode(
-                            Swift.String.self,
-                            forKey: .to
-                        )
-                        try decoder.ensureNoAdditionalProperties(knownKeys: [
-                            "from",
-                            "to"
-                        ])
                     }
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
@@ -6238,36 +4693,6 @@ extension Components {
                     case week
                     case hottest
                     case status
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.version = try container.decode(
-                        Components.Schemas.WeekStory.Case2Payload.VersionPayload.self,
-                        forKey: .version
-                    )
-                    self.squad = try container.decode(
-                        Components.Schemas.WeekStory.Case2Payload.SquadPayload.self,
-                        forKey: .squad
-                    )
-                    self.week = try container.decode(
-                        Components.Schemas.WeekStory.Case2Payload.WeekPayload.self,
-                        forKey: .week
-                    )
-                    self.hottest = try container.decodeIfPresent(
-                        Components.Schemas.StoryHottest.self,
-                        forKey: .hottest
-                    )
-                    self.status = try container.decode(
-                        Components.Schemas.WeekStory.Case2Payload.StatusPayload.self,
-                        forKey: .status
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "version",
-                        "squad",
-                        "week",
-                        "hottest",
-                        "status"
-                    ])
                 }
             }
             /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
@@ -6358,21 +4783,6 @@ extension Components {
                     case emoji
                     case count
                 }
-                public init(from decoder: any Swift.Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    self.emoji = try container.decode(
-                        Swift.String.self,
-                        forKey: .emoji
-                    )
-                    self.count = try container.decode(
-                        Swift.Int.self,
-                        forKey: .count
-                    )
-                    try decoder.ensureNoAdditionalProperties(knownKeys: [
-                        "emoji",
-                        "count"
-                    ])
-                }
             }
             /// Teammates’ reactions on it, one entry an emoji, most-used first, as they stood at the awards.
             ///
@@ -6422,51 +4832,6 @@ extension Components {
                 case photos
                 case reactions
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.checkIn = try container.decode(
-                    Swift.String.self,
-                    forKey: .checkIn
-                )
-                self.day = try container.decode(
-                    Swift.String.self,
-                    forKey: .day
-                )
-                self.kind = try container.decode(
-                    Components.Schemas.StoryHottest.KindPayload.self,
-                    forKey: .kind
-                )
-                self.sport = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .sport
-                )
-                self.caption = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .caption
-                )
-                self.text = try container.decodeIfPresent(
-                    Swift.String.self,
-                    forKey: .text
-                )
-                self.photos = try container.decode(
-                    [Components.Schemas.StoryPhoto].self,
-                    forKey: .photos
-                )
-                self.reactions = try container.decode(
-                    Components.Schemas.StoryHottest.ReactionsPayload.self,
-                    forKey: .reactions
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "checkIn",
-                    "day",
-                    "kind",
-                    "sport",
-                    "caption",
-                    "text",
-                    "photos",
-                    "reactions"
-                ])
-            }
         }
         /// - Remark: Generated from `#/components/schemas/StoryPhoto`.
         public struct StoryPhoto: Codable, Hashable, Sendable {
@@ -6491,21 +4856,6 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case path
                 case url
-            }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.path = try container.decode(
-                    Swift.String.self,
-                    forKey: .path
-                )
-                self.url = try container.decode(
-                    Swift.String.self,
-                    forKey: .url
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "path",
-                    "url"
-                ])
             }
         }
         /// - Remark: Generated from `#/components/schemas/StoryTitle`.
@@ -6542,25 +4892,69 @@ extension Components {
                 case speech
                 case move
             }
-            public init(from decoder: any Swift.Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.title = try container.decode(
-                    Swift.String.self,
-                    forKey: .title
-                )
-                self.speech = try container.decode(
-                    Swift.String.self,
-                    forKey: .speech
-                )
-                self.move = try container.decode(
-                    Swift.String.self,
-                    forKey: .move
-                )
-                try decoder.ensureNoAdditionalProperties(knownKeys: [
-                    "title",
-                    "speech",
-                    "move"
-                ])
+        }
+        /// - Remark: Generated from `#/components/schemas/AwardTotals`.
+        public struct AwardTotals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/version`.
+            public var version: Components.Schemas.AwardTotals.VersionPayload
+            /// Every title (周奖) the member has won, in all their squads and weeks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/titles`.
+            public var titles: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AwardTotals/latest`.
+            public var latest: Components.Schemas.LatestTitle?
+            /// Creates a new `AwardTotals`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - titles: Every title (周奖) the member has won, in all their squads and weeks.
+            ///   - latest:
+            public init(
+                version: Components.Schemas.AwardTotals.VersionPayload,
+                titles: Swift.Int,
+                latest: Components.Schemas.LatestTitle? = nil
+            ) {
+                self.version = version
+                self.titles = titles
+                self.latest = latest
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case titles
+                case latest
+            }
+        }
+        /// The latest title they won. Left out before the first.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LatestTitle`.
+        public struct LatestTitle: Codable, Hashable, Sendable {
+            /// The title, at most 6 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LatestTitle/title`.
+            public var title: Swift.String
+            /// How many times the member has won this title.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LatestTitle/times`.
+            public var times: Swift.Int
+            /// Creates a new `LatestTitle`.
+            ///
+            /// - Parameters:
+            ///   - title: The title, at most 6 characters.
+            ///   - times: How many times the member has won this title.
+            public init(
+                title: Swift.String,
+                times: Swift.Int
+            ) {
+                self.title = title
+                self.times = times
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case times
             }
         }
     }

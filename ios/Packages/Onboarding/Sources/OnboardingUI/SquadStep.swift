@@ -77,6 +77,8 @@ private struct JoinPanel: View {
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)
+                .submitLabel(.done)
+                .onSubmit { isTyping = false }
                 .focused($isTyping)
                 // The boxes show what is typed; the field only takes the keys.
                 .opacity(0.02)
@@ -223,7 +225,7 @@ private struct AIConsentLine: View {
 
     private var line: AttributedString {
         var line = AttributedString(
-            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module)
+            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module.inAppLanguage)
         for (link, range) in line.runs[\.link] where link != nil {
             line[range].link = privacyPolicy
             line[range].underlineStyle = .single
@@ -246,6 +248,13 @@ private struct CreatePanel: View {
             .accessibilityIdentifier("squad.name")
         }
         .padding(.top, Space.xs)
+    }
+}
+
+extension SignUpModel {
+    /// 「Tracy 的小队」.
+    static func suggestedName(for nickname: String) -> String {
+        String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
     }
 }
 #endif

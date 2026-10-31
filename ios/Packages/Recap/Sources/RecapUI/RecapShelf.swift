@@ -29,7 +29,7 @@ public final class RecapShelf {
     }
 
     /// The newest story out: this week's once Sunday's awards are in, else last week's. Nil
-    /// until one is read, or when the squad is too new to have one.
+    /// until one is read, or when neither week's 战报 came out (a squad too new to have one).
     public private(set) var latest: WeekStory?
     /// The story on screen.
     public var open: RecapModel?
@@ -68,17 +68,18 @@ public final class RecapShelf {
         self.scenePicked = scenePicked
     }
 
-    /// Reads the newest story: this week's, which is out from Sunday 8pm Eastern, else last
-    /// week's. A failed read keeps the one already shown.
+    /// Reads the newest story out: this week's, from Sunday 8pm Eastern, else last week's; a week
+    /// whose 战报 never came out shows none. A failed read keeps the one already shown.
     public func refresh() async {
         guard let squad = readSquad() else { return }
         cast = squad.cast
         let thisWeek = squad.today.weekStart
         do {
-            if let story = try await service.story(squad: squad.id, week: thisWeek) {
+            if let story = try await service.story(squad: squad.id, week: thisWeek), story.isPublished {
                 latest = story
             } else {
-                latest = try await service.story(squad: squad.id, week: thisWeek.adding(days: -7))
+                let lastWeek = try await service.story(squad: squad.id, week: thisWeek.adding(days: -7))
+                latest = lastWeek?.isPublished == true ? lastWeek : nil
             }
         } catch {
             return
@@ -91,16 +92,19 @@ public final class RecapShelf {
         show(latest, cast: cast)
     }
 
-    /// Opens the week a tapped awards push is about, once it can be read.
+    /// Opens the week a tapped awards push is about, once it can be read and has come out.
     public func open(squad id: SquadID, week monday: LocalDay) async {
         guard let squad = readSquad(), squad.id == id else { return }
         cast = squad.cast
-        guard let story = try? await service.story(squad: id, week: monday) else { return }
+        guard let story = try? await service.story(squad: id, week: monday), story.isPublished else { return }
         if monday >= (latest?.week.monday ?? monday) { latest = story }
         show(story, cast: squad.cast)
     }
 
+    /// Plays a story that came out: one that didn't may have no page at all, which the player
+    /// can't start on.
     private func show(_ story: WeekStory, cast: StoryCast) {
+        guard story.isPublished else { return }
         let model = RecapModel(
             story: story, cast: cast, service: service,
             close: { [weak self] in self?.open = nil },

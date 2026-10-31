@@ -9,13 +9,15 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/wildcard.css">
 <link rel="stylesheet" href="/legal.css">
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <header class="legal-chrome"><div class="wrap nav"><a class="mark" href="/"><img src="/logo.svg" width="30" height="30" alt="">WILDCARD</a><nav class="lang" aria-label="Language"><a href="/zh/privacy" hreflang="zh-Hans">简体</a><a href="/zh-hant/privacy" hreflang="zh-Hant">繁體</a><a href="/privacy" hreflang="en" aria-current="page">EN</a></nav></div></header>
 <main class="wc-page legal">
 
 <h1 class="t-large">Privacy Policy</h1>
-<p class="t-support">Last updated: October 23, 2026</p>
+<p class="t-support">Last updated: October 24, 2026</p>
 <p>This policy explains what Tracy Meng, an individual in New York, USA, who develops Wildcard (外卡) ("we") collects when you use the Wildcard app (the "App"), how we use it, who we share it with, and the choices you have. The Simplified Chinese, Traditional Chinese and English versions say the same thing; if they differ, the English version controls.</p>
 <p><strong>In one line:</strong> your check-ins are seen only by your squad; we don't sell your data, show ads or track you across apps; and you can delete your account and everything in it from inside the App at any time.</p>
 
@@ -27,7 +29,8 @@
 <p><strong>AI:</strong> when you choose to have AI draft a leave note, the reason you type and the drafts generated. Every Sunday, to write the squad's awards and weekly recap, the check-in captions and leave-note text (never photos) of squad members who agreed to AI use for that week.</p>
 <p><strong>Push:</strong> your device's push token if you turn on notifications, and your notification switches.</p>
 <p><strong>Technical logs:</strong> IP address, time, request outcome and errors, recorded by our servers for security and troubleshooting.</p>
-<p>We do not collect weight, calories or other body metrics, and we do not read your contacts, location or Health app data. Photos are chosen with the system photo picker, so we only receive the photos you select. We currently use no third-party analytics or advertising SDKs.</p>
+<p><strong>Crash and performance reports:</strong> when the App crashes or freezes, or iOS reports that it hung, ran out of memory, or used too much processing or storage, the App sends a report: what the code was doing, the device model, iOS and app version, and a random identifier for this installation. When our server hits an error, it sends one too, with the kind of request (never its content or your sign-in) and its log reference. These reports are not linked to your account and never include your check-ins, photos or screenshots.</p>
+<p>We do not collect weight, calories or other body metrics, and we do not read your contacts, location or Health app data. Photos are chosen with the system photo picker, so we only receive the photos you select. The App uses no third-party analytics or advertising SDKs; the only third-party code that sends anything is Sentry's crash reporter, described above. Our website uses Vercel Web Analytics, which counts page views without cookies and without identifying you across sites or devices; it records the page, referrer, country and browser type.</p>
 
 <h2 class="t-headline">2. How we use it</h2>
 <ul>
@@ -49,6 +52,7 @@
 <tbody>
 <tr><td data-label="Provider">Apple</td><td data-label="Purpose">Sign-in, push notifications</td><td data-label="Data involved">Apple user ID, name and email, push token and notification content</td></tr>
 <tr><td data-label="Provider">Supabase</td><td data-label="Purpose">Database, sign-in sessions, photo storage</td><td data-label="Data involved">All account, profile, check-in and photo data above</td></tr>
+<tr><td data-label="Provider">Sentry</td><td data-label="Purpose">Crash and error reports</td><td data-label="Data involved">The crash and performance reports above, not linked to your account</td></tr>
 <tr><td data-label="Provider">Google Cloud</td><td data-label="Purpose">Runs our servers</td><td data-label="Data involved">Requests passing through our servers, technical logs</td></tr>
 <tr><td data-label="Provider">OpenAI (currently used), Anthropic (alternative)</td><td data-label="Purpose">Drafting AI leave notes; weekly awards and recap</td><td data-label="Data involved">Leave notes: the reason you type. Weekly awards: captions, leave-note text and nicknames of squad members who agreed to AI use for the week. Never photos or email</td></tr>
 </tbody>
@@ -61,7 +65,7 @@
 <h2 class="t-headline">6. Retention and deletion</h2>
 <p>While your account exists we keep your content; you can delete individual check-ins at any time.</p>
 <p><strong>Deleting your account:</strong> start it in the App under Me → Delete account (注销账号) and confirm again with Apple. It takes effect at once: we delete your account, profile, check-ins, photos, squad memberships, reactions and AI consent record, and revoke the link to your Apple ID. Teammates stop seeing anything of yours. Routine database backups, if any, are overwritten within 30 days at most. If the law requires us to keep any record, we keep only that and tell you what was kept.</p>
-<p>Technical logs are kept for at most 30 days.</p>
+<p>Technical logs are kept for at most 30 days, and crash and performance reports for at most 90 days.</p>
 <p>A squad you created stays if it has other members, but your content in it is deleted.</p>
 
 <h2 class="t-headline">7. Your rights and choices</h2>

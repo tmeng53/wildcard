@@ -8,7 +8,8 @@ extension Artwork {
     /// Reads one flat SVG art file: `path`, `circle`, `ellipse` and `rect` elements, grouped
     /// with `g` if you like, colored with hex fills and strokes. Anything else is an error,
     /// so art never looks different on the phone from how it looked in the design tool.
-    /// Internal: callers load art through `Figure`, which reports `AvatarError.invalidSVG`.
+    /// Internal: callers go through `read(svg:path:)` or `Figure`, which report
+    /// `AvatarError.invalidSVG`.
     init(svg: String) throws(SVGProblem) {
         let reader = SVGReader()
         let parser = XMLParser(data: Data(svg.utf8))
@@ -18,6 +19,16 @@ extension Artwork {
         guard parsed else { throw .notXML(parser.parserError.map { "\($0)" } ?? "unreadable") }
         guard let viewBox = reader.viewBox else { throw .missingViewBox }
         self.init(width: viewBox.width, height: viewBox.height, shapes: reader.shapes)
+    }
+
+    /// Reads art that stands on its own, outside a figure, such as a store's badge; `path`
+    /// names it in the error.
+    public static func read(svg: String, path: String) throws(AvatarError) -> Artwork {
+        do {
+            return try Artwork(svg: svg)
+        } catch {
+            throw .invalidSVG(art: path, problem: error)
+        }
     }
 }
 
@@ -31,6 +42,7 @@ private struct Style {
     var strokeWidth = 1.0
     var cap = Stroke.Cap.butt
     var join = Stroke.Join.miter
+    var dash: [Double] = []
 }
 
 private final class SVGReader: NSObject, XMLParserDelegate {
@@ -118,12 +130,20 @@ private final class SVGReader: NSObject, XMLParserDelegate {
         case "stroke": style.stroke = try color(value)
         case "stroke-opacity": style.strokeOpacity = try number(value)
         case "stroke-width": style.strokeWidth = try number(value)
+        default: try stroke(key, value, into: &style)
+        }
+    }
+
+    /// How a stroke is drawn: its ends, its corners and its dashes.
+    private func stroke(_ key: String, _ value: String, into style: inout Style) throws(SVGProblem) {
+        switch key {
         case "stroke-linecap":
             guard let cap = Stroke.Cap(rawValue: value) else { throw .unsupportedAttribute("\(key)=\(value)") }
             style.cap = cap
         case "stroke-linejoin":
             guard let join = Stroke.Join(rawValue: value) else { throw .unsupportedAttribute("\(key)=\(value)") }
             style.join = join
+        case "stroke-dasharray": style.dash = try dashes(value)
         default: throw .unsupportedAttribute(key)
         }
     }
@@ -160,7 +180,7 @@ private final class SVGReader: NSObject, XMLParserDelegate {
         let stroke = style.stroke.map {
             Stroke(
                 color: RGBAColor(red: $0.red, green: $0.green, blue: $0.blue, opacity: style.strokeOpacity),
-                width: style.strokeWidth, cap: style.cap, join: style.join)
+                width: style.strokeWidth, cap: style.cap, join: style.join, dash: style.dash)
         }
         shapes.append(ArtShape(path: path, fill: fill, stroke: stroke, opacity: opacity))
     }
@@ -178,6 +198,21 @@ private final class SVGReader: NSObject, XMLParserDelegate {
         scanner.skipSeparators()
         guard scanner.isAtEnd else { throw .invalidNumber(text) }
         return value
+    }
+
+    /// `none`, or dash and gap lengths split by commas or spaces. An odd list repeats, as in SVG.
+    private func dashes(_ text: String) throws(SVGProblem) -> [Double] {
+        if text == "none" { return [] }
+        var scanner = NumberScanner(Array(text.unicodeScalars))
+        var lengths: [Double] = []
+        while !scanner.isAtEnd {
+            let length = try scanner.number()
+            guard length >= 0 else { throw .invalidNumber(text) }
+            lengths.append(length)
+            scanner.skipSeparators()
+        }
+        guard lengths.contains(where: { $0 > 0 }) else { return [] }
+        return lengths.count.isMultiple(of: 2) ? lengths : lengths + lengths
     }
 
     private func optionalNumber(_ key: String, in geometry: [String: String]) throws(SVGProblem) -> Double {

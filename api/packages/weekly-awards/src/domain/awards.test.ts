@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { MemberId, ModelReply, titlesOf, topCheckInOf, type WeekCheckIn } from './awards.js';
+import {
+  MemberId,
+  ModelReply,
+  titlesOf,
+  titlesWonOf,
+  topCheckInOf,
+  type WeekCheckIn,
+} from './awards.js';
 import { AwardMove } from './moves.js';
 import { promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
@@ -236,5 +243,26 @@ describe('promptFor', () => {
       'wave',
       'fullbelly',
     ]);
+  });
+});
+
+describe('titlesWonOf', () => {
+  const award = (...titles: string[]) => ({
+    version: 1 as const,
+    titles: titles.map((title) => ({
+      title,
+      speech: '周三下着雨还去跑了。',
+      move: 'pump' as const,
+    })),
+  });
+
+  it('counts every title, and how often the latest week’s first title was won', () => {
+    expect(
+      titlesWonOf([award('早八战神', '雨中狠人'), award('早八战神'), award('夜跑王')]),
+    ).toStrictEqual({ count: 4, latest: { title: '早八战神', times: 2 } });
+  });
+
+  it('has no latest before the first award', () => {
+    expect(titlesWonOf([])).toStrictEqual({ count: 0 });
   });
 });
