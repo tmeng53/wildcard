@@ -55,8 +55,11 @@ public struct FeedView: View {
         // A held card's slide picks an emoji; the list stays put under it.
         .scrollDisabled(model.lifted)
         .refreshable { await model.load() }
-        .onChange(of: model.focus, initial: true) { _, focus in
-            guard let focus else { return }
+        .task(id: model.focus) {
+            guard let focus = model.focus else { return }
+            // Waits a frame, so the list has laid out the post before moving to it: opened from
+            // the home, it hasn't yet, and setting the position at once would do nothing.
+            await Task.yield()
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
             model.focus = nil
         }
