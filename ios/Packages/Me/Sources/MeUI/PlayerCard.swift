@@ -73,7 +73,7 @@ struct PlayerCard: View {
 }
 
 /// The front: the character in its window under the card's number and latest title, the name,
-/// squad and the year they joined, then 练了, 本周 and 周奖.
+/// squad and the year they joined, then 练了, 本周 and 拿过的奖.
 private struct CardFront: View {
     let overview: MeOverview
     @Environment(\.sceneTheme) private var theme

@@ -302,7 +302,7 @@ public final class SignUpModel {
         }
     }
 
-    /// 跳过: no plan this week; 本周 counts against nothing until one is set.
+    /// 以后再说 on 本周目标: no plan this week; 本周 counts against nothing until one is set.
     func skipWeek() {
         week = nil
         show(.afterWeek(madeTheSquad: madeTheSquad))
