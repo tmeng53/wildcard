@@ -3874,7 +3874,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos",
+            "description": "The id holds a different check-in, or another check-in uses one of the photos",
             "content": {
               "application/problem+json": {
                 "schema": {
