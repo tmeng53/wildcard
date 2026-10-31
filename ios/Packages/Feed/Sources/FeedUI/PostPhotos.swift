@@ -6,35 +6,50 @@ import FeedDomain
 import ImageIO
 import SwiftUI
 
-/// A post's photos across the top of its card, swiped one to the next, the cover first. A double
-/// tap pops a big ❤️ where it landed, which flies to the author's character (never taking a
-/// reaction back).
+/// A post's photos across the top of its card, swiped one to the next, the cover first, in a
+/// box of the cover's shape (`PhotoFrame`: portrait up to 4:5). A tap opens them full screen;
+/// a double tap pops a big ❤️ where it landed, which flies to the author's character (never
+/// taking a reaction back).
 struct PostPhotos: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
     let post: FeedPost
     let photos: Photos
-
-    static let height: Double = 236
+    @State private var page = 0
+    @State private var isViewing = false
 
     var body: some View {
-        TabView {
-            ForEach(Array(photos.all.enumerated()), id: \.element) { index, ref in
-                FeedPhoto(model: model, ref: ref)
-                    .accessibilityLabel(
-                        Text("第 \(index + 1) 张，共 \(photos.all.count) 张", bundle: .module))
+        Color.clear
+            .aspectRatio(PhotoFrame.aspectRatio(of: photos), contentMode: .fit)
+            .overlay {
+                TabView(selection: $page) {
+                    ForEach(Array(photos.all.enumerated()), id: \.element) { index, ref in
+                        FeedPhoto(model: model, ref: ref)
+                            .accessibilityLabel(
+                                Text("第 \(index + 1) 张，共 \(photos.all.count) 张", bundle: .module)
+                            )
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityHint(Text("全屏看", bundle: .module))
+                            .accessibilityAction { isViewing = true }
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: photos.all.count > 1 ? .always : .never))
             }
-        }
-        .tabViewStyle(.page(indexDisplayMode: photos.all.count > 1 ? .always : .never))
-        .frame(height: Self.height)
-        .clipShape(
-            UnevenRoundedRectangle(topLeadingRadius: Radius.card, topTrailingRadius: Radius.card, style: .continuous)
-        )
-        .onTapGesture(count: 2, coordinateSpace: .named(FeedView.space)) { location in
-            guard post.canRespond(model.viewer) else { return }
-            model.react(.doubleTap, on: post, from: location)
-        }
-        .accessibilityElement(children: .contain)
+            .clipShape(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: Radius.card, topTrailingRadius: Radius.card, style: .continuous)
+            )
+            .onTapGesture(count: 2, coordinateSpace: .named(FeedView.space)) { location in
+                guard post.canRespond(model.viewer) else { return }
+                model.react(.doubleTap, on: post, from: location)
+            }
+            .onTapGesture { isViewing = true }
+            .photoViewer(isPresented: $isViewing, count: photos.all.count, page: $page) { [model, photos] index in
+                await model.store.photo(photos.all[index])
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("feed.photos")
     }
 }
 

@@ -1,7 +1,7 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(27);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -96,6 +96,16 @@ select throws_ok(
   $$insert into public.check_in_photos (path, check_in_id, position) values
     ('a0000000-0000-0000-0000-000000000001/4.jpg', '11111111-1111-1111-1111-111111111111', 4)$$,
   '23514', null, 'at most 3 photos'
+);
+select throws_ok(
+  $$insert into public.check_in_photos (path, check_in_id, position, width) values
+    ('a0000000-0000-0000-0000-000000000001/5.jpg', '11111111-1111-1111-1111-111111111111', 3, 1080)$$,
+  '23514', null, 'a photo has both sides of its size or neither'
+);
+select throws_ok(
+  $$insert into public.check_in_photos (path, check_in_id, position, width, height) values
+    ('a0000000-0000-0000-0000-000000000001/6.jpg', '11111111-1111-1111-1111-111111111111', 3, 0, 1350)$$,
+  '23514', null, 'a photo is at least a pixel wide'
 );
 select throws_ok(
   $$insert into public.check_in_squads (check_in_id, squad_id, position) values

@@ -94,6 +94,14 @@ struct ButtonSection: View {
                         Spacer()
                         HeaderButton(Text("设置", bundle: .module), systemImage: "gearshape") {}
                     }
+                    HStack {
+                        Spacer()
+                        HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark", on: .ink) {}
+                    }
+                    .padding(Space.s)
+                    .background(
+                        Color(role: .bgInk, in: theme),
+                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                 }
             }
             GuideGroup(Text("标签栏：玻璃，选中是浅灰块", bundle: .module)) {

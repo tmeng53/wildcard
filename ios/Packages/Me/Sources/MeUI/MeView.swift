@@ -29,7 +29,7 @@ public struct MeDestinations {
     }
 }
 
-/// 我: the member's player card (tap it to turn it over) and 编辑角色, with a small 设置 button
+/// 我: the member's player card (tap it to turn it over) and 编辑外卡运动员, with a small 设置 button
 /// that opens the settings menu, and from there 注销账号. Each page replaces the last in place.
 /// These pages keep out of the scene's colours: ink and white only.
 public struct MeView: View {
@@ -87,7 +87,7 @@ public struct MeView: View {
                     PlayerCard(overview: overview)
                     VStack(spacing: Space.xs) {
                         Button(action: destinations.editCharacter) {
-                            Text("编辑角色", bundle: .module)
+                            Text("编辑外卡运动员", bundle: .module)
                         }
                         .buttonStyle(SecondaryButtonStyle())
                         .accessibilityIdentifier("me.editCharacter")

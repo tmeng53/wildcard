@@ -25,3 +25,24 @@ import Testing
 
     #expect(await DeviceOutbox(directory: directory).load() == [post, untimed])
 }
+
+@Test func aWaitingPostKeepsItsPhotosSizesOnDisk() async throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let portrait = try PhotoSize(width: 1080, height: 1350)
+    let landscape = try PhotoSize(width: 1080, height: 720)
+    let sent = PreparedPhoto(id: UUID(), jpeg: Data(), size: portrait)
+    let waiting = PreparedPhoto(id: UUID(), jpeg: Data([0xFF, 0xD8]), size: landscape)
+    let post = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))),
+        member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
+        day: try LocalDay("2026-10-24"), createdAt: Timestamp(millisecondsSince1970: 1_792_813_400_000),
+        audience: try Audience([SquadID(try #require(UUID(uuidString: "33333333-3333-3333-3333-333333333333")))]),
+        draft: .healthyMeal(PostBody(photos: [sent, waiting], caption: "")),
+        uploaded: [sent.id: try PhotoRef(path: "22222222-2222-2222-2222-222222222222/sent")])
+
+    await DeviceOutbox(directory: directory).save([post])
+
+    let kept = try #require(await DeviceOutbox(directory: directory).load().first)
+    #expect(kept.draft.photos.map(\.size) == [portrait, landscape])
+    #expect(kept == post)
+}

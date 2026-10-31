@@ -5,9 +5,9 @@ import Foundation
 
 extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
-    /// a photo and emoji, a 请假条 and a salad; yesterday a swim and my own leg day;
+    /// two photos and emoji, a 请假条 and a salad; yesterday a swim and my own leg day;
     /// two days ago a tennis serve and a confessed burger. `photos` are the sample photos by
-    /// `samplePhotoNames`; without them the photos' places stay grey.
+    /// their names in `samplePhotoSizes`; without them the photos' places stay grey.
     public static func sample(
         viewer: MemberID, squad: SquadID, now: Date, zone: TimeZone, photos: [String: Data] = [:]
     ) -> InMemoryFeedSource {
@@ -19,7 +19,7 @@ extension InMemoryFeedSource {
         let write = SamplePosts(today: LocalDay(at: now, in: zone), zone: zone, audience: audience)
         var posts = [
             write.post(
-                jay, 0, 7, 42, .trained(write.training("run", minutes: 45, "track", "下雨也跑了，鞋已阵亡")),
+                jay, 0, 7, 42, .trained(write.training("run", minutes: 45, ["track", "tennis"], "下雨也跑了，鞋已阵亡")),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")]),
             write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
             write.post(
@@ -82,8 +82,13 @@ extension InMemoryFeedSource {
     /// Where the sample posts' photos are, as a member's folder in Storage.
     fileprivate static let photoFolder = "sample"
 
-    /// The sample photos `sample` refers to, by name.
-    public static let samplePhotoNames = ["track", "salad", "pool", "gym", "tennis", "burger"]
+    /// The sample photos `sample` refers to, by name, with their sizes in pixels: landscape
+    /// venues, a portrait leg day (taller than 4:5, so the feed crops it), a portrait salad and
+    /// a square burger.
+    public static let samplePhotoSizes: [String: (width: Int, height: Int)] = [
+        "track": (1080, 720), "pool": (1080, 720), "tennis": (1080, 720), "gym": (1080, 1440),
+        "salad": (1080, 1350), "burger": (1080, 1080),
+    ]
 
     fileprivate static func localized(_ key: String) -> String {
         Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
@@ -97,14 +102,18 @@ private struct SamplePosts {
     let zone: TimeZone
     let audience: Audience
 
-    func training(_ sport: Sport, minutes: Int? = nil, _ photo: String, _ caption: String) -> Training {
+    func training(_ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String) -> Training {
         Training(
-            activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: photos(photo),
+            activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: self.photos(photos),
             caption: line(caption))
     }
 
+    func training(_ sport: Sport, minutes: Int? = nil, _ photo: String, _ caption: String) -> Training {
+        training(sport, minutes: minutes, [photo], caption)
+    }
+
     func meal(_ photo: String, _ caption: String) -> Meal {
-        Meal(photos: photos(photo), caption: line(caption))
+        Meal(photos: photos([photo]), caption: line(caption))
     }
 
     func post(
@@ -131,8 +140,14 @@ private struct SamplePosts {
         return calendar.date(from: components) ?? .distantPast
     }
 
-    private func photos(_ name: String) -> Photos? {
-        (try? PhotoRef(path: "\(InMemoryFeedSource.photoFolder)/\(name)")).flatMap { try? Photos([$0]) }
+    private func photos(_ names: [String]) -> Photos? {
+        let refs = names.compactMap { name in
+            let size = InMemoryFeedSource.samplePhotoSizes[name].flatMap {
+                try? PhotoSize(width: $0.width, height: $0.height)
+            }
+            return try? PhotoRef(path: "\(InMemoryFeedSource.photoFolder)/\(name)", size: size)
+        }
+        return try? Photos(refs)
     }
 
     private func line(_ key: String) -> Caption? {
