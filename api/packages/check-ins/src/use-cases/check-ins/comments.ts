@@ -61,9 +61,10 @@ export async function commentOnCheckIn(
 
 /**
  * Deletes the member's own comment, even under a check-in they no longer see (they left the
- * squad): their words stay theirs. Safe to repeat: a comment that is gone, or was never on this
- * check-in, deletes nothing. Throws `CheckInNotFoundError` for a check-in they can't see (unless
- * the comment is theirs) and `NotYourCommentError` for someone else's comment.
+ * squad): their words stay theirs. Safe to repeat: a comment that is gone deletes nothing, and
+ * one that was never on this check-in deletes nothing either. Throws `CheckInNotFoundError` for a
+ * check-in they can't see (unless the comment on it is theirs) and `NotYourCommentError` for
+ * someone else's comment.
  */
 export async function deleteComment(
   deps: Deps,
@@ -74,12 +75,13 @@ export async function deleteComment(
   }: { readonly checkIn: CheckInId; readonly id: CommentId; readonly member: MemberId },
 ): Promise<void> {
   const saved = await deps.comments.find(id);
-  const onThisCheckIn = saved?.checkIn === checkIn ? saved : undefined;
-  if (onThisCheckIn?.member === member) {
+  // Gone already (a retry, even after leaving): ids are random, so this tells nobody anything.
+  if (saved === undefined) return;
+  if (saved.checkIn === checkIn && saved.member === member) {
     await deps.comments.remove(id);
     return;
   }
   await findVisibleCheckIn(deps, { id: checkIn, viewer: member });
-  if (onThisCheckIn === undefined) return;
+  if (saved.checkIn !== checkIn) return;
   throw new NotYourCommentError();
 }

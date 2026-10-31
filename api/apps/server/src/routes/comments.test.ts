@@ -243,6 +243,11 @@ describe('/check-ins/{checkInId}/comments', () => {
 
     const others = await call('DELETE', { path: tracys, token: ann.token });
     expect(others).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
+    const elsewhere = await checkIn(tracy.token, await squadOf(tracy));
+    const wrongPost = mine.replace(run, elsewhere);
+    const hidden = await call('DELETE', { path: wrongPost, token: ann.token });
+    expect(hidden).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
+    expect((await call('DELETE', { path: mine, token: ann.token })).status).toBe(204);
     expect((await call('DELETE', { path: mine, token: ann.token })).status).toBe(204);
     const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
     expect(listed.body).toMatchObject({ comments: [{ text: '谢谢' }] });
