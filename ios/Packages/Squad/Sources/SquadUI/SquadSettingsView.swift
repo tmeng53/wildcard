@@ -28,6 +28,8 @@ public struct SquadSettingsView: View {
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
+    /// The change last asked for, so its own control shows the wait while it saves.
+    @State private var working: Working?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -43,13 +45,20 @@ public struct SquadSettingsView: View {
     public var body: some View {
         ZStack {
             Color(role: .bgCanvas, in: theme).ignoresSafeArea()
-            switch model.load {
-            case .loading:
-                Color.clear
-            case .failed:
-                SquadFailed { Task { await model.reload() } }
-            case .loaded(let settings):
-                page(settings).swipesBack(perform: close)
+            Group {
+                switch model.load {
+                case .loading:
+                    Color.clear
+                case .failed:
+                    SquadFailed { Task { await model.reload() } }
+                case .loaded(let settings):
+                    page(settings).swipesBack(perform: close)
+                }
+            }
+            .loadingCover(model.load == .loading) {
+                LoadingCharacter()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }
             if let reveal {
                 UnboxRevealView(
@@ -106,6 +115,7 @@ public struct SquadSettingsView: View {
             Button {
                 let typed = renaming ?? ""
                 renaming = nil
+                working = .rename
                 Task { await model.rename(to: typed) }
             } label: {
                 Text("保存", bundle: .module)
@@ -140,10 +150,15 @@ public struct SquadSettingsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if model.isCaptain {
-                HeaderButton(Text("改队名", bundle: .module), systemImage: "pencil") {
-                    renaming = settings.squad.name
+                LoadingSwap(isSaving(.rename)) {
+                    HeaderButton(Text("改队名", bundle: .module), systemImage: "pencil") {
+                        renaming = settings.squad.name
+                    }
+                    .accessibilityIdentifier("squad.rename")
+                    .disabled(isSaving(.rename))
                 }
-                .accessibilityIdentifier("squad.rename")
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
         }
     }
@@ -211,7 +226,9 @@ public struct SquadSettingsView: View {
     private var memberRows: some View {
         VStack(spacing: 0) {
             ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
-                MemberRow(member: member, showsDivider: index > 0) { action in confirming = action }
+                MemberRow(member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id))) { action in
+                    confirming = action
+                }
             }
         }
         .confirmationDialog(
@@ -221,6 +238,7 @@ public struct SquadSettingsView: View {
             switch action {
             case .handCaptaincy(let member, _):
                 Button {
+                    working = .member(member)
                     Task { await model.handCaptaincy(to: member) }
                 } label: {
                     Text("转让", bundle: .module)
@@ -228,6 +246,7 @@ public struct SquadSettingsView: View {
                 .accessibilityIdentifier("squad.handCaptaincy.confirm")
             case .remove(let member, _):
                 Button(role: .destructive) {
+                    working = .member(member)
                     Task { await model.remove(member) }
                 } label: {
                     Text("移出", bundle: .module)
@@ -237,10 +256,6 @@ public struct SquadSettingsView: View {
         }
     }
 
-    private var isConfirming: Binding<Bool> {
-        Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })
-    }
-
     // MARK: 退出小队
 
     private func leaveButton(_ settings: SquadSettings) -> some View {
@@ -248,12 +263,14 @@ public struct SquadSettingsView: View {
             isLeaving = true
         } label: {
             Text("退出小队", bundle: .module)
+                .loadingLabel(isSaving(.leave))
         }
         .buttonStyle(TextButtonStyle(.plain))
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("squad.leave")
         .confirmationDialog(Text("退出小队？", bundle: .module), isPresented: $isLeaving, titleVisibility: .visible) {
             Button(role: .destructive) {
+                working = .leave
                 Task { await model.leave() }
             } label: {
                 Text("退出小队", bundle: .module)
@@ -269,11 +286,29 @@ public struct SquadSettingsView: View {
     }
 }
 
+extension SquadSettingsView {
+    private var isConfirming: Binding<Bool> {
+        Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })
+    }
+
+    /// Whether `change` is the one saving now.
+    private func isSaving(_ change: Working) -> Bool {
+        model.isSaving && working == change
+    }
+}
+
 /// The scene picker's reveal, once 「确认」 saved.
 private struct Reveal {
     let unboxing: Unboxing
     let scene: SceneTheme
     let startedAt: Date
+}
+
+/// A change the page saves, by the control that asked for it.
+enum Working: Hashable {
+    case rename
+    case member(MemberID)
+    case leave
 }
 
 /// What the captain is about to do to a member, waiting on the system's confirm.

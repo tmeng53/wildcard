@@ -30,6 +30,8 @@ public final class FeedStore {
     public private(set) var failure: FeedError?
     /// Whether scrolling further back can still find posts.
     public private(set) var hasEarlier = true
+    /// Whether the week before the earliest loaded is being read.
+    public private(set) var isLoadingEarlier = false
     /// The squad's members' characters as last loaded: names and looks.
     public private(set) var characters: [MemberID: MemberCharacter] = [:]
 
@@ -97,6 +99,8 @@ public final class FeedStore {
     /// Loads the week before the earliest loaded, as the member scrolls to the end.
     public func loadEarlier() async {
         guard hasEarlier, let earlier = range?.earlier else { return }
+        isLoadingEarlier = true
+        defer { isLoadingEarlier = false }
         let before = loaded.count
         guard await load(earlier) else { return }
         range = FeedRange(first: earlier.first, last: range?.last ?? earlier.last)

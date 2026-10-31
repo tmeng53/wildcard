@@ -43,7 +43,7 @@ public struct SceneSticker: View {
                     if let reveal = await picker.confirm(), let scene = picker.selection { onPicked(reveal, scene) }
                 }
             } label: {
-                Text("确认", bundle: .module).frame(maxWidth: .infinity)
+                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
