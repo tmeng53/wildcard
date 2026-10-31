@@ -1165,21 +1165,52 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PhotoView/url`.
             public var url: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PhotoView/size`.
+            public var size: Components.Schemas.PhotoSize?
             /// Creates a new `PhotoView`.
             ///
             /// - Parameters:
             ///   - path: The photo’s name, as the check-in was saved with.
             ///   - url: `GET` the photo here. It works for an hour.
+            ///   - size:
             public init(
                 path: Swift.String,
-                url: Swift.String
+                url: Swift.String,
+                size: Components.Schemas.PhotoSize? = nil
             ) {
                 self.path = path
                 self.url = url
+                self.size = size
             }
             public enum CodingKeys: String, CodingKey {
                 case path
                 case url
+                case size
+            }
+        }
+        /// Its width and height in pixels. Missing on photos saved without one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PhotoSize`.
+        public struct PhotoSize: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PhotoSize/width`.
+            public var width: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PhotoSize/height`.
+            public var height: Swift.Int
+            /// Creates a new `PhotoSize`.
+            ///
+            /// - Parameters:
+            ///   - width:
+            ///   - height:
+            public init(
+                width: Swift.Int,
+                height: Swift.Int
+            ) {
+                self.width = width
+                self.height = height
+            }
+            public enum CodingKeys: String, CodingKey {
+                case width
+                case height
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn`.
@@ -1618,15 +1649,23 @@ extension Components {
         public struct PhotoRef: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PhotoRef/path`.
             public var path: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PhotoRef/size`.
+            public var size: Components.Schemas.PhotoSize?
             /// Creates a new `PhotoRef`.
             ///
             /// - Parameters:
             ///   - path:
-            public init(path: Swift.String) {
+            ///   - size:
+            public init(
+                path: Swift.String,
+                size: Components.Schemas.PhotoSize? = nil
+            ) {
                 self.path = path
+                self.size = size
             }
             public enum CodingKeys: String, CodingKey {
                 case path
+                case size
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft`.

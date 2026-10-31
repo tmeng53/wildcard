@@ -17,8 +17,34 @@ export function isOwnPhoto(path: PhotoPath, member: string): boolean {
   return path.startsWith(`${member}/`);
 }
 
-/** One photo of a check-in, as `POST /photo-uploads` named it. */
-export const PhotoRef = z.strictObject({ path: PhotoPath }).meta({ id: 'PhotoRef' });
+/** The most pixels a photo's side may claim: well past what the app uploads (1080). */
+export const PHOTO_SIDE_MAX = 10_000;
+
+/**
+ * A photo's size in pixels, as the app prepared it, so a feed lays the photo out at its shape
+ * before it loads. The server only checks the shape; it never opens the file.
+ */
+export const PhotoSize = z
+  .strictObject({
+    width: z.int().min(1).max(PHOTO_SIDE_MAX),
+    height: z.int().min(1).max(PHOTO_SIDE_MAX),
+  })
+  .meta({
+    id: 'PhotoSize',
+    description: 'Its width and height in pixels. Missing on photos saved without one.',
+  });
+export type PhotoSize = z.infer<typeof PhotoSize>;
+
+/**
+ * One photo of a check-in, as `POST /photo-uploads` named it, with its size in pixels. Photos
+ * saved before sizes were sent have none.
+ */
+export const PhotoRef = z
+  .strictObject({
+    path: PhotoPath,
+    size: PhotoSize.optional(),
+  })
+  .meta({ id: 'PhotoRef' });
 export type PhotoRef = z.infer<typeof PhotoRef>;
 
 /** A check-in's photos: 1 to 3, no repeats, in the member's order. The first is the cover. */

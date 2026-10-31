@@ -153,22 +153,46 @@ public struct Photos: Hashable, Sendable {
     }
 }
 
-/// A check-in photo: its name in storage, as `POST /photo-uploads` gave it, and on a saved
-/// check-in the URL to view it. Two are the same photo when their paths are: the view URL is
-/// signed afresh on every list.
+/// A check-in photo: its name in storage, as `POST /photo-uploads` gave it, its size, and on a
+/// saved check-in the URL to view it. Two are the same photo when their paths are: the view URL
+/// is signed afresh on every list.
 public struct PhotoRef: Hashable, Sendable {
     public let path: String
+    /// Its width and height in pixels, so the feed lays it out at its shape before it loads.
+    /// Nil on photos saved before sizes were sent.
+    public let size: PhotoSize?
     /// Where to `GET` the photo, on check-ins the API sent. It stops working after a while;
     /// listing again gives fresh ones. Nil on a check-in the app is about to send.
     public let viewURL: URL?
 
-    public init(path: String, viewURL: URL? = nil) throws(ContractsError) {
+    public init(path: String, size: PhotoSize? = nil, viewURL: URL? = nil) throws(ContractsError) {
         guard !path.isEmpty else { throw .emptyPhotoPath }
         self.path = path
+        self.size = size
         self.viewURL = viewURL
     }
 
     public static func == (lhs: PhotoRef, rhs: PhotoRef) -> Bool { lhs.path == rhs.path }
 
     public func hash(into hasher: inout Hasher) { hasher.combine(path) }
+}
+
+/// A photo's width and height in pixels, each within `sideRange`.
+public struct PhotoSize: Hashable, Sendable {
+    /// The API's bounds, well past the 1080 pixels the app uploads.
+    public static let sideRange = 1...10_000
+
+    public let width: Int
+    public let height: Int
+
+    public init(width: Int, height: Int) throws(ContractsError) {
+        guard Self.sideRange.contains(width), Self.sideRange.contains(height) else {
+            throw .photoSize(width: width, height: height)
+        }
+        self.width = width
+        self.height = height
+    }
+
+    /// Width over height: above 1 is landscape, below 1 portrait.
+    public var aspectRatio: Double { Double(width) / Double(height) }
 }

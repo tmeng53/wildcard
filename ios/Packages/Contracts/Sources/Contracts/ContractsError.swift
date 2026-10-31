@@ -26,6 +26,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case photoCount(Int)
     /// A check-in that lists the same photo twice.
     case repeatedPhoto
+    /// A photo size with a side outside `PhotoSize.sideRange`.
+    case photoSize(width: Int, height: Int)
     /// A 其他 sport name that is empty or longer than `CustomSport.maxLength` characters.
     case customSportLength(Int)
     /// A 其他 sport name with a line break, tab or other control character.
