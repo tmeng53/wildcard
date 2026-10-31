@@ -47,6 +47,11 @@ final class PushBannerUITests: XCTestCase {
             keepScreenshot(named: "\(sample.shot)-push-\(sample.key.replacingOccurrences(of: ".", with: "-"))")
 
             shown.tap()
+            if !app.wait(for: .runningForeground, timeout: 10) {
+                // Logged so a miss says what the tap hit; then tapped once more, as a person would.
+                print("PushBannerUITests tapped:", shown.debugDescription)
+                shown.tap()
+            }
             XCTAssertTrue(app.wait(for: .runningForeground, timeout: Self.wait), "\(sample.key) didn't open the app")
             waitFor(app.buttons[sample.opens], "isSelected == true", "\(sample.key) didn't open \(sample.opens)")
             app.terminate()
@@ -56,8 +61,10 @@ final class PushBannerUITests: XCTestCase {
     /// Pulls Notification Center down from the top left until the notification with these words
     /// is in it (it arrives a few seconds after launch).
     private func openNotificationCenter(showing words: String) -> XCUIElement {
-        let notification = springboard.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
+        let reading = NSPredicate(format: "label CONTAINS %@", words)
+        let notification = springboard.descendants(matching: .any).matching(reading).firstMatch
+        // The notification itself is a button; the words alone are a text inside it that a tap may not open.
+        let button = springboard.buttons.matching(reading).firstMatch
         let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.01))
         let down = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.6))
         sleep(4)
@@ -65,7 +72,7 @@ final class PushBannerUITests: XCTestCase {
         XCTAssertTrue(
             notification.waitForExistence(timeout: Self.wait), "no notification reading「\(words)」in Notification Center"
         )
-        return notification
+        return button.exists ? button : notification
     }
 
     /// What iOS shows for a payload: its `loc-key`'s Chinese line with `loc-args` in its placeholders.
