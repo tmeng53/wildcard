@@ -8,12 +8,24 @@
             "state" : "translated",
             "value" : "%1$@  %2$@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@  %2$@"
+          }
         }
       }
     },
     "%@ %@  %@" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@  %3$@"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ %2$@  %3$@"
@@ -28,6 +40,12 @@
             "state" : "translated",
             "value" : "%1$@%2$@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@%2$@"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ reacted to you: %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@回應了你：%2$@"
           }
         }
       }
@@ -48,6 +72,12 @@
             "state" : "translated",
             "value" : "%1$@ got %2$@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@收到了%2$@"
+          }
         }
       }
     },
@@ -57,6 +87,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld reacted: %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 人回應：%2$@"
           }
         }
       }
@@ -68,6 +104,12 @@
             "state" : "translated",
             "value" : "Take me along for the next rain run"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下次帶我一起淋"
+          }
         }
       }
     },
@@ -77,6 +119,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ran in the rain. RIP, shoes"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下雨也照跑，鞋子已陣亡"
           }
         }
       }
@@ -88,6 +136,12 @@
             "state" : "translated",
             "value" : "Cancel reply"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不回覆了"
+          }
         }
       }
     },
@@ -97,6 +151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Today"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天"
           }
         }
       }
@@ -108,6 +168,12 @@
             "state" : "translated",
             "value" : "Today's greens, eaten with dignity"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的草，吃得很體面"
+          }
         }
       }
     },
@@ -117,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No one's out there yet today"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天還沒人上場"
           }
         }
       }
@@ -128,6 +200,12 @@
             "state" : "translated",
             "value" : "Healthy meal"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "健康餐"
+          }
         }
       }
     },
@@ -137,6 +215,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opens full screen"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全螢幕看"
           }
         }
       }
@@ -148,6 +232,12 @@
             "state" : "translated",
             "value" : "All"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
+          }
         }
       }
     },
@@ -157,6 +247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部 %lld"
           }
         }
       }
@@ -168,6 +264,12 @@
             "state" : "translated",
             "value" : "All %lld comments"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部 %lld 則留言"
+          }
         }
       }
     },
@@ -177,6 +279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comment"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寫留言"
           }
         }
       }
@@ -188,6 +296,12 @@
             "state" : "translated",
             "value" : "min"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分鐘"
+          }
         }
       }
     },
@@ -197,6 +311,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除"
           }
         }
       }
@@ -208,6 +328,12 @@
             "state" : "translated",
             "value" : "Feed"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動態"
+          }
         }
       }
     },
@@ -217,6 +343,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Check in"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "去打卡"
           }
         }
       }
@@ -228,6 +360,12 @@
             "state" : "translated",
             "value" : "My serve finally cleared the net"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發球終於過網了"
+          }
         }
       }
     },
@@ -237,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Send"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "傳送"
           }
         }
       }
@@ -248,6 +392,12 @@
             "state" : "translated",
             "value" : "Monday"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週一"
+          }
         }
       }
     },
@@ -257,6 +407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wednesday"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週三"
           }
         }
       }
@@ -268,6 +424,12 @@
             "state" : "translated",
             "value" : "Tuesday"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週二"
+          }
         }
       }
     },
@@ -277,6 +439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Friday"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週五"
           }
         }
       }
@@ -288,6 +456,12 @@
             "state" : "translated",
             "value" : "Saturday"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週六"
+          }
         }
       }
     },
@@ -297,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thursday"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週四"
           }
         }
       }
@@ -308,6 +488,12 @@
             "state" : "translated",
             "value" : "Sunday"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週日"
+          }
         }
       }
     },
@@ -317,6 +503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reply"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆"
           }
         }
       }
@@ -328,6 +520,12 @@
             "state" : "translated",
             "value" : "↪ %@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆 %@"
+          }
         }
       }
     },
@@ -337,6 +535,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reply to %@…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆 %@…"
           }
         }
       }
@@ -348,6 +552,12 @@
             "state" : "translated",
             "value" : "↪ %@: "
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆 %@："
+          }
         }
       }
     },
@@ -357,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "React"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回應"
           }
         }
       }
@@ -368,6 +584,12 @@
             "state" : "translated",
             "value" : "React %@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回應 %@"
+          }
         }
       }
     },
@@ -377,6 +599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cheat meal, confessed"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "坦白放縱餐"
           }
         }
       }
@@ -388,6 +616,12 @@
             "state" : "translated",
             "value" : "Confession: two burgers, no regrets"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "坦白：兩個漢堡，不後悔"
+          }
         }
       }
     },
@@ -397,6 +631,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copy"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝"
           }
         }
       }
@@ -408,6 +648,12 @@
             "state" : "translated",
             "value" : "Night swim. The pool is mine"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "夜泳人，泳池是我的"
+          }
         }
       }
     },
@@ -417,6 +663,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "They'll get used to it"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它會習慣的"
           }
         }
       }
@@ -428,6 +680,12 @@
             "state" : "translated",
             "value" : "Me"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我"
+          }
         }
       }
     },
@@ -437,6 +695,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "My reaction: %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的回應：%@"
           }
         }
       }
@@ -448,6 +712,12 @@
             "state" : "translated",
             "value" : "Handrail: needed again today"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扶手：今天也是被需要的一天"
+          }
         }
       }
     },
@@ -457,6 +727,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search emoji"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋表情符號"
           }
         }
       }
@@ -468,6 +744,12 @@
             "state" : "translated",
             "value" : "Yesterday"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天"
+          }
         }
       }
     },
@@ -477,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "More emoji"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多表情符號"
           }
         }
       }
@@ -488,6 +776,12 @@
             "state" : "translated",
             "value" : "Recent"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近"
+          }
         }
       }
     },
@@ -497,6 +791,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "See all comments"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看全部留言"
           }
         }
       }
@@ -508,6 +808,12 @@
             "state" : "translated",
             "value" : "See who reacted"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看誰回應了"
+          }
         }
       }
     },
@@ -517,6 +823,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Photo %1$lld of %2$lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %1$lld 張，共 %2$lld 張"
           }
         }
       }
@@ -528,6 +840,12 @@
             "state" : "translated",
             "value" : "Trained · %@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "練了 · %@"
+          }
         }
       }
     },
@@ -537,6 +855,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Leg day. Tomorrow the handrail does the stairs"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "練腿日，明天下樓梯要靠扶手"
           }
         }
       }
@@ -548,6 +872,12 @@
             "state" : "translated",
             "value" : "Say something to %@…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "給%@說點什麼…"
+          }
         }
       }
     },
@@ -557,6 +887,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couldn't send. Check your connection."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路開小差了，沒傳出去"
           }
         }
       }
@@ -568,6 +904,12 @@
             "state" : "translated",
             "value" : "My legs took the day off. I respect their decision"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腿說今天它請假，我尊重它的決定"
+          }
         }
       }
     },
@@ -577,6 +919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comments %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "留言 %lld"
           }
         }
       }
@@ -588,6 +936,12 @@
             "state" : "translated",
             "value" : "Say something to cheer %@ on"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說一句給%@打打氣"
+          }
         }
       }
     },
@@ -597,6 +951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Say something…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說點什麼…"
           }
         }
       }
@@ -608,6 +968,12 @@
             "state" : "translated",
             "value" : "Day-off note"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "假單"
+          }
         }
       }
     },
@@ -617,6 +983,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Back"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
           }
         }
       }
@@ -628,6 +1000,12 @@
             "state" : "translated",
             "value" : "No one has said anything yet"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還沒有人說話"
+          }
         }
       }
     },
@@ -637,6 +1015,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This post is gone"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這則動態不見了"
           }
         }
       }
@@ -648,6 +1032,12 @@
             "state" : "translated",
             "value" : "Pick a reaction"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選一個回應"
+          }
         }
       }
     },
@@ -658,6 +1048,12 @@
             "state" : "translated",
             "value" : "Teammate"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隊友"
+          }
         }
       }
     },
@@ -667,6 +1063,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shoes: I never signed up for this"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鞋：我沒簽這個合約"
           }
         }
       }
