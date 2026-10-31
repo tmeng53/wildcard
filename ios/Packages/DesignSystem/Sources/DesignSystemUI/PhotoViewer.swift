@@ -49,7 +49,7 @@ struct PhotoViewer: View {
     var body: some View {
         TabView(selection: $page) {
             ForEach(0..<count, id: \.self) { index in
-                ViewerPage(index: index, load: load)
+                ViewerPage(index: index, isShowing: index == page, load: load)
                     .accessibilityElement()
                     .accessibilityAddTraits(.isImage)
                     .accessibilityLabel(Text("第 \(index + 1) 张，共 \(count) 张", bundle: .module))
@@ -72,11 +72,12 @@ struct PhotoViewer: View {
 /// One photo, decoded off the main actor so the swipe to it doesn't drop frames.
 private struct ViewerPage: View {
     let index: Int
+    let isShowing: Bool
     let load: @Sendable (Int) async -> Data?
     @State private var image: UIImage?
 
     var body: some View {
-        ZoomablePhoto(image: image)
+        ZoomablePhoto(image: image, isShowing: isShowing)
             .task(id: index) {
                 guard let data = await load(index) else { return }
                 image = await Self.decode(data)
@@ -90,12 +91,17 @@ private struct ViewerPage: View {
 
 /// UIKit's scroll view, for the zoom the Photos app has: pinch, a double tap to zoom in on a
 /// spot and out again, rubber-banding at the edges. SwiftUI has no zooming scroll view.
+/// A photo swiped away goes back to whole, as in the Photos app.
 private struct ZoomablePhoto: UIViewRepresentable {
     let image: UIImage?
+    let isShowing: Bool
 
     func makeUIView(context: Context) -> ZoomingView { ZoomingView() }
 
-    func updateUIView(_ view: ZoomingView, context: Context) { view.show(image) }
+    func updateUIView(_ view: ZoomingView, context: Context) {
+        view.show(image)
+        if !isShowing { view.zoomOut() }
+    }
 }
 
 /// The photo fitted whole, centred, zoomed up to `maximumZoomScale` times.
@@ -129,6 +135,12 @@ final class ZoomingView: UIScrollView, UIScrollViewDelegate {
         guard imageView.image !== image else { return }
         imageView.image = image
         fit()
+    }
+
+    /// Back to the whole photo at once, for a page swiped away.
+    func zoomOut() {
+        guard zoomScale != minimumZoomScale else { return }
+        setZoomScale(minimumZoomScale, animated: false)
     }
 
     override func layoutSubviews() {
