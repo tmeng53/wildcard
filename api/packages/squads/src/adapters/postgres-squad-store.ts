@@ -3,7 +3,9 @@ import { sql, type Kysely, type Selectable, type Transaction } from 'kysely';
 import { z } from 'zod';
 
 import { InviteCode } from '../domain/invite-code.js';
+import { Scene, SceneWeek } from '../domain/scene.js';
 import {
+  captainOf,
   MemberId,
   SQUAD_MEMBER_LIMIT,
   SQUADS_PER_MEMBER,
@@ -11,7 +13,7 @@ import {
   SquadName,
   type Squad,
 } from '../domain/squad.js';
-import type { CreateOutcome, JoinOutcome, SquadStore } from '../ports.js';
+import type { CaptainOutcome, CreateOutcome, JoinOutcome, SquadStore } from '../ports.js';
 import type { DB, Squads } from './tables.js';
 
 /** The tables this store reads and writes, as generated from the migrations. */
@@ -41,19 +43,128 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       .orderBy('joined_at')
       .orderBy('member_id')
       .execute();
-    return rows.map((row) => ({
-      id: SquadId.parse(row.id),
-      name: SquadName.parse(row.name),
-      inviteCode: InviteCode.parse(row.invite_code),
-      createdAt: row.created_at,
-      createdBy: row.created_by === null ? null : MemberId.parse(row.created_by),
-      members: memberRows
+    return rows.map((row) => {
+      const members = memberRows
         .filter((member) => member.squad_id === row.id)
         .map((member) => ({
           member: MemberId.parse(member.member_id),
           joinedAt: member.joined_at,
-        })),
-    }));
+        }));
+      return {
+        id: SquadId.parse(row.id),
+        name: SquadName.parse(row.name),
+        inviteCode: InviteCode.parse(row.invite_code),
+        createdAt: row.created_at,
+        createdBy: row.created_by === null ? null : MemberId.parse(row.created_by),
+        captain: captainOf(
+          row.captain_id === null ? null : MemberId.parse(row.captain_id),
+          members,
+        ),
+        members,
+      };
+    });
+  }
+
+  /**
+   * Holds the squad still until the transaction ends, and reads its name, its captain as members
+   * see it, and its members, the earliest joined first.
+   */
+  async function lockSquad(trx: Transaction<SquadTables>, squad: SquadId) {
+    const row = await trx
+      .selectFrom('squads')
+      .select(['name', 'captain_id'])
+      .where('id', '=', squad)
+      .forUpdate()
+      .executeTakeFirst();
+    if (row === undefined) return undefined;
+    const members = (
+      await trx
+        .selectFrom('squad_members')
+        .select(['member_id', 'joined_at'])
+        .where('squad_id', '=', squad)
+        .orderBy('joined_at')
+        .orderBy('member_id')
+        .execute()
+    ).map((member) => ({ member: MemberId.parse(member.member_id), joinedAt: member.joined_at }));
+    const stored = row.captain_id === null ? null : MemberId.parse(row.captain_id);
+    return { name: row.name, stored, captain: captainOf(stored, members), members };
+  }
+
+  /** Saves the squad's name and captain, with its entry in the log. */
+  async function saveSettings(
+    trx: Transaction<SquadTables>,
+    change: {
+      readonly squad: SquadId;
+      readonly actor: MemberId;
+      readonly kind: 'renamed' | 'captainChanged';
+      readonly name: string;
+      readonly captain: MemberId | null;
+    },
+  ) {
+    await trx
+      .updateTable('squads')
+      .set({ name: change.name, captain_id: change.captain })
+      .where('id', '=', change.squad)
+      .execute();
+    await trx
+      .insertInto('squad_events')
+      .values({
+        squad_id: change.squad,
+        actor_id: change.actor,
+        kind: change.kind,
+        name: change.name,
+        captain_id: change.captain,
+      })
+      .execute();
+  }
+
+  /** Takes a member out, with the log's entry, and hands on a captaincy they held. */
+  async function takeOut(
+    trx: Transaction<SquadTables>,
+    {
+      squad,
+      member,
+      kind,
+      actor,
+    }: {
+      readonly squad: SquadId;
+      readonly member: MemberId;
+      readonly kind: 'left' | 'removed';
+      readonly actor: MemberId;
+    },
+  ) {
+    const before = await lockSquad(trx, squad);
+    if (before?.members.some((each) => each.member === member) !== true) return false;
+    await trx
+      .deleteFrom('squad_members')
+      .where('squad_id', '=', squad)
+      .where('member_id', '=', member)
+      .execute();
+    await trx
+      .insertInto('squad_membership_events')
+      .values({ squad_id: squad, member_id: member, kind, actor_id: actor })
+      .execute();
+    const left = before.members.filter((each) => each.member !== member);
+    const captain = captainOf(before.captain === member ? null : before.captain, left);
+    if (captain !== before.stored) {
+      await saveSettings(trx, { squad, actor, kind: 'captainChanged', name: before.name, captain });
+    }
+    return true;
+  }
+
+  /** Runs `change` if `actor` captains the squad now. */
+  async function asCaptain(
+    { squad, actor }: { readonly squad: SquadId; readonly actor: MemberId },
+    change: (
+      trx: Transaction<SquadTables>,
+      now: NonNullable<Awaited<ReturnType<typeof lockSquad>>>,
+    ) => Promise<CaptainOutcome>,
+  ): Promise<CaptainOutcome> {
+    return db.transaction().execute(async (trx) => {
+      const now = await lockSquad(trx, squad);
+      if (now?.captain !== actor) return 'notCaptain';
+      return change(trx, now);
+    });
   }
 
   /**
@@ -90,7 +201,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
         .where('invite_code', '=', code)
         .execute();
       const [squad] = await withMembers(rows);
-      return squad;
+      return squad?.members.length === 0 ? undefined : squad;
     },
 
     async squadsOf(member) {
@@ -151,7 +262,11 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           }
           await trx
             .insertInto('squads')
-            .values({ id, name, invite_code: inviteCode, created_by: creator })
+            .values({ id, name, invite_code: inviteCode, created_by: creator, captain_id: creator })
+            .execute();
+          await trx
+            .insertInto('squad_events')
+            .values({ squad_id: id, actor_id: creator, kind: 'created', name, captain_id: creator })
             .execute();
           await trx
             .insertInto('squad_members')
@@ -159,7 +274,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
             .execute();
           await trx
             .insertInto('squad_membership_events')
-            .values({ squad_id: id, member_id: creator, kind: 'joined' })
+            .values({ squad_id: id, member_id: creator, kind: 'joined', actor_id: creator })
             .execute();
           return { created: true };
         });
@@ -187,6 +302,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .select('member_id')
           .where('squad_id', '=', squad)
           .execute();
+        if (members.length === 0) return 'ended';
         if (members.some((row) => row.member_id === member)) return 'alreadyMember';
         if ((await squadCount(trx, member)) >= SQUADS_PER_MEMBER) return 'squadLimit';
         if (members.length >= SQUAD_MEMBER_LIMIT) return 'squadFull';
@@ -196,28 +312,70 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .execute();
         await trx
           .insertInto('squad_membership_events')
-          .values({ squad_id: squad, member_id: member, kind: 'joined' })
+          .values({ squad_id: squad, member_id: member, kind: 'joined', actor_id: member })
           .execute();
         return 'joined';
       });
     },
 
     async leave(squad, member) {
-      // One statement, so a membership never goes without its entry in the log, or twice.
-      await db
-        .with('left', (eb) =>
-          eb
-            .deleteFrom('squad_members')
-            .where('squad_id', '=', squad)
-            .where('member_id', '=', member)
-            .returning(['squad_id', 'member_id']),
-        )
-        .insertInto('squad_membership_events')
-        .columns(['squad_id', 'member_id', 'kind'])
-        .expression((eb) =>
-          eb.selectFrom('left').select(['squad_id', 'member_id', sql.lit('left').as('kind')]),
-        )
+      await db.transaction().execute(async (trx) => {
+        await takeOut(trx, { squad, member, kind: 'left', actor: member });
+      });
+    },
+
+    rename({ squad, actor, name }) {
+      return asCaptain({ squad, actor }, async (trx, now) => {
+        if (now.name === name) return 'unchanged';
+        await saveSettings(trx, { squad, actor, kind: 'renamed', name, captain: now.captain });
+        return 'changed';
+      });
+    },
+
+    handCaptaincy({ squad, actor, to }) {
+      return asCaptain({ squad, actor }, async (trx, now) => {
+        if (!now.members.some(({ member }) => member === to)) return 'notMember';
+        if (to === now.captain) return 'unchanged';
+        await saveSettings(trx, {
+          squad,
+          actor,
+          kind: 'captainChanged',
+          name: now.name,
+          captain: to,
+        });
+        return 'changed';
+      });
+    },
+
+    remove({ squad, actor, member }) {
+      return asCaptain({ squad, actor }, async (trx) =>
+        (await takeOut(trx, { squad, member, kind: 'removed', actor })) ? 'changed' : 'unchanged',
+      );
+    },
+
+    async scenePicks(squad) {
+      const rows = await db
+        .selectFrom('squad_scene_picks')
+        .select([sql<string>`week_start::text`.as('week_start'), 'scene', 'picked_by', 'picked_at'])
+        .where('squad_id', '=', squad)
+        .orderBy('week_start')
         .execute();
+      return rows.map((row) => ({
+        week: SceneWeek.parse(row.week_start),
+        scene: Scene.parse(row.scene),
+        by: row.picked_by === null ? null : MemberId.parse(row.picked_by),
+        at: row.picked_at,
+      }));
+    },
+
+    async pickScene({ squad, week, scene, by }) {
+      const saved = await db
+        .insertInto('squad_scene_picks')
+        .values({ squad_id: squad, week_start: week, scene, picked_by: by })
+        .onConflict((oc) => oc.columns(['squad_id', 'week_start']).doNothing())
+        .returning('scene')
+        .executeTakeFirst();
+      return saved === undefined ? 'taken' : 'picked';
     },
   };
 }

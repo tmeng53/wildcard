@@ -1,111 +1,148 @@
 #if canImport(SwiftUI)
 import DesignSystem
+import Foundation
 import SwiftUI
 
-/// The scene's floor markings in white: track lanes, pool lane ropes, a tennis court's lines, a
-/// gym's floor grid, climbing holds. Drawn in `band`, the floor's rectangle; climbing's holds go
-/// on the wall above it.
-struct ScenePattern: View {
+/// Where the character stands while it is dressed (sign-up, and 我): a graphite ticket with a
+/// small lamp at the top, two flat beams and a pool of light at its feet, the W mark and the
+/// day the member signed up along the top, and a stub under the tear line for its name. It wears
+/// the brand, never the scene, so the editor gives no scene away. The content fills the ticket,
+/// standing with its feet on the light; the stub holds the name.
+public struct CharacterStage<Content: View, Stub: View>: View {
     @Environment(\.sceneTheme) private var theme
-    /// The floor's top, as a fraction of the height.
-    let floorTop: Double
-    let ink: Color
+    private let issued: Date?
+    private let content: Content
+    private let stub: Stub
 
-    /// The design draws each pattern on a 358 by 96 point floor.
-    private static let designWidth: Double = 358
-    private static let designFloor: Double = 96
+    /// The stub's height under the tear line (44 of the design's 300).
+    public static var stubHeight: Double { TicketArt.stub }
+
+    /// `issued` is the day printed in the top corner: the day the member signed up. Nil prints none.
+    public init(issued: Date?, @ViewBuilder content: () -> Content, @ViewBuilder stub: () -> Stub) {
+        self.issued = issued
+        self.content = content()
+        self.stub = stub()
+    }
+
+    public var body: some View {
+        ZStack(alignment: .bottom) {
+            TicketArt()
+            content
+            stub
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.stubHeight)
+        }
+        .overlay(alignment: .topTrailing) {
+            if let issued {
+                Text(verbatim: TicketArt.stamp(issued))
+                    .typeStyle(TypeRamp.ticketDate)
+                    .foregroundStyle(Color(role: .fgBrandStamp, in: theme))
+                    // A picture of a ticket: the date keeps its size and sits on the design's baseline.
+                    .dynamicTypeSize(.large)
+                    .alignmentGuide(.top) { $0[.firstTextBaseline] - TicketArt.dateBaseline }
+                    .padding(.trailing, TicketArt.edge)
+            }
+        }
+        .clipShape(TicketShape(notchFromBottom: Self.stubHeight))
+    }
+}
+
+/// A ticket: rounded corners and a half-round notch in each side at the tear line.
+struct TicketShape: Shape {
+    /// How far above the bottom the notches' centers are.
+    let notchFromBottom: Double
+    private let notch: Double = 11
+
+    func path(in rect: CGRect) -> Path {
+        let ticket = Path(roundedRect: rect, cornerRadius: Radius.ticket, style: .continuous)
+        let y = rect.maxY - notchFromBottom
+        var notches = Path()
+        for side in [rect.minX, rect.maxX] {
+            notches.addEllipse(in: CGRect(x: side - notch, y: y - notch, width: notch * 2, height: notch * 2))
+        }
+        return ticket.subtracting(notches)
+    }
+}
+
+/// The ticket's face, drawn as the design draws it on a 358 by 300 stage: the lamp, beams and
+/// light keep to the middle and the marks to the edges, so it reads the same on any width. Flat
+/// white at low opacities, no gradients or blur.
+struct TicketArt: View {
+    @Environment(\.sceneTheme) private var theme
+
+    static let stub: Double = 44
+    /// The W mark's and the date's distance from the side edges.
+    static let edge: Double = 20
+    /// The date's baseline, from the top.
+    static let dateBaseline: Double = 32
+
+    /// 2026.10.23, in the phone's calendar.
+    static func stamp(_ day: Date) -> String {
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: day)
+        return String(format: "%04d.%02d.%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
 
     var body: some View {
         Canvas { context, size in
-            let top = size.height * floorTop
-            let unitX = size.width / Self.designWidth
-            let unitY = (size.height - top) / Self.designFloor
-            func across(_ y: Double, from start: Double = 0) -> Path {
+            let middle = size.width / 2
+            let tear = size.height - Self.stub
+            let light = Color(role: .fgOnBrand, in: theme)
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(role: .bgBrand, in: theme)))
+
+            // Two beams from the lamp to the floor, the narrow one over the wide one.
+            func beam(top: Double, bottom: Double) -> Path {
                 Path { path in
-                    path.move(to: CGPoint(x: start * unitX, y: top + y * unitY))
-                    path.addLine(to: CGPoint(x: size.width, y: top + y * unitY))
+                    path.move(to: CGPoint(x: middle - top, y: 9))
+                    path.addLine(to: CGPoint(x: middle + top, y: 9))
+                    path.addLine(to: CGPoint(x: middle + bottom, y: tear - 4))
+                    path.addLine(to: CGPoint(x: middle - bottom, y: tear - 4))
+                    path.closeSubpath()
                 }
             }
-            func down(_ column: Double, from y: Double = 0) -> Path {
-                Path { path in
-                    path.move(to: CGPoint(x: column * unitX, y: top + y * unitY))
-                    path.addLine(to: CGPoint(x: column * unitX, y: size.height))
-                }
+            context.fill(beam(top: 13, bottom: 97), with: .color(light.opacity(0.07)))
+            context.fill(beam(top: 7, bottom: 61), with: .color(light.opacity(0.06)))
+
+            // The pool of light the character stands in.
+            func pool(width: Double, height: Double) -> Path {
+                Path(ellipseIn: CGRect(x: middle - width, y: tear - 6 - height, width: width * 2, height: height * 2))
             }
-            let line = StrokeStyle(lineWidth: 2)
-            switch theme {
-            case .track:
-                for y in [24.0, 52, 80] { context.stroke(across(y), with: .color(ink), style: line) }
-            case .pool:
-                let rope = StrokeStyle(lineWidth: 3, lineCap: .round, dash: [1, 9])
-                for y in [22.0, 58] { context.stroke(across(y, from: 6), with: .color(ink), style: rope) }
-            case .tennis:
-                context.stroke(across(26), with: .color(ink), style: line)
-                context.stroke(down(Self.designWidth / 2, from: 26), with: .color(ink), style: line)
-            case .gym:
-                for column in [60.0, 150, 240, 330] { context.stroke(down(column), with: .color(ink), style: line) }
-                context.stroke(across(48), with: .color(ink), style: line)
-            case .climbing:
-                // Holds on the wall, placed on the design's 358 by 300 stage.
-                let holds: [(x: Double, y: Double, r: Double)] = [
-                    (46, 58, 7), (88, 128, 5), (300, 74, 8), (318, 150, 5), (270, 30, 5), (34, 168, 6),
-                ]
-                let unitWall = size.height / 300
-                for hold in holds {
-                    let rect = CGRect(
-                        x: hold.x * unitX - hold.r, y: hold.y * unitWall - hold.r, width: hold.r * 2,
-                        height: hold.r * 2)
-                    context.fill(Path(ellipseIn: rect), with: .color(Color(role: .borderDefault, in: theme)))
-                }
+            context.fill(pool(width: 98, height: 15), with: .color(light.opacity(0.14)))
+            context.fill(pool(width: 60, height: 9), with: .color(light.opacity(0.1)))
+
+            // The lamp, hanging from the top edge, and its lit lens.
+            context.fill(
+                Path(
+                    roundedRect: CGRect(x: middle - 16, y: -6, width: 32, height: 14),
+                    cornerSize: CGSize(width: 5, height: 5)),
+                with: .color(Color(role: .bgBrandLamp, in: theme)))
+            context.fill(
+                Path(
+                    roundedRect: CGRect(x: middle - 12, y: 6, width: 24, height: 3),
+                    cornerSize: CGSize(width: 1.5, height: 1.5)),
+                with: .color(light.opacity(0.9)))
+
+            // The stub, and the dashed tear line along its top.
+            context.fill(
+                Path(CGRect(x: 0, y: tear, width: size.width, height: Self.stub)),
+                with: .color(Color(role: .bgBrandStub, in: theme)))
+            var tearLine = Path()
+            tearLine.move(to: CGPoint(x: 22, y: tear))
+            tearLine.addLine(to: CGPoint(x: size.width - 22, y: tear))
+            context.stroke(
+                tearLine, with: .color(light.opacity(0.28)), style: StrokeStyle(lineWidth: 2, dash: [4, 5]))
+
+            // The W mark in the top corner.
+            var mark = Path()
+            let strokes: [(Double, Double)] = [(0, 0), (5, 22), (10, 0), (15, 22), (20, 0)]
+            for (index, point) in strokes.enumerated() {
+                let corner = CGPoint(x: Self.edge + point.0 * 0.8, y: 18 + point.1 * 0.8)
+                if index == 0 { mark.move(to: corner) } else { mark.addLine(to: corner) }
             }
+            context.stroke(
+                mark, with: .color(light.opacity(0.85)),
+                style: StrokeStyle(lineWidth: 3.68, lineJoin: .miter, miterLimit: 4))
         }
         .accessibilityHidden(true)
-    }
-}
-
-/// The scene's floor full screen, in the scene's color with its markings: where sign-up's crowd
-/// and 上场 stand.
-public struct SceneFloor: View {
-    @Environment(\.sceneTheme) private var theme
-
-    public init() {}
-
-    public var body: some View {
-        ZStack {
-            Color(role: .bgScene, in: theme)
-            ScenePattern(floorTop: 0.55, ink: Color(role: .bgCanvas, in: theme).opacity(theme == .gym ? 0.12 : 0.7))
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-/// Where the character stands while it is being dressed or shown off: a subtle block with
-/// 12-point corners and a grey floor band carrying the scene's markings, so the scene shows
-/// without its color competing with the accent. The content stands with its feet on the floor.
-public struct CharacterStage<Content: View>: View {
-    @Environment(\.sceneTheme) private var theme
-    private let content: Content
-
-    /// The floor band's top, as a fraction of the stage's height (204 of 300 in the design).
-    public static var floorTop: Double { 0.68 }
-
-    public init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    public var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-        GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                Color(role: .bgSubtle, in: theme)
-                Color(role: .borderDefault, in: theme)
-                    .frame(height: proxy.size.height * (1 - Self.floorTop))
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                ScenePattern(floorTop: Self.floorTop, ink: Color(role: .bgCanvas, in: theme))
-                content
-            }
-        }
-        .clipShape(shape)
     }
 }
 #endif

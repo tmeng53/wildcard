@@ -28,18 +28,30 @@ public struct Figure: Hashable, Sendable {
     public let width: Double
     public let height: Double
     /// Back to front.
-    public let parts: [Part]
+    public private(set) var parts: [Part]
     /// Each part's parent, as an index into `parts`.
     let parents: [Int?]
     /// Part indices with every parent before its children.
     let evaluationOrder: [Int]
+    /// A worn variant that keeps level in its wearer's hand, like goggles dangling from a
+    /// fist: the parts it draws on that hang from the arm stay level however the arm and the
+    /// body carrying it turn, in every clip but its own (`Clip.holds`). Read from
+    /// `<slot>/<variant>/hold.json`.
+    let level: Level?
+
+    struct Level: Hashable, Sendable {
+        let variant: String
+        let parts: [Int]
+    }
 
     public struct Part: Hashable, Sendable {
         public let id: PartID
         public let pivot: Point
         public let restOpacity: Double
         /// Back to front.
-        public let art: [Artwork]
+        public internal(set) var art: [Artwork]
+        /// The slot each of `art` is worn in, nil for the rig's own art.
+        public internal(set) var slots: [Slot?]
     }
 
     public init(rig: Rig, outfit: Outfit, art source: some ArtSource) throws(AvatarError) {
@@ -54,8 +66,13 @@ public struct Figure: Hashable, Sendable {
         /// Each recolored slot's art colors before recoloring, to check its tones against.
         var painted: [Slot: [RGBAColor]] = [:]
         var built: [Part] = []
+        /// Each part's `body` art, for the hands that layers are held in.
+        var bodies: [PartID: Artwork] = [:]
+        /// Layers held in a hand, painted once every part's body art is read.
+        var held: [(part: Int, layer: Int, hand: PartID)] = []
         for part in rig.parts {
             var artworks: [Artwork] = []
+            var slots: [Slot?] = []
             for layer in part.layers {
                 let path: String
                 if let slot = layer.slot {
@@ -68,21 +85,27 @@ public struct Figure: Hashable, Sendable {
                         painted[slot, default: []] += artwork.colors
                         artwork = recolor.applied(to: artwork)
                     }
+                    if slot == "body" { bodies[part.id] = artwork }
+                    if let hand = layer.hand { held.append((built.count, artworks.count, hand)) }
                     artworks.append(artwork)
+                    slots.append(slot)
                     used.insert(slot)
                 } else {
                     path = "base/\(layer.art).svg"
                     guard let svg = source.text(at: path) else { throw .missingArt(path) }
                     artworks.append(try Self.artwork(svg, path, rig))
+                    slots.append(nil)
                 }
             }
-            built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks))
+            built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks, slots: slots))
         }
+        try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
         }
         try Self.checkTones(recolors, against: painted, variants)
         (width, height, parts, self.parents) = (rig.width, rig.height, built, parents)
+        level = try Self.level(variants, rig, parents, source)
     }
 
     /// Each colored slot's tones, read from its variant's `tones.json`.
@@ -154,14 +177,22 @@ public struct Figure: Hashable, Sendable {
     }
 
     private static func artwork(_ svg: String, _ path: String, _ rig: Rig) throws(AvatarError) -> Artwork {
-        let artwork: Artwork
-        do {
-            artwork = try Artwork(svg: svg)
-        } catch {
-            throw .invalidSVG(art: path, problem: error)
-        }
+        let artwork = try Artwork.read(svg: svg, path: path)
         guard artwork.width == rig.width, artwork.height == rig.height else { throw .canvasMismatch(art: path) }
         return artwork
+    }
+
+    /// The figure with nothing but what `slot` wears, as on a shop's rack: no body, face or
+    /// other clothes, each piece still where the rig puts it.
+    public func wearing(only slot: Slot) -> Figure {
+        var figure = self
+        for index in figure.parts.indices {
+            let part = figure.parts[index]
+            let kept = part.slots.indices.filter { part.slots[$0] == slot }
+            figure.parts[index].art = kept.map { part.art[$0] }
+            figure.parts[index].slots = kept.map { part.slots[$0] }
+        }
+        return figure
     }
 
     /// Every part at rest.
@@ -175,7 +206,10 @@ public struct Figure: Hashable, Sendable {
         for accent in clip.accents {
             accents.append((accent, try bind(accent.clip.tracks, of: accent.clip.name)))
         }
-        return BoundClip(clip: clip, tracks: try bind(clip.tracks, of: clip.name), accents: accents)
+        // A level-held prop is the clip's to turn only when the clip is choreographed for it.
+        let leveled = level.map { clip.holds == $0.variant ? [] : $0.parts } ?? []
+        return BoundClip(
+            clip: clip, tracks: try bind(clip.tracks, of: clip.name), accents: accents, leveled: leveled)
     }
 
     private func bind(_ tracks: [Clip.Track], of clip: String) throws(AvatarError) -> [BoundClip.Track] {
@@ -217,6 +251,16 @@ public struct Figure: Hashable, Sendable {
                 pose.parts[part].add(track.value(at: moment), to: track.channel, strength: accent.strength)
             }
         }
+        // Turned back by as much as everything carrying it has turned, so it hangs level.
+        for part in bound.leveled {
+            var turned = 0.0
+            var carrier = parents[part]
+            while let index = carrier {
+                turned += pose.parts[index].rotation
+                carrier = parents[index]
+            }
+            pose.parts[part].rotation = -turned
+        }
         return pose
     }
 
@@ -250,6 +294,8 @@ public struct BoundClip: Sendable {
     public let clip: Clip
     let tracks: [Track]
     let accents: [(accent: Clip.Accent, tracks: [Track])]
+    /// Parts that hang level whatever carries them, as `Figure.level` says.
+    let leveled: [Int]
 }
 
 /// One part's channel values. Unlike a clip, a pose has every channel of every part.

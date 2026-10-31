@@ -40,8 +40,11 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
             let photos = refs.isEmpty ? nil : try Photos(refs)
             let entry: CheckIn.Entry =
                 switch draft {
-                case .trained(let activity, let body):
-                    .trained(Training(activity: activity, photos: photos, caption: try body.caption.map(Caption.init)))
+                case .trained(let activity, let minutes, let body):
+                    .trained(
+                        Training(
+                            activity: activity, minutes: minutes, photos: photos,
+                            caption: try body.caption.map(Caption.init)))
                 case .healthyMeal(let body):
                     .healthyMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
                 case .cheatMeal(let body):

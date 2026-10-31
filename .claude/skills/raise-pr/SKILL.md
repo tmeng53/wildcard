@@ -1,6 +1,6 @@
 ---
 name: raise-pr
-description: How to open a pull request in the Wildcard repo, write its description, and decide who merges it. Use whenever you create a PR, edit a PR description, are asked to "raise", "open" or "put up" a PR, or are about to merge one. Covers the sharp top line, when to add a diagram, the trade-offs table, the evidence section, the independent verifier's verdict, and who merges which PR.
+description: How to open a pull request in the Wildcard repo, write its description, and merge it. Use whenever you create a PR, edit a PR description, are asked to "raise", "open" or "put up" a PR, or are about to merge one. Covers the sharp top line, when to add a diagram, the trade-offs table, the evidence section, the independent verifier's verdict, and who merges which PR.
 ---
 
 # Raise a PR
@@ -13,7 +13,7 @@ A reviewer should understand what a PR does and why from its first line, see how
 - CI checks pass locally, and you have evidence the change works.
 - Review placement against `AGENTS.md` (Language practices) for Swift and the `module-structure` skill for TypeScript: pure domain rules, I/O in adapters. Explain any deviation in the PR.
 - Title: an imperative summary, prefixed with the work item when there is one, e.g. `Show squad check-ins on the track`. Label `contract` if it touches `ios/Packages/Contracts`, the database schema or the API.
-- Open it as a draft, and mark it ready for review once `scripts/verify.sh` passes locally on the head you pushed. CI (`.github/workflows/verify.yml`, on a GitHub-hosted Mac) runs only on ready PRs and on every push to them after that, so a draft has no CI result. Who merges is in Merging.
+- Open it as a draft, and mark it ready for review once `scripts/verify.sh` passes locally on the head you pushed. CI (`.github/workflows/verify.yml`) runs only on ready PRs and on every push to them after that, so a draft has no CI result. A new screen or a big redesign also gets the `ios-ci` label, so CI's `ios` job runs its UI tests on a Mac and uploads the screenshots before merge; a small UI change is checked on the next scheduled `ios` run on `main` instead, and its owner fixes forward. Merging is in Merging.
 
 ## The description
 
@@ -83,7 +83,7 @@ Tick one box. If the PR changes `ios/Packages/Contracts`, the database schema or
 
 ### 9. Screenshots
 
-For anything users can see: simulator screenshots or a recording, before and after. Delete the section only when nothing visible changed. Put each next to its entry in the Approved designs collection (an export or capture of the approved board) and list every difference: one the owner agreed to (link where), or one that can't match yet, which the owner hears about before merge. Scene colours from the squad's theme are not differences; take screenshots on the gym theme, the default. Check each image for clipped, cut-off, covered or overlapping content before attaching it; fix it first.
+For a new screen or a big redesign: simulator screenshots or a recording, before and after, from CI's `ios` job on the head (the PR carries the `ios-ci` label; merges and unlabelled PRs use no Mac). A small UI change says which scheduled run on `main` will show it, and its owner checks those screenshots there. Delete the section only when nothing visible changed. Put each next to its entry in the Approved designs collection (an export or capture of the approved board) and list every difference: one the owner agreed to (link where), or one that can't match yet, which the owner hears about before merge. Scene colours from the squad's theme are not differences; take screenshots on the gym theme, the default. Check each image for clipped, cut-off, covered or overlapping content before attaching it; fix it first.
 
 ### 10. Verifier verdict
 
@@ -138,21 +138,13 @@ When a review bot or a person comments, read every finding first, then check eac
 
 ## Merging
 
-Tracy's rule (2026-10-18): the owner thread merges most PRs itself; only a key technical decision or a major UI change she didn't ask for waits for her. When unsure which it is, ask her.
+Tracy's rule (2026-10-23, "why aren't agents merging themselves"): **the owner thread merges its own PR**, every PR, AGENTS.md, `.claude/`, `.github/`, contract and schema PRs included, and never waits for Tracy to merge. It merges when all of these hold on its current head commit:
 
-**The owner thread merges its own PR** when all of these hold on its current head commit:
-
-1. Every check is green: the `verify` workflow passed on the head commit.
+1. Every check is green: the `verify` workflow passed on the head commit (for a new screen or a big redesign, with its `ios` job run through the `ios-ci` label).
 2. For tier 2 or 3, the latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff, and each of its notes has an answer on the PR (see Independent verification).
 3. For tier 2 or 3, the Claude review is clean on the head commit; on a bigger PR, Codex has reviewed a head of this PR or 30 minutes have passed since the ask (see After opening), and each finding it posted is answered; and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
-5. It isn't one of the PRs below that wait for Tracy.
 
-**Tracy merges** (or tells the owner thread to) a PR that does something she didn't ask for in her own words (link her message from the PR when she did) and is either:
+A change to the rules and checks agents are held to (`AGENTS.md`, `CLAUDE.md`, anything under `.claude/`, `.agents/`, `scripts/` or `.github/`) is tier 2 at least, so an agent other than its author verifies it before merge. Product decisions (a new screen or flow, a vendor, the contract) are still Tracy's to make before they are built (project instructions); once she has decided, the PR that builds it merges like any other. Only a PR Tracy labels `needs-human` waits for her. For every PR users can see, the owner thread posts the screenshots or recording in the thread when it merges.
 
-- **A key technical decision.** For example: a new dependency or service (any `Package.swift`, `Package.resolved`, `package.json` or lockfile change that adds one), a change to the shared contract (`ios/Packages/Contracts`, the database schema or a migration, labelled `contract`), auth, privacy, payments or anything storing user data, a new architectural pattern other code will follow, anything hard to reverse, or any change to the rules and checks agents are held to, whether it tightens or loosens them, so an author never judges its own rule change. That is any change to `AGENTS.md`, `CLAUDE.md` or anything under `.claude/`, `.agents/`, `scripts/` or `.github/`, with two exceptions that are part of the feature instead: filling in project facts a skill asks for (a journey row, a launch or health-check command), and adding a check for new code (a new package's tests, a new step) that leaves every existing check, step and job name as it was. The PR's Decisions and trade-offs section says why it's one.
-- **A major UI change:** a new screen or flow, or a change to navigation, layout, visual style, motion or the tone of user-facing copy beyond what her request named. Small UI fixes (spacing, a typo, a bug that breaks a screen she approved) aren't major.
-
-Anything labelled `needs-human` also waits for her. For every PR users can see, major or not, the owner thread posts the screenshots or recording in the thread when it merges or asks.
-
-Branch protection on `main` is to require the `verify` check and block force-pushes and deletion (issue #2; Tracy turns it on, since the agent proxy can't change branch settings); until then GitHub enforces none of this. Even then it can't require Tracy's approval, because agents open PRs under her account and GitHub doesn't let an author approve their own PR, so the rest holds because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged. If anything after opening makes the PR one that waits for Tracy, stop and ask.
+Branch protection on `main` is to require the `verify` check and block force-pushes and deletion (issue #2; Tracy turns it on, since the agent proxy can't change branch settings); until then GitHub enforces none of this. It can't require an approval, because agents open PRs under Tracy's account and GitHub doesn't let an author approve their own PR, so the rest holds because every agent follows it. Use a merge commit (GitHub's "Create a merge commit"), then say in the owner thread that it merged.

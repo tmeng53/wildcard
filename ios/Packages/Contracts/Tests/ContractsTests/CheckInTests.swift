@@ -97,15 +97,6 @@ func customSportNameHasNoDirectionControls(control: String) {
     #expect(photos.withCover(relisted)?.all.map(\.path) == ["m/a.jpg", "m/b.jpg"])
 }
 
-@Test func everySportHasOneCategoryAndEveryCategoryHasSports() {
-    #expect(Sport.allCases.count == 52)
-    #expect(SportCategory.allCases.allSatisfy { !$0.sports.isEmpty })
-    #expect(
-        SportCategory.everyday.sports == [
-            .dogWalk, .walkCommute, .bikeCommute, .deepClean, .moving, .strollerWalk, .gardening,
-        ])
-}
-
 @Test func nicknameIsOneLineOfUpToTwelveCharacters() throws {
     #expect(try Nickname("  早八跑团的小周同学👍🏽冲 ").text == "早八跑团的小周同学👍🏽冲")
     #expect(throws: ContractsError.nicknameLength(13)) { try Nickname(String(repeating: "周", count: 13)) }

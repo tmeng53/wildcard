@@ -18,8 +18,8 @@ import Testing
     #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
     #expect(store.home?.today.today.trained == 3)
 
-    try await store.post(.trained(.sport(.yoga), PostBody(photos: [], caption: "")))
-    try await store.post(.trained(.sport(.run), PostBody(photos: [], caption: "")))
+    try await store.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))
+    try await store.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
     await store.load()
     #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
     #expect(store.home?.today.today.trained == 4)

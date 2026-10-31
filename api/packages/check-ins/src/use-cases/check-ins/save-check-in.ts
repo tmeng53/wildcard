@@ -22,8 +22,12 @@ import type {
   Clock,
   MemberCalendar,
   PhotoFiles,
+  SportList,
   SquadMembership,
+  WeeklyPlanStore,
 } from '../../ports.js';
+import { checkSport } from '../check-sport.js';
+import { planTrainedDay } from '../weekly-plans.js';
 
 export interface SaveCheckInInput {
   readonly id: CheckInId;
@@ -40,25 +44,63 @@ export interface SavedCheckIn {
 /**
  * Saves a member's check-in under the id the app made, so a retry is safe: the same check-in
  * again is a success, different contents under a saved id are refused. A retry is recognised
- * before the time checks, so a late retry of a saved check-in still succeeds.
+ * before the time checks, so a late retry of a saved check-in still succeeds. A 练了 on a day the
+ * member's plan has as a rest day makes it a training day of that sport, on a retry too, so a
+ * save that stopped between the two still ends with both.
  */
 export async function saveCheckIn(
   {
     store,
     membership,
     photos,
+    sports,
+    plans,
     calendarOf,
     clock,
   }: {
     readonly store: CheckInStore;
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
+    readonly sports: SportList;
+    readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
   { id, member, draft }: SaveCheckInInput,
 ): Promise<SavedCheckIn> {
   const checkIn = recordFromDraft(draft, { id, member });
+  const saved = await insertCheckIn(
+    { store, membership, photos, sports, calendarOf, clock },
+    checkIn,
+  );
+  if (saved.checkIn.kind === 'trained') {
+    await planTrainedDay(
+      { store: plans },
+      { member, day: saved.checkIn.day, training: saved.checkIn.training },
+    );
+  }
+  return saved;
+}
+
+async function insertCheckIn(
+  {
+    store,
+    membership,
+    photos,
+    sports,
+    calendarOf,
+    clock,
+  }: {
+    readonly store: CheckInStore;
+    readonly membership: SquadMembership;
+    readonly photos: PhotoFiles;
+    readonly sports: SportList;
+    readonly calendarOf: MemberCalendar;
+    readonly clock: Clock;
+  },
+  checkIn: CheckInRecord,
+): Promise<SavedCheckIn> {
+  const { id, member } = checkIn;
   const retry = await asRetry(store, checkIn);
   if (retry !== undefined) return retry;
 
@@ -67,6 +109,7 @@ export async function saveCheckIn(
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
   await checkPhotos(photos, checkIn);
+  if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
 
   const outcome = await store.insert(checkIn);
   if (outcome.saved) return { checkIn, created: true };

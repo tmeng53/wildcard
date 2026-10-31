@@ -16,6 +16,7 @@ import {
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -29,11 +30,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // Wired as main.ts wires it: squads and drafts ask the AI consent module itself.
 const db = createDatabase(config.databaseUrl);
@@ -58,9 +60,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: squads,
     reactions: createPostgresReactionStore(db),
@@ -71,6 +75,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: () => Promise.resolve(undefined),
     clock: () => new Date(),
@@ -78,6 +83,7 @@ const app = createApp({
   members: createMembers({ store: createPostgresProfileStore(db) }),
   squads,
   aiConsent,
+  nudges: nudgesOn(db),
   disclaimerDrafts: createDisclaimerDrafts({
     model: {
       answer: ({ prompt }) => {

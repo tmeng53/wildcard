@@ -21,15 +21,24 @@ import {
 import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
+  createDiceLines,
   createDraftSettings,
+  createPostgresDiceLines,
   createPostgresDraftAllowance,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
-import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import {
+  createMembers,
+  createPostgresProfileStore,
+  MemberId as ProfileMember,
+} from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createApnsSender,
   createOffSender,
+  createDailyPushSettings,
+  createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -44,6 +53,7 @@ import {
   createPostgresAwardsStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
@@ -56,22 +66,37 @@ import {
   createSupabaseTokenVerifier,
   supabaseAuthIssuer,
 } from './adapters/supabase-auth.js';
+import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
+import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
-import { reactionInteractions } from './flows/daily-progress-push.js';
+import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
+import { sportTools } from './admin-mcp/tools/sports.js';
+import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
+import { disclaimerDiceSection, sportsSection } from './routes/catalog.js';
 import { readConfig } from './config.js';
-import { createLog } from './log.js';
+import { createLog, redactText, reportingErrors } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
 
 // The composition root: picks the real adapters and serves the API.
 const config = readConfig(process.env);
-const log = createLog((line) => process.stdout.write(line));
+// Every error the server logs also goes to Sentry, once the API project's DSN is set.
+const errorReports =
+  config.errorReports === undefined
+    ? undefined
+    : createSentryErrorReports({ ...config.errorReports, redact: redactText });
+const stdoutLog = createLog((line) => process.stdout.write(line), {
+  traceProject: config.traceProject,
+});
+const log = errorReports === undefined ? stdoutLog : reportingErrors(stdoutLog, errorReports);
+if (errorReports === undefined) log.info('no Sentry DSN (SENTRY_DSN_API): errors are only logged');
 const db = createDatabase(config.databaseUrl, {
   ca: config.databaseCaFile === undefined ? undefined : readFileSync(config.databaseCaFile, 'utf8'),
   onIdleError: (error) => {
@@ -115,6 +140,7 @@ const push = createPush({
   store: createPostgresDeviceStore(db),
   settings: createPostgresSettingsStore(db),
   daily: createPostgresDailyPushStore(db),
+  dailySettings: createPostgresDailyPushSettings(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
@@ -136,22 +162,46 @@ const awards = createWeeklyAwards({
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
 });
-if (config.jobsToken === undefined)
-  log.info('no JOBS_TOKEN: the daily progress push and weekly awards are off');
+// The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
+// token on a local one.
+const isScheduler =
+  config.scheduler?.kind === 'google'
+    ? googleScheduler({
+        serviceAccount: config.scheduler.serviceAccount,
+        audience: config.publicUrl.origin,
+      })
+    : config.scheduler?.kind === 'token'
+      ? jobsTokenScheduler(config.scheduler.token)
+      : undefined;
+if (isScheduler === undefined)
+  log.info(
+    'no scheduler (JOBS_SCHEDULER_ACCOUNT or JOBS_TOKEN): the daily progress push and weekly awards are off',
+  );
 const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
 });
+// The sports list every picker shows, kept in the database.
+const sports = createSports({ store: createPostgresSportStore(db) });
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   // Who is in which squad is the squads module's to keep: check-ins ask it.
   membership: squads,
+  // Which sports exist is the sports module's to keep: check-ins and plans ask it.
+  sports,
   reactions: createPostgresReactionStore(db),
   replies: createPostgresReplyStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
+  clock: () => new Date(),
+});
+const nudges = createNudges({
+  store: createPostgresNudgeStore(db),
+  // Who is in which squad is the squads module's to keep: nudges ask it.
+  membership: squads,
+  timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
 const app = createApp({
@@ -168,18 +218,34 @@ const app = createApp({
   checkIns,
   weeklyPlans: createWeeklyPlans({
     store: createPostgresWeeklyPlanStore(db),
+    sports,
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
   }),
   members,
   squads,
+  nudges,
   aiConsent,
+  // Data the app shows that lives in the database. Each module keeps its own section.
+  catalog: {
+    sections: [
+      sportsSection(sports),
+      disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    ],
+    clock: () => new Date(),
+  },
   publicRoutes: {
     proxyHops: config.proxyHops,
     // Someone opening an invite link looks it up a few times at most; guessing a code takes
     // billions of tries, so this only keeps the lookup from being hammered.
     inviteLookups: createMemoryRateLimit({
       limit: 30,
+      windowSeconds: 600,
+      clock: () => new Date(),
+    }),
+    // The app reads it about once a launch; a shared address may hold many phones.
+    catalogReads: createMemoryRateLimit({
+      limit: 300,
       windowSeconds: 600,
       clock: () => new Date(),
     }),
@@ -206,9 +272,9 @@ const app = createApp({
   weeklyAwards: { awards, clock: () => new Date() },
   log,
   jobs: {
-    token: config.jobsToken,
+    isScheduler,
     // Each kind of interaction the daily push counts comes from one of these.
-    interactions: [reactionInteractions(checkIns)],
+    interactions: [reactionInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
   },
   admin: {
@@ -223,9 +289,16 @@ const app = createApp({
         drafts: createDraftSettings({ store: createPostgresDraftSettings(scope) }),
         awards: createAwardSettings({ store: createPostgresAwardSettings(scope) }),
       }),
+      ...disclaimerDiceTools({
+        dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
+      }),
+      ...dailyPushTools({
+        settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
+      }),
       ...weekSummaryWordTools({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
+      ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
@@ -247,4 +320,6 @@ process.once('SIGTERM', () => {
   server.close(() => {
     void db.destroy();
   });
+  // Cloud Run gives an instance 10 seconds after SIGTERM: send the reports still queued.
+  void errorReports?.flush(2000);
 });

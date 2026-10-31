@@ -16,6 +16,7 @@ import {
 } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -32,12 +33,13 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database (the draft settings
 // included), and each provider's adapter answering from recorded responses instead of the
@@ -77,8 +79,10 @@ function appWith(model: LanguageModel, modelName?: string) {
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     checkIns: createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
         store: createPostgresSquadStore(db),
@@ -113,6 +117,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: () => Promise.resolve(undefined),
       clock: () => new Date(),
@@ -124,6 +129,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     }),
     push: pushOn(db),
     aiConsent: aiConsentOn(db),
+    nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     weekSummaryWords: unusedWeekSummaryWords,
     log: createLog((line) => logged.push(JSON.parse(line))),

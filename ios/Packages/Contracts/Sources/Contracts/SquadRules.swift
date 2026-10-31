@@ -43,3 +43,8 @@ public struct InviteCode: Hashable, Sendable, CustomStringConvertible {
 
     public var description: String { text }
 }
+
+/// How many members a squad holds: 1 to `memberLimit`. The API's `SQUAD_MEMBER_LIMIT`.
+public enum SquadSize {
+    public static let memberLimit = 8
+}

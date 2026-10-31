@@ -27,11 +27,13 @@ import {
   createWeeklyAwards,
   type LanguageModel,
 } from '@wildcard/weekly-awards';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
+import { jobsTokenScheduler } from '../adapters/scheduler.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
@@ -43,10 +45,11 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -67,6 +70,7 @@ const aiConsent = aiConsentOn(db);
 const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
 const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
   store: checkInStore,
   membership: squads,
   reactions,
@@ -142,10 +146,12 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
       secretKey: config.supabaseSecretKey,
     }),
     revokeAppleSignIn: undefined,
+    catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns,
     weeklyPlans: createWeeklyPlans({
+      sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresWeeklyPlanStore(db),
       calendarOf: memberCalendar(members),
       clock: () => new Date(),
@@ -157,8 +163,9 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weeklyAwards: { awards, clock },
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     aiConsent,
+    nudges: nudgesOn(db),
     log: createLog(() => undefined),
-    jobs: { ...noJobs, token: JOBS_TOKEN },
+    jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN) },
     admin: adminOn(),
   });
   const read = async ({
@@ -217,7 +224,7 @@ async function member(timeZone = 'America/Los_Angeles', agreedToAi = true) {
   }
   await members.saveProfile({
     member: MembersMember.parse(signedUp.userId),
-    profile: { timeZone, catchphrase: null, character: null },
+    profile: { timeZone, catchphrase: null, character: null, jerseyNumber: null },
   });
   const token = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await pushOn(db).registerDevice({
@@ -392,6 +399,34 @@ describe('weekly awards', () => {
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(2);
+  });
+
+  it('counts every title a member won, in all their squads, for their player card', async () => {
+    const { run, app } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const totals = async (token: string) => {
+      const response = await app.request('/me/award-totals', {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      return [response.status, await response.json()];
+    };
+    expect(await totals(ana.token)).toStrictEqual([200, { version: 1, titles: 0 }]);
+    // Ana is first in both squads, so the model names her 狠人0号 in each.
+    const [first, second] = [await squadOf(ana, bo), await squadOf(ana)];
+    await trained(ana, { squad: first });
+    await trained(ana, { squad: second });
+    await trained(bo, { squad: first });
+
+    await run();
+    expect(await totals(ana.token)).toStrictEqual([
+      200,
+      { version: 1, titles: 2, latest: { title: '狠人0号', times: 2 } },
+    ]);
+    expect(await totals(bo.token)).toStrictEqual([
+      200,
+      { version: 1, titles: 1, latest: { title: '狠人1号', times: 1 } },
+    ]);
+    expect((await app.request('/me/award-totals')).status).toBe(401);
   });
 
   it('leaves out of the prompt and the awards a member who hasn’t agreed to AI use', async () => {

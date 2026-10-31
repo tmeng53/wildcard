@@ -68,14 +68,14 @@ struct EntranceScriptTests {
                 .init(feet: Point(x: 275, y: 626), height: 72),
             ])
         // Distances: 168, 117, 94.
-        #expect(script.cheers == [2.1 + 0.3 + 0.3, 2.1 + 0.3 + 0.15, 2.1 + 0.3])
-        #expect(abs(script.myLine - 2.3) < 1e-9)
+        #expect(script.cheers == [2.2 + 0.3 + 0.3, 2.2 + 0.3 + 0.15, 2.2 + 0.3])
+        #expect(abs(script.myLine - 2.4) < 1e-9)
     }
 
     @Test func itEndsWhenTheLastLineHasBeenUpItsTime() {
         let script = EntranceScript(spot: spot, teammates: [.init(feet: Point(x: 35, y: 626), height: 72)])
-        #expect(script.end == 2.4 + 4.2)
-        #expect(EntranceScript(spot: spot, teammates: []).end == 2.3 + 4.2)
+        #expect(abs(script.end - (2.5 + 4.2)) < 1e-9)
+        #expect(abs(EntranceScript(spot: spot, teammates: []).end - (2.4 + 4.2)) < 1e-9)
     }
 
     @Test func aBubbleStandsAboveItsSpeaker() {
@@ -105,5 +105,92 @@ struct EntranceScriptTests {
         // The nearer teammate (the second) cheers first and keeps its place.
         #expect(second == Point(x: 200, y: 520))
         #expect(first.y <= second.y - 36 - 4)
+    }
+
+    @Test func aBubbleThatWouldReachTheCardMovesAside() {
+        // Home's card reaches 470 down, so no bubble's top goes above 474: neither teammate's
+        // bubble can climb over the new member's, so each moves to the nearest clear side.
+        let script = EntranceScript(
+            spot: spot,
+            teammates: [
+                .init(feet: Point(x: 150, y: 600), height: 80),
+                .init(feet: Point(x: 200, y: 600), height: 80),
+            ])
+        let points = script.bubbles(
+            sizes: [(60, 36), (100, 36), (100, 36)], myHeight: 200, width: 390, ceiling: 470)
+        #expect(points == [Point(x: 195, y: 510), Point(x: 110, y: 520), Point(x: 280, y: 520)])
+    }
+
+    @Test func aSpeakerBehindTheCardTalksFromUnderIt() {
+        let script = EntranceScript(spot: spot, teammates: [.init(feet: Point(x: 60, y: 300), height: 80)])
+        let points = script.bubbles(sizes: [(80, 36), (80, 36)], myHeight: 90, width: 390, ceiling: 400)
+        #expect(points[1] == Point(x: 60, y: 440))
+    }
+}
+
+struct EntranceMotionTests {
+
+    private let entrance: Clip
+
+    init() throws {
+        entrance = try PlaceholderCharacter.entrance()
+    }
+
+    private func rootY(at time: Double) -> Double {
+        entrance.tracks.first { $0.part == "root" && $0.channel == .y }?.value(at: time) ?? 0
+    }
+
+    @Test func theScriptsTakeoffAndLandingAreTheClipsOwn() {
+        // Up is negative, in canvas points; the jump goes over 300 high.
+        #expect(abs(rootY(at: EntranceScript.takeoffInClip - 0.05)) < 1)
+        #expect(rootY(at: EntranceScript.takeoffInClip + 0.2) < -100)
+        #expect(rootY(at: EntranceScript.landingInClip - 0.05) < -10)
+        #expect(abs(rootY(at: EntranceScript.landingInClip)) < 1)
+    }
+
+    @Test func theNewMemberRunsInFromTheRightAndStopsOnTheSpot() {
+        let motion = EntranceMotion(spot: Point(x: 195, y: 676), scale: 0.34, entrance: entrance)
+        #expect(motion.newcomerX(at: 0) > 390)
+        #expect(abs(motion.newcomerX(at: EntranceScript.land) - 195) < 0.5)
+        #expect(motion.newcomerX(at: 5) == 195)
+    }
+
+    @Test func theyTurnOneAndAHalfTimesInTheAir() {
+        #expect(EntranceMotion.facing(at: 1) == -1)
+        #expect(EntranceMotion.facing(at: EntranceScript.land) == 1)
+        let air = EntranceScript.takeoffInClip..<EntranceScript.landingInClip
+        let samples = stride(from: air.lowerBound, to: air.upperBound, by: 0.005).map(EntranceMotion.facing(at:))
+        let flips = zip(samples, samples.dropFirst()).filter { ($0 < 0) != ($1 < 0) }.count
+        #expect(flips == 3)
+    }
+
+    @Test func theShockwaveAndRingFollowTheLanding() {
+        #expect(EntranceMotion.shockwave(at: EntranceScript.land - 0.01) == nil)
+        #expect(EntranceMotion.shockwave(at: EntranceScript.land)?.radius == 30)
+        #expect(EntranceMotion.shockwave(at: EntranceScript.land + 0.6) == nil)
+        #expect(EntranceMotion.ring(at: EntranceScript.land - 0.01) == (0, 0))
+        #expect(EntranceMotion.ring(at: EntranceScript.land + 0.5) == (1, 1))
+    }
+
+    @Test func theDustIsKickedUpRunningSkiddingAndLanding() {
+        let motion = EntranceMotion(spot: Point(x: 195, y: 676), scale: 0.34, entrance: entrance)
+        #expect(motion.puffs.count == 14)
+        #expect(motion.puffs.filter { $0.start == EntranceScript.land }.count == 4)
+    }
+
+    @Test func aWatchingTeammateEndsFacingFront() throws {
+        let motion = EntranceMotion(spot: Point(x: 195, y: 676), scale: 0.34, entrance: entrance)
+        let clip = try motion.watching(from: Point(x: 60, y: 600), until: 2.5, bounces: true)
+        #expect(clip.duration == 2.25)
+        for track in clip.tracks {
+            #expect(abs(track.value(at: 0)) < 1e-9)
+            #expect(abs(track.value(at: clip.duration)) < 1e-9)
+        }
+        let head = clip.tracks.first { $0.part == "head" }
+        // Mid-run, the runner is to the teammate's right, so the head turns that way.
+        #expect((head?.value(at: 0.8) ?? 0) > 0)
+        let mirrored = try motion.watching(from: Point(x: 60, y: 600), facing: -1, until: 2.5, bounces: false)
+        #expect((mirrored.tracks.first { $0.part == "head" }?.value(at: 0.8) ?? 0) < 0)
+        #expect(mirrored.tracks.count == 2)
     }
 }

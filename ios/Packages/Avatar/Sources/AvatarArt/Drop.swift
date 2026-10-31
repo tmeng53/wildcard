@@ -4,6 +4,9 @@ extension PlaceholderCharacter {
     /// When the drop touches the ground, in seconds; from then on the figure stays on its canvas.
     public static let dropLands = 0.55
 
+    /// How far above its spot the drop starts a figure, in the rig's points.
+    public static let dropHeight = 420.0
+
     /// Drops in from above and lands on its spot with weight, as the squad does when a new scene
     /// is revealed: a squash on touch-down, knees giving, dust from both feet, a small bounce
     /// and a wobble, then rest. The same for every look and persona; nothing turns or spins.

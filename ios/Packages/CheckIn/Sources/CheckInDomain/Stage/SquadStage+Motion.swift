@@ -1,15 +1,20 @@
 import Contracts
 
-/// Day or night on the scene. At night the lights come on, anyone training keeps going and
-/// everyone else sleeps where they are, 请假条 put away.
+/// Day or night on the scene. At night the venue goes dark, anyone training keeps going and
+/// everyone else sleeps where they are, 请假条 put away, until someone pulls the cord to switch
+/// the lights on (`LightsFlip`).
 public enum DayPhase: Hashable, Sendable {
     case day
     case night
 
-    /// Night runs from 7pm to 6am, on the member's own clock.
+    /// Night runs from 11pm to 6am, on the member's own clock.
     public init(hour: Int) {
-        self = (6..<19).contains(hour) ? .day : .night
+        self = (Self.dayStarts..<Self.nightStarts).contains(hour) ? .day : .night
     }
+
+    /// The hours day and night begin.
+    public static let dayStarts = 6
+    public static let nightStarts = 23
 }
 
 /// What a teammate is doing where they are.
@@ -36,6 +41,12 @@ public struct StagePosition: Hashable, Sendable {
 
     /// Where I stand: front and centre, facing right, a little bigger than the squad.
     public static let mine = StagePosition(point: StageLayout.mySpot, facing: 1, scale: StageLayout.myScale)
+
+    /// The same spot, facing right (1) or left (-1): turned toward a teammate for a moment, as
+    /// in 拍一拍.
+    public func facing(_ direction: Double) -> StagePosition {
+        StagePosition(point: point, facing: direction, scale: scale)
+    }
 }
 
 extension SquadStage {

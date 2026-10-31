@@ -7,15 +7,41 @@ import Foundation
 import SwiftUI
 import Testing
 
-/// The previews of moves that change the character: sport kits, the 上场 entrance, and 我's
-/// typing at the laptop and crying on 注销账号.
+/// The previews of moves that change the character: sport kits, the 上场 entrance, 我's
+/// typing at the laptop and crying on 注销账号, and the props' moves in the editor.
 extension CharacterPreviewTests {
-    /// `09-sport-kits.gif`, `10-entrance.gif`, `11-typing.gif` and `12-teary.gif`.
+    /// `09-sport-kits.gif`, `10-entrance.gif`, `11-typing.gif`, `12-teary.gif` and
+    /// `15-prop-moves.gif`.
     func writeMoves(to folder: URL) throws {
         try writeKits(to: folder.appendingPathComponent("09-sport-kits.gif"))
         try writeEntrance(to: folder.appendingPathComponent("10-entrance.gif"))
         try writeMeMove(typing: true, to: folder.appendingPathComponent("11-typing.gif"))
         try writeMeMove(typing: false, to: folder.appendingPathComponent("12-teary.gif"))
+        try writePropMoves(to: folder.appendingPathComponent("15-prop-moves.gif"))
+    }
+
+    /// Each prop the editor offers, held by the lifter and the cat, playing its move once every
+    /// 2.5 s from a still stand, as the editor plays it on every change.
+    func writePropMoves(to url: URL) throws {
+        let props = try PlaceholderCharacter.editorChoices().props
+        let stages = try props.flatMap { prop in
+            try [PlaceholderCharacter.lifter, Looks.cat].map { outfit in
+                var held = outfit
+                held.variants["prop"] = prop
+                let look = try Frame(outfit: held)
+                return (look, try look.figure.bind(try #require(try PlaceholderCharacter.propMove(for: held))))
+            }
+        }
+        try writeGIF(
+            frames(seconds: 5, fps: 20) { time in
+                try sideBySide(
+                    stages.map { look, move in
+                        try look.render(
+                            image: look.figure.pose(move, at: time.truncatingRemainder(dividingBy: 2.5)), scale: 1,
+                            background: Self.mist)
+                    })
+            },
+            fps: 20, to: url)
     }
 
     /// The lifter (and a cat beside it) picking each sport in turn, every 2 s: a hop into the
@@ -23,7 +49,7 @@ extension CharacterPreviewTests {
     func writeKits(to url: URL) throws {
         let kits = try PlaceholderCharacter.sportKits()
         let hop = try PlaceholderCharacter.kitHop()
-        let sports: [Sport] = [.swim, .run, .strength, .tennis, .climb, .yoga]
+        let sports: [Sport] = ["swim", "run", "strength", "tennis", "climb", "yoga"]
         let cast: [(Persona, Outfit)] = [(.energetic, PlaceholderCharacter.lifter), (.deadpan, Looks.cat)]
         // A performance acts on what is asked of it at once, so each pick is a performance of its
         // own, on stage from the moment it's made.
@@ -35,7 +61,7 @@ extension CharacterPreviewTests {
                 idle: try looks[0].figure.bind(PlaceholderCharacter.clip("idle", persona: persona)))
             var picks = [(from: 0.0, performance: performance)]
             for (index, sport) in sports.enumerated() {
-                let kit = kits.kit(for: .sport(sport))
+                let kit = kits.kit(for: .sport(sport), in: Looks.sports)
                 let look = try Frame(outfit: kit.dress(outfit))
                 looks.append(look)
                 let time = 0.5 + Double(index) * 2

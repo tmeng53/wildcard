@@ -3,7 +3,7 @@ import Contracts
 import Foundation
 import Testing
 
-private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], caption: "雨中五公里"))
+private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], caption: "雨中五公里"))
 
 @MainActor @Test func opensOnTheSavedCopyThenTheServers() async throws {
     var stale = sampleHome()
@@ -55,7 +55,7 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     #expect(today.home?.today.today.trained == 2)
     #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
 
-    try await today.post(.trained(.sport(.yoga), PostBody(photos: [], caption: "")))
+    try await today.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))
     #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
     #expect(today.home?.today.today.trained == 2)
     #expect(await backend.saves.count == 2)
@@ -104,7 +104,7 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     await backend.set(uploadsBeforeFailing: 1)
 
     let photos = [photo(3), photo(1), photo(2)]
-    #expect(try await today.post(.trained(.sport(.climb), PostBody(photos: photos, caption: ""))) == .queued)
+    #expect(try await today.post(.trained(.sport("climb"), nil, PostBody(photos: photos, caption: ""))) == .queued)
     #expect(today.pending.first?.uploaded.keys.sorted() == [id(3)])
 
     await backend.set(uploadsBeforeFailing: .max)
@@ -182,7 +182,7 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     let today = store(ScriptedBackend())
     #expect(today.suggestedActivity == nil)
     await today.load()
-    #expect(today.suggestedActivity == .sport(.yoga))
+    #expect(today.suggestedActivity == .sport("yoga"))
 }
 
 @MainActor @Test func reactionsShowAtOnceAndComeBackOnFailure() async throws {
@@ -243,7 +243,7 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     await today.refresh()
     #expect(today.myStatus == .trained)
     #expect(today.home?.today.squadWeek.trainedDays == 15)
-    #expect(today.home?.todaysSport(of: myID) == .sport(.run))
+    #expect(today.home?.todaysSport(of: myID) == .sport("run"))
 }
 
 @MainActor @Test func aDisclaimerAsksTheServerFirstForATrainingFromAnotherPhone() async throws {
@@ -311,4 +311,18 @@ private let run = CheckInDraft.trained(.sport(.run), PostBody(photos: [], captio
     #expect(await backend.saves.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
     #expect(today.pending.isEmpty)
     #expect(today.refused.isEmpty)
+}
+
+@MainActor @Test func aRestDayInThePlanOffersNoLeave() async throws {
+    var today = sampleToday()
+    today.members[1] = entry(myID, .notCheckedIn, plannedRest: true)
+    let backend = ScriptedBackend()
+    await backend.set(server: sampleHome(today: today))
+    let resting = store(backend)
+    await resting.load()
+    #expect(resting.restsToday)
+
+    let training = store(ScriptedBackend())
+    await training.load()
+    #expect(!training.restsToday)
 }

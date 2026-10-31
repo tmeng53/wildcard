@@ -5,7 +5,8 @@ import Foundation
 import OpenAPIRuntime
 
 /// The home and 打卡 over our API, with a copy of the last home kept on the device, as the API
-/// sent it, so the home opens offline. The copy is the member's: `forget()` it on sign-out.
+/// sent it, so the home opens offline. The copy is the member's: keep it in their
+/// `MemberFolders` folder.
 public struct APICheckInBackend: CheckInBackend {
     private let api: WildcardAPI
     private let saved: URL
@@ -78,9 +79,12 @@ public struct APICheckInBackend: CheckInBackend {
         do { try await api.removeReaction(from: checkIn) } catch { throw CheckInError(error) }
     }
 
-    /// Deletes the copy, when the member signs out or deletes their account.
-    public func forget() {
-        try? FileManager.default.removeItem(at: saved)
+    public func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
+        do { return try await api.pokes(in: squad) } catch { throw CheckInError(error) }
+    }
+
+    public func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
+        do { try await api.pat(member, in: squad) } catch { throw CheckInError(error) }
     }
 }
 

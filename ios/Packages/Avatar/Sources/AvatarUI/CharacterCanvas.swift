@@ -19,21 +19,39 @@ public struct FigureDrawing {
     public init(_ figure: Figure) {
         width = figure.width
         height = figure.height
-        parts = figure.parts.map { part in
-            part.art.flatMap(\.shapes).map { shape in
-                DrawableShape(
-                    path: Path(shape.path),
-                    fill: shape.fill.map { Color($0) },
-                    stroke: shape.stroke.map { stroke in
-                        (
-                            Color(stroke.color),
-                            StrokeStyle(
-                                lineWidth: stroke.width, lineCap: CGLineCap(stroke.cap),
-                                lineJoin: CGLineJoin(stroke.join))
-                        )
-                    },
-                    opacity: shape.opacity)
+        parts = figure.parts.map { part in Self.shapes(part.art.flatMap(\.shapes)) }
+    }
+
+    /// The canvas area the drawing covers in `placements`, strokes included: where a crop
+    /// fits a figure wearing one piece only. Nil when nothing shows.
+    public func bounds(_ placements: [Placement]) -> CGRect? {
+        var covered: CGRect?
+        for (shapes, placement) in zip(parts, placements) where placement.opacity > 0 {
+            let transform = CGAffineTransform(placement.transform)
+            for shape in shapes {
+                let width = shape.stroke?.style.lineWidth ?? 0
+                let box = shape.path.boundingRect.insetBy(dx: -width / 2, dy: -width / 2).applying(transform)
+                covered = covered?.union(box) ?? box
             }
+        }
+        return covered
+    }
+
+    /// Art's shapes as SwiftUI paths and paints.
+    static func shapes(_ shapes: [ArtShape]) -> [DrawableShape] {
+        shapes.map { shape in
+            DrawableShape(
+                path: Path(shape.path),
+                fill: shape.fill.map { Color($0) },
+                stroke: shape.stroke.map { stroke in
+                    (
+                        Color(stroke.color),
+                        StrokeStyle(
+                            lineWidth: stroke.width, lineCap: CGLineCap(stroke.cap),
+                            lineJoin: CGLineJoin(stroke.join), dash: stroke.dash.map { CGFloat($0) })
+                    )
+                },
+                opacity: shape.opacity)
         }
     }
 }
@@ -63,32 +81,35 @@ public struct CharacterCanvas: View {
                 var part = context
                 part.transform = CGAffineTransform(placement.transform).concatenating(fit)
                 guard placement.opacity < 1 else {
-                    draw(shapes, in: &part)
+                    part.draw(shapes)
                     continue
                 }
                 // A fading part fades as one piece, so its overlapping shapes don't show through.
                 part.opacity = placement.opacity
-                part.drawLayer { layer in draw(shapes, in: &layer) }
+                part.drawLayer { layer in layer.draw(shapes) }
             }
         }
     }
+}
 
-    private func draw(_ shapes: [FigureDrawing.DrawableShape], in context: inout GraphicsContext) {
+extension GraphicsContext {
+    /// Paints shapes back to front in this context's transform.
+    func draw(_ shapes: [FigureDrawing.DrawableShape]) {
         for shape in shapes {
-            var each = context
+            var each = self
             each.opacity *= shape.opacity
             guard shape.opacity < 1, shape.fill != nil, shape.stroke != nil else {
-                paint(shape, in: &each)
+                each.paint(shape)
                 continue
             }
             // As in SVG, fill and stroke fade together, so the stroke doesn't darken the fill under it.
-            each.drawLayer { layer in paint(shape, in: &layer) }
+            each.drawLayer { layer in layer.paint(shape) }
         }
     }
 
-    private func paint(_ shape: FigureDrawing.DrawableShape, in context: inout GraphicsContext) {
-        if let fill = shape.fill { context.fill(shape.path, with: .color(fill)) }
-        if let stroke = shape.stroke { context.stroke(shape.path, with: .color(stroke.color), style: stroke.style) }
+    private func paint(_ shape: FigureDrawing.DrawableShape) {
+        if let fill = shape.fill { self.fill(shape.path, with: .color(fill)) }
+        if let stroke = shape.stroke { self.stroke(shape.path, with: .color(stroke.color), style: stroke.style) }
     }
 }
 

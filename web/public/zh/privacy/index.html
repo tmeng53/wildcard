@@ -9,13 +9,15 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/wildcard.css">
 <link rel="stylesheet" href="/legal.css">
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <header class="legal-chrome"><div class="wrap nav"><a class="mark" href="/zh/"><img src="/logo.svg" width="30" height="30" alt="">WILDCARD</a><nav class="lang" aria-label="Language"><a href="/zh/privacy" hreflang="zh-Hans" aria-current="page">简体</a><a href="/zh-hant/privacy" hreflang="zh-Hant">繁體</a><a href="/privacy" hreflang="en">EN</a></nav></div></header>
 <main class="wc-page legal">
 
 <h1 class="t-large">隐私政策</h1>
-<p class="t-support">最后更新：2026 年 10 月 23 日</p>
+<p class="t-support">最后更新：2026 年 10 月 24 日</p>
 <p>本政策说明外卡（Wildcard，“本应用”）的开发者 Tracy Meng（个人，位于美国纽约，以下称“我们”）在你使用本应用时收集哪些信息、怎么用、和谁共享，以及你有哪些选择。各语言版本意思一致；如有不同，以英文版为准。</p>
 <p><strong>一句话版本：</strong>你的打卡只给你小队里的人看；我们不卖你的数据、不放广告、不跨 App 追踪你；你随时可以在 App 里删掉账号和全部内容。</p>
 
@@ -27,7 +29,8 @@
 <p><strong>AI 相关：</strong>当你选择让 AI 帮你写请假条时，你输入的理由和生成的候选文案。每周日为小队写颁奖词和周战报时，小队里同意使用 AI 的成员这一周的打卡文字和请假条内容（不含照片）。</p>
 <p><strong>推送：</strong>如果你开启通知，设备的推送令牌，以及你的通知开关设置。</p>
 <p><strong>技术日志：</strong>服务器在处理请求时记录的 IP 地址、时间、请求结果和错误信息，用于安全和排障。</p>
-<p>我们不收集体重、热量等身体指标；不读取你的通讯录、位置或健康 App 数据。选照片时使用系统相册选择器，只拿到你选中的那几张。我们目前不使用第三方分析或广告 SDK。</p>
+<p><strong>崩溃和性能报告：</strong>App 崩溃或卡住，或者 iOS 报告它卡顿、内存不足被关闭、占用过多处理器或存储时，App 会发送一份报告：当时代码在做什么、设备型号、iOS 和 App 版本，以及这次安装的一个随机标识。服务器出错时也会发送一份，包含请求的类型（从不包含请求内容或你的登录信息）和对应的日志编号。这些报告不与你的账号关联，也从不包含你的打卡、照片或截图。</p>
+<p>我们不收集体重、热量等身体指标；不读取你的通讯录、位置或健康 App 数据。选照片时使用系统相册选择器，只拿到你选中的那几张。App 不使用第三方分析或广告 SDK；唯一会发送信息的第三方代码是上面说的 Sentry 崩溃报告。我们的网站使用 Vercel Web Analytics 统计页面访问，不使用 cookie，也不会跨网站或跨设备识别你；它记录访问的页面、来源、国家或地区和浏览器类型。</p>
 
 <h2 class="t-headline">2. 我们怎么用</h2>
 <ul>
@@ -49,6 +52,7 @@
 <tbody>
 <tr><td data-label="服务商">Apple</td><td data-label="用途">登录、推送通知</td><td data-label="涉及的信息">Apple 用户标识、姓名和邮箱、推送令牌和通知内容</td></tr>
 <tr><td data-label="服务商">Supabase</td><td data-label="用途">数据库、登录会话、照片存储</td><td data-label="涉及的信息">上述全部账号、资料、打卡和照片</td></tr>
+<tr><td data-label="服务商">Sentry</td><td data-label="用途">崩溃和错误报告</td><td data-label="涉及的信息">上述崩溃和性能报告，不与你的账号关联</td></tr>
 <tr><td data-label="服务商">Google Cloud</td><td data-label="用途">运行我们的服务器</td><td data-label="涉及的信息">经过服务器的请求和技术日志</td></tr>
 <tr><td data-label="服务商">OpenAI（目前使用）、Anthropic（备选）</td><td data-label="用途">生成 AI 请假条、每周颁奖和战报</td><td data-label="涉及的信息">请假条：你输入的理由；每周颁奖：同意使用 AI 的小队成员这一周的打卡文字、请假条内容和昵称。都不含照片和邮箱</td></tr>
 </tbody>
@@ -61,7 +65,7 @@
 <h2 class="t-headline">6. 保留和删除</h2>
 <p>账号存续期间，我们保留你的内容；你可以随时删除单条打卡。</p>
 <p><strong>删除账号：</strong>在 App 里的「我 → 注销账号」发起，并用 Apple 再次确认。删除立即生效：我们会删除你的账号、资料、打卡、照片、小队成员关系、表情回应和 AI 同意记录，并撤销与 Apple ID 的登录关联。队友不再看到你的任何内容。数据库的例行备份（如有）会在最多 30 天内被覆盖。法律要求保留的记录（如有）除外，并会告诉你保留了什么。</p>
-<p>技术日志最多保留 30 天。</p>
+<p>技术日志最多保留 30 天，崩溃和性能报告最多保留 90 天。</p>
 <p>如果你创建的小队还有其他成员，小队本身保留，但你的内容会被删掉。</p>
 
 <h2 class="t-headline">7. 你的权利和选择</h2>

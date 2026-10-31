@@ -8,6 +8,7 @@ import {
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -21,11 +22,12 @@ import {
   aiConsentOn,
   config,
   noJobs,
+  nudgesOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -42,9 +44,11 @@ const app = createApp({
     secretKey: config.supabaseSecretKey,
   }),
   revokeAppleSignIn: undefined,
+  catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -59,6 +63,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   weeklyPlans: createWeeklyPlans({
+    sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
     calendarOf: memberCalendar(members),
     clock: () => new Date(),
@@ -72,6 +77,7 @@ const app = createApp({
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
+  nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
   log: createLog(() => undefined),
@@ -239,11 +245,11 @@ describe('/me/weekly-plans/{weekStart}', () => {
     expect(later).toMatchObject({ fuelGoals: [] });
     expect(
       await call('PUT', {
-        path: `/me/weekly-plans/${memberWeek(0)}/fuel-goals`,
+        path: `/me/weekly-plans/${memberWeek(-1)}/fuel-goals`,
         token,
         body: { version: 1, goals },
       }),
-    ).toStrictEqual([400, problem('WEEK_STARTED', 'FAILED_PRECONDITION')]);
+    ).toStrictEqual([400, problem('WEEK_OVER', 'FAILED_PRECONDITION')]);
     expect(
       await call('PUT', {
         path: `/me/weekly-plans/${memberWeek(5)}/fuel-goals`,

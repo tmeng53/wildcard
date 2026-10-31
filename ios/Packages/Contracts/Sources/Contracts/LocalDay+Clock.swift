@@ -36,11 +36,11 @@ extension LocalDay {
     /// The Monday of this day's week: the week weekly plans and 本周 count in.
     public var weekStart: LocalDay { adding(days: 1 - weekday) }
 
-    /// The ISO week of the year, as in 「第 42 周」.
-    public var weekOfYear: Int {
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.timeZone = Self.utc.timeZone
-        return calendar.component(.weekOfYear, from: midnight)
+    /// This day's week counted from the week of `first` as 1, as in 「第 1 周」 for the week
+    /// someone joined. A week before `first`'s counts 1 too.
+    public func weekNumber(since first: LocalDay) -> Int {
+        let days = Self.utc.dateComponents([.day], from: first.weekStart.midnight, to: weekStart.midnight).day ?? 0
+        return max(days / 7, 0) + 1
     }
 
     /// The day's start in UTC, where the calendar arithmetic above runs.

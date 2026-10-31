@@ -3,24 +3,26 @@ import DesignSystem
 import SwiftUI
 
 /// A 52-point row that opens something (性格 · 淡人 ›): an icon, the title, its current value in
-/// muted ink and a chevron. Rows in a list are separated by a hairline under the text, so pass
-/// `showsDivider: false` on the last one.
+/// muted ink and a chevron. A plain menu (设置) leaves out the icon and the chevron. Rows in a
+/// list are separated by a hairline under the text, so pass `showsDivider: false` on the last one.
 public struct ListRow: View {
     @Environment(\.sceneTheme) private var theme
     private let title: Text
-    private let systemImage: String
+    private let systemImage: String?
     private let value: Text?
     private let showsDivider: Bool
+    private let showsChevron: Bool
     private let action: () -> Void
 
     public init(
-        _ title: Text, systemImage: String, value: Text? = nil, showsDivider: Bool = true,
-        action: @escaping () -> Void
+        _ title: Text, systemImage: String? = nil, value: Text? = nil, showsDivider: Bool = true,
+        showsChevron: Bool = true, action: @escaping () -> Void
     ) {
         self.title = title
         self.systemImage = systemImage
         self.value = value
         self.showsDivider = showsDivider
+        self.showsChevron = showsChevron
         self.action = action
     }
 
@@ -33,10 +35,12 @@ public struct ListRow: View {
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
                 }
-                Image(systemName: "chevron.right")
-                    .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                    .accessibilityHidden(true)
+                if showsChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
+                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                        .accessibilityHidden(true)
+                }
             }
         }
         .buttonStyle(.plain)
