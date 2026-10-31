@@ -92,8 +92,15 @@ public struct PostWallView: View {
                         }
                     }
                 } header: {
-                    SectionLabel(month.title)
-                        .padding(.top, month.id == months.first?.id ? 0 : Space.m)
+                    HStack(alignment: .firstTextBaseline) {
+                        SectionLabel(month.title)
+                        Spacer()
+                        Text("\(month.posts.count) 张", bundle: .module)
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .monospacedDigit()
+                    }
+                    .padding(.top, month.id == months.first?.id ? 0 : Space.m)
                 }
             }
             if store.hasMore {
@@ -118,7 +125,7 @@ public struct PostWallView: View {
         [CategoryBarItem(id: .all, title: Text("全部", bundle: .module), accessibilityIdentifier: "wall.filter.all")]
         + PostKind.allCases.map {
             CategoryBarItem(
-                id: .only($0), title: $0.design.shortName, accessibilityIdentifier: "wall.filter.\($0.rawValue)")
+                id: .only($0), title: $0.chipName, accessibilityIdentifier: "wall.filter.\($0.rawValue)")
         }
 
     private var kind: Binding<Filter> {
@@ -136,13 +143,13 @@ public struct PostWallView: View {
 }
 
 extension PostKind {
-    /// The design system's kind, for its names.
-    var design: CheckInKind {
+    /// The filter chip's name: the word the tiles carry in their corner.
+    var chipName: Text {
         switch self {
-        case .trained: .trained
-        case .healthyMeal: .healthyMeal
-        case .cheatMeal: .cheatMeal
-        case .disclaimer: .disclaimer
+        case .trained: Text("练了", bundle: .module)
+        case .healthyMeal: Text("健康餐", bundle: .module)
+        case .cheatMeal: Text("放纵餐", bundle: .module)
+        case .disclaimer: Text("请假条", bundle: .module)
         }
     }
 }

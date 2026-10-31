@@ -68,6 +68,24 @@ public struct MeView: View {
         .task { await model.reload() }
     }
 
+    /// 我的动态 and 编辑外卡运动员: side by side, stacked where the words don't fit in a row.
+    @ViewBuilder private var actions: some View {
+        Button(action: destinations.myPosts) {
+            Label {
+                Text("我的动态", bundle: .module)
+            } icon: {
+                Image(systemName: "square.grid.2x2.fill")
+            }
+        }
+        .buttonStyle(PrimaryButtonStyle(.regular))
+        .accessibilityIdentifier("me.myPosts")
+        Button(action: destinations.editCharacter) {
+            Text("编辑外卡运动员", bundle: .module)
+        }
+        .buttonStyle(SecondaryButtonStyle())
+        .accessibilityIdentifier("me.editCharacter")
+    }
+
     @ViewBuilder private var content: some View {
         switch model.load {
         case .loading:
@@ -89,21 +107,9 @@ public struct MeView: View {
                     }
                     PlayerCard(overview: overview)
                     VStack(spacing: Space.xs) {
-                        HStack(spacing: Space.s) {
-                            Button(action: destinations.myPosts) {
-                                Label {
-                                    Text("我的动态", bundle: .module)
-                                } icon: {
-                                    Image(systemName: "square.grid.2x2.fill")
-                                }
-                            }
-                            .buttonStyle(PrimaryButtonStyle(.regular))
-                            .accessibilityIdentifier("me.myPosts")
-                            Button(action: destinations.editCharacter) {
-                                Text("编辑外卡运动员", bundle: .module)
-                            }
-                            .buttonStyle(SecondaryButtonStyle())
-                            .accessibilityIdentifier("me.editCharacter")
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: Space.s) { actions }
+                            VStack(spacing: Space.xs) { actions }
                         }
                         if model.saveFailed {
                             SaveFailed()

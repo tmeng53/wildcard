@@ -33,6 +33,22 @@
         }
       }
     },
+    "%lld 张" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 張"
+          }
+        }
+      }
+    },
     "%lld 人回应：%@" : {
       "localizations" : {
         "en" : {
@@ -109,6 +125,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今天還沒人上場"
+          }
+        }
+      }
+    },
+    "练了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trained"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "練了"
           }
         }
       }

@@ -103,12 +103,14 @@ struct TileColors {
         case .cheatMeal:
             self.init(scene: .track)
         case .disclaimer:
-            (scene, fill, ink) = (.gym, .bgBrand, .fgOnBrand)
+            self.init(scene: .gym, fill: .bgBrand, ink: .fgOnBrand)
         }
     }
 
-    private init(scene: SceneTheme) {
-        (self.scene, fill, ink) = (scene, .bgAccent, .fgOnAccent)
+    private init(scene: SceneTheme, fill: ColorRole = .bgAccent, ink: ColorRole = .fgOnAccent) {
+        self.scene = scene
+        self.fill = fill
+        self.ink = ink
     }
 
     /// Each category of the sports list on a scene: Tracy's pick (2026-10-31). A category added
