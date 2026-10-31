@@ -3,6 +3,7 @@ import DailyPushDomain
 import DailyPushUI
 import DesignSystem
 import DesignSystemUI
+import Observation
 import SwiftUI
 
 /// The 6pm push's long-press view on the sample squad (`-daily-push full` or `empty`), laid out
@@ -17,17 +18,20 @@ struct DailyPushPreview: View {
 
     @State private var model: DailyPushModel?
     /// Where the view last asked to open the app, for UI tests to check.
-    @State private var opened: PushDestination?
+    @State private var opened: Opened
 
     init(day: Day, now: Date) {
-        let opened = _opened
+        // A reference the model's callback shares with the view: a `State` copied before SwiftUI
+        // installs it isn't connected to the view, so writing to it would change nothing.
+        let opened = Opened()
+        _opened = State(initialValue: opened)
         _model = State(
             initialValue: DailyPushSample.push(empty: day == .empty, now: now).map {
                 DailyPushModel(
                     store: DailyPushStore(push: $0, sender: KeptReactions(), now: { Date() }), arrived: now,
                     looks: DailyPushSample.looks
                 ) { destination in
-                    opened.wrappedValue = destination
+                    opened.destination = destination
                 }
             })
     }
@@ -46,13 +50,19 @@ struct DailyPushPreview: View {
                 // Scrolled, the card stays below the status bar, as iOS keeps a notification's view.
                 .clipped()
             }
-            if let opened {
-                Text(verbatim: opened.rawValue)
+            if let destination = opened.destination {
+                Text(verbatim: destination.rawValue)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .accessibilityIdentifier("dailyPush.opened")
             }
         }
     }
+}
+
+/// Where the preview's push view last asked to open the app.
+@MainActor @Observable
+private final class Opened {
+    var destination: PushDestination?
 }
 
 /// The sample has no server: every reaction is kept.
