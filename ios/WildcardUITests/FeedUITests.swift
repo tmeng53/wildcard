@@ -152,6 +152,44 @@ final class FeedUITests: XCTestCase {
         waitFor(react, "label == '我的回应：😂'", "holding and sliding didn't pick 😂")
     }
 
+    /// A card's comments open its own page over the feed, with the tab bar gone: every comment,
+    /// tapping a teammate's one replies to them, a sent comment shows at once, and 返回 comes
+    /// back to the feed, whose card shows it.
+    func testComments() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let comments = app.buttons.matching(identifier: "feed.comments").firstMatch
+        XCTAssertTrue(comments.waitForExistence(timeout: Self.wait), "no card shows comments")
+        settle()
+        keepScreenshot(named: "48-feed-card-comments")
+        comments.tap()
+
+        let rows = app.descendants(matching: .any).matching(identifier: "post.comment")
+        XCTAssertTrue(app.buttons["post.back"].waitForExistence(timeout: Self.wait), "the post's page didn't open")
+        waitFor(rows.element(boundBy: 2), "exists == true", "the page doesn't list every comment")
+        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar shows over the post's page")
+        settle()
+        keepScreenshot(named: "49-post-page")
+
+        rows.firstMatch.tap()
+        XCTAssertTrue(app.buttons["post.cancelReply"].waitForExistence(timeout: Self.wait), "tapping didn't reply")
+        let box = app.descendants(matching: .any).matching(identifier: "post.field").firstMatch
+        box.typeText("加油")
+        let send = app.buttons["post.send"]
+        assertOnScreen(send, in: app)
+        settle()
+        keepScreenshot(named: "50-post-replying")
+        send.tap()
+        waitFor(rows.element(boundBy: 3), "exists == true", "the sent comment didn't show")
+        XCTAssertFalse(app.buttons["post.cancelReply"].exists, "still replying after sending")
+
+        app.buttons["post.back"].tap()
+        XCTAssertTrue(app.buttons["tab.feed"].waitForExistence(timeout: Self.wait), "the tab bar didn't come back")
+        waitFor(comments, "label CONTAINS '全部 4 条评论'", "the card doesn't count the new comment")
+        settle()
+        keepScreenshot(named: "51-feed-after-comment")
+    }
+
     func testFeedInEnglish() {
         continueAfterFailure = false
         let app = launch(language: "en")

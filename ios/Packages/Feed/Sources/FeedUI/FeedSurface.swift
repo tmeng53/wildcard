@@ -9,11 +9,16 @@ import SwiftUI
 struct FeedSurface: ViewModifier {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
+    /// False while another surface is over this one (a post's page over the feed): only the top
+    /// one places the bar, so the slide picks from the bar the member sees.
+    let isActive: Bool
 
     func body(content: Content) -> some View {
         content
             .overlayPreferenceValue(FeedAnchors.self) { anchors in
-                FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)
+                if isActive {
+                    FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)
+                }
             }
             .coordinateSpace(.named(FeedView.space))
             .background(Color(role: .bgCanvas, in: theme))
@@ -26,6 +31,8 @@ struct FeedSurface: ViewModifier {
 }
 
 extension View {
-    func feedSurface(_ model: FeedModel) -> some View { modifier(FeedSurface(model: model)) }
+    func feedSurface(_ model: FeedModel, isActive: Bool = true) -> some View {
+        modifier(FeedSurface(model: model, isActive: isActive))
+    }
 }
 #endif

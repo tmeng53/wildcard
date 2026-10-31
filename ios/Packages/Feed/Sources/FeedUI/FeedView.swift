@@ -75,7 +75,7 @@ public struct FeedView: View {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
             model.focus = nil
         }
-        .feedSurface(model)
+        .feedSurface(model, isActive: model.opened == nil)
         .task { await model.load() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
