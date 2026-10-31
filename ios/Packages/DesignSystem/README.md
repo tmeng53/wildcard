@@ -32,6 +32,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `dismissesKeyboardOnTapOutside()` | Applied once at the app's root: a tap outside a text input puts the keyboard away on every screen, and still reaches what was tapped |
 | `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
+| `TicketSpinner`, `TicketRock` | A whole-page wait: the logo's two tickets rocking apart and back on a 0.9 s beat, on graphite (`.brand`, the launch cover) or the brand's light page (`.page`); still with Reduce Motion |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows (a plain menu leaves out icon and chevron), a setting's on/off row |
 | `SceneTile`, `CartonBox`, `Tween`, `Wiggle` | A scene to pick for next week (a colour pattern card once the squad has trained there, a kraft carton until then, shaking every 2.4 s while picked); the carton the reveal opens; the reveal's easing curves |
 | `PullCord`, `PullCordMotion` | The light switch hanging under the home's card at night: a ball chain and a bulb, white when off, warm when on; pulled down it clicks at 24 points, springs back and swings |

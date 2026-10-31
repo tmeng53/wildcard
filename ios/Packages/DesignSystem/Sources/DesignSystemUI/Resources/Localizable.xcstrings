@@ -11,6 +11,26 @@
         }
       }
     },
+    "加载中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        }
+      }
+    },
+    "整页加载：两张票": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page loading: two tickets"
+          }
+        }
+      }
+    },
     "语言": {
       "localizations": {
         "en": {

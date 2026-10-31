@@ -35,6 +35,11 @@ final class AppModel {
     }
 
     private(set) var screen = Screen.starting
+    /// Whether the launch cover is up: until the first screen, with its scene, is ready.
+    var isStarting: Bool {
+        if case .starting = screen { return true }
+        return false
+    }
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -287,38 +292,6 @@ final class AppModel {
         await profile.reload()
     }
 
-    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
-    private func readScene(of squad: SquadID?, into today: TodayModel) async {
-        guard let squad, let scene = await serverScene(of: squad) else { return }
-        today.scene = scene
-    }
-
-    /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
-    private func openingScene(of squad: SquadID) async -> SceneTheme? {
-        let wait = Self.sceneWait
-        return await withTaskGroup(of: SceneTheme?.self) { group in
-            group.addTask { await self.serverScene(of: squad) }
-            group.addTask {
-                try? await Task.sleep(for: wait)
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
-        }
-    }
-
-    /// The squad's scene this week from the server, kept on this phone for the next launch.
-    private func serverScene(of squad: SquadID) async -> SceneTheme? {
-        guard let read = try? await api.scene(of: squad) else { return nil }
-        let scene = SceneTheme(rawValue: read.scene.rawValue) ?? .gym
-        KeptScene.save(scene, of: squad)
-        return scene
-    }
-
-    /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    private static let sceneWait = Duration.seconds(3)
-
     /// 冠军专属 on a 战报's last page: when the reader picks the scene for the week after the
     /// story's and nobody has yet. Offline, there is no sticker.
     private static func scenePicker(api: WildcardAPI, after story: WeekStory) async -> ScenePicker? {
@@ -361,4 +334,39 @@ final class AppModel {
         SignUpModel(
             service: APISignUpService(api: api), invite: nil, nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI)
     }
+}
+
+/// The squad's scene, which 今天 must open on rather than switch to.
+extension AppModel {
+    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
+    private func readScene(of squad: SquadID?, into today: TodayModel) async {
+        guard let squad, let scene = await serverScene(of: squad) else { return }
+        today.scene = scene
+    }
+
+    /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
+    private func openingScene(of squad: SquadID) async -> SceneTheme? {
+        let wait = Self.sceneWait
+        return await withTaskGroup(of: SceneTheme?.self) { group in
+            group.addTask { await self.serverScene(of: squad) }
+            group.addTask {
+                try? await Task.sleep(for: wait)
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+
+    /// The squad's scene this week from the server, kept on this phone for the next launch.
+    private func serverScene(of squad: SquadID) async -> SceneTheme? {
+        guard let read = try? await api.scene(of: squad) else { return nil }
+        let scene = SceneTheme(rawValue: read.scene.rawValue) ?? .gym
+        KeptScene.save(scene, of: squad)
+        return scene
+    }
+
+    /// How long the loading screen waits for the squad's scene before opening on the kept one.
+    private static let sceneWait = Duration.seconds(3)
 }
