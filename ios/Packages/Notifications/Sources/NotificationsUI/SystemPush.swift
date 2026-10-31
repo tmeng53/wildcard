@@ -67,10 +67,8 @@ public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate,
     }
 }
 
-// iOS's completion handler, carried to the main actor and called there once. @unchecked Sendable:
-// it is only ever called from the main actor, once, after the delegate method returned, so no two
-// threads touch it.
-private struct MainThreadCompletion: @unchecked Sendable {
+// iOS's completion handler, carried to the main actor and called there once.
+private struct MainThreadCompletion: @unchecked Sendable {  // only called once, on the main actor
     let call: () -> Void
 
     init(_ call: @escaping () -> Void) {
