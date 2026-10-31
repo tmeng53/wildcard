@@ -16,6 +16,9 @@ public struct FeedView: View {
     @State private var model: FeedModel
     /// The post at the top of the list, set to open 动态 on one.
     @State private var position: CheckInID?
+    /// Whether 动态 is on screen: a post opened from the home while it isn't waits until it is,
+    /// as the tab stays alive behind another one.
+    @State private var isShown = false
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
@@ -55,11 +58,12 @@ public struct FeedView: View {
         // A held card's slide picks an emoji; the list stays put under it.
         .scrollDisabled(model.lifted)
         .refreshable { await model.load() }
-        .onChange(of: model.focus, initial: true) { _, focus in
-            guard let focus else { return }
-            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
-            model.focus = nil
+        .onChange(of: model.focus) { scrollToFocus() }
+        .onAppear {
+            isShown = true
+            scrollToFocus()
         }
+        .onDisappear { isShown = false }
         .overlayPreferenceValue(FeedAnchors.self) { anchors in
             FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)
         }
@@ -74,6 +78,13 @@ public struct FeedView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
         }
+    }
+
+    /// Scrolls to the post opened from the home, once 动态 is on screen.
+    private func scrollToFocus() {
+        guard isShown, let focus = model.focus else { return }
+        withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
+        model.focus = nil
     }
 
     @ViewBuilder private var content: some View {

@@ -22,7 +22,7 @@ final class ScheduleUITests: XCTestCase {
 
     func testThisWeekChangesTodayAndDaysStillToCome() {
         let app = launch()
-        let tabBar = app.buttons["tab.schedule"]
+        let tabBar = tabButton("tab.schedule", in: app)
         XCTAssertTrue(tabBar.isSelected)
         // The poster and the counts under it sit clear of the tab bar.
         let poster = find(app, "schedule.poster")
@@ -71,7 +71,7 @@ final class ScheduleUITests: XCTestCase {
 
     func testNextWeekChangesFreelyWithFoodGoals() {
         let app = launch()
-        let tabBar = app.buttons["tab.schedule"]
+        let tabBar = tabButton("tab.schedule", in: app)
         // The bar opens on 本周 with 下周 beside it, in view and tappable.
         let nextWeek = app.buttons["下周"]
         waitFor(nextWeek, "hittable == true", "下周 isn't in view", timeout: 10)
