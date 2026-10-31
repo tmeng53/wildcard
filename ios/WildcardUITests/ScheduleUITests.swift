@@ -22,7 +22,7 @@ final class ScheduleUITests: XCTestCase {
 
     func testThisWeekChangesTodayAndDaysStillToCome() {
         let app = launch()
-        let tabBar = app.buttons["tab.schedule"]
+        let tabBar = tabButton("tab.schedule", in: app)
         XCTAssertTrue(tabBar.isSelected)
         // The poster and the counts under it sit clear of the tab bar.
         let poster = find(app, "schedule.poster")
@@ -40,10 +40,11 @@ final class ScheduleUITests: XCTestCase {
         // The days before today stay as they are.
         XCTAssertFalse(lane(app, 1).isEnabled, "Tuesday can still change")
 
-        // Today's training day takes another sport, never 休息.
+        // Today's training day becomes a 休息日, no 请假条 needed, and a training day again.
         lane(app, 3).tap()
         XCTAssertTrue(app.buttons["schedule.pick.more"].waitForExistence(timeout: 10), "today's picks didn't open")
-        XCTAssertFalse(app.buttons["schedule.pick.rest"].exists, "today offers 休息")
+        app.buttons["schedule.pick.rest"].tap()
+        waitFor(lane(app, 3), "label CONTAINS '休息'", "today didn't turn to a rest day")
         app.buttons["schedule.pick.swim"].tap()
         waitFor(lane(app, 3), "label CONTAINS '游泳'", "today didn't turn to swimming")
         lane(app, 3).tap()
@@ -71,7 +72,7 @@ final class ScheduleUITests: XCTestCase {
 
     func testNextWeekChangesFreelyWithFoodGoals() {
         let app = launch()
-        let tabBar = app.buttons["tab.schedule"]
+        let tabBar = tabButton("tab.schedule", in: app)
         // The bar opens on 本周 with 下周 beside it, in view and tappable.
         let nextWeek = app.buttons["下周"]
         waitFor(nextWeek, "hittable == true", "下周 isn't in view", timeout: 10)

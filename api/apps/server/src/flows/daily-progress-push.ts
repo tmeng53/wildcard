@@ -12,19 +12,20 @@ import {
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
 
 import type { Log } from '../log.js';
+import { pushAlert } from '../push-copy.js';
 import { pushToday, type PushToday } from './daily-push-today.js';
 
 /** How many members' pushes are put together at once. */
 const AT_ONCE = 4;
 
 /**
- * Teammates who did something for a member, by kind (`reaction`, a nudge's `poke`): each
+ * Teammates who did something for a member, by kind (`reaction`, `comment`, a nudge's `poke`): each
  * person once per kind. The kind is the name the app's String Catalog keys the copy by.
  */
 export type Interactions = ReadonlyMap<string, ReadonlySet<string>>;
 
 /**
- * Where one sort of interaction comes from: reactions and nudges now, others as they land. A new
+ * Where one sort of interaction comes from: reactions, comments and nudges now, others as they land. A new
  * kind of interaction is one more source, or one more kind from an existing one; nothing else
  * in the daily push changes.
  */
@@ -34,15 +35,21 @@ export type InteractionSource = (query: {
   readonly until: Date;
 }) => Promise<Interactions>;
 
-/** The interactions sources built on check-ins: teammates' reactions, with any emoji. */
-export function reactionInteractions(checkIns: CheckIns): InteractionSource {
+/**
+ * The interactions source built on check-ins: teammates who reacted (`reaction`, with any emoji)
+ * and who commented (`comment`) on the member's posts.
+ */
+export function checkInInteractions(checkIns: CheckIns): InteractionSource {
   return async ({ member, since, until }) => {
-    const people = await checkIns.reactionsReceived({
-      member: CheckInMember.parse(member),
-      since,
-      until,
-    });
-    return new Map([['reaction', people]]);
+    const query = { member: CheckInMember.parse(member), since, until };
+    const [reacted, commented] = await Promise.all([
+      checkIns.reactionsReceived(query),
+      checkIns.commentsReceived(query),
+    ]);
+    return new Map([
+      ['reaction', reacted],
+      ['comment', commented],
+    ]);
   };
 }
 
@@ -57,6 +64,7 @@ export function nudgeInteractions(nudges: Nudges): InteractionSource {
  * kind someone sent is the one named.
  */
 const NAMED_KINDS = ['poke'] as const;
+type NamedKind = (typeof NAMED_KINDS)[number];
 
 export interface DailyProgressDependencies {
   readonly members: Members;
@@ -226,7 +234,7 @@ export function roomForToday(
 async function namedSender(
   members: Members,
   received: Interactions,
-): Promise<{ readonly kind: string; readonly nickname: string } | undefined> {
+): Promise<{ readonly kind: NamedKind; readonly nickname: string } | undefined> {
   for (const kind of NAMED_KINDS) {
     const senders = [...(received.get(kind) ?? [])].map((each) => ProfileMember.parse(each));
     if (senders.length === 0) continue;
@@ -270,24 +278,27 @@ export function dailyProgressNotification({
   readonly squadWeek: { readonly trainedDays: number; readonly plannedDays: number };
   readonly received: Interactions;
   /** The nudge's sender to name, and its kind. */
-  readonly named?: { readonly kind: string; readonly nickname: string } | undefined;
+  readonly named?: { readonly kind: NamedKind; readonly nickname: string } | undefined;
   /** Teammates' check-ins today, for the push's long-press view; left out when they couldn't be read. */
   readonly today?: PushToday | undefined;
 }): PushNotification {
   const people = new Set([...received.values()].flatMap((each) => [...each])).size;
-  const week = [String(squadWeek.trainedDays), String(squadWeek.plannedDays)];
+  const trained = String(squadWeek.trainedDays);
+  const planned = String(squadWeek.plannedDays);
   const others = named === undefined ? 0 : (received.get(named.kind)?.size ?? 1) - 1;
   const alert =
     named !== undefined
       ? others > 0
-        ? {
-            key: `push.dailyProgress.${named.kind}.more`,
-            args: [...week, named.nickname, String(others)],
-          }
-        : { key: `push.dailyProgress.${named.kind}`, args: [...week, named.nickname] }
+        ? pushAlert(`push.dailyProgress.${named.kind}.more`, [
+            trained,
+            planned,
+            named.nickname,
+            String(others),
+          ])
+        : pushAlert(`push.dailyProgress.${named.kind}`, [trained, planned, named.nickname])
       : people === 0
-        ? { key: 'push.dailyProgress', args: week }
-        : { key: 'push.dailyProgress.received', args: [...week, String(people)] };
+        ? pushAlert('push.dailyProgress', [trained, planned])
+        : pushAlert('push.dailyProgress.received', [trained, planned, String(people)]);
   return {
     alert,
     category: 'dailyProgress',

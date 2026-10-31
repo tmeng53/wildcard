@@ -61,6 +61,55 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(await backend.saves.count == 2)
 }
 
+@MainActor @Test func aPostSharedToNoSquadCountsOnlyForTheMember() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+
+    let outcome = try await today.post(run, sharedTo: [])
+    guard case .posted(let saved) = outcome else {
+        Issue.record("expected posted, got \(outcome)")
+        return
+    }
+    #expect(saved.audience.squads == [])
+    #expect(today.myStatus == .trained)
+    #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
+    #expect(today.home?.today.today.trained == 1)
+    #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
+    // A 请假条 after it is refused at once, as the server would.
+    await #expect(throws: CheckInError.alreadyTrained) {
+        try await today.post(.disclaimer(try Disclaimer("累")), sharedTo: [])
+    }
+}
+
+@MainActor @Test func aSharedTrainingAfterAPrivateDisclaimerCountsWhatTheSquadSaw() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+
+    _ = try await today.post(.disclaimer(try Disclaimer("累")), sharedTo: [])
+    _ = try await today.post(run)
+    #expect(today.myStatus == .trained)
+    #expect(today.home?.today.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
+    #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
+}
+
+@MainActor @Test func waitingPostsCountWhatTheSquadSees() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+
+    #expect(try await today.post(run, sharedTo: []) == .queued)
+    #expect(today.home?.today.squadWeek.trainedDays == 14)
+    #expect(today.home?.today.today.everyoneTrained == false)
+    #expect(try await today.post(run) == .queued)
+    #expect(today.home?.today.today.trained == 2)
+    #expect(today.home?.today.squadWeek.trainedDays == 15)
+    #expect(today.home?.today.myWeek.week.trainedDays == 2)
+}
+
 @MainActor @Test func offlineAPostWaitsCountedAndGoesOutOnceUnderItsID() async throws {
     let backend = ScriptedBackend()
     let outbox = MemoryOutbox()
@@ -121,7 +170,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(training.photos?.all.map(\.size) == Array(repeating: try PhotoSize(width: 1080, height: 1350), count: 3))
 }
 
-@MainActor @Test func aDisclaimerIsOnceADayAndNeverAfterTraining() async throws {
+@MainActor @Test func disclaimersAreAnyNumberADayButNeverAfterTraining() async throws {
     let backend = ScriptedBackend()
     let today = store(backend)
     await today.load()
@@ -130,9 +179,9 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(try await today.post(.disclaimer(try Disclaimer("加班到十点"))) == .queued)
     #expect(today.myStatus == .disclaimer)
     #expect(today.home?.today.today.disclaimer == 1)
-    await #expect(throws: CheckInError.disclaimerAlreadyPosted) {
-        try await today.post(.disclaimer(try Disclaimer("又加班")))
-    }
+    #expect(try await today.post(.disclaimer(try Disclaimer("又加班"))) == .queued)
+    #expect(today.myStatus == .disclaimer)
+    #expect(today.home?.today.today.disclaimer == 1)
 
     try await today.post(run)
     #expect(today.myStatus == .trained)

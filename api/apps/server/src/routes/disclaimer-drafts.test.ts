@@ -1,6 +1,7 @@
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -89,6 +90,7 @@ function appWith(model: LanguageModel, modelName?: string) {
         aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
+      comments: createPostgresCommentStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),

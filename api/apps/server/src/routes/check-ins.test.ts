@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -56,6 +57,7 @@ const app = createApp({
       aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: () => Promise.resolve(undefined),
@@ -227,11 +229,17 @@ describe('PUT /check-ins/{id}', () => {
       'application/problem+json',
       'CHECK_IN_ID_CONFLICT',
     ]);
-    expect(await put(randomUUID(), disclaimer('下雨'))).toStrictEqual([
-      409,
-      'application/problem+json',
-      'DISCLAIMER_ALREADY_POSTED',
-    ]);
+    // Any number of 请假条 a day.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${randomUUID()}`,
+          token: me.token,
+          body: disclaimer('下雨'),
+        })
+      ).status,
+    ).toBe(201);
     expect(
       await put(randomUUID(), { ...disclaimer('累'), audience: [randomUUID()] }),
     ).toStrictEqual([403, 'application/problem+json', 'SQUAD_NOT_JOINED']);
@@ -362,6 +370,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
           {
             checkIn: { ...saved, audience: [squad] },
             reactions: [{ member: me.userId, emoji: '🤤', reactedAt }],
+            comments: [],
             // Kept for installed builds from before #180, which fail to read the feed without it.
             replies: [],
           },
@@ -394,6 +403,75 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
     ]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 
+  it('keeps a post shared to no squad to its member', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const body = {
+      version: 1,
+      day,
+      createdAt,
+      audience: [],
+      kind: 'disclaimer',
+      disclaimer: { text: '累' },
+    };
+    expect(
+      (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
+    ).toBe(201);
+    const range = `from=${day}&to=${day}`;
+    // Builds from before sharing was optional can't read it, so they aren't sent it.
+    expect(
+      await call({ method: 'GET', path: `/me/check-ins?${range}`, token: me.token }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, checkIns: [] },
+    });
+    expect(
+      await call({
+        method: 'GET',
+        path: `/me/check-ins?${range}&unshared=include`,
+        token: me.token,
+      }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: {
+        version: 1,
+        checkIns: [
+          {
+            version: 1,
+            id,
+            member: me.userId,
+            day,
+            createdAt,
+            audience: [],
+            kind: 'disclaimer',
+            disclaimer: { text: '累' },
+          },
+        ],
+      },
+    });
+    expect((await call({ method: 'GET', path: `/check-ins/${id}`, token: me.token })).status).toBe(
+      200,
+    );
+    expect(
+      (await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).status,
+    ).toBe(404);
+    expect(
+      await call({
+        method: 'GET',
+        path: `/squads/${squad}/check-ins?${range}`,
+        token: friend.token,
+      }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, posts: [] },
+    });
+  });
+
   it('refuses a range of more than 31 days, or one that runs backwards', async () => {
     const me = await signUp();
     const reasons = await Promise.all(
@@ -422,6 +500,99 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
         })
       ).status,
     ).toBe(200);
+  });
+});
+
+describe('GET /me/posts', () => {
+  it('pages through the member’s own check-ins with their reactions and counts', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const earlier = new Date(Date.now() - 60 * 60_000);
+    const later = new Date(Date.now() - 60_000);
+    const put = async (when: Date, fields: Record<string, unknown>) => {
+      const id = randomUUID();
+      const body = {
+        version: 1,
+        // The member has no time zone, so any day near the moment is taken.
+        day: when.toISOString().slice(0, 10),
+        createdAt: when.toISOString(),
+        audience: [squad],
+        ...fields,
+      };
+      expect(
+        (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
+      ).toBe(201);
+      return { ...body, id, member: me.userId };
+    };
+    const run = await put(earlier, { kind: 'trained', training: { sport: 'run', minutes: 30 } });
+    const meal = await put(later, { kind: 'cheatMeal', meal: { caption: '火锅' } });
+    const reacted = await call({
+      method: 'PUT',
+      path: `/check-ins/${run.id}/reactions/mine`,
+      token: friend.token,
+      body: { version: 1, emoji: '💪' },
+    });
+    const { reactedAt } = z.object({ reactedAt: z.string() }).parse(reacted.body);
+
+    const first = await call({ method: 'GET', path: '/me/posts?limit=1', token: me.token });
+    const Page = z.object({ next: z.string().optional() });
+    const { next } = Page.parse(first.body);
+    expect(first).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: {
+        version: 1,
+        posts: [{ checkIn: meal, reactions: [], comments: [] }],
+        next,
+        counts: { posts: 2, reactions: 1 },
+      },
+    });
+    expect(
+      await call({
+        method: 'GET',
+        path: `/me/posts?limit=1&after=${String(next)}`,
+        token: me.token,
+      }),
+    ).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: {
+        version: 1,
+        posts: [
+          {
+            checkIn: run,
+            reactions: [{ member: friend.userId, emoji: '💪', reactedAt }],
+            comments: [],
+          },
+        ],
+      },
+    });
+    const trained = await call({ method: 'GET', path: '/me/posts?kind=trained', token: me.token });
+    expect(z.object({ posts: z.array(z.unknown()) }).parse(trained.body).posts).toHaveLength(1);
+    // Someone else's history holds none of them.
+    expect(
+      (await call({ method: 'GET', path: '/me/posts', token: friend.token })).body,
+    ).toStrictEqual({
+      version: 1,
+      posts: [],
+      counts: { posts: 0, reactions: 0 },
+    });
+  });
+
+  it('refuses a kind, limit or `after` it doesn’t know, and a caller who isn’t signed in', async () => {
+    const me = await signUp();
+    const reasons = await Promise.all(
+      ['kind=nap', 'limit=0', 'limit=61', 'after=nope'].map(async (query) => {
+        const { status, body } = await call({
+          method: 'GET',
+          path: `/me/posts?${query}`,
+          token: me.token,
+        });
+        return [status, z.object({ reason: z.string() }).parse(body).reason];
+      }),
+    );
+    expect(reasons).toStrictEqual(Array(4).fill([400, 'REQUEST_INVALID']));
+    expect((await call({ method: 'GET', path: '/me/posts' })).status).toBe(401);
   });
 });
 

@@ -120,7 +120,8 @@ final class SignUpUITests: XCTestCase {
                 checkedCard = true
             }
         }
-        XCTAssertTrue(app.buttons["tab.today"].waitForExistence(timeout: Self.wait), "home never took over")
+        // 上场 shows the tab bar too, so home is its own 打卡.
+        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "home never took over")
         keepScreenshot(named: "48-signup-home")
     }
 
@@ -210,7 +211,8 @@ final class SignUpUITests: XCTestCase {
         confirm.tap()
 
         // The carton opens, then home takes over on the pool and the member drops onto it.
-        let today = app.buttons["tab.today"]
+        // Home's own 打卡, there as the drop starts; the tab bar only comes back after it.
+        let today = app.buttons["today.checkin"]
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "home never took over")
         // Frames a few times a second, to review the drop against the mockup.
         let start = Date()

@@ -140,11 +140,14 @@ final class TodayUITests: XCTestCase {
     /// A caption's bubble opens its post in 动态, on screen.
     private func assertOpensItsPost(_ bubble: XCUIElement, saying line: String, in app: XCUIApplication) {
         bubble.tap()
-        XCTAssertTrue(
-            app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "tapping the bubble didn't open 动态")
+        // 动态 opens scrolled to the post, so its title may be off screen: the tab says it opened.
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "tapping the bubble didn't open 动态")
         let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
         waitFor(post, "isHittable == true", "动态 didn't open on my post")
+        if !post.isHittable {
+            XCTFail("my post is at \(post.frame), the tab bar at \(app.buttons["tab.feed"].frame)")
+        }
         keepScreenshot(named: "48-feed-my-post")
     }
 

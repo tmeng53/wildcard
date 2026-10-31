@@ -25,7 +25,7 @@ struct DeleteAccountView: View {
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .padding(.top, Space.l)
                         .padding(.bottom, Space.xs)
-                    line(Text("外卡运动员、昵称和口头禅会删掉", bundle: .module))
+                    line(Text("外卡运动员和昵称会删掉", bundle: .module))
                     line(Text("所有打卡、照片和请假条会删掉", bundle: .module))
                     if let squadName = model.overview?.squadName {
                         line(Text("你会离开\(squadName)", bundle: .module))
@@ -76,14 +76,11 @@ struct DeleteAccountView: View {
                 Task { await model.deleteAccount() }
             } label: {
                 Label {
-                    if model.deletion == .deleting {
-                        Text("正在注销…", bundle: .module)
-                    } else {
-                        Text("用 Apple 确认注销", bundle: .module)
-                    }
+                    Text("用 Apple 确认注销", bundle: .module)
                 } icon: {
                     Image(systemName: "apple.logo")
                 }
+                .loadingLabel(model.deletion == .deleting)
             }
             .buttonStyle(AppleButtonStyle(.outlined))
             .disabled(!model.deletion.canConfirm)

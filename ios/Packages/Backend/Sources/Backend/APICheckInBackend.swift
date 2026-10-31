@@ -35,7 +35,8 @@ public struct APICheckInBackend: CheckInBackend {
                 _ = try await api.save(Profile(timeZone: .current))
                 signedIn = try await api.meWire()
             }
-            guard let squad = try await api.mySquadsWire().squads.first else {
+            let squads = try await api.mySquadsWire().squads
+            guard let squad = squads.first else {
                 try? FileManager.default.removeItem(at: saved)
                 return nil
             }
@@ -47,7 +48,8 @@ public struct APICheckInBackend: CheckInBackend {
             async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -2), through: day.adding(days: 2))
             async let week = api.myCheckInsWire(from: day.weekStart, through: day)
             let copy = SavedHome(
-                version: 1, member: signedIn, squad: squad, today: try await today, plan: try await plan,
+                version: 1, member: signedIn, squad: squad, squads: squads, today: try await today,
+                plan: try await plan,
                 checkIns: try await checkIns, week: try await week)
             let home = try copy.home(api: api)
             try? DeviceJSON.write(try DeviceJSON.encoder.encode(copy), to: saved)
@@ -93,6 +95,9 @@ struct SavedHome: Codable {
     let version: Int
     let member: Components.Schemas.Me
     let squad: Components.Schemas.Squad
+    /// Every squad the member is in, `squad` first; missing from a copy kept before posts could
+    /// be shared to more than one.
+    let squads: [Components.Schemas.Squad]?
     let today: Components.Schemas.SquadToday
     let plan: Components.Schemas.WeeklyPlan
     /// The squad's, from two days before the member's day to two days after.
@@ -105,7 +110,9 @@ struct SavedHome: Codable {
         let zone = member.profile.flatMap { TimeZone(identifier: $0.timeZone) } ?? .current
         return try api.read { () throws(ContractsError) in
             Home(
-                member: MemberID(id), timeZone: zone, squad: try Squad(squad), today: try SquadToday(today),
+                member: MemberID(id), timeZone: zone, squad: try Squad(squad),
+                squads: try squads?.map { wire throws(ContractsError) in try Squad(wire) },
+                today: try SquadToday(today),
                 plan: try WeeklyPlan(plan), checkIns: try Self.merged(checkIns, week))
         }
     }
@@ -161,7 +168,6 @@ extension CheckInError {
             case .unavailable: .notSent
             case .account(.signedOut), .account(.credentialRejected), .account(.canceled): .signedOut
             case .account: .notSent
-            case .refused(.disclaimerAlreadyPosted): .disclaimerAlreadyPosted
             case .refused(.squadNotJoined): .notInSquad
             case .refused(.checkInOutOfTime): .outOfTime
             case .refused(.photoRejected): .photoRejected
