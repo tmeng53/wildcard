@@ -10,6 +10,30 @@ enum Push {
 
     /// Pause after a post before the permission prompt, so the cheer plays out first.
     static let promptDelay = Duration.seconds(1.5)
+
+    #if DEBUG
+    /// Shows an APNs payload as iOS would, from the app's own String Catalog: its `loc-key` and
+    /// `loc-args`, category, thread and interruption level, with the payload as `userInfo` so a
+    /// tap reaches the app as a pushed one does. The simulator can't take a push from APNs here,
+    /// so the UI tests deliver the server's samples this way.
+    static func deliver(sample payload: [String: Any]) async {
+        let center = UNUserNotificationCenter.current()
+        guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true,
+            let aps = payload["aps"] as? [String: Any],
+            let alert = aps["alert"] as? [String: Any],
+            let key = alert["loc-key"] as? String
+        else { return }
+        let content = UNMutableNotificationContent()
+        let format = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+        content.body = String(format: format, arguments: alert["loc-args"] as? [String] ?? [])
+        content.categoryIdentifier = aps["category"] as? String ?? ""
+        content.threadIdentifier = aps["thread-id"] as? String ?? ""
+        content.interruptionLevel = aps["interruption-level"] as? String == "passive" ? .passive : .active
+        content.userInfo = payload
+        let soon = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+        try? await center.add(UNNotificationRequest(identifier: key, content: content, trigger: soon))
+    }
+    #endif
 }
 
 /// The app delegate, for what only it receives: the APNs token and taps on notifications.
@@ -24,6 +48,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // Set before launching ends, so a tap that launched the app is delivered.
         UNUserNotificationCenter.current().delegate = taps
         Task { await Push.registration.launched() }
+        #if DEBUG
+        if let sample = LaunchOptions.pushSample { Task { await Push.deliver(sample: sample) } }
+        #endif
         return true
     }
 

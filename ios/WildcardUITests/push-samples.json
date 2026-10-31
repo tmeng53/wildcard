@@ -1,0 +1,147 @@
+{
+  "push.dailyProgress": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.dailyProgress",
+        "loc-args": [
+          "0",
+          "40"
+        ]
+      },
+      "category": "dailyProgress",
+      "thread-id": "dailyProgress",
+      "interruption-level": "passive",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "dailyProgress",
+      "day": "2026-10-23",
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "squadTrainedDays": 0,
+      "squadPlannedDays": 40,
+      "received": {}
+    }
+  },
+  "push.dailyProgress.received": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.dailyProgress.received",
+        "loc-args": [
+          "23",
+          "40",
+          "3"
+        ]
+      },
+      "category": "dailyProgress",
+      "thread-id": "dailyProgress",
+      "interruption-level": "passive",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "dailyProgress",
+      "day": "2026-10-23",
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "squadTrainedDays": 23,
+      "squadPlannedDays": 40,
+      "received": {
+        "reaction": 3
+      }
+    }
+  },
+  "push.dailyProgress.poke": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.dailyProgress.poke",
+        "loc-args": [
+          "23",
+          "40",
+          "超超超超超超超超超超超超"
+        ]
+      },
+      "category": "dailyProgress",
+      "thread-id": "dailyProgress",
+      "interruption-level": "passive",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "dailyProgress",
+      "day": "2026-10-23",
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "squadTrainedDays": 23,
+      "squadPlannedDays": 40,
+      "received": {
+        "reaction": 3,
+        "poke": 1
+      }
+    }
+  },
+  "push.dailyProgress.poke.more": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.dailyProgress.poke.more",
+        "loc-args": [
+          "23",
+          "40",
+          "超超超超超超超超超超超超",
+          "7"
+        ]
+      },
+      "category": "dailyProgress",
+      "thread-id": "dailyProgress",
+      "interruption-level": "passive",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "dailyProgress",
+      "day": "2026-10-23",
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "squadTrainedDays": 23,
+      "squadPlannedDays": 40,
+      "received": {
+        "reaction": 3,
+        "poke": 8
+      }
+    }
+  },
+  "push.weeklyAwards.ready": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.weeklyAwards.ready"
+      },
+      "category": "weeklyAwards",
+      "thread-id": "weekly-awards",
+      "interruption-level": "active",
+      "sound": "default"
+    },
+    "event": {
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "weekStart": "2026-10-19"
+    }
+  },
+  "push.weeklyAwards.stuck": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.weeklyAwards.stuck",
+        "loc-args": [
+          "队队队队队队队队队队队队队队队队队队队队",
+          "12",
+          "429 You exceeded your current quota, please check your plan and billing details."
+        ]
+      },
+      "category": "weeklyAwardsStuck",
+      "thread-id": "weekly-awards-stuck",
+      "interruption-level": "active",
+      "sound": "default"
+    },
+    "event": {
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "weekStart": "2026-10-19"
+    }
+  }
+}

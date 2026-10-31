@@ -196,9 +196,16 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
-                delegate.opened = { [today, $tab] _ in
-                    $tab.wrappedValue = .today
-                    Task { await today.load() }
+                // As on the real backend: the awards push opens 动态, where the 战报 is, and any
+                // other push 今天.
+                delegate.opened = { [today, $tab] opened in
+                    switch opened {
+                    case .weeklyAwards:
+                        $tab.wrappedValue = .feed
+                    case .other:
+                        $tab.wrappedValue = .today
+                        Task { await today.load() }
+                    }
                 }
             }
         }
