@@ -22,9 +22,6 @@ extension TodayModel {
         func elapsed(at date: Date) -> Double { date.timeIntervalSince(start) }
     }
 
-    /// Whether the squad is dropping in.
-    public var isArriving: Bool { arrival != nil }
-
     /// The end of every scene pick: the picked scene has just filled the screen, and the squad
     /// drops onto it one after another, me last, then the card, 打卡 and the tab bar come back
     /// (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」). The drop's
