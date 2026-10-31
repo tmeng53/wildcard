@@ -99,7 +99,7 @@ private struct EmojiBar: View {
     }
 }
 
-/// Every emoji, laid over the push's bottom, since a push has no keyboard: the bar's six first.
+/// Every emoji 动态's ＋ offers, laid over the push's bottom, since a push has no keyboard.
 private struct EmojiPanel: View {
     let mine: Emoji?
     let pick: (Emoji, CGPoint) -> Void
@@ -114,7 +114,7 @@ private struct EmojiPanel: View {
                 SectionLabel(Text("全部", bundle: .module))
                     .padding(.horizontal, Space.xs - 2)
                 LazyVGrid(columns: Self.columns, spacing: 0) {
-                    ForEach(EmojiCatalog.all, id: \.self) { emoji in
+                    ForEach(Emoji.all, id: \.self) { emoji in
                         EmojiButton(emoji: emoji, size: Self.cell * 0.65, selected: emoji == mine, pick: pick)
                             .frame(height: Self.cell)
                     }
@@ -175,18 +175,6 @@ private struct EmojiButton: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("dailyPush.emoji.\(emoji.text)")
     }
-}
-
-/// The emoji ＋ offers: the bar's six, those with moves of their own, then everyday ones.
-enum EmojiCatalog {
-    static let all: [Emoji] =
-        (Emoji.quick.map(\.text) + [
-            "😎", "🏆", "👑", "🔥", "👏", "🎉", "🫶", "🥹", "🤣", "😋", "😱", "😳", "😤", "💩", "🙈", "🤔",
-            "😀", "😁", "😆", "😅", "🥰", "😍", "🤩", "😘", "😜", "🤪", "🤗", "🫡", "😏", "🙄", "😴", "🥵",
-            "🥶", "🤯", "🥳", "🤓", "🥺", "😭", "😩", "🥱", "💀", "🤡", "👻", "💯", "💥", "💦", "👋", "👌",
-            "✌️", "👍", "🙌", "🙏", "🦵", "🧠", "👀", "⭐", "✨", "🥇", "🏃", "🏋️", "🧘", "🏊", "🚴", "🥗",
-            "🍔", "🧋", "🍜", "☕", "💤",
-        ]).compactMap { try? Emoji($0) }
 }
 
 /// The emoji flying from the bar to its author: up in an arc, a little bigger at the top, then

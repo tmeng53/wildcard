@@ -43,7 +43,8 @@ public final class DailyPushStore {
         let wish = Wish(emoji: emoji == before.reactions.kind(of: push.viewer) ? nil : emoji, since: Timestamp(now()))
         push.posts[index].reactions = wish.applied(to: before.reactions, by: push.viewer)
         wishes[id] = wish
-        if !sendingPosts.contains(id) {
+        // Marked here, not when the task starts, so a second pick in the same turn waits its turn.
+        if sendingPosts.insert(id).inserted {
             sending = Task { await send(id) }
         }
         return wish.emoji.map(MoveID.init)
@@ -52,7 +53,6 @@ public final class DailyPushStore {
     /// Sends the post's wishes one at a time until none is left: a pick made while one is going
     /// out goes next, so the server never takes an older pick after a newer one.
     private func send(_ id: CheckInID) async {
-        sendingPosts.insert(id)
         defer { sendingPosts.remove(id) }
         while let wish = wishes[id] {
             do throws(DailyPushError) {

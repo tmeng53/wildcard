@@ -144,6 +144,15 @@ private actor HeldSender: ReactionSender {
     #expect(store.mine(on: id(slip))?.text == "😂")
 }
 
+@MainActor @Test func twoPicksInOneTurnGoOutOnceAsTheLatest() async throws {
+    let sender = Sender()
+    let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: sender, now: { noon })
+    try store.pick(try Emoji("💪"), on: id(slip))
+    try store.pick(try Emoji("😂"), on: id(slip))
+    await store.sending?.value
+    #expect(await sender.sent == ["😂"])
+}
+
 @MainActor @Test func nobodyReactsToAPostNotInThePush() async throws {
     let store = DailyPushStore(push: try DailyPush(event: Data(event.utf8)), sender: Sender(), now: { noon })
     #expect(throws: DailyPushError.unknownPost) { try store.pick(try Emoji("❤️"), on: id(meID)) }

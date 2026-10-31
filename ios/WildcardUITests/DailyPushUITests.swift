@@ -50,8 +50,8 @@ final class DailyPushUITests: XCTestCase {
         settle()
         keepScreenshot(named: "63-push-react-all")
 
-        app.buttons["dailyPush.emoji.🔥"].tap()
-        waitFor(react, "label == '我的回应 🔥，换一个'", "picking from every emoji didn't react")
+        app.buttons["dailyPush.emoji.😀"].tap()
+        waitFor(react, "label == '我的回应 😀，换一个'", "picking from every emoji didn't react")
 
         app.buttons["dailyPush.more"].tap()
         waitFor(app.staticTexts["dailyPush.opened"], "label == 'feed'", "「还有 2 条」 didn't open 动态")
