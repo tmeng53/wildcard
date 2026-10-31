@@ -36,7 +36,9 @@ struct MainTabs: View {
 
     var body: some View {
         AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar) { tab in
-            screen(tab)
+            // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
+            // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
+            if tab == selection { screen(tab) }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
@@ -116,11 +118,9 @@ struct MainTabs: View {
                 selection = .feed
             }
         case .feed:
-            FeedView(model: feed, header: AnyView(RecapTile(recap: recap)), isShown: selection == .feed) {
-                selection = .today
-            }
-            .environment(\.sceneTheme, today.scene)
-            .task { await recap.refresh() }
+            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
+                .environment(\.sceneTheme, today.scene)
+                .task { await recap.refresh() }
         case .schedule:
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)

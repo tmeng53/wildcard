@@ -16,8 +16,8 @@ public struct TodayView: View {
     @State private var model: TodayModel
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
-    /// The day picked on the card's second page; nil shows today. Leaving home forgets it: going
-    /// to another tab or to the background clears it.
+    /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
+    /// view is made anew on coming back to the tab, and going to the background clears it.
     @State private var pickedDay: Int?
     /// How far above the screen's bottom edge the app's tab bar reaches, which 打卡 stands on:
     /// measured while the bar shows and kept while it hides, so 打卡 stays put when the burst opens.
@@ -84,7 +84,6 @@ public struct TodayView: View {
             if model.showsTabBar { barRoom = room }
         }
         .task { await model.load() }
-        .onDisappear { pickedDay = nil }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
