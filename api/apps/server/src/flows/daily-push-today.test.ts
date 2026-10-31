@@ -64,7 +64,6 @@ function post(author: MemberId, minute: number): SquadPost {
     reactions: everyone
       .filter((member) => member !== author)
       .map((member, at) => ({ member, emoji: family, reactedAt: new Date(at * 1000) })),
-    replies: [],
   };
 }
 
