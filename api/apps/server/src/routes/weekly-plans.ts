@@ -199,8 +199,8 @@ export function weeklyPlans(deps: {
     summary: 'Save the signed-in member’s typical week',
     description:
       'Replaces the typical week; repeating a save gives the same result. The first one, made ' +
-      'at sign-up, is this week’s plan too; a change applies from next week, so this week ' +
-      'keeps its plan. Weeks saved for themselves keep theirs.',
+      'in the week the member joined, is that week’s plan too; any other change applies from ' +
+      'next week, so this week keeps its plan. Weeks saved for themselves keep theirs.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {

@@ -13023,7 +13023,7 @@ public enum Operations {
     }
     /// Save the signed-in member’s typical week
     ///
-    /// Replaces the typical week; repeating a save gives the same result. The first one, made at sign-up, is this week’s plan too; a change applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    /// Replaces the typical week; repeating a save gives the same result. The first one, made in the week the member joined, is that week’s plan too; any other change applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
     ///
     /// - Remark: HTTP `PUT /me/plan-template`.
     /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.

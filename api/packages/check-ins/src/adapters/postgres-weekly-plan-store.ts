@@ -19,16 +19,13 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
     },
 
     async templateFor(member, weekStart) {
-      // The latest applying from the week or before; failing that, for a week before the first
-      // one, the first one.
       const row = await db
         .selectFrom('plan_templates')
         .select('payload')
         .where('member_id', '=', member)
-        .orderBy(sql`from_week <= ${weekStart}`, 'desc')
-        .orderBy(sql`case when from_week <= ${weekStart} then from_week end desc nulls last`)
-        // Rows only ever apply from the same week or a later one than the row before.
-        .orderBy(sql`case when from_week <= ${weekStart} then -id else id end`)
+        .where('from_week', '<=', weekStart)
+        .orderBy('from_week', 'desc')
+        .orderBy('id', 'desc')
         .limit(1)
         .executeTakeFirst();
       return row === undefined ? undefined : StoredPlan.parse(row.payload).days;

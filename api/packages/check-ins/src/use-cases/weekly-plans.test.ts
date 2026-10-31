@@ -149,6 +149,20 @@ describe('the typical week', () => {
     expect((await plans.find({ member, weekStart: nextWeek })).days).toStrictEqual(mine);
   });
 
+  it('made first after the join week applies from next week; earlier weeks keep the default', async () => {
+    const member = await newMember({ joinedAt: new Date('2026-10-07T17:00:00.000Z') });
+    await plans.saveTemplate({ member, days: mine });
+    const theDefault = [train, train, rest, train, train, train, rest];
+    expect(await plans.find({ member, weekStart: thisWeek })).toMatchObject({
+      days: theDefault,
+      source: 'default',
+    });
+    expect(await plans.find({ member, weekStart: nextWeek })).toMatchObject({
+      days: mine,
+      source: 'template',
+    });
+  });
+
   it('logs each change once, with the week it applies from', async () => {
     const member = await newMember();
     await plans.saveTemplate({ member, days: mine });

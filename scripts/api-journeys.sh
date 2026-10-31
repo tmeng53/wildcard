@@ -372,8 +372,28 @@ if want weekly-plan; then
   later="$(days_after "$monday" 14)"
   call GET "/me/weekly-plans/$later" "$planner_token"
   expect 200
-  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"carriedOver\",$saved]" ] || fail "the week after should carry next week's plan over: $body"
-  echo "weekly-plan: the week after ($later) carries it over"
+  [ "$(jq -c .source <<<"$body")" = '"default"' ] || fail "next week's own plan shouldn't reach the week after: $body"
+  typical='{"version":1,"days":[{"kind":"train","sport":"swim"},{"kind":"rest"},{"kind":"train"},{"kind":"rest"},{"kind":"train","sport":"run"},{"kind":"rest"},{"kind":"rest"}]}'
+  call PUT /me/plan-template "$planner_token" "$typical"
+  expect 200
+  template="$(jq -c .days <<<"$body")"
+  call GET /me/plan-template "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"saved\",$template]" ] || fail "the typical week should read back: $body"
+  call GET "/me/weekly-plans/$later" "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"template\",$template]" ] || fail "the week after should follow the typical week: $body"
+  call GET "/me/weekly-plans/$monday" "$planner_token"
+  expect 200
+  [ "$(jq -c .source <<<"$body")" = '"template"' ] || fail "the first typical week should be this week's plan too: $body"
+  call GET "/me/weekly-plans/$next" "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"saved\",$saved]" ] || fail "next week should keep its own plan: $body"
+  call PUT /me/plan-template "$planner_token" "$typical"
+  expect 200
+  templates="$(psql "$DB_URL" -tAc "select count(*) from public.plan_templates where member_id = '$planner'")"
+  [ "$templates" = 1 ] || fail "saving the same typical week twice should log once: $templates rows"
+  echo "weekly-plan: the typical week saved and logged once; this week and the week after ($later) follow it, next week keeps its own"
 
   call PUT "/me/weekly-plans/$(days_after "$monday" -7)" "$planner_token" "$plan"
   expect 400 WEEK_OVER

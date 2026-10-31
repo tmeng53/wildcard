@@ -19,8 +19,8 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try [PlanDay](wire: wire.days) }
     }
 
-    /// Saves the member's typical week. The first, made at sign-up, is this week's plan too; a
-    /// change applies from next week.
+    /// Saves the member's typical week. The first, made in the week they joined, is that week's
+    /// plan too; any other change applies from next week.
     public func saveTemplate(_ days: [PlanDay]) async throws(APIError) {
         _ = try await call { try await client.saveMyPlanTemplate(body: .json(.init(days))).ok }
     }
