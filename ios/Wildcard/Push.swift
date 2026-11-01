@@ -1,3 +1,6 @@
+import Backend
+import DailyPushDomain
+import DailyPushUI
 import NotificationsDomain
 import NotificationsUI
 import UIKit
@@ -10,6 +13,11 @@ enum Push {
 
     /// Pause after a post before the permission prompt, so the cheer plays out first.
     static let promptDelay = Duration.seconds(1.5)
+
+    /// Where the 6pm push's view asked to open the app: 动态, 打卡, or nil for a plain tap.
+    static func takeDestination() -> PushDestination? {
+        AppGroup.defaults.map(PushDestinations.init).flatMap { $0.take(at: Date()) }
+    }
 
     #if DEBUG
     /// Shows the payload `-uitest-push` passed (if any) as iOS would, from the app's own String
@@ -42,13 +50,29 @@ enum Push {
 final class AppDelegate: NSObject, UIApplicationDelegate {
     /// What a tapped notification does; the scene sets it.
     var opened: (OpenedNotification) -> Void = { _ in }
-    private lazy var taps = NotificationTaps { [weak self] in self?.opened($0) }
+    /// Where the 6pm push's view asked to go, kept until the tabs take it: a tap that launched
+    /// the app comes before they are there.
+    private var destination: PushDestination?
+    private lazy var taps = NotificationTaps { [weak self] in
+        self?.destination = Push.takeDestination()
+        self?.opened($0)
+    }
+
+    /// Where the last tapped notification asked to go, once.
+    func takeDestination() -> PushDestination? {
+        defer { destination = nil }
+        return destination
+    }
 
     func application(
         _ application: UIApplication, didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         // Set before launching ends, so a tap that launched the app is delivered.
         UNUserNotificationCenter.current().delegate = taps
+        // The 6pm push opens into today's check-ins (its content extension, by this category).
+        UNUserNotificationCenter.current().setNotificationCategories([
+            UNNotificationCategory(identifier: "dailyProgress", actions: [], intentIdentifiers: [])
+        ])
         Task { await Push.registration.launched() }
         #if DEBUG
         Task { await Push.deliverLaunchSample() }
