@@ -134,6 +134,10 @@ struct MainTabs: View {
                     squad: { showsSquad = true },
                     pastRecaps: { selection = .feed },
                     editCharacter: editCharacter,
+                    weeklyTemplate: {
+                        schedule.showTemplate()
+                        selection = .schedule
+                    },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
             )
             .accentTone(.brand)

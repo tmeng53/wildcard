@@ -56,8 +56,13 @@ public final class ScheduleModel {
     private(set) var saving = Saving.idle
     private var shares = 0
 
-    public init(store: ScheduleStore) {
+    /// How long 只改了这一周 · 也改到模板 stays after a week's change before it goes by itself.
+    let templateOfferHold: Duration
+
+    /// `templateOfferHold`: longer only where UI tests need time to find the offer.
+    public init(store: ScheduleStore, templateOfferHold: Duration = .seconds(5)) {
         self.store = store
+        self.templateOfferHold = templateOfferHold
         makePlayer()
     }
 

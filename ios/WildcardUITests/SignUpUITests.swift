@@ -97,6 +97,8 @@ final class SignUpUITests: XCTestCase {
         XCTAssertLessThanOrEqual(count.frame.maxY, rest.frame.minY, "the week's total is under the choices")
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
         XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
+        XCTAssertTrue(app.staticTexts["week.note"].exists, "本周目标 doesn't say it is the 每周模板")
+        XCTAssertTrue(app.buttons["week.day.0"].isEnabled, "Monday can't change on the 每周模板")
         rest.tap()
         settle()
         keepScreenshot(named: "46-signup-week-changed")
@@ -125,8 +127,8 @@ final class SignUpUITests: XCTestCase {
         keepScreenshot(named: "48-signup-home")
     }
 
-    /// Making a squad, skipping sports and the week, in English. Sign-up starts on a Monday, so
-    /// no day is over yet, and with no sport picked the default plan trains one day: 1/7.
+    /// Making a squad, skipping sports and the week, in English. With no sport picked the 每周模板
+    /// trains one day: 1/7.
     func testStartingASquadInEnglish() {
         let app = launch(language: "en")
         let signIn = app.buttons["signup.signIn"]

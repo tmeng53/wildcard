@@ -112,6 +112,21 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
     }
 
+    /// 设置's 每周模板 row says how many days it trains and opens 出赛表 on it.
+    func testWeeklyTemplateRowOpensTheTemplate() {
+        let app = launch(language: "zh-Hans")
+        let settingsButton = app.buttons["me.settings"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
+        settingsButton.tap()
+        let row = app.buttons["me.weeklyTemplate"]
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 每周模板 row")
+        XCTAssertTrue(row.label.contains("每周 5 天"), "the row doesn't count the template's days: \(row.label)")
+        row.tap()
+        let note = app.descendants(matching: .any)["schedule.template.note"]
+        XCTAssertTrue(note.waitForExistence(timeout: 30), "出赛表 didn't open on the 每周模板")
+        XCTAssertTrue(app.buttons["schedule.template"].isSelected, "the 每周模板 chip isn't the one selected")
+    }
+
     /// A change that can't be saved flips back and says so; a delete that fails can be tried again.
     func testFailuresSayWhatHappened() {
         let app = launch(language: "zh-Hans", extra: ["-uitest-me-fails"])

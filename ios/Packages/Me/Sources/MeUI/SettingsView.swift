@@ -5,7 +5,7 @@ import MeDomain
 import SwiftUI
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
-/// small group labels (小队, 偏好, 关于, 账号), with no icons and no chevrons, and an ink switch.
+/// small group labels (小队, 偏好 with the 每周模板, 关于, 账号), with no icons and no chevrons, and an ink switch.
 /// Signing out and deleting the account come last.
 struct SettingsView: View {
     @Bindable var model: MeModel
@@ -90,6 +90,11 @@ struct SettingsView: View {
 
     private var preferencesGroup: some View {
         MenuGroup(Text("偏好", bundle: .module)) {
+            ListRow(Text("每周模板", bundle: .module), value: templateValue, showsChevron: false) {
+                close()
+                destinations.weeklyTemplate()
+            }
+            .accessibilityIdentifier("me.weeklyTemplate")
             SwitchRow(
                 Text("通知", bundle: .module),
                 isOn: Binding(
@@ -106,6 +111,11 @@ struct SettingsView: View {
             .accessibilityIdentifier("me.language")
             .languagePicker(isPresented: $isPickingLanguage)
         }
+    }
+
+    /// 每周 N 天, once the 每周模板 has loaded.
+    private var templateValue: Text? {
+        model.overview?.templateDays.map { Text("每周 \($0) 天", bundle: .module) }
     }
 
     private var aboutGroup: some View {

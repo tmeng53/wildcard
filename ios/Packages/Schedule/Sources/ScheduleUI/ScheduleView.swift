@@ -29,8 +29,6 @@ public struct ScheduleView: View {
     private static let posterID = "schedule.posterFrame"
     /// How long 没存上 stays before it goes.
     private let failedNoteHold: Duration = .seconds(5)
-    /// How long 只改了这一周 · 也改到模板 stays after a week's change.
-    private let templateOfferHold: Duration = .seconds(5)
 
     public init(model: ScheduleModel) {
         self.model = model
@@ -201,7 +199,9 @@ public struct ScheduleView: View {
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: store.templateOffer)
         // The offer goes by itself after a few seconds; another change brings it back.
         .task(id: store.templateOffer) {
-            guard store.templateOffer != nil, (try? await Task.sleep(for: templateOfferHold)) != nil else { return }
+            guard store.templateOffer != nil, (try? await Task.sleep(for: model.templateOfferHold)) != nil else {
+                return
+            }
             store.dismissTemplateOffer()
         }
         .transition(.opacity)
@@ -336,7 +336,7 @@ extension ScheduleView {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [
             CategoryBarItem(
-                id: .template, title: Text("每周模板", bundle: .module), systemImage: ScheduleLabels.templateSymbol,
+                id: .template, title: Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
                 startsGroup: true, accessibilityIdentifier: "schedule.template")
         ]
     }

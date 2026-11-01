@@ -31,7 +31,9 @@ import Testing
             == MeOverview(
                 character: MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama),
                 joinedAt: joinedAt.date,
-                counts: .zero, week: week, squadName: "早八健身", dailyPushOn: true, squadPlace: 1))
+                counts: .zero, week: week, squadName: "早八健身", dailyPushOn: true, squadPlace: 1,
+                // The default 每周模板, since this member never saved one.
+                templateDays: 5))
 
     try await service.setDailyPush(false)
     #expect(try await service.overview().dailyPushOn == false)

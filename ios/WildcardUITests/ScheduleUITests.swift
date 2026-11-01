@@ -11,7 +11,7 @@ final class ScheduleUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-tab", "schedule",
-            "-uitest-thursday",
+            "-uitest-thursday", "-uitest-hold-offers",
         ]
         if let scene { app.launchArguments += ["-uitest-scene", scene] }
         app.launch()
