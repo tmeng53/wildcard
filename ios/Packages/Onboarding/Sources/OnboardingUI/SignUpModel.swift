@@ -343,7 +343,13 @@ public final class SignUpModel {
     /// The squad's planned days this week, with the member's own once their plan is in.
     var squadGoal: (before: Int, after: Int) {
         let before = joined?.weekGoal ?? 0
-        return (before, before + (week?.trainingDays ?? 0))
+        return (before, before + plannedThisWeek)
+    }
+
+    /// The template's training days from today on: what this week plans, since the first week
+    /// counts only from the day the member joined.
+    var plannedThisWeek: Int {
+        week?.days.dropFirst(daysGone).count { $0 != .rest } ?? 0
     }
 
     /// The squad the member is in once 上场 has played, or the scene picked has filled the

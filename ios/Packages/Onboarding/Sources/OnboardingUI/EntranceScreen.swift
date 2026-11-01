@@ -166,7 +166,7 @@ struct EntranceScreen<Tabs: View>: View {
     private var myWeek: DesignSystemUI.MyWeek {
         let days = model.week?.days ?? Array(repeating: .rest, count: WeeklyPlan.dayCount)
         return DesignSystemUI.MyWeek(
-            summary: "", done: 0, planned: days.dropFirst(model.daysGone).count { $0 != .rest },
+            summary: "", done: 0, planned: model.plannedThisWeek,
             days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone,
             details: [])
     }
