@@ -205,7 +205,8 @@ async function runWake(
       instructions: instructionsOf(settings, coach),
       task,
       tools: toolbox({ week, roster, draft, daily }),
-      // Every wake of a coach begins with its same instructions and tools.
+      // Every wake of a coach begins with its same instructions, then its tools (the daily wake's
+      // post_note last, so both kinds share the rest).
       cacheKey: `coach:${coach.id}`,
     });
     // The tokens were spent whatever comes next, so they are counted first, on their own.

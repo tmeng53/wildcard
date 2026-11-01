@@ -33,8 +33,8 @@ export function getCoachSettings({ settings }: CoachToolDependencies) {
     description:
       'Shows what every AI coach runs with now: whether coaching is on (for every squad that ' +
       'hired a coach), the model (openai/…), the rules every coach follows (Chinese; each ' +
-      'coach’s soul comes after them), and the model’s prices per million input and output ' +
-      'tokens in millionths of a US dollar, which each wake’s cost is counted at.',
+      'coach’s soul comes after them), and the model’s prices per million input, cached input ' +
+      'and output tokens in millionths of a US dollar, which each wake’s cost is counted at.',
     changes: false,
     input: z.strictObject({}),
     run: async () => settings.current(),
