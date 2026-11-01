@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// A coach as the catalog keeps it. Its identity (name, catchphrase, credentials card, style,
-// look) and its soul (the persona prompt only the model reads) are the coach's own: every squad
+// A coach as the catalog keeps it. Its identity (name, title, catchphrase, its fictional 简历,
+// style, look) and its soul (the persona prompt only the model reads) are the coach's own: every squad
 // gets the same coach, and what it learns about a squad is that squad's memory, kept apart.
 // A coach is never deleted and keeps its id; `offered: false` retires it.
 
@@ -21,23 +21,41 @@ export const CoachLook = z.string().regex(/^[a-z][a-z0-9-]{0,39}$/);
 
 /** A coach, whole, as stored, logged and put by an admin. */
 export const Coach = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
   id: CoachId.describe('Its id, such as `xiaohun`. Never changes.'),
   tier: CoachTier.describe('entry (入门), advanced (进阶) or pro (专业).'),
   name: z.string().trim().min(1).max(20).describe('Its name in the app, such as 小混.'),
   catchphrase: z.string().trim().min(1).max(60).describe('Its 口头禅, shown on its card.'),
-  credentials: z
+  title: z.string().trim().min(1).max(10).describe('Its 头衔 next to its name, such as 混混教练.'),
+  background: z
     .string()
     .trim()
     .min(1)
-    .max(400)
-    .describe('Its fictional 资历卡 copy, shown in the app.'),
+    .max(100)
+    .describe('Its fictional 履历, one line on its 简历.'),
+  yearsCoaching: z
+    .int()
+    .min(0)
+    .max(60)
+    .describe('Its fictional years coaching, the number in 执教 on its 简历.'),
+  experience: z
+    .string()
+    .trim()
+    .min(1)
+    .max(20)
+    .describe('What 执教 says after the years, such as 热情满格.'),
   style: z
     .string()
     .trim()
     .min(1)
     .max(200)
     .describe('Its 执教风格 in a few words, shown in the app.'),
+  tags: z
+    .array(z.string().trim().min(1).max(6))
+    .min(1)
+    .max(5)
+    .describe('Up to 5 short tags on its card in 教练市场, such as 体院应届.'),
+  pay: z.string().trim().min(1).max(20).describe('Its 期望待遇, such as 管饭就行.'),
   soul: z
     .string()
     .min(1)

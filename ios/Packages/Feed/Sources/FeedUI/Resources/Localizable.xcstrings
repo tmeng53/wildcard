@@ -1,6 +1,54 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "%@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@  %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@  %3$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@  %3$@"
+          }
+        }
+      }
+    },
+    "%@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@%2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@%2$@"
+          }
+        }
+      }
+    },
     "%@回应了你：%@" : {
       "localizations" : {
         "en" : {
@@ -65,6 +113,22 @@
         }
       }
     },
+    "下次带我一起淋" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take me along for the next rain run"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下次帶我一起淋"
+          }
+        }
+      }
+    },
     "下雨也跑了，鞋已阵亡" : {
       "localizations" : {
         "en" : {
@@ -77,6 +141,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下雨也照跑，鞋子已陣亡"
+          }
+        }
+      }
+    },
+    "不回复了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel reply"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不回覆了"
           }
         }
       }
@@ -161,6 +241,22 @@
         }
       }
     },
+    "全屏看" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens full screen"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全螢幕看"
+          }
+        }
+      }
+    },
     "全部" : {
       "localizations" : {
         "en" : {
@@ -189,6 +285,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部 %lld"
+          }
+        }
+      }
+    },
+    "全部 %lld 条评论" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All %lld comments"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部 %lld 則留言"
+          }
+        }
+      }
+    },
+    "写评论" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寫留言"
+          }
+        }
+      }
+    },
+    "分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分鐘"
+          }
+        }
+      }
+    },
+    "删除" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除"
           }
         }
       }
@@ -237,6 +397,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "發球終於過網了"
+          }
+        }
+      }
+    },
+    "发送" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "傳送"
           }
         }
       }
@@ -353,6 +529,70 @@
         }
       }
     },
+    "回复" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reply"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆"
+          }
+        }
+      }
+    },
+    "回复 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↪ %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆 %@"
+          }
+        }
+      }
+    },
+    "回复 %@…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reply to %@…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆 %@…"
+          }
+        }
+      }
+    },
+    "回复 %@：" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↪ %@: "
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回覆 %@："
+          }
+        }
+      }
+    },
     "回应" : {
       "localizations" : {
         "en" : {
@@ -417,6 +657,22 @@
         }
       }
     },
+    "复制" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝"
+          }
+        }
+      }
+    },
     "夜泳人，泳池是我的" : {
       "localizations" : {
         "en" : {
@@ -429,6 +685,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "夜泳人，泳池是我的"
+          }
+        }
+      }
+    },
+    "它会习惯的" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They'll get used to it"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它會習慣的"
           }
         }
       }
@@ -461,6 +733,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的回應：%@"
+          }
+        }
+      }
+    },
+    "扶手：今天也是被需要的一天" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handrail: needed again today"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扶手：今天也是被需要的一天"
           }
         }
       }
@@ -529,6 +817,22 @@
         }
       }
     },
+    "看全部评论" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See all comments"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看全部留言"
+          }
+        }
+      }
+    },
     "看谁回应了" : {
       "localizations" : {
         "en" : {
@@ -593,6 +897,38 @@
         }
       }
     },
+    "给%@说点什么…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something to %@…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "給%@說點什麼…"
+          }
+        }
+      }
+    },
+    "网络开小差了，没发出去" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't send. Check your connection."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路開小差了，沒傳出去"
+          }
+        }
+      }
+    },
     "腿说今天它请假，我尊重它的决定" : {
       "localizations" : {
         "en" : {
@@ -609,6 +945,54 @@
         }
       }
     },
+    "评论 %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comments %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "留言 %lld"
+          }
+        }
+      }
+    },
+    "说一句给%@打打气" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something to cheer %@ on"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說一句給%@打打氣"
+          }
+        }
+      }
+    },
+    "说点什么…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說點什麼…"
+          }
+        }
+      }
+    },
     "请假条" : {
       "localizations" : {
         "en" : {
@@ -621,6 +1005,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "假單"
+          }
+        }
+      }
+    },
+    "返回" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        }
+      }
+    },
+    "还没有人说话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No one has said anything yet"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還沒有人說話"
+          }
+        }
+      }
+    },
+    "这条动态不见了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This post is gone"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這則動態不見了"
           }
         }
       }
@@ -657,34 +1089,18 @@
         }
       }
     },
-    "分钟" : {
+    "鞋：我没签这个合同" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "min"
+            "value" : "Shoes: I never signed up for this"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "分鐘"
-          }
-        }
-      }
-    },
-    "全屏看" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens full screen"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全螢幕看"
+            "value" : "鞋：我沒簽這個合約"
           }
         }
       }

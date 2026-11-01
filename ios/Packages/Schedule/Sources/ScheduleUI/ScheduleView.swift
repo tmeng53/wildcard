@@ -8,8 +8,9 @@ import SportsUI
 import SwiftUI
 
 /// 出赛表: the week as a poster the member plans on. Chips pick the week (back to the one they
-/// joined, this week, next week); 存图 saves the poster to Photos; under the poster sit the
-/// picks for the day in hand, next week's 饮食小目标, or the counts. The tab bar is the app's:
+/// joined, this week, next week) or the 每周模板, on a graphite poster of its own; 存图 saves a
+/// week's poster to Photos; under the poster sit the picks for the day in hand, next week's
+/// 饮食小目标, or the counts. The tab bar is the app's:
 /// this screen keeps to the safe area the app gives it and draws no bar.
 public struct ScheduleView: View {
     let model: ScheduleModel
@@ -28,6 +29,8 @@ public struct ScheduleView: View {
     private static let posterID = "schedule.posterFrame"
     /// How long 没存上 stays before it goes.
     private let failedNoteHold: Duration = .seconds(5)
+    /// How long 只改了这一周 · 也改到模板 stays after a week's change.
+    private let templateOfferHold: Duration = .seconds(5)
 
     public init(model: ScheduleModel) {
         self.model = model
@@ -39,10 +42,10 @@ public struct ScheduleView: View {
         ScrollViewReader { scroller in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.l) {
-                    if let sheet = store.sheet {
-                        poster(sheet)
+                    if let shown = shownContent {
+                        poster(shown)
                             .id(Self.posterID)
-                        panel(sheet)
+                        panel(store.sheet)
                             .id(Self.panelID)
                     } else {
                         loading
@@ -136,10 +139,18 @@ public struct ScheduleView: View {
             typingFuel: model.writingFuel ? ownFuel : "")
     }
 
-    private func poster(_ sheet: WeekSheet) -> some View {
+    /// The week shown, or the 每周模板.
+    private var shownContent: PosterContent? {
+        if store.showsTemplate {
+            return store.board.map { PosterContent(template: $0, nickname: store.profile?.nickname ?? "") }
+        }
+        return store.sheet.map(content)
+    }
+
+    private func poster(_ content: PosterContent) -> some View {
         GeometryReader { proxy in
             SchedulePoster(
-                content: content(sheet), player: model.player, onTapLane: model.tap,
+                content: content, player: model.player, onTapLane: model.tap,
                 onTapFuel: model.toggleFuelPanel
             )
             .scaleEffect(proxy.size.width / SchedulePoster.size.width, anchor: .topLeading)
@@ -163,40 +174,63 @@ public struct ScheduleView: View {
 
     // MARK: Under the poster
 
+    /// `sheet` is the week shown; nil on the 每周模板.
     @ViewBuilder
-    private func panel(_ sheet: WeekSheet) -> some View {
+    private func panel(_ sheet: WeekSheet?) -> some View {
         VStack(alignment: .leading, spacing: Space.s) {
             switch model.panel {
             case .counts:
-                switch store.board?.tense {
-                case .upcoming: CountdownCard(store: store)
-                case .current: ScheduleCounts(store: store, sheet: sheet)
-                case .past, nil: WeekAwards(titles: sheet.titles)
-                }
+                counts(sheet)
             case .dayPicks(let index):
-                DayPicks(store: store, sheet: sheet, index: index, onPick: model.pick, onRest: model.rest) {
-                    picksAll = true
+                if let board = store.board {
+                    DayPicks(store: store, board: board, index: index, onPick: model.pick, onRest: model.rest) {
+                        picksAll = true
+                    }
                 }
             case .fuel:
-                fuelPicks(sheet)
+                if let sheet { fuelPicks(sheet) }
             }
             PanelNote(store: store)
+            if store.showsTemplate {
+                TemplateNote()
+            } else if store.templateOffer != nil {
+                TemplateOffer(onCopy: model.copyToTemplate)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: store.templateOffer)
+        // The offer goes by itself after a few seconds; another change brings it back.
+        .task(id: store.templateOffer) {
+            guard store.templateOffer != nil, (try? await Task.sleep(for: templateOfferHold)) != nil else { return }
+            store.dismissTemplateOffer()
         }
         .transition(.opacity)
+    }
+
+    /// Under a week with nothing in hand: next week's countdown, this week's counts or a past
+    /// week's awards; nothing under the 每周模板, whose note says when it counts.
+    @ViewBuilder
+    private func counts(_ sheet: WeekSheet?) -> some View {
+        switch (store.board?.tense, sheet) {
+        case (.upcoming, _): CountdownCard(store: store)
+        case (.current, let sheet?): ScheduleCounts(store: store, sheet: sheet)
+        case (.past, let sheet?), (nil, let sheet?): WeekAwards(titles: sheet.titles)
+        default: EmptyView()
+        }
     }
 
     /// 常用运动: the sports in the week on the poster, in the order planned.
     private var recentActivities: [Activity] {
         var seen: [Activity] = []
-        for case .train(let activity?) in store.sheet?.plan ?? [] where !seen.contains(activity) {
+        for case .train(let activity?) in store.board?.days ?? [] where !seen.contains(activity) {
             seen.append(activity)
         }
         return seen
     }
 
     private var selectedActivity: Activity {
-        guard let sheet = store.sheet, case .selected(let index) = store.board?.focus,
-            case .train(let activity?) = sheet.plan[index]
+        guard let board = store.board, case .selected(let index) = board.focus,
+            case .train(let activity?) = board.days[index]
         else { return .sport("run") }
         return activity
     }
@@ -272,25 +306,42 @@ extension ScheduleView {
 
     fileprivate var topBar: some View {
         HStack(spacing: Space.xs) {
-            CategoryBar(weekChips, selection: weekSelection)
+            CategoryBar(pageChips, selection: pageSelection)
                 .frame(maxWidth: .infinity)
-            Button {
-                save()
-            } label: {
-                Label {
-                    Text("存图", bundle: .module)
-                } icon: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-                }
+            // The 每周模板 is no one week's poster to share.
+            if !store.showsTemplate {
+                saveButton
             }
-            .buttonStyle(SecondaryButtonStyle())
-            .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
-            .accessibilityIdentifier("schedule.save")
         }
     }
 
-    fileprivate var weekChips: [CategoryBarItem<LocalDay>] {
+    private var saveButton: some View {
+        Button {
+            save()
+        } label: {
+            Label {
+                Text("存图", bundle: .module)
+            } icon: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
+            }
+        }
+        .buttonStyle(SecondaryButtonStyle())
+        .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
+        .accessibilityIdentifier("schedule.save")
+    }
+
+    /// The weeks, then the 每周模板 after a hairline.
+    fileprivate var pageChips: [CategoryBarItem<SchedulePage>] {
+        guard !store.weeks.isEmpty else { return [] }
+        return weekChips + [
+            CategoryBarItem(
+                id: .template, title: Text("每周模板", bundle: .module), systemImage: ScheduleLabels.templateSymbol,
+                startsGroup: true, accessibilityIdentifier: "schedule.template")
+        ]
+    }
+
+    fileprivate var weekChips: [CategoryBarItem<SchedulePage>] {
         let thisWeek = store.today?.weekStart
         return store.weeks.map { week in
             let title: Text =
@@ -301,14 +352,22 @@ extension ScheduleView {
                 } else {
                     Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
                 }
-            return CategoryBarItem(id: week, title: title, accessibilityIdentifier: "schedule.week.\(week)")
+            return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
         }
     }
 
-    private var weekSelection: Binding<LocalDay> {
+    private var pageSelection: Binding<SchedulePage> {
         Binding(
-            get: { store.shownWeek ?? store.today?.weekStart ?? LocalDay(at: .now, in: .current) },
-            set: { model.show($0) })
+            get: {
+                store.showsTemplate
+                    ? .template : .week(store.shownWeek ?? store.today?.weekStart ?? LocalDay(at: .now, in: .current))
+            },
+            set: { page in
+                switch page {
+                case .week(let week): model.show(week)
+                case .template: model.showTemplate()
+                }
+            })
     }
 
     @ViewBuilder
@@ -331,15 +390,4 @@ extension ScheduleView {
     }
 }
 
-/// The character jogging in place on the poster's grey card while the weeks are read.
-private struct PosterLoader: View {
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        LoadingCharacter()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(role: .bgSubtle, in: theme))
-            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-    }
-}
 #endif

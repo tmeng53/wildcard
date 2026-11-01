@@ -65,8 +65,9 @@ export function listCoaches({ coaches }: CoachToolDependencies) {
     title: 'List the coaches',
     description:
       'Lists every AI coach, retired ones (offered false) too: id, tier (entry 入门, advanced ' +
-      '进阶, pro 专业), name, catchphrase, credentials (the fictional 资历卡), style, soul (the ' +
-      'persona prompt only the model reads), look (the character’s art id) and offered.',
+      '进阶, pro 专业), name, title (头衔), catchphrase, the fictional 简历 the app shows ' +
+      '(background 履历, yearsCoaching and experience for 执教, tags, pay 期望待遇), style, soul ' +
+      '(the persona prompt only the model reads), look (the character’s art id) and offered.',
     changes: false,
     input: z.strictObject({}),
     run: async () => ({ version: 1, coaches: await coaches.list() }),

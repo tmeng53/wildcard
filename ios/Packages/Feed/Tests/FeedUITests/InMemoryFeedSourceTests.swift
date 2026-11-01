@@ -16,7 +16,9 @@ private let newYork = TimeZone(identifier: "America/New_York") ?? .gmt
 private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     let source = InMemoryFeedSource.sample(viewer: viewer, squad: squad, now: thursday, zone: newYork)
     let today = LocalDay(at: thursday, in: newYork)
-    let store = FeedStore(source: source, squad: squad, viewer: viewer, today: { today }, now: { Timestamp(thursday) })
+    let store = FeedStore(
+        source: source, squad: squad, viewer: viewer, today: { today }, now: { Timestamp(thursday) },
+        newCommentID: { CommentID(UUID()) })
     await store.load()
     return (store, source)
 }
@@ -56,7 +58,9 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     let photos = Dictionary(uniqueKeysWithValues: names.map { ($0, Data($0.utf8)) })
     let source = InMemoryFeedSource.sample(viewer: viewer, squad: squad, now: thursday, zone: newYork, photos: photos)
     let today = LocalDay(at: thursday, in: newYork)
-    let feed = FeedStore(source: source, squad: squad, viewer: viewer, today: { today }, now: { Timestamp(thursday) })
+    let feed = FeedStore(
+        source: source, squad: squad, viewer: viewer, today: { today }, now: { Timestamp(thursday) },
+        newCommentID: { CommentID(UUID()) })
     await feed.load()
     let refs = feed.sections.flatMap(\.posts).flatMap { post -> [PhotoRef] in
         switch post.checkIn.entry {

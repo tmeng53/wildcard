@@ -101,7 +101,8 @@ export function comments(deps: { readonly verifyToken: VerifyToken; readonly che
     path: '/check-ins/{checkInId}/comments/{commentId}',
     operationId: 'deleteComment',
     summary: 'Delete your comment',
-    description: 'It is gone for everyone. Safe to repeat.',
+    description:
+      'It is gone for everyone, and works even after you left the squad. Safe to repeat.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params },

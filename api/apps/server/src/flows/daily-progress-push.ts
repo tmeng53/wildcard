@@ -305,7 +305,6 @@ export function dailyProgressNotification({
     thread: 'dailyProgress',
     collapseId: `dailyProgress-${day}`,
     interruption: 'passive',
-    mutableContent: true,
     event: {
       kind: 'dailyProgress',
       day,

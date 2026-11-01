@@ -161,7 +161,7 @@ struct WildcardApp: App {
         let zone = TimeZone.current
         let store = FeedStore(
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
-            now: { Timestamp(LaunchOptions.now()) })
+            now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
         return FeedModel(store: store, viewer: viewer, now: LaunchOptions.now)
     }
 

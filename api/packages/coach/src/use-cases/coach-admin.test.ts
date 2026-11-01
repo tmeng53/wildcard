@@ -103,8 +103,13 @@ const nuannuan: CoachEdit = {
   id: CoachId.parse('nuannuan'),
   tier: 'entry',
   name: '暖暖',
+  title: '暖心教练',
   catchphrase: '今天也辛苦啦',
-  credentials: '普拉提教练，持证（真的）。',
+  background: '普拉提教练，持证（真的）',
+  yearsCoaching: 6,
+  experience: '夸人满分',
+  tags: ['持证', '温柔'],
+  pay: '一杯奶茶',
   style: '温柔、会夸人',
   soul: '你是暖暖，一个温柔的普拉提教练。',
   look: 'nuannuan',
@@ -121,11 +126,24 @@ describe('the coaches', () => {
     ]);
   });
 
+  it('give the first coach the 简历 Tracy approved', async () => {
+    const [first] = await createCoachCatalog({ store: createPostgresCoachCatalog(db) }).list();
+    expect(first).toMatchObject({
+      version: 2,
+      title: '混混教练',
+      background: '体育学院刚毕业，该学的都学了，就是证还没考下来',
+      yearsCoaching: 0,
+      experience: '热情满格',
+      tags: ['体院应届', '懂行', '松弛', '风趣'],
+      pay: '管饭就行',
+    });
+  });
+
   it('add a coach and replace one whole, logging each change once', async () => {
     await rolledBack(async (trx, admin) => {
       const catalog = createCoachCatalog({ store: createPostgresCoachCatalog(trx) });
 
-      expect(await catalog.put(nuannuan, admin)).toStrictEqual({ version: 1, ...nuannuan });
+      expect(await catalog.put(nuannuan, admin)).toStrictEqual({ version: 2, ...nuannuan });
       // The same coach again saves nothing new.
       await catalog.put(nuannuan, admin);
       const retired = { ...nuannuan, offered: false };
@@ -136,8 +154,8 @@ describe('the coaches', () => {
         { id: 'xiaohun', offered: true },
       ]);
       expect(await logged(trx, { log: 'coach_catalog_events', by: admin })).toStrictEqual([
-        { version: 1, ...nuannuan },
-        { version: 1, ...retired },
+        { version: 2, ...nuannuan },
+        { version: 2, ...retired },
       ]);
     });
   });

@@ -16,7 +16,9 @@ public struct APIMyPostsSource: MyPostsSource {
         do throws(APIError) {
             let page = try await api.myPostsWire(kind: kind.map(\.wire), after: after)
             let posts = try api.read { () throws(ContractsError) in
-                try page.posts.map { post throws(ContractsError) in try FeedPost(post) }
+                try page.posts.map { post throws(ContractsError) in
+                    try FeedPost(checkIn: post.checkIn, reactions: post.reactions, comments: post.comments)
+                }
             }
             return MyPostsPage(
                 posts: posts, next: page.next,
@@ -40,19 +42,5 @@ extension PostKind {
         case .cheatMeal: .cheatMeal
         case .disclaimer: .disclaimer
         }
-    }
-}
-
-extension FeedPost {
-    /// A post as the API lists it: the check-in with its teammates' emoji.
-    init(_ post: Components.Schemas.SquadPost) throws(ContractsError) {
-        self.init(
-            checkIn: try CheckIn(post.checkIn),
-            reactions: Responses(
-                try post.reactions.map { entry throws(ContractsError) in
-                    let reaction = try Reaction(entry)
-                    return Responses<Emoji>.Response(
-                        member: reaction.member, kind: reaction.emoji, moment: reaction.reactedAt)
-                }))
     }
 }

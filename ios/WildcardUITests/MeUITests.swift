@@ -52,6 +52,17 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "92-my-posts")
 
+        // A tile opens 动态's own post page, without the tab bar, and 返回 comes back to the wall.
+        tile.tap()
+        let back = app.buttons["post.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
+        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar stayed over the post's page")
+        settle()
+        keepScreenshot(named: "94-my-posts-post")
+        back.tap()
+        XCTAssertTrue(
+            app.buttons["wall.filter.cheatMeal"].waitForExistence(timeout: 30), "返回 didn't go back to the wall")
+
         app.buttons["wall.filter.cheatMeal"].tap()
         let empty = app.descendants(matching: .any).matching(identifier: "wall.empty").firstMatch
         XCTAssertTrue(empty.waitForExistence(timeout: 30), "an empty kind says nothing")

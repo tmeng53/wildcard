@@ -3,8 +3,8 @@ import Contracts
 import Foundation
 import ScheduleDomain
 
-/// 出赛表 over our API: the member's weekly plans with their 饮食小目标, the days they checked
-/// in, the titles the weekly awards gave them and, for this week, their squad's count.
+/// 出赛表 over our API: the member's weekly plans with their 饮食小目标 and their typical week
+/// (每周模板), the days they checked in, the titles the weekly awards gave them and, for this week, their squad's count.
 public struct APIScheduleBackend: ScheduleBackend {
     private let api: WildcardAPI
     private let now: @Sendable () -> Date
@@ -72,6 +72,14 @@ public struct APIScheduleBackend: ScheduleBackend {
 
     public func trainedDays() async throws(ScheduleError) -> Int {
         try await schedule { () throws(APIError) in try await api.checkInTotals().trainedDays }
+    }
+
+    public func template() async throws(ScheduleError) -> [PlanDay] {
+        try await schedule { () throws(APIError) in try await api.planTemplate() }
+    }
+
+    public func saveTemplate(_ days: [PlanDay]) async throws(ScheduleError) {
+        try await schedule { () throws(APIError) in try await api.saveTemplate(days) }
     }
 
     // MARK: - Private

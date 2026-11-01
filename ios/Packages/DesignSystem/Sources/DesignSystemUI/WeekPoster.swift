@@ -43,6 +43,15 @@ public struct WeekPosterLayout: Sendable, Equatable {
         characterInset: CGSize(width: 30, height: 56))
 }
 
+/// What a `WeekPoster` says in big under its title line.
+public enum WeekPosterHeading {
+    /// The week's number, shown as W43.
+    case week(Int)
+    /// A name with its symbol over the rows instead of a number: the 每周模板, which is no one
+    /// week.
+    case named(Text, systemImage: String)
+}
+
 /// The week as a poster, wherever a member plans or shares one (sign-up's 本周目标, the 出赛表):
 /// who and which dates along the top, the week's number in big italic under them, a row a day,
 /// the member's character in the bottom corner and a darker strip along the bottom. A picture
@@ -56,7 +65,7 @@ public struct WeekPoster<Backdrop: View, Rows: View, Character: View, Overlay: V
     @Environment(\.sceneTheme) private var theme
 
     private let title: String
-    private let weekNumber: Int
+    private let heading: WeekPosterHeading
     private let layout: WeekPosterLayout
     private let fill: ColorRole
     private let ink: ColorRole
@@ -69,15 +78,15 @@ public struct WeekPoster<Backdrop: View, Rows: View, Character: View, Overlay: V
     /// The strip: the fill, a shade darker.
     private let stripShade = 0.16
 
-    /// `title` is the line along the top (Tracy · 10.20–10.26); `weekNumber` is shown as W43.
+    /// `title` is the line along the top (Tracy · 10.20–10.26); `heading` the big line under it.
     public init(
-        title: String, weekNumber: Int, layout: WeekPosterLayout, fill: ColorRole, ink: ColorRole,
+        title: String, heading: WeekPosterHeading, layout: WeekPosterLayout, fill: ColorRole, ink: ColorRole,
         @ViewBuilder backdrop: () -> Backdrop, @ViewBuilder rows: () -> Rows,
         @ViewBuilder character: () -> Character, @ViewBuilder overlay: () -> Overlay,
         @ViewBuilder strip: () -> Strip
     ) {
         self.title = title
-        self.weekNumber = weekNumber
+        self.heading = heading
         self.layout = layout
         self.fill = fill
         self.ink = ink
@@ -99,13 +108,8 @@ public struct WeekPoster<Backdrop: View, Rows: View, Character: View, Overlay: V
                 .frame(maxWidth: layout.titleWidth, alignment: .leading)
                 .padding(.leading, Space.m + 2)
                 .padding(.top, Space.s + 2)
-            Text(verbatim: "W\(weekNumber)")
-                .typeStyle(layout.weekNumberStyle)
-                .fixedSize()
-                .padding(.leading, Space.s + 2)
-                .padding(.top, layout.weekNumberTop)
+            headingView
                 .allowsHitTesting(false)
-                .accessibilityLabel(Text("第 \(weekNumber) 周", bundle: .module))
             rows
                 .frame(maxWidth: layout.rowsWidth ?? .infinity)
                 .padding(.leading, layout.rowsLeading)
@@ -131,16 +135,42 @@ public struct WeekPoster<Backdrop: View, Rows: View, Character: View, Overlay: V
         // A picture with a fixed layout: its type doesn't grow with Dynamic Type.
         .dynamicTypeSize(.large)
     }
+
+    @ViewBuilder
+    private var headingView: some View {
+        switch heading {
+        case .week(let number):
+            Text(verbatim: "W\(number)")
+                .typeStyle(layout.weekNumberStyle)
+                .fixedSize()
+                .padding(.leading, Space.s + 2)
+                .padding(.top, layout.weekNumberTop)
+                .accessibilityLabel(Text("第 \(number) 周", bundle: .module))
+        case .named(let name, let symbol):
+            // Sits on the rows, where a number's foot would.
+            Label {
+                name
+            } icon: {
+                Image(systemName: symbol)
+                    .accessibilityHidden(true)
+            }
+            .typeStyle(TypeRamp.largeTitle)
+            .lineLimit(1)
+            .padding(.leading, Space.m + 2)
+            .frame(height: layout.rowsTop - Space.s, alignment: .bottomLeading)
+            .accessibilityAddTraits(.isHeader)
+        }
+    }
 }
 
 extension WeekPoster where Backdrop == EmptyView, Overlay == EmptyView {
     /// A poster with nothing behind or over its rows.
     public init(
-        title: String, weekNumber: Int, layout: WeekPosterLayout, fill: ColorRole, ink: ColorRole,
+        title: String, heading: WeekPosterHeading, layout: WeekPosterLayout, fill: ColorRole, ink: ColorRole,
         @ViewBuilder rows: () -> Rows, @ViewBuilder character: () -> Character, @ViewBuilder strip: () -> Strip
     ) {
         self.init(
-            title: title, weekNumber: weekNumber, layout: layout, fill: fill, ink: ink,
+            title: title, heading: heading, layout: layout, fill: fill, ink: ink,
             backdrop: { EmptyView() }, rows: rows, character: character, overlay: { EmptyView() }, strip: strip)
     }
 }
