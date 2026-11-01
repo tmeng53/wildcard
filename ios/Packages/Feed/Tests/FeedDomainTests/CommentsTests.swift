@@ -75,8 +75,7 @@ import Testing
 }
 
 /// Hands out commentID(1), commentID(2), … in turn.
-private final class CommentIDs: @unchecked Sendable {
-    // Only the main-actor store under test calls it, one call at a time.
+private final class CommentIDs: @unchecked Sendable {  // Only the main-actor store under test calls it.
     private var next = 0
     func callAsFunction() -> CommentID {
         next += 1
