@@ -69,6 +69,16 @@ struct WeekDraftTests {
         #expect(week.selected == 2)
     }
 
+    /// Joining on a Thursday, the week counts Thursday to Sunday of the template.
+    @Test func theJoiningWeekCountsFromToday() {
+        let week = WeekDraft(sports: [.sport("run"), .sport("swim"), .sport("yoga")])
+        #expect(week.days == [run, .rest, swim, .rest, yoga, .rest, .rest])
+        #expect(week.trainingDays(from: 0) == 3)
+        #expect(week.trainingDays(from: 3) == 1)
+        #expect(week.trainingDays(from: 5) == 0)
+        #expect(week.trainingDays == 3)
+    }
+
     @Test func thePlanIsTheWeeksDays() throws {
         let week = WeekDraft(sports: [.sport("run")])
         let member = MemberID(.init())

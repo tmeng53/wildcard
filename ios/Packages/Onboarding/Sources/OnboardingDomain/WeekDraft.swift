@@ -50,6 +50,12 @@ public struct WeekDraft: Hashable, Sendable {
         days.count { $0 != .rest }
     }
 
+    /// The training days from `day` (0 is Monday) to Sunday: what the week the member joins
+    /// plans, since it counts only from the day they joined.
+    public func trainingDays(from day: Int) -> Int {
+        days.dropFirst(max(day, 0)).count { $0 != .rest }
+    }
+
     /// The plan to save, for the member's week starting `weekStart`.
     public func plan(for member: MemberID, weekStart: LocalDay) throws(ContractsError) -> WeeklyPlan {
         try WeeklyPlan(member: member, weekStart: weekStart, days: days)

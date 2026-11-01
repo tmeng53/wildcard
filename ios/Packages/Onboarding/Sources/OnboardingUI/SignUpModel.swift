@@ -349,7 +349,7 @@ public final class SignUpModel {
     /// The template's training days from today on: what this week plans, since the first week
     /// counts only from the day the member joined.
     var plannedThisWeek: Int {
-        week?.days.dropFirst(daysGone).count { $0 != .rest } ?? 0
+        week?.trainingDays(from: daysGone) ?? 0
     }
 
     /// The squad the member is in once 上场 has played, or the scene picked has filled the
