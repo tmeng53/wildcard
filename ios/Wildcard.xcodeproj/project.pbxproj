@@ -33,6 +33,18 @@
 		A1C0DE0000000000000000D2 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D1 /* Sentry */; };
 		A1C0DE000000000000000079 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000075 /* Backend */; };
 		A1C0DE00000000000000007A /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000076 /* Contracts */; };
+		A1C0DE000000000000000210 /* DailyPushUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000020A /* DailyPushUI */; };
+		A1C0DE000000000000000211 /* DailyPushDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000020B /* DailyPushDomain */; };
+		A1C0DE000000000000000212 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000020C /* Backend */; };
+		A1C0DE000000000000000213 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000020D /* AccountDomain */; };
+		A1C0DE000000000000000214 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000020E /* AccountUI */; };
+		A1C0DE000000000000000215 /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000020F /* Contracts */; };
+		A1C0DE00000000000000021F /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000221 /* DesignSystem */; };
+		A1C0DE000000000000000220 /* DesignSystemUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000222 /* DesignSystemUI */; };
+		A1C0DE000000000000000223 /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000224 /* SportsUI */; };
+		A1C0DE00000000000000021D /* DailyPushDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000021B /* DailyPushDomain */; };
+		A1C0DE00000000000000021E /* DailyPushUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000021C /* DailyPushUI */; };
+		A1C0DE000000000000000217 /* WildcardPushReact.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000200 /* WildcardPushReact.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C1 /* ScheduleDomain */; };
 		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
 		A1C0DE0000000000000000D5 /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D4 /* SportsUI */; };
@@ -46,12 +58,45 @@
 			remoteGlobalIDString = A1C0DE000000000000000008;
 			remoteInfo = Wildcard;
 		};
+		A1C0DE000000000000000218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1C0DE000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1C0DE000000000000000205;
+			remoteInfo = WildcardPushReact;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A1C0DE000000000000000216 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1C0DE000000000000000217 /* WildcardPushReact.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A1C0DE000000000000000004 /* Wildcard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wildcard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1C0DE000000000000000005 /* WildcardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WildcardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1C0DE000000000000000200 /* WildcardPushReact.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildcardPushReact.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A1C0DE00000000000000021A /* Exceptions for "WildcardPushReact" folder in "WildcardPushReact" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				WildcardPushReact.entitlements,
+			);
+			target = A1C0DE000000000000000205 /* WildcardPushReact */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A1C0DE000000000000000006 /* Wildcard */ = {
@@ -62,6 +107,14 @@
 		A1C0DE000000000000000007 /* WildcardUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = WildcardUITests;
+			sourceTree = "<group>";
+		};
+		A1C0DE000000000000000201 /* WildcardPushReact */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1C0DE00000000000000021A /* Exceptions for "WildcardPushReact" folder in "WildcardPushReact" target */,
+			);
+			path = WildcardPushReact;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -97,6 +150,8 @@
 				A1C0DE000000000000000079 /* Backend in Frameworks */,
 				A1C0DE0000000000000000D2 /* Sentry in Frameworks */,
 				A1C0DE00000000000000007A /* Contracts in Frameworks */,
+				A1C0DE00000000000000021D /* DailyPushDomain in Frameworks */,
+				A1C0DE00000000000000021E /* DailyPushUI in Frameworks */,
 				A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */,
 				A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */,
 				A1C0DE0000000000000000D5 /* SportsUI in Frameworks */,
@@ -110,6 +165,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1C0DE000000000000000202 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1C0DE000000000000000210 /* DailyPushUI in Frameworks */,
+				A1C0DE000000000000000211 /* DailyPushDomain in Frameworks */,
+				A1C0DE000000000000000212 /* Backend in Frameworks */,
+				A1C0DE000000000000000213 /* AccountDomain in Frameworks */,
+				A1C0DE000000000000000214 /* AccountUI in Frameworks */,
+				A1C0DE000000000000000215 /* Contracts in Frameworks */,
+				A1C0DE00000000000000021F /* DesignSystem in Frameworks */,
+				A1C0DE000000000000000220 /* DesignSystemUI in Frameworks */,
+				A1C0DE000000000000000223 /* SportsUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -118,6 +189,7 @@
 			children = (
 				A1C0DE000000000000000006 /* Wildcard */,
 				A1C0DE000000000000000007 /* WildcardUITests */,
+				A1C0DE000000000000000201 /* WildcardPushReact */,
 				A1C0DE000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -127,6 +199,7 @@
 			children = (
 				A1C0DE000000000000000004 /* Wildcard.app */,
 				A1C0DE000000000000000005 /* WildcardUITests.xctest */,
+				A1C0DE000000000000000200 /* WildcardPushReact.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -141,10 +214,12 @@
 				A1C0DE00000000000000000A /* Sources */,
 				A1C0DE00000000000000000B /* Frameworks */,
 				A1C0DE00000000000000000C /* Resources */,
+				A1C0DE000000000000000216 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A1C0DE000000000000000219 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A1C0DE000000000000000006 /* Wildcard */,
@@ -176,6 +251,8 @@
 				A1C0DE000000000000000074 /* AccountUI */,
 				A1C0DE000000000000000075 /* Backend */,
 				A1C0DE000000000000000076 /* Contracts */,
+				A1C0DE00000000000000021B /* DailyPushDomain */,
+				A1C0DE00000000000000021C /* DailyPushUI */,
 				A1C0DE0000000000000000C1 /* ScheduleDomain */,
 				A1C0DE0000000000000000C3 /* ScheduleUI */,
 				A1C0DE0000000000000000D4 /* SportsUI */,
@@ -206,6 +283,37 @@
 			productReference = A1C0DE000000000000000005 /* WildcardUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A1C0DE000000000000000205 /* WildcardPushReact */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1C0DE000000000000000206 /* Build configuration list for PBXNativeTarget "WildcardPushReact" */;
+			buildPhases = (
+				A1C0DE000000000000000203 /* Sources */,
+				A1C0DE000000000000000202 /* Frameworks */,
+				A1C0DE000000000000000204 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A1C0DE000000000000000201 /* WildcardPushReact */,
+			);
+			name = WildcardPushReact;
+			packageProductDependencies = (
+				A1C0DE00000000000000020A /* DailyPushUI */,
+				A1C0DE00000000000000020B /* DailyPushDomain */,
+				A1C0DE00000000000000020C /* Backend */,
+				A1C0DE00000000000000020D /* AccountDomain */,
+				A1C0DE00000000000000020E /* AccountUI */,
+				A1C0DE00000000000000020F /* Contracts */,
+				A1C0DE000000000000000221 /* DesignSystem */,
+				A1C0DE000000000000000222 /* DesignSystemUI */,
+				A1C0DE000000000000000224 /* SportsUI */,
+			);
+			productName = WildcardPushReact;
+			productReference = A1C0DE000000000000000200 /* WildcardPushReact.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -222,6 +330,9 @@
 					A1C0DE000000000000000009 = {
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = A1C0DE000000000000000008;
+					};
+					A1C0DE000000000000000205 = {
+						CreatedOnToolsVersion = 26.0;
 					};
 				};
 			};
@@ -248,6 +359,7 @@
 				A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
 				A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */,
+				A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */,
 				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */,
 				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
 				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
@@ -262,6 +374,7 @@
 			targets = (
 				A1C0DE000000000000000008 /* Wildcard */,
 				A1C0DE000000000000000009 /* WildcardUITests */,
+				A1C0DE000000000000000205 /* WildcardPushReact */,
 			);
 		};
 /* End PBXProject section */
@@ -275,6 +388,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A1C0DE00000000000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1C0DE000000000000000204 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -298,6 +418,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1C0DE000000000000000203 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -305,6 +432,11 @@
 			isa = PBXTargetDependency;
 			target = A1C0DE000000000000000008 /* Wildcard */;
 			targetProxy = A1C0DE000000000000000010 /* PBXContainerItemProxy */;
+		};
+		A1C0DE000000000000000219 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1C0DE000000000000000205 /* WildcardPushReact */;
+			targetProxy = A1C0DE000000000000000218 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -358,6 +490,10 @@
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
+				WILDCARD_API_URL = "https://wildcard-api-872064445161.us-east4.run.app";
+				WILDCARD_AUTH_PUBLISHABLE_KEY = sb_publishable_0k3jsx2o9G6SV3tyRMB-Rg_or-FTsVs;
+				WILDCARD_AUTH_URL = "https://uuxclkozpfbelhpheaae.supabase.co";
+				WILDCARD_SENTRY_DSN = "";
 			};
 			name = Release;
 		};
@@ -416,10 +552,6 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				WILDCARD_API_URL = "https://wildcard-api-872064445161.us-east4.run.app";
-				WILDCARD_AUTH_PUBLISHABLE_KEY = sb_publishable_0k3jsx2o9G6SV3tyRMB-Rg_or-FTsVs;
-				WILDCARD_AUTH_URL = "https://uuxclkozpfbelhpheaae.supabase.co";
-				WILDCARD_SENTRY_DSN = "";
 			};
 			name = Release;
 		};
@@ -451,6 +583,52 @@
 			};
 			name = Release;
 		};
+		A1C0DE000000000000000207 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WildcardPushReact/WildcardPushReact.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WildcardPushReact/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wildcardsquad.wildcard.PushReact;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+			};
+			name = Debug;
+		};
+		A1C0DE000000000000000208 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WildcardPushReact/WildcardPushReact.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WildcardPushReact/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wildcardsquad.wildcard.PushReact;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -477,6 +655,15 @@
 			buildConfigurations = (
 				A1C0DE000000000000000018 /* Debug */,
 				A1C0DE000000000000000019 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1C0DE000000000000000206 /* Build configuration list for PBXNativeTarget "WildcardPushReact" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1C0DE000000000000000207 /* Debug */,
+				A1C0DE000000000000000208 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -539,6 +726,10 @@
 		A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Contracts;
+		};
+		A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DailyPush;
 		};
 		A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -686,6 +877,61 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
 			productName = Contracts;
+		};
+		A1C0DE00000000000000020A /* DailyPushUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */;
+			productName = DailyPushUI;
+		};
+		A1C0DE00000000000000020B /* DailyPushDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */;
+			productName = DailyPushDomain;
+		};
+		A1C0DE00000000000000020C /* Backend */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */;
+			productName = Backend;
+		};
+		A1C0DE00000000000000020D /* AccountDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
+			productName = AccountDomain;
+		};
+		A1C0DE00000000000000020E /* AccountUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
+			productName = AccountUI;
+		};
+		A1C0DE00000000000000020F /* Contracts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
+			productName = Contracts;
+		};
+		A1C0DE000000000000000221 /* DesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystem;
+		};
+		A1C0DE000000000000000222 /* DesignSystemUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystemUI;
+		};
+		A1C0DE000000000000000224 /* SportsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */;
+			productName = SportsUI;
+		};
+		A1C0DE00000000000000021B /* DailyPushDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */;
+			productName = DailyPushDomain;
+		};
+		A1C0DE00000000000000021C /* DailyPushUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */;
+			productName = DailyPushUI;
 		};
 		A1C0DE0000000000000000C1 /* ScheduleDomain */ = {
 			isa = XCSwiftPackageProductDependency;

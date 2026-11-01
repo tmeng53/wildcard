@@ -229,6 +229,30 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(listed.body).toStrictEqual({ version: 1, comments: [] });
   });
 
+  it('lets a member who left the squad delete their own old comment, and nobody else’s', async () => {
+    const [tracy, ann] = [await signUp(), await signUp()];
+    const squad = await squadOf(tracy, ann);
+    const run = await checkIn(tracy.token, squad);
+    const mine = `/check-ins/${run}/comments/${randomUUID()}`;
+    const tracys = `/check-ins/${run}/comments/${randomUUID()}`;
+    await call('PUT', { path: mine, token: ann.token, body: { version: 1, text: '加油' } });
+    await call('PUT', { path: tracys, token: tracy.token, body: { version: 1, text: '谢谢' } });
+    await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${ann.userId}`.execute(
+      db,
+    );
+
+    const others = await call('DELETE', { path: tracys, token: ann.token });
+    expect(others).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
+    const elsewhere = await checkIn(tracy.token, await squadOf(tracy));
+    const wrongPost = mine.replace(run, elsewhere);
+    const hidden = await call('DELETE', { path: wrongPost, token: ann.token });
+    expect(hidden).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
+    expect((await call('DELETE', { path: mine, token: ann.token })).status).toBe(204);
+    expect((await call('DELETE', { path: mine, token: ann.token })).status).toBe(204);
+    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    expect(listed.body).toMatchObject({ comments: [{ text: '谢谢' }] });
+  });
+
   it('reads one post with its comments, for its author even after they left the squad', async () => {
     const [tracy, ann, stranger] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(tracy, ann);
