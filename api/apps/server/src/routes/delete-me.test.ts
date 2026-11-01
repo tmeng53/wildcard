@@ -197,11 +197,10 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
     await sql`insert into public.weekly_award_winners (squad_id, week_start, member_id, position, award)
       values (${squad}, '2026-10-12', ${userId}, ${position}, ${award}::jsonb)`.execute(db);
   }
-  // A 练了 on a rest day of the plan members have before they save one (Wednesday, Sunday)
-  // saves this week's plan too.
+  // A 练了 on one of the default plan's rest days (Wednesday, Sunday) makes that day a training
+  // day, which saves this week's plan too.
   const restDay = [0, 3].includes(new Date(`${torontoDay}T00:00:00.000Z`).getUTCDay());
-  const everything = { ...everyRow, weeklyPlans: restDay ? 2 : 1 };
-  return { me, friend, squad, everything };
+  return { me, friend, squad, everything: { ...everything, weeklyPlans: restDay ? 2 : 1 } };
 }
 
 /**
@@ -262,7 +261,7 @@ const nothing = {
   awards: 0,
   files: 0,
 };
-const everyRow = {
+const everything = {
   user: 1,
   profiles: 1,
   checkIns: 1,
