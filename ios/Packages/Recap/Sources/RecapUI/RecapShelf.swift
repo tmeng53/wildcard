@@ -10,8 +10,8 @@ import ScenePickDomain
 import SwiftUI
 
 /// Where the app keeps the squad's latest 战报: the story 动态's tile opens. A tapped awards push
-/// only reads it again, so the member opens the new story from the tile. It reads the story from its service and the squad (who is in it, how they
-/// look, the reader's day) from the app.
+/// only reads it again, so the member opens the new story from the tile. It reads the story from
+/// its service and the squad (who is in it, how they look, the reader's day) from the app.
 @MainActor @Observable
 public final class RecapShelf {
     /// The squad the story is about, as the app last read it.
