@@ -308,6 +308,10 @@ const app = createApp({
     random: Math.random,
   }),
   push,
+  coachHiring: createCoachHiring({
+    hiring: createPostgresCoachHiring(db),
+    catalog: createPostgresCoachCatalog(db),
+  }),
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   log,

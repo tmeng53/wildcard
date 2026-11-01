@@ -60,7 +60,7 @@ private struct PlanPoster: View {
 
     var body: some View {
         WeekPoster(
-            title: "\(model.nickname) · \(dates)", weekNumber: model.weekNumber, layout: .card, fill: tone.fill,
+            title: "\(model.nickname) · \(dates)", heading: .week(model.weekNumber), layout: .card, fill: tone.fill,
             ink: tone.onFill
         ) {
             VStack(spacing: 0) {

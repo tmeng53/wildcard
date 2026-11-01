@@ -69,7 +69,11 @@ import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeeklyAwards,
+  unusedWeekSummaryWords,
+  unusedCoachHiring,
+} from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
 // (the official MCP SDK) discovers how to sign in from the 401, signs in through local Supabase
@@ -144,6 +148,7 @@ beforeAll(async () => {
           nudges: nudgesOn(db),
           weeklyAwards: unusedWeeklyAwards,
           weekSummaryWords: unusedWeekSummaryWords,
+          coachHiring: unusedCoachHiring,
           log: createLog(() => undefined),
           jobs: noJobs,
           admin: {

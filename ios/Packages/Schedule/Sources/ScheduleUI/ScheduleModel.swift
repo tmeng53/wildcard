@@ -123,6 +123,19 @@ public final class ScheduleModel {
         Task { await store.show(week) }
     }
 
+    /// Shows the 每周模板 instead of a week: from its chip, or from 设置 before the screen has
+    /// loaded.
+    public func showTemplate() {
+        fuelOpen = false
+        writingFuel = false
+        Task { await store.showTemplate() }
+    }
+
+    /// 也改到模板: the week just changed becomes the template too.
+    func copyToTemplate() {
+        Task { await store.copyToTemplate() }
+    }
+
     // MARK: The board
 
     func tap(_ day: Int) {

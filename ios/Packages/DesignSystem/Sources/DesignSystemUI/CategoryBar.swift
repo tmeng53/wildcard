@@ -6,12 +6,21 @@ import SwiftUI
 public struct CategoryBarItem<ID: Hashable>: Identifiable {
     public let id: ID
     public let title: Text
+    /// A symbol in front of the title, for an item unlike the rest (出赛表's 每周模板).
+    public let systemImage: String?
+    /// Sets the item apart from the ones before it with a hairline.
+    public let startsGroup: Bool
     /// For UI tests; the bar puts it on the item's button.
     public let accessibilityIdentifier: String?
 
-    public init(id: ID, title: Text, accessibilityIdentifier: String? = nil) {
+    public init(
+        id: ID, title: Text, systemImage: String? = nil, startsGroup: Bool = false,
+        accessibilityIdentifier: String? = nil
+    ) {
         self.id = id
         self.title = title
+        self.systemImage = systemImage
+        self.startsGroup = startsGroup
         self.accessibilityIdentifier = accessibilityIdentifier
     }
 }
@@ -42,6 +51,13 @@ public struct CategoryBar<ID: Hashable>: View {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
                     ForEach(items) { item in
+                        if item.startsGroup {
+                            Rectangle()
+                                .fill(Color(role: .borderDefault, in: theme))
+                                .frame(width: 1, height: Sizing.compactControl - Space.s)
+                                .padding(.horizontal, Space.xxs)
+                                .accessibilityHidden(true)
+                        }
                         itemButton(item).id(item.id)
                     }
                 }
@@ -74,23 +90,30 @@ public struct CategoryBar<ID: Hashable>: View {
         return Button {
             withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { selection = item.id }
         } label: {
-            item.title
-                .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
-                .foregroundStyle(Color(role: isSelected ? .bgCanvas : .fgMuted, in: theme))
-                .lineLimit(1)
-                .fixedSize()
-                .padding(.horizontal, Self.itemInset)
-                // The pill hugs this box, so it grows with Dynamic Type instead of clipping.
-                .frame(minHeight: Sizing.compactControl)
-                .background {
-                    if isSelected {
-                        Capsule()
-                            .fill(Color(role: .fgDefault, in: theme))
-                            .matchedGeometryEffect(id: "selection", in: indicator)
-                    }
+            HStack(spacing: Space.xxs) {
+                if let symbol = item.systemImage {
+                    Image(systemName: symbol)
+                        .font(.system(size: Sizing.smallIcon, weight: .semibold))
+                        .accessibilityHidden(true)
                 }
-                .frame(minHeight: Sizing.minimumTapTarget)
-                .contentShape(Rectangle())
+                item.title
+            }
+            .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
+            .foregroundStyle(Color(role: isSelected ? .bgCanvas : .fgMuted, in: theme))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, Self.itemInset)
+            // The pill hugs this box, so it grows with Dynamic Type instead of clipping.
+            .frame(minHeight: Sizing.compactControl)
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(Color(role: .fgDefault, in: theme))
+                        .matchedGeometryEffect(id: "selection", in: indicator)
+                }
+            }
+            .frame(minHeight: Sizing.minimumTapTarget)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

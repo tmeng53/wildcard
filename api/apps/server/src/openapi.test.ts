@@ -20,7 +20,11 @@ import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
 import { aiConsentOn, noJobs, nudgesOn, pushOn } from './test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from './test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from './test-kit/weekly-awards.js';
+import {
+  unusedWeekSummaryWords,
+  unusedWeeklyAwards,
+  unusedCoachHiring,
+} from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
   it('matches the routes (run `pnpm openapi` in api/ to rewrite it)', async () => {
@@ -76,6 +80,7 @@ describe('openapi.json', () => {
       }),
       weeklyAwards: unusedWeeklyAwards,
       weekSummaryWords: unusedWeekSummaryWords,
+      coachHiring: unusedCoachHiring,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       log: createLog(() => undefined),
