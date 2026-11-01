@@ -10,13 +10,18 @@ import OpenAPIRuntime
 public struct APICheckInBackend: CheckInBackend {
     private let api: WildcardAPI
     private let saved: URL
+    private let shared: SharedSquad?
     private let now: @Sendable () -> Date
 
     /// - Parameters:
     ///   - directory: where the copy is kept, such as Application Support.
-    public init(api: WildcardAPI, directory: URL, now: @escaping @Sendable () -> Date = { Date() }) {
+    ///   - shared: where the squad's looks are kept for the 6pm push view.
+    public init(
+        api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.api = api
         saved = directory.appending(path: "home.json")
+        self.shared = shared
         self.now = now
     }
 
@@ -38,6 +43,7 @@ public struct APICheckInBackend: CheckInBackend {
             let squads = try await api.mySquadsWire().squads
             guard let squad = squads.first else {
                 try? FileManager.default.removeItem(at: saved)
+                shared?.forget()
                 return nil
             }
             let zone = signedIn.profile.flatMap { TimeZone(identifier: $0.timeZone) } ?? .current
@@ -53,6 +59,7 @@ public struct APICheckInBackend: CheckInBackend {
                 checkIns: try await checkIns, week: try await week)
             let home = try copy.home(api: api)
             try? DeviceJSON.write(try DeviceJSON.encoder.encode(copy), to: saved)
+            shared?.save(home.today.members)
             return home
         } catch let error as APIError {
             throw CheckInError(error)

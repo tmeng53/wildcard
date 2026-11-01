@@ -280,6 +280,11 @@ public final class TodayModel {
         defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
     }
 
+    /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.
+    public func openCheckIn() {
+        if step == .scene { isBurstOpen = true }
+    }
+
     func pick(_ kind: CheckInKind) {
         sendFailed = false
         payoff = nil
