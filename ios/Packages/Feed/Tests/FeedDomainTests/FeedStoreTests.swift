@@ -5,7 +5,9 @@ import Testing
 
 @MainActor
 func store(_ source: FakeSource, viewer: MemberID = coco, today: LocalDay = thursday) -> FeedStore {
-    FeedStore(source: source, squad: squad, viewer: viewer, today: { today }, now: { at(500) })
+    FeedStore(
+        source: source, squad: squad, viewer: viewer, today: { today }, now: { at(500) },
+        newCommentID: { commentID(1) })
 }
 
 let jaysRun = FeedPost(checkIn: checkIn(1, by: jay, on: "2026-10-22", at: 100), reactions: reactions([(mia, "❤️", 10)]))

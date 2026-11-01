@@ -33,6 +33,18 @@ func checkIn(_ number: Int, by author: MemberID, on onDay: String, at moment: In
     } catch { fatalError("bad test check-in") }
 }
 
+func commentID(_ number: Int) -> CommentID { CommentID(uuid(5000 + number)) }
+
+func text(_ words: String) -> CommentText {
+    do { return try CommentText(words) } catch { fatalError("not a comment: \(words)") }
+}
+
+func comment(_ number: Int, by writer: MemberID, _ words: String, replyTo: MemberID? = nil, at moment: Int64 = 0)
+    -> Comment
+{
+    Comment(id: commentID(number), member: writer, text: text(words), replyTo: replyTo, commentedAt: at(moment))
+}
+
 func emoji(_ text: String) -> Emoji {
     do { return try Emoji(text) } catch { fatalError("not an emoji: \(text)") }
 }
@@ -47,6 +59,9 @@ actor FakeSource: FeedSource {
     enum Call: Equatable {
         case posts(LocalDay, LocalDay)
         case reaction(Emoji?, CheckInID)
+        case post(CheckInID)
+        case comment(CommentID, String, MemberID?, CheckInID)
+        case deleteComment(CommentID, CheckInID)
     }
 
     private(set) var calls: [Call] = []
@@ -88,6 +103,29 @@ actor FakeSource: FeedSource {
 
     func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(FeedError) {
         calls.append(.reaction(emoji, checkIn))
+        await wait()
+        if let failure { throw failure }
+    }
+
+    func post(_ id: CheckInID) async throws(FeedError) -> FeedPost {
+        calls.append(.post(id))
+        if let failure { throw failure }
+        guard let post = posts.first(where: { $0.id == id }) else { throw .postGone }
+        return post
+    }
+
+    func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+        async throws(FeedError) -> Comment
+    {
+        calls.append(.comment(id, text.text, member, checkIn))
+        await wait()
+        if let failure { throw failure }
+        guard posts.contains(where: { $0.id == checkIn }) else { throw .postGone }
+        return Comment(id: id, member: coco, text: text, replyTo: member, commentedAt: at(900))
+    }
+
+    func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {
+        calls.append(.deleteComment(id, checkIn))
         await wait()
         if let failure { throw failure }
     }
