@@ -2,7 +2,7 @@
 // the model by roster name (`people/队员N.md`), so the model never sees an id and a member's
 // page follows them when the numbering changes.
 
-/** The longest a file may grow, in characters; the database checks the same. */
+/** The longest a file may grow, in characters, as the model sees it. */
 export const FILE_LIMIT = 8000;
 
 /** The files every squad has, empty until the coach writes them. */
@@ -26,6 +26,27 @@ export function storedPathOf(
     if (shown === `people/${name}.md`) return `people/${member}.md`;
   }
   return undefined;
+}
+
+// In a file's text, the model names members by roster name too, but the numbering changes when
+// someone leaves, so a body is stored with each name as the member's id (`{队员:<id>}`) and shown
+// with each id as the member's name now. A member who left is shown as 一位已离队的队员.
+
+/** A body as stored: each roster name in it as its member's id. */
+export function storedBody(shown: string, roster: ReadonlyMap<string, string>): string {
+  const members = new Map([...roster].map(([member, name]) => [name, member]));
+  return shown.replace(/队员\d+/g, (name) => {
+    const member = members.get(name);
+    return member === undefined ? name : `{队员:${member}}`;
+  });
+}
+
+/** A body as the model reads it: each member's id in it as their roster name now. */
+export function shownBody(stored: string, roster: ReadonlyMap<string, string>): string {
+  return stored.replace(
+    /\{队员:([0-9a-f-]{36})\}/g,
+    (_token, member: string) => roster.get(member) ?? '一位已离队的队员',
+  );
 }
 
 /** The member a stored `people/` page is about. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { editBody, FILE_LIMIT, shownPaths, storedPathOf } from './memory.js';
+import { editBody, FILE_LIMIT, shownBody, shownPaths, storedBody, storedPathOf } from './memory.js';
 import { taskOf } from './prompt.js';
 import { SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -84,6 +84,16 @@ describe('the squad’s week, as the model reads it', () => {
 });
 
 describe('the memory files', () => {
+  it('stores members named in a file by id, and shows them by their name now', () => {
+    const roster = rosterOf(week);
+    const stored = storedBody('队员1 爱跑步，队员2 怕雨，队员12 不存在', roster);
+    expect(stored).toBe(`{队员:${mia}} 爱跑步，{队员:${leo}} 怕雨，队员12 不存在`);
+    expect(shownBody(stored, roster)).toBe('队员1 爱跑步，队员2 怕雨，队员12 不存在');
+    // 米亚 left: 队员1 is 里奥 now, and 米亚 is no one's number.
+    const after = rosterOf({ ...week, members: [{ member: leo }] });
+    expect(shownBody(stored, after)).toBe('一位已离队的队员 爱跑步，队员1 怕雨，队员12 不存在');
+  });
+
   const roster = rosterOf(week);
 
   it('show each member’s page by roster name and store it by member id', () => {

@@ -1,5 +1,11 @@
 import type { Coach } from '../domain/coach.js';
-import { shownPaths, storedPathOf } from '../domain/memory.js';
+import {
+  shownBody,
+  shownPaths,
+  storedBody,
+  storedPathOf,
+  type StoredPath,
+} from '../domain/memory.js';
 import { instructionsOf, taskOf } from '../domain/prompt.js';
 import type { CoachSettings, SquadId } from '../domain/settings.js';
 import { consentedOnly, rosterOf, type SquadWeek } from '../domain/squad-week.js';
@@ -169,7 +175,13 @@ async function runWake(
       return true;
     }
     const roster = rosterOf(week);
-    const stored = await deps.stores.memory.files(wake.squad);
+    // The files as the model reads them, by stored path, with members by their names now.
+    const stored = new Map(
+      [...(await deps.stores.memory.files(wake.squad))].map(([path, body]) => [
+        path,
+        shownBody(body, roster),
+      ]),
+    );
     const draft: WakeDraft = { files: new Map(stored), changed: new Set(), note: undefined };
     const daily = wake.reason.kind === 'daily';
     const files = new Map(
@@ -208,7 +220,7 @@ async function runWake(
       return false;
     }
     await deps.transaction(async (stores) => {
-      await saveDraft(stores, { squad: wake.squad, wake, draft, coach });
+      await saveDraft(stores, { squad: wake.squad, wake, draft, stored, roster, coach });
       await stores.wakes.finish(wake.id);
     });
     return true;
@@ -218,22 +230,33 @@ async function runWake(
   }
 }
 
-/** Saves what a wake's run changed: its files and, on a daily wake, its 战术板 line. */
+/**
+ * Saves what a wake's run changed: a new version of each file whose text it changed (none for
+ * an edit it undid), and on a daily wake, its 战术板 line.
+ */
 async function saveDraft(
   stores: CoachStores,
   {
     squad,
     wake,
     draft,
+    stored,
+    roster,
     coach,
   }: {
     readonly squad: SquadId;
     readonly wake: Wake;
     readonly draft: WakeDraft;
+    /** The files as the run found them, as the model read them. */
+    readonly stored: ReadonlyMap<StoredPath, string>;
+    readonly roster: ReadonlyMap<string, string>;
     readonly coach: Coach;
   },
 ): Promise<void> {
-  const files = [...draft.changed].map((path) => ({ path, body: draft.files.get(path) ?? '' }));
+  const files = [...draft.changed]
+    .map((path) => ({ path, body: draft.files.get(path) ?? '' }))
+    .filter(({ path, body }) => body !== (stored.get(path) ?? ''))
+    .map(({ path, body }) => ({ path, body: storedBody(body, roster) }));
   if (files.length > 0) await stores.memory.save({ squad, wake: wake.id, files });
   if (draft.note !== undefined && wake.reason.kind === 'daily') {
     await stores.notes.save({

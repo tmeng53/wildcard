@@ -245,7 +245,8 @@ describe('the coach', () => {
         trx,
       );
       expect(files.rows).toStrictEqual([
-        { path: 'memory.md', body: '- 队员1 周日跑步', member_id: null },
+        // Members named in a file are stored by id, so a name follows them when 队员N shifts.
+        { path: 'memory.md', body: `- {队员:${fixture.mia}} 周日跑步`, member_id: null },
         { path: `people/${leo}.md`, body: '还没打卡过', member_id: leo },
       ]);
       const notes = await sql<{ day: string; text: string; coach_id: string }>`
@@ -365,6 +366,21 @@ describe('the coach', () => {
         trx,
       );
       expect(counts.rows).toStrictEqual([{ files: '0', notes: '0', usage: '6' }]);
+    });
+  });
+
+  it('saves no new version of a file an edit left as it was', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad } = fixture;
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'edit_file', input: { path: 'memory.md', find: '', replace: '跑' } },
+        { tool: 'edit_file', input: { path: 'memory.md', find: '跑', replace: '' } },
+      ]);
+      expect(await wakes(fixture, { agent }).run()).toMatchObject({ done: 2 });
+      expect(runs).toHaveLength(2);
+      const files = await sql<{ count: string }>`
+        select count(*) from public.coach_files where squad_id = ${squad}`.execute(trx);
+      expect(files.rows).toStrictEqual([{ count: '0' }]);
     });
   });
 

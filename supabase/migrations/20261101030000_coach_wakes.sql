@@ -74,7 +74,8 @@ create unique index coach_wakes_one_running on public.coach_wakes (squad_id)
 
 -- Each squad's memory: the files its coach keeps (squad.md, memory.md, a page per member), a
 -- new row for every version, so the newest of a path is the file now and the rest is its
--- history. `people/<member id>.md`; the model sees each member as 队员N instead. The squad's
+-- history. `people/<member id>.md`, and members named in a body as `{队员:<member id>}`; the
+-- model sees each member as 队员N instead, numbered as the squad is now. The squad's
 -- end takes its files; a member's page goes with their account.
 create table public.coach_files (
   id bigint generated always as identity primary key,
@@ -87,7 +88,9 @@ create table public.coach_files (
   member_id uuid references auth.users (id) on delete cascade,
   check ((path like 'people/%') = (member_id is not null)),
   check (member_id is null or path = 'people/' || member_id || '.md'),
-  body text not null check (char_length(body) <= 8000),
+  -- The model's limit is 8000 characters as it reads them; stored, each member it names (队员N)
+  -- is their id (`{队员:<id>}`), which is longer, so the cap here allows a file of nothing but names.
+  body text not null check (char_length(body) <= 120000),
   wake_id bigint references public.coach_wakes (id) on delete set null,
   at timestamptz not null default now()
 );
