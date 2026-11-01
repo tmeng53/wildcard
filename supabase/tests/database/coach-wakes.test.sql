@@ -1,7 +1,7 @@
 -- The coach at work: one coach a squad, hires logged; one wake per check-in and per squad-day; files, notes and usage that only
 -- grow, until the squad ends or (for a member's page) the member's account goes.
 begin;
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -29,6 +29,9 @@ select throws_ok($$insert into public.coach_wakes (squad_id, reason, day)
 select throws_ok($$insert into public.coach_wakes (squad_id, reason, day)
   values ('33333333-3333-4333-8333-333333333333', 'checkIn', '2026-11-01')$$,
   '23514', null, 'a check-in wake names its check-in');
+update public.coach_wakes set state = 'running' where id = 1;
+select throws_ok($$update public.coach_wakes set state = 'running' where id = 2$$,
+  '23505', null, 'a squad runs one wake at a time');
 
 insert into public.coach_files (squad_id, path, member_id, body, wake_id) values
   ('33333333-3333-4333-8333-333333333333', 'memory.md', null, '米亚爱跑步', 1),

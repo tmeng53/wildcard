@@ -148,9 +148,7 @@ export function createApp(deps: AppDependencies) {
       isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
-      ...(deps.jobs.coach === undefined
-        ? {}
-        : { coach: { wakes: deps.jobs.coach, clock: deps.jobs.clock } }),
+      ...(deps.jobs.coach === undefined ? {} : { coach: deps.jobs.coach }),
     }),
   );
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.

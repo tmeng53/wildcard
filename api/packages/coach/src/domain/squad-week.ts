@@ -83,3 +83,23 @@ export function weekText(week: SquadWeek): string {
     checkIns.length === 0 ? '这周还没有人打卡。' : `打卡：\n${checkIns.join('\n')}`,
   ].join('\n');
 }
+
+/**
+ * The week as the model may read it: only members with a current AI consent have their words
+ * in it (their nickname, check-ins and comments). The others stay on the roster as 队员N, so the
+ * numbering holds, with nothing they wrote.
+ */
+export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): SquadWeek {
+  return {
+    weekStart: week.weekStart,
+    members: week.members.map((entry) =>
+      consented.has(entry.member) ? entry : { member: entry.member },
+    ),
+    checkIns: week.checkIns
+      .filter(({ member }) => consented.has(member))
+      .map((checkIn) => ({
+        ...checkIn,
+        comments: checkIn.comments.filter(({ member }) => consented.has(member)),
+      })),
+  };
+}

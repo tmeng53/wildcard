@@ -238,7 +238,11 @@ const coachWakes =
         transaction: postgresCoachTransaction(db),
         agent: createOpenAICoachAgent({ apiKey: openaiKey }),
         squadWeek: coachSquadWeek({ checkIns, members, sports, clock: () => new Date() }),
+        // Only the words of members who agreed to the current AI copy reach the model.
+        aiConsented: (members) =>
+          aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
+        clock: () => new Date(),
       });
 const app = createApp({
   db,

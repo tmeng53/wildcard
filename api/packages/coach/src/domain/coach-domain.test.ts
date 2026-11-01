@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { editBody, FILE_LIMIT, shownPaths, storedPathOf } from './memory.js';
 import { taskOf } from './prompt.js';
 import { SquadId } from './settings.js';
-import { checkInLine, rosterOf, weekText, type SquadWeek } from './squad-week.js';
-import { costMicros, newYorkTime, wakesDue, weekStartOf } from './wake.js';
+import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
+import { costMicros, newYorkTime, wakesDue, weekStartOf, weeksAround } from './wake.js';
 
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
@@ -62,6 +62,25 @@ describe('the squad’s week, as the model reads it', () => {
     );
     expect(weekText(week)).not.toContain(mia);
   });
+
+  it('keeps only the words of members who agreed to AI use, and the numbering', () => {
+    expect(weekText(consentedOnly(week, new Set([leo])))).toBe(
+      [
+        '本周从 2026-10-26（周一）开始。',
+        '队员：队员1，队员2',
+        '打卡：',
+        '- 11-01 周日 队员2 请假条 「下雨」',
+      ].join('\n'),
+    );
+    expect(weekText(consentedOnly(week, new Set([mia])))).toBe(
+      [
+        '本周从 2026-10-26（周一）开始。',
+        '队员：队员1（昵称：米亚），队员2',
+        '打卡：',
+        '- 10-27 周二 队员1 练了 跑步 30 分钟 「腿废了」 · 2 个表情',
+      ].join('\n'),
+    );
+  });
 });
 
 describe('the memory files', () => {
@@ -115,6 +134,20 @@ describe('when the coach wakes', () => {
     });
     expect(weekStartOf('2026-11-01')).toBe('2026-10-26');
     expect(weekStartOf('2026-10-26')).toBe('2026-10-26');
+  });
+
+  it('looks in every week a member’s own day can be in', () => {
+    // 10am Sunday in New York is already Monday east of UTC+10.
+    expect(weeksAround(new Date('2026-11-01T15:00:00Z'))).toStrictEqual([
+      '2026-10-26',
+      '2026-11-02',
+    ]);
+    // 1am Monday in New York is still Sunday in Hawaii.
+    expect(weeksAround(new Date('2026-11-02T06:00:00Z'))).toStrictEqual([
+      '2026-10-26',
+      '2026-11-02',
+    ]);
+    expect(weeksAround(new Date('2026-11-04T17:00:00Z'))).toStrictEqual(['2026-11-02']);
   });
 
   it('wakes for check-ins of the last hour, and once a day from 6am New York', () => {

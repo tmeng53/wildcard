@@ -21,7 +21,7 @@ export function jobs(deps: {
   readonly dailyProgress: DailyProgressDependencies;
   readonly weeklyAwards: WeeklyAwardsDependencies;
   /** The AI coach's wakes; undefined without an OpenAI key, and then the coach never wakes. */
-  readonly coach?: { readonly wakes: CoachWakes; readonly clock: () => Date };
+  readonly coach?: CoachWakes;
 }) {
   return new Hono()
     .use('/jobs/*', async (c, next) => {
@@ -48,7 +48,7 @@ export function jobs(deps: {
       const run =
         deps.coach === undefined
           ? { coaching: false, squads: 0, queued: 0, done: 0, failed: 0 }
-          : await deps.coach.wakes.run(deps.coach.clock());
+          : await deps.coach.run();
       // A failed wake keeps why on its row (get_squad_coaching shows it) and is tried again.
       if (run.failed > 0) deps.weeklyAwards.log.warn('some coach wakes failed', { ...run });
       else deps.weeklyAwards.log.info('coach run', { ...run });

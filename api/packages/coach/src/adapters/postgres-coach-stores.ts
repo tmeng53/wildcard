@@ -13,6 +13,31 @@ const STALE_MINUTES = 15;
 /** How old a waiting wake may be and still run; older ones are left. */
 const FRESH_HOURS = 24;
 
+/** How long a wake whose try failed waits before its next. */
+const RETRY_MINUTES = 5;
+
+/** Whether `error` is Postgres refusing a duplicate (`unique_violation`). */
+function uniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
+}
+
+/** A claimed wake's row as the coach reads it. */
+function wakeOf(row: {
+  readonly id: string;
+  readonly squad_id: string;
+  readonly reason: string;
+  readonly check_in_id: string | null;
+  readonly day: string | null;
+}): Wake {
+  const squad = SquadId.parse(row.squad_id);
+  const id = Number(row.id);
+  if (row.reason === 'daily' && row.day !== null) {
+    return { id, squad, reason: { kind: 'daily', day: row.day } };
+  }
+  // The database keeps a check-in wake's check-in.
+  return { id, squad, reason: { kind: 'checkIn', checkIn: row.check_in_id ?? '' } };
+}
+
 /** The coach's wakes, files, notes and usage on Postgres (`supabase/migrations`). */
 export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
   return {
@@ -51,6 +76,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         if (squads.length === 0) return [];
         const stale = new Date(now.getTime() - STALE_MINUTES * 60_000);
         const fresh = new Date(now.getTime() - FRESH_HOURS * 3_600_000);
+        const retry = new Date(now.getTime() - RETRY_MINUTES * 60_000);
         // A run that stopped on its last try leaves nothing to take back: it failed.
         await db
           .updateTable('coach_wakes')
@@ -59,65 +85,64 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .where('claimed_at', '<', stale)
           .where('tries', '>=', 3)
           .execute();
-        const rows = await db
-          .updateTable('coach_wakes')
-          .set((eb) => ({ state: 'running', tries: eb('tries', '+', 1), claimed_at: now }))
-          .where('id', 'in', (eb) =>
-            eb
-              .selectFrom('coach_wakes as wake')
-              .select('wake.id')
-              .where('wake.squad_id', 'in', squads)
-              // Never a squad another run is still waking: its wakes run in order.
-              .where((where) =>
-                where.not(
-                  where.exists(
-                    where
-                      .selectFrom('coach_wakes as running')
-                      .select('running.id')
-                      .whereRef('running.squad_id', '=', 'wake.squad_id')
-                      .where('running.state', '=', 'running')
-                      .where('running.claimed_at', '>=', stale),
-                  ),
-                ),
-              )
-              .where('wake.tries', '<', 3)
-              .where((where) =>
-                where.or([
-                  where.and([
-                    where('wake.state', '=', 'waiting'),
-                    where('wake.created_at', '>', fresh),
-                  ]),
-                  where.and([
-                    where('wake.state', '=', 'running'),
-                    where('wake.claimed_at', '<', stale),
-                  ]),
-                ]),
-              )
-              .orderBy('wake.created_at')
-              .orderBy('wake.id')
-              .limit(limit)
-              .forUpdate()
-              .skipLocked(),
+        // Which wake can run: one a run must have dropped, or one waiting long enough.
+        const claimable = (prefix: '' | 'wake.') =>
+          sql<boolean>`${sql.ref(`${prefix}tries`)} < 3 and (
+            (${sql.ref(`${prefix}state`)} = 'running' and ${sql.ref(`${prefix}claimed_at`)} < ${stale})
+            or (${sql.ref(`${prefix}state`)} = 'waiting' and ${sql.ref(`${prefix}created_at`)} > ${fresh}
+              and (${sql.ref(`${prefix}claimed_at`)} is null or ${sql.ref(`${prefix}claimed_at`)} < ${retry})))`;
+        // Each squad's next wake: one a run dropped first, else its oldest waiting one; never
+        // a squad whose wake is running.
+        const next = await db
+          .selectFrom('coach_wakes as wake')
+          .distinctOn('wake.squad_id')
+          .select(['wake.id', 'wake.squad_id', 'wake.created_at'])
+          .where('wake.squad_id', 'in', squads)
+          .where(claimable('wake.'))
+          .where((where) =>
+            where.not(
+              where.exists(
+                where
+                  .selectFrom('coach_wakes as running')
+                  .select('running.id')
+                  .whereRef('running.squad_id', '=', 'wake.squad_id')
+                  .where('running.state', '=', 'running')
+                  .where('running.claimed_at', '>=', stale),
+              ),
+            ),
           )
-          .returning([
-            'id',
-            'squad_id',
-            'reason',
-            'check_in_id',
-            sql<string | null>`to_char(day, 'YYYY-MM-DD')`.as('day'),
-          ])
+          .orderBy('wake.squad_id')
+          .orderBy(sql`wake.state = 'running'`, 'desc')
+          .orderBy('wake.created_at')
+          .orderBy('wake.id')
           .execute();
-        return rows
-          .map((row): Wake => {
-            const squad = SquadId.parse(row.squad_id);
-            const id = Number(row.id);
-            if (row.reason === 'daily' && row.day !== null) {
-              return { id, squad, reason: { kind: 'daily', day: row.day } };
-            }
-            // The database keeps a check-in wake's check-in.
-            return { id, squad, reason: { kind: 'checkIn', checkIn: row.check_in_id ?? '' } };
-          })
-          .toSorted((a, b) => a.id - b.id);
+        const picked = next
+          .toSorted((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .slice(0, limit);
+        const claimed: Wake[] = [];
+        for (const { id } of picked) {
+          // Claimed only if it still can be: another run may have taken it, or another of its
+          // squad's wakes, which the one-running-a-squad index refuses.
+          const row = await db
+            .updateTable('coach_wakes')
+            .set((eb) => ({ state: 'running', tries: eb('tries', '+', 1), claimed_at: now }))
+            .where('id', '=', id)
+            .where(claimable(''))
+            .returning([
+              'id',
+              'squad_id',
+              'reason',
+              'check_in_id',
+              sql<string | null>`to_char(day, 'YYYY-MM-DD')`.as('day'),
+            ])
+            .executeTakeFirst()
+            .catch((error: unknown) => {
+              if (uniqueViolation(error)) return undefined;
+              throw error;
+            });
+          if (row !== undefined) claimed.push(wakeOf(row));
+        }
+        return claimed;
       },
 
       async finish(wake) {
@@ -198,7 +223,9 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .insertInto('coach_usage')
           .values({
             squad_id: squad,
-            wake_id: String(wake),
+            // Null when the wake has gone meanwhile (its check-in was deleted).
+            wake_id: (eb) =>
+              eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
             coach_id: coach,
             model,
             requests: usage.requests,

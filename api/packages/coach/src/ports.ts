@@ -65,9 +65,10 @@ export interface CoachWakeStore {
   /** Adds the wakes not queued already, as queued at `now`; says how many were new. */
   enqueue(wakes: readonly NewWake[], now: Date): Promise<number>;
   /**
-   * Claims up to `limit` of these squads' wakes to run, oldest first: waiting ones from the last
-   * day, and ones a run claimed long enough ago that it must have stopped. Each claim counts as
-   * a try.
+   * Claims the next wake of up to `limit` of these squads, at most one a squad and never a squad
+   * whose wake is running: a wake a run claimed long enough ago that it must have stopped, or
+   * else the oldest waiting one from the last day (one that failed waits a few minutes before
+   * its next try). Each claim counts as a try.
    */
   claim(input: {
     readonly squads: readonly SquadId[];
@@ -109,7 +110,10 @@ export interface CoachNoteStore {
   ): Promise<readonly { readonly day: string; readonly text: string }[]>;
 }
 
-/** The tokens each wake used, per squad, for usage-based billing later. */
+/**
+ * The tokens each wake used, per squad, for usage-based billing later. Recorded even when the
+ * wake has gone meanwhile (its check-in was deleted): then without it.
+ */
 export interface CoachUsageStore {
   record(entry: {
     readonly squad: SquadId;
@@ -137,6 +141,12 @@ export type SquadWeekSource = (input: {
   readonly squad: SquadId;
   readonly weekStart: string;
 }) => Promise<SquadWeek>;
+
+/**
+ * Those of these members who agreed to having their words sent to AI providers (the current
+ * copy): only their words reach the model.
+ */
+export type AiConsented = (members: readonly string[]) => Promise<readonly string[]>;
 
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {

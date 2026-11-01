@@ -16,6 +16,9 @@ const MAX_TURNS = 12;
 /** One request's limit, so a stuck call can't hold a wake. */
 const TIMEOUT_MS = 60_000;
 
+/** How long a whole run may take, its turns together, before it is stopped as failed. */
+const RUN_TIMEOUT_MS = 120_000;
+
 /** The coach's wakes as runs of an agent on the OpenAI Agents SDK, the only code that knows it. */
 export function createOpenAICoachAgent(options: {
   readonly apiKey: string;
@@ -58,7 +61,11 @@ export function createOpenAICoachAgent(options: {
       // Ours, so what the run used is still here when it fails part way: those tokens count too.
       const context = new RunContext();
       try {
-        await runner.run(agent, task, { context, maxTurns: MAX_TURNS });
+        await runner.run(agent, task, {
+          context,
+          maxTurns: MAX_TURNS,
+          signal: AbortSignal.timeout(RUN_TIMEOUT_MS),
+        });
         return { ok: true, usage: tokensOf(context.usage) };
       } catch (error) {
         return {

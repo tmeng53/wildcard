@@ -127,7 +127,24 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
   return { agent, runs };
 }
 
-function wakes({ trx, week }: Fixture, agent: CoachAgent) {
+/**
+ * The coach at `at`, on the fixture's squad, whose week is `week` (else the fixture's, for
+ * every week) and whose members all agreed to AI use unless `consented` says who did.
+ */
+function wakes(
+  { trx, week }: Fixture,
+  {
+    agent,
+    at = now,
+    weeks,
+    consented,
+  }: {
+    readonly agent: CoachAgent;
+    readonly at?: Date;
+    readonly weeks?: Readonly<Record<string, SquadWeek>>;
+    readonly consented?: readonly string[];
+  },
+) {
   const stores = createPostgresCoachStores(trx);
   return createCoachWakes({
     settings: createPostgresCoachSettings(trx),
@@ -136,8 +153,18 @@ function wakes({ trx, week }: Fixture, agent: CoachAgent) {
     // Already in the test's transaction, which is rolled back at the end.
     transaction: (work) => work(stores),
     agent,
-    squadWeek: () => Promise.resolve(week),
+    squadWeek: ({ weekStart }) =>
+      Promise.resolve(
+        weeks === undefined
+          ? week
+          : (weeks[weekStart] ?? { weekStart, members: week.members, checkIns: [] }),
+      ),
+    aiConsented: (members) =>
+      Promise.resolve(
+        consented === undefined ? members : members.filter((member) => consented.includes(member)),
+      ),
     hiring: createPostgresCoachHiring(trx),
+    clock: () => at,
   });
 }
 
@@ -151,8 +178,10 @@ describe('the coach', () => {
       transaction: () => Promise.reject(new Error('nothing to save')),
       agent,
       squadWeek: () => Promise.reject(new Error('no squad to read')),
+      aiConsented: () => Promise.reject(new Error('no one to ask')),
       hiring: createPostgresCoachHiring(db),
-    }).run(now);
+      clock: () => now,
+    }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
   });
@@ -184,7 +213,7 @@ describe('the coach', () => {
             ],
       );
 
-      expect(await wakes(fixture, agent).run(now)).toStrictEqual({
+      expect(await wakes(fixture, { agent }).run()).toStrictEqual({
         coaching: true,
         squads: 1,
         queued: 2,
@@ -237,7 +266,9 @@ describe('the coach', () => {
       ]);
 
       // Run again: nothing new to wake for, and nothing runs twice.
-      expect(await wakes(fixture, agent).run(new Date(now.getTime() + 10 * 60_000))).toStrictEqual({
+      expect(
+        await wakes(fixture, { agent, at: new Date(now.getTime() + 10 * 60_000) }).run(),
+      ).toStrictEqual({
         coaching: true,
         squads: 1,
         queued: 0,
@@ -259,12 +290,15 @@ describe('the coach', () => {
       const { agent, runs } = scriptedAgent(() => [
         { tool: 'edit_file', input: { path: 'squad.md', find: '', replace: '队名：squad' } },
       ]);
-      await wakes(fixture, agent).run(now);
+      await wakes(fixture, { agent }).run();
       expect(await hiring.fire({ squad, by })).toStrictEqual({ fired: 'xiaohun' });
 
       // Fired: the next day comes and no coach wakes.
       const tomorrow = new Date(now.getTime() + 86_400_000);
-      expect(await wakes(fixture, agent).run(tomorrow)).toMatchObject({ squads: 0, queued: 0 });
+      expect(await wakes(fixture, { agent, at: tomorrow }).run()).toMatchObject({
+        squads: 0,
+        queued: 0,
+      });
       expect(runs).toHaveLength(2);
       await expect(hiring.fire({ squad, by })).rejects.toBeInstanceOf(NoCoachHiredError);
 
@@ -276,7 +310,7 @@ describe('the coach', () => {
       await expect(
         hiring.hire({ squad, coach: CoachId.parse('xiaohun'), by }),
       ).rejects.toBeInstanceOf(CoachAlreadyHiredError);
-      await wakes(fixture, agent).run(tomorrow);
+      await wakes(fixture, { agent, at: tomorrow }).run();
       // Both earlier wakes added a line; the new hire reads them.
       expect(runs[2]?.task).toContain('squad.md（17 字）');
 
@@ -307,7 +341,7 @@ describe('the coach', () => {
       const { trx, squad } = fixture;
       const { agent, runs } = scriptedAgent(() => 'fail');
       for (const minutes of [0, 10, 20, 30]) {
-        await wakes(fixture, agent).run(new Date(now.getTime() + minutes * 60_000));
+        await wakes(fixture, { agent, at: new Date(now.getTime() + minutes * 60_000) }).run();
       }
       // Two wakes, three tries each; the fourth run has nothing left to try.
       expect(runs).toHaveLength(6);
@@ -334,6 +368,58 @@ describe('the coach', () => {
     });
   });
 
+  it('sends the model only the words of members who agreed to AI use', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => [{ tool: 'squad_week', input: {} }]);
+      // 米亚 hasn't agreed to the current copy: her check-in wakes no one, and her name and
+      // run are nowhere the model reads.
+      expect(await wakes(fixture, { agent, consented: [fixture.leo] }).run()).toMatchObject({
+        queued: 1,
+        done: 1,
+      });
+      expect(runs).toHaveLength(1);
+      const read = [runs[0]?.task, ...(runs[0]?.answers ?? [])].join('\n');
+      expect(read).toContain('队员1');
+      expect(read).not.toContain('米亚');
+      expect(read).not.toContain('跑步');
+    });
+  });
+
+  it('wakes for a check-in made on a day already in next week, as a member far east has it', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      // 10am Sunday in New York is Monday in Tokyo: the check-in is in the week of 11-02.
+      const nextWeek: SquadWeek = {
+        ...fixture.week,
+        weekStart: '2026-11-02',
+        checkIns: fixture.week.checkIns.map((checkIn) => ({ ...checkIn, day: '2026-11-02' })),
+      };
+      expect(
+        await wakes(fixture, { agent, weeks: { '2026-11-02': nextWeek } }).run(),
+      ).toMatchObject({ queued: 2, done: 2 });
+      // The day's wake was queued first, from this week; then the check-in's, from next week's.
+      expect(runs.map(({ task }) => task.includes('队员1 练了 跑步'))).toStrictEqual([false, true]);
+    });
+  });
+
+  it('counts the tokens of a wake whose check-in was deleted while it ran', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, checkIn } = fixture;
+      const agent: CoachAgent = {
+        async run({ task }) {
+          if (!task.includes('新的一天')) {
+            await sql`delete from public.check_ins where id = ${checkIn}`.execute(trx);
+          }
+          return { ok: true, usage: { requests: 1, inputTokens: 1_000, outputTokens: 10 } };
+        },
+      };
+      expect(await wakes(fixture, { agent }).run()).toMatchObject({ queued: 2, done: 2 });
+      const usage = await sql<{ wake_id: string | null }>`
+        select wake_id from public.coach_usage where squad_id = ${squad} order by id`.execute(trx);
+      expect(usage.rows.map(({ wake_id }) => wake_id === null)).toStrictEqual([true, false]);
+    });
+  });
+
   it('runs a squad’s wakes one at a time, and keeps its files append-only until it ends', async () => {
     await rolledBack(async ({ trx, squad }) => {
       const stores = createPostgresCoachStores(trx);
@@ -343,14 +429,15 @@ describe('the coach', () => {
       // While it runs, another run leaves the squad alone, so its wakes run in order.
       await stores.wakes.enqueue([{ squad, reason: { kind: 'daily', day: '2026-11-02' } }], now);
       expect(await stores.wakes.claim({ squads: [squad], limit: 1, now })).toStrictEqual([]);
-      // Until it has run so long that it must have stopped.
-      expect(
-        await stores.wakes.claim({
-          squads: [squad],
-          limit: 5,
-          now: new Date(now.getTime() + 16 * 60_000),
-        }),
-      ).toMatchObject([{ id: wake.id }, { reason: { kind: 'daily', day: '2026-11-02' } }]);
+      // Until it has run so long that it must have stopped: it is taken back first, alone.
+      const later = new Date(now.getTime() + 16 * 60_000);
+      expect(await stores.wakes.claim({ squads: [squad], limit: 5, now: later })).toMatchObject([
+        { id: wake.id },
+      ]);
+      await stores.wakes.finish(wake.id);
+      expect(await stores.wakes.claim({ squads: [squad], limit: 5, now: later })).toMatchObject([
+        { reason: { kind: 'daily', day: '2026-11-02' } },
+      ]);
       await stores.memory.save({ squad, wake: wake.id, files: [{ path: 'memory.md', body: 'a' }] });
       await sql`savepoint attempt`.execute(trx);
       await expect(

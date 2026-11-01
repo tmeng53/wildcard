@@ -68,6 +68,9 @@ create unique index coach_wakes_one_a_day on public.coach_wakes (squad_id, day)
   where reason = 'daily';
 create index coach_wakes_to_run on public.coach_wakes (created_at)
   where state in ('waiting', 'running');
+-- A squad's wakes run one after another, each reading what the last one wrote.
+create unique index coach_wakes_one_running on public.coach_wakes (squad_id)
+  where state = 'running';
 
 -- Each squad's memory: the files its coach keeps (squad.md, memory.md, a page per member), a
 -- new row for every version, so the newest of a path is the file now and the rest is its
