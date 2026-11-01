@@ -3,7 +3,8 @@ import FeedDomain
 import Foundation
 
 /// A squad's feed kept in memory, for previews, UI tests and builds that don't talk to the API
-/// yet. Reactions are kept as the API keeps them: one emoji per member.
+/// yet. Reactions and comments are kept as the API keeps them: one emoji per member, comments
+/// deleted only by their writer.
 public actor InMemoryFeedSource: FeedSource {
     private let viewer: MemberID
     private var posts: [FeedPost]
@@ -37,6 +38,31 @@ public actor InMemoryFeedSource: FeedSource {
         guard let index = posts.firstIndex(where: { $0.id == checkIn }) else { throw .postGone }
         posts[index] = try posts[index].reacting(emoji, by: viewer)
     }
+
+    public func post(_ id: CheckInID) async throws(FeedError) -> FeedPost {
+        guard let post = posts.first(where: { $0.id == id }) else { throw .postGone }
+        return post
+    }
+
+    public func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+        async throws(FeedError) -> Comment
+    {
+        guard let index = posts.firstIndex(where: { $0.id == checkIn }) else { throw .postGone }
+        if let saved = posts[index].comments.first(where: { $0.id == id }) { return saved }
+        let comment = Comment(id: id, member: viewer, text: text, replyTo: member, commentedAt: Timestamp(Date()))
+        let post = posts[index]
+        posts[index] = FeedPost(checkIn: post.checkIn, reactions: post.reactions, comments: post.comments + [comment])
+        return comment
+    }
+
+    public func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {
+        guard let index = posts.firstIndex(where: { $0.id == checkIn }) else { throw .postGone }
+        let post = posts[index]
+        guard let comment = post.comments.first(where: { $0.id == id }) else { return }
+        guard comment.member == viewer else { throw .refused }
+        posts[index] = FeedPost(
+            checkIn: post.checkIn, reactions: post.reactions, comments: post.comments.filter { $0.id != id })
+    }
 }
 
 extension FeedPost {
@@ -44,6 +70,7 @@ extension FeedPost {
     fileprivate func reacting(_ emoji: Emoji?, by member: MemberID) throws(FeedError) -> FeedPost {
         guard canRespond(member) else { throw .ownPost }
         let moment = Timestamp(Date())
-        return FeedPost(checkIn: checkIn, reactions: reactions.setting(emoji, for: member, at: moment))
+        return FeedPost(
+            checkIn: checkIn, reactions: reactions.setting(emoji, for: member, at: moment), comments: comments)
     }
 }
