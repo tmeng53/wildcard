@@ -1,7 +1,7 @@
 /**
  * A push notification, written without its words. The alert names a key in the app's String
  * Catalog (APNs `loc-key`), so the copy lives in the app, Chinese first, and changes without a
- * server release.
+ * server release; the app shows it in the language picked in the app.
  */
 export interface PushNotification {
   readonly alert: {
@@ -28,12 +28,6 @@ export interface PushNotification {
    */
   readonly interruption: 'passive' | 'active';
   /**
-   * Lets the app's notification service extension rewrite the alert from `event` before it is
-   * shown (APNs `mutable-content`), for copy one String Catalog key can't say, such as a list of
-   * counts. The alert stays as sent when the extension doesn't run.
-   */
-  readonly mutableContent?: boolean;
-  /**
    * What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`, or counts by kind
    * such as `{ received: { reaction: 3 } }`. APNs takes 4KB for the whole payload.
    */
@@ -49,7 +43,7 @@ export type EventValue =
 
 /** The APNs JSON payload for a notification, with the `version` every wire body carries. */
 export function apnsPayload(notification: PushNotification) {
-  const { alert, category, thread, interruption, mutableContent, event } = notification;
+  const { alert, category, thread, interruption, event } = notification;
   return {
     version: 1,
     aps: {
@@ -61,7 +55,10 @@ export function apnsPayload(notification: PushNotification) {
       'thread-id': thread,
       'interruption-level': interruption,
       ...(interruption === 'active' ? { sound: 'default' } : {}),
-      ...(mutableContent === true ? { 'mutable-content': 1 } : {}),
+      // Every push goes through the app's notification service extension before it shows,
+      // which looks the key up again in the language the member picked in the app: iOS looks it
+      // up in the phone's. A build without the extension shows the alert as iOS wrote it.
+      'mutable-content': 1,
     },
     event,
   };
