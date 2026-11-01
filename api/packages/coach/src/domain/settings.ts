@@ -42,6 +42,9 @@ const fields = {
   inputMicrosPerMillion: MicrosPerMillion.describe(
     'The model’s price for input tokens: US dollars in millionths per million tokens.',
   ),
+  cachedInputMicrosPerMillion: MicrosPerMillion.describe(
+    'The model’s price for input tokens the provider had cached from an earlier request with the same beginning: US dollars in millionths per million tokens.',
+  ),
   outputMicrosPerMillion: MicrosPerMillion.describe(
     'The model’s price for output tokens: US dollars in millionths per million tokens.',
   ),

@@ -84,17 +84,25 @@ export function wakesDue({
 /** The tokens a wake used, as the model's provider counts them. */
 export interface TokenUsage {
   readonly requests: number;
+  /** Every input token, cached ones included. */
   readonly inputTokens: number;
+  /** Those of the input tokens the provider had cached, at its cheaper price. */
+  readonly cachedInputTokens: number;
   readonly outputTokens: number;
 }
 
 /** What tokens cost at the settings' prices, in US dollars' millionths, rounded up. */
 export function costMicros(
   usage: TokenUsage,
-  prices: Pick<CoachSettings, 'inputMicrosPerMillion' | 'outputMicrosPerMillion'>,
+  prices: Pick<
+    CoachSettings,
+    'inputMicrosPerMillion' | 'cachedInputMicrosPerMillion' | 'outputMicrosPerMillion'
+  >,
 ): number {
+  const cached = Math.min(usage.cachedInputTokens, usage.inputTokens);
   return Math.ceil(
-    (usage.inputTokens * prices.inputMicrosPerMillion +
+    ((usage.inputTokens - cached) * prices.inputMicrosPerMillion +
+      cached * prices.cachedInputMicrosPerMillion +
       usage.outputTokens * prices.outputMicrosPerMillion) /
       1_000_000,
   );

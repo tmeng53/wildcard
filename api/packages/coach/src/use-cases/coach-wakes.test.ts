@@ -113,7 +113,7 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
   const agent: CoachAgent = {
     async run({ instructions, task, tools }): Promise<AgentRun> {
       const steps = script(task);
-      const usage = { requests: 2, inputTokens: 12_000, outputTokens: 800 };
+      const usage = { requests: 2, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 };
       const answers: string[] = [];
       runs.push({ task, instructions, tools: tools.map(({ name }) => name), answers });
       if (steps === 'fail') return { ok: false, usage, error: 'ModelBehaviorError: no' };
@@ -238,6 +238,9 @@ describe('the coach', () => {
       expect(runs[1]?.task).toContain('memory.md（10 字）');
       expect(runs[1]?.instructions).toContain('你是小混');
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
+      // How each wake goes is in the instructions, the same every time, so it can be cached.
+      expect(runs[1]?.instructions).toContain('你会在两种时候醒来');
+      expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
 
       // A member's page is stored by their id, never by 队员N.
       const files = await sql<{ path: string; body: string; member_id: string | null }>`
@@ -324,6 +327,7 @@ describe('the coach', () => {
             wakes: 3,
             requests: 6,
             inputTokens: 36_000,
+            cachedInputTokens: 0,
             outputTokens: 2_400,
             costMicros: 13_800,
           },
@@ -426,7 +430,10 @@ describe('the coach', () => {
           if (!task.includes('新的一天')) {
             await sql`delete from public.check_ins where id = ${checkIn}`.execute(trx);
           }
-          return { ok: true, usage: { requests: 1, inputTokens: 1_000, outputTokens: 10 } };
+          return {
+            ok: true,
+            usage: { requests: 1, inputTokens: 1_000, cachedInputTokens: 0, outputTokens: 10 },
+          };
         },
       };
       expect(await wakes(fixture, { agent }).run()).toMatchObject({ queued: 2, done: 2 });

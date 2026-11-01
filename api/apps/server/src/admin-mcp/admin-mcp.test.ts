@@ -592,7 +592,14 @@ describe('the admin MCP server', () => {
       expect(JSON.parse(on.text)).toStrictEqual({ ...settings, coaching: true });
 
       // A squad hires one coach at a time, and fires it before hiring another.
-      const nothing = { wakes: 0, requests: 0, inputTokens: 0, outputTokens: 0, costMicros: 0 };
+      const nothing = {
+        wakes: 0,
+        requests: 0,
+        inputTokens: 0,
+        cachedInputTokens: 0,
+        outputTokens: 0,
+        costMicros: 0,
+      };
       const coaching = async () =>
         z.json().parse(JSON.parse((await call('get_squad_coaching', { squad })).text));
       expect(await coaching()).toStrictEqual({
