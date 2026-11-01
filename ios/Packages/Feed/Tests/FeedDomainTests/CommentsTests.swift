@@ -64,6 +64,18 @@ import Testing
     #expect(await source.calls == [.post(miasSlip.id)])
 }
 
+@MainActor @Test func aFeedHandsOutAStoreOfOneOfItsPostsOnTheSameSource() async {
+    let source = FakeSource([jaysRun, miasSlip])
+    let feed = store(source)
+    let page = feed.store(of: miasSlip.id)
+    await page.loadPost(miasSlip.id)
+    #expect(page.post(miasSlip.id) == miasSlip)
+    #expect(page.post(jaysRun.id) == nil)
+    #expect(page.hasEarlier == false)
+    #expect(feed.post(miasSlip.id) == nil)
+    #expect(await source.calls == [.post(miasSlip.id)])
+}
+
 @MainActor @Test func openingAPostsPageInTheFeedPicksUpNewComments() async {
     let source = FakeSource([jaysRun])
     let feed = store(source)

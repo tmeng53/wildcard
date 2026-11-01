@@ -90,7 +90,7 @@ public struct APIFeedSource: FeedSource {
 
 extension FeedPost {
     /// A post as the API sends it, in the feed or on its own page.
-    fileprivate init(
+    init(
         checkIn: Components.Schemas.CheckIn, reactions: [Components.Schemas.ReactionEntry],
         comments: [Components.Schemas.CommentEntry]
     ) throws(ContractsError) {

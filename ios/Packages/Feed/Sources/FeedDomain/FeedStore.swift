@@ -100,6 +100,12 @@ public final class FeedStore {
         hasEarlier = false
     }
 
+    /// A store of one of the posts this store can read, for that post's own page opened from
+    /// outside the feed (the member's past posts), on the same source and clocks.
+    public func store(of post: CheckInID) -> FeedStore {
+        FeedStore(source: source, post: post, viewer: viewer, today: today, now: now, newCommentID: newCommentID)
+    }
+
     // MARK: - Reading
 
     /// The posts by day, newest first, with the member's responses on their way already in.
