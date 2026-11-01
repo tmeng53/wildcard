@@ -81,6 +81,20 @@ describe('the coach on the OpenAI Agents SDK', () => {
     model.assertComplete();
   });
 
+  it('never counts more cached tokens than input tokens', async () => {
+    const model = new ScriptedModel([
+      { output: [assistantMessage('好。')], usage: usage(500, { cachedTokens: 900 }) },
+    ]);
+    const agent = createOpenAICoachAgent({ apiKey: 'unused', modelProvider: scripted(model) });
+
+    const run = await agent.run({ ...request, tools: [] });
+
+    expect(run).toStrictEqual({
+      ok: true,
+      usage: { requests: 1, inputTokens: 500, cachedInputTokens: 500, outputTokens: 0 },
+    });
+  });
+
   it('says a run failed, with the tokens it used until then', async () => {
     const model = new ScriptedModel([
       {

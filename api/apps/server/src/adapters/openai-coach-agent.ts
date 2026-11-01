@@ -89,7 +89,8 @@ function tokensOf(usage: Usage): TokenUsage {
   return {
     requests: usage.requests,
     inputTokens: usage.inputTokens,
-    cachedInputTokens: cachedOf(usage.inputTokensDetails),
+    // Never more than the input, which the usage log refuses, whatever the provider reports.
+    cachedInputTokens: Math.min(cachedOf(usage.inputTokensDetails), usage.inputTokens),
     outputTokens: usage.outputTokens,
   };
 }
