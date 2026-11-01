@@ -45,6 +45,26 @@ export interface Coaches {
   tier: string;
 }
 
+export interface CoachFiles {
+  at: Generated<Timestamp>;
+  body: string;
+  id: Generated<Int8>;
+  member_id: string | null;
+  path: string;
+  squad_id: string;
+  wake_id: Int8 | null;
+}
+
+export interface CoachNotes {
+  at: Generated<Timestamp>;
+  coach_id: string;
+  day: string;
+  id: Generated<Int8>;
+  squad_id: string;
+  text: string;
+  wake_id: Int8 | null;
+}
+
 export interface CoachSettingEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
@@ -57,14 +77,61 @@ export interface CoachSettings {
   input_micros_per_million: number;
   model: string;
   only_row: Generated<boolean>;
-  only_squads: string[] | null;
   output_micros_per_million: number;
   rules: string;
 }
 
+export interface CoachUsage {
+  at: Generated<Timestamp>;
+  coach_id: string;
+  cost_micros: Int8;
+  id: Generated<Int8>;
+  input_tokens: Int8;
+  model: string;
+  output_tokens: Int8;
+  requests: number;
+  squad_id: string;
+  wake_id: Int8 | null;
+}
+
+export interface CoachWakes {
+  check_in_id: string | null;
+  claimed_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  day: string | null;
+  id: Generated<Int8>;
+  last_error: string | null;
+  reason: string;
+  squad_id: string;
+  state: Generated<string>;
+  tries: Generated<number>;
+}
+
+export interface SquadCoaches {
+  coach_id: string;
+  hired_at: Generated<Timestamp>;
+  hired_by: string | null;
+  squad_id: string;
+}
+
+export interface SquadCoachEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  coach_id: string;
+  id: Generated<Int8>;
+  kind: string;
+  squad_id: string;
+}
+
 export interface DB {
   coach_catalog_events: CoachCatalogEvents;
+  coach_files: CoachFiles;
+  coach_notes: CoachNotes;
   coach_setting_events: CoachSettingEvents;
   coach_settings: CoachSettings;
+  coach_usage: CoachUsage;
+  coach_wakes: CoachWakes;
   coaches: Coaches;
+  squad_coach_events: SquadCoachEvents;
+  squad_coaches: SquadCoaches;
 }

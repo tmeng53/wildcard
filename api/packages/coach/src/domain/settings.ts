@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
-/** A squad's id, lower-cased as Postgres stores a uuid, so a list can't name one twice. */
+/** A squad's id, lower-cased as Postgres stores a uuid. */
 export const SquadId = z
   .uuid()
   .transform((id) => id.toLowerCase())
@@ -30,14 +30,9 @@ const MicrosPerMillion = z.int().min(0).max(2_000_000_000);
 const fields = {
   coaching: z
     .boolean()
-    .describe('Whether coaches wake at all. Off, no squad has a coach and nothing is sent.'),
-  onlySquads: z
-    .array(SquadId)
-    .min(1)
-    .max(100)
-    .refine((ids) => new Set(ids).size === ids.length, { message: 'A squad is listed twice' })
-    .nullable()
-    .describe('While coaching is on: only these squads, for a trial; null for every squad.'),
+    .describe(
+      'Whether coaches wake at all. On, every squad that hired a coach has one; off, none does and nothing is sent.',
+    ),
   model: CoachModel,
   rules: z
     .string()

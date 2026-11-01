@@ -11,7 +11,7 @@ import {
   type CoachTables,
 } from '../adapters/postgres-coach-settings.js';
 import { CoachId, type CoachEdit } from '../domain/coach.js';
-import { CoachSettingsChange, MemberId, SquadId } from '../domain/settings.js';
+import { CoachSettingsChange, MemberId } from '../domain/settings.js';
 import { createCoachCatalog } from './coach-catalog.js';
 import { createCoachSettings } from './coach-settings.js';
 
@@ -60,7 +60,6 @@ describe('the coach settings', () => {
     expect(settings).toMatchObject({
       version: 1,
       coaching: false,
-      onlySquads: null,
       model: 'openai/gpt-6-luna',
       inputMicrosPerMillion: 0,
       outputMicrosPerMillion: 0,
@@ -72,35 +71,22 @@ describe('the coach settings', () => {
     await rolledBack(async (trx, admin) => {
       const settings = createCoachSettings({ store: createPostgresCoachSettings(trx) });
       const before = await settings.current();
-      const trial = SquadId.parse('6f1c3e2a-8b4d-4c5e-9f60-7a8b9c0d1e2f');
-
       const changed = await settings.change(
-        { coaching: true, onlySquads: [trial], inputMicrosPerMillion: 1_250_000 },
+        { coaching: true, inputMicrosPerMillion: 1_250_000 },
         admin,
       );
-      const expected = {
-        ...before,
-        coaching: true,
-        onlySquads: [trial],
-        inputMicrosPerMillion: 1_250_000,
-      };
+      const expected = { ...before, coaching: true, inputMicrosPerMillion: 1_250_000 };
       expect(changed).toStrictEqual(expected);
       expect(await settings.current()).toStrictEqual(expected);
 
       // The same change again saves nothing new.
-      await settings.change({ coaching: true, onlySquads: [trial] }, admin);
+      await settings.change({ coaching: true }, admin);
       expect(await logged(trx, { log: 'coach_setting_events', by: admin })).toStrictEqual([
         expected,
       ]);
 
-      // The same squad in upper case is the same squad.
-      expect(
-        CoachSettingsChange.safeParse({ onlySquads: [trial, trial.toUpperCase()] }).success,
-      ).toBe(false);
-
-      // Back to every squad.
-      await settings.change({ onlySquads: null }, admin);
-      expect(await settings.current()).toMatchObject({ onlySquads: null });
+      await settings.change({ coaching: false }, admin);
+      expect(await settings.current()).toMatchObject({ coaching: false });
       expect(await logged(trx, { log: 'coach_setting_events', by: admin })).toHaveLength(2);
     });
   });
