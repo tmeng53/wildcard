@@ -1989,18 +1989,18 @@
         }
       }
     },
-    "等待：三拍，整页是小人原地跑": {
+    "等待：三拍，整页是两张票": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Waiting: three hopping dots; a whole page jogs"
+            "value": "Waiting: three hopping dots; a whole page, two tickets"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "等待：三拍，整頁是小人原地跑"
+            "value": "等待：三拍，整頁是兩張票"
           }
         }
       }
