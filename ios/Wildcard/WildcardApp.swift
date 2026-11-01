@@ -99,11 +99,7 @@ struct WildcardApp: App {
             initialValue: SquadSettingsModel(
                 service: InMemorySquadSettingsService.sample(
                     seat: LaunchOptions.squadSeat, longNames: LaunchOptions.longNames)))
-        _schedule = State(
-            initialValue: ScheduleModel(
-                store: ScheduleStore(
-                    backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
-                    now: LaunchOptions.scheduleNow)))
+        _schedule = State(initialValue: Self.sampleSchedule())
         _recap = State(initialValue: Self.sampleRecap(today: today))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
@@ -123,6 +119,14 @@ struct WildcardApp: App {
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
         _myPosts = State(initialValue: feedSource)
+    }
+
+    /// The sample member's 出赛表.
+    private static func sampleSchedule() -> ScheduleModel {
+        ScheduleModel(
+            store: ScheduleStore(
+                backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
+                now: LaunchOptions.scheduleNow))
     }
 
     /// The sample member for 我. The in-memory member has no Apple account to confirm with and
