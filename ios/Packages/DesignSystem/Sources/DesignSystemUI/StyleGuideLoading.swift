@@ -7,7 +7,7 @@ struct LoadingGuide: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        GuideGroup(Text("等待：三拍，整页是小人原地跑", bundle: .module)) {
+        GuideGroup(Text("等待：三拍，整页是两张票", bundle: .module)) {
             VStack(spacing: Space.xs) {
                 Button {
                 } label: {
