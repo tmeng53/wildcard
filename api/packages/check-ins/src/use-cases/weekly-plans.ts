@@ -2,13 +2,14 @@ import type { LocalDay, MemberId } from '../domain/check-in.js';
 import type { FuelGoals } from '../domain/fuel-goal.js';
 import {
   DEFAULT_PLAN_DAYS,
+  WeekStart,
+  addDays,
   checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
   trainedOnRestDay,
   weekStartOf,
   type PlanDays,
-  type WeekStart,
   type WeeklyPlan,
 } from '../domain/weekly-plan.js';
 import { TimeZoneNotSetError } from '../errors.js';
@@ -31,9 +32,16 @@ export interface PlannedWeek extends WeeklyPlan {
   readonly firstWeek: WeekStart | undefined;
 }
 
-/** Members' weekly plans: reading a week's plan and changing it. */
+/** A member's typical week (每周模板): the plan each week follows until it is changed for itself. */
+export interface PlanTemplate {
+  readonly days: PlanDays;
+  /** `default` before the member makes one. */
+  readonly source: 'saved' | 'default';
+}
+
+/** Members' weekly plans and typical weeks: reading a week's plan and changing it. */
 export interface WeeklyPlans {
-  /** The member's plan for a week, whether saved for it, carried over or the default. */
+  /** The member's plan for a week, whether saved for it, their template or the default. */
   find(input: { readonly member: MemberId; readonly weekStart: WeekStart }): Promise<PlannedWeek>;
   /**
    * Saves the member's plan for a week and returns it. Throws `TimeZoneNotSetError` before the
@@ -55,20 +63,32 @@ export interface WeeklyPlans {
     readonly weekStart: WeekStart;
     readonly goals: FuelGoals;
   }): Promise<PlannedWeek>;
+  /** The member's template: the one the weeks to come follow, or the default before they make one. */
+  template(input: { readonly member: MemberId }): Promise<PlanTemplate>;
+  /**
+   * Saves the member's template and returns it. Made in the week the member joined, it applies
+   * from that week; a change in any later week applies from next week, so a week that has begun
+   * keeps its plan. A week before the first one follows the default. Throws
+   * `TimeZoneNotSetError` before the member has a profile. Safe to repeat.
+   */
+  saveTemplate(input: {
+    readonly member: MemberId;
+    readonly days: PlanDays;
+  }): Promise<PlanTemplate>;
 }
 
-/** The member's plan for a week: saved for it, carried over from an earlier week, or the default. */
+/** The member's plan for a week: saved for it, else their template, else the default. */
 export async function findWeeklyPlan(
   { store }: { readonly store: WeeklyPlanStore },
   { member, weekStart }: { readonly member: MemberId; readonly weekStart: WeekStart },
 ): Promise<WeeklyPlan> {
-  const latest = await store.latestFrom(member, weekStart);
-  if (latest === undefined) return { weekStart, days: DEFAULT_PLAN_DAYS, source: 'default' };
-  return {
-    weekStart,
-    days: latest.days,
-    source: latest.weekStart === weekStart ? 'saved' : 'carriedOver',
-  };
+  const [saved, template] = await Promise.all([
+    store.savedFor(member, weekStart),
+    store.templateFor(member, weekStart),
+  ]);
+  if (saved !== undefined) return { weekStart, days: saved, source: 'saved' };
+  if (template !== undefined) return { weekStart, days: template, source: 'template' };
+  return { weekStart, days: DEFAULT_PLAN_DAYS, source: 'default' };
 }
 
 /**
@@ -101,6 +121,13 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
     return { today: localDayAt(deps.clock(), timeZone), joinedOn: localDayAt(joinedAt, timeZone) };
   }
 
+  /** Throws `SportNotListedError` for a day naming a sport the list doesn't have. */
+  async function checkSports(days: PlanDays) {
+    for (const day of days) {
+      if (day.kind === 'train' && day.sport !== undefined) await checkSport(deps.sports, day.sport);
+    }
+  }
+
   async function plannedWeek(
     { member, joinedOn }: { readonly member: MemberId; readonly joinedOn: LocalDay | undefined },
     plan: WeeklyPlan,
@@ -127,12 +154,26 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
       const { today, joinedOn } = await daysOf(member);
       const current = await findWeeklyPlan(deps, { member, weekStart });
       checkPlanChange({ current, next: days, today, joinedOn });
-      for (const day of days) {
-        if (day.kind === 'train' && day.sport !== undefined)
-          await checkSport(deps.sports, day.sport);
-      }
+      await checkSports(days);
       await deps.store.save({ member, weekStart, days });
       return plannedWeek({ member, joinedOn }, { weekStart, days, source: 'saved' });
+    },
+    async template({ member }) {
+      const latest = await deps.store.latestTemplate(member);
+      return latest === undefined
+        ? { days: DEFAULT_PLAN_DAYS, source: 'default' }
+        : { days: latest.days, source: 'saved' };
+    },
+    async saveTemplate({ member, days }) {
+      const { today, joinedOn } = await daysOf(member);
+      await checkSports(days);
+      const thisWeek = weekStartOf(today);
+      // Made on the day the member joined (sign-up, and going back to it), it is this week's
+      // plan too, as no day of it has been planned yet; a change on any later day waits for next
+      // week, so days already over keep their plan.
+      const fromWeek = joinedOn >= today ? thisWeek : WeekStart.parse(addDays(thisWeek, 7));
+      await deps.store.saveTemplate({ member, fromWeek, days });
+      return { days, source: 'saved' };
     },
     async saveFuelGoals({ member, weekStart, goals }) {
       const { today, joinedOn } = await daysOf(member);

@@ -39,8 +39,8 @@ enum Launch {
 /// `-character-editor` the character editor, `-loading` the launch page and `-recap` the 战报's tile and
 /// sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
-/// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
-/// about. `Launch` starts it.
+/// brings the member back to 今天 with the home loaded again, or, for an awards push, to 动态,
+/// where the 战报's tile is. `Launch` starts it.
 struct WildcardApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var today: TodayModel
@@ -56,6 +56,9 @@ struct WildcardApp: App {
     /// made their squad only once the squad is dropping onto the scene they picked, so the
     /// tabs never show the squad's old scene first.
     @State private var signedUp = false
+    /// Signing in on `-onboarding`'s open screen, which `-slow-sign-in` makes last long enough
+    /// for the loader to show.
+    @State private var isSigningIn = false
     @State private var app: AppModel?
     /// The language the app speaks; a pick in the app draws everything again in it.
     @State private var language = AppLanguage.current
@@ -175,10 +178,23 @@ struct WildcardApp: App {
                 model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
-                ContinueWithApple { signUp.signedIn(name: nil) }
+                ContinueWithApple {
+                    if let wait = LaunchOptions.signInWait {
+                        Task {
+                            isSigningIn = true
+                            try? await Task.sleep(for: .seconds(wait))
+                            signUp.signedIn(name: nil)
+                            isSigningIn = false
+                        }
+                    } else {
+                        signUp.signedIn(name: nil)
+                    }
+                }
             } tabs: { showsBar, content in
                 MainTabs.entranceTabs(showsBar: showsBar, content: content)
             }
+            // As on the real backend's open screen.
+            .loadingCover(isSigningIn) { LaunchCover() }
             .onChange(of: signUp.finished) { _, finished in
                 guard finished != nil else { return }
                 Task {
@@ -271,9 +287,10 @@ private struct AppRoot: View {
         .onAppear {
             delegate.opened = { [app, $tab] opened in
                 switch opened {
-                case .weeklyAwards(let squad, let week):
+                // 动态, where the member sees the new 战报's tile and opens it themselves.
+                case .weeklyAwards:
                     $tab.wrappedValue = .feed
-                    Task { await app.openRecap(squad: squad, week: week) }
+                    Task { await app.readRecapAgain() }
                 case .other:
                     $tab.wrappedValue = .today
                     Task { await app.reloadToday() }
