@@ -89,6 +89,7 @@ actor FakeSource: FeedSource {
 
     func posts(in squad: SquadID, from first: LocalDay, through last: LocalDay) async throws(FeedError) -> [FeedPost] {
         calls.append(.posts(first, last))
+        await wait()
         if let failure { throw failure }
         return posts.filter { (first...last).contains($0.checkIn.day) }
     }

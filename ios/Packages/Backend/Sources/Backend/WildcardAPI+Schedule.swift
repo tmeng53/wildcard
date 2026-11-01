@@ -11,4 +11,17 @@ extension WildcardAPI {
             ).ok.body.json
         }
     }
+
+    /// The member's typical week (每周模板): seven days, Monday first, which the weeks to come
+    /// follow until one is changed for itself; the default before they make one.
+    public func planTemplate() async throws(APIError) -> [PlanDay] {
+        let wire = try await call { try await client.getMyPlanTemplate().ok.body.json }
+        return try read { () throws(ContractsError) in try [PlanDay](wire: wire.days) }
+    }
+
+    /// Saves the member's typical week. Saved in the week they joined, it is that week's plan
+    /// too; a change in a later week applies from next week.
+    public func saveTemplate(_ days: [PlanDay]) async throws(APIError) {
+        _ = try await call { try await client.saveMyPlanTemplate(body: .json(.init(days))).ok }
+    }
 }

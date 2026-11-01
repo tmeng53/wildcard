@@ -156,9 +156,10 @@ public final class FeedStore {
         }
     }
 
-    /// Loads the week before the earliest loaded, as the member scrolls to the end.
+    /// Loads the week before the earliest loaded, as the member scrolls to the end. A call while
+    /// one is under way does nothing, so the week is read once and the loader stays until it is.
     public func loadEarlier() async {
-        guard case .squad = scope, hasEarlier, let earlier = range?.earlier else { return }
+        guard case .squad = scope, !isLoadingEarlier, hasEarlier, let earlier = range?.earlier else { return }
         isLoadingEarlier = true
         defer { isLoadingEarlier = false }
         let before = loaded.count

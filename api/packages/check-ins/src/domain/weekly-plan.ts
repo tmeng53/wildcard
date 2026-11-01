@@ -77,7 +77,7 @@ export const StoredPlan = z.discriminatedUnion('version', [
   z.strictObject({ version: z.literal(1), days: PlanDays }),
 ]);
 
-/** The plan a member has before they first save one: rest on Wednesday and Sunday. */
+/** The plan a week has before the member makes their template: rest on Wednesday and Sunday. */
 export const DEFAULT_PLAN_DAYS: PlanDays = [
   { kind: 'train' },
   { kind: 'train' },
@@ -89,10 +89,10 @@ export const DEFAULT_PLAN_DAYS: PlanDays = [
 ];
 
 /**
- * Where a week's plan comes from: saved for this week, carried over from the member's latest
- * earlier plan (they haven't changed it since), or the default before their first save.
+ * Where a week's plan comes from: saved for this week, the member's template (their typical
+ * week, when they haven't changed this one), or the default before they make a template.
  */
-export type PlanSource = 'saved' | 'carriedOver' | 'default';
+export type PlanSource = 'saved' | 'template' | 'default';
 
 export interface WeeklyPlan {
   readonly weekStart: WeekStart;
@@ -143,7 +143,7 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
  * days before today stay as they were; today and the days after it change freely, rest days
  * included (a rest today is a 休息日, no 请假条 needed). Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
- * is still on the default plan: that is where they first make their plan.
+ * hasn't been changed for itself: that is where they first make their plan.
  */
 export function checkPlanChange({
   current,
@@ -162,7 +162,7 @@ export function checkPlanChange({
     throw new WeekTooFarAheadError(current.weekStart);
   }
   if (current.weekStart > thisWeek) return;
-  if (current.source === 'default' && joinedOn >= today) return;
+  if (current.source !== 'saved' && joinedOn >= today) return;
 
   const from = joinedOn > thisWeek ? joinedOn : thisWeek;
   const first = Math.round((Date.parse(from) - Date.parse(thisWeek)) / DAY);
