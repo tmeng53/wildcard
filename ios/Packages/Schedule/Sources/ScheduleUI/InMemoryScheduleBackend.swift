@@ -9,7 +9,12 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     private let thisWeek: LocalDay
     private let today: LocalDay
     private var sheets: [LocalDay: WeekSheet] = [:]
+    /// Weeks whose plan the member changed for themselves.
+    private var saved: Set<LocalDay> = []
     private var lifetime: Int
+    /// The member's typical week (每周模板), which the weeks ahead follow: the sample's next
+    /// week is planned from it.
+    private var typicalWeek: [PlanDay] = InMemoryScheduleBackend.planB
 
     public init(profile: ScheduleProfile, today: LocalDay, sheets: [WeekSheet], lifetimeTrainedDays: Int) {
         member = profile
@@ -75,9 +80,8 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
 
     public func week(starting weekStart: LocalDay) async throws(ScheduleError) -> WeekSheet {
         if let sheet = sheets[weekStart] { return sheet }
-        // A week further ahead follows the latest plan, as the API's does.
-        let latest = sheets.keys.filter { $0 < weekStart }.max().flatMap { sheets[$0]?.plan } ?? Self.planA
-        return try WeekSheet(weekStart: weekStart, plan: latest, marks: Array(repeating: .none, count: 7))
+        // A week further ahead follows the template, as the API's does.
+        return try WeekSheet(weekStart: weekStart, plan: typicalWeek, marks: Array(repeating: .none, count: 7))
     }
 
     public func savePlan(_ days: [PlanDay], weekStart: LocalDay) async throws(ScheduleError) -> [PlanDay] {
@@ -92,6 +96,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         }
         sheet.plan = days
         sheets[weekStart] = sheet
+        saved.insert(weekStart)
         return days
     }
 
@@ -103,6 +108,19 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     }
 
     public func trainedDays() async throws(ScheduleError) -> Int { lifetime }
+
+    public func template() async throws(ScheduleError) -> [PlanDay] { typicalWeek }
+
+    /// Applies from next week, as the API's does: weeks after it not saved for themselves
+    /// follow it.
+    public func saveTemplate(_ days: [PlanDay]) async throws(ScheduleError) {
+        guard days.count == WeeklyPlan.dayCount else { throw .refused }
+        typicalWeek = days
+        // Their 饮食小目标 stay, as the API keeps them.
+        for week in sheets.keys where week > thisWeek && !saved.contains(week) {
+            sheets[week]?.plan = days
+        }
+    }
 }
 
 extension Array {

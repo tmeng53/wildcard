@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -65,19 +66,24 @@ struct WeekAwards: View {
 /// The picks for the day in hand: the week's sports and the usual ones, 休息, and 更多.
 struct DayPicks: View {
     let store: ScheduleStore
-    let sheet: WeekSheet
+    let board: WeekBoard
     let index: Int
     let onPick: (Activity) -> Void
     let onRest: () -> Void
     let onMore: () -> Void
 
     var body: some View {
-        let day = sheet.weekStart.adding(days: index)
-        let plan = sheet.plan[index]
+        let day = board.weekStart.adding(days: index)
+        let plan = board.days[index]
         let picks = store.suggestedActivities(common: SportList.shared.catalog.checkInQuick)
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(
-                Text("\(ScheduleLabels.weekday(day)) · \(ScheduleLabels.shortDate(day))", bundle: .module))
+            // The 每周模板's days are every week's: no date.
+            if board.tense == .template {
+                SectionLabel(ScheduleLabels.weekday(day))
+            } else {
+                SectionLabel(
+                    Text("\(ScheduleLabels.weekday(day)) · \(ScheduleLabels.shortDate(day))", bundle: .module))
+            }
             FlowRow {
                 ForEach(picks, id: \.key) { activity in
                     PickPill(activity.name, systemImage: activity.symbol, isSelected: plan == .train(activity)) {
@@ -95,6 +101,53 @@ struct DayPicks: View {
                 .accessibilityIdentifier("schedule.pick.more")
             }
         }
+    }
+}
+
+/// Under the 每周模板: when a change to it counts.
+struct TemplateNote: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Label {
+            Text("改了从下周开始生效，本周不变", bundle: .module)
+        } icon: {
+            Image(systemName: ScheduleLabels.templateSymbol)
+                .accessibilityHidden(true)
+        }
+        .noteStyle(theme)
+        .accessibilityIdentifier("schedule.template.note")
+    }
+}
+
+/// After a week's plan changes: only that week changed, and a way to change the 每周模板 too.
+/// In the brand's graphite, as the template is.
+struct TemplateOffer: View {
+    let onCopy: () -> Void
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        HStack(spacing: Space.xs) {
+            Text("只改了这一周", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+            Spacer(minLength: Space.xs)
+            Button(action: onCopy) {
+                Text("也改到模板", bundle: .module)
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .frame(minHeight: Sizing.minimumTapTarget)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("schedule.template.copy")
+        }
+        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+        .padding(.leading, Space.s)
+        .padding(.trailing, Space.s)
+        .background(
+            Color(role: .bgBrand, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("schedule.template.offer")
     }
 }
 
@@ -194,6 +247,23 @@ struct CountdownCard: View {
     }
 }
 
+/// What the 出赛表's chips show: a week, or the 每周模板.
+enum SchedulePage: Hashable {
+    case week(LocalDay)
+    case template
+}
+
+/// The character jogging in place on the poster's grey card while the weeks are read.
+struct PosterLoader: View {
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        LoadingCharacter()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(role: .bgSubtle, in: theme))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+    }
+}
 extension View {
     /// A short note under the poster: what just happened.
     fileprivate func noteStyle(_ theme: SceneTheme) -> some View {
