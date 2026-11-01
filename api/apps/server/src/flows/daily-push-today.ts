@@ -47,6 +47,8 @@ export type PushPost = {
   readonly kind: 'trained' | 'healthyMeal' | 'cheatMeal' | 'disclaimer';
   readonly sport?: string;
   readonly customSport?: string;
+  /** A 练了's minutes, when the member gave them. */
+  readonly minutes?: number;
   readonly at: string;
   /** The caption, or the 请假条's text, cut to `POST_TEXT` and `POST_TEXT_BYTES`. */
   readonly text?: string;
@@ -147,6 +149,9 @@ export async function pushToday(
             ...(checkIn.training.customSport === undefined
               ? {}
               : { customSport: cut(checkIn.training.customSport, { bytes: SPORT_BYTES }) }),
+            ...(checkIn.training.minutes === undefined
+              ? {}
+              : { minutes: checkIn.training.minutes }),
           }
         : {}),
       at: checkIn.createdAt.toISOString(),

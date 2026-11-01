@@ -58,6 +58,7 @@ function post(author: MemberId, minute: number): SquadPost {
       training: {
         sport: 'custom',
         customSport: family.repeat(20),
+        minutes: 600,
         caption: family.repeat(60),
       },
     },
@@ -112,6 +113,7 @@ describe('the push’s today', () => {
     // Cut by bytes, so they still say something.
     expect(carried?.posts[0]?.text).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
     expect(carried?.members[1]?.name).toMatch(/^(👨‍👩‍👧‍👦)+…$/u);
+    expect(carried?.posts[0]?.minutes).toBe(600);
   });
 
   it('leaves room for an alert that names someone with a long name', async () => {

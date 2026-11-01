@@ -97,8 +97,8 @@ public struct PushPost: Hashable, Sendable, Identifiable {
 
 /// What a teammate checked in.
 public enum PushEntry: Hashable, Sendable {
-    /// 练了, and the sport when this build knows it.
-    case trained(Activity?)
+    /// 练了, the sport when this build knows it, and the minutes when the member gave them.
+    case trained(Activity?, minutes: WorkoutMinutes?)
     case healthyMeal
     case cheatMeal
     case disclaimer
@@ -106,10 +106,12 @@ public enum PushEntry: Hashable, Sendable {
     init(_ post: WirePost) throws(DailyPushError) {
         switch post.kind {
         case "trained":
+            // Minutes outside the range the app takes are left out, as a sport it doesn't know is.
+            let minutes = post.minutes.flatMap { try? WorkoutMinutes($0) }
             if let name = post.customSport, let custom = try? CustomSport(name) {
-                self = .trained(.custom(custom))
+                self = .trained(.custom(custom), minutes: minutes)
             } else {
-                self = .trained(post.sport.flatMap(Sport.init(rawValue:)).map(Activity.sport))
+                self = .trained(post.sport.flatMap(Sport.init(rawValue:)).map(Activity.sport), minutes: minutes)
             }
         case "healthyMeal": self = .healthyMeal
         case "cheatMeal": self = .cheatMeal
@@ -157,13 +159,15 @@ struct WirePost: Decodable {
     let kind: String
     let sport: String?
     let customSport: String?
+    /// A 练了's minutes; pushes from before the server sent them have none.
+    let minutes: Int?
     let posted: String
     let text: String?
     let reactions: [Wire.Reaction]
     let reactionCount: Int
 
     enum CodingKeys: String, CodingKey {
-        case id, kind, sport, customSport, text, reactions, reactionCount
+        case id, kind, sport, customSport, minutes, text, reactions, reactionCount
         case author = "by"
         case posted = "at"
     }
