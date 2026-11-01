@@ -1,3 +1,4 @@
+import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 
 import { CoachId } from '../domain/coach.js';
@@ -16,10 +17,8 @@ const FRESH_HOURS = 24;
 /** How long a wake whose try failed waits before its next. */
 const RETRY_MINUTES = 5;
 
-/** Whether `error` is Postgres refusing a duplicate (`unique_violation`). */
-function uniqueViolation(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
-}
+/** Postgres's code for a duplicate row: here, a second running wake of a squad. */
+const UNIQUE_VIOLATION = '23505';
 
 /** A claimed wake's row as the coach reads it. */
 function wakeOf(row: {
@@ -137,7 +136,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             ])
             .executeTakeFirst()
             .catch((error: unknown) => {
-              if (uniqueViolation(error)) return undefined;
+              if (hasErrorCode(error, UNIQUE_VIOLATION)) return undefined;
               throw error;
             });
           if (row !== undefined) claimed.push(wakeOf(row));

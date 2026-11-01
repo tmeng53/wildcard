@@ -1,3 +1,4 @@
+import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 
 import { CoachId } from '../domain/coach.js';
@@ -54,7 +55,7 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
           .execute();
         return hired.length > 0 ? 'hired' : 'hasCoach';
       } catch (error) {
-        if (isForeignKeyViolation(error)) return 'noSquad';
+        if (hasErrorCode(error, FOREIGN_KEY_VIOLATION)) return 'noSquad';
         throw error;
       }
     },
@@ -85,13 +86,4 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
       return row === undefined ? undefined : CoachId.parse(row.coach_id);
     },
   };
-}
-
-function isForeignKeyViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    error.code === FOREIGN_KEY_VIOLATION
-  );
 }
