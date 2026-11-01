@@ -153,7 +153,10 @@ public final class FeedStore {
         } catch {
             switch error {
             case .signedOut: phase = .signedOut
-            case .postGone: loaded[id] = nil
+            case .postGone:
+                forget(id)
+                // A page of one post that is gone shows that, rather than loading for ever.
+                if phase == .loading { phase = .current }
             default: if phase == .loading { phase = .offline }
             }
         }
@@ -263,7 +266,9 @@ public final class FeedStore {
             }
             return true
         } catch {
-            if error == .postGone { loaded[id] = nil } else { unsentComments[id] = comment }
+            // The member's own post the server hasn't saved yet takes comments once it has.
+            let error = error == .postGone && ownNotYetListed[id] != nil ? FeedError.notSent : error
+            if error == .postGone { forget(id) } else { unsentComments[id] = comment }
             failure = error
             return false
         }
@@ -271,6 +276,8 @@ public final class FeedStore {
 
     /// The member deletes their own comment: gone at once, and back if the server says no.
     public func deleteComment(_ comment: CommentID, on id: CheckInID) async {
+        // One still going out can't be deleted yet: the delete could reach the server first.
+        guard !isSending(comment, on: id) else { return }
         deleting.insert(comment)
         defer { deleting.remove(comment) }
         do {
@@ -280,9 +287,14 @@ public final class FeedStore {
                 loaded[id] = post
             }
         } catch {
-            if error == .postGone { loaded[id] = nil }
+            if error == .postGone { forget(id) }
             failure = error
         }
+    }
+
+    /// True while the member's comment is still going out.
+    public func isSending(_ comment: CommentID, on id: CheckInID) -> Bool {
+        pendingComments[id]?.contains { $0.id == comment } ?? false
     }
 
     private func send(_ key: CheckInID) async {
@@ -297,16 +309,22 @@ public final class FeedStore {
             } catch {
                 // What the server has stays; the post shows it again.
                 wishes[key] = nil
-                if error == .postGone { loaded[key] = nil }
+                if error == .postGone { forget(key) }
                 failure = error
             }
         }
     }
 
+    /// The server says the post is gone: it leaves, unless it is the member's own that the server
+    /// hasn't saved yet.
+    private func forget(_ id: CheckInID) {
+        loaded[id] = ownNotYetListed[id]
+    }
+
     private func showing(_ post: FeedPost) -> FeedPost {
         var post = wishes[post.id].map { $0.applied(to: post, by: viewer) } ?? post
         let pending = (pendingComments[post.id] ?? []).filter { mine in
-            !post.comments.contains { $0.id == mine.id }
+            !deleting.contains(mine.id) && !post.comments.contains { $0.id == mine.id }
         }
         post.comments = post.comments.filter { !deleting.contains($0.id) } + pending
         return post

@@ -120,6 +120,7 @@ actor FakeSource: FeedSource {
         calls.append(.comment(id, text.text, member, checkIn))
         await wait()
         if let failure { throw failure }
+        guard posts.contains(where: { $0.id == checkIn }) else { throw .postGone }
         return Comment(id: id, member: coco, text: text, replyTo: member, commentedAt: at(900))
     }
 

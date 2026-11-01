@@ -134,3 +134,42 @@ private final class CommentIDs: @unchecked Sendable {
     #expect(await sent.value)
     #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
 }
+
+@MainActor @Test func theMembersOwnPostNotSavedYetStaysWhenItsPageOpensOrTakesAComment() async {
+    let mine = checkIn(9, by: coco, on: "2026-10-22", at: 400)
+    let source = FakeSource([])
+    let feed = store(source)
+    await feed.load()
+    feed.show(mine)
+    await feed.loadPost(mine.id)
+    #expect(feed.post(mine.id) == FeedPost(checkIn: mine))
+    #expect(await feed.comment(text("加油"), replyingTo: nil, on: mine.id) == false)
+    #expect(feed.failure == .notSent)
+    #expect(feed.post(mine.id) == FeedPost(checkIn: mine))
+}
+
+@MainActor @Test func aCommentStillGoingOutCantBeDeletedYet() async {
+    let source = FakeSource([jaysRun])
+    let feed = store(source)
+    await feed.load()
+    await source.hold()
+    let sent = Task { await feed.comment(text("等等"), replyingTo: nil, on: jaysRun.id) }
+    while await source.waiting == 0 { await Task.yield() }
+    #expect(feed.isSending(commentID(1), on: jaysRun.id))
+    await feed.deleteComment(commentID(1), on: jaysRun.id)
+    #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
+    await source.release()
+    #expect(await sent.value)
+    #expect(feed.isSending(commentID(1), on: jaysRun.id) == false)
+    #expect(await source.calls.contains(.deleteComment(commentID(1), jaysRun.id)) == false)
+}
+
+@MainActor @Test func aPageOfOnePostThatIsGoneStopsLoading() async {
+    let source = FakeSource([jaysRun])
+    let feed = FeedStore(
+        source: source, post: miasSlip.id, viewer: coco, today: { thursday }, now: { at(500) },
+        newCommentID: { commentID(1) })
+    await feed.loadPost(miasSlip.id)
+    #expect(feed.phase == .current)
+    #expect(feed.post(miasSlip.id) == nil)
+}

@@ -144,7 +144,7 @@ public struct PostDetailView: View {
                 Image(systemName: "doc.on.doc")
             }
         }
-        if comment.member == model.viewer {
+        if comment.member == model.viewer, !model.store.isSending(comment.id, on: post.id) {
             Button(role: .destructive) {
                 Task { await model.store.deleteComment(comment.id, on: post.id) }
             } label: {
