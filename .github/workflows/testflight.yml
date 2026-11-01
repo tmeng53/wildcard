@@ -23,6 +23,14 @@ on:
     # UTC; offset from verify's 23 minutes past so the two don't start together.
     - cron: "47 */3 * * *"
   workflow_dispatch:
+    inputs:
+      without_app_group:
+        description: >-
+          Build without the app group, until group.com.wildcardsquad.wildcard is registered and
+          enabled on every App ID in the Apple Developer portal (no long-press view on the 6pm
+          push; pushes in the phone's language)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -103,6 +111,19 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install --quiet "pyjwt[crypto]==2.10.1"
           "$RUNNER_TEMP/venv/bin/python" scripts/asc-revoke-dev-certs.py snapshot "$RUNNER_TEMP/certificates-before.json"
+      # Cloud signing can't register an app group, so until it is set up in the Apple Developer
+      # portal a build that asks for one can't be signed. This leaves it out of every target:
+      # the sign-in stays in the app's own Keychain (KeychainSessionStore keeps it outside the
+      # group when the build isn't in it), and the 6pm push's long-press view, which needs the
+      # shared sign-in and looks, is switched off, so that push shows as a plain notification.
+      - name: Leave the app group out
+        if: inputs.without_app_group
+        run: |
+          for file in ios/Config/Wildcard.entitlements ios/WildcardPush*/*.entitlements; do
+            /usr/libexec/PlistBuddy -c 'Delete :com.apple.security.application-groups' "$file"
+          done
+          /usr/libexec/PlistBuddy -c 'Set :NSExtension:NSExtensionAttributes:UNNotificationExtensionCategory none' \
+            ios/WildcardPushReact/Info.plist
       - name: Archive
         env:
           BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
