@@ -34,23 +34,42 @@ public struct PrimaryButtonStyle: ButtonStyle {
     }
 }
 
-/// A second action beside or under the primary one (换一组): a light grey capsule, 44 tall.
+/// A second action beside or under the primary one (换一组): a light grey capsule, 44 tall. Inside
+/// a grey card it turns white (`.inCard`). `.danger` is for an action that can't be taken back
+/// (解雇): only its words turn red.
 public struct SecondaryButtonStyle: ButtonStyle {
-    @Environment(\.sceneTheme) private var theme
+    public enum Placement: Sendable {
+        case onPage
+        case inCard
+    }
 
-    public init() {}
+    @Environment(\.sceneTheme) private var theme
+    private let placement: Placement
+    private let tone: ButtonTone
+
+    public init(_ placement: Placement = .onPage, tone: ButtonTone = .plain) {
+        self.placement = placement
+        self.tone = tone
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .typeStyle(TypeRamp.calloutEmphasis)
             .lineLimit(1)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .foregroundStyle(Color(role: tone == .danger ? .fgDanger : .fgDefault, in: theme))
             .padding(.horizontal, Space.m + Space.xxs)
             .frame(minHeight: Sizing.control)
-            .background(Color(role: .bgSubtle, in: theme), in: Capsule())
+            .background(Color(role: placement == .inCard ? .bgCanvas : .bgSubtle, in: theme), in: Capsule())
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }
+}
+
+/// The words of a secondary or text button: plain ink, or `.danger` red for an action that can't
+/// be taken back (解雇, 确认解雇). The main action of a page is never red.
+public enum ButtonTone: Sendable {
+    case plain
+    case danger
 }
 
 /// Confirming with Apple (用 Apple 确认注销), in Apple's own black as its button guidelines ask.
@@ -103,12 +122,14 @@ public struct AppleButtonStyle: ButtonStyle {
     }
 }
 
-/// A word that acts: 以后再选 in muted ink, or 删除 in plain ink (deleting asks again; it is
-/// never red). 44 tall, no fill.
+/// A word that acts: 以后再选 in muted ink, 删除 in plain ink (deleting asks again), or
+/// 确认解雇 in `.danger` red, for the last step of an action that can't be taken back. 44 tall,
+/// no fill.
 public struct TextButtonStyle: ButtonStyle {
     public enum Tone: Sendable {
         case muted
         case plain
+        case danger
     }
 
     @Environment(\.sceneTheme) private var theme
@@ -121,12 +142,20 @@ public struct TextButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .typeStyle(TypeRamp.calloutEmphasis)
-            .foregroundStyle(Color(role: tone == .muted ? .fgMuted : .fgDefault, in: theme))
+            .foregroundStyle(Color(role: role, in: theme))
             .padding(.horizontal, Space.s)
             .frame(minHeight: Sizing.control)
             .contentShape(Rectangle())
             .opacity(configuration.isPressed ? 0.6 : 1)
             .animation(.wildcard(Motion.change), value: configuration.isPressed)
+    }
+
+    private var role: ColorRole {
+        switch tone {
+        case .muted: .fgMuted
+        case .plain: .fgDefault
+        case .danger: .fgDanger
+        }
     }
 }
 #endif

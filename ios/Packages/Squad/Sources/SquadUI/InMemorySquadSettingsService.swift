@@ -15,6 +15,10 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
         case member
         /// 小林, the captain, with nobody holding last week's crown: the captain picks.
         case noWinner
+        /// 小林, the captain, whose squad has hired 毛头.
+        case coached
+        /// Mia, on a squad that has hired 毛头: she reads its 简历 and hires nobody.
+        case coachedMember
     }
 
     private var current: SquadSettings
@@ -47,12 +51,14 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
             : Bundle.module.inAppLanguage.localizedString(forKey: "晨跑五人组", value: nil, table: nil)
         let viewer: MemberID =
             switch seat {
-            case .captain, .noWinner: ids[0]
+            case .captain, .noWinner, .coached: ids[0]
             case .winner: ids[1]
-            case .member: ids[2]
+            case .member, .coachedMember: ids[2]
             }
+        let coached = seat == .coached || seat == .coachedMember
+        let now = Date.now
         let pickers: SquadScene.Pickers = seat == .noWinner ? .captain(ids[0]) : .crown([ids[1]])
-        let week = LocalDay(at: .now, in: .current).weekStart
+        let week = LocalDay(at: now, in: .current).weekStart
         return InMemorySquadSettingsService(
             settings: SquadSettings(
                 squad: Squad(
@@ -65,7 +71,10 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                         SceneHistory(scene: .track, weeksAgo: 2), SceneHistory(scene: .pool, weeksAgo: nil),
                         SceneHistory(scene: .gym, weeksAgo: 0), SceneHistory(scene: .tennis, weeksAgo: nil),
                         SceneHistory(scene: .climbing, weeksAgo: nil),
-                    ])))
+                    ]),
+                coach: SquadCoach(
+                    hire: coached ? SquadCoach.Hire(coach: sampleCoach, since: now) : nil, canHire: viewer == ids[0]),
+                today: LocalDay(at: now, in: .current), timeZone: .current))
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
@@ -107,6 +116,35 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
         return current.scene
     }
 }
+
+extension InMemorySquadSettingsService {
+    public func coaches() async throws(SquadError) -> [Coach] {
+        [sampleCoach]
+    }
+
+    public func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach {
+        if failsSaving { throw .unavailable }
+        guard current.coach.canHire, coach == sampleCoach.id else { throw .outdated }
+        if current.coach.hire?.coach.id != coach {
+            current.coach = SquadCoach(hire: .init(coach: sampleCoach, since: .now), canHire: true)
+        }
+        return current.coach
+    }
+
+    public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
+        if failsSaving { throw .unavailable }
+        guard current.coach.canHire else { throw .outdated }
+        current.coach = SquadCoach(hire: nil, canHire: true)
+        return current.coach
+    }
+}
+
+/// The first coach, 毛头, with the 简历 Tracy approved (2026-11-01). The words are the API's, so
+/// they stay as the server sends them.
+private let sampleCoach = Coach(
+    id: "xiaohun", name: "毛头", title: "混混教练", catchphrase: "先动起来，证书以后再说",
+    background: "体育学院刚毕业，该学的都学了，就是证还没考下来", yearsCoaching: 0, experience: "热情满格",
+    style: "懂行、松弛、风趣", tags: ["体院应届", "懂行", "松弛", "风趣"], pay: "管饭就行")
 
 extension Squad {
     fileprivate func with(name: String? = nil, members: [MemberID]? = nil) -> Squad {

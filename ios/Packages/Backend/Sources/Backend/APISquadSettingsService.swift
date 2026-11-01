@@ -4,8 +4,8 @@ import Foundation
 import ScenePickDomain
 import SquadDomain
 
-/// 小队设置 over our API: the member's first squad with its members' characters and the week's
-/// scene, and the captain's changes, leaving and the scene pick.
+/// 小队设置 over our API: the member's first squad with its members' characters, the week's
+/// scene and its coach, and the captain's changes, leaving, the scene pick and the coach.
 public struct APISquadSettingsService: SquadSettingsService {
     private let api: WildcardAPI
 
@@ -19,11 +19,15 @@ public struct APISquadSettingsService: SquadSettingsService {
             guard let first = try await api.mySquads().first else { throw .refused(.squadNotJoined) }
             let today = try await api.today(of: first.id)
             let scene = try await api.scene(of: first.id)
+            let coach = try await api.coach(of: first.id)
             var characters: [MemberID: MemberCharacter] = [:]
             for mate in today.members {
                 if let character = mate.character { characters[mate.member] = character }
             }
-            return SquadSettings(squad: first, viewer: viewer, characters: characters, scene: scene)
+            let timeZone = TimeZone.current
+            return SquadSettings(
+                squad: first, viewer: viewer, characters: characters, scene: scene, coach: coach,
+                today: LocalDay(at: Date(), in: timeZone), timeZone: timeZone)
         }
     }
 
@@ -41,6 +45,18 @@ public struct APISquadSettingsService: SquadSettingsService {
 
     public func pick(_ scene: SceneID, for squad: SquadID, week: LocalDay) async throws(SquadError) -> SquadScene {
         try await self.squad { () throws(APIError) in try await api.pick(scene, for: squad, week: week) }
+    }
+
+    public func coaches() async throws(SquadError) -> [Coach] {
+        try await squad { () throws(APIError) in try await api.coaches() }
+    }
+
+    public func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach {
+        try await self.squad { () throws(APIError) in try await api.hire(coach, for: squad) }
+    }
+
+    public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
+        try await self.squad { () throws(APIError) in try await api.fireCoach(of: squad) }
     }
 
     private func squad<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {

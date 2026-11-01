@@ -1,5 +1,6 @@
 import Contracts
 import DesignSystem
+import Foundation
 import Observation
 import ScenePickDomain
 
@@ -7,6 +8,13 @@ import ScenePickDomain
 public enum SquadLoad: Hashable, Sendable {
     case loading
     case loaded(SquadSettings)
+    case failed(SquadError)
+}
+
+/// 教练市场 while it reads the coaches.
+public enum CoachMarketLoad: Hashable, Sendable {
+    case loading
+    case loaded([Coach])
     case failed(SquadError)
 }
 
@@ -55,6 +63,8 @@ public final class SquadSettingsModel {
     public private(set) var hasLeft = false
     /// The scene picker, while the member may pick and has opened it (换场地).
     public private(set) var picker: ScenePicker?
+    /// 教练市场, read each time it opens.
+    public private(set) var market: CoachMarketLoad = .loading
 
     @ObservationIgnored private let service: any SquadSettingsService
     @ObservationIgnored private let signOut: @MainActor () async -> Void
@@ -143,6 +153,56 @@ public final class SquadSettingsModel {
     /// The member may pick this week's scene now (换场地 shows).
     public var canPickScene: Bool { settings?.scene.canPick ?? false }
 
+    // MARK: 教练
+
+    /// The squad's coach, once hired.
+    public var coach: SquadCoach.Hire? { settings?.coach.hire }
+
+    /// The member is the captain, who hires, changes and fires the coach (招聘, 换教练, 解雇);
+    /// everyone else reads the 简历 only.
+    public var canHireCoach: Bool { settings?.coach.canHire ?? false }
+
+    /// 「执教第 N 周」: the week the squad hired it counts 1, weeks starting Monday on the
+    /// member's clock.
+    public var coachWeek: Int? {
+        guard let settings, let hire = settings.coach.hire else { return nil }
+        return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
+    }
+
+    /// Reads 教练市场's coaches, each time it opens.
+    public func loadMarket() async {
+        market = .loading
+        do {
+            market = .loaded(try await service.coaches())
+        } catch {
+            market = .failed(error)
+            if error == .signedOut { await signOut() }
+        }
+    }
+
+    /// Hires `coach` (招聘), or swaps the squad's coach for it in one step (换教练). True once the
+    /// squad has it, so the page goes back to 小队设置.
+    @discardableResult
+    public func hire(_ coach: CoachID) async -> Bool {
+        guard let settings else { return false }
+        await change { service throws(SquadError) in
+            let hired = try await service.hire(coach, for: settings.squad.id)
+            self.updateCoach(hired)
+        }
+        return !changeFailed
+    }
+
+    /// Fires the squad's coach (确认解雇). True once it is gone.
+    @discardableResult
+    public func fireCoach() async -> Bool {
+        guard let settings else { return false }
+        await change { service throws(SquadError) in
+            let fired = try await service.fireCoach(of: settings.squad.id)
+            self.updateCoach(fired)
+        }
+        return !changeFailed
+    }
+
     // MARK: Changes
 
     /// Renames the squad. A name the rules refuse is the field's to say; this returns false for it.
@@ -204,6 +264,13 @@ public final class SquadSettingsModel {
         picker = nil
         await reload()
         changed()
+    }
+
+    /// The coach changes nothing 今天 or 我 show, so nothing else reads the squad again.
+    private func updateCoach(_ coach: SquadCoach) {
+        guard case .loaded(var settings) = load else { return }
+        settings.coach = coach
+        load = .loaded(settings)
     }
 
     private func update(_ edit: (inout SquadSettings) -> Void) {
