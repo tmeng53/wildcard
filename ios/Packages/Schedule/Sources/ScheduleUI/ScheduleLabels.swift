@@ -29,6 +29,9 @@ enum ScheduleLabels {
         "\(day.month)/\(day.day)"
     }
 
+    /// The 每周模板's symbol, on its chip and its poster: it comes round every week.
+    static let templateSymbol = "repeat"
+
     /// W3, the week the member joined being W1.
     static func week(_ number: Int) -> String {
         "W\(number)"

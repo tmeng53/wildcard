@@ -316,7 +316,6 @@ describe('the daily progress push', () => {
         thread: 'dailyProgress',
         collapseId: `dailyProgress-${dayAt(eve.offset)}`,
         interruption: 'passive',
-        mutableContent: true,
         event: {
           kind: 'dailyProgress',
           day: dayAt(eve.offset),

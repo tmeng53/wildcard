@@ -1,7 +1,9 @@
 import CharacterEditorUI
 import CheckInUI
+import Contracts
 import DesignSystem
 import DesignSystemUI
+import FeedDomain
 import FeedUI
 import MeDomain
 import MeUI
@@ -25,6 +27,8 @@ struct MainTabs: View {
     let feed: FeedModel
     let squad: SquadSettingsModel
     let recap: RecapShelf
+    /// The member's own posts, for 我的动态.
+    let myPosts: any MyPostsSource
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
@@ -33,6 +37,10 @@ struct MainTabs: View {
     @State private var editor: CharacterEditorModel?
     /// 小队设置, open from 我 over everything.
     @State private var showsSquad = false
+    /// 我的动态, open from 我 in its place.
+    @State private var wall: PostWallStore?
+    /// A post opened from 我的动态: 动态's post page, over the wall.
+    @State private var post: OpenedPost?
 
     var body: some View {
         AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar) { tab in
@@ -99,12 +107,14 @@ struct MainTabs: View {
             look: character.outfit, persona: character.persona, nickname: character.nickname)
     }
 
-    /// A tab's full-screen step (writing a check-in, the 注销账号 page) hides the bar.
+    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) hides the
+    /// bar.
     private var showsTabBar: Bool {
         switch selection {
         case .today: today.showsTabBar
-        case .profile: !profile.isDeletionOpen
-        case .feed, .schedule: true
+        case .profile: !profile.isDeletionOpen && post == nil
+        case .feed: feed.opened == nil
+        case .schedule: true
         }
     }
 
@@ -125,17 +135,43 @@ struct MainTabs: View {
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
         case .profile:
-            MeView(
-                model: profile,
-                destinations: MeDestinations(
-                    // Past 战报 live in 动态 until they have a page of their own.
-                    squad: { showsSquad = true },
-                    pastRecaps: { selection = .feed },
-                    editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-            )
-            .accentTone(.brand)
+            profilePage
         }
+    }
+
+    /// 我, or 我的动态 in its place, with a post opened from it over the wall.
+    private var profilePage: some View {
+        ZStack {
+            if let wall {
+                PostWallView(
+                    store: wall, back: { self.wall = nil },
+                    open: { post = OpenedPost(id: $0.id, model: feed.page(of: $0.id)) },
+                    checkIn: { selection = .today }
+                )
+                .allowsHitTesting(post == nil)
+                .accessibilityHidden(post != nil)
+                .transition(.move(edge: .trailing))
+                if let post {
+                    PostDetailView(model: post.model, post: post.id) { self.post = nil }
+                        .environment(\.sceneTheme, today.scene)
+                        .transition(.move(edge: .trailing))
+                }
+            } else {
+                MeView(
+                    model: profile,
+                    destinations: MeDestinations(
+                        // Past 战报 live in 动态 until they have a page of their own.
+                        squad: { showsSquad = true },
+                        pastRecaps: { selection = .feed },
+                        editCharacter: editCharacter,
+                        myPosts: { wall = PostWallStore(source: myPosts) },
+                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                )
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: post?.id)
+        .accentTone(.brand)
     }
 
     /// The tabs as home opens with them, around `content` on 今天, for 上场, whose end hands over
@@ -170,4 +206,10 @@ private struct RecapTile: View {
                 week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
         }
     }
+}
+
+/// A post opened from 我的动态, with the page's own model of it.
+private struct OpenedPost {
+    let id: CheckInID
+    let model: FeedModel
 }

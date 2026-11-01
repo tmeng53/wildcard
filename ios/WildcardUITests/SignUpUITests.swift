@@ -126,7 +126,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     /// Making a squad, skipping sports and the week, in English. Sign-up starts on a Monday, so
-    /// no day is over yet and the default plan reads 5/7.
+    /// no day is over yet, and with no sport picked the default plan trains one day: 1/7.
     func testStartingASquadInEnglish() {
         let app = launch(language: "en")
         let signIn = app.buttons["signup.signIn"]
@@ -162,7 +162,7 @@ final class SignUpUITests: XCTestCase {
         skip.tap()
         let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
-        XCTAssertEqual(count.label, "Training 5/7 days a week")
+        XCTAssertEqual(count.label, "Training 1/7 days a week")
         settle()
         keepScreenshot(named: "50-signup-week-en")
     }
@@ -294,7 +294,7 @@ extension SignUpUITests {
         skip.tap()
         let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
-        XCTAssertEqual(count.label, "每週訓練 5/7 天")
+        XCTAssertEqual(count.label, "每週訓練 1/7 天")
         settle()
         keepScreenshot(named: "58-signup-week-zh-hant")
     }

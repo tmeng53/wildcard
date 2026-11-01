@@ -62,6 +62,19 @@ struct PosterContentTests {
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .held, .plain])
     }
 
+    @Test func theTemplateHasEveryDayOpenAndOnlyItsCount() {
+        var board = WeekBoard(template: plan, weekStart: monday.adding(days: 7))
+        board.tap(2)
+        let content = PosterContent(template: board, nickname: "Tracy")
+        #expect(content.isTemplate)
+        #expect(content.lanes.map(\.look) == [.plain, .plain, .held, .plain, .plain, .plain, .plain])
+        #expect(content.lanes.allSatisfy { $0.isEditable && $0.mark == .none && !$0.isToday })
+        #expect(content.tally == .typical(train: 5))
+        #expect(content.fuel.isEmpty)
+        #expect(content.fuelEditable == false)
+        #expect(content.titles.isEmpty)
+    }
+
     @Test func nextWeekCountsThePlanAndOpensItsGoals() throws {
         let next = monday.adding(days: 7)
         var board = WeekBoard(weekStart: next, days: plan, today: thursday)

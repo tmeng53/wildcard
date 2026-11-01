@@ -116,7 +116,8 @@
       "category": "weeklyAwards",
       "thread-id": "weekly-awards",
       "interruption-level": "active",
-      "sound": "default"
+      "sound": "default",
+      "mutable-content": 1
     },
     "event": {
       "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
@@ -137,7 +138,8 @@
       "category": "weeklyAwardsStuck",
       "thread-id": "weekly-awards-stuck",
       "interruption-level": "active",
-      "sound": "default"
+      "sound": "default",
+      "mutable-content": 1
     },
     "event": {
       "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",

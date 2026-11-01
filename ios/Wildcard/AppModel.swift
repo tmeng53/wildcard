@@ -309,9 +309,13 @@ final class AppModel {
         let zone = home.timeZone
         let store = FeedStore(
             source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
-            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) })
+            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) },
+            newCommentID: { CommentID(UUID()) })
         return FeedModel(store: store, viewer: home.member, now: { Date() })
     }
+
+    /// 我的动态 over our API.
+    var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
 
     private func registerForPush() async {
         try? await Push.registration.signedIn(APIDeviceRegistry(api: api))

@@ -9,24 +9,33 @@ import SwiftUI
 
 /// 穿搭: the shopping street, where each store is a card, then the open store's rack. WARM-UP
 /// 热身社 runs the width of the street at the top; the other stores stand two a row, greyed
-/// while closed, and a tap on one says how it opens.
+/// while closed, and a tap on one says how it opens. In a store, the colors of the piece just
+/// picked stay put above the rack while it scrolls, as the skin swatches do on 长相.
 struct ShoppingStreet: View {
     let model: CharacterEditorModel
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.xs) {
-                if let id = model.store, let store = model.draft.catalog.stores.first(where: { $0.id == id }) {
-                    StoreRack(model: model, store: store)
-                } else {
-                    street
-                }
+        let store = model.store.flatMap { id in model.draft.catalog.stores.first(where: { $0.id == id }) }
+        VStack(alignment: .leading, spacing: 0) {
+            if store != nil, let slot = model.picked {
+                SwatchRow(model: model, slot: slot, named: true)
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.top, Space.s)
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.vertical, Space.s)
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    if let store {
+                        StoreRack(model: model, store: store)
+                    } else {
+                        street
+                    }
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.vertical, Space.s)
+            }
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
     }
 
     @ViewBuilder
@@ -127,8 +136,8 @@ private struct StoreBadge: View {
     }
 }
 
-/// Inside a store: a way back to the street, the store's name and line, the colors of the
-/// piece just picked, and its rack, three a row, each piece with its name.
+/// Inside a store: a way back to the street, the store's name and line, and its rack, three a
+/// row, each piece with its name. The colors of the piece just picked sit above it, pinned.
 private struct StoreRack: View {
     let model: CharacterEditorModel
     let store: EditorChoices.Store
@@ -164,9 +173,6 @@ private struct StoreRack: View {
         StoreCopy.tagline(store.id)
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        if let slot = model.picked {
-            SwatchRow(model: model, slot: slot, named: true)
-        }
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3), spacing: Space.xs) {
             ForEach(model.draft.catalog.rack(of: store.id), id: \.variant) { piece in
                 RackPiece(model: model, slot: piece.slot, variant: piece.variant)

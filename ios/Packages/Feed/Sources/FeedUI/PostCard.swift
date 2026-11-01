@@ -31,6 +31,8 @@ struct PostCard: View {
     static let liftScale: Double = 1.02
 
     private var canRespond: Bool { post.canRespond(model.viewer) }
+    /// On its own page the post lists every comment under the card instead.
+    private var showsAllComments: Bool { model.opened == post.id }
     private var isLifted: Bool { model.lifted && model.picking == post.id }
 
     var body: some View {
@@ -41,7 +43,12 @@ struct PostCard: View {
             details
             ReactionRow(model: model, post: post)
                 .padding(.horizontal, Space.m)
-                .padding(.bottom, Space.xs)
+                .padding(.bottom, post.comments.isEmpty || showsAllComments ? Space.xs : 0)
+            if !post.comments.isEmpty && !showsAllComments {
+                CardComments(model: model, post: post)
+                    .padding(.horizontal, Space.m)
+                    .padding(.bottom, Space.s)
+            }
         }
         .background(
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)

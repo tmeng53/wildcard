@@ -40,6 +40,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case strayCustomSport
     /// A player card number outside `JerseyNumber.range`.
     case jerseyNumberOutOfRange(Int)
+    /// A comment that is empty or longer than `CommentText.maxLength` characters.
+    case commentLength(Int)
     /// A catchphrase that is empty or longer than `Catchphrase.maxLength` characters.
     case catchphraseLength(Int)
     /// A catchphrase with a line break; it is one line.
