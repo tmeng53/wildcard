@@ -77,14 +77,34 @@ extension WeeklyPlan {
     public init(_ wire: Components.Schemas.WeeklyPlan) throws(ContractsError) {
         try self.init(
             member: try MemberID(wire: wire.member), weekStart: try LocalDay(wire.weekStart),
-            days: try wire.days.map { day throws(ContractsError) in
-                switch day {
-                case .case1(let train):
-                    guard let sport = train.sport else { return .train(nil) }
-                    return .train(try Activity(sport: sport, customSport: train.customSport))
-                case .case2: return .rest
-                }
-            })
+            days: try [PlanDay](wire: wire.days))
+    }
+}
+
+extension [PlanDay] {
+    /// A plan's seven days as the API sends them, the week's first day first.
+    public init(wire: Components.Schemas.PlanDays) throws(ContractsError) {
+        self = try wire.map { day throws(ContractsError) in
+            switch day {
+            case .case1(let train):
+                guard let sport = train.sport else { return .train(nil) }
+                return .train(try Activity(sport: sport, customSport: train.customSport))
+            case .case2: return .rest
+            }
+        }
+    }
+}
+
+extension Components.Schemas.PlanDays {
+    /// Seven days as the API takes them, the week's first day first.
+    public init(_ days: [PlanDay]) {
+        self = days.map { day in
+            switch day {
+            case .train(let activity):
+                .case1(.init(kind: .train, sport: activity?.wireSport, customSport: activity?.wireCustomSport))
+            case .rest: .case2(.init(kind: .rest))
+            }
+        }
     }
 }
 
@@ -92,15 +112,14 @@ extension Components.Schemas.WeeklyPlanDraft {
     /// The body of `PUT /me/weekly-plans/{weekStart}` that saves these days, the week's first
     /// day first, with the week in the path.
     public init(_ days: [PlanDay]) {
-        self.init(
-            version: ._1,
-            days: days.map { day in
-                switch day {
-                case .train(let activity):
-                    .case1(.init(kind: .train, sport: activity?.wireSport, customSport: activity?.wireCustomSport))
-                case .rest: .case2(.init(kind: .rest))
-                }
-            })
+        self.init(version: ._1, days: .init(days))
+    }
+}
+
+extension Components.Schemas.PlanTemplateDraft {
+    /// The body of `PUT /me/plan-template` that saves these days as the member's typical week.
+    public init(_ days: [PlanDay]) {
+        self.init(version: ._1, days: .init(days))
     }
 }
 

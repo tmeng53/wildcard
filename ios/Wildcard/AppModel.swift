@@ -64,6 +64,8 @@ final class AppModel {
     @ObservationIgnored private let folders: MemberFolders
     /// The lists the app shows that live in the database, such as every sport.
     @ObservationIgnored private let catalog: CatalogClient
+    /// The squad's looks, kept for the 6pm push view.
+    @ObservationIgnored private let shared = AppGroup.directory.map(SharedSquad.init)
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
     /// with the session alone.
     @ObservationIgnored private let confirmDeletion: @MainActor () async throws(MeError) -> DeletionConfirmation
@@ -71,11 +73,11 @@ final class AppModel {
     @ObservationIgnored private let posted: @MainActor () -> Void
 
     init(
-        config: AppConfig, usesApple: Bool = true, posted: @escaping @MainActor () -> Void
+        config: BackendAddress, usesApple: Bool = true, posted: @escaping @MainActor () -> Void
     ) {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
-            store: KeychainSessionStore(), now: { Date() })
+            store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
         api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
         memberAPI = { [account] member in
             WildcardAPI(
@@ -278,7 +280,7 @@ final class AppModel {
     private func todayStore(of member: MemberID) -> TodayStore {
         let directory = folders.folder(for: member)
         return TodayStore(
-            backend: APICheckInBackend(api: memberAPI(member), directory: directory),
+            backend: APICheckInBackend(api: memberAPI(member), directory: directory, shared: shared),
             outbox: DeviceOutbox(directory: directory),
             now: { Date() }, newID: { UUID() })
     }
@@ -322,6 +324,7 @@ final class AppModel {
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()
+        shared?.forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
     }

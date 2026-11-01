@@ -125,15 +125,24 @@ export interface PhotoFiles {
 export type Clock = () => Date;
 
 /**
- * Where members' weekly plans and 饮食小目标 are kept: a row only for each week the member
- * changed.
+ * Where members' weekly plans, typical weeks and 饮食小目标 are kept: a plan row only for each
+ * week the member changed, and a template row for each change to their typical week.
  */
 export interface WeeklyPlanStore {
-  /** The member's plan saved for `weekStart` or, failing that, for the latest week before it. */
-  latestFrom(
+  /** The member's plan saved for `weekStart` itself. */
+  savedFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
+  /** The member's template for `weekStart`: the newest one applying from that week or before. */
+  templateFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
+  /** The member's latest template, the one the weeks to come follow, and the week it applies from. */
+  latestTemplate(
     member: MemberId,
-    weekStart: WeekStart,
-  ): Promise<{ readonly weekStart: WeekStart; readonly days: PlanDays } | undefined>;
+  ): Promise<{ readonly fromWeek: WeekStart; readonly days: PlanDays } | undefined>;
+  /** Adds a template applying from `fromWeek`; one equal to the latest adds nothing. */
+  saveTemplate(template: {
+    readonly member: MemberId;
+    readonly fromWeek: WeekStart;
+    readonly days: PlanDays;
+  }): Promise<void>;
   /** Saves the member's plan for a week, replacing any saved before. */
   save(plan: {
     readonly member: MemberId;

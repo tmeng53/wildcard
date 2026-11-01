@@ -141,8 +141,59 @@ const days = [{ kind: 'train', sport: 'tennis' }, rest, train, train, train, res
 const problem = (reason: string, errorStatus: string): unknown =>
   expect.objectContaining({ version: 1, reason, errorStatus });
 
+describe('/me/plan-template', () => {
+  it('gives the default, then the saved typical week, which this week and later ones follow', async () => {
+    const { token, userId } = await member();
+    expect(await call('GET', { path: '/me/plan-template', token })).toStrictEqual([
+      200,
+      { version: 1, days: [train, train, rest, train, train, train, rest], source: 'default' },
+    ]);
+    const saved = { version: 1, days, source: 'saved' };
+    expect(
+      await call('PUT', { path: '/me/plan-template', token, body: { version: 1, days } }),
+    ).toStrictEqual([200, saved]);
+    expect(await call('GET', { path: '/me/plan-template', token })).toStrictEqual([200, saved]);
+    for (const weekStart of [memberWeek(0), memberWeek(2)]) {
+      expect(await call('GET', { path: `/me/weekly-plans/${weekStart}`, token })).toStrictEqual([
+        200,
+        {
+          version: 1,
+          member: userId,
+          weekStart,
+          days,
+          source: 'carriedOver',
+          fuelGoals: [],
+          firstWeek: joinedWeek(),
+        },
+      ]);
+    }
+  });
+
+  it('refuses a plan that isn’t seven days, or a sport the list doesn’t have', async () => {
+    const { token } = await member();
+    expect(
+      await call('PUT', { path: '/me/plan-template', token, body: { version: 1, days: [rest] } }),
+    ).toStrictEqual([400, problem('REQUEST_INVALID', 'INVALID_ARGUMENT')]);
+    expect(
+      await call('PUT', {
+        path: '/me/plan-template',
+        token,
+        body: { version: 1, days: [{ kind: 'train', sport: 'quidditch' }, ...days.slice(1)] },
+      }),
+    ).toStrictEqual([400, problem('SPORT_NOT_LISTED', 'INVALID_ARGUMENT')]);
+  });
+
+  it('asks for a profile first, and for a sign-in', async () => {
+    const { token } = await member({ profile: false });
+    expect(
+      await call('PUT', { path: '/me/plan-template', token, body: { version: 1, days } }),
+    ).toStrictEqual([400, problem('TIME_ZONE_NOT_SET', 'FAILED_PRECONDITION')]);
+    expect((await call('GET', { path: '/me/plan-template' }))[0]).toBe(401);
+  });
+});
+
 describe('/me/weekly-plans/{weekStart}', () => {
-  it('saves a plan, reads it back, and carries it into later weeks', async () => {
+  it('saves a plan and reads it back; other weeks follow the typical week', async () => {
     const { token, userId } = await member();
     const weekStart = monday(2);
     const saved = {
@@ -167,7 +218,12 @@ describe('/me/weekly-plans/{weekStart}', () => {
     ]);
     expect(await call('GET', { path: `/me/weekly-plans/${monday(3)}`, token })).toStrictEqual([
       200,
-      { ...saved, weekStart: monday(3), source: 'carriedOver' },
+      {
+        ...saved,
+        weekStart: monday(3),
+        days: [train, train, rest, train, train, train, rest],
+        source: 'default',
+      },
     ]);
   });
 
