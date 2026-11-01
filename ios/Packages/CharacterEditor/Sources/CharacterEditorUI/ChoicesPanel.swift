@@ -8,7 +8,7 @@ import DesignSystemUI
 import SwiftUI
 
 /// The open tab's choices: color swatches over a grid of picture tiles, or the persona
-/// carousel. On 样子 the skin or coat swatches stay put above the species while they scroll.
+/// carousel. On 长相 the skin or coat swatches stay put above the species while they scroll.
 struct ChoicesPanel: View {
     let model: CharacterEditorModel
 

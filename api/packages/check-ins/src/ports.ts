@@ -1,6 +1,7 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
 import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
+import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
 import type { PhotoPath } from './domain/photos.js';
 import type { Comment, CommentId } from './domain/comment.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
@@ -10,8 +11,7 @@ import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
-  | { readonly saved: true }
-  | { readonly saved: false; readonly taken: 'id' | 'dailyDisclaimer' | 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' };
 
 /** Where check-ins are kept. */
 export interface CheckInStore {
@@ -32,6 +32,18 @@ export interface CheckInStore {
   squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
+  /**
+   * Up to `limit` of a member's own check-ins, newest day first, then newest made, then by id
+   * from the end: those after `after` when given, of one kind when given.
+   */
+  pageForMember(query: {
+    readonly member: MemberId;
+    readonly kind?: CheckInKind | undefined;
+    readonly after?: PostCursor | undefined;
+    readonly limit: number;
+  }): Promise<CheckInRecord[]>;
+  /** How many check-ins `member` ever made, of every kind. */
+  countForMember(member: MemberId): Promise<number>;
 }
 
 /** Who is in which squad now. The squads module keeps that; check-ins only ask. */

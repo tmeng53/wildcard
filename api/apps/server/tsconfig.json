@@ -48,6 +48,9 @@
     },
     {
       "path": "../../packages/sports"
+    },
+    {
+      "path": "../../packages/coach"
     }
   ]
 }

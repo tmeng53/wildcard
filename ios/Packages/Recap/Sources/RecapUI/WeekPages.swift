@@ -295,7 +295,7 @@ struct HottestPage: View {
             } placeholder: {
                 Color(role: .bgCanvas, in: theme)
             }
-            .accessibilityLabel(Text("打卡照片", bundle: .module))
+            .accessibilityLabel(Text("照片", bundle: .module))
         } else {
             ZStack {
                 Color(role: .bgCanvas, in: theme)

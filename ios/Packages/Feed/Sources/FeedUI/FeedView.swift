@@ -15,8 +15,10 @@ public struct FeedView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: FeedModel
-    /// The post at the top of the list, set to open 动态 on one.
-    @State private var position: CheckInID?
+    /// The post opened from the home, held at the top for a moment or until the member scrolls:
+    /// what is above it (the 战报's tile, the posts the server lists, cards the lazy list measures
+    /// only when drawn) keeps arriving after the first move and would push it away.
+    @State private var pinned: CheckInID?
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
@@ -25,6 +27,8 @@ public struct FeedView: View {
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
     static let space = "feed"
+    /// How long a post opened from the home stays held at the top.
+    static let pinFor = Duration.seconds(2)
 
     public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
@@ -33,33 +37,54 @@ public struct FeedView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: Space.m) {
-                Text("动态", bundle: .module)
-                    .typeStyle(TypeRamp.largeTitle)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("feed.title")
-                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
-                header
-                content
+        ScrollViewReader { scroller in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: Space.m) {
+                    Text("动态", bundle: .module)
+                        .typeStyle(TypeRamp.largeTitle)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .accessibilityAddTraits(.isHeader)
+                        .accessibilityIdentifier("feed.title")
+                        .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    header
+                    content
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.top, Space.l)
+                .padding(.bottom, Space.l)
             }
-            .scrollTargetLayout()
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.l)
-            .padding(.bottom, Space.l)
-        }
-        // Keeps a focused post at the top while what is above it loads and grows (the 战报's
-        // tile, the posts the server lists), which a one-off scroll would lose.
-        .scrollPosition(id: $position, anchor: .top)
-        .scrollDismissesKeyboard(.immediately)
-        // A held card's slide picks an emoji; the list stays put under it.
-        .scrollDisabled(model.lifted)
-        .refreshable { await model.load() }
-        .onChange(of: model.focus, initial: true) { _, focus in
-            guard let focus else { return }
-            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { position = focus }
-            model.focus = nil
+            // Each time the list's height changes, puts the pinned post back at the top.
+            .onScrollGeometryChange(for: CGFloat.self) {
+                $0.contentSize.height
+            } action: { _, _ in
+                if let pinned { scroller.scrollTo(pinned, anchor: .top) }
+            }
+            .onScrollPhaseChange { _, phase in
+                if phase == .interacting { pinned = nil }
+            }
+            // Lets go once the list has settled, so the pin can't keep moving the list.
+            .task(id: pinned) {
+                guard pinned != nil else { return }
+                try? await Task.sleep(for: Self.pinFor)
+                // A newer pin or leaving 动态 cancels this wait; only a wait that ran out lets go.
+                guard !Task.isCancelled else { return }
+                pinned = nil
+            }
+            .scrollDismissesKeyboard(.immediately)
+            // A held card's slide picks an emoji; the list stays put under it.
+            .scrollDisabled(model.lifted)
+            .refreshable { await model.load() }
+            .task(id: model.focus) {
+                guard let focus = model.focus else { return }
+                // Waits a frame, so the list has laid out the post before scrolling to it: opened
+                // from the home, it hasn't yet, and the scroll would do nothing.
+                await Task.yield()
+                pinned = focus
+                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                    scroller.scrollTo(focus, anchor: .top)
+                }
+                model.focus = nil
+            }
         }
         .overlayPreferenceValue(FeedAnchors.self) { anchors in
             FeedLayer(model: model, bar: anchors.bar, who: anchors.who, heads: anchors.heads)

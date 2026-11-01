@@ -83,7 +83,8 @@ extension Home {
             healthyMeals: healthy, cheatMeals: cheat)
     }
 
-    /// A member's posts today to this squad, saved or waiting to go out, oldest first.
+    /// A member's posts today to this squad (the signed-in member's wherever they went), saved or
+    /// waiting to go out, oldest first.
     private func recapPosts(of mate: SquadmateToday, pending: [PendingCheckIn]) -> [(at: Timestamp, post: RecapPost)] {
         let saved = todaysCheckIns(of: mate.member).map { checkIn -> (at: Timestamp, post: RecapPost) in
             switch checkIn.entry {
@@ -94,7 +95,8 @@ extension Home {
             }
         }
         let waiting = pending.filter { post in
-            post.member == mate.member && post.day == mate.day && post.audience.squads.contains(squad.id)
+            post.member == mate.member && post.day == mate.day
+                && (post.member == member || post.audience.squads.contains(squad.id))
                 && !checkIns.contains { $0.id == post.id }
         }
         .map { post -> (at: Timestamp, post: RecapPost) in

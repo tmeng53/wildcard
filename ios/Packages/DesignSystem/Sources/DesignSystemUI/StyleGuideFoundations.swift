@@ -273,6 +273,17 @@ struct MotionSection: View {
             }
             .buttonStyle(SecondaryButtonStyle())
             .accessibilityIdentifier("styleguide.motion.play")
+            GuideGroup(Text("整页加载：两张票", bundle: .module)) {
+                HStack(spacing: 0) {
+                    TicketSpinner(size: 64, on: .brand)
+                        .frame(maxWidth: .infinity, minHeight: 120)
+                        .background(Color(role: .bgBrand, in: theme))
+                    TicketSpinner(size: 64, on: .page)
+                        .frame(maxWidth: .infinity, minHeight: 120)
+                        .background(Color(role: .bgBrandPage, in: theme))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            }
         }
     }
 }

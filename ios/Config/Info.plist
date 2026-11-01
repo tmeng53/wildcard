@@ -27,6 +27,17 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- The launch screen: the launch cover's graphite with the logo at rest, the same size and
+	     place (LaunchCover.swift), so the app opens without a white frame. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchMark</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<false/>
+	</dict>
 	<!-- The app uses only the encryption built into iOS (HTTPS), which is exempt, so App Store
 	     Connect doesn't ask about export compliance on every upload. -->
 	<key>ITSAppUsesNonExemptEncryption</key>

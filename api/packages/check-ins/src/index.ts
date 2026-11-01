@@ -28,7 +28,15 @@ export {
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
-export { DayRange } from './domain/day-range.js';
+export { DayRange, MyDayRange, Unshared } from './domain/day-range.js';
+export {
+  CheckInKind,
+  DEFAULT_PAGE,
+  MAX_PAGE,
+  decodeCursor,
+  encodeCursor,
+  type PostCursor,
+} from './domain/post-cursor.js';
 export type { CheckInTotals, TopSport } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, type Comment } from './domain/comment.js';
@@ -50,7 +58,6 @@ export {
   CheckInNotFoundError,
   CheckInTooOldError,
   CommentIdConflictError,
-  DisclaimerAlreadyPostedError,
   NotYourCommentError,
   OwnCheckInReactionError,
   PhotoInUseError,
@@ -84,6 +91,7 @@ export type { CommentInput, Commented } from './use-cases/check-ins/comments.js'
 export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadPost } from './use-cases/check-ins/list-squad-check-ins.js';
+export type { MyPostsPage } from './use-cases/check-ins/list-my-posts.js';
 export {
   Language,
   WeekSummaryWords,

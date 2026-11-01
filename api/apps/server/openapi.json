@@ -944,7 +944,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1045,7 +1044,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1112,7 +1110,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1158,7 +1155,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1378,6 +1374,57 @@
         ],
         "additionalProperties": false
       },
+      "MyPostPage": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SquadPost"
+            },
+            "description": "Newest day first, then newest made. Each shows its whole audience, and the reactions and comments of the member and of members of the squads it went to that the member still shares with them."
+          },
+          "next": {
+            "type": "string",
+            "description": "Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/MyPostCounts"
+          }
+        },
+        "required": [
+          "version",
+          "posts"
+        ],
+        "additionalProperties": false
+      },
+      "MyPostCounts": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every check-in the member made."
+          },
+          "reactions": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The reactions on them the member can see, as on each post."
+          }
+        },
+        "required": [
+          "posts",
+          "reactions"
+        ],
+        "additionalProperties": false,
+        "description": "On the first page only (no `after`); never narrowed to `kind`."
+      },
       "CheckInTotals": {
         "type": "object",
         "properties": {
@@ -1405,7 +1452,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins, at most one a day."
+            "description": "今日请假条 check-ins."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
@@ -3827,7 +3874,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos",
+            "description": "The id holds a different check-in, or another check-in uses one of the photos",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4029,7 +4076,7 @@
       "get": {
         "operationId": "listMyCheckIns",
         "summary": "The signed-in member’s check-ins for a range of days",
-        "description": "Newest day first, each with its whole audience.",
+        "description": "Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.",
         "security": [
           {
             "bearer": []
@@ -4053,6 +4100,19 @@
             "required": true,
             "name": "to",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "include"
+              ],
+              "description": "`include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them."
+            },
+            "required": false,
+            "description": "`include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them.",
+            "name": "unshared",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4068,6 +4128,101 @@
           },
           "400": {
             "description": "Not a valid range of days (at most 31)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/posts": {
+      "get": {
+        "operationId": "listMyPosts",
+        "summary": "The signed-in member’s own check-ins, a page at a time, with their reactions",
+        "description": "历史动态: everything the member posted, wherever it went, including squads they left. Pages follow from `next`, so posts made meanwhile never shift them.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "trained",
+                "healthyMeal",
+                "cheatMeal",
+                "disclaimer"
+              ],
+              "description": "Only check-ins of this kind."
+            },
+            "required": false,
+            "description": "Only check-ins of this kind.",
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "The `next` of the page before; left out for the newest page."
+            },
+            "required": false,
+            "description": "The `next` of the page before; left out for the newest page.",
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60,
+              "description": "Check-ins on the page: 1 to 60, 30 when left out."
+            },
+            "required": false,
+            "description": "Check-ins on the page: 1 to 60, 30 when left out.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPostPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid kind, limit or `after`",
             "content": {
               "application/problem+json": {
                 "schema": {

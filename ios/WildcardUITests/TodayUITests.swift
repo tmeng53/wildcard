@@ -84,7 +84,7 @@ final class TodayUITests: XCTestCase {
         // The page opens on writing the reason, with nothing to post yet.
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "the keyboard isn't up")
         XCTAssertEqual(field.placeholderValue, "为什么没练？")
-        XCTAssertEqual(source.label, "灵感：随机")
+        XCTAssertEqual(source.label, "随便编几句")
         XCTAssertFalse(post.isEnabled, "an empty excuse can be posted")
 
         field.typeText("deadline")
@@ -98,7 +98,7 @@ final class TodayUITests: XCTestCase {
         // lands at once.
         let write = app.buttons["disclaimer.write"]
         let first = writeFunnyLines(in: app)
-        XCTAssertEqual(source.label, "灵感：deadline")
+        XCTAssertEqual(source.label, "照着「deadline」编")
         XCTAssertEqual(field.value as? String, first.label, "编几句 didn't put its first line up")
         XCTAssertTrue(first.isSelected, "the line in the excuse isn't marked")
         keepScreenshot(named: "18-disclaimer-styled")
@@ -140,11 +140,14 @@ final class TodayUITests: XCTestCase {
     /// A caption's bubble opens its post in 动态, on screen.
     private func assertOpensItsPost(_ bubble: XCUIElement, saying line: String, in app: XCUIApplication) {
         bubble.tap()
-        XCTAssertTrue(
-            app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "tapping the bubble didn't open 动态")
+        // 动态 opens scrolled to the post, so its title may be off screen: the tab says it opened.
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "tapping the bubble didn't open 动态")
         let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
         waitFor(post, "isHittable == true", "动态 didn't open on my post")
+        if !post.isHittable {
+            XCTFail("my post is at \(post.frame), the tab bar at \(app.buttons["tab.feed"].frame)")
+        }
         keepScreenshot(named: "48-feed-my-post")
     }
 

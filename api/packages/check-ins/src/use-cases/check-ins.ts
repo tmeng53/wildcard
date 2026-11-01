@@ -1,5 +1,5 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
-import type { DayRange } from '../domain/day-range.js';
+import type { DayRange, Unshared } from '../domain/day-range.js';
 import type { CheckInTotals } from '../domain/totals.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
 import type { Comment, CommentId } from '../domain/comment.js';
@@ -17,6 +17,7 @@ import type {
 } from '../ports.js';
 import { findPost } from './check-ins/find-post.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
+import { listMyPosts, type ListMyPostsInput, type MyPostsPage } from './check-ins/list-my-posts.js';
 import {
   listSquadCheckIns,
   type ListSquadCheckInsInput,
@@ -55,7 +56,13 @@ export interface CheckIns {
   listForSquad(input: ListSquadCheckInsInput): Promise<SquadPost[]>;
   /** One post, as the feed shows it, for its author or a teammate who can see it. */
   post(input: { readonly id: CheckInId; readonly viewer: MemberId }): Promise<SquadPost>;
-  listMine(input: { readonly member: MemberId; readonly days: DayRange }): Promise<CheckInRecord[]>;
+  listMine(input: {
+    readonly member: MemberId;
+    readonly days: DayRange;
+    readonly unshared?: Unshared;
+  }): Promise<CheckInRecord[]>;
+  /** The member's history (历史动态): their own check-ins, newest first, a page at a time. */
+  listMyPosts(input: ListMyPostsInput): Promise<MyPostsPage>;
   /** Everything the member ever checked in, counted by kind, wherever it went. */
   totals(member: MemberId): Promise<CheckInTotals>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
@@ -124,6 +131,7 @@ export function createCheckIns(deps: {
     listForSquad: (input) => listSquadCheckIns(deps, input),
     post: (input) => findPost(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),
+    listMyPosts: (input) => listMyPosts(deps, input),
     totals: (member) => deps.store.totals(member),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
