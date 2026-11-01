@@ -66,11 +66,18 @@ final class CoachHireUITests: XCTestCase {
         keepScreenshot(named: "87-coach-resume-mate")
     }
 
-    /// English names are the longest; they still keep one line each.
+    /// English names are the longest; they still keep one line each. 教练市场 counts its one
+    /// coach in the singular.
     func testTheResumeInEnglish() {
         let app = launch(language: "en", extra: ["-squad-seat", "coached"])
         let open = app.buttons["squad.coach.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 30), "the captain doesn't see the squad's coach")
+        app.buttons["squad.coach.change"].tap()
+        XCTAssertTrue(
+            app.staticTexts["1 coach looking for a squad"].waitForExistence(timeout: 30),
+            "教练市场 doesn't count one coach in the singular")
+        app.buttons["coach.market.back"].tap()
+        XCTAssertTrue(open.waitForExistence(timeout: 30), "教练市场 didn't go back to 小队设置")
         open.tap()
         XCTAssertTrue(app.staticTexts["Expected pay"].waitForExistence(timeout: 30), "the 简历 isn't in English")
         assertLabelsKeepOneLine(app)

@@ -916,9 +916,21 @@
     "%lld 位教练在找队伍": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld coaches looking for a squad"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld coach looking for a squad"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld coaches looking for a squad"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {

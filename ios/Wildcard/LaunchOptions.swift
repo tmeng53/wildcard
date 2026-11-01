@@ -88,7 +88,8 @@ enum LaunchOptions {
     }
 
     /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
-    /// `winner`, `member`, `noWinner`); the captain by default.
+    /// `winner`, `member`, `noWinner`, `coached` for the captain of a squad with a coach,
+    /// `coachedMember` for a mate in it); the captain by default.
     static var squadSeat: InMemorySquadSettingsService.Seat {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return .captain }
