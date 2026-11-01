@@ -10,6 +10,10 @@ import Observation
 /// change made while a save is on its way goes out once it answers, whichever week is shown by
 /// then, so the server ends on the last change. When a save fails that part of the week (its
 /// plan or its 饮食小目标) goes back to what the server has, and `failure` says why.
+///
+/// Beside the weeks it shows the member's typical week (每周模板), which the weeks from next
+/// week on follow until one is changed for itself. It is planned like a week and saved the
+/// same way; after a week's plan changes, the store offers to put it into the template too.
 @MainActor @Observable
 public final class ScheduleStore {
     /// Where loading stands.
@@ -31,8 +35,15 @@ public final class ScheduleStore {
     public private(set) var profile: ScheduleProfile?
     /// The Monday of the week shown.
     public private(set) var shownWeek: LocalDay?
-    /// The shown week's plan as it is being edited.
+    /// Whether the 每周模板 shows instead of a week.
+    public private(set) var showsTemplate = false
+    /// The shown week's plan, or the template, as it is being edited.
     public private(set) var board: WeekBoard?
+    /// The member's typical week as the server holds it, once loaded.
+    public private(set) var template: [PlanDay]?
+    /// The week whose plan just changed and now differs from the template, while the screen
+    /// offers to put it into the template too (只改了这一周 · 也改到模板).
+    public private(set) var templateOffer: LocalDay?
     /// Every day the member ever trained, once loaded.
     public private(set) var lifetimeTrainedDays: Int?
     /// Why a part of the last change didn't go through; nil once a change goes through whole.
@@ -45,6 +56,11 @@ public final class ScheduleStore {
     private var saving: Set<LocalDay> = []
     /// Counts each week's changes, so a load that began before one never replaces it.
     private var changes: [LocalDay: Int] = [:]
+    /// The template as the member sees it, while the server hasn't taken it yet.
+    private var templateDraft: [PlanDay]?
+    private var savingTemplate = false
+    /// Counts the template's changes, as `changes` does a week's.
+    private var templateChanges = 0
 
     private let backend: any ScheduleBackend
     private let now: @Sendable () -> Date
@@ -72,7 +88,7 @@ public final class ScheduleStore {
 
     /// The week shown, with the board's days; nil until it has loaded.
     public var sheet: WeekSheet? {
-        guard let shownWeek, var sheet = drafts[shownWeek] ?? sheets[shownWeek] else { return nil }
+        guard !showsTemplate, let shownWeek, var sheet = drafts[shownWeek] ?? sheets[shownWeek] else { return nil }
         if let board { sheet.plan = board.days }
         return sheet
     }
@@ -111,14 +127,23 @@ public final class ScheduleStore {
             phase = .offline
             return
         }
-        let start = shownWeek ?? today?.weekStart
-        if let start { await show(start) }
+        if showsTemplate {
+            await showTemplate()
+        } else if let start = shownWeek ?? today?.weekStart {
+            await show(start)
+        }
         lifetimeTrainedDays = try? await backend.trainedDays()
+        // Known before a week changes, so the offer to change it too shows only when it differs.
+        if template == nil, let loaded = try? await backend.template(), templateDraft == nil, template == nil {
+            template = loaded
+        }
     }
 
     /// Shows a week: the copy loaded before at once, then the server's.
     public func show(_ weekStart: LocalDay) async {
-        if shownWeek != weekStart {
+        if shownWeek != weekStart || showsTemplate {
+            showsTemplate = false
+            templateOffer = nil
             shownWeek = weekStart
             board = (drafts[weekStart] ?? sheets[weekStart]).flatMap(makeBoard)
         }
@@ -138,6 +163,36 @@ public final class ScheduleStore {
         } catch {
             phase = .offline
         }
+    }
+
+    /// Shows the template: the copy loaded before at once, then the server's. Before the
+    /// profile has loaded it shows once `load()` has it.
+    public func showTemplate() async {
+        if !showsTemplate {
+            showsTemplate = true
+            templateOffer = nil
+            board = (templateDraft ?? template).flatMap(makeTemplateBoard)
+        }
+        guard today != nil else { return }
+        if board == nil { board = (templateDraft ?? template).flatMap(makeTemplateBoard) }
+        let changesBefore = templateChanges
+        do {
+            let fresh = try await backend.template()
+            guard templateChanges == changesBefore, !savingTemplate else { return }
+            template = fresh
+            guard showsTemplate, templateDraft == nil else { return }
+            board = makeTemplateBoard(fresh)
+            phase = .ready
+        } catch .signedOut {
+            phase = .signedOut
+        } catch {
+            phase = .offline
+        }
+    }
+
+    /// The template's board, its days named from next week, the first it applies to.
+    private func makeTemplateBoard(_ days: [PlanDay]) -> WeekBoard? {
+        today.map { WeekBoard(template: days, weekStart: $0.weekStart.adding(days: WeeklyPlan.dayCount)) }
     }
 
     private func makeBoard(_ sheet: WeekSheet) -> WeekBoard? {
@@ -165,7 +220,7 @@ public final class ScheduleStore {
         guard var board, case .selected = board.focus else { return }
         board.pick(activity)
         self.board = board
-        await savePlan()
+        await saveBoard()
     }
 
     /// Makes the selected day a rest day and saves it.
@@ -173,21 +228,28 @@ public final class ScheduleStore {
         guard var board, case .selected = board.focus else { return }
         board.rest()
         self.board = board
-        await savePlan()
+        await saveBoard()
     }
 
-    /// Takes the board's days into the week's draft and saves it.
-    private func savePlan() async {
-        guard let board, var draft = drafts[board.weekStart] ?? sheets[board.weekStart] else { return }
+    /// Takes the board's days into the template's draft or the week's, and saves it.
+    private func saveBoard() async {
+        guard let board else { return }
+        if board.tense == .template {
+            templateDraft = board.days
+            await saveTemplate()
+            return
+        }
+        guard var draft = drafts[board.weekStart] ?? sheets[board.weekStart] else { return }
         draft.plan = board.days
         drafts[board.weekStart] = draft
+        templateOffer = board.days == template ? nil : board.weekStart
         await save(board.weekStart)
     }
 
     // MARK: - 饮食小目标
 
     /// Whether the shown week's 饮食小目标 can change: this week's and later ones'.
-    public var canEditFuel: Bool { board.map { $0.tense != .past } ?? false }
+    public var canEditFuel: Bool { board.map { $0.tense == .current || $0.tense == .upcoming } ?? false }
 
     /// Adds a goal to the shown week, or takes it off; a fourth is ignored. Saved at once.
     public func toggleFuel(_ goal: FuelGoal) async {
@@ -235,6 +297,7 @@ public final class ScheduleStore {
                 } catch {
                     failure = error
                     refused = true
+                    withdrawOffer(for: week)
                     drafts[week]?.plan = held.plan
                     if board?.weekStart == week { board?.reset(to: held.plan) }
                 }
@@ -250,6 +313,53 @@ public final class ScheduleStore {
             } else {
                 drafts[week] = nil
                 if !refused { failure = nil }
+            }
+        }
+    }
+}
+
+extension ScheduleStore {
+    // MARK: - 每周模板
+
+    /// Puts the plan of the week on offer into the template; the weeks from next week on
+    /// follow it.
+    public func copyToTemplate() async {
+        guard let week = templateOffer, let plan = (drafts[week] ?? sheets[week])?.plan else { return }
+        templateOffer = nil
+        templateDraft = plan
+        await saveTemplate()
+    }
+
+    /// A week whose change didn't go through has nothing to offer.
+    private func withdrawOffer(for week: LocalDay) {
+        if templateOffer == week { templateOffer = nil }
+    }
+
+    /// The offer to change the template too has been shown long enough.
+    public func dismissTemplateOffer() {
+        templateOffer = nil
+    }
+
+    /// Sends the template's draft until the server holds it, one save at a time as a week's
+    /// are. One the server refuses goes back to the server's.
+    private func saveTemplate() async {
+        templateChanges += 1
+        guard !savingTemplate else { return }
+        savingTemplate = true
+        defer { savingTemplate = false }
+        while let draft = templateDraft {
+            guard draft != template else {
+                templateDraft = nil
+                failure = nil
+                break
+            }
+            do {
+                try await backend.saveTemplate(draft)
+                template = draft
+            } catch {
+                failure = error
+                templateDraft = nil
+                if let template, board?.tense == .template { board?.reset(to: template) }
             }
         }
     }

@@ -8,6 +8,9 @@ public enum WeekTense: Hashable, Sendable {
     case current
     /// Next week or later: every day changes freely.
     case upcoming
+    /// Not a week but the member's typical one (每周模板): every day changes freely, and the
+    /// weeks from next week on follow it.
+    case template
 }
 
 /// One week's plan as the poster edits it, with the rules for what a tap does. A value: the
@@ -58,12 +61,21 @@ public struct WeekBoard: Hashable, Sendable {
         }
     }
 
+    /// The member's typical week (每周模板). `weekStart` names its days (Monday first) and is
+    /// the first week it applies to.
+    public init(template days: [PlanDay], weekStart: LocalDay) {
+        self.weekStart = weekStart
+        self.days = days
+        tense = .template
+        today = nil
+    }
+
     /// Whether the day may change at all.
     public func isEditable(_ index: Int) -> Bool {
         guard days.indices.contains(index) else { return false }
         switch tense {
         case .past: return false
-        case .upcoming: return true
+        case .upcoming, .template: return true
         case .current:
             guard let today else { return false }
             return index >= today

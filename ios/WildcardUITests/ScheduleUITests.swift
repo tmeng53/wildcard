@@ -183,6 +183,55 @@ final class ScheduleUITests: XCTestCase {
         app.descendants(matching: .any)[identifier].firstMatch
     }
 
+    /// 每周模板: its chip after the weeks opens a graphite poster with every day open and no
+    /// 存图; a change to next week offers to change the template too.
+    func testTemplatePlansEveryWeekAndAWeekOffersIt() {
+        let app = launch()
+        let tabBar = tabButton("tab.schedule", in: app)
+        let template = app.buttons["schedule.template"]
+        XCTAssertTrue(template.waitForExistence(timeout: 10), "no 每周模板 chip")
+        if !template.isHittable { app.buttons["下周"].swipeLeft() }
+        waitFor(template, "hittable == true", "每周模板 isn't in view", timeout: 10)
+        template.tap()
+        waitFor(template, "isSelected == true", "每周模板 didn't open", timeout: 10)
+        XCTAssertFalse(app.buttons["schedule.save"].exists, "存图 shows on the template")
+        let note = find(app, "schedule.template.note")
+        XCTAssertTrue(note.waitForExistence(timeout: 10), "no note on when the template counts")
+        XCTAssertLessThanOrEqual(note.frame.maxY, tabBar.frame.minY, "the note sits under the tab bar")
+        XCTAssertTrue((0..<7).allSatisfy { lane(app, $0).isEnabled }, "a template day is locked")
+        settle()
+        keepScreenshot(named: "69-schedule-template")
+
+        // A day of the template takes a sport, as a week's does.
+        lane(app, 2).tap()
+        let swim = app.buttons["schedule.pick.swim"]
+        XCTAssertTrue(swim.waitForExistence(timeout: 10), "the template's picks didn't open")
+        swim.tap()
+        waitFor(lane(app, 2), "label CONTAINS '游泳'", "Wednesday didn't turn to swimming")
+        settle()
+        keepScreenshot(named: "69-schedule-template-pick")
+        lane(app, 2).tap()
+
+        // Next week now follows it; a change there offers to change the template too.
+        let nextWeek = app.buttons["下周"]
+        if !nextWeek.isHittable { template.swipeRight() }
+        nextWeek.tap()
+        waitFor(nextWeek, "isSelected == true", "下周 didn't open", timeout: 10)
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 10), "存图 didn't come back")
+        waitFor(lane(app, 2), "label CONTAINS '游泳'", "next week doesn't follow the template")
+        lane(app, 6).tap()
+        let rest = app.buttons["schedule.pick.rest"]
+        XCTAssertTrue(rest.waitForExistence(timeout: 10), "next week's picks didn't open")
+        rest.tap()
+        let copy = app.buttons["schedule.template.copy"]
+        XCTAssertTrue(copy.waitForExistence(timeout: 5), "no offer to change the template too")
+        XCTAssertLessThanOrEqual(copy.frame.maxY, tabBar.frame.minY, "the offer sits under the tab bar")
+        settle()
+        keepScreenshot(named: "69-schedule-template-offer")
+        copy.tap()
+        waitFor(copy, "exists == false", "the offer stayed after it was taken", timeout: 5)
+    }
+
     private func lane(_ app: XCUIApplication, _ index: Int) -> XCUIElement {
         app.buttons["schedule.lane.\(index)"]
     }
