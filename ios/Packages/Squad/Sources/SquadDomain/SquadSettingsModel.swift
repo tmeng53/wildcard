@@ -1,5 +1,6 @@
 import Contracts
 import DesignSystem
+import Foundation
 import Observation
 import ScenePickDomain
 
@@ -8,6 +9,24 @@ public enum SquadLoad: Hashable, Sendable {
     case loading
     case loaded(SquadSettings)
     case failed(SquadError)
+}
+
+/// 教练市场 while it reads the coaches.
+public enum CoachMarketLoad: Hashable, Sendable {
+    case loading
+    case loaded([Coach])
+    case failed(SquadError)
+}
+
+/// How a coach change (招聘, 换教练, 确认解雇) ended, for the coach's pages.
+public enum CoachChange: Hashable, Sendable {
+    /// The squad has the change: the pages close onto 小队设置.
+    case done
+    /// The squad changed under it (a retired coach, a new captain): the page has read it again,
+    /// and the pages close onto it.
+    case outdated
+    /// It never got through: the page says so and may try again.
+    case unavailable
 }
 
 /// A member on the page's list, in the order they joined.
@@ -55,6 +74,8 @@ public final class SquadSettingsModel {
     public private(set) var hasLeft = false
     /// The scene picker, while the member may pick and has opened it (换场地).
     public private(set) var picker: ScenePicker?
+    /// 教练市场, read each time it opens.
+    public private(set) var market: CoachMarketLoad = .loading
 
     @ObservationIgnored private let service: any SquadSettingsService
     @ObservationIgnored private let signOut: @MainActor () async -> Void
@@ -143,6 +164,49 @@ public final class SquadSettingsModel {
     /// The member may pick this week's scene now (换场地 shows).
     public var canPickScene: Bool { settings?.scene.canPick ?? false }
 
+    // MARK: 教练
+
+    /// The squad's coach, once hired.
+    public var coach: SquadCoach.Hire? { settings?.coach.hire }
+
+    /// The member is the captain, who hires, changes and fires the coach (招聘, 换教练, 解雇);
+    /// everyone else reads the 简历 only.
+    public var canHireCoach: Bool { settings?.coach.canHire ?? false }
+
+    /// 「执教第 N 周」: the week the squad hired it counts 1, weeks starting Monday on the
+    /// member's clock.
+    public var coachWeek: Int? {
+        guard let settings, let hire = settings.coach.hire else { return nil }
+        return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
+    }
+
+    /// Reads 教练市场's coaches, each time it opens.
+    public func loadMarket() async {
+        market = .loading
+        do {
+            market = .loaded(try await service.coaches())
+        } catch {
+            market = .failed(error)
+            if error == .signedOut { await signOut() }
+        }
+    }
+
+    /// Hires `coach` (招聘), or swaps the squad's coach for it in one step (换教练).
+    public func hire(_ coach: CoachID) async -> CoachChange {
+        guard let settings else { return .outdated }
+        return await changeCoach { service throws(SquadError) in
+            try await service.hire(coach, for: settings.squad.id)
+        }
+    }
+
+    /// Fires the squad's coach (确认解雇).
+    public func fireCoach() async -> CoachChange {
+        guard let settings else { return .outdated }
+        return await changeCoach { service throws(SquadError) in
+            try await service.fireCoach(of: settings.squad.id)
+        }
+    }
+
     // MARK: Changes
 
     /// Renames the squad. A name the rules refuse is the field's to say; this returns false for it.
@@ -204,6 +268,33 @@ public final class SquadSettingsModel {
         picker = nil
         await reload()
         changed()
+    }
+
+    /// A coach change, which the coach's pages answer themselves: the squad-wide `changeFailed`
+    /// stays as it was. The coach changes nothing 今天 or 我 show, so nothing else reads the
+    /// squad again.
+    private func changeCoach(
+        _ body: (any SquadSettingsService) async throws(SquadError) -> SquadCoach
+    ) async -> CoachChange {
+        guard !isSaving else { return .unavailable }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            let coach = try await body(service)
+            if case .loaded(var settings) = load {
+                settings.coach = coach
+                load = .loaded(settings)
+            }
+            return .done
+        } catch {
+            switch error {
+            case .signedOut: await signOut()
+            case .noSquad: hasLeft = true
+            case .outdated: await reload()
+            case .unavailable: return .unavailable
+            }
+            return .outdated
+        }
     }
 
     private func update(_ edit: (inout SquadSettings) -> Void) {

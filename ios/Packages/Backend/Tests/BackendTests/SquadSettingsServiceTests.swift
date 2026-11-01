@@ -60,3 +60,29 @@ import Testing
     #expect(seen.picked == SquadScene.Pick(scene: .gym, picker: captain.id))
     #expect(!seen.canPick)
 }
+
+@Test func theCaptainHiresAndFiresTheCoachAndTheMateSeesIt() async throws {
+    let stack = try LocalStack()
+    let (captain, mate) = (try await stack.signedInMember(), try await stack.signedInMember())
+    let squad = try await stack.squad(of: captain, mate)
+    let captains = APISquadSettingsService(api: captain.api)
+    let mates = APISquadSettingsService(api: mate.api)
+
+    let first = try await captains.settings()
+    #expect(first.coach == SquadCoach(hire: nil, canHire: true))
+    let market = try await captains.coaches()
+    let coach = try #require(market.first { $0.id == "xiaohun" })
+    #expect(!coach.tags.isEmpty)
+
+    await #expect(throws: SquadError.outdated) { _ = try await mates.hire(coach.id, for: squad) }
+    let hired = try await captains.hire(coach.id, for: squad)
+    #expect(hired.hire?.coach == coach)
+    #expect(try await captains.hire(coach.id, for: squad) == hired)
+
+    let seen = try await mates.settings().coach
+    #expect(seen.hire?.coach.id == coach.id)
+    #expect(!seen.canHire)
+
+    #expect(try await captains.fireCoach(of: squad) == SquadCoach(hire: nil, canHire: true))
+    #expect(try await mates.settings().coach.hire == nil)
+}
