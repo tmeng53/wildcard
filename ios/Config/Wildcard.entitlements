@@ -12,7 +12,8 @@
 		<string>Default</string>
 	</array>
 	<!-- Shared with the 6pm push's view (WildcardPushReact): the sign-in (an app group is also a
-	     Keychain access group), the squad's looks and where to open the app. -->
+	     Keychain access group), the squad's looks and where to open the app; and with it and
+	     WildcardPushService, the language picked in the app. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.wildcardsquad.wildcard</string>
