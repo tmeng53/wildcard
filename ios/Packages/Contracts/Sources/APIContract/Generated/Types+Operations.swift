@@ -5742,7 +5742,7 @@ public enum Operations {
     }
     /// Delete your comment
     ///
-    /// It is gone for everyone. Safe to repeat.
+    /// It is gone for everyone, and works even after you left the squad. Safe to repeat.
     ///
     /// - Remark: HTTP `DELETE /check-ins/{checkInId}/comments/{commentId}`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/delete(deleteComment)`.
