@@ -75,9 +75,7 @@ struct CoachStage: View {
                 .opacity(surface == .page ? 1 : CoachMetrics.floorShade)
                 .frame(height: floor)
             VStack(spacing: Space.s) {
-                // The catchphrase comes from the API and may be any length, so it wraps
-                // (`.info`) rather than truncating to one line (`.line`).
-                SpeechBubble(Text(verbatim: catchphrase), kind: .info(title: nil), on: .scene)
+                SpeechBubble(Text(verbatim: catchphrase), kind: .quote, on: .scene)
                     .frame(maxWidth: .infinity, alignment: bubble == .leading ? .leading : .center)
                 CoachSilhouette(fill: Color(role: .bgInk, in: theme), mood: mood)
                     .frame(width: figureWidth)
