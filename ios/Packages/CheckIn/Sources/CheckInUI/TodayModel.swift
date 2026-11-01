@@ -282,8 +282,7 @@ public final class TodayModel {
 
     /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.
     public func openCheckIn() {
-        guard step == .scene else { return }
-        isBurstOpen = true
+        if step == .scene { isBurstOpen = true }
     }
 
     func pick(_ kind: CheckInKind) {
