@@ -19,7 +19,7 @@ struct ListSection: View {
                 ) {}
                 SwitchRow(Text("每日提醒", bundle: .module), systemImage: "bell", isOn: $dailyReminder)
                     .accessibilityIdentifier("styleguide.switch")
-                SwitchRow(Text("被戳提醒", bundle: .module), systemImage: "hand.tap", isOn: $pokes, showsDivider: false)
+                SwitchRow(Text("拍一拍", bundle: .module), systemImage: "hand.tap", isOn: $pokes, showsDivider: false)
             }
             // A plain menu (设置): no icons, no chevrons, an ink switch.
             VStack(spacing: 0) {

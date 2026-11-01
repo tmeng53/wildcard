@@ -2195,7 +2195,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
             public var cheatMeals: Swift.Int
-            /// 今日请假条 check-ins, at most one a day.
+            /// 今日请假条 check-ins.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
@@ -2208,7 +2208,7 @@ extension Components {
             ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
-            ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            ///   - disclaimers: 今日请假条 check-ins.
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,

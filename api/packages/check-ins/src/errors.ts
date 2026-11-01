@@ -14,17 +14,6 @@ export class CheckInIdConflictError extends AppError {
   }
 }
 
-/** Thrown for a second 今日请假条 on the same day: a member posts at most one a day. */
-export class DisclaimerAlreadyPostedError extends AppError {
-  override readonly name = 'DisclaimerAlreadyPostedError';
-  readonly reason = 'DISCLAIMER_ALREADY_POSTED';
-  readonly status = 'ALREADY_EXISTS';
-
-  constructor(readonly day: string) {
-    super(`A disclaimer is already posted for ${day}.`);
-  }
-}
-
 /** Thrown for a check-in made more than 48 hours ago: it waited offline too long to sync. */
 export class CheckInTooOldError extends AppError {
   override readonly name = 'CheckInTooOldError';

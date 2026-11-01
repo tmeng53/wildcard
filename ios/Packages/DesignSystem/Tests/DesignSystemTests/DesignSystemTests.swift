@@ -243,7 +243,6 @@ struct LayoutTests {
         #expect([Sizing.characterHead, Sizing.characterBust, Sizing.characterFull] == [28, 84, 132])
         #expect([Sizing.kindButton, Sizing.kindIcon, Sizing.tag] == [52, 22, 28])
         #expect([Sizing.icon, Sizing.smallIcon] == [20, 15])
-        #expect([Sizing.tabBar, Sizing.tabItemWidth, Sizing.tabItemHeight, Sizing.tabBarBottom] == [62, 76, 54, 26])
     }
 
     @Test func scrimIsALightBlurNotADim() {

@@ -200,7 +200,10 @@ public struct WildcardAPI: Sendable {
     func myCheckInsWire(from: LocalDay, through last: LocalDay) async throws(APIError) -> Components.Schemas.CheckInList
     {
         try await call {
-            try await client.listMyCheckIns(query: .init(from: from.description, to: last.description)).ok.body.json
+            // This build reads posts shared to no squad, so it asks for them.
+            try await client.listMyCheckIns(
+                query: .init(from: from.description, to: last.description, unshared: .include)
+            ).ok.body.json
         }
     }
 

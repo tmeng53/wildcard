@@ -15,7 +15,7 @@ export interface CheckInTotals {
   readonly trainedDays: number;
   readonly healthyMeals: number;
   readonly cheatMeals: number;
-  /** 今日请假条, at most one a day. */
+  /** 今日请假条 posted, any number a day. */
   readonly disclaimers: number;
   /**
    * The sport with the most 练了 (a custom sport counts by its name), the latest one on a tie;

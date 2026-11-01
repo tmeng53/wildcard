@@ -4,8 +4,8 @@ import Foundation
 /// The squad dropping onto home once a newly picked scene has filled the screen: the end of
 /// every scene pick (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」).
 /// One after another, 0.7 s / N apart and me last, each falls from above the screen onto their
-/// spot with the drop clip; then the squad's card drops in from the top, 打卡 rises, and the tab
-/// bar after it.
+/// spot with the drop clip; then the squad's card drops in from the top, 打卡 rises, and the
+/// system's tab bar comes back after it.
 ///
 /// Times count from the moment the picked scene covers the screen (`Unboxing.covered`), and
 /// every number is the approved 冠军开箱 prototype's, in the design's 390 × 844 stage points
@@ -48,14 +48,12 @@ public struct DropIn: Hashable, Sendable {
         Tween.mix(160, 0, Tween.backOut(Tween.progress(time, from: Self.button, lasting: 0.4)))
     }
 
-    /// How far below its place the tab bar is, in stage points.
-    public func tabBarOffset(at time: Double) -> Double {
-        Tween.mix(140, 0, Tween.backOut(Tween.progress(time, from: Self.tabBar, lasting: 0.4)))
-    }
+    /// When the tab bar, hidden while the squad drops, comes back with the system's own motion.
+    public static let tabBarReturns = 1.9
 
     /// When the last figure has settled and everything is in place.
     public var finished: Double {
-        max(start(of: count - 1) + Self.dropLength, Self.tabBar + 0.4)
+        max(start(of: count - 1) + Self.dropLength, Self.tabBarReturns + 0.4)
     }
 
     // The prototype's moments, from the covered screen (its 2.8 s).
@@ -63,7 +61,6 @@ public struct DropIn: Hashable, Sendable {
     static let spread = 0.7
     static let card = 1.35
     static let button = 1.8
-    static let tabBar = 1.9
     /// The drop clip's length (`PlaceholderCharacter.drop()`).
     public static let dropLength = 1.9
     /// Where a falling figure's feet start: this far above the screen's top.

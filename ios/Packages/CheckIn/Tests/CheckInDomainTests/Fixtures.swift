@@ -104,7 +104,7 @@ actor ScriptedBackend: CheckInBackend {
         if let failure { throw failure }
         saves.append(checkIn)
         if var home = server, !home.checkIns.contains(where: { $0.id == checkIn.id }) {
-            home.today = home.today.countingMine(checkIn)
+            home.today = home.today.countingMine(checkIn, squadSaw: home.squadSees(on: checkIn.day))
             home.checkIns.append(checkIn)
             server = home
         }
