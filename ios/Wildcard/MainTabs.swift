@@ -135,12 +135,12 @@ struct MainTabs: View {
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
         case .profile:
-            me
+            profilePage
         }
     }
 
     /// 我, or 我的动态 in its place, with a post opened from it over the wall.
-    private var me: some View {
+    private var profilePage: some View {
         ZStack {
             if let wall {
                 PostWallView(
