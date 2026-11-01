@@ -17,7 +17,7 @@ public struct APISquadSettingsService: SquadSettingsService {
 
     public func settings() async throws(SquadError) -> SquadSettings {
         try await squad { () throws(APIError) in
-            let me = try await api.me()
+            let member = try await api.me()
             guard let first = try await api.mySquads().first else { throw .refused(.squadNotJoined) }
             let today = try await api.today(of: first.id)
             let scene = try await api.scene(of: first.id)
@@ -26,9 +26,9 @@ public struct APISquadSettingsService: SquadSettingsService {
             for mate in today.members {
                 if let character = mate.character { characters[mate.member] = character }
             }
-            let timeZone = me.profile?.timeZone ?? .current
+            let timeZone = member.profile?.timeZone ?? .current
             return SquadSettings(
-                squad: first, viewer: me.id, characters: characters, scene: scene, coach: coach,
+                squad: first, viewer: member.id, characters: characters, scene: scene, coach: coach,
                 today: LocalDay(at: now(), in: timeZone), timeZone: timeZone)
         }
     }
