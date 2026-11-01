@@ -9,8 +9,8 @@ import RecapDomain
 import ScenePickDomain
 import SwiftUI
 
-/// Where the app keeps the squad's latest 战报: the story 动态's tile opens, and the one a tapped
-/// awards push opens. It reads the story from its service and the squad (who is in it, how they
+/// Where the app keeps the squad's latest 战报: the story 动态's tile opens. A tapped awards push
+/// only reads it again, so the member opens the new story from the tile. It reads the story from its service and the squad (who is in it, how they
 /// look, the reader's day) from the app.
 @MainActor @Observable
 public final class RecapShelf {
@@ -90,15 +90,6 @@ public final class RecapShelf {
     public func openLatest() {
         guard let latest, let cast else { return }
         show(latest, cast: cast)
-    }
-
-    /// Opens the week a tapped awards push is about, once it can be read and has come out.
-    public func open(squad id: SquadID, week monday: LocalDay) async {
-        guard let squad = readSquad(), squad.id == id else { return }
-        cast = squad.cast
-        guard let story = try? await service.story(squad: id, week: monday), story.isPublished else { return }
-        if monday >= (latest?.week.monday ?? monday) { latest = story }
-        show(story, cast: squad.cast)
     }
 
     /// Plays a story that came out: one that didn't may have no page at all, which the player
