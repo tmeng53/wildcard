@@ -388,6 +388,7 @@ describe('the coach', () => {
 
       // A squad that isn't there is refused before anything is written, so the transaction
       // it ran in goes on.
+      await catalog.save(hiredNow, by);
       await expect(
         hiring.change({ squad: SquadId.parse(randomUUID()), coach: nuannuan, by }),
       ).rejects.toBeInstanceOf(CoachSquadNotFoundError);

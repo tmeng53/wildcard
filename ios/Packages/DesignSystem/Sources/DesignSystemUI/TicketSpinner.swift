@@ -47,6 +47,9 @@ public struct TicketSpinner: View {
 /// 12°, and a filled one in front, turned −10°, with notches, a perforation and a W, both turning
 /// about a point below them.
 private enum TicketMark {
+    /// The logo's ticket corners, on its 100-point canvas.
+    private static let corner: Double = 8
+
     /// - Parameter rock: how far into `TicketRock`'s rock the tickets are.
     static func draw(in context: inout GraphicsContext, size: CGSize, rock: Double, ground: Color, ink: Color) {
         context.scaleBy(x: size.width / 100, y: size.height / 100)
@@ -54,14 +57,15 @@ private enum TicketMark {
 
         var back = context
         turn(&back, by: 12 + TicketRock.backTurn * rock, about: pivot)
-        let backTicket = Path(roundedRect: CGRect(x: 29.5, y: 15.5, width: 45, height: 68), cornerRadius: 8)
+        let backTicket = Path(roundedRect: CGRect(x: 29.5, y: 15.5, width: 45, height: 68), cornerRadius: corner)
         back.fill(backTicket, with: .color(ground))
         back.stroke(backTicket, with: .color(ink), lineWidth: 3)
 
         var front = context
         front.translateBy(x: 0, y: -TicketRock.frontLift * rock)
         turn(&front, by: -10 + TicketRock.frontTurn * rock, about: pivot)
-        front.fill(Path(roundedRect: CGRect(x: 26, y: 14, width: 48, height: 70), cornerRadius: 8), with: .color(ink))
+        front.fill(
+            Path(roundedRect: CGRect(x: 26, y: 14, width: 48, height: 70), cornerRadius: corner), with: .color(ink))
         for notch in [26.0, 74] {
             front.fill(Path(ellipseIn: CGRect(x: notch - 5, y: 57, width: 10, height: 10)), with: .color(ground))
         }

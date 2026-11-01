@@ -213,10 +213,12 @@ describe('commenting on a check-in', () => {
     const [tracy, ann, stranger] = [await newMember(), await newMember(), await newMember()];
     await newSquad(tracy, stranger);
     const run = await trained(tracy, await newSquad(tracy, ann));
+    const anns = newId();
+    await checkIns.comment({ checkIn: run.id, id: anns, member: ann, text: text('好') });
 
     for (const attempt of [
       () => checkIns.comment({ checkIn: run.id, id: newId(), member: stranger, text: text('嗨') }),
-      () => checkIns.deleteComment({ checkIn: run.id, id: newId(), member: stranger }),
+      () => checkIns.deleteComment({ checkIn: run.id, id: anns, member: stranger }),
       () => checkIns.listComments({ checkIn: run.id, viewer: stranger }),
     ]) {
       await expect(attempt()).rejects.toStrictEqual(new CheckInNotFoundError(run.id));

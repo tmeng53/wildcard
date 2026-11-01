@@ -1,0 +1,256 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "%@拍了拍你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ patted you"
+          }
+        }
+      }
+    },
+    "%lld 人回应：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld reacted: %2$@"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODAY"
+          }
+        }
+      }
+    },
+    "今天还没人发动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nobody's posted yet today"
+          }
+        }
+      }
+    },
+    "健康餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Healthy meal"
+          }
+        }
+      }
+    },
+    "全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ALL"
+          }
+        }
+      }
+    },
+    "全部表情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All emoji"
+          }
+        }
+      }
+    },
+    "回应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "React"
+          }
+        }
+      }
+    },
+    "回应 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "React %@"
+          }
+        }
+      }
+    },
+    "坦白放纵餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheat meal, confessed"
+          }
+        }
+      }
+    },
+    "外卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wildcard"
+          }
+        }
+      }
+    },
+    "我": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me"
+          }
+        }
+      }
+    },
+    "我去发一个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'll go first"
+          }
+        }
+      }
+    },
+    "我的回应 %@，换一个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My reaction %@, change it"
+          }
+        }
+      }
+    },
+    "打开动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the feed"
+          }
+        }
+      }
+    },
+    "更多表情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More emoji"
+          }
+        }
+      }
+    },
+    "本周小队已练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad this week"
+          }
+        }
+      }
+    },
+    "本周小队已练 %lld/%lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad this week: %1$lld of %2$lld"
+          }
+        }
+      }
+    },
+    "次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "times"
+          }
+        }
+      }
+    },
+    "练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained"
+          }
+        }
+      }
+    },
+    "练了 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained · %@"
+          }
+        }
+      }
+    },
+    "请假条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day-off note"
+          }
+        }
+      }
+    },
+    "还有 %lld 条，去动态看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more in the feed"
+          }
+        }
+      }
+    },
+    "选一个回应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a reaction"
+          }
+        }
+      }
+    },
+    "队友": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teammate"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
