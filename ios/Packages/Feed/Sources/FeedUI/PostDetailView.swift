@@ -45,6 +45,8 @@ public struct PostDetailView: View {
             model.opened = id
             await model.store.loadPost(id)
         }
+        // However the page goes, the feed and tab bar stop treating the post as open.
+        .onDisappear { if model.opened == id { model.opened = nil } }
     }
 
     private var backButton: some View {

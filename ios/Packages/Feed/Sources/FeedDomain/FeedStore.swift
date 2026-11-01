@@ -47,6 +47,9 @@ public final class FeedStore {
     private var ownNotYetListed: [CheckInID: FeedPost] = [:]
     /// The member's comments shown before the server took them, by post, oldest first.
     private var pendingComments: [CheckInID: [Comment]] = [:]
+    /// The member's last comment on each post that couldn't go out: sending the same words to
+    /// the same person again reuses its id, so if the server had saved it after all it saves once.
+    private var unsentComments: [CheckInID: Comment] = [:]
     /// The member's comments hidden while their deletion goes out.
     private var deleting: Set<CommentID> = []
     /// The days loaded so far, from the earliest.
@@ -246,7 +249,10 @@ public final class FeedStore {
             failure = .postGone
             return false
         }
-        let comment = Comment(id: newCommentID(), member: viewer, text: text, replyTo: member, commentedAt: now())
+        let comment =
+            unsentComments[id].flatMap { $0.text == text && $0.replyTo == member ? $0 : nil }
+            ?? Comment(id: newCommentID(), member: viewer, text: text, replyTo: member, commentedAt: now())
+        unsentComments[id] = nil
         pendingComments[id, default: []].append(comment)
         defer { pendingComments[id]?.removeAll { $0.id == comment.id } }
         do {
@@ -257,7 +263,7 @@ public final class FeedStore {
             }
             return true
         } catch {
-            if error == .postGone { loaded[id] = nil }
+            if error == .postGone { loaded[id] = nil } else { unsentComments[id] = comment }
             failure = error
             return false
         }
@@ -299,7 +305,10 @@ public final class FeedStore {
 
     private func showing(_ post: FeedPost) -> FeedPost {
         var post = wishes[post.id].map { $0.applied(to: post, by: viewer) } ?? post
-        post.comments = post.comments.filter { !deleting.contains($0.id) } + (pendingComments[post.id] ?? [])
+        let pending = (pendingComments[post.id] ?? []).filter { mine in
+            !post.comments.contains { $0.id == mine.id }
+        }
+        post.comments = post.comments.filter { !deleting.contains($0.id) } + pending
         return post
     }
 }

@@ -73,3 +73,64 @@ import Testing
     await feed.loadPost(jaysRun.id)
     #expect(feed.post(jaysRun.id)?.comments.map(\.text.text) == ["来了"])
 }
+
+/// Hands out commentID(1), commentID(2), … in turn.
+private final class CommentIDs: @unchecked Sendable {
+    // Only the main-actor store under test calls it, one call at a time.
+    private var next = 0
+    func callAsFunction() -> CommentID {
+        next += 1
+        return commentID(next)
+    }
+}
+
+@MainActor @Test func sendingTheSameWordsAgainAfterAFailureReusesTheirIDSoTheServerSavesOnce() async {
+    let source = FakeSource([jaysRun])
+    let ids = CommentIDs()
+    let feed = FeedStore(
+        source: source, squad: squad, viewer: coco, today: { thursday }, now: { at(500) },
+        newCommentID: { ids() })
+    await feed.load()
+    await source.fail(with: .notSent)
+    #expect(await feed.comment(text("加油"), replyingTo: jay, on: jaysRun.id) == false)
+    await source.fail(with: nil)
+    #expect(await feed.comment(text("加油"), replyingTo: jay, on: jaysRun.id))
+    #expect(await feed.comment(text("再来"), replyingTo: jay, on: jaysRun.id))
+    #expect(
+        await source.calls.suffix(3) == [
+            .comment(commentID(1), "加油", jay, jaysRun.id),
+            .comment(commentID(1), "加油", jay, jaysRun.id),
+            .comment(commentID(2), "再来", jay, jaysRun.id),
+        ])
+}
+
+@MainActor @Test func otherWordsAfterAFailureAreANewComment() async {
+    let source = FakeSource([jaysRun])
+    let ids = CommentIDs()
+    let feed = FeedStore(
+        source: source, squad: squad, viewer: coco, today: { thursday }, now: { at(500) },
+        newCommentID: { ids() })
+    await feed.load()
+    await source.fail(with: .notSent)
+    _ = await feed.comment(text("加油"), replyingTo: nil, on: jaysRun.id)
+    await source.fail(with: nil)
+    _ = await feed.comment(text("加油"), replyingTo: jay, on: jaysRun.id)
+    #expect(await source.calls.last == .comment(commentID(2), "加油", jay, jaysRun.id))
+}
+
+@MainActor @Test func aCommentInFlightThatAReloadAlreadyListsShowsOnce() async {
+    let source = FakeSource([jaysRun])
+    let feed = store(source)
+    await feed.load()
+    await source.hold()
+    let sent = Task { await feed.comment(text("明天一起"), replyingTo: nil, on: jaysRun.id) }
+    while await source.waiting == 0 { await Task.yield() }
+    let saved = FeedPost(
+        checkIn: jaysRun.checkIn, reactions: jaysRun.reactions, comments: [comment(1, by: coco, "明天一起", at: 900)])
+    await source.setPosts([saved])
+    await feed.loadPost(jaysRun.id)
+    #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
+    await source.release()
+    #expect(await sent.value)
+    #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
+}

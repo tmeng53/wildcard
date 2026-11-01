@@ -15,7 +15,8 @@ struct CommentComposer: View {
     var isTyping: FocusState<Bool>.Binding
     @State private var draft = ""
     @State private var isSending = false
-    @State private var sendFailed = false
+    /// The words that couldn't go out, back in the box; the line saying so shows until they change.
+    @State private var unsent: String?
 
     /// Past this many characters the box shows how many are used.
     private static let countFrom = CommentText.maxLength - 20
@@ -43,7 +44,7 @@ struct CommentComposer: View {
                     .accessibilityIdentifier("post.cancelReply")
                 }
             }
-            if sendFailed {
+            if let unsent, unsent == draft {
                 Text("网络开小差了，没发出去", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
@@ -80,7 +81,6 @@ struct CommentComposer: View {
             .focused(isTyping)
             .accessibilityIdentifier("post.field")
             .onChange(of: draft) { _, typed in
-                sendFailed = false
                 if typed.count > CommentText.maxLength { draft = String(typed.prefix(CommentText.maxLength)) }
             }
             if draft.count > Self.countFrom {
@@ -124,13 +124,15 @@ struct CommentComposer: View {
     private func send(_ text: CommentText, on post: CheckInID) {
         let typed = draft
         draft = ""
+        unsent = nil
         isSending = true
         Task {
             let sent = await model.comment(text, on: post)
             isSending = false
-            if !sent {
+            // Words typed meanwhile stay: the unsent ones come back only to an empty box.
+            if !sent, draft.isEmpty {
                 draft = typed
-                sendFailed = true
+                unsent = typed
             }
         }
     }
