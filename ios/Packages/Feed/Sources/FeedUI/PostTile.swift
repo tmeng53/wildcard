@@ -66,8 +66,8 @@ struct PostTile: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.pick))
             .contentShape(RoundedRectangle(cornerRadius: Radius.pick))
             .accessibilityElement(children: .combine)
-            .task(id: post.checkIn.photos?.cover) {
-                guard let ref = post.checkIn.photos?.cover, let jpeg = await store.photo(ref) else { return }
+            .task(id: post.checkIn.photos?.cover.loadID) {
+                guard cover == nil, let ref = post.checkIn.photos?.cover, let jpeg = await store.photo(ref) else { return }
                 cover = await Self.thumbnail(jpeg)
             }
     }
