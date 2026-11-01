@@ -240,6 +240,8 @@ describe('the coach', () => {
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
       expect(runs[1]?.instructions).toContain('你会在两种时候醒来');
+      // The 简历 is for the app only: the model never reads the coach's missing license.
+      expect(runs[1]?.instructions).not.toContain('证还没考下来');
       expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
 
       // A member's page is stored by their id, never by 队员N.
@@ -338,6 +340,51 @@ describe('the coach', () => {
         trx,
       );
       expect(hires.rows.map(({ kind }) => kind)).toStrictEqual(['hired', 'fired', 'hired']);
+    });
+  });
+
+  it('changes the coach in one step for 换教练, and says when it already had it', async () => {
+    await rolledBack(async ({ trx, squad, mia }) => {
+      const by = MemberId.parse(mia);
+      const catalog = createPostgresCoachCatalog(trx);
+      const hiring = createCoachHiring({ hiring: createPostgresCoachHiring(trx), catalog });
+      const xiaohun = CoachId.parse('xiaohun');
+      const nuannuan = CoachId.parse('nuannuan');
+      const [first] = await catalog.list();
+      if (first === undefined) throw new Error('No coach.');
+      await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
+
+      expect((await hiring.offered()).map(({ id }) => id)).toStrictEqual([nuannuan, xiaohun]);
+      expect(await hiring.current(squad)).toMatchObject({ coach: { id: xiaohun } });
+      expect(await hiring.change({ squad, coach: xiaohun, by })).toMatchObject({
+        coach: { id: xiaohun },
+        changed: false,
+      });
+      expect(await hiring.change({ squad, coach: nuannuan, by })).toMatchObject({
+        coach: { id: nuannuan, name: '暖暖' },
+        changed: true,
+      });
+      expect(await hiring.current(squad)).toMatchObject({ coach: { id: nuannuan } });
+
+      // A retired coach can't be hired; the squad keeps the one it has.
+      await catalog.save({ ...first, offered: false }, by);
+      await expect(hiring.change({ squad, coach: xiaohun, by })).rejects.toBeInstanceOf(
+        CoachNotOfferedError,
+      );
+      expect((await hiring.offered()).map(({ id }) => id)).toStrictEqual([nuannuan]);
+
+      // The fixture's hire, then the change: fired and hired in order, each by the member.
+      const events = await sql<{ kind: string; coach_id: string; changed_by: string }>`
+        select kind, coach_id, changed_by from public.squad_coach_events
+        where squad_id = ${squad} order by id`.execute(trx);
+      expect(events.rows).toStrictEqual([
+        { kind: 'hired', coach_id: 'xiaohun', changed_by: mia },
+        { kind: 'fired', coach_id: 'xiaohun', changed_by: mia },
+        { kind: 'hired', coach_id: 'nuannuan', changed_by: mia },
+      ]);
+
+      await hiring.fire({ squad, by });
+      expect(await hiring.current(squad)).toBeUndefined();
     });
   });
 

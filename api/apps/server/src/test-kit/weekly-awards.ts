@@ -14,3 +14,12 @@ export const unusedWeeklyAwards = {
 
 /** The Sunday summary's words, for an app whose test never reads them. */
 export const unusedWeekSummaryWords = unused;
+
+/** Each squad's coach, for an app whose test never reads it. */
+export const unusedCoachHiring = {
+  hire: unused,
+  fire: unused,
+  change: unused,
+  current: unused,
+  offered: unused,
+};

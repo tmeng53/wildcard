@@ -250,6 +250,34 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
     func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
+    /// The coaches a squad can hire (教练市场)
+    ///
+    /// Every coach offered now, with its 简历. The same coaches for every squad.
+    ///
+    /// - Remark: HTTP `GET /coaches`.
+    /// - Remark: Generated from `#/paths//coaches/get(listCoaches)`.
+    func listCoaches(_ input: Operations.ListCoaches.Input) async throws -> Operations.ListCoaches.Output
+    /// A squad’s coach
+    ///
+    /// The coach the squad has hired, if any. Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/get(getSquadCoach)`.
+    func getSquadCoach(_ input: Operations.GetSquadCoach.Input) async throws -> Operations.GetSquadCoach.Output
+    /// Hire the squad’s coach (招聘, 换教练)
+    ///
+    /// For the captain: hires an offered coach, firing the squad’s coach first when it has another (one step, both logged). The squad’s memory stays with the squad. Safe to repeat: the coach it has already answers 200.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/put(hireSquadCoach)`.
+    func hireSquadCoach(_ input: Operations.HireSquadCoach.Input) async throws -> Operations.HireSquadCoach.Output
+    /// Fire the squad’s coach (解雇)
+    ///
+    /// For the captain. The squad’s memory stays with the squad for the next coach. Safe to repeat: a squad with no coach answers the same.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
+    func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -822,6 +850,62 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The coaches a squad can hire (教练市场)
+    ///
+    /// Every coach offered now, with its 简历. The same coaches for every squad.
+    ///
+    /// - Remark: HTTP `GET /coaches`.
+    /// - Remark: Generated from `#/paths//coaches/get(listCoaches)`.
+    public func listCoaches(headers: Operations.ListCoaches.Input.Headers = .init()) async throws -> Operations.ListCoaches.Output {
+        try await listCoaches(Operations.ListCoaches.Input(headers: headers))
+    }
+    /// A squad’s coach
+    ///
+    /// The coach the squad has hired, if any. Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/get(getSquadCoach)`.
+    public func getSquadCoach(
+        path: Operations.GetSquadCoach.Input.Path,
+        headers: Operations.GetSquadCoach.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadCoach.Output {
+        try await getSquadCoach(Operations.GetSquadCoach.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Hire the squad’s coach (招聘, 换教练)
+    ///
+    /// For the captain: hires an offered coach, firing the squad’s coach first when it has another (one step, both logged). The squad’s memory stays with the squad. Safe to repeat: the coach it has already answers 200.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/put(hireSquadCoach)`.
+    public func hireSquadCoach(
+        path: Operations.HireSquadCoach.Input.Path,
+        headers: Operations.HireSquadCoach.Input.Headers = .init(),
+        body: Operations.HireSquadCoach.Input.Body
+    ) async throws -> Operations.HireSquadCoach.Output {
+        try await hireSquadCoach(Operations.HireSquadCoach.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Fire the squad’s coach (解雇)
+    ///
+    /// For the captain. The squad’s memory stays with the squad for the next coach. Safe to repeat: a squad with no coach answers the same.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
+    public func fireSquadCoach(
+        path: Operations.FireSquadCoach.Input.Path,
+        headers: Operations.FireSquadCoach.Input.Headers = .init()
+    ) async throws -> Operations.FireSquadCoach.Output {
+        try await fireSquadCoach(Operations.FireSquadCoach.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// The caller’s pokes in a squad (拍一拍)

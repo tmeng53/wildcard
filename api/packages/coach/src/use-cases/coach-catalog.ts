@@ -17,7 +17,7 @@ export function createCoachCatalog(deps: { readonly store: CoachCatalogStore }):
   return {
     list: () => deps.store.list(),
     put: async (edit, by) => {
-      const coach = Coach.parse({ version: 1, ...edit });
+      const coach = Coach.parse({ version: 2, ...edit });
       await deps.store.save(coach, by);
       return coach;
     },

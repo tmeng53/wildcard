@@ -15,10 +15,12 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
     async coachOf(squad) {
       const row = await db
         .selectFrom('squad_coaches')
-        .select('coach_id')
+        .select(['coach_id', 'hired_at'])
         .where('squad_id', '=', squad)
         .executeTakeFirst();
-      return row === undefined ? undefined : CoachId.parse(row.coach_id);
+      return row === undefined
+        ? undefined
+        : { coach: CoachId.parse(row.coach_id), since: new Date(row.hired_at) };
     },
 
     async hired() {
@@ -84,6 +86,27 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
         .execute();
       const [row] = fired;
       return row === undefined ? undefined : CoachId.parse(row.coach_id);
+    },
+
+    async replace({ squad, coach, by }) {
+      const change = async (trx: Kysely<DB>): Promise<'hired' | 'same' | 'noSquad'> => {
+        // The squad's coach row, locked, so a second change waits for this one.
+        const current = await trx
+          .selectFrom('squad_coaches')
+          .select('coach_id')
+          .where('squad_id', '=', squad)
+          .forUpdate()
+          .executeTakeFirst();
+        if (current?.coach_id === coach) return 'same';
+        const inTransaction = createPostgresCoachHiring(trx);
+        if (current !== undefined) await inTransaction.fire({ squad, by });
+        const hired = await inTransaction.hire({ squad, coach, by });
+        if (hired === 'noSquad') return 'noSquad';
+        // Another change got in first (two at once): this one keeps what it found.
+        return hired === 'hired' ? 'hired' : 'same';
+      };
+      // Inside a caller's transaction already (the admin tools, tests), it runs in that one.
+      return db.isTransaction ? change(db) : db.transaction().execute(change);
     },
   };
 }

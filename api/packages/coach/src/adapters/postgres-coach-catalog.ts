@@ -7,12 +7,17 @@ import type { DB } from './tables.js';
 /** A coach from its row. */
 function coachOf(row: DB['coaches']): Coach {
   return Coach.parse({
-    version: 1,
+    version: 2,
     id: row.id,
     tier: row.tier,
     name: row.name,
+    title: row.title,
     catchphrase: row.catchphrase,
-    credentials: row.credentials,
+    background: row.background,
+    yearsCoaching: row.years_coaching,
+    experience: row.experience,
+    tags: row.tags,
+    pay: row.pay,
     style: row.style,
     soul: row.soul,
     look: row.look,
@@ -32,8 +37,13 @@ export function createPostgresCoachCatalog(db: Kysely<DB>): CoachCatalogStore {
       const columns = {
         tier: coach.tier,
         name: coach.name,
+        title: coach.title,
         catchphrase: coach.catchphrase,
-        credentials: coach.credentials,
+        background: coach.background,
+        years_coaching: coach.yearsCoaching,
+        experience: coach.experience,
+        tags: [...coach.tags],
+        pay: coach.pay,
         style: coach.style,
         soul: coach.soul,
         look: coach.look,
@@ -51,7 +61,7 @@ export function createPostgresCoachCatalog(db: Kysely<DB>): CoachCatalogStore {
                 .column('id')
                 .doUpdateSet(columns)
                 .where(
-                  sql<boolean>`(coaches.tier, coaches.name, coaches.catchphrase, coaches.credentials, coaches.style, coaches.soul, coaches.look, coaches.offered) is distinct from (excluded.tier, excluded.name, excluded.catchphrase, excluded.credentials, excluded.style, excluded.soul, excluded.look, excluded.offered)`,
+                  sql<boolean>`(coaches.tier, coaches.name, coaches.title, coaches.catchphrase, coaches.background, coaches.years_coaching, coaches.experience, coaches.tags, coaches.pay, coaches.style, coaches.soul, coaches.look, coaches.offered) is distinct from (excluded.tier, excluded.name, excluded.title, excluded.catchphrase, excluded.background, excluded.years_coaching, excluded.experience, excluded.tags, excluded.pay, excluded.style, excluded.soul, excluded.look, excluded.offered)`,
                 ),
             )
             .returning('id'),

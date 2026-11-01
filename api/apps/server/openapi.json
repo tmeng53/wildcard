@@ -2363,6 +2363,179 @@
         ],
         "additionalProperties": false
       },
+      "CoachMarket": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "coaches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachCard"
+            },
+            "description": "The coaches a squad can hire now."
+          }
+        },
+        "required": [
+          "version",
+          "coaches"
+        ],
+        "additionalProperties": false
+      },
+      "CoachCard": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach’s id. Never changes.",
+            "example": "xiaohun"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "entry",
+              "advanced",
+              "pro"
+            ],
+            "description": "入门, 进阶 or 专业: a style a squad picks, never a better coach."
+          },
+          "name": {
+            "type": "string",
+            "example": "毛头"
+          },
+          "title": {
+            "type": "string",
+            "description": "Its 头衔, next to its name.",
+            "example": "混混教练"
+          },
+          "catchphrase": {
+            "type": "string",
+            "description": "Its 口头禅.",
+            "example": "先动起来，证书以后再说"
+          },
+          "background": {
+            "type": "string",
+            "description": "Its fictional 履历."
+          },
+          "yearsCoaching": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number in 执教: its fictional years."
+          },
+          "experience": {
+            "type": "string",
+            "description": "What 执教 says after the years.",
+            "example": "热情满格"
+          },
+          "style": {
+            "type": "string",
+            "description": "Its 风格.",
+            "example": "懂行、松弛、风趣"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The tags on its card in 教练市场."
+          },
+          "pay": {
+            "type": "string",
+            "description": "Its 期望待遇.",
+            "example": "管饭就行"
+          },
+          "look": {
+            "type": "string",
+            "description": "The character the app draws, by the art’s id."
+          }
+        },
+        "required": [
+          "id",
+          "tier",
+          "name",
+          "title",
+          "catchphrase",
+          "background",
+          "yearsCoaching",
+          "experience",
+          "style",
+          "tags",
+          "pay",
+          "look"
+        ],
+        "additionalProperties": false
+      },
+      "SquadCoach": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "coach": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachCard"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "The squad’s coach, or null for none."
+              }
+            ]
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the squad hired it (执教第 N 周 counts from here), or null."
+          },
+          "canHire": {
+            "type": "boolean",
+            "description": "True for the captain, the only member who hires, changes and fires the coach."
+          }
+        },
+        "required": [
+          "version",
+          "coach",
+          "since",
+          "canHire"
+        ],
+        "additionalProperties": false
+      },
+      "CoachHire": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "coach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach’s id. Never changes.",
+            "example": "xiaohun"
+          }
+        },
+        "required": [
+          "version",
+          "coach"
+        ],
+        "additionalProperties": false
+      },
       "SquadNudges": {
         "type": "object",
         "properties": {
@@ -6097,6 +6270,301 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coaches": {
+      "get": {
+        "operationId": "listCoaches",
+        "summary": "The coaches a squad can hire (教练市场)",
+        "description": "Every coach offered now, with its 简历. The same coaches for every squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The coaches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachMarket"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach": {
+      "get": {
+        "operationId": "getSquadCoach",
+        "summary": "A squad’s coach",
+        "description": "The coach the squad has hired, if any. Only for its members.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squad’s coach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadCoach"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "hireSquadCoach",
+        "summary": "Hire the squad’s coach (招聘, 换教练)",
+        "description": "For the captain: hires an offered coach, firing the squad’s coach first when it has another (one step, both logged). The squad’s memory stays with the squad. Safe to repeat: the coach it has already answers 200.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoachHire"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The squad has this coach already: this was a retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadCoach"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Hired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadCoach"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or coach id, or a coach that isn’t offered (`COACH_NOT_OFFERED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "fireSquadCoach",
+        "summary": "Fire the squad’s coach (解雇)",
+        "description": "For the captain. The squad’s memory stays with the squad for the next coach. Safe to repeat: a squad with no coach answers the same.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The squad has no coach now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadCoach"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
             "content": {
               "application/problem+json": {
                 "schema": {
