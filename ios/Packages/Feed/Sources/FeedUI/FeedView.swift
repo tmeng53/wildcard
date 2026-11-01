@@ -91,9 +91,9 @@ public struct FeedView: View {
         }
         .coordinateSpace(.named(Self.space))
         .background(Color(role: .bgCanvas, in: theme))
-        // Opened before any post was read: the character jogs in place until the list arrives.
+        // Opened before any post was read: the tickets rock until the list arrives.
         .loadingCover(model.store.phase == .loading && model.store.sections.isEmpty) {
-            LoadingCharacter()
+            TicketSpinner(on: .light(.bgCanvas))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgCanvas, in: theme))
         }

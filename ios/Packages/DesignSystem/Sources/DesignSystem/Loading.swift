@@ -1,7 +1,7 @@
 import Foundation
 
 /// How the app shows a wait (loader design A 三拍, approved 2026-10-24): one language everywhere.
-/// A whole page waits with the character jogging in place; a button or a line waits with three
+/// A whole page waits with the two tickets rocking (`TicketRock`, 两张票, 2026-10-31); a button or a line waits with three
 /// dots hopping in a running cadence, in the colour of what they replace. Neither says a word, and
 /// neither shows for a wait too short to notice.
 public enum Loading {
@@ -55,11 +55,6 @@ public enum Loading {
     public static func dotOpacity(dot index: Int, at time: Double) -> Double {
         dotRestOpacity + (1 - dotRestOpacity) * hop(dot: index, at: time)
     }
-
-    // MARK: - The page's character
-
-    /// The character jogs in place at this fraction of the run's own tempo.
-    public static let jogTempo: Double = 0.85
 
     // MARK: - What arrives
 
