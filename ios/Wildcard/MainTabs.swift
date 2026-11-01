@@ -11,9 +11,9 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
-/// screen keeps to the safe area, which this raises above the floating bar, so none of them
-/// draws or measures the bar itself.
+/// The app once the member is signed in and in a squad: the four tabs in the system's Liquid Glass
+/// tab bar (`AppTabs`). Each tab screen keeps to the safe area, which the system raises above the
+/// bar, so none of them draws the bar itself.
 struct MainTabs: View {
     enum Tab: Hashable {
         case today, feed, schedule, profile
@@ -35,27 +35,12 @@ struct MainTabs: View {
     @State private var showsSquad = false
 
     var body: some View {
-        GeometryReader { proxy in
-            // The bar floats `tabBarBottom` above the screen's edge, inside the home indicator's
-            // inset; screens leave room for it and a little air.
-            let room = Sizing.tabBarBottom + Sizing.tabBar + Space.xs - proxy.safeAreaInsets.bottom
-            screen
-                .safeAreaPadding(.bottom, showsTabBar ? max(room, 0) : 0)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .overlay(alignment: .bottom) {
-                    if showsTabBar {
-                        TimelineView(.animation(minimumInterval: nil, paused: !arriving)) { timeline in
-                            TabBar(Self.tabs, selection: $selection)
-                                .padding(.horizontal, Space.pageMargin)
-                                .offset(
-                                    y: proxy.safeAreaInsets.bottom - Sizing.tabBarBottom
-                                        + (arriving ? today.tabBarOffset(at: timeline.date) : 0))
-                        }
-                        .transition(.opacity)
-                    }
-                }
-                .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar) { tab in
+            // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
+            // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
+            if tab == selection { screen(tab) }
         }
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
@@ -100,9 +85,6 @@ struct MainTabs: View {
         }
     }
 
-    /// Whether the squad is dropping onto a newly picked scene, which brings the tab bar back.
-    private var arriving: Bool { today.isArriving && !reduceMotion }
-
     /// Every scene pick ends on home: the picked scene filled the screen at `coveredAt`, and the
     /// squad drops onto it.
     private func land(on scene: SceneTheme, coveredAt: Date) {
@@ -117,7 +99,7 @@ struct MainTabs: View {
             look: character.outfit, persona: character.persona, nickname: character.nickname)
     }
 
-    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) covers the
+    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) hides the
     /// bar.
     private var showsTabBar: Bool {
         switch selection {
@@ -130,8 +112,8 @@ struct MainTabs: View {
 
     /// Coming back to 今天 shows the home the store kept at once, then reads the server's again
     /// and sends any post still waiting.
-    @ViewBuilder private var screen: some View {
-        switch selection {
+    @ViewBuilder private func screen(_ tab: Tab) -> some View {
+        switch tab {
         case .today:
             TodayView(model: today) { post in
                 feed.open(post)
@@ -158,9 +140,12 @@ struct MainTabs: View {
         }
     }
 
-    /// The bar as home opens with it, for the end of 上场, which hands over to home.
-    static var entranceTabBar: some View {
-        TabBar(tabs, selection: .constant(Tab.today))
+    /// The tabs as home opens with them, around `content` on 今天, for 上场, whose end hands over
+    /// to home: the bar rises once `showsBar`.
+    static func entranceTabs(showsBar: Bool, content: AnyView) -> some View {
+        AppTabs(tabs, selection: .constant(Tab.today), showsBar: showsBar) { tab in
+            if tab == .today { content }
+        }
     }
 
     private static let tabs: [TabBarItem<Tab>] = [

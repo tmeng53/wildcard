@@ -30,7 +30,7 @@ struct SportsStep: View {
             )
             .accessibilityIdentifier("sports.done")
             Button(action: model.skipSports) {
-                Text("以后再选", bundle: .module)
+                Text("以后再说", bundle: .module)
             }
             .buttonStyle(TextButtonStyle())
             .accessibilityIdentifier("sports.skip")

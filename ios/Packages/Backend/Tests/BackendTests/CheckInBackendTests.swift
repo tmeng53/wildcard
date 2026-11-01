@@ -158,7 +158,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     #expect(try await mate.api.checkIns(of: squad, from: day.adding(days: -1), through: day.adding(days: 1)).count == 1)
 }
 
-@MainActor @Test func aSecondDisclaimerIsRefusedEvenFromAnotherPhone() async throws {
+@MainActor @Test func aDisclaimerIsRefusedAfterATrainingFromAnotherPhone() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     _ = try await stack.squad(of: author)
@@ -168,8 +168,10 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     await tablet.load()
 
     try await phone.post(.disclaimer(try Disclaimer("加班到十点")))
-    await #expect(throws: CheckInError.disclaimerAlreadyPosted) {
-        try await tablet.post(.disclaimer(try Disclaimer("又加班")))
+    try await tablet.post(.disclaimer(try Disclaimer("又加班")))
+    try await phone.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
+    await #expect(throws: CheckInError.alreadyTrained) {
+        try await tablet.post(.disclaimer(try Disclaimer("还是加班")))
     }
     #expect(tablet.pending.isEmpty)
 }

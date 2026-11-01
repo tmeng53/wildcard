@@ -198,7 +198,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Healthy meal"
+            "value" : "Clean meal"
           }
         },
         "zh-Hant" : {
@@ -598,7 +598,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cheat meal, confessed"
+            "value" : "Cheat meal"
           }
         },
         "zh-Hant" : {

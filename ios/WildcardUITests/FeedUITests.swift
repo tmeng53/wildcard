@@ -48,7 +48,7 @@ final class FeedUITests: XCTestCase {
         // The oldest posts scroll up clear of the tab bar: swipe until the last post is on
         // screen, as the list builds its cards as they come.
         let posts = app.descendants(matching: .any).matching(identifier: "feed.post")
-        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         var swipes = 0
         let feed = app.scrollViews.firstMatch
         while swipes < Self.maxSwipes, posts.element(boundBy: posts.count - 1).frame.maxY > tabBarTop {
@@ -103,7 +103,7 @@ final class FeedUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
         let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
-        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0
         while drags < Self.maxSwipes, !(minutes.exists && minutes.frame.maxY <= tabBarTop) {
@@ -227,8 +227,7 @@ final class FeedUITests: XCTestCase {
     /// Fully on screen and above the floating tab bar, so nothing covers it.
     private func assertClearOfTheTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         assertOnScreen(element, in: app)
-        let bar = app.buttons["tab.feed"]
-        XCTAssertTrue(bar.exists, "no tab bar")
+        let bar = tabButton("tab.feed", in: app)
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.frame.minY, "\(element.identifier) is under the tab bar")
     }
 

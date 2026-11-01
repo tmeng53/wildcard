@@ -95,7 +95,9 @@ func photoSideRangeIsTheAPIs(side: String) throws {
 
 @Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
 func audienceSizeIsTheAPIs(schema: String) throws {
-    #expect(try property("audience", of: schema)?.maxItems == Audience.maxSquads)
+    let audience = try property("audience", of: schema)
+    #expect(audience?.minItems == nil)
+    #expect(audience?.maxItems == Audience.maxSquads)
 }
 
 @Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft"])

@@ -5,6 +5,7 @@ import {
   CheckInKind,
   DEFAULT_PAGE,
   DayRange,
+  MyDayRange,
   MAX_PAGE,
   decodeCursor,
   encodeCursor,
@@ -185,7 +186,7 @@ const CheckInTotals = z
     trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
     healthyMeals: count('健康餐 check-ins.'),
     cheatMeals: count('坦白放纵餐 check-ins.'),
-    disclaimers: count('今日请假条 check-ins, at most one a day.'),
+    disclaimers: count('今日请假条 check-ins.'),
     topSport: z
       .strictObject({
         sport: storedTrainingFields.sport,
@@ -291,10 +292,7 @@ export function checkIns(deps: {
           'counted for the wrong day, or with a photo that isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
-      409: problem(
-        'The id holds a different check-in, today’s disclaimer is already posted, or another ' +
-          'check-in uses one of the photos',
-      ),
+      409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
       ...jsonBodyFailures,
       ...signedInFailures,
     },
@@ -347,10 +345,12 @@ export function checkIns(deps: {
     path: '/me/check-ins',
     operationId: 'listMyCheckIns',
     summary: 'The signed-in member’s check-ins for a range of days',
-    description: 'Newest day first, each with its whole audience.',
+    description:
+      'Newest day first, each with its whole audience. Posts shared to no squad only with ' +
+      '`unshared=include`.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { query: DayRange },
+    request: { query: MyDayRange },
     responses: {
       200: {
         description: 'The check-ins',
@@ -449,9 +449,11 @@ export function checkIns(deps: {
       );
     })
     .openapi(listMine, async (c) => {
+      const { from, to, unshared } = c.req.valid('query');
       const records = await deps.checkIns.listMine({
         member: MemberId.parse(c.var.caller.userId),
-        days: c.req.valid('query'),
+        days: { from, to },
+        ...(unshared === undefined ? {} : { unshared }),
       });
       const urls = await viewUrls(deps.photos, records);
       return c.json(

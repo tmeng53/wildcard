@@ -47,6 +47,9 @@
       "path": "packages/weekly-awards"
     },
     {
+      "path": "packages/coach"
+    },
+    {
       "path": "apps/server"
     }
   ]

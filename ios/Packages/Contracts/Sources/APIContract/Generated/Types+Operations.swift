@@ -2534,7 +2534,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos
+            /// The id holds a different check-in, or another check-in uses one of the photos
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/409`.
             ///
@@ -3061,7 +3061,7 @@ public enum Operations {
     }
     /// The signed-in member’s check-ins for a range of days
     ///
-    /// Newest day first, each with its whole audience.
+    /// Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.
     ///
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
@@ -3074,17 +3074,30 @@ public enum Operations {
                 public var from: Swift.String
                 /// - Remark: Generated from `#/paths/me/check-ins/GET/query/to`.
                 public var to: Swift.String
+                /// `include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them.
+                ///
+                /// - Remark: Generated from `#/paths/me/check-ins/GET/query/unshared`.
+                @frozen public enum UnsharedPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case include = "include"
+                }
+                /// `include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them.
+                ///
+                /// - Remark: Generated from `#/paths/me/check-ins/GET/query/unshared`.
+                public var unshared: Operations.ListMyCheckIns.Input.Query.UnsharedPayload?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - from:
                 ///   - to:
+                ///   - unshared: `include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them.
                 public init(
                     from: Swift.String,
-                    to: Swift.String
+                    to: Swift.String,
+                    unshared: Operations.ListMyCheckIns.Input.Query.UnsharedPayload? = nil
                 ) {
                     self.from = from
                     self.to = to
+                    self.unshared = unshared
                 }
             }
             public var query: Operations.ListMyCheckIns.Input.Query

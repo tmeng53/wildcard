@@ -1,8 +1,8 @@
 import Contracts
 import Testing
 
-@Test func aDisclaimerIsOnlyOfferedBeforeTrainingAndOnceADay() {
+@Test func aDisclaimerIsOfferedUntilTheDayIsTrained() {
     #expect(TrainingStatus.notCheckedIn.allowsDisclaimer)
     #expect(!TrainingStatus.trained.allowsDisclaimer)
-    #expect(!TrainingStatus.disclaimer.allowsDisclaimer)
+    #expect(TrainingStatus.disclaimer.allowsDisclaimer)
 }

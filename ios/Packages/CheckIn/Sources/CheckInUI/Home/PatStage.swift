@@ -217,11 +217,11 @@ final class PatStage {
         case .disclaimer:
             return (
                 String(localized: "请假条", bundle: .module.inAppLanguage),
-                mate.disclaimer ?? String(localized: "今天休息", bundle: .module.inAppLanguage)
+                mate.disclaimer ?? String(localized: "请假了", bundle: .module.inAppLanguage)
             )
         case .restDay:
             return (
-                String(localized: "今天是休息日", bundle: .module.inAppLanguage),
+                String(localized: "休息日", bundle: .module.inAppLanguage),
                 String(localized: "按计划休息", bundle: .module.inAppLanguage)
             )
         case .notYet:
