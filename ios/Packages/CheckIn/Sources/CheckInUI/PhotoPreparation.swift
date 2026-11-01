@@ -8,6 +8,8 @@ import UniformTypeIdentifiers
 /// Shrinks a picked photo before it goes anywhere: at most 1080 px on the long edge, JPEG at
 /// quality 0.7, so a check-in photo is a few hundred KB and the free storage tier lasts.
 /// Runs off the main actor: decoding a camera photo takes long enough to drop frames.
+/// The JPEG is written from the pixels alone, so it carries none of the original's metadata
+/// (EXIF, GPS, maker notes, XMP); the orientation is applied to the pixels instead.
 public enum PhotoPreparation {
     public static let maxPixelSize = 1080
     public static let jpegQuality = 0.7
