@@ -90,21 +90,30 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
 
     async replace({ squad, coach, by }) {
       const change = async (trx: Kysely<DB>): Promise<'hired' | 'same' | 'noSquad'> => {
-        // The squad's row, locked, so changes to one squad's coach run one after another; a
-        // squad that isn't there is answered before anything is written.
-        const squadRow = await sql<{ id: string }>`
-          select id from public.squads where id = ${squad} for update`.execute(trx);
-        if (squadRow.rows.length === 0) return 'noSquad';
+        // A lock of the coach module's own on this squad's coach (never the squads module's
+        // table), held until the transaction ends, so changes to one squad's coach run one after
+        // another.
+        await sql`select pg_advisory_xact_lock(hashtextextended(${`squad_coaches:${squad}`}, 0))`.execute(
+          trx,
+        );
         const current = await trx
           .selectFrom('squad_coaches')
           .select('coach_id')
           .where('squad_id', '=', squad)
           .executeTakeFirst();
         if (current?.coach_id === coach) return 'same';
+        // A squad that isn't there fails the hire's foreign key; the savepoint keeps a caller's
+        // transaction usable after it.
+        await sql`savepoint coach_replace`.execute(trx);
         const inTransaction = createPostgresCoachHiring(trx);
         if (current !== undefined) await inTransaction.fire({ squad, by });
         const hired = await inTransaction.hire({ squad, coach, by });
-        // With the squad locked and its coach fired, nothing else can have hired one.
+        if (hired === 'noSquad') {
+          await sql`rollback to savepoint coach_replace`.execute(trx);
+          return 'noSquad';
+        }
+        await sql`release savepoint coach_replace`.execute(trx);
+        // With the lock held and its coach fired, nothing else can have hired one.
         if (hired !== 'hired') throw new Error(`Hiring for a locked squad answered ${hired}.`);
         return 'hired';
       };
