@@ -34,15 +34,20 @@ export interface CoachCatalogEvents {
 }
 
 export interface Coaches {
+  background: string;
   catchphrase: string;
-  credentials: string;
+  experience: string;
   id: string;
   look: string;
   name: string;
   offered: boolean;
+  pay: string;
   soul: string;
   style: string;
+  tags: string[];
   tier: string;
+  title: string;
+  years_coaching: number;
 }
 
 export interface CoachFiles {

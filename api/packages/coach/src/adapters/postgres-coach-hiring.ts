@@ -15,10 +15,12 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
     async coachOf(squad) {
       const row = await db
         .selectFrom('squad_coaches')
-        .select('coach_id')
+        .select(['coach_id', 'hired_at'])
         .where('squad_id', '=', squad)
         .executeTakeFirst();
-      return row === undefined ? undefined : CoachId.parse(row.coach_id);
+      return row === undefined
+        ? undefined
+        : { coach: CoachId.parse(row.coach_id), since: new Date(row.hired_at) };
     },
 
     async hired() {
@@ -84,6 +86,39 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
         .execute();
       const [row] = fired;
       return row === undefined ? undefined : CoachId.parse(row.coach_id);
+    },
+
+    async replace({ squad, coach, by }) {
+      const change = async (trx: Kysely<DB>): Promise<'hired' | 'same' | 'noSquad'> => {
+        // A lock of the coach module's own on this squad's coach (never the squads module's
+        // table), held until the transaction ends, so changes to one squad's coach run one after
+        // another.
+        await sql`select pg_advisory_xact_lock(hashtextextended(${`squad_coaches:${squad}`}, 0))`.execute(
+          trx,
+        );
+        const current = await trx
+          .selectFrom('squad_coaches')
+          .select('coach_id')
+          .where('squad_id', '=', squad)
+          .executeTakeFirst();
+        if (current?.coach_id === coach) return 'same';
+        // A squad that isn't there fails the hire's foreign key; the savepoint keeps a caller's
+        // transaction usable after it.
+        await sql`savepoint coach_replace`.execute(trx);
+        const inTransaction = createPostgresCoachHiring(trx);
+        if (current !== undefined) await inTransaction.fire({ squad, by });
+        const hired = await inTransaction.hire({ squad, coach, by });
+        if (hired === 'noSquad') {
+          await sql`rollback to savepoint coach_replace`.execute(trx);
+          return 'noSquad';
+        }
+        await sql`release savepoint coach_replace`.execute(trx);
+        // With the lock held and its coach fired, nothing else can have hired one.
+        if (hired !== 'hired') throw new Error(`Hiring for a locked squad answered ${hired}.`);
+        return 'hired';
+      };
+      // Inside a caller's transaction already (the admin tools, tests), it runs in that one.
+      return db.isTransaction ? change(db) : db.transaction().execute(change);
     },
   };
 }

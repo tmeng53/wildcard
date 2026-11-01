@@ -96,6 +96,7 @@ const app = createApp({
     hasCurrent: unused,
     currentAmong: unused,
   },
+  coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   weeklyAwards: {
     awards: {

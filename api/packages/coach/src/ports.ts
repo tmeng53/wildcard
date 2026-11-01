@@ -155,8 +155,8 @@ export type AiConsented = (members: readonly string[]) => Promise<readonly strin
 
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {
-  /** The coach the squad has hired now, if any. */
-  coachOf(squad: SquadId): Promise<CoachId | undefined>;
+  /** The coach the squad has hired now and since when, if any. */
+  coachOf(squad: SquadId): Promise<{ readonly coach: CoachId; readonly since: Date } | undefined>;
   /** Every squad with a coach hired now, with its coach. */
   hired(): Promise<ReadonlyMap<SquadId, CoachId>>;
   /**
@@ -170,6 +170,16 @@ export interface CoachHiringStore {
   }): Promise<'hired' | 'hasCoach' | 'noSquad'>;
   /** Fires the squad's coach, logged as `by`'s; the coach fired, or `undefined` for none. */
   fire(input: { readonly squad: SquadId; readonly by: MemberId }): Promise<CoachId | undefined>;
+  /**
+   * Hires `coach` for the squad in one transaction, firing the coach it has first (both logged
+   * as `by`'s): `same` when it is that coach already, and nothing is saved; `noSquad` when
+   * there is no such squad.
+   */
+  replace(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly by: MemberId;
+  }): Promise<'hired' | 'same' | 'noSquad'>;
 }
 
 /** What a squad's coach has done, for the admins: its files, lines, wakes and tokens. */

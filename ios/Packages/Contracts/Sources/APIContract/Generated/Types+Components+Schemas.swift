@@ -3496,6 +3496,249 @@ extension Components {
                 case scene
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachMarket`.
+        public struct CoachMarket: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachMarket/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMarket/version`.
+            public var version: Components.Schemas.CoachMarket.VersionPayload
+            /// The coaches a squad can hire now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMarket/coaches`.
+            public var coaches: [Components.Schemas.CoachCard]
+            /// Creates a new `CoachMarket`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - coaches: The coaches a squad can hire now.
+            public init(
+                version: Components.Schemas.CoachMarket.VersionPayload,
+                coaches: [Components.Schemas.CoachCard]
+            ) {
+                self.version = version
+                self.coaches = coaches
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case coaches
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachCard`.
+        public struct CoachCard: Codable, Hashable, Sendable {
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/id`.
+            public var id: Swift.String
+            /// 入门, 进阶 or 专业: a style a squad picks, never a better coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/tier`.
+            @frozen public enum TierPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case entry = "entry"
+                case advanced = "advanced"
+                case pro = "pro"
+            }
+            /// 入门, 进阶 or 专业: a style a squad picks, never a better coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/tier`.
+            public var tier: Components.Schemas.CoachCard.TierPayload
+            /// - Remark: Generated from `#/components/schemas/CoachCard/name`.
+            public var name: Swift.String
+            /// Its 头衔, next to its name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/title`.
+            public var title: Swift.String
+            /// Its 口头禅.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/catchphrase`.
+            public var catchphrase: Swift.String
+            /// Its fictional 履历.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/background`.
+            public var background: Swift.String
+            /// The number in 执教: its fictional years.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/yearsCoaching`.
+            public var yearsCoaching: Swift.Int
+            /// What 执教 says after the years.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/experience`.
+            public var experience: Swift.String
+            /// Its 风格.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/style`.
+            public var style: Swift.String
+            /// The tags on its card in 教练市场.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/tags`.
+            public var tags: [Swift.String]
+            /// Its 期望待遇.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/pay`.
+            public var pay: Swift.String
+            /// The character the app draws, by the art’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/look`.
+            public var look: Swift.String
+            /// Creates a new `CoachCard`.
+            ///
+            /// - Parameters:
+            ///   - id: The coach’s id. Never changes.
+            ///   - tier: 入门, 进阶 or 专业: a style a squad picks, never a better coach.
+            ///   - name:
+            ///   - title: Its 头衔, next to its name.
+            ///   - catchphrase: Its 口头禅.
+            ///   - background: Its fictional 履历.
+            ///   - yearsCoaching: The number in 执教: its fictional years.
+            ///   - experience: What 执教 says after the years.
+            ///   - style: Its 风格.
+            ///   - tags: The tags on its card in 教练市场.
+            ///   - pay: Its 期望待遇.
+            ///   - look: The character the app draws, by the art’s id.
+            public init(
+                id: Swift.String,
+                tier: Components.Schemas.CoachCard.TierPayload,
+                name: Swift.String,
+                title: Swift.String,
+                catchphrase: Swift.String,
+                background: Swift.String,
+                yearsCoaching: Swift.Int,
+                experience: Swift.String,
+                style: Swift.String,
+                tags: [Swift.String],
+                pay: Swift.String,
+                look: Swift.String
+            ) {
+                self.id = id
+                self.tier = tier
+                self.name = name
+                self.title = title
+                self.catchphrase = catchphrase
+                self.background = background
+                self.yearsCoaching = yearsCoaching
+                self.experience = experience
+                self.style = style
+                self.tags = tags
+                self.pay = pay
+                self.look = look
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case tier
+                case name
+                case title
+                case catchphrase
+                case background
+                case yearsCoaching
+                case experience
+                case style
+                case tags
+                case pay
+                case look
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadCoach`.
+        public struct SquadCoach: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/version`.
+            public var version: Components.Schemas.SquadCoach.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/coach`.
+            public struct CoachPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SquadCoach/coach/value1`.
+                public var value1: Components.Schemas.CoachCard
+                /// The squad’s coach, or null for none.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadCoach/coach/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIObjectContainer
+                /// Creates a new `CoachPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The squad’s coach, or null for none.
+                public init(
+                    value1: Components.Schemas.CoachCard,
+                    value2: OpenAPIRuntime.OpenAPIObjectContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/coach`.
+            public var coach: Components.Schemas.SquadCoach.CoachPayload?
+            /// When the squad hired it (执教第 N 周 counts from here), or null.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/since`.
+            public var since: Foundation.Date?
+            /// True for the captain, the only member who hires, changes and fires the coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/canHire`.
+            public var canHire: Swift.Bool
+            /// Creates a new `SquadCoach`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - coach:
+            ///   - since: When the squad hired it (执教第 N 周 counts from here), or null.
+            ///   - canHire: True for the captain, the only member who hires, changes and fires the coach.
+            public init(
+                version: Components.Schemas.SquadCoach.VersionPayload,
+                coach: Components.Schemas.SquadCoach.CoachPayload? = nil,
+                since: Foundation.Date? = nil,
+                canHire: Swift.Bool
+            ) {
+                self.version = version
+                self.coach = coach
+                self.since = since
+                self.canHire = canHire
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case coach
+                case since
+                case canHire
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachHire`.
+        public struct CoachHire: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachHire/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachHire/version`.
+            public var version: Components.Schemas.CoachHire.VersionPayload
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachHire/coach`.
+            public var coach: Swift.String
+            /// Creates a new `CoachHire`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - coach: The coach’s id. Never changes.
+            public init(
+                version: Components.Schemas.CoachHire.VersionPayload,
+                coach: Swift.String
+            ) {
+                self.version = version
+                self.coach = coach
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case coach
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
         public struct SquadNudges: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.

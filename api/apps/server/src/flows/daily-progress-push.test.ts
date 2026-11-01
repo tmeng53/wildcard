@@ -36,7 +36,11 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeekSummaryWords,
+  unusedWeeklyAwards,
+  unusedCoachHiring,
+} from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
   nudgeInteractions,
@@ -106,6 +110,7 @@ const deps = {
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
+  coachHiring: unusedCoachHiring,
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),
