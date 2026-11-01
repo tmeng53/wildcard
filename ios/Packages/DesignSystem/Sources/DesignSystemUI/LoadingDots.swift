@@ -6,7 +6,7 @@ import SwiftUI
 /// turn like running steps, in the foreground style around them (ink on a brand page, the scene's
 /// colour on its turf, white in a filled button). It shows only once the wait has lasted `delay`.
 /// With Reduce Motion on, the dots stay put and only brighten in turn. A whole page waits with the
-/// character instead (`AvatarUI`'s `LoadingCharacter`).
+/// two tickets instead (`TicketSpinner`).
 public struct LoadingDots: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let delay: Double
@@ -53,7 +53,7 @@ extension View {
     }
 
     /// A page, or the part of one, while what it shows is read: once `isLoading` has lasted
-    /// `Loading.pageDelay`, `loader` covers it (the character jogging, on the page's own
+    /// `Loading.pageDelay`, `loader` covers it (the two tickets, `TicketSpinner`, on the page's own
     /// background, so nothing under it shows through), and stays at least `Loading.minimumShown`,
     /// fading out over what arrived.
     public func loadingCover(_ isLoading: Bool, @ViewBuilder loader: () -> some View) -> some View {
