@@ -8,14 +8,16 @@ import SquadDomain
 /// scene and its coach, and the captain's changes, leaving, the scene pick and the coach.
 public struct APISquadSettingsService: SquadSettingsService {
     private let api: WildcardAPI
+    private let now: @Sendable () -> Date
 
-    public init(api: WildcardAPI) {
-        self.api = api
+    /// `now` says which week the coach is in, on the member's own clock.
+    public init(api: WildcardAPI, now: @escaping @Sendable () -> Date = Date.init) {
+        (self.api, self.now) = (api, now)
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
         try await squad { () throws(APIError) in
-            let viewer = try await api.me().id
+            let me = try await api.me()
             guard let first = try await api.mySquads().first else { throw .refused(.squadNotJoined) }
             let today = try await api.today(of: first.id)
             let scene = try await api.scene(of: first.id)
@@ -24,10 +26,10 @@ public struct APISquadSettingsService: SquadSettingsService {
             for mate in today.members {
                 if let character = mate.character { characters[mate.member] = character }
             }
-            let timeZone = TimeZone.current
+            let timeZone = me.profile?.timeZone ?? .current
             return SquadSettings(
-                squad: first, viewer: viewer, characters: characters, scene: scene, coach: coach,
-                today: LocalDay(at: Date(), in: timeZone), timeZone: timeZone)
+                squad: first, viewer: me.id, characters: characters, scene: scene, coach: coach,
+                today: LocalDay(at: now(), in: timeZone), timeZone: timeZone)
         }
     }
 
