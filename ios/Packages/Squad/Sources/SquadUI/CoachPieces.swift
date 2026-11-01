@@ -114,9 +114,7 @@ struct CoachSilhouette: View {
             let tear = Color(role: .fgOnInkMuted, in: theme)
             for left in [24.0, 56.0] {
                 context.fill(
-                    Path(
-                        roundedRect: CGRect(x: left * unit, y: 40 * unit, width: 12 * unit, height: 4 * unit),
-                        cornerRadius: 2 * unit),
+                    Capsule().path(in: CGRect(x: left * unit, y: 40 * unit, width: 12 * unit, height: 4 * unit)),
                     with: .color(face))
             }
             for (left, top) in [(26.0, 50.0), (58.0, 56.0)] {
