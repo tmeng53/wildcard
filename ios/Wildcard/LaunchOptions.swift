@@ -132,6 +132,12 @@ enum LaunchOptions {
     }
     #endif
 
+    /// With `-onboarding`, `-slow-sign-in`: signing in on the open screen takes this long, in
+    /// seconds, so the loader that covers a slow sign-in shows.
+    static var signInWait: Double? {
+        ProcessInfo.processInfo.arguments.contains("-slow-sign-in") ? 2 : nil
+    }
+
     /// On the sample squad, `-onboarding`: open sign-up, then 今天 once it is done.
     static var showsOnboarding: Bool {
         ProcessInfo.processInfo.arguments.contains("-onboarding")
