@@ -202,7 +202,10 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
     await sql`insert into public.weekly_award_winners (squad_id, week_start, member_id, position, award)
       values (${squad}, '2026-10-12', ${userId}, ${position}, ${award}::jsonb)`.execute(db);
   }
-  return { me, friend, squad };
+  // A 练了 on one of the default plan's rest days (Wednesday, Sunday) makes that day a training
+  // day, which saves this week's plan too.
+  const restDay = [0, 3].includes(new Date(`${torontoDay}T00:00:00.000Z`).getUTCDay());
+  return { me, friend, squad, everything: { ...everything, weeklyPlans: restDay ? 2 : 1 } };
 }
 
 /**
@@ -281,7 +284,7 @@ const aRequestId: unknown = expect.stringMatching(/^[0-9a-f]{32}$/);
 describe('DELETE /me', () => {
   it('deletes the account and all that is the member’s, and leaves the squad to the others', async () => {
     const { call } = appWith(undefined);
-    const { me, friend, squad } = await memberWithEverything(call);
+    const { me, friend, squad, everything } = await memberWithEverything(call);
     expect(await whatIsLeftOf(me.userId)).toStrictEqual(everything);
 
     expect(await call('DELETE', '/me', me.token, { version: 1 })).toStrictEqual({
@@ -370,7 +373,7 @@ describe('DELETE /me', () => {
       codes.push(code);
       return Promise.resolve();
     });
-    const { me } = await memberWithEverything(call);
+    const { me, everything } = await memberWithEverything(call);
     await linkAppleIdentity(me.userId);
     const refused = await call('DELETE', '/me', me.token, { version: 1 });
     expect([refused.status, reasonOf(refused.body), codes]).toStrictEqual([
@@ -399,7 +402,7 @@ describe('DELETE /me', () => {
 
   it('deletes nothing when Apple refuses the code, so the app can retry with a new one', async () => {
     const { call } = appWith(() => Promise.reject(new AppleAuthorizationCodeInvalidError()));
-    const { me } = await memberWithEverything(call);
+    const { me, everything } = await memberWithEverything(call);
     const response = await call('DELETE', '/me', me.token, {
       version: 1,
       appleAuthorizationCode: 'expired',

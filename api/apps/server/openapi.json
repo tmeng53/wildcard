@@ -3002,6 +3002,102 @@
         ],
         "additionalProperties": false
       },
+      "PlanTemplate": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "days": {
+            "$ref": "#/components/schemas/PlanDays"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "saved",
+              "default"
+            ],
+            "description": "`saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one."
+          }
+        },
+        "required": [
+          "version",
+          "days",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "PlanDays": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "train"
+                  ]
+                },
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string",
+                  "maxLength": 1000,
+                  "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
+                  "x-max-characters": 20
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "rest"
+                  ]
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "minItems": 7,
+        "maxItems": 7,
+        "description": "Seven days, Monday first: `{\"kind\": \"train\"}`, optionally with a `sport` (and `customSport` for `\"custom\"`), or `{\"kind\": \"rest\"}`."
+      },
+      "PlanTemplateDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "days": {
+            "$ref": "#/components/schemas/PlanDays"
+          }
+        },
+        "required": [
+          "version",
+          "days"
+        ],
+        "additionalProperties": false
+      },
       "WeeklyPlan": {
         "type": "object",
         "properties": {
@@ -3023,53 +3119,7 @@
             "example": "2026-10-19"
           },
           "days": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "train"
-                      ]
-                    },
-                    "sport": {
-                      "$ref": "#/components/schemas/Sport"
-                    },
-                    "customSport": {
-                      "type": "string",
-                      "maxLength": 1000,
-                      "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
-                      "x-max-characters": 20
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "rest"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            },
-            "minItems": 7,
-            "maxItems": 7,
-            "description": "Seven days, Monday first: `{\"kind\": \"train\"}`, optionally with a `sport` (and `customSport` for `\"custom\"`), or `{\"kind\": \"rest\"}`."
+            "$ref": "#/components/schemas/PlanDays"
           },
           "source": {
             "type": "string",
@@ -3078,7 +3128,7 @@
               "carriedOver",
               "default"
             ],
-            "description": "`saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save."
+            "description": "`saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one."
           },
           "fuelGoals": {
             "$ref": "#/components/schemas/FuelGoals"
@@ -3168,53 +3218,7 @@
             ]
           },
           "days": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "train"
-                      ]
-                    },
-                    "sport": {
-                      "$ref": "#/components/schemas/Sport"
-                    },
-                    "customSport": {
-                      "type": "string",
-                      "maxLength": 1000,
-                      "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
-                      "x-max-characters": 20
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "rest"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            },
-            "minItems": 7,
-            "maxItems": 7,
-            "description": "Seven days, Monday first: `{\"kind\": \"train\"}`, optionally with a `sport` (and `customSport` for `\"custom\"`), or `{\"kind\": \"rest\"}`."
+            "$ref": "#/components/schemas/PlanDays"
           }
         },
         "required": [
@@ -6958,11 +6962,127 @@
         }
       }
     },
+    "/me/plan-template": {
+      "get": {
+        "operationId": "getMyPlanTemplate",
+        "summary": "The signed-in member’s typical week",
+        "description": "The plan the weeks to come follow until one is changed for itself.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The typical week",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanTemplate"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveMyPlanTemplate",
+        "summary": "Save the signed-in member’s typical week",
+        "description": "Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanTemplateDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanTemplate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid plan, a sport the list doesn’t have (`SPORT_NOT_LISTED`), or no profile yet (`TIME_ZONE_NOT_SET`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/weekly-plans/{weekStart}": {
       "get": {
         "operationId": "getMyWeeklyPlan",
         "summary": "The signed-in member’s plan for a week",
-        "description": "Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.",
+        "description": "Every week has a plan: the one saved for it, else the member’s typical week as it stood when the week began, else the default.",
         "security": [
           {
             "bearer": []
