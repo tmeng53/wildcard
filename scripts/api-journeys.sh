@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [devices] [daily-push] [weekly-awards] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [devices] [daily-push] [weekly-awards] [coach] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices daily-push weekly-awards account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices daily-push weekly-awards coach account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | daily-push | weekly-awards | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, daily-push, weekly-awards, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | daily-push | weekly-awards | coach | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, daily-push, weekly-awards, coach, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -690,6 +690,18 @@ if want weekly-awards; then
   echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
 fi
 
+if want coach; then
+  read -r _ coach_member_token <<<"$(sign_up)"
+  call POST /jobs/coach "$coach_member_token"
+  expect 401 JOB_TOKEN_INVALID
+  # The journeys' server has no OpenAI key, so the coach never wakes, whatever the settings say.
+  call POST /jobs/coach "$jobs_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0}' ] ||
+    fail "without an OpenAI key the coach run does nothing: $body"
+  echo "coach: a member's token refused (401); without an OpenAI key the scheduler's run woke no coach"
+fi
+
 if want account; then
   read -r leaver leaver_token <<<"$(sign_up)"
   call GET /me "$leaver_token"
@@ -711,8 +723,9 @@ if want account; then
   path="$(jq -r .path <<<"$body")"
   curl -sf -X PUT "$(jq -r .uploadUrl <<<"$body")" -H 'content-type: image/jpeg' --data-binary 'not really a jpeg' >/dev/null ||
     fail "upload to storage failed"
-  # The leaver's own day in Toronto when the check-in was made, which lasts until 3am there.
-  toronto_day="$(node -p "new Date(Date.parse('$now') - 3 * 3_600_000).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' })")"
+  # The leaver's own day in Toronto when the check-in was made, which lasts until 3am there:
+  # three hours back on Toronto's clock, so the night the clocks go back still counts right.
+  toronto_day="$(node -p "new Date(Date.parse(new Date('$now').toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z') - 3 * 3_600_000).toISOString().slice(0, 10)")"
   call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$toronto_day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
   expect 201
   echo "account: leaver made a squad with mate and posted a meal with a photo"
@@ -843,7 +856,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 

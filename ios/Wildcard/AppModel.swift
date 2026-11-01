@@ -48,8 +48,6 @@ final class AppModel {
         if case .tabs = screen { return true }
         return false
     }
-    /// An awards push tapped before the home was up, opened once it is.
-    @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
     /// The squad 今天 is on, whose scene it reads again each time the app comes back.
     @ObservationIgnored private var homeSquad: SquadID?
     /// A home opening under the launch cover after a sign-in on the open screen, so the account's
@@ -154,13 +152,11 @@ final class AppModel {
         if case .tabs(let today, _, _, _, _, _) = screen { await today.load() }
     }
 
-    /// A tapped awards push: the 战报 it is about, over 动态.
-    func openRecap(squad: SquadID, week: LocalDay) async {
-        guard case .tabs(_, _, _, _, _, let recap) = screen else {
-            pendingRecap = (squad, week)
-            return
-        }
-        await recap.open(squad: squad, week: week)
+    /// A tapped awards push: 动态 reads the 战报 again, so its tile shows the new one for the
+    /// member to open. Tabs not up yet read it as they open.
+    func readRecapAgain() async {
+        guard case .tabs(_, _, _, _, _, let recap) = screen else { return }
+        await recap.refresh()
     }
 
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
@@ -276,10 +272,6 @@ final class AppModel {
             today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
             recap: recap)
         homeSquad = home.squad.id
-        if let pending = pendingRecap {
-            pendingRecap = nil
-            await openRecap(squad: pending.squad, week: pending.week)
-        }
     }
 
     /// The member's home, from what the phone kept for them alone.

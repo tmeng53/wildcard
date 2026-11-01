@@ -2,6 +2,7 @@ import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
 import type { NudgeTables } from '@wildcard/nudges';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
+import type { CoachTables } from '@wildcard/coach';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
@@ -160,7 +161,8 @@ export type Tables = CheckInTables &
   AiConsentTables &
   NudgeTables &
   WeeklyAwardTables &
-  SportTables;
+  SportTables &
+  CoachTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;
