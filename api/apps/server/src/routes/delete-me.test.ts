@@ -197,10 +197,10 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
     await sql`insert into public.weekly_award_winners (squad_id, week_start, member_id, position, award)
       values (${squad}, '2026-10-12', ${userId}, ${position}, ${award}::jsonb)`.execute(db);
   }
-  // A 练了 on a rest day of the plan members start with (Wednesday, Sunday) saves this week's plan
-  // too, so the member then has two.
-  const weeklyPlans = [0, 3].includes(new Date(`${torontoDay}T00:00:00.000Z`).getUTCDay()) ? 2 : 1;
-  return { me, friend, squad, expected: { ...everything, weeklyPlans } };
+  // A 练了 on one of the default plan's rest days (Wednesday, Sunday) makes that day a training
+  // day, which saves this week's plan too.
+  const restDay = [0, 3].includes(new Date(`${torontoDay}T00:00:00.000Z`).getUTCDay());
+  return { me, friend, squad, everything: { ...everything, weeklyPlans: restDay ? 2 : 1 } };
 }
 
 /**
@@ -279,8 +279,8 @@ const aRequestId: unknown = expect.stringMatching(/^[0-9a-f]{32}$/);
 describe('DELETE /me', () => {
   it('deletes the account and all that is the member’s, and leaves the squad to the others', async () => {
     const { call } = appWith(undefined);
-    const { me, friend, squad, expected } = await memberWithEverything(call);
-    expect(await whatIsLeftOf(me.userId)).toStrictEqual(expected);
+    const { me, friend, squad, everything } = await memberWithEverything(call);
+    expect(await whatIsLeftOf(me.userId)).toStrictEqual(everything);
 
     expect(await call('DELETE', '/me', me.token, { version: 1 })).toStrictEqual({
       status: 204,
@@ -368,7 +368,7 @@ describe('DELETE /me', () => {
       codes.push(code);
       return Promise.resolve();
     });
-    const { me, expected } = await memberWithEverything(call);
+    const { me, everything } = await memberWithEverything(call);
     await linkAppleIdentity(me.userId);
     const refused = await call('DELETE', '/me', me.token, { version: 1 });
     expect([refused.status, reasonOf(refused.body), codes]).toStrictEqual([
@@ -376,7 +376,7 @@ describe('DELETE /me', () => {
       'APPLE_AUTHORIZATION_CODE_REQUIRED',
       [],
     ]);
-    expect(await whatIsLeftOf(me.userId)).toStrictEqual(expected);
+    expect(await whatIsLeftOf(me.userId)).toStrictEqual(everything);
     const deleted = await call('DELETE', '/me', me.token, {
       version: 1,
       appleAuthorizationCode: 'c0de',
@@ -397,7 +397,7 @@ describe('DELETE /me', () => {
 
   it('deletes nothing when Apple refuses the code, so the app can retry with a new one', async () => {
     const { call } = appWith(() => Promise.reject(new AppleAuthorizationCodeInvalidError()));
-    const { me, expected } = await memberWithEverything(call);
+    const { me, everything } = await memberWithEverything(call);
     const response = await call('DELETE', '/me', me.token, {
       version: 1,
       appleAuthorizationCode: 'expired',
@@ -406,7 +406,7 @@ describe('DELETE /me', () => {
       400,
       'APPLE_AUTHORIZATION_CODE_INVALID',
     ]);
-    expect(await whatIsLeftOf(me.userId)).toStrictEqual(expected);
+    expect(await whatIsLeftOf(me.userId)).toStrictEqual(everything);
   });
 
   it('still deletes, with a warning, while no Apple key is configured', async () => {
