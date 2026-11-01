@@ -562,7 +562,8 @@ describe('the admin MCP server', () => {
     const Coaches = z.object({ coaches: z.array(z.record(z.string(), z.json())) });
     const settings = await read('get_coach_settings');
     expect(settings).toMatchObject({ version: 1, coaching: false, model: 'openai/gpt-6-luna' });
-    const [xiaohun] = Coaches.parse(await read('list_coaches')).coaches;
+    const listed = Coaches.parse(await read('list_coaches')).coaches;
+    const xiaohun = listed.find(({ id }) => id === 'xiaohun');
     expect(xiaohun).toMatchObject({ id: 'xiaohun', name: '小混', offered: true });
     const edit = Object.fromEntries(
       Object.entries(z.record(z.string(), z.json()).parse(xiaohun)).filter(
@@ -611,7 +612,7 @@ describe('the admin MCP server', () => {
       await call('put_coach', edit);
     }
     expect(await read('get_coach_settings')).toStrictEqual(settings);
-    expect(Coaches.parse(await read('list_coaches')).coaches).toStrictEqual([xiaohun]);
+    expect(Coaches.parse(await read('list_coaches')).coaches).toStrictEqual(listed);
     await client.close();
   });
 

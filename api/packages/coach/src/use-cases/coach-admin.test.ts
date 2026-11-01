@@ -93,6 +93,11 @@ describe('the coach settings', () => {
         expected,
       ]);
 
+      // The same squad in upper case is the same squad.
+      expect(
+        CoachSettingsChange.safeParse({ onlySquads: [trial, trial.toUpperCase()] }).success,
+      ).toBe(false);
+
       // Back to every squad.
       await settings.change({ onlySquads: null }, admin);
       expect(await settings.current()).toMatchObject({ onlySquads: null });

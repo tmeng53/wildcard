@@ -6,7 +6,11 @@ import { z } from 'zod';
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
-export const SquadId = z.uuid().brand<'SquadId'>();
+/** A squad's id, lower-cased as Postgres stores a uuid, so a list can't name one twice. */
+export const SquadId = z
+  .uuid()
+  .transform((id) => id.toLowerCase())
+  .brand<'SquadId'>();
 export type SquadId = z.infer<typeof SquadId>;
 
 /**
