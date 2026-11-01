@@ -23,7 +23,7 @@ final class MeUITests: XCTestCase {
 
         // A tap turns the card over to the career numbers, and another turns it back.
         card.tap()
-        waitFor(card, "label CONTAINS '坦白放纵餐'", "the card didn't turn over to the other kinds")
+        waitFor(card, "label CONTAINS '放纵餐'", "the card didn't turn over to the other kinds")
         XCTAssertTrue(card.label.contains("46"), "the back has no 健康餐 count: \(card.label)")
         XCTAssertTrue(card.label.contains("最常练"), "the back has no 最常练: \(card.label)")
         XCTAssertTrue(card.label.contains("跑步"), "the back has no top sport: \(card.label)")
@@ -31,7 +31,7 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "41-me-card-back")
         card.tap()
-        waitFor(card, "NOT (label CONTAINS '坦白放纵餐')", "the card didn't turn back")
+        waitFor(card, "NOT (label CONTAINS '放纵餐')", "the card didn't turn back")
     }
 
     func testSettingsAndDeleteAccount() {

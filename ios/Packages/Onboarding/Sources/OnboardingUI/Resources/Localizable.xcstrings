@@ -1469,28 +1469,6 @@
         }
       }
     },
-    "以后再选": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose later"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "以后再选"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "之後再選"
-          }
-        }
-      }
-    },
     "休息": {
       "localizations": {
         "en": {
@@ -1997,24 +1975,24 @@
         }
       }
     },
-    "跳过": {
+    "以后再说": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skip"
+            "value": "Later"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跳过"
+            "value": "以后再说"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跳過"
+            "value": "以後再說"
           }
         }
       }
@@ -2085,24 +2063,24 @@
         }
       }
     },
-    "就它了": {
+    "确认": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This one"
+            "value": "Confirm"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "就它了"
+            "value": "确认"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "就它了"
+            "value": "確認"
           }
         }
       }

@@ -111,24 +111,24 @@
         }
       }
     },
-    "就它了": {
+    "确认": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This one"
+            "value": "Confirm"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "就它了"
+            "value": "确认"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "就它了"
+            "value": "確認"
           }
         }
       }

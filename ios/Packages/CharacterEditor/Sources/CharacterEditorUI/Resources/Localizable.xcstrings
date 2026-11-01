@@ -882,18 +882,18 @@
         }
       }
     },
-    "就这样": {
+    "确认": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "That's me"
+            "value": "Confirm"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "就這樣"
+            "value": "確認"
           }
         }
       }
@@ -1234,18 +1234,18 @@
         }
       }
     },
-    "样子": {
+    "长相": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Look"
+            "value": "Looks"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "外型"
+            "value": "長相"
           }
         }
       }
@@ -1794,18 +1794,18 @@
         }
       }
     },
-    "脸蛋什么都不加": {
+    "不加": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nothing on the cheeks"
+            "value": "Nothing"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "臉頰什麼都不加"
+            "value": "不加"
           }
         }
       }
