@@ -73,6 +73,7 @@ export interface CoachSettingEvents {
 }
 
 export interface CoachSettings {
+  cached_input_micros_per_million: Generated<number>;
   coaching: boolean;
   input_micros_per_million: number;
   model: string;
@@ -83,6 +84,7 @@ export interface CoachSettings {
 
 export interface CoachUsage {
   at: Generated<Timestamp>;
+  cached_input_tokens: Generated<Int8>;
   coach_id: string;
   cost_micros: Int8;
   id: Generated<Int8>;

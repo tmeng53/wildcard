@@ -57,6 +57,11 @@ export interface CoachAgent {
     readonly instructions: string;
     readonly task: string;
     readonly tools: readonly CoachTool[];
+    /**
+     * Names the requests that begin the same way (one coach's instructions and tools), so the
+     * provider keeps that beginning cached for them.
+     */
+    readonly cacheKey: string;
   }): Promise<AgentRun>;
 }
 
@@ -192,6 +197,8 @@ export interface UsageTotal {
   readonly wakes: number;
   readonly requests: number;
   readonly inputTokens: number;
+  /** Those of the input tokens the provider had cached. */
+  readonly cachedInputTokens: number;
   readonly outputTokens: number;
   /** US dollars in millionths. */
   readonly costMicros: number;

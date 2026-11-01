@@ -229,6 +229,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             model,
             requests: usage.requests,
             input_tokens: usage.inputTokens,
+            cached_input_tokens: usage.cachedInputTokens,
             output_tokens: usage.outputTokens,
             cost_micros: costMicros,
           })
@@ -277,6 +278,7 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
             eb.fn.countAll<string>().as('wakes'),
             sql<string>`coalesce(sum(requests), 0)`.as('requests'),
             sql<string>`coalesce(sum(input_tokens), 0)`.as('input_tokens'),
+            sql<string>`coalesce(sum(cached_input_tokens), 0)`.as('cached_input_tokens'),
             sql<string>`coalesce(sum(output_tokens), 0)`.as('output_tokens'),
             sql<string>`coalesce(sum(cost_micros), 0)`.as('cost_micros'),
           ])
@@ -287,6 +289,7 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
           wakes: Number(row.wakes),
           requests: Number(row.requests),
           inputTokens: Number(row.input_tokens),
+          cachedInputTokens: Number(row.cached_input_tokens),
           outputTokens: Number(row.output_tokens),
           costMicros: Number(row.cost_micros),
         };

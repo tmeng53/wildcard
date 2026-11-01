@@ -170,21 +170,59 @@ describe('when the coach wakes', () => {
     expect(wakesDue({ squad, week, now: new Date('2026-11-01T10:59:00Z') })).toStrictEqual([]);
   });
 
-  it('counts a wake’s cost at the settings’ prices, rounded up', () => {
-    const usage = { requests: 3, inputTokens: 12_000, outputTokens: 800 };
-    // $0.25 and $2 per million tokens: 3000 + 1600 millionths.
-    expect(
-      costMicros(usage, { inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 }),
-    ).toBe(4_600);
+  it('counts a wake’s cost at the settings’ prices, cached input at its own, rounded up', () => {
+    const prices = {
+      inputMicrosPerMillion: 100_000,
+      cachedInputMicrosPerMillion: 10_000,
+      outputMicrosPerMillion: 500_000,
+    };
+    // GPT-6 Luna: 2,000 uncached in at $0.10, 10,000 cached at $0.01, 800 out at $0.50.
     expect(
       costMicros(
-        { requests: 1, inputTokens: 1, outputTokens: 0 },
-        {
-          inputMicrosPerMillion: 1,
-          outputMicrosPerMillion: 0,
-        },
+        { requests: 3, inputTokens: 12_000, cachedInputTokens: 10_000, outputTokens: 800 },
+        prices,
+      ),
+    ).toBe(200 + 100 + 400);
+    // Nothing cached: every input token at the full price.
+    expect(
+      costMicros(
+        { requests: 3, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 },
+        prices,
+      ),
+    ).toBe(1_200 + 400);
+    expect(
+      costMicros(
+        { requests: 1, inputTokens: 1, cachedInputTokens: 0, outputTokens: 0 },
+        { inputMicrosPerMillion: 1, cachedInputMicrosPerMillion: 0, outputMicrosPerMillion: 0 },
       ),
     ).toBe(1);
+  });
+
+  it('keeps what every wake begins with in the instructions, and only what changes in the task', () => {
+    const task = taskOf({
+      reason: { kind: 'daily', day: '2026-11-01' },
+      week,
+      files: new Map([
+        ['memory.md', '米亚爱跑步'],
+        ['squad.md', undefined],
+      ]),
+      recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
+    });
+    expect(task).toBe(
+      [
+        '新的一天：2026-11-01。',
+        '你的文件：memory.md（5 字），squad.md（空）。',
+        '你最近写过：\n- 2026-10-31：周末也要动一动',
+      ].join('\n\n'),
+    );
+    expect(
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c2' },
+        week,
+        files: new Map([['memory.md', undefined]]),
+        recentNotes: [],
+      }),
+    ).toBe('有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你的文件：memory.md（空）。');
   });
 
   it('has nothing to do for a check-in no longer in the week', () => {

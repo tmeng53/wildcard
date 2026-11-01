@@ -16,8 +16,14 @@ function scripted(model: ScriptedModel): ModelProvider {
   return { getModel: () => Promise.resolve(model) };
 }
 
-const usage = (inputTokens: number, outputTokens: number) =>
-  new Usage({ requests: 1, inputTokens, outputTokens, totalTokens: inputTokens + outputTokens });
+const usage = (inputTokens: number, { outputTokens = 0, cachedTokens = 0 } = {}) =>
+  new Usage({
+    requests: 1,
+    inputTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    inputTokensDetails: { cached_tokens: cachedTokens },
+  });
 
 /** A tool that records what it was called with. */
 function recordingTool(calls: unknown[]): CoachTool {
@@ -36,6 +42,7 @@ const request = {
   model: CoachModel.parse('openai/gpt-6-luna'),
   instructions: '你是小混。',
   task: '新的一天。',
+  cacheKey: 'coach:xiaohun',
 };
 
 describe('the coach on the OpenAI Agents SDK', () => {
@@ -43,9 +50,13 @@ describe('the coach on the OpenAI Agents SDK', () => {
     const model = new ScriptedModel([
       {
         output: [functionCall('post_note', { text: '先动起来' }, { callId: 'call-1' })],
-        usage: usage(1_000, 50),
+        usage: usage(1_000, { outputTokens: 50 }),
       },
-      { output: [assistantMessage('写好了。')], usage: usage(1_200, 10) },
+      // The second turn begins with all of the first, which OpenAI had cached.
+      {
+        output: [assistantMessage('写好了。')],
+        usage: usage(1_200, { outputTokens: 10, cachedTokens: 1_024 }),
+      },
     ]);
     const calls: unknown[] = [];
     const agent = createOpenAICoachAgent({ apiKey: 'unused', modelProvider: scripted(model) });
@@ -54,7 +65,7 @@ describe('the coach on the OpenAI Agents SDK', () => {
 
     expect(run).toStrictEqual({
       ok: true,
-      usage: { requests: 2, inputTokens: 2_200, outputTokens: 60 },
+      usage: { requests: 2, inputTokens: 2_200, cachedInputTokens: 1_024, outputTokens: 60 },
     });
     expect(calls).toStrictEqual([{ text: '先动起来' }]);
     // The model sees the instructions and the task, and the tool's answer on its next turn.
@@ -62,14 +73,33 @@ describe('the coach on the OpenAI Agents SDK', () => {
     expect(JSON.stringify(model.lastCall?.request.input)).toContain('已写上战术板。');
     // Nothing kept on OpenAI's side.
     expect(model.firstCall?.request.modelSettings.store).toBe(false);
+    // Every request of a coach is sent to the same cache, kept a day.
+    expect(model.firstCall?.request.modelSettings.promptCacheRetention).toBe('24h');
+    expect(model.lastCall?.request.modelSettings.providerData).toStrictEqual({
+      prompt_cache_key: 'coach:xiaohun',
+    });
     model.assertComplete();
+  });
+
+  it('never counts more cached tokens than input tokens', async () => {
+    const model = new ScriptedModel([
+      { output: [assistantMessage('好。')], usage: usage(500, { cachedTokens: 900 }) },
+    ]);
+    const agent = createOpenAICoachAgent({ apiKey: 'unused', modelProvider: scripted(model) });
+
+    const run = await agent.run({ ...request, tools: [] });
+
+    expect(run).toStrictEqual({
+      ok: true,
+      usage: { requests: 1, inputTokens: 500, cachedInputTokens: 500, outputTokens: 0 },
+    });
   });
 
   it('says a run failed, with the tokens it used until then', async () => {
     const model = new ScriptedModel([
       {
         output: [functionCall('post_note', { text: '一' }, { callId: 'call-1' })],
-        usage: usage(800, 20),
+        usage: usage(800, { outputTokens: 20 }),
       },
       modelError(new Error('insufficient_quota')),
     ]);
@@ -79,7 +109,7 @@ describe('the coach on the OpenAI Agents SDK', () => {
 
     expect(run).toStrictEqual({
       ok: false,
-      usage: { requests: 1, inputTokens: 800, outputTokens: 20 },
+      usage: { requests: 1, inputTokens: 800, cachedInputTokens: 0, outputTokens: 20 },
       error: 'Error: insufficient_quota',
     });
   });

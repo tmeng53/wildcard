@@ -42,13 +42,20 @@ export function createOpenAICoachAgent(options: {
   // Tracing would send members' words to OpenAI's traces dashboard as well.
   const runner = new Runner({ modelProvider, tracingDisabled: true });
   return {
-    async run({ model, instructions, task, tools }): Promise<AgentRun> {
+    async run({ model, instructions, task, tools, cacheKey }): Promise<AgentRun> {
       const agent = new Agent({
         name: 'coach',
         instructions,
         model: model.slice('openai/'.length),
-        // Members' words aren't kept on OpenAI's side for later turns.
-        modelSettings: { store: false },
+        modelSettings: {
+          // Members' words aren't kept on OpenAI's side for later turns.
+          store: false,
+          // The instructions and tools, the same for every wake of a coach, stay cached a day,
+          // so each wake pays OpenAI's cached price for them; the key sends a coach's requests
+          // to the same cache.
+          promptCacheRetention: '24h',
+          providerData: { prompt_cache_key: cacheKey },
+        },
         tools: tools.map((each) =>
           tool({
             name: each.name,
@@ -82,6 +89,19 @@ function tokensOf(usage: Usage): TokenUsage {
   return {
     requests: usage.requests,
     inputTokens: usage.inputTokens,
+    // Never more than the input, which the usage log refuses, whatever the provider reports.
+    cachedInputTokens: Math.min(cachedOf(usage.inputTokensDetails), usage.inputTokens),
     outputTokens: usage.outputTokens,
   };
+}
+
+/**
+ * The input tokens OpenAI reported it had cached (`cached_tokens`), over every request of the
+ * run; 0 for a request that reports none.
+ */
+function cachedOf(details: Usage['inputTokensDetails']): number {
+  return details.reduce((sum, each) => {
+    const cached = each.cached_tokens;
+    return sum + (typeof cached === 'number' ? cached : 0);
+  }, 0);
 }

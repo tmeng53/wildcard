@@ -1,7 +1,7 @@
 -- The coach at work: one coach a squad, hires logged; one wake per check-in and per squad-day; files, notes and usage that only
 -- grow, until the squad ends or (for a member's page) the member's account goes.
 begin;
-select plan(15);
+select plan(17);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -53,6 +53,12 @@ select throws_ok($$insert into public.coach_notes (squad_id, coach_id, day, text
   '23505', null, 'one 战术板 line a squad a day');
 insert into public.coach_usage (squad_id, wake_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
   values ('33333333-3333-4333-8333-333333333333', 1, 'xiaohun', 'openai/gpt-6-luna', 2, 12000, 800, 4600);
+select throws_ok($$insert into public.coach_usage (squad_id, coach_id, model, requests, input_tokens, cached_input_tokens, output_tokens, cost_micros)
+  values ('33333333-3333-4333-8333-333333333333', 'xiaohun', 'openai/gpt-6-luna', 1, 500, 501, 0, 0)$$,
+  '23514', null, 'never more cached input than input');
+select throws_ok($$insert into public.coach_usage (squad_id, coach_id, model, requests, input_tokens, cached_input_tokens, output_tokens, cost_micros)
+  values ('33333333-3333-4333-8333-333333333333', 'xiaohun', 'openai/gpt-6-luna', 1, 500, -1, 0, 0)$$,
+  '23514', null, 'cached input is never negative');
 select throws_ok($$delete from public.coach_usage$$, '42501', null, 'usage is never removed');
 
 -- The check-in's deletion takes its wake; what the wake wrote stays.
