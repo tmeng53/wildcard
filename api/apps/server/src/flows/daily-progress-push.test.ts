@@ -170,6 +170,13 @@ const evening = zoneAt(19, 21);
 const morning = zoneAt(8, 11);
 /** The day on a clock `offset` hours ahead of UTC (never within 3 hours of midnight here). */
 const dayAt = (offset: number) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
+/**
+ * The squad's planned days when an evening member trained today: one more on a rest day of the
+ * plan members have before they save one (Wednesday, Sunday), which a 练了 makes a training day.
+ */
+const eveningPlanned = (planned: number) =>
+  planned +
+  ([0, 3].includes(new Date(`${dayAt(evening.offset)}T00:00:00.000Z`).getUTCDay()) ? 1 : 0);
 
 /** A member with a profile in `at`'s zone (and a character called `nickname`) and a phone. */
 async function member(at: { readonly zone: string; readonly offset: number }, nickname?: string) {
@@ -296,7 +303,7 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toStrictEqual([
       {
-        alert: { key: 'push.dailyProgress.received', args: ['1', '15', '2'] },
+        alert: { key: 'push.dailyProgress.received', args: ['1', String(eveningPlanned(15)), '2'] },
         category: 'dailyProgress',
         thread: 'dailyProgress',
         collapseId: `dailyProgress-${dayAt(eve.offset)}`,
@@ -308,7 +315,7 @@ describe('the daily progress push', () => {
           squad,
           // One day trained, of each member's default 5 planned.
           squadTrainedDays: 1,
-          squadPlannedDays: 15,
+          squadPlannedDays: eveningPlanned(15),
           received: { reaction: 2 },
           // Eve's own posts aren't in her push.
           today: { members: [{ id: eve.userId }], posts: [], more: 0 },
@@ -336,7 +343,7 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
-        alert: { key: 'push.dailyProgress.received', args: ['1', '15', '2'] },
+        alert: { key: 'push.dailyProgress.received', args: ['1', String(eveningPlanned(15)), '2'] },
         event: { received: { reaction: 1, comment: 1 } },
       },
     ]);
@@ -412,7 +419,10 @@ describe('the daily progress push', () => {
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
         // The fan's reaction is in `event`, not the count: 「小美和另外 1 人拍了拍你」.
-        alert: { key: 'push.dailyProgress.poke.more', args: ['1', '20', '小美', '1'] },
+        alert: {
+          key: 'push.dailyProgress.poke.more',
+          args: ['1', String(eveningPlanned(20)), '小美', '1'],
+        },
         event: { received: { reaction: 1, poke: 2 } },
       },
     ]);
@@ -440,7 +450,10 @@ describe('the daily progress push', () => {
       values (${eve.userId}, ${yesterday}, false, now())`.execute(db);
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
-      { alert: { key: 'push.dailyProgress', args: ['1', '10'] }, event: { received: {} } },
+      {
+        alert: { key: 'push.dailyProgress', args: ['1', String(eveningPlanned(10))] },
+        event: { received: {} },
+      },
     ]);
   });
 
@@ -460,7 +473,10 @@ describe('the daily progress push', () => {
     await at(after.userId, sixPm + 60_000);
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
-      { alert: { args: ['1', '15', '1'] }, event: { received: { reaction: 1 } } },
+      {
+        alert: { args: ['1', String(eveningPlanned(15)), '1'] },
+        event: { received: { reaction: 1 } },
+      },
     ]);
   });
 
