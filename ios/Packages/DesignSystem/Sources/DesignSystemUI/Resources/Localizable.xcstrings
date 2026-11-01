@@ -17,6 +17,26 @@
         }
       }
     },
+    "加载中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        }
+      }
+    },
+    "整页加载：两张票": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page loading: two tickets"
+          }
+        }
+      }
+    },
     "语言": {
       "localizations": {
         "en": {
@@ -934,7 +954,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cheat meal confession"
+            "value": "Cheat meal"
           }
         },
         "zh-Hant": {
@@ -1697,12 +1717,12 @@
         }
       }
     },
-    "标签栏：玻璃，选中是浅灰块": {
+    "标签栏：系统的液态玻璃，选中是墨色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tab bar: glass, the selected tab on light grey"
+            "value": "Tab bar: the system's Liquid Glass, the selected tab in ink"
           }
         },
         "zh-Hant": {
@@ -2113,18 +2133,18 @@
         }
       }
     },
-    "被戳提醒": {
+    "拍一拍": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pokes"
+            "value": "Pat"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "被戳提醒"
+            "value": "拍一拍"
           }
         }
       }
@@ -2461,22 +2481,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天練了"
-          }
-        }
-      }
-    },
-    "拍一拍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pat"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拍一拍"
           }
         }
       }

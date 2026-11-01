@@ -21,9 +21,8 @@ import type { CheckIns, DB } from './tables.js';
 export type CheckInTables = DB;
 
 /** Which uniqueness rule a unique violation (23505) names. */
-const UNIQUE_RULES: Record<string, 'id' | 'dailyDisclaimer' | 'photo' | undefined> = {
+const UNIQUE_RULES: Record<string, 'id' | 'photo' | undefined> = {
   check_ins_pkey: 'id',
-  check_ins_one_disclaimer_a_day: 'dailyDisclaimer',
   // The path is the key, so a photo belongs to one check-in.
   check_in_photos_pkey: 'photo',
 };
@@ -114,16 +113,18 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               payload: JSON.stringify(storedPayload(checkIn)),
             })
             .execute();
-          await trx
-            .insertInto('check_in_squads')
-            .values(
-              checkIn.audience.map((squad, index) => ({
-                check_in_id: checkIn.id,
-                squad_id: squad,
-                position: index + 1,
-              })),
-            )
-            .execute();
+          if (checkIn.audience.length > 0) {
+            await trx
+              .insertInto('check_in_squads')
+              .values(
+                checkIn.audience.map((squad, index) => ({
+                  check_in_id: checkIn.id,
+                  squad_id: squad,
+                  position: index + 1,
+                })),
+              )
+              .execute();
+          }
           const photos = photosOf(checkIn);
           if (photos.length > 0) {
             await trx

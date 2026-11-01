@@ -22,14 +22,6 @@ extension TodayModel {
         func elapsed(at date: Date) -> Double { date.timeIntervalSince(start) }
     }
 
-    /// Whether the squad is dropping in; the app moves the tab bar with `tabBarOffset(at:)`.
-    public var isArriving: Bool { arrival != nil }
-
-    /// How far below its place the tab bar is at `date`, in points, while the squad drops in.
-    public func tabBarOffset(at date: Date) -> Double {
-        arrival.map { $0.drop.tabBarOffset(at: $0.elapsed(at: date)) } ?? 0
-    }
-
     /// The end of every scene pick: the picked scene has just filled the screen, and the squad
     /// drops onto it one after another, me last, then the card, 打卡 and the tab bar come back
     /// (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」). The drop's
@@ -62,10 +54,17 @@ extension TodayModel {
         }
         try? player?.play(clip, now: start.addingTimeInterval(drop.start(of: mates.count)), blending: false)
         arrival = Arrival(drop: drop, start: start, order: mates.map(\.id))
+        holdsTabBar = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(max(0, DropIn.tabBarReturns - start.distance(to: .now))))
+            guard arrival?.start == start else { return }
+            holdsTabBar = false
+        }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(drop.finished))
             guard arrival?.start == start else { return }
             arrival = nil
+            holdsTabBar = false
             placeSquad()
         }
     }

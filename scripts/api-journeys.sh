@@ -148,9 +148,10 @@ if want check-in; then
   call PUT "/check-ins/$first" "$mate_token" "$(disclaimer 腿还在酸)"
   expect 201
   echo "check-in: mate posted today's disclaimer $first (201)"
-  call PUT "/check-ins/$(new_id)" "$mate_token" "$(disclaimer 再来一条)"
-  expect 409 DISCLAIMER_ALREADY_POSTED
-  echo "check-in: a second disclaimer today refused (409 DISCLAIMER_ALREADY_POSTED)"
+  second="$(new_id)"
+  call PUT "/check-ins/$second" "$mate_token" "$(disclaimer 再来一条)"
+  expect 201
+  echo "check-in: mate posted a second disclaimer today $second (201)"
 
   call PUT "/check-ins/$(new_id)" "$outsider_token" "$trained"
   expect 403 SQUAD_NOT_JOINED
@@ -158,11 +159,11 @@ if want check-in; then
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
   expect 200
-  [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
-    fail "squad list should hold exactly $id and $first: $body"
+  [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" --arg c "$second" '[$a,$b,$c] | sort')" ] ||
+    fail "squad list should hold exactly $id, $first and $second: $body"
   [ "$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .training.minutes' <<<"$body")" = "40" ] ||
     fail "mate should see the 练了's 40 minutes: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
+  echo "check-in: mate sees all three in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED

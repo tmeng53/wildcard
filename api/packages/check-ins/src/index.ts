@@ -28,7 +28,7 @@ export {
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
-export { DayRange } from './domain/day-range.js';
+export { DayRange, MyDayRange, Unshared } from './domain/day-range.js';
 export {
   CheckInKind,
   DEFAULT_PAGE,
@@ -58,7 +58,6 @@ export {
   CheckInNotFoundError,
   CheckInTooOldError,
   CommentIdConflictError,
-  DisclaimerAlreadyPostedError,
   NotYourCommentError,
   OwnCheckInReactionError,
   PhotoInUseError,

@@ -7,6 +7,8 @@ import SwiftUI
 struct ButtonSection: View {
     @Environment(\.sceneTheme) private var theme
     @State private var tab = 0
+    /// Room for the tab bar's sample: the bar over a strip of scene.
+    private static let tabsHeight: Double = 140
 
     private var tabs: [TabBarItem<Int>] {
         [
@@ -104,12 +106,12 @@ struct ButtonSection: View {
                         in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                 }
             }
-            GuideGroup(Text("标签栏：玻璃，选中是浅灰块", bundle: .module)) {
-                TabBar(tabs, selection: $tab)
-                    .padding(Space.s)
-                    .background(
-                        Color(role: .bgScene, in: theme),
-                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            GuideGroup(Text("标签栏：系统的液态玻璃，选中是墨色", bundle: .module)) {
+                AppTabs(tabs, selection: $tab) { _ in
+                    Color(role: .bgScene, in: theme)
+                }
+                .frame(height: Self.tabsHeight)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
         }
     }

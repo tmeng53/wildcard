@@ -42,13 +42,12 @@ select throws_ok(
   '23503', null, 'a check-in belongs to a real member'
 );
 
--- One disclaimer a day.
+-- Any number of disclaimers a day.
 select pg_temp.check_in('22222222-2222-2222-2222-222222222222', 'a0000000-0000-0000-0000-000000000001',
   'disclaimer', '{"version":1,"text":"下雨了"}');
-select throws_ok(
+select lives_ok(
   $$select pg_temp.check_in(gen_random_uuid(), 'a0000000-0000-0000-0000-000000000001', 'disclaimer', '{"version":1,"text":"还在下"}')$$,
-  '23505', 'duplicate key value violates unique constraint "check_ins_one_disclaimer_a_day"',
-  'a second disclaimer on the same day is refused'
+  'a second disclaimer on the same day is saved too'
 );
 select lives_ok(
   $$insert into public.check_ins (id, member_id, day, created_at, kind, payload)

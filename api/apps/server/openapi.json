@@ -944,7 +944,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1045,7 +1044,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1112,7 +1110,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1158,7 +1155,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1456,7 +1452,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins, at most one a day."
+            "description": "今日请假条 check-ins."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
@@ -3878,7 +3874,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos",
+            "description": "The id holds a different check-in, or another check-in uses one of the photos",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4080,7 +4076,7 @@
       "get": {
         "operationId": "listMyCheckIns",
         "summary": "The signed-in member’s check-ins for a range of days",
-        "description": "Newest day first, each with its whole audience.",
+        "description": "Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.",
         "security": [
           {
             "bearer": []
@@ -4103,6 +4099,19 @@
             },
             "required": true,
             "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "include"
+              ],
+              "description": "`include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them."
+            },
+            "required": false,
+            "description": "`include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them.",
+            "name": "unshared",
             "in": "query"
           }
         ],

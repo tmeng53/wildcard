@@ -10,8 +10,7 @@ import UIKit
 /// Launch arguments the UI tests pass in.
 enum LaunchOptions {
     /// `-styleguide`: open the style guide instead of 今天.
-    /// `-loading`: the launch page and its loader, which a fast launch never shows long enough
-    /// to see.
+    /// `-loading`: the launch cover, which a fast launch never shows long enough to see.
     static var showsLoading: Bool {
         ProcessInfo.processInfo.arguments.contains("-loading")
     }
@@ -121,6 +120,15 @@ enum LaunchOptions {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-test-member"), flag + 2 < arguments.count else { return nil }
         return (arguments[flag + 1], arguments[flag + 2])
+    }
+
+    /// `-uitest-push JSON`: an APNs payload (one of `WildcardUITests/push-samples.json`, which the
+    /// API writes) that the app shows as a notification a few seconds after launch, so a UI test
+    /// can look at its banner and tap it.
+    static var pushSample: [String: Any]? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-push"), flag + 1 < arguments.count else { return nil }
+        return (try? JSONSerialization.jsonObject(with: Data(arguments[flag + 1].utf8))) as? [String: Any]
     }
     #endif
 
