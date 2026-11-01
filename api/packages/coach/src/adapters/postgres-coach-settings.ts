@@ -19,7 +19,6 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
       return CoachSettings.parse({
         version: 1,
         coaching: row.coaching,
-        onlySquads: row.only_squads,
         model: row.model,
         rules: row.rules,
         inputMicrosPerMillion: row.input_micros_per_million,
@@ -30,7 +29,6 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
     async save(settings, by) {
       const columns = {
         coaching: settings.coaching,
-        only_squads: settings.onlySquads,
         model: settings.model,
         rules: settings.rules,
         input_micros_per_million: settings.inputMicrosPerMillion,
@@ -44,7 +42,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
             .updateTable('coach_settings')
             .set(columns)
             .where(
-              sql<boolean>`(coaching, only_squads, model, rules, input_micros_per_million, output_micros_per_million) is distinct from (${columns.coaching}, ${columns.only_squads}::uuid[], ${columns.model}, ${columns.rules}, ${columns.input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer)`,
+              sql<boolean>`(coaching, model, rules, input_micros_per_million, output_micros_per_million) is distinct from (${columns.coaching}, ${columns.model}, ${columns.rules}, ${columns.input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer)`,
             )
             .returning('only_row'),
         )
