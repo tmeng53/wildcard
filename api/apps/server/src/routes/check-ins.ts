@@ -2,7 +2,13 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   CheckInDraft,
   CheckInId,
+  CheckInKind,
+  DEFAULT_PAGE,
   DayRange,
+  MyDayRange,
+  MAX_PAGE,
+  decodeCursor,
+  encodeCursor,
   LocalDay,
   MemberId,
   SquadId,
@@ -20,6 +26,7 @@ import { bodyVersion } from '../body-version.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { CommentEntry, wireComment } from './comments.js';
 import { ReactionEntry, wireReaction } from './reactions.js';
 
 const checkInFields = {
@@ -90,22 +97,78 @@ const CheckInList = z
   .strictObject({ version: bodyVersion(1), checkIns: z.array(CheckIn) })
   .openapi('CheckInList');
 
+/** A check-in with what teammates left on it. */
+const postFields = {
+  checkIn: CheckIn,
+  reactions: z.array(ReactionEntry).meta({ description: 'Teammates’ emoji, oldest first.' }),
+  comments: z.array(CommentEntry).meta({
+    description:
+      'Comments from the author and the teammates the viewer shares a squad with, ' +
+      'oldest first. Builds from before comments read the feed without it.',
+  }),
+};
+const SquadPost = z.strictObject(postFields).openapi('SquadPost');
+
 /** A squad's check-ins, each with what teammates left on it. */
 const SquadPostList = z
+  .strictObject({ version: bodyVersion(1), posts: z.array(SquadPost) })
+  .openapi('SquadPostList');
+
+/** A page of the member's own check-ins (历史动态). */
+const MyPostPage = z
   .strictObject({
     version: bodyVersion(1),
-    posts: z.array(
-      z
-        .strictObject({
-          checkIn: CheckIn,
-          reactions: z
-            .array(ReactionEntry)
-            .meta({ description: 'Teammates’ emoji, oldest first.' }),
-        })
-        .openapi('SquadPost'),
-    ),
+    posts: z.array(SquadPost).meta({
+      description:
+        'Newest day first, then newest made. Each shows its whole audience, and the reactions ' +
+        'and comments of the member and of members of the squads it went to that the member ' +
+        'still shares with them.',
+    }),
+    next: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'Pass as `after` for the next page. Left out on the page that reaches the member’s ' +
+          'first check-in.',
+      }),
+    counts: z
+      .strictObject({
+        posts: z.int().nonnegative().meta({ description: 'Every check-in the member made.' }),
+        reactions: z
+          .int()
+          .nonnegative()
+          .meta({ description: 'The reactions on them the member can see, as on each post.' }),
+      })
+      .optional()
+      .meta({ description: 'On the first page only (no `after`); never narrowed to `kind`.' })
+      .openapi('MyPostCounts'),
   })
-  .openapi('SquadPostList');
+  .openapi('MyPostPage');
+
+const MyPostQuery = z.strictObject({
+  kind: CheckInKind.optional().meta({ description: 'Only check-ins of this kind.' }),
+  after: z
+    .string()
+    .max(200)
+    .refine((text) => decodeCursor(text) !== undefined, {
+      message: 'Not a `next` this server gave',
+    })
+    .optional()
+    .meta({ description: 'The `next` of the page before; left out for the newest page.' }),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_PAGE)
+    .optional()
+    .meta({
+      description: `Check-ins on the page: 1 to ${String(MAX_PAGE)}, ${String(DEFAULT_PAGE)} when left out.`,
+    }),
+});
+
+/** One check-in with what teammates left on it: a post's own page. */
+const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi('Post');
 
 /**
  * Installed builds from before the replies were removed (#180) still require `replies` on each
@@ -123,7 +186,7 @@ const CheckInTotals = z
     trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
     healthyMeals: count('健康餐 check-ins.'),
     cheatMeals: count('坦白放纵餐 check-ins.'),
-    disclaimers: count('今日请假条 check-ins, at most one a day.'),
+    disclaimers: count('今日请假条 check-ins.'),
     topSport: z
       .strictObject({
         sport: storedTrainingFields.sport,
@@ -190,10 +253,10 @@ const signedInFailures = {
 };
 
 /**
- * Daily check-ins: `PUT /check-ins/{id}` saves one, `GET /squads/{squadId}/check-ins` (the
- * squad's feed, with reactions) and `GET /me/check-ins` read them back for a range of
- * days, and `GET /me/check-in-totals` counts
- * all of the member's own.
+ * Daily check-ins: `PUT /check-ins/{id}` saves one and `GET` the same path reads it as a post
+ * (its own page), `GET /squads/{squadId}/check-ins` (the squad's feed, with reactions and
+ * comments) and `GET /me/check-ins` read them back for a range of days, and
+ * `GET /me/check-in-totals` counts all of the member's own.
  */
 export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
@@ -229,10 +292,7 @@ export function checkIns(deps: {
           'counted for the wrong day, or with a photo that isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
-      409: problem(
-        'The id holds a different check-in, today’s disclaimer is already posted, or another ' +
-          'check-in uses one of the photos',
-      ),
+      409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
       ...jsonBodyFailures,
       ...signedInFailures,
     },
@@ -242,10 +302,10 @@ export function checkIns(deps: {
     method: 'get',
     path: '/squads/{squadId}/check-ins',
     operationId: 'listSquadCheckIns',
-    summary: 'A squad’s check-ins for a range of days, with their reactions',
+    summary: 'A squad’s check-ins for a range of days, with their reactions and comments',
     description:
       'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
-      'each with the reactions of the teammates the viewer shares a squad with. ' +
+      'each with the reactions and comments of the teammates the viewer shares a squad with. ' +
       'Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -261,21 +321,63 @@ export function checkIns(deps: {
     },
   });
 
+  const findPost = createRoute({
+    method: 'get',
+    path: '/check-ins/{id}',
+    operationId: 'getPost',
+    summary: 'One check-in, with its reactions and comments',
+    description:
+      'A post’s own page, as the feed shows it: for its author, even from a squad they left, ' +
+      'or a teammate who shares a squad it went to.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ id: CheckInId }) },
+    responses: {
+      200: { description: 'The post', content: { 'application/json': { schema: Post } } },
+      400: problem('Not a check-in id'),
+      404: problem('No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)'),
+      ...signedInFailures,
+    },
+  });
+
   const listMine = createRoute({
     method: 'get',
     path: '/me/check-ins',
     operationId: 'listMyCheckIns',
     summary: 'The signed-in member’s check-ins for a range of days',
-    description: 'Newest day first, each with its whole audience.',
+    description:
+      'Newest day first, each with its whole audience. Posts shared to no squad only with ' +
+      '`unshared=include`.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { query: DayRange },
+    request: { query: MyDayRange },
     responses: {
       200: {
         description: 'The check-ins',
         content: { 'application/json': { schema: CheckInList } },
       },
       400: problem('Not a valid range of days (at most 31)'),
+      ...signedInFailures,
+    },
+  });
+
+  const myPosts = createRoute({
+    method: 'get',
+    path: '/me/posts',
+    operationId: 'listMyPosts',
+    summary: 'The signed-in member’s own check-ins, a page at a time, with their reactions',
+    description:
+      '历史动态: everything the member posted, wherever it went, including squads they left. ' +
+      'Pages follow from `next`, so posts made meanwhile never shift them.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { query: MyPostQuery },
+    responses: {
+      200: {
+        description: 'The page',
+        content: { 'application/json': { schema: MyPostPage } },
+      },
+      400: problem('Not a valid kind, limit or `after`'),
       ...signedInFailures,
     },
   });
@@ -320,23 +422,68 @@ export function checkIns(deps: {
       return c.json(
         {
           version: 1 as const,
-          posts: posts.map(({ checkIn, reactions }) => ({
+          posts: posts.map(({ checkIn, reactions, comments }) => ({
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
+            comments: comments.map(wireComment),
             ...installedBuildsReplies,
           })),
         },
         200,
       );
     })
+    .openapi(findPost, async (c) => {
+      const { checkIn, reactions, comments } = await deps.checkIns.post({
+        id: c.req.valid('param').id,
+        viewer: MemberId.parse(c.var.caller.userId),
+      });
+      const urls = await viewUrls(deps.photos, [checkIn]);
+      return c.json(
+        {
+          version: 1 as const,
+          checkIn: wire(checkIn, urls),
+          reactions: reactions.map(wireReaction),
+          comments: comments.map(wireComment),
+        },
+        200,
+      );
+    })
     .openapi(listMine, async (c) => {
+      const { from, to, unshared } = c.req.valid('query');
       const records = await deps.checkIns.listMine({
         member: MemberId.parse(c.var.caller.userId),
-        days: c.req.valid('query'),
+        days: { from, to },
+        ...(unshared === undefined ? {} : { unshared }),
       });
       const urls = await viewUrls(deps.photos, records);
       return c.json(
         { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
+        200,
+      );
+    })
+    .openapi(myPosts, async (c) => {
+      const { kind, after, limit } = c.req.valid('query');
+      const page = await deps.checkIns.listMyPosts({
+        member: MemberId.parse(c.var.caller.userId),
+        kind,
+        after: after === undefined ? undefined : decodeCursor(after),
+        limit: limit ?? DEFAULT_PAGE,
+      });
+      const urls = await viewUrls(
+        deps.photos,
+        page.posts.map(({ checkIn }) => checkIn),
+      );
+      return c.json(
+        {
+          version: 1 as const,
+          posts: page.posts.map(({ checkIn, reactions, comments }) => ({
+            checkIn: wire(checkIn, urls),
+            reactions: reactions.map(wireReaction),
+            comments: comments.map(wireComment),
+          })),
+          ...(page.next === undefined ? {} : { next: encodeCursor(page.next) }),
+          ...(page.counts === undefined ? {} : { counts: page.counts }),
+        },
         200,
       );
     })

@@ -69,7 +69,7 @@ enum ScheduleLabels {
     /// What went wrong saving, in friendly words; never a warning.
     static func failure(_ error: ScheduleError) -> Text {
         switch error {
-        case .notSent: Text("网不太好，没存上，等下再改一次", bundle: .module)
+        case .notSent: Text("网络开小差了，没存上", bundle: .module)
         case .signedOut: Text("登录过期了，重新登录再来排", bundle: .module)
         case .weekOver: Text("这周已经结束了，就让它留在这儿吧", bundle: .module)
         case .dayStarted: Text("已经开始的日子改不了啦", bundle: .module)

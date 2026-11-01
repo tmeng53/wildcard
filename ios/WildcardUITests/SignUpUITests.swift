@@ -40,9 +40,9 @@ final class SignUpUITests: XCTestCase {
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
-        // Return puts the keyboard away: the editor doesn't make room for it, so it covers 就这样.
+        // Return puts the keyboard away: the editor doesn't make room for it, so it covers 确认.
         nickname.typeText("Tracy\n")
-        waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
+        waitFor(editorDone, "isEnabled == true", "确认 stays off with a nickname")
         settle()
         keepScreenshot(named: "41-signup-character")
         editorDone.tap()
@@ -120,7 +120,8 @@ final class SignUpUITests: XCTestCase {
                 checkedCard = true
             }
         }
-        XCTAssertTrue(app.buttons["tab.today"].waitForExistence(timeout: Self.wait), "home never took over")
+        // 上场 shows the tab bar too, so home is its own 打卡.
+        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "home never took over")
         keepScreenshot(named: "48-signup-home")
     }
 
@@ -178,7 +179,7 @@ final class SignUpUITests: XCTestCase {
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText("Tracy\n")
-        waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
+        waitFor(editorDone, "isEnabled == true", "确认 stays off with a nickname")
         editorDone.tap()
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "你的小队 never appeared")
@@ -194,23 +195,24 @@ final class SignUpUITests: XCTestCase {
         let confirm = app.buttons["scene.done"]
         XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "这周在哪练？ never appeared")
         XCTAssertTrue(app.staticTexts["这周在哪练？"].exists, "the scene step has no title")
-        XCTAssertFalse(confirm.isEnabled, "就它了 is on before a carton is chosen")
+        XCTAssertFalse(confirm.isEnabled, "确认 is on before a carton is chosen")
         let tiles = ["track", "pool", "gym", "tennis", "climbing"].map { app.buttons["scenePick.\($0)"] }
         let screen = app.windows.firstMatch.frame
         for tile in tiles {
             XCTAssertTrue(tile.exists, "a scene is missing from the cartons")
             XCTAssertTrue(screen.contains(tile.frame), "a carton runs off the screen")
-            XCTAssertLessThanOrEqual(tile.frame.maxY, confirm.frame.minY, "就它了 covers a carton")
+            XCTAssertLessThanOrEqual(tile.frame.maxY, confirm.frame.minY, "确认 covers a carton")
         }
         XCTAssertEqual(tiles[1].label, "游泳池，还没开过")
         tiles[1].tap()
-        waitFor(confirm, "isEnabled == true", "就它了 stays off with a carton chosen")
+        waitFor(confirm, "isEnabled == true", "确认 stays off with a carton chosen")
         settle()
         keepScreenshot(named: "51-signup-scene")
         confirm.tap()
 
         // The carton opens, then home takes over on the pool and the member drops onto it.
-        let today = app.buttons["tab.today"]
+        // Home's own 打卡, there as the drop starts; the tab bar only comes back after it.
+        let today = app.buttons["today.checkin"]
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "home never took over")
         // Frames a few times a second, to review the drop against the mockup.
         let start = Date()

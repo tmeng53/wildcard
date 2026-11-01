@@ -28,7 +28,7 @@ public struct WildcardAPI: Sendable {
     public init(
         url: URL, accessToken: @escaping AccessToken,
         refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
-        language: LanguageTag? = nil, http: URLSession = .shared
+        language: LanguageTag? = nil, http: URLSession = .wildcard
     ) {
         client = Client(
             serverURL: url, configuration: .api, transport: URLSessionTransport(configuration: .init(session: http)),
@@ -200,7 +200,10 @@ public struct WildcardAPI: Sendable {
     func myCheckInsWire(from: LocalDay, through last: LocalDay) async throws(APIError) -> Components.Schemas.CheckInList
     {
         try await call {
-            try await client.listMyCheckIns(query: .init(from: from.description, to: last.description)).ok.body.json
+            // This build reads posts shared to no squad, so it asks for them.
+            try await client.listMyCheckIns(
+                query: .init(from: from.description, to: last.description, unshared: .include)
+            ).ok.body.json
         }
     }
 

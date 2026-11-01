@@ -11,12 +11,25 @@ import {
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
   createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import {
+  createCoachCatalog,
+  createCoachHiring,
+  createCoachSettings,
+  createCoachWakes,
+  createPostgresCoachCatalog,
+  createPostgresCoachHiring,
+  createPostgresCoachReport,
+  createPostgresCoachSettings,
+  createPostgresCoachStores,
+  postgresCoachTransaction,
+} from '@wildcard/coach';
 import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
@@ -56,6 +69,7 @@ import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
+import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
 import { createDatabase } from './adapters/postgres.js';
@@ -69,10 +83,12 @@ import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { coachTools } from './admin-mcp/tools/coach.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
-import { nudgeInteractions, reactionInteractions } from './flows/daily-progress-push.js';
+import { coachSquadWeek } from './flows/coach.js';
+import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
@@ -198,6 +214,7 @@ const checkIns = createCheckIns({
   // Which sports exist is the sports module's to keep: check-ins and plans ask it.
   sports,
   reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -210,6 +227,23 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+// The AI coach runs on OpenAI: without its key the coach never wakes, whatever the settings say.
+const coachWakes =
+  openaiKey === undefined
+    ? undefined
+    : createCoachWakes({
+        settings: createPostgresCoachSettings(db),
+        catalog: createPostgresCoachCatalog(db),
+        stores: createPostgresCoachStores(db),
+        transaction: postgresCoachTransaction(db),
+        agent: createOpenAICoachAgent({ apiKey: openaiKey }),
+        squadWeek: coachSquadWeek({ checkIns, members, sports, clock: () => new Date() }),
+        // Only the words of members who agreed to the current AI copy reach the model.
+        aiConsented: (members) =>
+          aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+        hiring: createPostgresCoachHiring(db),
+        clock: () => new Date(),
+      });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -280,8 +314,9 @@ const app = createApp({
   jobs: {
     isScheduler,
     // Each kind of interaction the daily push counts comes from one of these.
-    interactions: [reactionInteractions(checkIns), nudgeInteractions(nudges)],
+    interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
+    ...(coachWakes === undefined ? {} : { coach: coachWakes }),
   },
   admin: {
     admins: adminsOn,
@@ -305,6 +340,16 @@ const app = createApp({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+      ...coachTools({
+        settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
+        coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),
+        hiring: createCoachHiring({
+          hiring: createPostgresCoachHiring(scope),
+          catalog: createPostgresCoachCatalog(scope),
+        }),
+        report: createPostgresCoachReport(scope),
+        clock: () => new Date(),
+      }),
       ...testPushTools({ push, squads, clock: () => new Date() }),
     ],
     publicUrl: config.publicUrl,

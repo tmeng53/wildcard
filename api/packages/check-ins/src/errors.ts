@@ -14,17 +14,6 @@ export class CheckInIdConflictError extends AppError {
   }
 }
 
-/** Thrown for a second 今日请假条 on the same day: a member posts at most one a day. */
-export class DisclaimerAlreadyPostedError extends AppError {
-  override readonly name = 'DisclaimerAlreadyPostedError';
-  readonly reason = 'DISCLAIMER_ALREADY_POSTED';
-  readonly status = 'ALREADY_EXISTS';
-
-  constructor(readonly day: string) {
-    super(`A disclaimer is already posted for ${day}.`);
-  }
-}
-
 /** Thrown for a check-in made more than 48 hours ago: it waited offline too long to sync. */
 export class CheckInTooOldError extends AppError {
   override readonly name = 'CheckInTooOldError';
@@ -144,6 +133,42 @@ export class OwnCheckInReactionError extends AppError {
 
   constructor() {
     super('You can’t react to your own check-in.');
+  }
+}
+
+/**
+ * Thrown when a comment id is already saved with a different comment, or on another check-in.
+ * The app reused an id: give the comment a new one.
+ */
+export class CommentIdConflictError extends AppError {
+  override readonly name = 'CommentIdConflictError';
+  readonly reason = 'COMMENT_ID_CONFLICT';
+  readonly status = 'ALREADY_EXISTS';
+
+  constructor(readonly commentId: string) {
+    super(`Comment ${commentId} is already saved with different contents.`);
+  }
+}
+
+/** Thrown for a reply to someone who can't see the check-in: a reply names a teammate. */
+export class ReplyToNotInSquadError extends AppError {
+  override readonly name = 'ReplyToNotInSquadError';
+  readonly reason = 'REPLY_TO_NOT_IN_SQUAD';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('You can only reply to someone in the squad.');
+  }
+}
+
+/** Thrown when a member deletes someone else's comment: each deletes only their own. */
+export class NotYourCommentError extends AppError {
+  override readonly name = 'NotYourCommentError';
+  readonly reason = 'NOT_YOUR_COMMENT';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('You can only delete your own comments.');
   }
 }
 

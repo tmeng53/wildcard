@@ -145,18 +145,18 @@
         }
       }
     },
-    "你是最后一个人，小队会解散": {
+    "你走了，小队就散了": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You're the last one here. The squad ends when you go."
+            "value": "Once you go, the squad ends."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你是最後一個人，小隊會解散"
+            "value": "你走了，小隊就散了"
           }
         }
       }
@@ -305,18 +305,18 @@
         }
       }
     },
-    "就它了": {
+    "确认": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This one"
+            "value": "Confirm"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "就它了"
+            "value": "確認"
           }
         }
       }
@@ -561,34 +561,18 @@
         }
       }
     },
-    "网络开小差了，没改成": {
+    "网络开小差了，没存上": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Didn't go through. Check your connection."
+            "value": "Couldn't save. Check your connection"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路怪怪的，沒改成"
-          }
-        }
-      }
-    },
-    "网络开小差了，没选上": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Didn't go through. Try again."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路怪怪的，沒選到"
+            "value": "網路開小差了，沒存上"
           }
         }
       }

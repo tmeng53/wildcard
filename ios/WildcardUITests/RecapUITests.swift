@@ -73,7 +73,7 @@ final class RecapUITests: XCTestCase {
         let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
         let tile = app.buttons["recap.entry"]
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "动态 shows no 战报 tile")
-        let bar = app.buttons["tab.feed"]
+        let bar = tabButton("tab.feed", in: app)
         XCTAssertTrue(bar.isSelected, "-tab feed didn't open on 动态")
         XCTAssertLessThan(tile.frame.maxY, bar.frame.minY, "the tile runs under the tab bar")
         Thread.sleep(forTimeInterval: 1)

@@ -6,9 +6,11 @@ import {
   CheckInInTheFutureError,
   CheckInNotFoundError,
   CheckInTooOldError,
-  DisclaimerAlreadyPostedError,
+  CommentIdConflictError,
+  NotYourCommentError,
   OwnCheckInReactionError,
   PlanDayStartedError,
+  ReplyToNotInSquadError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
@@ -22,7 +24,6 @@ describe('check-in errors', () => {
     expect(
       [
         new CheckInIdConflictError('c1'),
-        new DisclaimerAlreadyPostedError('2026-10-18'),
         new CheckInTooOldError(),
         new CheckInInTheFutureError(),
         new CheckInDayMismatchError('2026-10-18'),
@@ -34,10 +35,12 @@ describe('check-in errors', () => {
         new CheckInNotFoundError('c1'),
         new OwnCheckInReactionError(),
         new WeekNotStartedError('2026-10-26'),
+        new CommentIdConflictError('k1'),
+        new ReplyToNotInSquadError(),
+        new NotYourCommentError(),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['CheckInIdConflictError', 'CHECK_IN_ID_CONFLICT', 'ALREADY_EXISTS'],
-      ['DisclaimerAlreadyPostedError', 'DISCLAIMER_ALREADY_POSTED', 'ALREADY_EXISTS'],
       ['CheckInTooOldError', 'CHECK_IN_TOO_OLD', 'INVALID_ARGUMENT'],
       ['CheckInInTheFutureError', 'CHECK_IN_IN_THE_FUTURE', 'FAILED_PRECONDITION'],
       ['CheckInDayMismatchError', 'CHECK_IN_DAY_MISMATCH', 'INVALID_ARGUMENT'],
@@ -49,6 +52,9 @@ describe('check-in errors', () => {
       ['CheckInNotFoundError', 'CHECK_IN_NOT_FOUND', 'NOT_FOUND'],
       ['OwnCheckInReactionError', 'OWN_CHECK_IN_REACTION', 'FAILED_PRECONDITION'],
       ['WeekNotStartedError', 'WEEK_NOT_STARTED', 'FAILED_PRECONDITION'],
+      ['CommentIdConflictError', 'COMMENT_ID_CONFLICT', 'ALREADY_EXISTS'],
+      ['ReplyToNotInSquadError', 'REPLY_TO_NOT_IN_SQUAD', 'INVALID_ARGUMENT'],
+      ['NotYourCommentError', 'NOT_YOUR_COMMENT', 'PERMISSION_DENIED'],
     ]);
   });
 });

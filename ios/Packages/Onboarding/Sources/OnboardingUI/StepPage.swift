@@ -64,10 +64,8 @@ struct StepPage<Content: View, Actions: View>: View {
     }
 }
 
-/// The step's one primary action, full width; it shows a spinner while its call is under way.
+/// The step's one primary action, full width; it shows 三拍 while its call is under way.
 struct StepButton: View {
-    @Environment(\.sceneTheme) private var theme
-    @Environment(\.accentTone) private var tone
     let title: Text
     let isWorking: Bool
     let isEnabled: Bool
@@ -75,13 +73,9 @@ struct StepButton: View {
 
     var body: some View {
         Button(action: action) {
-            ZStack {
-                title.opacity(isWorking ? 0 : 1)
-                if isWorking {
-                    ProgressView().tint(Color(role: tone.onFill, in: theme))
-                }
-            }
-            .frame(maxWidth: .infinity)
+            title
+                .loadingLabel(isWorking)
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
         .disabled(!isEnabled || isWorking)

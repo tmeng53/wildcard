@@ -6,6 +6,7 @@ import CheckInDomain
 import CheckInUI
 import Combine
 import Contracts
+import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
@@ -35,7 +36,8 @@ enum Launch {
 /// squad, then 今天 under the tab bar. Without one it opens on 今天 backed by an in-memory squad
 /// and member, as UI tests do; there `-onboarding` opens sign-up first, which hands over to the
 /// tabs once its 上场 has played. `-styleguide` opens the design system's style guide,
-/// `-character-editor` the character editor and `-recap` the 战报's tile and sample story
+/// `-character-editor` the character editor, `-loading` the launch page and `-recap` the 战报's tile and
+/// sample story
 /// instead. After the first check-in it asks for notifications; a tapped one
 /// brings the member back to 今天 with the home loaded again, or opens the 战报 its awards push is
 /// about. `Launch` starts it.
@@ -174,8 +176,8 @@ struct WildcardApp: App {
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 ContinueWithApple { signUp.signedIn(name: nil) }
-            } tabBar: {
-                MainTabs.entranceTabBar
+            } tabs: { showsBar, content in
+                MainTabs.entranceTabs(showsBar: showsBar, content: content)
             }
             .onChange(of: signUp.finished) { _, finished in
                 guard finished != nil else { return }
@@ -186,6 +188,8 @@ struct WildcardApp: App {
             }
         } else if LaunchOptions.showsStyleGuide {
             StyleGuideView()
+        } else if LaunchOptions.showsLoading {
+            LaunchCover()
         } else if LaunchOptions.showsRecap {
             RecapDemo()
         } else if let app {
@@ -196,9 +200,16 @@ struct WildcardApp: App {
                 selection: $tab
             )
             .onAppear {
-                delegate.opened = { [today, $tab] _ in
-                    $tab.wrappedValue = .today
-                    Task { await today.load() }
+                // As on the real backend: the awards push opens 动态, where the 战报 is, and any
+                // other push 今天.
+                delegate.opened = { [today, $tab] opened in
+                    switch opened {
+                    case .weeklyAwards:
+                        $tab.wrappedValue = .feed
+                    case .other:
+                        $tab.wrappedValue = .today
+                        Task { await today.load() }
+                    }
                 }
             }
         }
@@ -217,12 +228,15 @@ private struct AppRoot: View {
         ZStack {
             switch app.screen {
             case .starting:
-                ProgressView()
+                LaunchCover()
+                    // Over the screen that replaces it while it fades.
+                    .zIndex(1)
+                    .transition(.opacity)
             case .signUp(let signUp):
                 SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                     SignInButton(app: app, signUp: signUp)
-                } tabBar: {
-                    MainTabs.entranceTabBar
+                } tabs: { showsBar, content in
+                    MainTabs.entranceTabs(showsBar: showsBar, content: content)
                 }
                 .onChange(of: signUp.finished) { _, finished in
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
@@ -240,6 +254,9 @@ private struct AppRoot: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
+        // Signing in on the open screen: the tickets rock over it until the next screen opens.
+        .loadingCover(app.isSigningIn) { LaunchCover() }
         .task { await app.run() }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in

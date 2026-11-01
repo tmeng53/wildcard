@@ -145,22 +145,6 @@
         }
       }
     },
-    "正在注销…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deleting…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在刪除…"
-          }
-        }
-      }
-    },
     "注销账号": {
       "localizations": {
         "en": {
@@ -487,7 +471,7 @@
         }
       }
     },
-    "坦白放纵餐": {
+    "放纵餐": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -498,7 +482,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "坦白放縱餐"
+            "value": "放縱餐"
           }
         }
       }
@@ -535,7 +519,7 @@
         }
       }
     },
-    "次练了": {
+    "次训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -546,7 +530,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "次練了"
+            "value": "次訓練"
           }
         }
       }
@@ -588,7 +572,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Days off"
+            "value": "Day-off notes"
           }
         },
         "zh-Hant": {
@@ -679,18 +663,18 @@
         }
       }
     },
-    "周奖": {
+    "拿过的奖": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Weekly awards"
+            "value": "Awards won"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "週獎"
+            "value": "拿過的獎"
           }
         }
       }

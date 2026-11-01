@@ -100,16 +100,6 @@ public enum Sizing {
     /// The white gap between a status ring and the avatar inside it.
     public static let ringGap: Double = 2
 
-    // MARK: Tab bar
-
-    /// The floating tab bar's height; it is a capsule.
-    public static let tabBar: Double = 62
-    /// One tab: its icon over its name.
-    public static let tabItemWidth: Double = 76
-    public static let tabItemHeight: Double = 54
-    /// From the tab bar to the bottom of the screen.
-    public static let tabBarBottom: Double = 26
-
     // MARK: The character: three sizes only
 
     /// A head in an avatar circle.
