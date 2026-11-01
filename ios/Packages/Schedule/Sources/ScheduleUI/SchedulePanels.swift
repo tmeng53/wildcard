@@ -112,7 +112,7 @@ struct TemplateNote: View {
         Label {
             Text("改了从下周开始生效，本周不变", bundle: .module)
         } icon: {
-            Image(systemName: ScheduleLabels.templateSymbol)
+            Image(systemName: WeekPosterHeading.templateSymbol)
                 .accessibilityHidden(true)
         }
         .noteStyle(theme)

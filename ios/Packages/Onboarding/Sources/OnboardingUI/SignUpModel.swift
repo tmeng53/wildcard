@@ -63,13 +63,12 @@ public final class SignUpModel {
         case failed(InviteCode, SignUpError)
     }
 
-    /// This week's days, Monday first, for the poster's dates.
+    /// This week's days, Monday first, for the poster's weekday names.
     let weekDays: [LocalDay]
-    /// The poster's W1: weeks count from the one the member signs up in.
-    let weekNumber = 1
 
     @ObservationIgnored private let service: any SignUpService
-    /// How many of this week's days are over: 0 on its first day.
+    /// How many of this week's days are over: 0 on its first day. Home's first week counts only
+    /// from today.
     @ObservationIgnored let daysGone: Int
 
     /// `invite`: the code an invite link carried. `nickname`: the name Sign in with Apple shared,
@@ -134,8 +133,8 @@ public final class SignUpModel {
         if next == .character, editor == nil {
             editor = try? CharacterEditorModel.placeholder(look: welcomeLook, nickname: nickname)
         }
-        if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, daysGone: daysGone).choices {
-            week = WeekDraft(sports: sports.picked, daysGone: daysGone)
+        if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked).choices {
+            week = WeekDraft(sports: sports.picked)
         }
         if step == .week, next == .sports {
             // Back to the sports: the character wears the one picked last again, not the

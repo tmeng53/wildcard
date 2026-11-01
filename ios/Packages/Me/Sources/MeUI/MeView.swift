@@ -13,17 +13,20 @@ public struct MeDestinations {
     public var squad: () -> Void
     public var pastRecaps: () -> Void
     public var editCharacter: () -> Void
+    /// 出赛表 on the 每周模板.
+    public var weeklyTemplate: () -> Void
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
 
     public init(
         squad: @escaping () -> Void, pastRecaps: @escaping () -> Void, editCharacter: @escaping () -> Void,
-        privacyPolicy: URL, terms: URL
+        weeklyTemplate: @escaping () -> Void, privacyPolicy: URL, terms: URL
     ) {
         self.squad = squad
         self.pastRecaps = pastRecaps
         self.editCharacter = editCharacter
+        self.weeklyTemplate = weeklyTemplate
         self.privacyPolicy = privacyPolicy
         self.terms = terms
     }
