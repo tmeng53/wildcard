@@ -17,6 +17,7 @@
     "@wildcard/admins": "workspace:*",
     "@wildcard/ai-consent": "workspace:*",
     "@wildcard/check-ins": "workspace:*",
+    "@wildcard/coach": "workspace:*",
     "@wildcard/disclaimer-drafts": "workspace:*",
     "@wildcard/disclaimer-styles": "workspace:*",
     "@wildcard/errors": "workspace:*",
