@@ -237,16 +237,16 @@ private actor Squad3: SquadSettingsService {
         await model.loadMarket()
         #expect(model.market == .loaded([maotou, nuannuan]))
 
-        #expect(await model.hire("xiaohun"))
+        #expect(await model.hire("xiaohun") == .done)
         #expect(model.coach?.coach == maotou)
         #expect(model.coachWeek == 1)
 
         // 换教练 is one step.
-        #expect(await model.hire("nuannuan"))
+        #expect(await model.hire("nuannuan") == .done)
         #expect(model.coach?.coach == nuannuan)
         #expect(await service.hires == ["xiaohun", "nuannuan"])
 
-        #expect(await model.fireCoach())
+        #expect(await model.fireCoach() == .done)
         #expect(model.coach == nil)
     }
 
@@ -258,9 +258,34 @@ private actor Squad3: SquadSettingsService {
         await model.reload()
         #expect(!model.canHireCoach)
         #expect(model.coach?.coach == maotou)
-        #expect(!(await model.hire("nuannuan")))
-        #expect(model.changeFailed)
+        #expect(await model.hire("nuannuan") == .outdated)
+        #expect(!model.changeFailed)
         #expect(model.coach?.coach == maotou)
+    }
+
+    /// A coach change that doesn't get through is the coach page's to say, never 小队设置's.
+    @Test func aCoachChangeThatFailsLeavesTheSquadPageAlone() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))
+        let model = SquadSettingsModel(service: service)
+        await model.reload()
+        await service.fail(with: .unavailable)
+        #expect(await model.hire("xiaohun") == .unavailable)
+        #expect(!model.changeFailed)
+        #expect(model.coach == nil)
+        await service.fail(with: nil)
+        #expect(await model.hire("xiaohun") == .done)
+        #expect(model.coach?.coach == maotou)
+    }
+
+    /// A coach the market no longer offers is refused; the page reads the squad again.
+    @Test func aRetiredCoachIsRefusedAndTheSquadIsReadAgain() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))
+        let model = SquadSettingsModel(service: service)
+        await model.reload()
+        #expect(await model.hire("retired") == .outdated)
+        #expect(!model.changeFailed)
+        #expect(model.coach == nil)
+        #expect(await service.hires.isEmpty)
     }
 
     /// The week it was hired counts 1; weeks start on Monday, on the member's clock.

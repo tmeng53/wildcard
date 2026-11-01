@@ -18,6 +18,17 @@ public enum CoachMarketLoad: Hashable, Sendable {
     case failed(SquadError)
 }
 
+/// How a coach change (招聘, 换教练, 确认解雇) ended, for the coach's pages.
+public enum CoachChange: Hashable, Sendable {
+    /// The squad has the change: the pages close onto 小队设置.
+    case done
+    /// The squad changed under it (a retired coach, a new captain): the page has read it again,
+    /// and the pages close onto it.
+    case outdated
+    /// It never got through: the page says so and may try again.
+    case unavailable
+}
+
 /// A member on the page's list, in the order they joined.
 public struct SquadMemberRow: Hashable, Sendable, Identifiable {
     public let id: MemberID
@@ -180,27 +191,20 @@ public final class SquadSettingsModel {
         }
     }
 
-    /// Hires `coach` (招聘), or swaps the squad's coach for it in one step (换教练). True once the
-    /// squad has it, so the page goes back to 小队设置.
-    @discardableResult
-    public func hire(_ coach: CoachID) async -> Bool {
-        guard let settings else { return false }
-        await change { service throws(SquadError) in
-            let hired = try await service.hire(coach, for: settings.squad.id)
-            self.updateCoach(hired)
+    /// Hires `coach` (招聘), or swaps the squad's coach for it in one step (换教练).
+    public func hire(_ coach: CoachID) async -> CoachChange {
+        guard let settings else { return .outdated }
+        return await changeCoach { service throws(SquadError) in
+            try await service.hire(coach, for: settings.squad.id)
         }
-        return !changeFailed
     }
 
-    /// Fires the squad's coach (确认解雇). True once it is gone.
-    @discardableResult
-    public func fireCoach() async -> Bool {
-        guard let settings else { return false }
-        await change { service throws(SquadError) in
-            let fired = try await service.fireCoach(of: settings.squad.id)
-            self.updateCoach(fired)
+    /// Fires the squad's coach (确认解雇).
+    public func fireCoach() async -> CoachChange {
+        guard let settings else { return .outdated }
+        return await changeCoach { service throws(SquadError) in
+            try await service.fireCoach(of: settings.squad.id)
         }
-        return !changeFailed
     }
 
     // MARK: Changes
@@ -266,11 +270,31 @@ public final class SquadSettingsModel {
         changed()
     }
 
-    /// The coach changes nothing 今天 or 我 show, so nothing else reads the squad again.
-    private func updateCoach(_ coach: SquadCoach) {
-        guard case .loaded(var settings) = load else { return }
-        settings.coach = coach
-        load = .loaded(settings)
+    /// A coach change, which the coach's pages answer themselves: the squad-wide `changeFailed`
+    /// stays as it was. The coach changes nothing 今天 or 我 show, so nothing else reads the
+    /// squad again.
+    private func changeCoach(
+        _ body: (any SquadSettingsService) async throws(SquadError) -> SquadCoach
+    ) async -> CoachChange {
+        guard !isSaving else { return .unavailable }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            let coach = try await body(service)
+            if case .loaded(var settings) = load {
+                settings.coach = coach
+                load = .loaded(settings)
+            }
+            return .done
+        } catch {
+            switch error {
+            case .signedOut: await signOut()
+            case .noSquad: hasLeft = true
+            case .outdated: await reload()
+            case .unavailable: return .unavailable
+            }
+            return .outdated
+        }
     }
 
     private func update(_ edit: (inout SquadSettings) -> Void) {

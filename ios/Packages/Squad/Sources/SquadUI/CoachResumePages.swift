@@ -10,8 +10,8 @@ import SwiftUI
 struct CoachPageStack: View {
     @Bindable var model: SquadSettingsModel
     @Binding var pages: [CoachRoute]
-    /// A coach change was asked for on these pages, so a failure is theirs to say.
-    @State private var asked = false
+    /// The page whose change didn't get through, which says so until the member moves on.
+    @State private var failed: CoachRoute?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -24,7 +24,6 @@ struct CoachPageStack: View {
     }
 
     @ViewBuilder private func page(_ route: CoachRoute) -> some View {
-        let failed = asked && model.changeFailed
         switch route {
         case .market:
             CoachMarketPage(
@@ -32,6 +31,7 @@ struct CoachPageStack: View {
                 retry: { Task { await model.loadMarket() } },
                 open: { coach in
                     withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) {
+                        failed = nil
                         pages.append(.resume(coach))
                     }
                 }
@@ -40,30 +40,29 @@ struct CoachPageStack: View {
         case .resume(let coach):
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id, canHire: model.canHireCoach,
-                isSaving: model.isSaving, failed: failed, back: back,
-                hire: {
-                    asked = true
-                    Task { if await model.hire(coach.id) { closeAll() } }
-                })
+                isSaving: model.isSaving, failed: failed == route, back: back,
+                hire: { Task { finish(route, await model.hire(coach.id)) } })
         case .fire(let coach):
             FireCoachPage(
-                coach: coach, isSaving: model.isSaving, failed: failed, back: back,
-                fire: {
-                    asked = true
-                    Task { if await model.fireCoach() { closeAll() } }
-                })
+                coach: coach, isSaving: model.isSaving, failed: failed == route, back: back,
+                fire: { Task { finish(route, await model.fireCoach()) } })
         }
     }
 
     private func back() {
         guard !pages.isEmpty else { return }
+        failed = nil
         withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { _ = pages.removeLast() }
-        if pages.isEmpty { asked = false }
     }
 
-    private func closeAll() {
+    /// A change that landed, or that the squad has moved past, ends on 小队设置.
+    private func finish(_ route: CoachRoute, _ change: CoachChange) {
+        guard change != .unavailable else {
+            failed = route
+            return
+        }
+        failed = nil
         withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { pages = [] }
-        asked = false
     }
 }
 
