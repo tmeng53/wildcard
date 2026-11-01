@@ -27,6 +27,12 @@ import {
   createPostgresDiceLines,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
+import {
+  createCoachCatalog,
+  createCoachSettings,
+  createPostgresCoachCatalog,
+  createPostgresCoachSettings,
+} from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -56,6 +62,7 @@ import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
 import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { memeTools } from './tools/memes.js';
+import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -176,6 +183,10 @@ beforeAll(async () => {
                 words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
               }),
               ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+              ...coachTools({
+                settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
+                coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),
+              }),
               // A tool that changes something, standing in for the meme tools.
               adminTool({
                 name: 'rename_thing',
@@ -343,6 +354,10 @@ describe('the admin MCP server', () => {
       ['put_sport', false],
       ['put_sport_category', false],
       ['set_sport_picks', false],
+      ['get_coach_settings', true],
+      ['change_coach_settings', false],
+      ['list_coaches', true],
+      ['put_coach', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -532,6 +547,72 @@ describe('the admin MCP server', () => {
     }
     expect(await read('get_disclaimer_draft_settings')).toStrictEqual(drafts);
     expect(await read('get_weekly_award_settings')).toStrictEqual(awards);
+    await client.close();
+  });
+
+  it('reads and changes the coach settings and the coaches, logging each change', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const read = async (name: string) =>
+      z.record(z.string(), z.json()).parse(JSON.parse((await call(name)).text));
+    const Coaches = z.object({ coaches: z.array(z.record(z.string(), z.json())) });
+    const settings = await read('get_coach_settings');
+    expect(settings).toMatchObject({ version: 1, coaching: false, model: 'openai/gpt-6-luna' });
+    const listed = Coaches.parse(await read('list_coaches')).coaches;
+    const xiaohun = listed.find(({ id }) => id === 'xiaohun');
+    expect(xiaohun).toMatchObject({ id: 'xiaohun', name: '小混', offered: true });
+    const edit = Object.fromEntries(
+      Object.entries(z.record(z.string(), z.json()).parse(xiaohun)).filter(
+        ([key]) => key !== 'version',
+      ),
+    );
+    const trial = randomUUID();
+
+    try {
+      const on = await call('change_coach_settings', { coaching: true, onlySquads: [trial] });
+      expect(JSON.parse(on.text)).toStrictEqual({
+        ...settings,
+        coaching: true,
+        onlySquads: [trial],
+      });
+      const renamed = await call('put_coach', { ...edit, catchphrase: '先练再说' });
+      expect(JSON.parse(renamed.text)).toStrictEqual({ ...xiaohun, catchphrase: '先练再说' });
+
+      // Not an OpenAI model, a coach missing a field, or no change at all.
+      for (const [name, args] of [
+        ['change_coach_settings', { model: 'anthropic/claude-haiku-5-5' }],
+        ['change_coach_settings', {}],
+        ['put_coach', { id: 'nuannuan', name: '暖暖' }],
+      ] as const) {
+        expect((await call(name, args)).isError).toBe(true);
+      }
+
+      const logged = await sql<{ settings: unknown }>`
+        select settings from public.coach_setting_events where changed_by = ${admin.userId}
+      `.execute(db);
+      expect(logged.rows.map((row) => row.settings)).toStrictEqual([
+        { ...settings, coaching: true, onlySquads: [trial] },
+      ]);
+      const actions = await sql<{ action: { tool: string } }>`
+        select action from public.admin_actions where admin_id = ${admin.userId} order by id
+      `.execute(db);
+      expect(actions.rows.map(({ action }) => action.tool)).toStrictEqual([
+        'change_coach_settings',
+        'put_coach',
+      ]);
+    } finally {
+      await call('change_coach_settings', {
+        coaching: settings.coaching,
+        onlySquads: settings.onlySquads,
+      });
+      await call('put_coach', edit);
+    }
+    expect(await read('get_coach_settings')).toStrictEqual(settings);
+    expect(Coaches.parse(await read('list_coaches')).coaches).toStrictEqual(listed);
     await client.close();
   });
 

@@ -19,6 +19,12 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import {
+  createCoachCatalog,
+  createCoachSettings,
+  createPostgresCoachCatalog,
+  createPostgresCoachSettings,
+} from '@wildcard/coach';
+import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
   createDiceLines,
@@ -70,6 +76,7 @@ import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { coachTools } from './admin-mcp/tools/coach.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
@@ -307,6 +314,10 @@ const app = createApp({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+      ...coachTools({
+        settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
+        coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),
+      }),
       ...testPushTools({ push, squads, clock: () => new Date() }),
     ],
     publicUrl: config.publicUrl,
