@@ -17,7 +17,12 @@ import {
 } from '../adapters/postgres-coach-stores.js';
 import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
-import { CoachAlreadyHiredError, CoachNotOfferedError, NoCoachHiredError } from '../errors.js';
+import {
+  CoachAlreadyHiredError,
+  CoachNotOfferedError,
+  CoachSquadNotFoundError,
+  NoCoachHiredError,
+} from '../errors.js';
 import type { SquadWeek } from '../domain/squad-week.js';
 import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
 import { createCoachHiring } from './coach-hiring.js';
@@ -372,6 +377,21 @@ describe('the coach', () => {
         CoachNotOfferedError,
       );
       expect((await hiring.offered()).map(({ id }) => id)).toStrictEqual([nuannuan]);
+      // Retired since it was hired, the squad's own coach is still a retry, never a refusal.
+      const hiredNow = (await catalog.list()).find(({ id }) => id === nuannuan);
+      if (hiredNow === undefined) throw new Error('No 暖暖.');
+      await catalog.save({ ...hiredNow, offered: false }, by);
+      expect(await hiring.change({ squad, coach: nuannuan, by })).toMatchObject({
+        coach: { id: nuannuan },
+        changed: false,
+      });
+
+      // A squad that isn't there is refused before anything is written, so the transaction
+      // it ran in goes on.
+      await expect(
+        hiring.change({ squad: SquadId.parse(randomUUID()), coach: nuannuan, by }),
+      ).rejects.toBeInstanceOf(CoachSquadNotFoundError);
+      expect(await hiring.current(squad)).toMatchObject({ coach: { id: nuannuan } });
 
       // The fixture's hire, then the change: fired and hired in order, each by the member.
       const events = await sql<{ kind: string; coach_id: string; changed_by: string }>`

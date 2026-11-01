@@ -90,20 +90,23 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
 
     async replace({ squad, coach, by }) {
       const change = async (trx: Kysely<DB>): Promise<'hired' | 'same' | 'noSquad'> => {
-        // The squad's coach row, locked, so a second change waits for this one.
+        // The squad's row, locked, so changes to one squad's coach run one after another; a
+        // squad that isn't there is answered before anything is written.
+        const squadRow = await sql<{ id: string }>`
+          select id from public.squads where id = ${squad} for update`.execute(trx);
+        if (squadRow.rows.length === 0) return 'noSquad';
         const current = await trx
           .selectFrom('squad_coaches')
           .select('coach_id')
           .where('squad_id', '=', squad)
-          .forUpdate()
           .executeTakeFirst();
         if (current?.coach_id === coach) return 'same';
         const inTransaction = createPostgresCoachHiring(trx);
         if (current !== undefined) await inTransaction.fire({ squad, by });
         const hired = await inTransaction.hire({ squad, coach, by });
-        if (hired === 'noSquad') return 'noSquad';
-        // Another change got in first (two at once): this one keeps what it found.
-        return hired === 'hired' ? 'hired' : 'same';
+        // With the squad locked and its coach fired, nothing else can have hired one.
+        if (hired !== 'hired') throw new Error(`Hiring for a locked squad answered ${hired}.`);
+        return 'hired';
       };
       // Inside a caller's transaction already (the admin tools, tests), it runs in that one.
       return db.isTransaction ? change(db) : db.transaction().execute(change);

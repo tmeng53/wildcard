@@ -52,6 +52,12 @@ export function createCoachHiring(deps: {
     if (found === undefined) throw new CoachNotOfferedError(id);
     return found;
   };
+  const currentOf = async (squad: SquadId) => {
+    const hired = await deps.hiring.coachOf(squad);
+    if (hired === undefined) return undefined;
+    const coach = (await deps.catalog.list()).find(({ id }) => id === hired.coach);
+    return coach === undefined ? undefined : { coach, since: hired.since };
+  };
   return {
     offered,
 
@@ -72,17 +78,15 @@ export function createCoachHiring(deps: {
     },
 
     async change({ squad, coach, by }) {
+      // The coach the squad has already, even one retired since: a retry changes nothing.
+      const current = await currentOf(squad);
+      if (current?.coach.id === coach) return { coach: current.coach, changed: false };
       const hired = await offeredOne(coach);
       const outcome = await deps.hiring.replace({ squad, coach, by });
       if (outcome === 'noSquad') throw new CoachSquadNotFoundError();
       return { coach: hired, changed: outcome === 'hired' };
     },
 
-    async current(squad) {
-      const hired = await deps.hiring.coachOf(squad);
-      if (hired === undefined) return undefined;
-      const coach = (await deps.catalog.list()).find(({ id }) => id === hired.coach);
-      return coach === undefined ? undefined : { coach, since: hired.since };
-    },
+    current: currentOf,
   };
 }
