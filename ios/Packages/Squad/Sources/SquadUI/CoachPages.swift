@@ -145,6 +145,7 @@ struct CoachMarketPage: View {
             .ignoresSafeArea(edges: [.top, .bottom])
         }
         .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.market")
     }
 

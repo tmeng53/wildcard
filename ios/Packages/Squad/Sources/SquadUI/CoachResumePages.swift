@@ -105,6 +105,7 @@ struct CoachResumePage: View {
             .safeAreaInset(edge: .bottom) { action }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.resume")
     }
 
@@ -262,6 +263,7 @@ struct FireCoachPage: View {
             .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.fire")
     }
 }
