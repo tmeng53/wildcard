@@ -211,6 +211,26 @@
         }
       }
     },
+    "练了 · %@ · %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained · %1$@ · %2$lld min"
+          }
+        }
+      }
+    },
+    "练了 · %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trained · %lld min"
+          }
+        }
+      }
+    },
     "请假条": {
       "localizations": {
         "en": {

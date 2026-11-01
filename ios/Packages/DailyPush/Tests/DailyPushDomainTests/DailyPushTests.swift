@@ -30,6 +30,23 @@ private let event = """
     }
     """
 
+@Test func readsTrainingMinutesAndLeavesOutOnesTheAppDoesntTake() throws {
+    func entry(_ minutes: String) throws -> PushEntry? {
+        let post = """
+            {"id": "\(squat)", "by": 1, "kind": "trained", "sport": "run", \(minutes)
+             "at": "2026-10-23T21:42:00.000Z", "reactions": [], "reactionCount": 0}
+            """
+        let push = """
+            {"kind": "dailyProgress", "squadTrainedDays": 1, "squadPlannedDays": 5,
+             "today": {"members": [{"id": "\(meID)"}, {"id": "\(miID)"}], "posts": [\(post)], "more": 0}}
+            """
+        return try DailyPush(event: Data(push.utf8)).posts.first?.entry
+    }
+    #expect(try entry("\"minutes\": 45,") == .trained(.sport("run"), minutes: try WorkoutMinutes(45)))
+    #expect(try entry("") == .trained(.sport("run"), minutes: nil))
+    #expect(try entry("\"minutes\": 0,") == .trained(.sport("run"), minutes: nil))
+}
+
 private let noon = Date(timeIntervalSince1970: 1_793_448_000)
 
 private func id<Tag>(_ text: String) -> ID<Tag> { ID(UUID(uuidString: text) ?? UUID()) }
@@ -42,7 +59,7 @@ private func id<Tag>(_ text: String) -> ID<Tag> { ID(UUID(uuidString: text) ?? U
     #expect(push.more == 2)
     #expect(push.name(of: id(miID)) == "小米")
     #expect(push.name(of: id(meID)) == nil)
-    #expect(push.posts.map(\.entry) == [.trained(.sport("strength")), .disclaimer])
+    #expect(push.posts.map(\.entry) == [.trained(.sport("strength"), minutes: nil), .disclaimer])
     let squatPost = try #require(push.posts.first)
     #expect(squatPost.latest(4).map(\.member) == [id(meID), id(leo)])
     #expect(squatPost.latest(4).map(\.kind.text) == ["😂", "💪"])

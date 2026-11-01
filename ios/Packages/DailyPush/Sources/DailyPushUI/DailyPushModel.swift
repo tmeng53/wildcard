@@ -136,7 +136,7 @@ public final class DailyPushModel {
     func player(for post: PushPost) -> CharacterPlayer? {
         if let player = players[post.id] { return player }
         var outfit = outfit(of: post.author)
-        if case .trained(let activity?) = post.entry, let kits = try? PlaceholderCharacter.sportKits() {
+        if case .trained(let activity?, _) = post.entry, let kits = try? PlaceholderCharacter.sportKits() {
             outfit = kits.kit(for: activity, in: SportList.shared.catalog).dress(outfit)
         }
         guard let player = Self.still(outfit, now: now()) else { return nil }

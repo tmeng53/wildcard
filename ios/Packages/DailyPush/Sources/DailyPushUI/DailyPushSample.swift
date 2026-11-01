@@ -51,7 +51,7 @@ public enum DailyPushSample {
             empty
             ? ""
             : """
-            {"id": "\(post(1))", "by": 1, "kind": "trained", "sport": "strength", "at": "\(at(17, 42))",
+            {"id": "\(post(1))", "by": 1, "kind": "trained", "sport": "strength", "minutes": 45, "at": "\(at(17, 42))",
              "text": "深蹲加了 5 公斤，腿在抖", "reactions": [[3, "💪"], [4, "😂"], [2, "💪"]], "reactionCount": 3},
             {"id": "\(post(2))", "by": 2, "kind": "disclaimer", "at": "\(at(16, 10))",
              "text": "腿说今天它请假，我尊重它的决定，明天再说", "reactions": [[1, "😂"]], "reactionCount": 1},
