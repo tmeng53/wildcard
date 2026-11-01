@@ -242,7 +242,7 @@ public final class ScheduleStore {
         guard var draft = drafts[board.weekStart] ?? sheets[board.weekStart] else { return }
         draft.plan = board.days
         drafts[board.weekStart] = draft
-        templateOffer = board.days == template ? nil : board.weekStart
+        templateOffer = template.map { $0 == board.days ? nil : board.weekStart } ?? nil
         await save(board.weekStart)
     }
 
@@ -292,14 +292,14 @@ public final class ScheduleStore {
                     // The server's answer stands unless the member changed the plan meanwhile.
                     if drafts[week]?.plan == draft.plan {
                         drafts[week]?.plan = plan
-                        if plan != draft.plan, board?.weekStart == week { board?.reset(to: plan) }
+                        if plan != draft.plan, showsBoard(of: week) { board?.reset(to: plan) }
                     }
                 } catch {
                     failure = error
                     refused = true
                     withdrawOffer(for: week)
                     drafts[week]?.plan = held.plan
-                    if board?.weekStart == week { board?.reset(to: held.plan) }
+                    if showsBoard(of: week) { board?.reset(to: held.plan) }
                 }
             } else if draft.fuel != held.fuel {
                 do {
@@ -328,6 +328,12 @@ extension ScheduleStore {
         templateOffer = nil
         templateDraft = plan
         await saveTemplate()
+    }
+
+    /// Whether the board is that week's: the template's board names its days from next week,
+    /// so its start alone can't say.
+    private func showsBoard(of week: LocalDay) -> Bool {
+        board?.tense != .template && board?.weekStart == week
     }
 
     /// A week whose change didn't go through has nothing to offer.

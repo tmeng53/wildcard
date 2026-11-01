@@ -12,8 +12,9 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     /// Weeks whose plan the member changed for themselves.
     private var saved: Set<LocalDay> = []
     private var lifetime: Int
-    /// The member's typical week (每周模板), which the weeks ahead follow.
-    private var typicalWeek: [PlanDay] = InMemoryScheduleBackend.planA
+    /// The member's typical week (每周模板), which the weeks ahead follow: the sample's next
+    /// week is planned from it.
+    private var typicalWeek: [PlanDay] = InMemoryScheduleBackend.planB
 
     public init(profile: ScheduleProfile, today: LocalDay, sheets: [WeekSheet], lifetimeTrainedDays: Int) {
         member = profile
@@ -115,8 +116,9 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     public func saveTemplate(_ days: [PlanDay]) async throws(ScheduleError) {
         guard days.count == WeeklyPlan.dayCount else { throw .refused }
         typicalWeek = days
+        // Their 饮食小目标 stay, as the API keeps them.
         for week in sheets.keys where week > thisWeek && !saved.contains(week) {
-            sheets[week] = nil
+            sheets[week]?.plan = days
         }
     }
 }

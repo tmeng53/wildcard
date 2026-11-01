@@ -108,4 +108,36 @@ struct ScheduleStoreTemplateTests {
         await store.show(thisWeek)
         #expect(store.templateOffer == nil)
     }
+
+    @Test func aRefusedSaveOfNextWeekLeavesTheTemplateShownAlone() async throws {
+        let backend = FakeBackend()
+        // Next week was saved for itself: all rest, unlike the template.
+        let allRest = [PlanDay](repeating: .rest, count: 7)
+        await backend.set(try WeekSheet(weekStart: nextWeek, plan: allRest, marks: Array(repeating: .none, count: 7)))
+        let store = store(backend)
+        await store.load()
+        await store.show(nextWeek)
+        await backend.holdSaves()
+        await backend.failSaves(with: .refused)
+        await store.tap(2)
+        let saving = Task { await store.pick(.sport("swim")) }
+        while await backend.savedPlans.isEmpty { await Task.yield() }
+        await store.showTemplate()
+        await backend.finishSave()
+        await saving.value
+        #expect(store.failure == .refused)
+        #expect(store.board?.tense == .template)
+        #expect(store.board?.days == Fixtures.plan)
+    }
+
+    @Test func noOfferBeforeTheTemplateIsKnown() async {
+        let backend = FakeBackend()
+        await backend.failTemplate(with: .notSent)
+        let store = store(backend)
+        await store.load()
+        await store.show(nextWeek)
+        await store.tap(2)
+        await store.pick(.sport("swim"))
+        #expect(store.templateOffer == nil)
+    }
 }
