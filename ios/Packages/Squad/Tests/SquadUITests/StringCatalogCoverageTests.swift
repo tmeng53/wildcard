@@ -42,14 +42,17 @@ struct StringCatalogCoverageTests {
         }
     }
 
-    /// The catalog's keys that have an English value.
+    /// The catalog's keys that have an English value, or English plural forms.
     private static func englishKeys() throws -> Set<String> {
         let catalog = try JSONSerialization.jsonObject(with: Data(contentsOf: catalogURL)) as? [String: Any]
         let strings = catalog?["strings"] as? [String: Any] ?? [:]
         return Set(
             strings.compactMap { key, entry in
                 let localized = ((entry as? [String: Any])?["localizations"] as? [String: Any])?["en"] as? [String: Any]
-                let value = (localized?["stringUnit"] as? [String: Any])?["value"] as? String
+                // A plural's English is its `other` form.
+                let plural = (localized?["variations"] as? [String: Any])?["plural"] as? [String: Any]
+                let unit = localized?["stringUnit"] ?? (plural?["other"] as? [String: Any])?["stringUnit"]
+                let value = (unit as? [String: Any])?["value"] as? String
                 return value?.isEmpty == false ? key : nil
             })
     }
