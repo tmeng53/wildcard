@@ -1922,21 +1922,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadPost/reactions`.
             public var reactions: [Components.Schemas.ReactionEntry]
+            /// Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPost/comments`.
+            public var comments: [Components.Schemas.CommentEntry]
             /// Creates a new `SquadPost`.
             ///
             /// - Parameters:
             ///   - checkIn:
             ///   - reactions: Teammates’ emoji, oldest first.
+            ///   - comments: Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
             public init(
                 checkIn: Components.Schemas.CheckIn,
-                reactions: [Components.Schemas.ReactionEntry]
+                reactions: [Components.Schemas.ReactionEntry],
+                comments: [Components.Schemas.CommentEntry]
             ) {
                 self.checkIn = checkIn
                 self.reactions = reactions
+                self.comments = comments
             }
             public enum CodingKeys: String, CodingKey {
                 case checkIn
                 case reactions
+                case comments
             }
         }
         /// - Remark: Generated from `#/components/schemas/ReactionEntry`.
@@ -1974,6 +1982,100 @@ extension Components {
                 case reactedAt
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CommentEntry`.
+        public struct CommentEntry: Codable, Hashable, Sendable {
+            /// The comment’s id, which the app picks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/id`.
+            public var id: Swift.String
+            /// Who wrote it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/member`.
+            public var member: Swift.String
+            /// Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/text`.
+            public var text: Swift.String
+            /// Whom it replies to, when it does. Gone once their account is deleted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/replyTo`.
+            public var replyTo: Swift.String?
+            /// When it was written, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/commentedAt`.
+            public var commentedAt: Foundation.Date
+            /// Creates a new `CommentEntry`.
+            ///
+            /// - Parameters:
+            ///   - id: The comment’s id, which the app picks.
+            ///   - member: Who wrote it.
+            ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
+            ///   - commentedAt: When it was written, in UTC with milliseconds.
+            public init(
+                id: Swift.String,
+                member: Swift.String,
+                text: Swift.String,
+                replyTo: Swift.String? = nil,
+                commentedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.member = member
+                self.text = text
+                self.replyTo = replyTo
+                self.commentedAt = commentedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case member
+                case text
+                case replyTo
+                case commentedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Post`.
+        public struct Post: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Post/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/version`.
+            public var version: Components.Schemas.Post.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/Post/checkIn`.
+            public var checkIn: Components.Schemas.CheckIn
+            /// Teammates’ emoji, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Post/reactions`.
+            public var reactions: [Components.Schemas.ReactionEntry]
+            /// Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Post/comments`.
+            public var comments: [Components.Schemas.CommentEntry]
+            /// Creates a new `Post`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - checkIn:
+            ///   - reactions: Teammates’ emoji, oldest first.
+            ///   - comments: Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
+            public init(
+                version: Components.Schemas.Post.VersionPayload,
+                checkIn: Components.Schemas.CheckIn,
+                reactions: [Components.Schemas.ReactionEntry],
+                comments: [Components.Schemas.CommentEntry]
+            ) {
+                self.version = version
+                self.checkIn = checkIn
+                self.reactions = reactions
+                self.comments = comments
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case checkIn
+                case reactions
+                case comments
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInList`.
         public struct CheckInList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInList/version`.
@@ -2001,6 +2103,78 @@ extension Components {
                 case checkIns
             }
         }
+        /// - Remark: Generated from `#/components/schemas/MyPostPage`.
+        public struct MyPostPage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/version`.
+            public var version: Components.Schemas.MyPostPage.VersionPayload
+            /// Newest day first, then newest made. Each shows its whole audience, and the reactions and comments of the member and of members of the squads it went to that the member still shares with them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/posts`.
+            public var posts: [Components.Schemas.SquadPost]
+            /// Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/counts`.
+            public var counts: Components.Schemas.MyPostCounts?
+            /// Creates a new `MyPostPage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - posts: Newest day first, then newest made. Each shows its whole audience, and the reactions and comments of the member and of members of the squads it went to that the member still shares with them.
+            ///   - next: Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in.
+            ///   - counts:
+            public init(
+                version: Components.Schemas.MyPostPage.VersionPayload,
+                posts: [Components.Schemas.SquadPost],
+                next: Swift.String? = nil,
+                counts: Components.Schemas.MyPostCounts? = nil
+            ) {
+                self.version = version
+                self.posts = posts
+                self.next = next
+                self.counts = counts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case posts
+                case next
+                case counts
+            }
+        }
+        /// On the first page only (no `after`); never narrowed to `kind`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MyPostCounts`.
+        public struct MyPostCounts: Codable, Hashable, Sendable {
+            /// Every check-in the member made.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostCounts/posts`.
+            public var posts: Swift.Int
+            /// The reactions on them the member can see, as on each post.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostCounts/reactions`.
+            public var reactions: Swift.Int
+            /// Creates a new `MyPostCounts`.
+            ///
+            /// - Parameters:
+            ///   - posts: Every check-in the member made.
+            ///   - reactions: The reactions on them the member can see, as on each post.
+            public init(
+                posts: Swift.Int,
+                reactions: Swift.Int
+            ) {
+                self.posts = posts
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case posts
+                case reactions
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
         public struct CheckInTotals: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
@@ -2021,7 +2195,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
             public var cheatMeals: Swift.Int
-            /// 今日请假条 check-ins, at most one a day.
+            /// 今日请假条 check-ins.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
@@ -2034,7 +2208,7 @@ extension Components {
             ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
-            ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            ///   - disclaimers: 今日请假条 check-ins.
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
@@ -2231,6 +2405,131 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case reactions
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Comment`.
+        public struct Comment: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Comment/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Comment/version`.
+            public var version: Components.Schemas.Comment.VersionPayload
+            /// The comment’s id, which the app picks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/id`.
+            public var id: Swift.String
+            /// Who wrote it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/member`.
+            public var member: Swift.String
+            /// Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/text`.
+            public var text: Swift.String
+            /// Whom it replies to, when it does. Gone once their account is deleted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/replyTo`.
+            public var replyTo: Swift.String?
+            /// When it was written, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/commentedAt`.
+            public var commentedAt: Foundation.Date
+            /// Creates a new `Comment`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: The comment’s id, which the app picks.
+            ///   - member: Who wrote it.
+            ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
+            ///   - commentedAt: When it was written, in UTC with milliseconds.
+            public init(
+                version: Components.Schemas.Comment.VersionPayload,
+                id: Swift.String,
+                member: Swift.String,
+                text: Swift.String,
+                replyTo: Swift.String? = nil,
+                commentedAt: Foundation.Date
+            ) {
+                self.version = version
+                self.id = id
+                self.member = member
+                self.text = text
+                self.replyTo = replyTo
+                self.commentedAt = commentedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case member
+                case text
+                case replyTo
+                case commentedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CommentDraft`.
+        public struct CommentDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/version`.
+            public var version: Components.Schemas.CommentDraft.VersionPayload
+            /// Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/text`.
+            public var text: Swift.String
+            /// Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/replyTo`.
+            public var replyTo: Swift.String?
+            /// Creates a new `CommentDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///   - replyTo: Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
+            public init(
+                version: Components.Schemas.CommentDraft.VersionPayload,
+                text: Swift.String,
+                replyTo: Swift.String? = nil
+            ) {
+                self.version = version
+                self.text = text
+                self.replyTo = replyTo
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case text
+                case replyTo
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CommentList`.
+        public struct CommentList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CommentList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CommentList/version`.
+            public var version: Components.Schemas.CommentList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CommentList/comments`.
+            public var comments: [Components.Schemas.CommentEntry]
+            /// Creates a new `CommentList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - comments:
+            public init(
+                version: Components.Schemas.CommentList.VersionPayload,
+                comments: [Components.Schemas.CommentEntry]
+            ) {
+                self.version = version
+                self.comments = comments
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case comments
             }
         }
         /// - Remark: Generated from `#/components/schemas/Device`.

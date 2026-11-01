@@ -10,6 +10,11 @@ import UIKit
 /// Launch arguments the UI tests pass in.
 enum LaunchOptions {
     /// `-styleguide`: open the style guide instead of 今天.
+    /// `-loading`: the launch cover, which a fast launch never shows long enough to see.
+    static var showsLoading: Bool {
+        ProcessInfo.processInfo.arguments.contains("-loading")
+    }
+
     static var showsStyleGuide: Bool {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
@@ -116,7 +121,22 @@ enum LaunchOptions {
         guard let flag = arguments.firstIndex(of: "-test-member"), flag + 2 < arguments.count else { return nil }
         return (arguments[flag + 1], arguments[flag + 2])
     }
+
+    /// `-uitest-push JSON`: an APNs payload (one of `WildcardUITests/push-samples.json`, which the
+    /// API writes) that the app shows as a notification a few seconds after launch, so a UI test
+    /// can look at its banner and tap it.
+    static var pushSample: [String: Any]? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-push"), flag + 1 < arguments.count else { return nil }
+        return (try? JSONSerialization.jsonObject(with: Data(arguments[flag + 1].utf8))) as? [String: Any]
+    }
     #endif
+
+    /// With `-onboarding`, `-slow-sign-in`: signing in on the open screen takes this long, in
+    /// seconds, so the loader that covers a slow sign-in shows.
+    static var signInWait: Double? {
+        ProcessInfo.processInfo.arguments.contains("-slow-sign-in") ? 2 : nil
+    }
 
     /// On the sample squad, `-onboarding`: open sign-up, then 今天 once it is done.
     static var showsOnboarding: Bool {

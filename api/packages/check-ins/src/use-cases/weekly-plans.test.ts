@@ -200,7 +200,7 @@ describe('saving a week’s plan', () => {
     ]);
   });
 
-  it('lets a rest today become a training day, with one rest day fewer', async () => {
+  it('lets today switch between a rest day and a training day', async () => {
     const member = await newMember({ joinedAt: new Date('2026-10-14T17:00:00.000Z') });
     // Rest today, Wednesday, and Sunday.
     const resting: PlanDays = [swim, train, rest, train, train, train, rest];
@@ -211,9 +211,9 @@ describe('saving a week’s plan', () => {
     expect((await plans.save({ member, weekStart: thisWeek, days: trained })).days).toStrictEqual(
       trained,
     );
-    // Once today trains, it stays a training day.
-    await expect(plans.save({ member, weekStart: thisWeek, days: resting })).rejects.toThrow(
-      new PlanDayStartedError('2026-10-21'),
+    // And back to a rest day: a rest today is a 休息日.
+    expect((await plans.save({ member, weekStart: thisWeek, days: resting })).days).toStrictEqual(
+      resting,
     );
   });
 

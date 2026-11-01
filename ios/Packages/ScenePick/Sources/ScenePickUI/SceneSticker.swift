@@ -7,7 +7,7 @@ import SwiftUI
 /// 冠军专属: the sticker on the 战报's last page where last week's crown winner (or, with no
 /// crown, the captain) picks where the squad trains next week (approved 2026-10-22). A white
 /// card tilted 2° left: the five scenes as tiles, a line saying when the squad last trained at
-/// the one chosen, and 「就它了」. It is the page's only interactive piece and never part of
+/// the one chosen, and 「确认」. It is the page's only interactive piece and never part of
 /// 存图. `onPicked` gets the reveal to play once the pick is saved.
 public struct SceneSticker: View {
     @Environment(\.sceneTheme) private var theme
@@ -43,7 +43,7 @@ public struct SceneSticker: View {
                     if let reveal = await picker.confirm(), let scene = picker.selection { onPicked(reveal, scene) }
                 }
             } label: {
-                Text("就它了", bundle: .module).frame(maxWidth: .infinity)
+                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)

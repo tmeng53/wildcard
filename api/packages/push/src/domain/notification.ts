@@ -5,7 +5,7 @@
  */
 export interface PushNotification {
   readonly alert: {
-    /** The String Catalog key of the alert's text, e.g. `push.daily.squadTrained`. */
+    /** The String Catalog key of the alert's text: one of the server's `PUSH_COPY`. */
     readonly key: string;
     /** Values for the key's `%@` placeholders, in order. */
     readonly args?: readonly string[];

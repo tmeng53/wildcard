@@ -35,16 +35,24 @@ final class AppModel {
     }
 
     private(set) var screen = Screen.starting
+    /// Whether the launch cover is up: until the first screen, with its scene, is ready.
+    var isStarting: Bool {
+        if case .starting = screen { return true }
+        return false
+    }
+    /// Signing in on the open screen, until the screen after it opens.
+    private(set) var isSigningIn = false
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
         if case .tabs = screen { return true }
         return false
     }
-    /// An awards push tapped before the home was up, opened once it is.
-    @ObservationIgnored private var pendingRecap: (squad: SquadID, week: LocalDay)?
     /// The squad 今天 is on, whose scene it reads again each time the app comes back.
     @ObservationIgnored private var homeSquad: SquadID?
+    /// A home opening under the launch cover after a sign-in on the open screen, so the account's
+    /// next signed-in state doesn't open it a second time.
+    @ObservationIgnored private var openingUnderCover = false
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored private let api: WildcardAPI
@@ -106,7 +114,7 @@ final class AppModel {
             case .signedOut: await signedOut()
             case .signedIn:
                 await registerForPush()
-                if case .starting = screen { await openHome() }
+                if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
     }
@@ -123,6 +131,8 @@ final class AppModel {
     /// Signs in and carries on: into sign-up's next step, or straight to 今天 for a member who
     /// already has a squad, such as on a new phone.
     func signIn(with credential: Credential, name: String?, from signUp: SignUpModel) async {
+        isSigningIn = true
+        defer { isSigningIn = false }
         do {
             _ = try await account.signIn(with: credential)
         } catch {
@@ -144,13 +154,11 @@ final class AppModel {
         if case .tabs(let today, _, _, _, _, _) = screen { await today.load() }
     }
 
-    /// A tapped awards push: the 战报 it is about, over 动态.
-    func openRecap(squad: SquadID, week: LocalDay) async {
-        guard case .tabs(_, _, _, _, _, let recap) = screen else {
-            pendingRecap = (squad, week)
-            return
-        }
-        await recap.open(squad: squad, week: week)
+    /// A tapped awards push: 动态 reads the 战报 again, so its tile shows the new one for the
+    /// member to open. Tabs not up yet read it as they open.
+    func readRecapAgain() async {
+        guard case .tabs(_, _, _, _, _, let recap) = screen else { return }
+        await recap.refresh()
     }
 
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
@@ -251,16 +259,21 @@ final class AppModel {
             scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
         // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
         // from now rather than from when the scene covered the screen.
-        if let scene { await today.dropIn(on: scene, coveredAt: .now) }
+        if let scene {
+            await today.dropIn(on: scene, coveredAt: .now)
+        } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
+            // The loading screen stays up until the squad's scene is known, so 今天 never shows
+            // the gym first and then switches.
+            today.scene = read
+        } else {
+            // Slow or offline: the scene this phone kept, read again once the tabs are up.
+            today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
+            Task { await readScene(of: home.squad.id, into: today) }
+        }
         screen = .tabs(
             today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
             recap: recap)
         homeSquad = home.squad.id
-        await readScene(of: home.squad.id, into: today)
-        if let pending = pendingRecap {
-            pendingRecap = nil
-            await openRecap(squad: pending.squad, week: pending.week)
-        }
     }
 
     /// The member's home, from what the phone kept for them alone.
@@ -278,12 +291,6 @@ final class AppModel {
         await readScene(of: squad.settings?.squad.id, into: today)
         await today.load()
         await profile.reload()
-    }
-
-    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
-    private func readScene(of squad: SquadID?, into today: TodayModel) async {
-        guard let squad, let scene = try? await api.scene(of: squad) else { return }
-        today.scene = SceneTheme(rawValue: scene.scene.rawValue) ?? .gym
     }
 
     /// 冠军专属 on a 战报's last page: when the reader picks the scene for the week after the
@@ -312,6 +319,7 @@ final class AppModel {
 
     private func signedOut() async {
         SignUpProgress.clear()
+        KeptScene.forgetAll()
         folders.forgetAll()
         shared?.forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
@@ -329,4 +337,50 @@ final class AppModel {
         SignUpModel(
             service: APISignUpService(api: api), invite: nil, nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI)
     }
+}
+
+/// The squad's scene, which 今天 must open on rather than switch to.
+extension AppModel {
+    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
+    private func readScene(of squad: SquadID?, into today: TodayModel) async {
+        guard let squad, let scene = await serverScene(of: squad) else { return }
+        today.scene = scene
+    }
+
+    /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
+    private func openingScene(of squad: SquadID) async -> SceneTheme? {
+        let wait = Self.sceneWait
+        return await withTaskGroup(of: SceneTheme?.self) { group in
+            group.addTask { await self.serverScene(of: squad) }
+            group.addTask {
+                try? await Task.sleep(for: wait)
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+
+    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
+    /// member whose squad is already set up, rather than sitting on a button that seems to do
+    /// nothing.
+    private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
+        guard case .signUp = screen else { return await work() }
+        screen = .starting
+        openingUnderCover = true
+        defer { openingUnderCover = false }
+        return await work()
+    }
+
+    /// The squad's scene this week from the server, kept on this phone for the next launch.
+    private func serverScene(of squad: SquadID) async -> SceneTheme? {
+        guard let read = try? await api.scene(of: squad) else { return nil }
+        let scene = SceneTheme(rawValue: read.scene.rawValue) ?? .gym
+        KeptScene.save(scene, of: squad)
+        return scene
+    }
+
+    /// How long the loading screen waits for the squad's scene before opening on the kept one.
+    private static let sceneWait = Duration.seconds(3)
 }

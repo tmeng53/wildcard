@@ -944,7 +944,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1045,7 +1044,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1112,7 +1110,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1158,7 +1155,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "minItems": 1,
             "maxItems": 3
           },
           "kind": {
@@ -1239,11 +1235,19 @@
               "$ref": "#/components/schemas/ReactionEntry"
             },
             "description": "Teammates’ emoji, oldest first."
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentEntry"
+            },
+            "description": "Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it."
           }
         },
         "required": [
           "checkIn",
-          "reactions"
+          "reactions",
+          "comments"
         ],
         "additionalProperties": false
       },
@@ -1274,6 +1278,80 @@
         ],
         "additionalProperties": false
       },
+      "CommentEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The comment’s id, which the app picks."
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who wrote it."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them; may span lines.",
+            "x-max-characters": 100
+          },
+          "replyTo": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Whom it replies to, when it does. Gone once their account is deleted."
+          },
+          "commentedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was written, in UTC with milliseconds.",
+            "example": "2026-10-18T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "member",
+          "text",
+          "commentedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "checkIn": {
+            "$ref": "#/components/schemas/CheckIn"
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReactionEntry"
+            },
+            "description": "Teammates’ emoji, oldest first."
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentEntry"
+            },
+            "description": "Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it."
+          }
+        },
+        "required": [
+          "version",
+          "checkIn",
+          "reactions",
+          "comments"
+        ],
+        "additionalProperties": false
+      },
       "CheckInList": {
         "type": "object",
         "properties": {
@@ -1295,6 +1373,57 @@
           "checkIns"
         ],
         "additionalProperties": false
+      },
+      "MyPostPage": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SquadPost"
+            },
+            "description": "Newest day first, then newest made. Each shows its whole audience, and the reactions and comments of the member and of members of the squads it went to that the member still shares with them."
+          },
+          "next": {
+            "type": "string",
+            "description": "Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/MyPostCounts"
+          }
+        },
+        "required": [
+          "version",
+          "posts"
+        ],
+        "additionalProperties": false
+      },
+      "MyPostCounts": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every check-in the member made."
+          },
+          "reactions": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The reactions on them the member can see, as on each post."
+          }
+        },
+        "required": [
+          "posts",
+          "reactions"
+        ],
+        "additionalProperties": false,
+        "description": "On the first page only (no `after`); never narrowed to `kind`."
       },
       "CheckInTotals": {
         "type": "object",
@@ -1323,7 +1452,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins, at most one a day."
+            "description": "今日请假条 check-ins."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
@@ -1462,6 +1591,101 @@
         "required": [
           "version",
           "reactions"
+        ],
+        "additionalProperties": false
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The comment’s id, which the app picks."
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who wrote it."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them; may span lines.",
+            "x-max-characters": 100
+          },
+          "replyTo": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Whom it replies to, when it does. Gone once their account is deleted."
+          },
+          "commentedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was written, in UTC with milliseconds.",
+            "example": "2026-10-18T20:05:00.000Z"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "member",
+          "text",
+          "commentedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CommentDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them; may span lines.",
+            "x-max-characters": 100
+          },
+          "replyTo": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it."
+          }
+        },
+        "required": [
+          "version",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "CommentList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentEntry"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "comments"
         ],
         "additionalProperties": false
       },
@@ -3650,7 +3874,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, today’s disclaimer is already posted, or another check-in uses one of the photos",
+            "description": "The id holds a different check-in, or another check-in uses one of the photos",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3680,13 +3904,86 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "getPost",
+        "summary": "One check-in, with its reactions and comments",
+        "description": "A post’s own page, as the feed shows it: for its author, even from a squad they left, or a teammate who shares a squad it went to.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The post",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/squads/{squadId}/check-ins": {
       "get": {
         "operationId": "listSquadCheckIns",
-        "summary": "A squad’s check-ins for a range of days, with their reactions",
-        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions of the teammates the viewer shares a squad with. Only for members of the squad.",
+        "summary": "A squad’s check-ins for a range of days, with their reactions and comments",
+        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.",
         "security": [
           {
             "bearer": []
@@ -3779,7 +4076,7 @@
       "get": {
         "operationId": "listMyCheckIns",
         "summary": "The signed-in member’s check-ins for a range of days",
-        "description": "Newest day first, each with its whole audience.",
+        "description": "Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.",
         "security": [
           {
             "bearer": []
@@ -3803,6 +4100,19 @@
             "required": true,
             "name": "to",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "include"
+              ],
+              "description": "`include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them."
+            },
+            "required": false,
+            "description": "`include` lists posts shared to no squad too; left out, they are not listed, since builds from before they existed can’t read them.",
+            "name": "unshared",
+            "in": "query"
           }
         ],
         "responses": {
@@ -3818,6 +4128,101 @@
           },
           "400": {
             "description": "Not a valid range of days (at most 31)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/posts": {
+      "get": {
+        "operationId": "listMyPosts",
+        "summary": "The signed-in member’s own check-ins, a page at a time, with their reactions",
+        "description": "历史动态: everything the member posted, wherever it went, including squads they left. Pages follow from `next`, so posts made meanwhile never shift them.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "trained",
+                "healthyMeal",
+                "cheatMeal",
+                "disclaimer"
+              ],
+              "description": "Only check-ins of this kind."
+            },
+            "required": false,
+            "description": "Only check-ins of this kind.",
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "The `next` of the page before; left out for the newest page."
+            },
+            "required": false,
+            "description": "The `next` of the page before; left out for the newest page.",
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60,
+              "description": "Check-ins on the page: 1 to 60, 30 when left out."
+            },
+            "required": false,
+            "description": "Check-ins on the page: 1 to 60, 30 when left out.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPostPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid kind, limit or `after`",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4135,6 +4540,290 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReactionList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{checkInId}/comments/{commentId}": {
+      "put": {
+        "operationId": "commentOnCheckIn",
+        "summary": "Comment on a check-in",
+        "description": "Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid comment, or a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The id holds a different comment (`COMMENT_ID_CONFLICT`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteComment",
+        "summary": "Delete your comment",
+        "description": "It is gone for everyone. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted, or already gone"
+          },
+          "400": {
+            "description": "Not a check-in or comment id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Someone else’s comment (`NOT_YOUR_COMMENT`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-ins/{checkInId}/comments": {
+      "get": {
+        "operationId": "listCheckInComments",
+        "summary": "A check-in’s comments",
+        "description": "Oldest first, for its author and the teammates who can see it.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "checkInId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentList"
                 }
               }
             }
@@ -5871,7 +6560,7 @@
       "put": {
         "operationId": "saveMyWeeklyPlan",
         "summary": "Save the signed-in member’s plan for a week",
-        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
+        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
         "security": [
           {
             "bearer": []

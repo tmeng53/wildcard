@@ -75,3 +75,18 @@ struct PullCordTests {
         #expect(PullCordMotion.release(from: 28, at: 0.3, swings: false).degrees == 0)
     }
 }
+
+struct TicketRockTests {
+    /// The approved design A 两张票 (2026-10-31): apart by 30% of the 0.9 s beat, back by 60%,
+    /// then still until the next beat.
+    @Test func ticketsRockOnTheBeat() {
+        func near(_ value: Double, _ expected: Double) -> Bool { abs(value - expected) < 1e-6 }
+        #expect(near(TicketRock.amount(at: 0), 0))
+        #expect(near(TicketRock.amount(at: 0.27), 1))
+        #expect(near(TicketRock.amount(at: 0.54), 0))
+        #expect(near(TicketRock.amount(at: 0.8), 0))
+        #expect(near(TicketRock.amount(at: 0.9 + 0.27), 1))
+        // The overshoot past the top, as CSS's cubic-bezier(0.34, 1.56, 0.64, 1) gives it.
+        #expect(TicketRock.amount(at: 0.18) > 1)
+    }
+}

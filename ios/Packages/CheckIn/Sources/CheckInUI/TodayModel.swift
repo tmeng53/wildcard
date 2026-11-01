@@ -61,10 +61,11 @@ public final class TodayModel {
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
-    /// anywhere outside its capsules closes it) or a check-in is being written (the compose and
-    /// 请假条 pages take the whole screen).
+    /// anywhere outside its capsules closes it), a check-in is being written (the compose and
+    /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        switch step {
+        guard !holdsTabBar else { return false }
+        return switch step {
         case .scene, .pickingPhotos: !isBurstOpen
         case .composing, .disclaimer: false
         }
@@ -135,6 +136,8 @@ public final class TodayModel {
     /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
     /// settled (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
+    /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
+    var holdsTabBar = false
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -145,6 +148,8 @@ public final class TodayModel {
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport("run") }
     var recentActivities: [Activity] { store.recentActivities }
+    /// The squads a post can be shared to, the earliest joined first.
+    var shareSquads: [Squad] { store.home?.squads ?? [] }
 
     /// Day or night on the scene, on the member's own clock.
     var phase: DayPhase {
@@ -322,7 +327,8 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    func post(_ draft: CheckInDraft) async {
+    /// Posts `draft` to the squads in `shared` (none keeps it to the member).
+    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>) async {
         guard !isSending else { return }
         isSending = true
         sendFailed = false
@@ -330,7 +336,8 @@ public final class TodayModel {
         let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
-            let outcome = try await store.post(draft)
+            let audience = shareSquads.map(\.id).filter(shared.contains)
+            let outcome = try await store.post(draft, sharedTo: audience)
             // A 练了's kit goes on after its cheer.
             if draft.kind == .trained {
                 dressHolds += 1

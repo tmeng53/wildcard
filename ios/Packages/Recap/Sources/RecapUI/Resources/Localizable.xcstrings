@@ -8,6 +8,12 @@
             "state": "translated",
             "value": "%1$@ · %2$@"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
         }
       }
     },
@@ -17,6 +23,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld reactions"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 個回應"
           }
         }
       }
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "M"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "W"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三"
           }
         }
       }
@@ -48,6 +72,12 @@
             "state": "translated",
             "value": "Previous page"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一頁"
+          }
         }
       }
     },
@@ -57,6 +87,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next page"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一頁"
           }
         }
       }
@@ -68,6 +104,12 @@
             "state": "translated",
             "value": "The organizers ran out of money. Finding sponsors, awards soon"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主辦單位沒經費了，正在拉贊助，等一下再來頒獎"
+          }
         }
       }
     },
@@ -77,6 +119,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "T"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二"
           }
         }
       }
@@ -88,6 +136,12 @@
             "state": "translated",
             "value": "F"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五"
+          }
         }
       }
     },
@@ -97,6 +151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rest"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "休息"
           }
         }
       }
@@ -108,6 +168,12 @@
             "state": "translated",
             "value": "Your hottest post"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你最紅的一則"
+          }
         }
       }
     },
@@ -118,6 +184,12 @@
             "state": "translated",
             "value": "Your week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的一週"
+          }
         }
       }
     },
@@ -126,7 +198,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Healthy meals"
+            "value": "Clean meals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康餐"
           }
         }
       }
@@ -138,6 +216,12 @@
             "state": "translated",
             "value": "Nudge the organizers"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "催一下主辦單位"
+          }
         }
       }
     },
@@ -147,6 +231,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全隊"
           }
         }
       }
@@ -158,6 +248,12 @@
             "state": "translated",
             "value": "Whole squad on plan"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全隊達標"
+          }
         }
       }
     },
@@ -167,6 +263,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "S"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "六"
           }
         }
       }
@@ -178,6 +280,12 @@
             "state": "translated",
             "value": "Close"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
+          }
         }
       }
     },
@@ -187,6 +295,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Organizers nudged to top up tokens"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已催主辦單位儲值 token"
           }
         }
       }
@@ -198,6 +312,12 @@
             "state": "translated",
             "value": "What we ate"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "吃了"
+          }
         }
       }
     },
@@ -208,15 +328,27 @@
             "state": "translated",
             "value": "T"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四"
+          }
         }
       }
     },
-    "坦白放纵餐": {
+    "放纵餐": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Confessed treats"
+            "value": "Cheat meals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放縱餐"
           }
         }
       }
@@ -228,6 +360,12 @@
             "state": "translated",
             "value": "Titles"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頭銜"
+          }
         }
       }
     },
@@ -238,15 +376,27 @@
             "state": "translated",
             "value": "Save image"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存圖"
+          }
         }
       }
     },
-    "打卡照片": {
+    "照片": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check-in photo"
+            "value": "Photo"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照片"
           }
         }
       }
@@ -258,6 +408,12 @@
             "state": "translated",
             "value": "Plan next week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "排下週"
+          }
         }
       }
     },
@@ -268,15 +424,11 @@
             "state": "translated",
             "value": "Reactions received"
           }
-        }
-      }
-    },
-    "放纵餐": {
-      "localizations": {
-        "en": {
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "Treats"
+            "value": "收到的回應"
           }
         }
       }
@@ -288,6 +440,12 @@
             "state": "translated",
             "value": "S"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日"
+          }
         }
       }
     },
@@ -296,7 +454,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Best excuse note"
+            "value": "Best day-off note"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最佳假單"
           }
         }
       }
@@ -308,6 +472,12 @@
             "state": "translated",
             "value": "This week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週"
+          }
         }
       }
     },
@@ -317,6 +487,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Weekly recap"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週戰報"
           }
         }
       }
@@ -328,6 +504,12 @@
             "state": "translated",
             "value": "Weekly recap, %@"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週戰報，%@"
+          }
         }
       }
     },
@@ -337,6 +519,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Page %1$lld of %2$lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %1$lld 頁，共 %2$lld 頁"
           }
         }
       }
@@ -348,6 +536,12 @@
             "state": "translated",
             "value": "Trained"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練了"
+          }
         }
       }
     },
@@ -358,6 +552,12 @@
             "state": "translated",
             "value": "Training days"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "訓練天數"
+          }
         }
       }
     },
@@ -366,7 +566,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excuse note"
+            "value": "Day-off note"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "假單"
           }
         }
       }
@@ -378,6 +584,12 @@
             "state": "translated",
             "value": "%lld to go"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還差 %lld 次"
+          }
         }
       }
     },
@@ -388,6 +600,12 @@
             "state": "translated",
             "value": "This week"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這一週"
+          }
         }
       }
     },
@@ -397,6 +615,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Podium"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頒獎台"
           }
         }
       }

@@ -22,6 +22,14 @@ struct ComposeView: View {
     @State private var isRulingMinutes = false
     /// Where the caption starts on the page, so it can fill the page below.
     @State private var captionTop = 0.0
+    /// The squads it goes to: all of them until the member unticks one.
+    @State private var shared: Set<SquadID>
+
+    init(model: TodayModel, kind: CheckInKind) {
+        self.model = model
+        self.kind = kind
+        _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -64,6 +72,11 @@ struct ComposeView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            ShareRow(squads: model.shareSquads, shared: $shared)
+                .padding(.horizontal, Space.pageMargin)
+                .background(Color(role: .bgCanvas, in: theme))
+        }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
             SportPicker(selected: currentActivity, recent: model.recentActivities) { picked in
@@ -97,15 +110,12 @@ struct ComposeView: View {
             .accessibilityIdentifier("compose.cancel")
             Spacer()
             Button {
-                Task { await model.post(draft) }
+                Task { await model.post(draft, sharedTo: shared) }
             } label: {
-                if model.isSending {
-                    ProgressView()
-                } else {
-                    Text("发布", bundle: .module)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                }
+                Text("发布", bundle: .module)
+                    .typeStyle(TypeRamp.headline)
+                    .loadingLabel(model.isSending)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
             .frame(minHeight: Sizing.minimumTapTarget)
             .disabled(model.isSending)

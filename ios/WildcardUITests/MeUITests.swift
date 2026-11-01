@@ -23,7 +23,7 @@ final class MeUITests: XCTestCase {
 
         // A tap turns the card over to the career numbers, and another turns it back.
         card.tap()
-        waitFor(card, "label CONTAINS '坦白放纵餐'", "the card didn't turn over to the other kinds")
+        waitFor(card, "label CONTAINS '放纵餐'", "the card didn't turn over to the other kinds")
         XCTAssertTrue(card.label.contains("46"), "the back has no 健康餐 count: \(card.label)")
         XCTAssertTrue(card.label.contains("最常练"), "the back has no 最常练: \(card.label)")
         XCTAssertTrue(card.label.contains("跑步"), "the back has no top sport: \(card.label)")
@@ -31,7 +31,7 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "41-me-card-back")
         card.tap()
-        waitFor(card, "NOT (label CONTAINS '坦白放纵餐')", "the card didn't turn back")
+        waitFor(card, "NOT (label CONTAINS '放纵餐')", "the card didn't turn back")
     }
 
     func testSettingsAndDeleteAccount() {
@@ -157,8 +157,29 @@ final class MeUITests: XCTestCase {
     /// What must stay tappable sits above the floating tab bar.
     private func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(element.waitForExistence(timeout: 30), "\(element) never showed")
-        let bar = app.buttons["tab.today"].frame
+        let bar = tabButton("tab.today", in: app).frame
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.minY, "\(element) sits under the tab bar")
+    }
+
+    /// 我 in Traditional Chinese reads in Taiwan's words, not converted ones.
+    func testMePageInTraditionalChinese() {
+        let app = launch(language: "zh-Hant")
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30))
+        XCTAssertTrue(card.label.contains("練了"), "the card isn't in Traditional Chinese: \(card.label)")
+        XCTAssertTrue(app.buttons["編輯外卡運動員"].exists)
+        settle()
+        keepScreenshot(named: "49-me-zh-hant")
+        app.buttons["me.settings"].tap()
+        let language = app.buttons["me.language"]
+        XCTAssertTrue(language.waitForExistence(timeout: 30), "設定 has no 語言 row")
+        XCTAssertTrue(language.label.contains("繁體中文"), "the row doesn't name the language: \(language.label)")
+        app.swipeUp()
+        let deleteAccount = app.buttons["me.deleteAccount"]
+        XCTAssertTrue(deleteAccount.waitForExistence(timeout: 30), "no delete-account row in 設定")
+        XCTAssertTrue(deleteAccount.label.contains("刪除帳號"), "the row reads \(deleteAccount.label)")
+        settle()
+        keepScreenshot(named: "50-settings-zh-hant")
     }
 
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {

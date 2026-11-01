@@ -8,11 +8,17 @@ import {
   type SquadId,
   type Title,
 } from '../../domain/awards.js';
-import { promptFor } from '../../domain/prompt.js';
+import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
 import type { AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
-import type { AiConsented, AwardSettingsStore, AwardsStore, LanguageModel } from '../../ports.js';
+import type {
+  AiConsented,
+  AwardSettingsStore,
+  AwardsStore,
+  LanguageModel,
+  MemesInUse,
+} from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
 const ATTEMPTS = 2;
@@ -26,8 +32,9 @@ export interface GiveAwardsInput {
 
 /**
  * A squad's awards for the week: the ones saved already, or new ones the model writes for every
- * member who checked in and agreed to AI use, saved once. A squad where none of them did gets
- * none, without asking the model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
+ * member who checked in and agreed to AI use, saved once, read with the comments on their posts
+ * from members who agreed too. A squad where none of them did gets none, without asking the
+ * model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
  * the failed try and why.
  */
 export async function giveAwards(
@@ -36,6 +43,7 @@ export async function giveAwards(
     readonly settings: AwardSettingsStore;
     readonly store: AwardsStore;
     readonly aiConsented: AiConsented;
+    readonly memes: MemesInUse;
   },
   { squad, weekStart, members }: GiveAwardsInput,
 ): Promise<Awards> {
@@ -43,15 +51,29 @@ export async function giveAwards(
   if (saved?.status === 'given') return saved.awards;
 
   const checkedIn = members.filter(({ checkIns }) => checkIns.length > 0);
-  const agreed = new Set(
-    checkedIn.length === 0 ? [] : await deps.aiConsented(checkedIn.map(({ member }) => member)),
-  );
-  const winners = checkedIn.filter(({ member }) => agreed.has(member));
+  // Whose words may go to the model: those who checked in, and whoever commented on their posts.
+  const writers = new Set(checkedIn.map(({ member }) => member));
+  for (const { checkIns } of checkedIn) {
+    for (const { comments = [] } of checkIns)
+      for (const { member } of comments) writers.add(member);
+  }
+  const agreed = new Set(writers.size === 0 ? [] : await deps.aiConsented([...writers]));
+  const winners = checkedIn
+    .filter(({ member }) => agreed.has(member))
+    .map((week) => ({
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.comments === undefined
+          ? each
+          : { ...each, comments: each.comments.filter(({ member }) => agreed.has(member)) },
+      ),
+    }));
   let titles: Titles = new Map<MemberId, Title[]>();
   if (winners.length > 0) {
     try {
       titles = await writeTitles(deps.model, {
         settings: await deps.settings.current(),
+        memes: await deps.memes(),
         weekStart,
         winners,
       });
@@ -117,15 +139,17 @@ async function writeTitles(
   model: LanguageModel,
   {
     settings,
+    memes,
     weekStart,
     winners,
   }: {
     readonly settings: AwardSettings;
+    readonly memes: readonly PromptMeme[];
     readonly weekStart: WeekStart;
     readonly winners: readonly MemberWeek[];
   },
 ): Promise<Titles> {
-  const prompt = promptFor({ weekStart, members: winners, moves: settings.moves });
+  const prompt = promptFor({ weekStart, members: winners, moves: settings.moves, memes });
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {

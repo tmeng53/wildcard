@@ -30,7 +30,7 @@ final class LanguageUITests: XCTestCase {
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
         nickname.typeText("Tracy\n")
-        waitFor(editorDone, "isEnabled == true", "就这样 stays off with a nickname")
+        waitFor(editorDone, "isEnabled == true", "确认 stays off with a nickname")
         editorDone.tap()
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "你的小队 never appeared")
