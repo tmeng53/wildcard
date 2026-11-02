@@ -26,6 +26,9 @@
       "path": "packages/sports"
     },
     {
+      "path": "packages/unlocks"
+    },
+    {
       "path": "packages/check-ins"
     },
     {

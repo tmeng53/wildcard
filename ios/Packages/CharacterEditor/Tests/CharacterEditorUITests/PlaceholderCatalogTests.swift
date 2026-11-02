@@ -2,6 +2,8 @@ import AvatarArt
 import AvatarDomain
 import CharacterEditorDomain
 import CharacterEditorUI
+import Contracts
+import Foundation
 import Testing
 
 /// The bundled art gives the editor what the design shows: five species, WARM-UP's twelve pieces,
@@ -66,4 +68,24 @@ import Testing
         draft.pick("bear", for: "body")
         _ = try PlaceholderCharacter.figure(wearing: draft.outfit)
     }
+}
+
+/// A store the member unlocked opens on the street with its rack, and an unlocked prop joins
+/// the starters; the rest stay shut.
+@Test func unlocksOpenTheirStoresAndProps() throws {
+    let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
+    let catalog = try Catalog.placeholder(unlocks: [
+        Unlock(
+            kind: .store, id: "deuce", unlockedAt: unlockedAt, sports: ["tennis", "pickleball", "squash"], checkIns: 3),
+        Unlock(kind: .prop, id: "racket", unlockedAt: unlockedAt, sports: ["tennis", "squash"], checkIns: 1),
+    ])
+    #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "deuce"])
+    #expect(catalog.props == ["bottle", "dumbbell", "racket"])
+    #expect(
+        catalog.rack(of: "deuce").map(\.variant) == [
+            "deuce-polo", "deuce-shorts", "deuce-skirt", "deuce-court", "deuce-visor",
+        ])
+    #expect(catalog.rack(of: "lap").isEmpty)
+    #expect(catalog.swatches(for: "top", wearing: "deuce-polo").isEmpty)
+    #expect(catalog.variants["top"] == ["warmup-tee", "warmup-tank", "warmup-hoodie", "deuce-polo"])
 }

@@ -37,6 +37,7 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
@@ -104,6 +105,7 @@ const app = createApp({
   }),
   push: pushOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   jobs: noJobs,
