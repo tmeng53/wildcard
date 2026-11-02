@@ -9,6 +9,7 @@ import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
 import type { SquadTables } from '@wildcard/squads';
 import type { SportTables } from '@wildcard/sports';
+import type { UnlockTables } from '@wildcard/unlocks';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -162,6 +163,7 @@ export type Tables = CheckInTables &
   NudgeTables &
   WeeklyAwardTables &
   SportTables &
+  UnlockTables &
   CoachTables;
 
 /** The database: any Postgres, through Kysely. */

@@ -1,0 +1,57 @@
+import { UnlockRuleEdit, type UnlocksAdmin, type UnlockRule } from '@wildcard/unlocks';
+import { z } from 'zod';
+
+import { adminTool } from '../admin-tool.js';
+
+// How the character editor's stores and props unlock: each after a number of 练了 check-ins in
+// its sports. A change applies to the next read of each member's unlocks; what a member already
+// unlocked stays. Rules are never deleted.
+
+interface UnlockToolDependencies {
+  readonly unlocks: UnlocksAdmin;
+}
+
+const shown = (rules: readonly UnlockRule[]) => ({
+  version: 1,
+  rules: rules.map(({ countsFrom, ...rule }) => ({
+    ...rule,
+    countsFrom: countsFrom.toISOString(),
+  })),
+});
+
+/** `get_unlock_rules`: every rule now. */
+export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'get_unlock_rules',
+    title: 'Read the unlock rules',
+    description:
+      'Shows how each store on the character editor’s 商店街 and each prop unlocks: kind ' +
+      '(store or prop), id, sports (empty = any sport), after (练了 check-ins needed) and ' +
+      'countsFrom (only check-ins made from then count). Starters (WARM-UP, the tumbler, the ' +
+      'dumbbell) are open to everyone and have no rule.',
+    changes: false,
+    input: z.strictObject({}),
+    run: async () => shown(await unlocks.rules()),
+  });
+}
+
+/** `put_unlock_rule`: adds a rule, or changes the sports or count of one. */
+export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'put_unlock_rule',
+    title: 'Add or change an unlock rule',
+    description:
+      'Adds a rule for a store or prop, or changes the sports or count of one. A new rule ' +
+      'counts check-ins made from now; a changed one keeps its start. Members who already ' +
+      'unlocked it keep it. The id must be a store or prop the app’s art has. Returns every ' +
+      'rule now.',
+    changes: true,
+    input: UnlockRuleEdit,
+    run: async (edit) => shown(await unlocks.putRule(edit)),
+  });
+}
+
+export const unlockTools = (deps: UnlockToolDependencies) => [
+  getUnlockRules(deps),
+  putUnlockRule(deps),
+];

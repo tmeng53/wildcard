@@ -32,6 +32,7 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
@@ -87,6 +88,7 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   log: createLog(() => undefined),

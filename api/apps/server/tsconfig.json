@@ -51,6 +51,9 @@
     },
     {
       "path": "../../packages/coach"
+    },
+    {
+      "path": "../../packages/unlocks"
     }
   ]
 }

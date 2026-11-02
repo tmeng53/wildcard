@@ -30,6 +30,8 @@ public struct APIMeService: MeService {
             let titles = try? await api.awardTotals()
             // And the 每周模板's row its count.
             let templateDays = try? await api.planTemplate().count { $0 != .rest }
+            // And the editor its starters only.
+            let unlocks = (try? await api.unlocks()) ?? []
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -50,7 +52,7 @@ public struct APIMeService: MeService {
                         count: titles.titles,
                         latest: titles.latest.map { TitlesWon.Latest(title: $0.title, times: $0.times) })
                 } ?? .none,
-                templateDays: templateDays)
+                templateDays: templateDays, unlocks: unlocks)
         }
     }
 

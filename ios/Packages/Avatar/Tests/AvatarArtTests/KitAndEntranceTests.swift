@@ -216,7 +216,7 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
         try PlaceholderCharacter.woken(),
     ]
     clips += try PlaceholderCharacter.editorChoices().props.compactMap {
-        try PlaceholderCharacter.propMove(for: Outfit(["prop": $0]))
+        try PlaceholderCharacter.propMove(for: Outfit(["prop": $0.id]))
     }
     clips += PlaceholderCharacter.reactionMoves.compactMap(PlaceholderCharacter.reactionMove)
     for persona in Persona.allCases {

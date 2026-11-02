@@ -41,6 +41,7 @@ import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
@@ -135,6 +136,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
+    unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     log: createLog((line) => logged.push(JSON.parse(line))),

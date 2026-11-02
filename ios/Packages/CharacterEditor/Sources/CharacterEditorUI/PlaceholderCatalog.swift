@@ -1,13 +1,23 @@
 import AvatarArt
 import AvatarDomain
 import CharacterEditorDomain
+import Contracts
 
 extension Catalog {
-    /// What the placeholder character's bundled art offers: the species, stores, clothes and
-    /// props in its `editor.json`, every bundled hair and face part, and their preset colors.
-    public static func placeholder() throws(AvatarError) -> Catalog {
+    /// What the placeholder character's bundled art offers a member who unlocked `unlocks`: the
+    /// species and stores in its `editor.json`, the clothes of the stores open to them and the
+    /// props they hold (the starters, with nothing unlocked), every bundled hair and face part,
+    /// and their preset colors.
+    public static func placeholder(unlocks: [Unlock] = []) throws(AvatarError) -> Catalog {
         let choices = try PlaceholderCharacter.editorChoices()
-        var variants = choices.wear.mapValues { $0.map(\.id) }
+        let unlocked = { (kind: Unlock.Kind) in Set(unlocks.filter { $0.kind == kind }.map(\.id)) }
+        let (unlockedStores, unlockedProps) = (unlocked(.store), unlocked(.prop))
+        let stores = choices.stores.map { store in
+            EditorChoices.Store(id: store.id, isOpen: store.isOpen || unlockedStores.contains(store.id))
+        }
+        let open = Set(stores.filter(\.isOpen).map(\.id))
+        let props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
+        var variants = choices.wear.mapValues { pieces in pieces.filter { open.contains($0.store) }.map(\.id) }
         for slot in ["hair"] + PlaceholderCharacter.faceSlots {
             variants[slot] = PlaceholderCharacter.variants(for: slot)
         }
@@ -34,9 +44,9 @@ extension Catalog {
             storeOf[piece.id] = piece.store
         }
         return Catalog(
-            species: choices.species, variants: variants, props: choices.props, swatches: swatches,
+            species: choices.species, variants: variants, props: props, swatches: swatches,
             originals: originals,
             defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) },
-            stores: choices.stores, storeOf: storeOf)
+            stores: stores, storeOf: storeOf)
     }
 }

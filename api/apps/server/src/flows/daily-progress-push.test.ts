@@ -39,6 +39,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeekSummaryWords,
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
 import {
@@ -109,6 +110,7 @@ const deps = {
   push,
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyAwards: unusedWeeklyAwards,
+  unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   log,

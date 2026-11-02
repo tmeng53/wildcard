@@ -1,0 +1,12 @@
+import { AppError } from '@wildcard/errors';
+
+/** Thrown when a rule names a sport the sports list doesn't have. */
+export class UnlockSportNotListedError extends AppError {
+  override readonly name = 'UnlockSportNotListedError';
+  readonly reason = 'UNLOCK_SPORT_NOT_LISTED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly sport: string) {
+    super(`${sport} is not on the sports list.`);
+  }
+}

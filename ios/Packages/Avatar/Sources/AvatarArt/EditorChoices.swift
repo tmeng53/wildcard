@@ -24,8 +24,20 @@ public struct EditorChoices: Hashable, Sendable {
     public struct Store: Hashable, Sendable, Identifiable {
         /// `warmup`, `lap`, ...: the prefix of its pieces' ids.
         public let id: String
-        /// Whether every member can shop there. For now only WARM-UP is; the others open with
-        /// check-ins once the catalog keeps who unlocked what.
+        /// Whether every member can shop there from the start: WARM-UP. The others open once
+        /// the member unlocks them by training.
+        public let isOpen: Bool
+
+        public init(id: String, isOpen: Bool = false) {
+            (self.id, self.isOpen) = (id, isOpen)
+        }
+    }
+
+    /// A prop of this release. Its name is UI copy, in the editor's String Catalog.
+    public struct Prop: Hashable, Sendable, Identifiable {
+        public let id: String
+        /// Whether every member holds it from the start: the tumbler and the dumbbell. The
+        /// others open once the member unlocks them by training.
         public let isOpen: Bool
 
         public init(id: String, isOpen: Bool = false) {
@@ -52,19 +64,21 @@ public struct EditorChoices: Hashable, Sendable {
     /// The pieces each clothing slot offers (`top`, `bottom`, `shoes`, `hat`, `acc`), in display
     /// order.
     public let wear: [Slot: [Wearable]]
-    public let props: [String]
+    /// The props, in the order the editor shows them.
+    public let props: [Prop]
 
-    public init(species: [Species], stores: [Store], wear: [Slot: [Wearable]], props: [String]) {
+    public init(species: [Species], stores: [Store], wear: [Slot: [Wearable]], props: [Prop]) {
         (self.species, self.stores, self.wear, self.props) = (species, stores, wear, props)
     }
 
     /// The only `version` of `editor.json` this build reads.
-    public static let currentVersion = 3
+    public static let currentVersion = 4
 
-    /// `{"version": 3, "species": [{"id": "person", "bodies": ["peach"], "hair": true}],
+    /// `{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hair": true}],
     /// "stores": [{"id": "warmup", "open": true}, {"id": "lap"}],
     /// "wear": {"top": [{"id": "warmup-tee", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128"]}]},
-    /// "props": ["dumbbell"]}`. Every piece hangs in a store the list has.
+    /// "props": [{"id": "dumbbell", "open": true}, {"id": "racket"}]}`. Every piece hangs in a
+    /// store the list has.
     public static func decode(_ data: Data) throws(AvatarError) -> EditorChoices {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
         let stores = file.stores.map { Store(id: $0.id, isOpen: $0.open ?? false) }
@@ -83,12 +97,12 @@ public struct EditorChoices: Hashable, Sendable {
         }
         return EditorChoices(
             species: file.species.map { Species(id: $0.id, bodies: $0.bodies, wearsHair: $0.hair ?? false) },
-            stores: stores, wear: wear, props: file.props)
+            stores: stores, wear: wear, props: file.props.map { Prop(id: $0.id, isOpen: $0.open ?? false) })
     }
 
     private struct File: Decodable {
         static let shape = JSONShape.object([
-            "version": .value, "props": .value,
+            "version": .value, "props": .array(.object(["id": .value, "open": .value])),
             "stores": .array(.object(["id": .value, "open": .value])),
             // Keyed by slot, so any key goes.
             "wear": .value,
@@ -96,12 +110,13 @@ public struct EditorChoices: Hashable, Sendable {
         ])
 
         let species: [SpeciesFile]
-        let stores: [StoreFile]
+        let stores: [ItemFile]
         let wear: [String: [WearableFile]]
-        let props: [String]
+        let props: [ItemFile]
     }
 
-    private struct StoreFile: Decodable {
+    /// A store or a prop: its id, and whether it is open from the start.
+    private struct ItemFile: Decodable {
         let id: String
         let open: Bool?
     }
