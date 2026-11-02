@@ -356,6 +356,8 @@ func outline(_ path: [PathElement]) -> [Point] {
     let stores = try PlaceholderCharacter.editorChoices().stores
     #expect(stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"])
     #expect(stores.filter(\.isOpen).map(\.id) == ["warmup"])
+    let starters = try PlaceholderCharacter.editorChoices().starterWear.values.joined()
+    #expect(starters.count == 12 && starters.allSatisfy { $0.store == "warmup" })
     for store in stores {
         #expect(try !PlaceholderCharacter.storeBadge(store.id).shapes.isEmpty)
     }

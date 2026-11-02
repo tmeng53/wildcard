@@ -71,6 +71,12 @@ public struct EditorChoices: Hashable, Sendable {
         (self.species, self.stores, self.wear, self.props) = (species, stores, wear, props)
     }
 
+    /// The pieces of the stores every member can shop at from the start (WARM-UP), by slot.
+    public var starterWear: [Slot: [Wearable]] {
+        let open = Set(stores.filter(\.isOpen).map(\.id))
+        return wear.mapValues { pieces in pieces.filter { open.contains($0.store) } }
+    }
+
     /// The only `version` of `editor.json` this build reads.
     public static let currentVersion = 4
 
