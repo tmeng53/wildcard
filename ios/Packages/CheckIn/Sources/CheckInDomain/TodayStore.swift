@@ -137,6 +137,7 @@ public final class TodayStore {
                 let earlier = savedHome
                 savedHome = fresh
                 news = news.adding(SquadNews(from: earlier, to: fresh))
+                lostSquad = nil
                 for saved in earlier?.checkIns ?? [] where saved.member == fresh.member && saved.day == day {
                     fold(saved)
                 }

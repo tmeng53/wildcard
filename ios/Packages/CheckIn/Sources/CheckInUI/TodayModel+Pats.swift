@@ -7,12 +7,15 @@ import Foundation
 /// 拍一拍 on the home, and the squad's news told on the scene.
 extension TodayModel {
     /// The squad's news since the home was last shown, once: who joined walks in with a bubble,
-    /// and a member made captain hears 「你现在是队长了」. Leaving says nothing.
+    /// and a member made captain hears 「你现在是队长了」. Leaving says nothing. Kept for the next
+    /// load while the scene is covered (writing a check-in, the burst open).
     func tellNews() async {
-        let news = store.takeNews()
-        guard !news.isEmpty else { return }
+        guard !store.news.isEmpty else { return }
         try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
         await untilArrived()
+        guard step == .scene, !isBurstOpen else { return }
+        let news = store.takeNews()
+        guard !news.isEmpty else { return }
         let joined = news.joined.compactMap { id in cast.mates.first { $0.id == id } }
         pats.welcome(joined, cast: cast, phase: stagePhase)
         if news.madeCaptain { pats.say(String(localized: "你现在是队长了", bundle: .module.inAppLanguage)) }
