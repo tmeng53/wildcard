@@ -39,7 +39,7 @@ struct CoachCard: View {
 
     private var empty: some View {
         HStack(spacing: Space.s) {
-            CoachThumbnail(isEmpty: true)
+            CoachThumbnail(coach: nil)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 Text("还没有教练", bundle: .module)
                     .typeStyle(TypeRamp.headline)
@@ -71,7 +71,7 @@ struct CoachCard: View {
                 open(.resume(coach))
             } label: {
                 HStack(spacing: Space.s) {
-                    CoachThumbnail(isEmpty: false)
+                    CoachThumbnail(coach: coach.id)
                     VStack(alignment: .leading, spacing: Space.xxs) {
                         CoachName(coach: coach, name: TypeRamp.headline, title: TypeRamp.footnote)
                         if let week {
@@ -211,7 +211,8 @@ private struct MarketCard: View {
         Button(action: open) {
             VStack(alignment: .leading, spacing: 0) {
                 CoachStage(
-                    catchphrase: coach.catchphrase, bubble: .leading, figureWidth: CoachMetrics.marketFigure,
+                    coach: coach.id, catchphrase: coach.catchphrase, bubble: .leading,
+                    figureHeight: CoachMetrics.marketFigure,
                     floor: CoachMetrics.marketFloor
                 )
                 .frame(height: CoachMetrics.marketCardStage)
@@ -292,18 +293,20 @@ enum CoachMetrics {
     static let spinner = 64.0
     /// The 教练 card's square.
     static let thumbnail = 56.0
+    /// The silhouette's width in the square, for a coach without a character.
     static let thumbnailFigure = 26.0
     /// A silhouette is twice as tall as it is wide.
     static let figureAspect = 0.5
     /// How far the market's cards ride up over its ink header.
     static let marketOverlap = 40.0
     static let marketCardStage = 188.0
-    static let marketFigure = 70.0
+    /// The coach's height on its stage, here and on the 简历 and 解雇 pages.
+    static let marketFigure = 140.0
     static let marketFloor = 40.0
     static let moreThumbnail = CGSize(width: 48, height: 56)
     static let moreFigure = 22.0
     static let resumeStage = 380.0
-    static let resumeFigure = 92.0
+    static let resumeFigure = 184.0
     static let resumeFloor = 72.0
     /// How far the 简历's sheet rides up over the stage, and its corners.
     static let sheetOverlap = 20.0
