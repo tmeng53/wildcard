@@ -85,8 +85,8 @@ struct CoachResumePage: View {
             ScrollView {
                 VStack(spacing: 0) {
                     CoachStage(
-                        catchphrase: coach.catchphrase, bubble: .center, figureWidth: CoachMetrics.resumeFigure,
-                        floor: CoachMetrics.resumeFloor
+                        coach: coach.id, catchphrase: coach.catchphrase, bubble: .center,
+                        figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.resumeFloor, greets: true
                     )
                     .frame(height: min(CoachMetrics.resumeStage, proxy.size.height * 0.42) + proxy.safeAreaInsets.top)
                     sheet
@@ -220,8 +220,9 @@ struct FireCoachPage: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
                 CoachStage(
+                    coach: coach.id,
                     catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
-                    bubble: .center, figureWidth: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
+                    bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
                     mood: .crying, surface: .page
                 )
                 .frame(height: CoachMetrics.fireStage)
