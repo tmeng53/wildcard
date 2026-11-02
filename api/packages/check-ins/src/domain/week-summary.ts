@@ -143,14 +143,22 @@ export interface WeekSummary {
   };
 }
 
+/** Every award someone won in a week, in `AwardKind`'s order. */
+export const weekAwards = (facts: WeekFacts): Award[] =>
+  AwardKind.options
+    .map((kind) => ({ kind, winners: AWARDS[kind](facts) }))
+    .filter(({ winners }) => winners.length > 0);
+
+/** Each count added up over these members. */
+export const statsOf = (facts: WeekFacts, members: readonly MemberWeek[]): Stat[] =>
+  StatKind.options.map((kind) => ({
+    kind,
+    value: members.reduce((sum, member) => sum + STATS[kind](member, facts), 0),
+  }));
+
 /** The summary of a squad's week, as `viewer` (one of its members) sees it. */
 export function summarizeWeek(facts: WeekFacts, viewer: MemberId): WeekSummary {
   const me = facts.members.find(({ member }) => member === viewer);
-  const statsOf = (members: readonly MemberWeek[]) =>
-    StatKind.options.map((kind) => ({
-      kind,
-      value: members.reduce((sum, member) => sum + STATS[kind](member, facts), 0),
-    }));
   const mine = new Set(me?.checkIns.map(({ id }) => id));
   const all = [...facts.reactions.entries()].flatMap(([checkIn, reactions]) =>
     reactions.map((reaction) => ({ checkIn, reaction })),
@@ -163,18 +171,16 @@ export function summarizeWeek(facts: WeekFacts, viewer: MemberId): WeekSummary {
   );
 
   return {
-    awards: AwardKind.options
-      .map((kind) => ({ kind, winners: AWARDS[kind](facts) }))
-      .filter(({ winners }) => winners.length > 0),
+    awards: weekAwards(facts),
     squad: {
-      stats: statsOf(facts.members),
+      stats: statsOf(facts, facts.members),
       reactions: [...byEmoji(all.map(({ reaction }) => reaction))].map(([emoji, count]) => ({
         emoji,
         count,
       })),
     },
     me: {
-      stats: statsOf(me === undefined ? [] : [me]),
+      stats: statsOf(facts, me === undefined ? [] : [me]),
       reactions: [...new Set([...received.keys(), ...given.keys()])].map((emoji) => ({
         emoji,
         received: received.get(emoji) ?? 0,

@@ -1,4 +1,5 @@
 import {
+  MemberId as CheckInMember,
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
   type CheckInRecord,
@@ -7,22 +8,26 @@ import {
 import type { SquadWeekSource, WeekCheckIn } from '@wildcard/coach';
 import type { Members } from '@wildcard/members';
 import type { Sports } from '@wildcard/sports';
+import { SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
 
-// The coach across modules: a squad's week from check-ins, its members' nicknames from members
-// and sports' names from sports, in the shape the coach reads.
+// The coach across modules: who is in a squad from squads, its week from check-ins, its members'
+// nicknames from members and sports' names from sports, in the shape the coach reads.
 
 /** A squad's week as the coach sees it, up to `now`. */
 export function coachSquadWeek(deps: {
   readonly checkIns: CheckIns;
   readonly members: Members;
+  readonly squads: Squads;
   readonly sports: Sports;
   readonly clock: () => Date;
 }): SquadWeekSource {
   return async ({ squad, weekStart }) => {
+    const inSquad = await deps.squads.membersOf(SquadsSquad.parse(squad));
     const week = await deps.checkIns.squadWeekCheckIns({
       squad: CheckInSquad.parse(squad),
       weekStart: CheckInWeek.parse(weekStart),
       before: deps.clock(),
+      members: inSquad.map((member) => CheckInMember.parse(member)),
     });
     const [squadmates, catalog] = await Promise.all([
       deps.members.squadmates(week.members.map(({ member }) => member)),
