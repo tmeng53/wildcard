@@ -6,7 +6,9 @@ import SquadDomain
 import SwiftUI
 
 /// The 小队 tab's row of heads under the squad's name (approved 2026-11-02): every member's face,
-/// still, with their name, then the coach's circle (「招聘中」 until the squad hires one) and, while
+/// still, with their name, then the coach's circle (「招聘中」 until the squad hires one; once hired,
+/// ringed in ink with a whistle badge and named 「毛头教练」, so no teammate nicknamed 教练 passes
+/// for it, as Tracy asked on 2026-11-02) and, while
 /// the squad has room, 「+ 邀请」, which shares the invite at once. Nothing here moves: the scene
 /// and its animations belong to 今天.
 struct SquadHeads: View {
@@ -46,7 +48,9 @@ struct SquadHeads: View {
             Button {
                 openCoach(.resume(coach.coach))
             } label: {
-                HeadSpot(name: Text(verbatim: coach.coach.name)) { CoachHead() }
+                HeadSpot(name: Text("\(coach.coach.name)教练", bundle: .module), isCoach: true) {
+                    CoachHead()
+                }
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("squad.head.coach")
@@ -74,6 +78,8 @@ struct SquadHeads: View {
 /// A circle with a short name under it.
 private struct HeadSpot<Face: View>: View {
     let name: Text
+    /// The coach's name is ink and bold; members' are muted.
+    var isCoach = false
     @ViewBuilder let face: () -> Face
     @Environment(\.sceneTheme) private var theme
 
@@ -82,8 +88,8 @@ private struct HeadSpot<Face: View>: View {
             face()
                 .frame(width: SquadHeadsMetrics.circle, height: SquadHeadsMetrics.circle)
             name
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .typeStyle(isCoach ? TypeRamp.label : TypeRamp.caption)
+                .foregroundStyle(Color(role: isCoach ? .fgDefault : .fgMuted, in: theme))
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
@@ -117,7 +123,8 @@ private struct DashedCircle<Mark: View>: View {
     }
 }
 
-/// The squad's coach in a circle, until coaches have their own still heads: its ink silhouette.
+/// The squad's coach in a circle ringed in ink, with a whistle badge at its lower right; until
+/// coaches have their own still heads, its ink silhouette.
 private struct CoachHead: View {
     @Environment(\.sceneTheme) private var theme
 
@@ -129,6 +136,18 @@ private struct CoachHead: View {
                 .offset(y: SquadHeadsMetrics.circle * 0.12)
         }
         .clipShape(Circle())
+        // A white gap, then the ink ring, as a sticker's edge.
+        .padding(SquadHeadsMetrics.ringGap)
+        .overlay(Circle().strokeBorder(Color(role: .bgInk, in: theme), lineWidth: Sizing.selectionStroke))
+        .overlay(alignment: .bottomTrailing) {
+            Image(systemName: "whistle.fill")
+                .font(.system(size: SquadHeadsMetrics.badge * 0.5, weight: .semibold))
+                .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                .frame(width: SquadHeadsMetrics.badge, height: SquadHeadsMetrics.badge)
+                .background(Color(role: .bgInk, in: theme), in: Circle())
+                .overlay(Circle().strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: 2))
+                .offset(x: SquadHeadsMetrics.ringGap, y: SquadHeadsMetrics.ringGap)
+        }
         .accessibilityHidden(true)
     }
 }
@@ -138,5 +157,9 @@ enum SquadHeadsMetrics {
     static let circle = 52.0
     /// A head with its name: a little wider than the circle, for the name.
     static let spot = 56.0
+    /// The coach's whistle badge.
+    static let badge = 22.0
+    /// The white gap between the coach's face and its ink ring.
+    static let ringGap = 2.0
 }
 #endif
