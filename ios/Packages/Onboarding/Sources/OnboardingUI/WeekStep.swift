@@ -7,10 +7,11 @@ import OnboardingDomain
 import SportsUI
 import SwiftUI
 
-/// 本周目标, step 4: this week as a poster, each day a sport picked in the step before or
-/// 休息. Tap a day, then what it is under the poster, and the next day is selected; days already
-/// over are blank, neither training nor 休息, since the member wasn't here yet. Giving a day a
-/// sport puts the character on the poster into that sport's kit and move, as in the step before.
+/// 本周目标, step 4: the member's 每周模板 as a poster, each day a sport picked in the step before
+/// or 休息, with a line saying it is the template they can change later in 出赛表. Tap a day,
+/// then what it is under the poster, and the next day is selected; every day can change, since
+/// it is the typical week, which this week follows from today. Giving a day a sport puts the
+/// character on the poster into that sport's kit and move, as in the step before.
 struct WeekStep: View {
     let model: SignUpModel
     @Environment(\.sceneTheme) private var theme
@@ -19,7 +20,14 @@ struct WeekStep: View {
         StepPage(step: .week, title: Text("本周目标", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
-                    PlanPoster(model: model, week: week)
+                    VStack(alignment: .leading, spacing: Space.xs) {
+                        Text("这就是你的每周模板，以后可以在出赛表里改", bundle: .module)
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("week.note")
+                        PlanPoster(model: model, week: week)
+                    }
                     DayChoices(model: model, week: week)
                 }
             }
@@ -39,9 +47,10 @@ struct WeekStep: View {
     }
 }
 
-/// The week on sign-up's `WeekPoster` card in the accent tone (the brand's, in sign-up), laid out as
-/// the approved board draws it: who and which dates, the week's number in italic, a row a day,
-/// the character in the corner and 每周训练 N/7 天 along the bottom.
+/// The 每周模板 on sign-up's `WeekPoster` card in the accent tone (the brand's, in sign-up), laid
+/// out as the approved board draws it, as 出赛表 draws the template: who, 每周模板 where a week has
+/// its number (a template has no dates or number), a row a day, the character in the corner and
+/// 每周训练 N/7 天 along the bottom.
 private struct PlanPoster: View {
     let model: SignUpModel
     let week: WeekDraft
@@ -53,15 +62,17 @@ private struct PlanPoster: View {
     private let rowHeight: Double = 38
     /// The day's name in front of its sport.
     private let dayLabelWidth: Double = 32
-    /// Days that are 休息 or already over fade back, so the training days read first.
+    /// 休息 days fade back, so the training days read first.
     private let restOpacity = 0.55
     /// The selected day's row: the ink over the card, faintly.
     private let selectedFill = 0.22
 
     var body: some View {
         WeekPoster(
-            title: "\(model.nickname) · \(dates)", heading: .week(model.weekNumber), layout: .card, fill: tone.fill,
-            ink: tone.onFill
+            title: model.nickname,
+            heading: .named(Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol),
+            layout: .card,
+            fill: tone.fill, ink: tone.onFill
         ) {
             VStack(spacing: 0) {
                 ForEach(week.days.indices, id: \.self) { index in
@@ -92,16 +103,9 @@ private struct PlanPoster: View {
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .frame(width: dayLabelWidth, alignment: .leading)
                 // The board sets the sport at 19 points, semibold: the action's size.
-                if week.isOpen(index) {
-                    DayName(day: day)
-                        .typeStyle(TypeRamp.action)
-                        .lineLimit(1)
-                } else {
-                    // A day gone before sign-up isn't a rest day, so it says nothing.
-                    Text(verbatim: "–")
-                        .typeStyle(TypeRamp.action)
-                        .accessibilityHidden(true)
-                }
+                DayName(day: day)
+                    .typeStyle(TypeRamp.action)
+                    .lineLimit(1)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, Space.xs)
@@ -112,23 +116,12 @@ private struct PlanPoster: View {
                         .fill(Color(role: tone.onFill, in: theme).opacity(selectedFill))
                 }
             }
-            .opacity(day == .rest || !week.isOpen(index) ? restOpacity : 1)
+            .opacity(day == .rest ? restOpacity : 1)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
-        .disabled(!week.isOpen(index))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("week.day.\(index)")
-    }
-
-    /// 10.20–10.26.
-    private var dates: String {
-        guard let first = model.weekDays.first, let last = model.weekDays.last else { return "" }
-        return "\(Self.short(first))–\(Self.short(last))"
-    }
-
-    private static func short(_ day: LocalDay) -> String {
-        "\(day.month).\(day.day)"
     }
 
     /// 周一, Mon: the day's name at its noon on the phone's clock.

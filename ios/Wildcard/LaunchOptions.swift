@@ -100,6 +100,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-long-names")
     }
 
+    /// `-uitest-hold-offers`: 出赛表's 也改到模板 stays a minute, not 5 seconds, so a slow
+    /// simulator still finds it before it goes by itself.
+    static var templateOfferHold: Duration {
+        ProcessInfo.processInfo.arguments.contains("-uitest-hold-offers") ? .seconds(60) : .seconds(5)
+    }
+
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI
     /// tests check after a post. Only the notification UI test leaves it out.
     static var asksForNotifications: Bool {

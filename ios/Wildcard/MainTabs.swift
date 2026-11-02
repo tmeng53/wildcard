@@ -164,6 +164,10 @@ struct MainTabs: View {
                         squad: { showsSquad = true },
                         pastRecaps: { selection = .feed },
                         editCharacter: editCharacter,
+                        weeklyTemplate: {
+                            schedule.showTemplate()
+                            selection = .schedule
+                        },
                         myPosts: { wall = PostWallStore(source: myPosts) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )

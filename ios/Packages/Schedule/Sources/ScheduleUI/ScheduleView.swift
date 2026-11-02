@@ -29,8 +29,6 @@ public struct ScheduleView: View {
     private static let posterID = "schedule.posterFrame"
     /// How long 没存上 stays before it goes.
     private let failedNoteHold: Duration = .seconds(5)
-    /// How long 只改了这一周 · 也改到模板 stays after a week's change.
-    private let templateOfferHold: Duration = .seconds(5)
 
     public init(model: ScheduleModel) {
         self.model = model
@@ -89,10 +87,25 @@ public struct ScheduleView: View {
             .padding(.top, Space.xs)
             .background(Color(role: .bgCanvas, in: theme))
         }
+        // 只改了这一周 · 也改到模板 sits just over the tab bar, where it shows however long the
+        // panel under the poster is.
         .safeAreaInset(edge: .bottom) {
             if model.writingFuel {
                 fuelField
+            } else if store.templateOffer != nil {
+                TemplateOffer(onCopy: model.copyToTemplate)
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.bottom, Space.xs)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+        }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: store.templateOffer)
+        // The offer goes by itself after a few seconds; another change brings it back.
+        .task(id: store.templateOffer) {
+            guard store.templateOffer != nil, (try? await Task.sleep(for: model.templateOfferHold)) != nil else {
+                return
+            }
+            store.dismissTemplateOffer()
         }
         .task { await model.load() }
         .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
@@ -193,16 +206,7 @@ public struct ScheduleView: View {
             PanelNote(store: store)
             if store.showsTemplate {
                 TemplateNote()
-            } else if store.templateOffer != nil {
-                TemplateOffer(onCopy: model.copyToTemplate)
-                    .transition(.opacity)
             }
-        }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: store.templateOffer)
-        // The offer goes by itself after a few seconds; another change brings it back.
-        .task(id: store.templateOffer) {
-            guard store.templateOffer != nil, (try? await Task.sleep(for: templateOfferHold)) != nil else { return }
-            store.dismissTemplateOffer()
         }
         .transition(.opacity)
     }
@@ -336,7 +340,7 @@ extension ScheduleView {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [
             CategoryBarItem(
-                id: .template, title: Text("每周模板", bundle: .module), systemImage: ScheduleLabels.templateSymbol,
+                id: .template, title: Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
                 startsGroup: true, accessibilityIdentifier: "schedule.template")
         ]
     }

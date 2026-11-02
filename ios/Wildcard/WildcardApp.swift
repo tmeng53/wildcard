@@ -126,7 +126,8 @@ struct WildcardApp: App {
         ScheduleModel(
             store: ScheduleStore(
                 backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
-                now: LaunchOptions.scheduleNow))
+                now: LaunchOptions.scheduleNow),
+            templateOfferHold: LaunchOptions.templateOfferHold)
     }
 
     /// The sample member for 我. The in-memory member has no Apple account to confirm with and

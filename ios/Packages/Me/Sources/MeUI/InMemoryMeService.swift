@@ -34,7 +34,8 @@ public actor InMemoryMeService: MeService {
                     count: 3,
                     latest: TitlesWon.Latest(
                         title: Bundle.module.inAppLanguage.localizedString(forKey: "早八战神", value: nil, table: nil),
-                        times: 2))),
+                        times: 2)),
+                templateDays: 5),
             failsSaving: failsSaving)
     }
 
