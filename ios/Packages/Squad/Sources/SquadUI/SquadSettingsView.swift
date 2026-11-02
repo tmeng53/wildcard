@@ -30,6 +30,8 @@ public struct SquadSettingsView: View {
     @State private var reveal: Reveal?
     /// The change last asked for, so its own control shows the wait while it saves.
     @State private var working: Working?
+    /// The coach's pages open over the page, the last on top.
+    @State private var coachPages: [CoachRoute] = []
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -52,7 +54,7 @@ public struct SquadSettingsView: View {
                 case .failed:
                     SquadFailed { Task { await model.reload() } }
                 case .loaded(let settings):
-                    page(settings).swipesBack(perform: close)
+                    page(settings).swipesBack(isEnabled: coachPages.isEmpty, perform: close)
                 }
             }
             .loadingCover(model.load == .loading) {
@@ -60,6 +62,7 @@ public struct SquadSettingsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }
+            CoachPageStack(model: model, pages: $coachPages)
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
@@ -88,6 +91,7 @@ public struct SquadSettingsView: View {
                         .accessibilityIdentifier("squad.changeFailed")
                 }
                 section(Text("本周场地", bundle: .module)) { sceneCard }
+                section(Text("教练", bundle: .module)) { coachCard }
                 section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
                 section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                     memberRows
@@ -287,6 +291,16 @@ public struct SquadSettingsView: View {
 }
 
 extension SquadSettingsView {
+    // MARK: 教练
+
+    private var coachCard: some View {
+        CoachCard(hire: model.coach, week: model.coachWeek, canHire: model.canHireCoach, open: openCoachPage)
+    }
+
+    private func openCoachPage(_ route: CoachRoute) {
+        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { coachPages.append(route) }
+    }
+
     private var isConfirming: Binding<Bool> {
         Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })
     }

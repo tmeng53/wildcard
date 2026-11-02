@@ -4,6 +4,7 @@ import DesignSystem
 import DesignSystemUI
 import RecapDomain
 import SwiftUI
+import UIKit
 
 /// 吃了: the squad's meals, and everyone eating what they logged more of. Never a judgment of
 /// food or bodies.
@@ -244,35 +245,32 @@ struct EndingPage: View {
 /// What the last page offers: the page as a picture to save or post, and planning next week.
 struct EndingActions {
     /// Nil until it is drawn, a moment after the page opens.
-    let picture: Image?
+    let picture: UIImage?
     let planNextWeek: () -> Void
 }
 
-/// 存图 and 排下周, at the bottom of the last page.
+/// 存图 and 排下周, at the bottom of the last page. 存图 opens the sheet that saves or shares the
+/// page's picture, as 出赛表's does.
 struct EndingButtons: View {
     let actions: EndingActions
+    @State private var isSaving = false
 
     var body: some View {
         VStack(spacing: Space.xs) {
             // 存图 stands from the start, waiting while its picture is drawn.
-            Group {
-                if let picture = actions.picture {
-                    ShareLink(
-                        item: picture,
-                        preview: SharePreview(Text("每周战报", bundle: .module), image: picture)
-                    ) {
-                        Text("存图", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                } else {
-                    Button {
-                    } label: {
-                        Text("存图", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .disabled(true)
-                }
+            Button {
+                isSaving = true
+            } label: {
+                Text("存图", bundle: .module).frame(maxWidth: .infinity)
             }
+            .disabled(actions.picture == nil)
             .buttonStyle(PrimaryButtonStyle(.large))
             .accessibilityIdentifier("recap.save")
+            .sheet(isPresented: $isSaving) {
+                if let picture = actions.picture {
+                    SavePictureSheet(image: picture) { isSaving = false }
+                }
+            }
             Button(action: actions.planNextWeek) { Text("排下周", bundle: .module) }
                 .buttonStyle(TextButtonStyle(.muted))
                 .accessibilityIdentifier("recap.planNextWeek")

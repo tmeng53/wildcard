@@ -5,7 +5,7 @@ import Foundation
 import MeDomain
 
 /// 我 over our API: the profile's character and card number, the card's records, the squad, the
-/// daily push switch, and deleting the account.
+/// 每周模板's count, the daily push switch, and deleting the account.
 public struct APIMeService: MeService {
     private let api: WildcardAPI
     private let beforeDeleting: @Sendable () async -> Void
@@ -28,6 +28,8 @@ public struct APIMeService: MeService {
             if let squad { week = try? await api.today(of: squad.id).myWeek.week }
             // So do the titles: the card shows none rather than no card.
             let titles = try? await api.awardTotals()
+            // And the 每周模板's row its count.
+            let templateDays = try? await api.planTemplate().count { $0 != .rest }
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -47,7 +49,8 @@ public struct APIMeService: MeService {
                     TitlesWon(
                         count: titles.titles,
                         latest: titles.latest.map { TitlesWon.Latest(title: $0.title, times: $0.times) })
-                } ?? .none)
+                } ?? .none,
+                templateDays: templateDays)
         }
     }
 

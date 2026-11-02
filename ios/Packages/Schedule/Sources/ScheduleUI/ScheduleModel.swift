@@ -24,7 +24,8 @@ public final class ScheduleModel {
     }
 
     /// Where 存图 stands: drawing the poster, then sharing the picture (the poster flashes as a
-    /// screenshot does and the share sheet opens on it), or a picture that couldn't be drawn.
+    /// screenshot does and 存图's sheet opens on it, to save or share), or a picture that couldn't
+    /// be drawn.
     public enum Saving: Equatable {
         case idle
         case working
@@ -32,7 +33,7 @@ public final class ScheduleModel {
         case failed
     }
 
-    /// A drawn poster on its way to the share sheet; each 存图 is a new one.
+    /// A drawn poster on its way to 存图's sheet; each 存图 is a new one.
     public struct SharedPoster: Identifiable, Equatable {
         public let id: Int
         public let image: PosterImage
@@ -56,8 +57,13 @@ public final class ScheduleModel {
     private(set) var saving = Saving.idle
     private var shares = 0
 
-    public init(store: ScheduleStore) {
+    /// How long 只改了这一周 · 也改到模板 stays after a week's change before it goes by itself.
+    let templateOfferHold: Duration
+
+    /// `templateOfferHold`: longer only where UI tests need time to find the offer.
+    public init(store: ScheduleStore, templateOfferHold: Duration = .seconds(5)) {
         self.store = store
+        self.templateOfferHold = templateOfferHold
         makePlayer()
     }
 
@@ -177,7 +183,7 @@ public final class ScheduleModel {
 
     // MARK: Saving the poster
 
-    /// Draws the poster with `render` and hands the picture to the share sheet.
+    /// Draws the poster with `render` and hands the picture to 存图's sheet.
     func sharePoster(_ render: () -> PosterImage?) {
         guard saving == .idle || saving == .failed else { return }
         saving = .working
@@ -189,7 +195,7 @@ public final class ScheduleModel {
         saving = .sharing(SharedPoster(id: shares, image: image))
     }
 
-    /// The share sheet closed, or the failed note has been read.
+    /// 存图's sheet closed, or the failed note has been read.
     func clearSaving() {
         if saving != .working { saving = .idle }
     }

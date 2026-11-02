@@ -11,12 +11,16 @@ import SwiftUI
 /// Given an `action`, it is a button that opens what it says (a caption opens its post) and
 /// shrinks while held like every other control. `.status` is a teammate's status with one thing
 /// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
-/// accent capsule under them; once done, the capsule turns grey and does nothing.
+/// accent capsule under them; once done, the capsule turns grey and does nothing. My own status
+/// has nothing to do: no capsule.
 public struct SpeechBubble: View {
     public enum Kind {
         case line
+        /// A line said in `.line`'s type that must show whole (a coach's catchphrase, which can be
+        /// any length): it wraps at `.info`'s width instead of cutting off.
+        case quote
         case info(title: Text?)
-        case status(detail: Text?, button: StatusButton)
+        case status(detail: Text?, button: StatusButton?)
     }
 
     /// The capsule under a `.status` bubble's words.
@@ -87,6 +91,14 @@ public struct SpeechBubble: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .lineLimit(1)
             }
+        case .quote:
+            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+                text
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         case .info(let title):
             HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
                 VStack(alignment: .leading, spacing: Space.xxs / 2) {
@@ -116,8 +128,10 @@ public struct SpeechBubble: View {
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    StatusCapsule(button: button)
-                        .padding(.top, Space.xs - Space.xxs / 2)
+                    if let button {
+                        StatusCapsule(button: button)
+                            .padding(.top, Space.xs - Space.xxs / 2)
+                    }
                 }
             }
         }

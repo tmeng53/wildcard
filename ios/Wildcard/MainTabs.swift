@@ -43,7 +43,7 @@ struct MainTabs: View {
     @State private var post: OpenedPost?
 
     var body: some View {
-        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar) { tab in
+        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: feed.hasNews ? [.feed] : []) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
             if tab == selection { screen(tab) }
@@ -52,6 +52,13 @@ struct MainTabs: View {
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
+        // 动态's dot: looked for each minute while 动态 isn't open; opening it clears the dot.
+        .task(id: selection) {
+            while selection != .feed, !Task.isCancelled {
+                await feed.checkNews()
+                try? await Task.sleep(for: .seconds(60))
+            }
+        }
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
@@ -123,10 +130,12 @@ struct MainTabs: View {
     @ViewBuilder private func screen(_ tab: Tab) -> some View {
         switch tab {
         case .today:
-            TodayView(model: today) { post in
-                feed.open(post)
-                selection = .feed
-            }
+            TodayView(
+                model: today, openSquad: { showsSquad = true },
+                openPost: { post in
+                    feed.open(post)
+                    selection = .feed
+                })
         case .feed:
             FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
                 .environment(\.sceneTheme, today.scene)
@@ -164,6 +173,10 @@ struct MainTabs: View {
                         squad: { showsSquad = true },
                         pastRecaps: { selection = .feed },
                         editCharacter: editCharacter,
+                        weeklyTemplate: {
+                            schedule.showTemplate()
+                            selection = .schedule
+                        },
                         myPosts: { wall = PostWallStore(source: myPosts) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )

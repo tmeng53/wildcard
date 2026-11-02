@@ -631,6 +631,38 @@
         }
       }
     },
+    "每周模板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly template"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週模板"
+          }
+        }
+      }
+    },
+    "每周 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/7 days a week"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週 %lld 天"
+          }
+        }
+      }
+    },
     "保存": {
       "localizations": {
         "en": {

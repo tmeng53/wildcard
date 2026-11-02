@@ -88,7 +88,8 @@ enum LaunchOptions {
     }
 
     /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
-    /// `winner`, `member`, `noWinner`); the captain by default.
+    /// `winner`, `member`, `noWinner`, `coached` for the captain of a squad with a coach,
+    /// `coachedMember` for a mate in it); the captain by default.
     static var squadSeat: InMemorySquadSettingsService.Seat {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return .captain }
@@ -98,6 +99,12 @@ enum LaunchOptions {
     /// `-uitest-long-names`: the in-memory squad's names are as long as the rules allow.
     static var longNames: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-long-names")
+    }
+
+    /// `-uitest-hold-offers`: 出赛表's 也改到模板 stays a minute, not 5 seconds, so a slow
+    /// simulator still finds it before it goes by itself.
+    static var templateOfferHold: Duration {
+        ProcessInfo.processInfo.arguments.contains("-uitest-hold-offers") ? .seconds(60) : .seconds(5)
     }
 
     /// `-uitest-no-push`: never show the notification prompt, which would cover the screens UI

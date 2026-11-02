@@ -11,7 +11,7 @@ final class ScheduleUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-tab", "schedule",
-            "-uitest-thursday",
+            "-uitest-thursday", "-uitest-hold-offers",
         ]
         if let scene { app.launchArguments += ["-uitest-scene", scene] }
         app.launch()
@@ -152,10 +152,18 @@ final class ScheduleUITests: XCTestCase {
         app.swipeDown()
         settle()
 
-        // 存图 flashes the poster, then opens the share sheet on its picture.
+        // 存图 flashes the poster, then shows its picture with 保存到相册 and 分享, all in view;
+        // 分享 opens the share sheet on it.
         app.buttons["schedule.save"].tap()
+        let toPhotos = app.buttons["savePicture.save"]
+        XCTAssertTrue(toPhotos.waitForExistence(timeout: 10), "存图 didn't show its picture first")
+        let shareButton = app.buttons["savePicture.share"]
+        XCTAssertTrue(shareButton.isHittable, "分享 isn't in view")
+        settle()
+        keepScreenshot(named: "68-schedule-save-sheet")
+        shareButton.tap()
         let share = app.otherElements["ActivityListView"]
-        XCTAssertTrue(share.waitForExistence(timeout: 10), "存图 opened no share sheet")
+        XCTAssertTrue(share.waitForExistence(timeout: 10), "分享 opened no share sheet")
         keepScreenshot(named: "68-schedule-share")
     }
 

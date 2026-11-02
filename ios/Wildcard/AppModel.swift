@@ -42,6 +42,8 @@ final class AppModel {
     }
     /// Signing in on the open screen, until the screen after it opens.
     private(set) var isSigningIn = false
+    /// The squad the member is no longer in (removed, or left on another phone), said once.
+    var lostSquadName: String?
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -163,7 +165,12 @@ final class AppModel {
 
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
     func leftSquad() async {
-        await openHome()
+        await openHome(saysLost: false)
+    }
+
+    /// 今天 found the member in no squad any more: sign-up's squad step, saying which squad.
+    private func removedFromSquad(_ squad: Squad?) async {
+        if showsTabs { await openHome(lost: squad) }
     }
 
     /// Reads the catalog again, as the app comes back to the front: a sport or dice line added on
@@ -191,9 +198,10 @@ final class AppModel {
         try? await account.signOut()
     }
 
-    /// Loads the member's home and opens 今天 on it, or sign-up when they are in no squad.
+    /// Opens 今天 on the member's home, or sign-up in no squad, saying which squad was lost.
     private func openHome(
-        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
+        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil,
+        lost: Squad? = nil, saysLost: Bool = true
     ) async {
         // Only called once the account says who is signed in, so it is read from memory.
         guard case .signedIn(let member)? = try? await account.restore() else {
@@ -212,6 +220,7 @@ final class AppModel {
             let agreed = (try? await api.hasAgreedToAI()) ?? false
             let model = (agreed ? nil : signUp) ?? newSignUp(hasAgreedToAI: agreed)
             model.signedIn(name: name)
+            if saysLost, let squad = lost ?? store.lostSquad { lostSquadName = squad.name }
             screen = .signUp(model)
         case .signedOut:
             await signedOut()
@@ -244,7 +253,8 @@ final class AppModel {
     /// onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
         let today = TodayModel(
-            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted,
+            noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
             confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })

@@ -27,7 +27,8 @@ struct PatOverlay: View {
     let pat: (MemberID) -> Void
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: pats.pat == nil && pats.bubble == nil)) { timeline in
+        let isStill = pats.pat == nil && pats.bubble == nil && pats.myLine == nil
+        TimelineView(.animation(minimumInterval: nil, paused: isStill)) { timeline in
             let seconds = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             ZStack(alignment: .topLeading) {
                 if layer == .marks, let current = pats.pat, !reduceMotion {
@@ -36,16 +37,24 @@ struct PatOverlay: View {
                         .accessibilityHidden(true)
                 }
                 if layer == .bubble, let bubble = pats.bubble,
-                    let mate = cast.mates.first(where: { $0.id == bubble.mate }),
-                    let position = cast.stage.position(of: mate.id, at: seconds)
+                    let position = bubble.kind == .mine
+                        ? StagePosition.mine : cast.stage.position(of: bubble.mate, at: seconds)
                 {
                     bubbleView(bubble, over: position)
                         .id(bubble.id)
                         .transition(.speech(reduceMotion: reduceMotion))
                 }
+                if layer == .bubble, let line = pats.myLine {
+                    HeadBubble(line: line.text, position: .mine, unit: unit)
+                        .id(line.id)
+                        .allowsHitTesting(false)
+                        .accessibilityIdentifier("today.myLine")
+                        .transition(.speech(reduceMotion: reduceMotion))
+                }
             }
             .frame(width: StageLayout.width * unit, height: Stage.height * unit, alignment: .topLeading)
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: pats.bubble)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: pats.myLine)
         }
     }
 
@@ -56,6 +65,10 @@ struct PatOverlay: View {
     private func bubbleView(_ bubble: PatStage.Bubble, over position: StagePosition) -> some View {
         let head = position.point.x * unit
         let patted = !canPat(bubble.mate)
+        let button = SpeechBubble.StatusButton(
+            patted ? Text("拍过了", bundle: .module) : Text("拍一拍", bundle: .module),
+            isDone: patted, identifier: "today.pat"
+        ) { pat(bubble.mate) }
         return Color.clear
             .frame(width: 0, height: 0)
             .overlay(alignment: .bottom) {
@@ -63,14 +76,11 @@ struct PatOverlay: View {
                     Text(verbatim: bubble.title),
                     kind: .status(
                         detail: bubble.detail.map { Text(verbatim: $0) },
-                        button: .init(
-                            patted ? Text("拍过了", bundle: .module) : Text("拍一拍", bundle: .module),
-                            isDone: patted, identifier: "today.pat"
-                        ) { pat(bubble.mate) })
+                        button: bubble.kind == .mine ? nil : button)
                 )
                 .fixedSize()
                 .accessibilityElement(children: .contain)
-                .accessibilityIdentifier("today.patBubble")
+                .accessibilityIdentifier(bubble.kind == .mine ? "today.myBubble" : "today.patBubble")
                 .alignmentGuide(HorizontalAlignment.center) { size in
                     size.width / 2 + head - Self.centre(of: size.width, over: head, unit: unit)
                 }

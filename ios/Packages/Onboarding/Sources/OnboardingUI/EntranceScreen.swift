@@ -161,12 +161,12 @@ struct EntranceScreen<Tabs: View>: View {
         .accessibilityHidden(true)
     }
 
-    /// My week as the card's second page shows it: the plan just made, nothing done yet, and no
-    /// day to pick.
+    /// My week as the card's second page shows it: the template just made, counted from today as
+    /// the first week is, nothing done yet, and no day to pick.
     private var myWeek: DesignSystemUI.MyWeek {
         let days = model.week?.days ?? Array(repeating: .rest, count: WeeklyPlan.dayCount)
         return DesignSystemUI.MyWeek(
-            summary: "", done: 0, planned: model.week?.trainingDays ?? 0,
+            summary: "", done: 0, planned: model.plannedThisWeek,
             days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone,
             details: [])
     }
