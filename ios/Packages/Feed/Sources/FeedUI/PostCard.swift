@@ -8,11 +8,12 @@ import SportsUI
 import SwiftUI
 import UIKit
 
-/// One post: its photos on top (swipe; the cover first), the author's character standing at the
-/// card's left in that day's kit, their name and time, the kind's tag (a 请假条's grey with a
-/// moon), the caption or the 请假条's text, then the emoji row. A teammate reacts with the
-/// smiley button, by holding the card and sliding to an emoji, or with a double tap on a photo
-/// (❤️); the emoji flies to the author's character, which answers with a move.
+/// One post: its photos on top (swipe; the cover first), or without photos the shared colour
+/// block with its words, the author's character standing at the card's left in that day's kit,
+/// their name and time, the kind's tag (a 请假条's grey with a moon), the caption under photos,
+/// then the emoji row. A teammate reacts with the smiley button, by holding the card and sliding
+/// to an emoji, or with a double tap on a photo or the block (❤️); the emoji flies to the
+/// author's character, which answers with a move.
 struct PostCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -39,6 +40,8 @@ struct PostCard: View {
         VStack(alignment: .leading, spacing: 0) {
             if let photos = post.checkIn.photos {
                 PostPhotos(model: model, post: post, photos: photos)
+            } else {
+                block
             }
             details
             ReactionRow(model: model, post: post)
@@ -98,12 +101,26 @@ struct PostCard: View {
         model.react(.pick(EmojiBar.common[index]), on: post, from: from)
     }
 
+    /// A post without photos: the shared colour block in their place, with its words and a
+    /// 练了's minutes on it. A double tap reacts as on a photo.
+    private var block: some View {
+        PostBlock(checkIn: post.checkIn, layout: .strip)
+            .clipShape(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: Radius.card, topTrailingRadius: Radius.card, style: .continuous)
+            )
+            .onTapGesture(count: 2, coordinateSpace: .named(FeedView.space)) { location in
+                guard canRespond else { return }
+                model.react(.doubleTap, on: post, from: location)
+            }
+    }
+
     /// The character's column, then who, when, what and the words.
     private var details: some View {
         HStack(alignment: .top, spacing: 0) {
             PostCharacter(model: model, post: post)
                 .frame(width: Self.characterColumn)
-                .padding(.top, post.checkIn.photos == nil ? Space.m : -Self.overlap)
+                .padding(.top, -Self.overlap)
             VStack(alignment: .leading, spacing: Space.xs) {
                 HStack(alignment: .firstTextBaseline, spacing: Space.xs - 2) {
                     authorName
@@ -114,7 +131,9 @@ struct PostCard: View {
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
-                    if case .trained(let training) = post.checkIn.entry, let minutes = training.minutes {
+                    if post.checkIn.photos != nil, case .trained(let training) = post.checkIn.entry,
+                        let minutes = training.minutes
+                    {
                         Spacer(minLength: Space.xs)
                         minutesNumber(minutes)
                     }
@@ -124,10 +143,10 @@ struct PostCard: View {
                 } else {
                     Tag(kindTitle)
                 }
-                words
+                if post.checkIn.photos != nil { words }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, Space.s + (post.checkIn.photos == nil ? Space.xxs : 0))
+            .padding(.top, Space.s)
             .padding(.trailing, Space.m)
             .padding(.bottom, Space.s)
         }

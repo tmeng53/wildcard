@@ -69,7 +69,7 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
         case .disclaimer(let disclaimer): disclaimer.photos?.all ?? []
         }
     }
-    #expect(refs.count == 7)
+    #expect(refs.count == 6)
     var loaded: [String] = []
     for ref in refs {
         let data = try #require(await feed.photo(ref))

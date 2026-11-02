@@ -6,7 +6,7 @@ import Foundation
 extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
     /// two photos, emoji and three comments, a 请假条 and a salad; yesterday a swim and my own leg day;
-    /// two days ago a tennis serve and a confessed burger. `photos` are the sample photos by
+    /// two days ago a tennis serve without a photo and a confessed burger. `photos` are the sample photos by
     /// their names in `samplePhotoSizes`; without them the photos' places stay grey.
     public static func sample(
         viewer: MemberID, squad: SquadID, now: Date, zone: TimeZone, photos: [String: Data] = [:]
@@ -30,7 +30,7 @@ extension InMemoryFeedSource {
                 viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
                 comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
-            write.post(fish, 2, 18, 10, .trained(write.training("tennis", "tennis", "发球终于过网了"))),
+            write.post(fish, 2, 18, 10, .trained(write.training("tennis", minutes: 50, [], "发球终于过网了"))),
             write.post(
                 kiki, 2, 20, 45, .cheatMeal(write.meal("burger", "坦白：两个汉堡，不后悔")),
                 reactions: [(jay, "🤤"), (fish, "🤤")]),
