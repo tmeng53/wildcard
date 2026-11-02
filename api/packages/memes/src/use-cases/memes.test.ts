@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { Kysely, PostgresDialect } from 'kysely';
+import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -147,6 +147,27 @@ describe('the meme library', () => {
     await expect(
       memes.setExpiry({ phrase: `没有这个梗${randomUUID()}`, expiresAt: null }),
     ).rejects.toBeInstanceOf(MemeNotFoundError);
+  });
+
+  it('logs each change to a meme with its new row, and none for a save that changed nothing', async () => {
+    const meme = draft('记一笔梗');
+    const approvedAt = new Date('2026-11-02T18:00:00.000Z');
+    await memes.addApproved({ memes: [meme], approvedAt });
+    const expiresAt = new Date(approvedAt.getTime() + 7 * DAY);
+    await memes.setExpiry({ phrase: meme.phrase, expiresAt });
+    await memes.setExpiry({ phrase: meme.phrase, expiresAt });
+    await memes.turnOff(meme.phrase);
+
+    const { rows } = await sql<{ op: string; expires_at: string | null; off: boolean }>`
+      select op, value ->> 'expires_at' as expires_at, value ->> 'disabled_at' is not null as off
+      from public.meme_events where value ->> 'phrase' = ${meme.phrase} order by id`.execute(db);
+    expect(
+      rows.map(({ op, expires_at, off }) => [op, expires_at && new Date(expires_at), off]),
+    ).toStrictEqual([
+      ['INSERT', null, false],
+      ['UPDATE', expiresAt, false],
+      ['UPDATE', expiresAt, true],
+    ]);
   });
 
   it('lists every meme, expired and turned off included', async () => {

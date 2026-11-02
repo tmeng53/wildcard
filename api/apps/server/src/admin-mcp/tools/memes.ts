@@ -61,7 +61,8 @@ export function addMemes({ memes, clock }: MemeToolDependencies) {
     description:
       'Adds memes the admin approved to the library. To import memes/approved.json, call it ' +
       'once per batch with that batch’s approvedAt. A phrase the library already has is left ' +
-      'unchanged, so importing the same batch again changes nothing. A meme tied to a moment ' +
+      'unchanged, its expiry included (set_meme_expiry changes that), so importing the same ' +
+      'batch again changes nothing. A meme tied to a moment ' +
       'gets expiresAt; one without it stays in use until turned off.',
     changes: true,
     input: z.strictObject({
