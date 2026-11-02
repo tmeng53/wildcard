@@ -44,7 +44,7 @@ export function squadsCheckedInto(
 /**
  * A squad's week as it stood at `before`, for these members (who was in the squad then, in the
  * order they joined): their check-ins and the reactions and comments on them made before it, and the 战报's
- * pages from those and the members' plans. What the week's awards and its frozen 战报 are made
+ * pages from those and the members' plans as they stood then. What the week's awards and its frozen 战报 are made
  * from; a check-in or reaction made later still counts for the week's summary, only not here.
  */
 export async function squadWeekCheckIns(
@@ -72,7 +72,10 @@ export async function squadWeekCheckIns(
   // A squad has at most 8 members, so one plan read each is fine.
   const [plans, zones, listed] = await Promise.all([
     Promise.all(
-      memberIds.map((member) => findWeeklyPlan({ store: deps.plans }, { member, weekStart })),
+      // As they stood at the cutoff: a later change, or a late 练了 marking a rest day, stays out.
+      memberIds.map((member) =>
+        findWeeklyPlan({ store: deps.plans }, { member, weekStart, asOf: before }),
+      ),
     ),
     first === undefined ? [] : zonesOf(deps.calendarOf, { members: memberIds, viewer: first }),
     memberIds.length === 0

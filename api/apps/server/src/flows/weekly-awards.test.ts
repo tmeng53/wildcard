@@ -654,7 +654,7 @@ describe('weekly awards', () => {
   });
 
   it('freezes on the first read when no run has, and drops a post deleted since', async () => {
-    const { read } = setup();
+    const { read, run } = setup();
     const [ana, bo] = [await member(), await member()];
     const squad = await squadOf(ana, bo);
     const top = await trained(ana, { squad });
@@ -676,6 +676,36 @@ describe('weekly awards', () => {
       ).rows[0]?.n,
     ).toBe(0);
     expect(after.myWeek?.trainedDays).toBe(1);
+    // The next run finishes it, though no check-in of the week is left to find the squad by.
+    await run();
+    expect(Story.parse((await read({ token: ana.token, squad })).body).status).toBe('ready');
+  });
+
+  it('counts the plans as they stood at the awards, whenever it freezes', async () => {
+    const { read } = setup();
+    const ana = await member();
+    const squad = await squadOf(ana);
+    await sql`update public.profiles set created_at = '2026-10-01T00:00:00Z'
+      where member_id = ${ana.userId}`.execute(db);
+    await trained(ana, { squad });
+    const train = JSON.stringify({
+      version: 1,
+      days: Array.from({ length: 7 }, () => ({ kind: 'train' })),
+    });
+    const restMost = JSON.stringify({
+      version: 1,
+      days: [{ kind: 'train' }, ...Array.from({ length: 6 }, () => ({ kind: 'rest' }))],
+    });
+    await sql`insert into public.plan_templates (member_id, from_week, payload, at)
+      values (${ana.userId}, ${WEEK}, ${train}::jsonb, ${BEFORE_AWARDS})`.execute(db);
+    // Changed after 8pm, before anyone read the 战报.
+    await sql`insert into public.weekly_plans (member_id, week_start, payload)
+      values (${ana.userId}, ${WEEK}, ${restMost}::jsonb)`.execute(db);
+    await sql`insert into public.weekly_plan_events (member_id, week_start, payload, at)
+      values (${ana.userId}, ${WEEK}, ${restMost}::jsonb,
+        ${new Date(AWARDS_AT.getTime() + HOUR / 2)})`.execute(db);
+    const story = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(story.myWeek?.plannedDays).toBe(7);
   });
 
   it('keeps trying a squad still failing into the next week', async () => {

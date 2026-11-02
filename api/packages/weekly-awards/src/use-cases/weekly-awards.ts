@@ -56,6 +56,8 @@ export interface WeeklyAwards {
    * stands.
    */
   freezeStory(story: WeekStory): Promise<WeekStory>;
+  /** The squads whose 战报 for the week is frozen and still waits for its awards. */
+  storiesWaiting(input: { readonly weekStart: WeekStart }): Promise<SquadId[]>;
 }
 
 export function createWeeklyAwards(deps: {
@@ -78,6 +80,7 @@ export function createWeeklyAwards(deps: {
     },
     titlesWon: (member) => deps.store.titlesWon(member),
     story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
+    storiesWaiting: ({ weekStart }) => deps.stories.waitingForAwards(weekStart),
     freezeStory: async (story) => {
       await deps.stories.freeze(story);
       const frozen = await deps.stories.find(story.squad, story.weekStart);

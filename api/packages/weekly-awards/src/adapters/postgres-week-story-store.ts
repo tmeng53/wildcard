@@ -62,6 +62,27 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
       };
     },
 
+    async waitingForAwards(weekStart) {
+      const rows = await db
+        .selectFrom('week_stories')
+        .select('squad_id')
+        .where('week_start', '=', weekStart)
+        .where((eb) =>
+          eb.not(
+            eb.exists(
+              eb
+                .selectFrom('weekly_awards')
+                .select('squad_id')
+                .whereRef('weekly_awards.squad_id', '=', 'week_stories.squad_id')
+                .whereRef('weekly_awards.week_start', '=', 'week_stories.week_start')
+                .where('given_at', 'is not', null),
+            ),
+          ),
+        )
+        .execute();
+      return rows.map(({ squad_id }) => SquadId.parse(squad_id));
+    },
+
     freeze: ({ squad, weekStart, story, members }: WeekStory) =>
       db.transaction().execute(async (trx) => {
         const written = await trx

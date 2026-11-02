@@ -83,6 +83,11 @@ export interface WeekStoryStore {
   find(squad: SquadId, weekStart: WeekStart): Promise<WeekStory | undefined>;
   /** Saves a squad's 战报 for a week unless it has one already: two runs at once keep one. */
   freeze(story: WeekStory): Promise<void>;
+  /**
+   * The squads with a 战报 frozen for the week and no awards given yet, so the job finishes them
+   * even after the check-ins that started them were deleted.
+   */
+  waitingForAwards(weekStart: WeekStart): Promise<SquadId[]>;
 }
 
 /**

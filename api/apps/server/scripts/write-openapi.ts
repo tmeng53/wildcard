@@ -107,6 +107,7 @@ const app = createApp({
       titlesWon: unused,
       story: unused,
       freezeStory: unused,
+      storiesWaiting: unused,
     },
     clock: unused,
   },

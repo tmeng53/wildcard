@@ -142,10 +142,12 @@ async function giveWeek(
   week: WeekStart,
 ): Promise<Omit<WeeklyAwardsRun, 'weeks'>> {
   const before = awardsTimeOf(week);
-  const squads = await deps.checkIns.squadsCheckedInto({
-    weekStart: CheckInWeek.parse(week),
-    before,
-  });
+  const [checkedIn, waiting] = await Promise.all([
+    deps.checkIns.squadsCheckedInto({ weekStart: CheckInWeek.parse(week), before }),
+    // A frozen 战报 still waiting, though the check-ins that started it were deleted since.
+    deps.awards.storiesWaiting({ weekStart: week }),
+  ]);
+  const squads = [...new Set([...checkedIn, ...waiting])];
   let given = 0;
   let failed = 0;
   let told = 0;

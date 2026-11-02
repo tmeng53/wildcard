@@ -10,6 +10,7 @@ export const unusedWeeklyAwards = {
     titlesWon: unused,
     story: unused,
     freezeStory: unused,
+    storiesWaiting: unused,
   },
   clock: () => new Date(),
 };
