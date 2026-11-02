@@ -70,6 +70,18 @@ async function planned(member: MemberId, { monday, days }: { monday: string; day
   await plans.save({ member, weekStart: WeekStart.parse(monday), days });
 }
 
+/** A plan saved at `at`, in the past the test's clock is set to, with its log row. */
+async function plannedAt(
+  member: MemberId,
+  { monday, days, at }: { monday: string; days: PlanDay[]; at: Date },
+) {
+  const payload = JSON.stringify({ version: 1, days });
+  await sql`insert into public.weekly_plans (member_id, week_start, payload)
+    values (${member}, ${monday}, ${payload}::jsonb)`.execute(db);
+  await sql`insert into public.weekly_plan_events (member_id, week_start, payload, at)
+    values (${member}, ${monday}, ${payload}::jsonb, ${at})`.execute(db);
+}
+
 async function newMember(timeZone?: string) {
   const id = MemberId.parse(randomUUID());
   await sql`insert into auth.users (id) values (${id})`.execute(db);
@@ -165,10 +177,12 @@ describe('a squad’s week summary', () => {
     // Not this week's, or not this squad's.
     await checkedIn(ace, { kind: 'trained', day: '2026-10-18', audience: [squad] });
     await checkedIn(ace, { kind: 'trained', day: '2026-10-25', audience: [elsewhere] });
-    // Tokyo plans 3 days and trains all 3.
-    await planned(tokyo, {
+    // Tokyo plans 3 days, before the week, and trains all 3. The 战报 reads plans as they stood
+    // at the awards, so the plan is logged at a time before them.
+    await plannedAt(tokyo, {
       monday: '2026-10-19',
       days: [train, train, train, rest, rest, rest, rest],
+      at: new Date('2026-10-18T00:00:00.000Z'),
     });
     for (const day of ['2026-10-19', '2026-10-20', '2026-10-21']) {
       await checkedIn(tokyo, { kind: 'trained', day, audience: [squad] });
@@ -351,10 +365,12 @@ describe('a squad’s week for its awards', () => {
     for (const day of ['2026-10-19', '2026-10-20', '2026-10-22', '2026-10-23', '2026-10-24']) {
       await checkedIn(ace, { kind: 'trained', day, audience: [squad] });
     }
-    // Tokyo plans 3 days and trains all 3.
-    await planned(tokyo, {
+    // Tokyo plans 3 days, before the week, and trains all 3. The 战报 reads plans as they stood
+    // at the awards, so the plan is logged at a time before them.
+    await plannedAt(tokyo, {
       monday: '2026-10-19',
       days: [train, train, train, rest, rest, rest, rest],
+      at: new Date('2026-10-18T00:00:00.000Z'),
     });
     for (const day of ['2026-10-19', '2026-10-20', '2026-10-21']) {
       await checkedIn(tokyo, { kind: 'trained', day, audience: [squad] });
