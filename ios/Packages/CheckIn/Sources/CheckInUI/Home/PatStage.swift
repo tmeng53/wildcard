@@ -38,6 +38,8 @@ final class PatStage {
         case pattedMe
         /// They joined the squad since the home was last shown.
         case joined
+        /// My own status, after a tap on me: nothing to do about it.
+        case mine
     }
 
     /// A line over my own head: the squad's news for me, such as 「你现在是队长了」.
@@ -99,7 +101,7 @@ final class PatStage {
             return
         }
         let pose = hop(mate, cast: cast, phase: phase, now: now)
-        let line = Self.status(of: mate, pose: pose)
+        let line = Self.status(mate.member.status, disclaimer: mate.disclaimer, asleep: pose == .asleep)
         show(
             Bubble(
                 mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
@@ -147,6 +149,22 @@ final class PatStage {
             try? await Task.sleep(for: .seconds(hold))
             if self?.myLine == line { self?.myLine = nil }
         }
+    }
+
+    /// I tapped myself: my status over my head, 「我 · 今天还没打卡」, with nothing to do about
+    /// it. Tapped again while it is up, it closes.
+    func tapMe(_ member: MemberID, status: StageStatus, disclaimer: String?) {
+        guard pat == nil else { return }
+        if bubble?.kind == .mine {
+            bubble = nil
+            return
+        }
+        let line = Self.status(status, disclaimer: disclaimer, asleep: false)
+        show(
+            Bubble(
+                mate: member, kind: .mine,
+                title: Self.titled(String(localized: "我", bundle: .module.inAppLanguage), line.title),
+                detail: line.detail, id: nextBubble()), for: hold)
     }
 
     /// A tap anywhere else on the scene closes the bubble.
@@ -246,11 +264,11 @@ final class PatStage {
         return String(localized: "\(name) · \(status)", bundle: .module.inAppLanguage)
     }
 
-    /// What a teammate is up to today, as the approved home says it: the status, and a second
-    /// line where there is one.
-    static func status(of mate: SquadCast.Mate, pose: StagePose) -> (title: String, detail: String?) {
-        if pose == .asleep { return (String(localized: "睡着了", bundle: .module.inAppLanguage), nil) }
-        switch mate.member.status {
+    /// What someone is up to today, as the approved home says it: the status, and a second line
+    /// where there is one.
+    static func status(_ status: StageStatus, disclaimer: String?, asleep: Bool) -> (title: String, detail: String?) {
+        if asleep { return (String(localized: "睡着了", bundle: .module.inAppLanguage), nil) }
+        switch status {
         case .trained(let activity?):
             return (
                 String(localized: "\(activity.localizedName) 中", bundle: .module.inAppLanguage),
@@ -261,7 +279,7 @@ final class PatStage {
         case .disclaimer:
             return (
                 String(localized: "请假条", bundle: .module.inAppLanguage),
-                mate.disclaimer ?? String(localized: "请假了", bundle: .module.inAppLanguage)
+                disclaimer ?? String(localized: "请假了", bundle: .module.inAppLanguage)
             )
         case .restDay:
             return (

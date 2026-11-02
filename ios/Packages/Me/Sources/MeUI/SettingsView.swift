@@ -5,8 +5,8 @@ import MeDomain
 import SwiftUI
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
-/// small group labels (小队, 偏好 with the 每周模板, 关于, 账号), with no icons and no chevrons, and an ink switch.
-/// Signing out and deleting the account come last.
+/// small group labels (小队, 偏好 with the 每周模板, 关于, 账号), with no icons, a chevron on each row
+/// that opens a page, and an ink switch. Signing out and deleting the account come last.
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
@@ -71,19 +71,18 @@ struct SettingsView: View {
         MenuGroup(Text("小队", bundle: .module)) {
             if let squad = model.overview?.squadName {
                 ListRow(
-                    Text("我的小队", bundle: .module), value: Text(squad), showsChevron: false, action: destinations.squad
+                    Text("我的小队", bundle: .module), value: Text(squad), action: destinations.squad
                 )
                 .accessibilityIdentifier("me.squad")
             }
             ListRow(
-                Text("球衣号码", bundle: .module), value: Text(verbatim: model.overview?.cardNumber?.text ?? ""),
-                showsChevron: false
+                Text("球衣号码", bundle: .module), value: Text(verbatim: model.overview?.cardNumber?.text ?? "")
             ) {
                 isPickingNumber = true
             }
             .accessibilityIdentifier("me.jerseyNumber")
             ListRow(
-                Text("往期战报", bundle: .module), showsDivider: false, showsChevron: false, action: destinations.pastRecaps
+                Text("往期战报", bundle: .module), showsDivider: false, action: destinations.pastRecaps
             )
         }
     }
@@ -103,8 +102,7 @@ struct SettingsView: View {
             )
             .accessibilityIdentifier("me.notifications")
             ListRow(
-                Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false,
-                showsChevron: false
+                Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
             ) {
                 isPickingLanguage = true
             }
@@ -120,11 +118,11 @@ struct SettingsView: View {
 
     private var aboutGroup: some View {
         MenuGroup(Text("关于", bundle: .module)) {
-            ListRow(Text("隐私政策", bundle: .module), showsChevron: false) {
+            ListRow(Text("隐私政策", bundle: .module)) {
                 openURL(destinations.privacyPolicy)
             }
             .accessibilityIdentifier("me.privacy")
-            ListRow(Text("用户条款", bundle: .module), showsDivider: false, showsChevron: false) {
+            ListRow(Text("用户条款", bundle: .module), showsDivider: false) {
                 openURL(destinations.terms)
             }
             .accessibilityIdentifier("me.terms")
@@ -146,7 +144,7 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("me.signOut.confirm")
             }
-            ListRow(Text("注销账号", bundle: .module), showsDivider: false, showsChevron: false) {
+            ListRow(Text("注销账号", bundle: .module), showsDivider: false) {
                 model.openDeletion()
             }
             .accessibilityIdentifier("me.deleteAccount")

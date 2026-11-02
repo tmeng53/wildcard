@@ -6,6 +6,7 @@ import RecapDomain
 import ScenePickDomain
 import ScenePickUI
 import SwiftUI
+import UIKit
 
 /// The Sunday 战报, full screen: one page at a time with a segment bar on top, like a phone
 /// story. Tap the right of the screen to go on, the left to go back; hold to pause; swipe down
@@ -22,7 +23,7 @@ public struct RecapView: View {
     let model: RecapModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
-    @State private var picture: Image?
+    @State private var picture: UIImage?
     @State private var dragDown = 0.0
     @State private var touchedAt: Date?
     @State private var reveal: Reveal?
@@ -187,15 +188,15 @@ public struct RecapView: View {
 
     /// The ending as it settles, drawn once to a picture for 存图: the squad's week, the count
     /// and everyone's finale, without the buttons.
-    private func renderPicture() async -> Image? {
+    private func renderPicture() async -> UIImage? {
         guard case .ending? = model.pages.last else { return nil }
         let card = endingStill(actions: false)
             .frame(width: Self.pictureSize.width, height: Self.pictureSize.height)
         let renderer = ImageRenderer(content: card)
         renderer.proposedSize = ProposedViewSize(Self.pictureSize)
         renderer.scale = Self.pictureScale
-        if let image = renderer.uiImage { return Image(uiImage: image) }
-        return renderer.cgImage.map { Image(decorative: $0, scale: Self.pictureScale) }
+        return renderer.uiImage
+            ?? renderer.cgImage.map { UIImage(cgImage: $0, scale: Self.pictureScale, orientation: .up) }
     }
 
     /// Room for the segments and the header above each page.

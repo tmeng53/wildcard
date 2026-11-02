@@ -130,10 +130,12 @@ struct MainTabs: View {
     @ViewBuilder private func screen(_ tab: Tab) -> some View {
         switch tab {
         case .today:
-            TodayView(model: today) { post in
-                feed.open(post)
-                selection = .feed
-            }
+            TodayView(
+                model: today, openSquad: { showsSquad = true },
+                openPost: { post in
+                    feed.open(post)
+                    selection = .feed
+                })
         case .feed:
             FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
                 .environment(\.sceneTheme, today.scene)

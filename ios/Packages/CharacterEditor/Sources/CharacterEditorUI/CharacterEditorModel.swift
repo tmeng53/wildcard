@@ -46,14 +46,11 @@ public final class CharacterEditorModel {
             guard tab != oldValue else { return }
             // The 性格 tab counts its idle seconds from when it opens.
             if tab == .persona { moveEnds = .now }
-            knocked = nil
             restyle(move: nil)
         }
     }
     /// The store open on the 穿搭 tab; nil shows the shopping street.
     private(set) var store: String?
-    /// A closed store tapped on the street, whose opening line shows under it.
-    private(set) var knocked: String?
     /// The slot of the piece last picked off the open store's rack, whose colors show over it.
     private(set) var picked: Slot?
     /// Nil until the first figure is built.
@@ -120,13 +117,10 @@ public final class CharacterEditorModel {
         restyle(move: .look)
     }
 
-    /// Walks into an open store, or tells how a closed one opens.
+    /// Walks into an open store; a closed one stays shut, its card saying how it unlocks.
     func visit(_ store: EditorChoices.Store) {
-        guard store.isOpen else {
-            knocked = store.id
-            return
-        }
-        (self.store, knocked, picked) = (store.id, nil, nil)
+        guard store.isOpen else { return }
+        (self.store, picked) = (store.id, nil)
     }
 
     /// Back out to the shopping street.

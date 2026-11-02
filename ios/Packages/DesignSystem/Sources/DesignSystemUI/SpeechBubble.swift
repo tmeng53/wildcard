@@ -11,7 +11,8 @@ import SwiftUI
 /// Given an `action`, it is a button that opens what it says (a caption opens its post) and
 /// shrinks while held like every other control. `.status` is a teammate's status with one thing
 /// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
-/// accent capsule under them; once done, the capsule turns grey and does nothing.
+/// accent capsule under them; once done, the capsule turns grey and does nothing. My own status
+/// has nothing to do: no capsule.
 public struct SpeechBubble: View {
     public enum Kind {
         case line
@@ -19,7 +20,7 @@ public struct SpeechBubble: View {
         /// any length): it wraps at `.info`'s width instead of cutting off.
         case quote
         case info(title: Text?)
-        case status(detail: Text?, button: StatusButton)
+        case status(detail: Text?, button: StatusButton?)
     }
 
     /// The capsule under a `.status` bubble's words.
@@ -127,8 +128,10 @@ public struct SpeechBubble: View {
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    StatusCapsule(button: button)
-                        .padding(.top, Space.xs - Space.xxs / 2)
+                    if let button {
+                        StatusCapsule(button: button)
+                            .padding(.top, Space.xs - Space.xxs / 2)
+                    }
                 }
             }
         }
